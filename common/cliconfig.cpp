@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.168  1998/08/05 16:39:28  cberry
+// Changed register len to register int len in isstringblank()
+//
 // Revision 1.167  1998/08/02 16:05:08  cyruspatel
 // Completed support for logging. (Note: LogScreen() and LogScreenf() are
 // synonymous)
@@ -163,7 +166,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.167 1998/08/02 16:05:08 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.168 1998/08/05 16:39:28 cberry Exp $";
 return id; }
 #endif
 
@@ -488,7 +491,7 @@ static optionstruct options[OPTION_COUNT]=
 
 static int isstringblank( const char *string )
 {
-  register len = ( string ? ( strlen( string )+1 ) : 0 );
+  register int len = ( string ? ( strlen( string )+1 ) : 0 );
 
   while (len)
     {
