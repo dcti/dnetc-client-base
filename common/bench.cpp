@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.2  1998/09/29 10:03:33  chrisb
+// RISC OS doesn't understand fileno
+//
 // Revision 1.1  1998/09/28 01:38:04  cyp
 // Spun off from client.cpp  Note: the problem object is local so it does not
 // need to be assigned from the problem table. Another positive side effect
@@ -12,7 +15,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.1 1998/09/28 01:38:04 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.2 1998/09/29 10:03:33 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -101,7 +104,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
   problem.percent = 0;
   sm0 = "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%";
   cm1 = '\n'; 
-  #if defined(NEEDVIRTUALMETHODS)
+  #if (defined(NEEDVIRTUALMETHODS)) || (CLIENT_OS == OS_RISCOS)
   cm3 = '\r';
   #else
   cm3 = ((isatty(fileno(stdout)))?('\r'):(0));
