@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.59 2000/11/02 18:29:46 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.60 2000/11/21 00:14:43 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1011,23 +1011,24 @@ static long __GetRawProcessorID(const char **cpuname )
     if ((cpuinfo = fopen( "/proc/cpuinfo", "r")) != NULL)
     {
       char buffer[256];
+      n = 0;
       while(fgets(buffer, sizeof(buffer), cpuinfo)) 
       {
-        n = 8; 
-        if ( memcmp( buffer, "Type\t\t: ", n ) == 0 )
-        {
-          unsigned int w = 0;
-          while (w < (sizeof(namebuf)-1) &&
-                 (isalpha(buffer[n]) || isdigit(buffer[n])))
-          {
-            namebuf[w++] = buffer[n++];
-          }  
-          namebuf[w++] = '\0';  
-          break;
-        }
+        if(memcmp(buffer, "Type\t\t: ", 8) == 0)
+	  n = 8;
+	if(memcmp(buffer, "Processor\t: ", 12) == 0)
+	  n = 12;
+	
+        if(n != 0)
+	{
+	  strncpy(namebuf, &buffer[n], sizeof(namebuf)-1);
+	  namebuf[sizeof(namebuf)-1] = '\0';
+	  break;
+	}
       }
       fclose(cpuinfo);
     }
+    
     if (namebuf[0])
     {
       static struct { const char *sig;  int rid; } sigs[] ={
@@ -1039,14 +1040,23 @@ static long __GetRawProcessorID(const char **cpuname )
                     { "arm610",     0x610},
                     { "arm7",       0x700},
                     { "arm710",     0x710},
-                    { "sa110",      0xA10}
+                    { "sa110",      0xA10},
+		    { "ARM/VLSI ARM 6",		0x600},
+		    { "ARM/VLSI ARM 610",	0x610},
+		    { "ARM/VLSI ARM 7",		0x700},
+		    { "ARM/VLSI ARM 710",	0x710},
+		    { "Intel StrongARM-110",	0xA10}
                     };
       /* assume unknown ID and unrecognized name in namebuf */
       detectedtype = 0; 
-      detectedname = ((const char *)&(namebuf[0])); 
+      detectedname = ((const char *)&(namebuf[0]));
+       
       for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
       {
-        if (strcmp(namebuf,sigs[n].sig)==0)
+        int l = strlen(sigs[n].sig);
+	
+        if ((strncmp(namebuf, sigs[n].sig, l) == 0) &&
+	    ((namebuf[l] == '\0') || (namebuf[l] == ' ')))
         {
           /* known ID and recognized name */
           detectedtype = (long)sigs[n].rid;
