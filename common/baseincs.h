@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.1 1999/05/31 11:21:39 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.2 1999/06/02 16:33:07 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -28,6 +28,9 @@ extern "C" {
 #endif
 #include <errno.h>
 #include <limits.h>
+#if defined(__unix__)
+#include <sys/utsname.h> /* uname() */
+#endif
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
 }
 #endif
@@ -170,15 +173,12 @@ extern "C" {
 #elif (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
-  #include <sys/sysctl.h> /* sysctl()/sysctlbyname() */
 #elif (CLIENT_OS == OS_BSDI)
   #include <sys/time.h>
   #include <unistd.h>
   #include <sched.h>
-  #include <sys/sysctl.h> /* sysctl()/sysctlbyname() */
 #elif (CLIENT_OS == OS_NETBSD)
   #include <sys/time.h>
-  #include <sys/sysctl.h> /* sysctl()/sysctlbyname() */
 #elif (CLIENT_OS == OS_FREEBSD)  
   #include <sys/time.h>
   #include <unistd.h>
