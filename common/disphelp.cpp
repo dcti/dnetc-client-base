@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.19  1998/06/21 02:36:26  silby
+// Made changes so that the help display would detect if it was piped and not wait for user input.  It's ugly and could use work, but it prevents the former problem of the help screen appearing to lock up.
+//
 // Revision 1.18  1998/06/15 12:03:58  kbracey
 // Lots of consts.
 //
@@ -24,7 +27,7 @@
 // call DisplayHelp() from main with the 'unrecognized option' argv[x]
 // or NULL or "-help" or "help" (or whatever)
 
-static const char *id="@(#)$Id: disphelp.cpp,v 1.18 1998/06/15 12:03:58 kbracey Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.19 1998/06/21 02:36:26 silby Exp $";
 
 #include "client.h"
 
@@ -205,9 +208,13 @@ void Client::DisplayHelp( const char * unrecognized_option )
 #if !defined(NOPAGER)
       printf( "Press enter/space to display a list of valid command line\n"
               "options or press any other key to quit... ");
-      int i = readkeypress();
-      printf("\n");
-      if (i != '\n' && i != '\r' && i != ' ') return;
+      if (!isatty(fileno(stdout))) ; // nobody can hear us!
+      else 
+        {
+        int i = readkeypress();
+        printf("\n");
+        if (i != '\n' && i != '\r' && i != ' ') return;
+        };
 #endif
     }
   }
@@ -249,7 +256,13 @@ void Client::DisplayHelp( const char * unrecognized_option )
     else
       printf("\nPress '+' or '-' for the next/previous page, or any other key to quit... ");
 
-    i = readkeypress();
+    if (isatty(fileno(stdout)))
+      i = readkeypress();
+    else // we're piped, don't wait for keys!
+      if (startline >= ((bodylines-maxpagesize)-1))
+        i = 'q';// we hit the end, terminate
+      else
+        i = '\r';
     if (i == '+' || i == '=' || i == ' ' ||
         i == 'f' || i == '\r' || i == '\n')
     {
