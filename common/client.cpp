@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.189  1999/02/03 04:31:16  cyp
+// cosmetic change: fixed a misplaced space in the startup banner.
+//
 // Revision 1.188  1999/02/03 03:41:56  cyp
 // InitializeConnectivity()/DeinitializeConnectivity() are now in netinit.cpp
 //
@@ -183,7 +186,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.188 1999/02/03 03:41:56 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.189 1999/02/03 04:31:16 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -403,9 +406,9 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       const char *msg = GetBuildOrEnvDescription();
       if (msg == NULL) msg="";
 
-      LogRaw("\nRC5DES %sClient %s for %s%s%s%s started.\n",CLIENT_VERSIONSTRING,
-              ((ClientIsGUI())?("GUI "):("")), CLIENT_OS_NAME, 
-              ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
+      LogRaw("\nRC5DES %s %sClient for %s%s%s%s started.\n",
+            CLIENT_VERSIONSTRING, ((ClientIsGUI())?("GUI "):("")), 
+            CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
   
       LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
       
