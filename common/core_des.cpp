@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_des_cpp(void) {
-return "@(#)$Id: core_des.cpp,v 1.1.2.5 2003/11/28 00:43:31 snake Exp $"; }
+return "@(#)$Id: core_des.cpp,v 1.1.2.6 2004/01/06 19:46:19 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -139,7 +139,7 @@ int apply_selcore_substitution_rules_des(int cindex)
 {
   #if (CLIENT_CPU == CPU_X86)
     long det = GetProcessorType(1);
-    int have_mmx = (det >= 0 && (det & 0x100)!=0);
+    int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
 
     #if !defined(CLIENT_SUPPORTS_SMP)
       if (cindex == 2)                /* "Kwan/Bitslice" */
@@ -182,7 +182,7 @@ int selcoreGetPreselectedCoreForProject_des()
   // ===============================================================
   #elif (CLIENT_CPU == CPU_X86)
   {
-    int have_mmx = ((detected_flags & CPU_F_MMX) == CPU_F_MMX);
+    int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
 
       if (detected_type >= 0)
       {
@@ -289,7 +289,7 @@ int selcoreSelectCore_des(unsigned int threadindex,
       #if defined(MMX_BITSLICER)
       {
         long det = GetProcessorType(1 /* quietly */);
-        if ((det >= 0 && (det & 0x100)!=0)) /* ismmx */
+        if (GetProcessorFeatureFlags() & CPU_F_MMX) /* ismmx */
           bryd_fallback = mmxslice = des_unit_func_mmx;
       }
       #endif

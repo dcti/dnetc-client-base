@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.35 2003/12/31 18:24:13 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.36 2004/01/06 19:46:19 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -53,6 +53,26 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.35 2003/12/31 18:24:13 oliver Exp $"; }
    if we have an ID but no name:       return ID, set cpuname to ""
                                                    -  cyp April/03/1999
 */
+
+#if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+  extern "C" u32 x86ident( void ) asm ("x86ident");
+  extern "C" u32 x86features( void ) asm ("x86features");
+  extern "C" u32 x86htcount( void ) asm ("x86htcount");
+#else
+#if defined(__WATCOMC__)
+  // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
+  // must be declared as "cdecl" to allow compiler save necessary
+registers.
+  extern "C" u32 __cdecl x86ident( void );
+  extern "C" u32 __cdecl x86features( void );
+  extern "C" u32 __cdecl x86htcount( void );
+#else
+  extern "C" u32 x86ident( void );
+  extern "C" u32 x86features( void );
+  extern "C" u32 x86htcount( void );
+#endif
+  extern "C" u32 x86ident_haveioperm; /* default is zero */
+#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -254,6 +274,28 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   }
 
   return cpucount;
+}
+
+/* ---------------------------------------------------------------------- */
+
+int GetNumberOfLogicalProcessors ( void )
+{ 
+  return GetNumberOfDetectedProcessors();
+}
+
+/* ---------------------------------------------------------------------- */
+
+int GetNumberOfPhysicalProcessors ( void )
+{
+#if (CLIENT_CPU == CPU_X86)
+  if ((GetNumberOfLogicalProcessors() % x86htcount()) != 0) {
+    return -1;
+  } else {
+    return (int)(GetNumberOfLogicalProcessors() / x86htcount());
+  }
+#else
+  return GetNumberOfDetectedProcessors();
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -900,19 +942,6 @@ static u32 __os_x86ident_fixup(u32 x86ident_result)
   return x86ident_result;
 }  
 
-#if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
-  extern "C" u32 x86ident( void ) asm ("x86ident");
-#else
-#if defined(__WATCOMC__)
-  // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
-  // must be declared as "cdecl" to allow compiler save necessary registers.
-  extern "C" u32 __cdecl x86ident( void );
-#else
-  extern "C" u32 x86ident( void );
-#endif
-  extern "C" u32 x86ident_haveioperm; /* default is zero */
-#endif
-
 // whattoret 0:detectedtype, 'c':simpleid, 'f':featureflags
 long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 {
@@ -990,7 +1019,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0490, CPU_F_I486,       0, "5x86"      },
           {  0x0520, CPU_F_I586,       3, "6x86/MI"   },
           {  0x0540, CPU_F_I586,       0, "GXm"       },
-          {  0x0600, CPU_F_I686MMX,    9, "6x86MX/MII"},
+          {  0x0600, CPU_F_I686,       9, "6x86MX/MII"},
           /* The VIA Cyrix III is CentaurHauls */
           {  0x0000, 0,               -1, NULL        }
           }; internalxref = &cyrixxref[0]; 
@@ -1009,12 +1038,12 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
     {
       static struct cpuxref centaurxref[]={
-          {  0x0540, CPU_F_I586MMX, 0x0A, "C6" }, /* has its own id */
-          {  0x0580, CPU_F_I586MMX, 0x0A, "C2" }, /* uses RG Cx re-pair */
-          {  0x0590, CPU_F_I586MMX, 0x0A, "C3" },
+          {  0x0540, CPU_F_I586, 0x0A, "C6" }, /* has its own id */
+          {  0x0580, CPU_F_I586, 0x0A, "C2" }, /* uses RG Cx re-pair */
+          {  0x0590, CPU_F_I586, 0x0A, "C3" },
           /* I'm not sure about the following two: are they I586 or I686 ? so do it the safe way */
-          {  0x0660, CPU_F_I586MMX, 0x09, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
-          {  0x0670, CPU_F_I586MMX, 0x0A, "C3" },
+          {  0x0660, CPU_F_I586, 0x09, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
+          {  0x0670, CPU_F_I586, 0x0A, "C3" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT";
@@ -1067,21 +1096,21 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0510, CPU_F_I586,       4, "K5 PR120 or PR133" },
           {  0x0520, CPU_F_I586,       4, "K5 PR166" },
           {  0x0530, CPU_F_I586,       4, "K5 PR200" },
-          {  0x0560, CPU_F_I586MMX,    5, "K6"       },
-          {  0x0570, CPU_F_I586MMX,    5, "K6"       },
-          {  0x0580, CPU_F_I586MMX,    5, "K6-2"     },
-          {  0x0590, CPU_F_I586MMX,    5, "K6-3"     },
-          {  0x05D0, CPU_F_I586MMX,    5, "K6-2+/K6-3+" },
-          {  0x0610, CPU_F_I686MMX,    9, "K7 (Athlon)"            }, // slot A
-          {  0x0620, CPU_F_I686MMX,    9, "K7-2 (Athlon)"          }, // slot A
-          {  0x0630, CPU_F_I686MMX,    9, "K7-3 (Duron)"           }, // 64K L2
-          {  0x0640, CPU_F_I686MMX,    9, "K7-4 (Athlon Thunderbird)" }, // 256K L2
-          {  0x0660, CPU_F_I686MMX,    9, "K7-6 (Athlon XP/MP/-4)" }, // Palomino core, 256K L2
-          {  0x0670, CPU_F_I686MMX,    9, "K7-7 (Duron)"           }, // Morgan core = Palomino core w/ 64K L2
-          {  0x0680, CPU_F_I686MMX,    9, "K7-8 (Athlon XP)"       }, // Thoroughbred core
-          {  0x06A0, CPU_F_I686MMX,    9, "K7-10 (Athlon XP)"      }, // Barton core
-          {  0x0F40, CPU_F_I686MMX,    9, "Athlon 64" },
-          {  0x0F50, CPU_F_I686MMX,    9, "Opteron" },
+          {  0x0560, CPU_F_I586,       5, "K6"       },
+          {  0x0570, CPU_F_I586,       5, "K6"       },
+          {  0x0580, CPU_F_I586,       5, "K6-2"     },
+          {  0x0590, CPU_F_I586,       5, "K6-3"     },
+          {  0x05D0, CPU_F_I586,       5, "K6-2+/K6-3+" },
+          {  0x0610, CPU_F_I686,       9, "K7 (Athlon)"            }, // slot A
+          {  0x0620, CPU_F_I686,       9, "K7-2 (Athlon)"          }, // slot A
+          {  0x0630, CPU_F_I686,       9, "K7-3 (Duron)"           }, // 64K L2
+          {  0x0640, CPU_F_I686,       9, "K7-4 (Athlon Thunderbird)" }, // 256K L2
+          {  0x0660, CPU_F_I686,       9, "K7-6 (Athlon XP/MP/-4)" }, // Palomino core, 256K L2
+          {  0x0670, CPU_F_I686,       9, "K7-7 (Duron)"           }, // Morgan core = Palomino core w/ 64K L2
+          {  0x0680, CPU_F_I686,       9, "K7-8 (Athlon XP)"       }, // Thoroughbred core
+          {  0x06A0, CPU_F_I686,       9, "K7-10 (Athlon XP)"      }, // Barton core
+          {  0x0F40, CPU_F_I686,       9, "Athlon 64" },
+          {  0x0F50, CPU_F_I686,       9, "Opteron" },
           {  0x0000, 0,               -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD";
@@ -1113,57 +1142,57 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0520, CPU_F_I586,       0, "Pentium" },
           {  0x0530, CPU_F_I586,       0, "Pentium Overdrive" },
           {  0x0545, CPU_F_I586,       0, "Pentium (buggy-MMX)" }, /* MMX core crash - #2204 */
-          {  0x0540, CPU_F_I586MMX,    0, "Pentium MMX" },
+          {  0x0540, CPU_F_I586,       0, "Pentium MMX" },
           {  0x0570, CPU_F_I586,       0, "Pentium" },
-          {  0x0580, CPU_F_I586MMX,    0, "Pentium MMX" },
+          {  0x0580, CPU_F_I586,       0, "Pentium MMX" },
           {  0x0600, CPU_F_I686,       8, "Pentium Pro A-step" },
           {  0x0610, CPU_F_I686,       8, "Pentium Pro" },
-          {  0x0630, CPU_F_I686MMX,    2, "Pentium II" }, /* Klamath (0.35um/512KB) */
+          {  0x0630, CPU_F_I686,       2, "Pentium II" }, /* Klamath (0.35um/512KB) */
           /* the following CPUs may have brand bits generated by x86ident */
           /* PII:  650: Deschutes A80522 (0.28um) */
           /* PII:  650: Tonga [Mobile] (0.25um) */
           /* Cely: 650: Covington (no On-Die L2 Cache) */
-          {  0x0650, CPU_F_I686MMX,    2, "Pentium II" },
-          {  0x1650, CPU_F_I686MMX,    2, "Celeron (Covington)" },
-          {  0x4650, CPU_F_I686MMX,    2, "Pentium II Xeon" },
+          {  0x0650, CPU_F_I686,    2, "Pentium II" },
+          {  0x1650, CPU_F_I686,    2, "Celeron (Covington)" },
+          {  0x4650, CPU_F_I686,    2, "Pentium II Xeon" },
           /* Cely: 660: Dixon [Mobile] (128 [Cely] or 256 [PII] KB On-Die) */
           /* Cely: 660: Mendocino A80523 (0.25um, 128 KB On-Die L2 Cache) */
-          {  0x0660, CPU_F_I686MMX,    2, "Pentium II" },
-          {  0x1660, CPU_F_I686MMX,    2, "Celeron-A (Mendocino/Dixon)" },
-        //{  0x0670, CPU_F_I686MMX,    2, "Pentium III" }, /* Katmai (0.25um/0.18um), 512KB, KNI */
-          {  0x0670, CPU_F_I686MMX,    2, "Pentium III (Katmai)" },
-/* !!! */ {  0x0670, CPU_F_I686MMX,    2, "Pentium III Xeon" },
+          {  0x0660, CPU_F_I686,    2, "Pentium II" },
+          {  0x1660, CPU_F_I686,    2, "Celeron-A (Mendocino/Dixon)" },
+        //{  0x0670, CPU_F_I686,    2, "Pentium III" }, /* Katmai (0.25um/0.18um), 512KB, KNI */
+          {  0x0670, CPU_F_I686,    2, "Pentium III (Katmai)" },
+/* !!! */ {  0x0670, CPU_F_I686,    2, "Pentium III Xeon" },
           /* the following CPUs have brand bits from Intel */
-        //{  0x0680, CPU_F_I686MMX,    2, "Pentium III" },
-          {  0x1680, CPU_F_I686MMX,    2, "Celeron" },
-          {  0x2680, CPU_F_I686MMX,    2, "Pentium III" },
-/* !!! */ {  0x2680, CPU_F_I686MMX,    2, "Mobile Pentium III" },
-          {  0x3680, CPU_F_I686MMX,    2, "Pentium III Xeon" },
-          {  0x0690, CPU_F_I686MMX,    2, "Pentium III (Timna)" }, /* Timna:6547:0692 */
-          {  0x6690, CPU_F_I686MMX, 0x0B, "Pentium M" }, /* brand id 0x16 ? */ /* #3323 */
-        //{  0x06A0, CPU_F_I686MMX,    2, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
-          {  0x36A0, CPU_F_I686MMX,    2, "Pentium III Xeon" },
-        //{  0x06B0, CPU_F_I686MMX,    2, "Pentium III" }, /* Tualatin:6547:46B1 */
-          {  0x16B0, CPU_F_I686MMX,    2, "Celeron (Tualatin)" },
-          {  0x26B0, CPU_F_I686MMX,    2, "Pentium III (Tualatin)" },
-          {  0x36B0, CPU_F_I686MMX,    2, "Celeron (Tualatin)" },
-          {  0x46B0, CPU_F_I686MMX,    2, "Pentium III (Tualatin)" },
-          {  0x66B0, CPU_F_I686MMX,    2, "Mobile Pentium III-M" },
-          {  0x0700, CPU_F_I686MMX,    5, "Itanium" }, /* 6547:0701. #5 == RG RISC-rotate II */
-        //{  0x0F00, CPU_F_I686MMX, 0x0B, "Pentium 4" }, /* 1.3 - 1.5GHz P4  (0.18u) */
-        //{  0x0F10, CPU_F_I686MMX, 0x0B, "Pentium 4" }, /* 1.4 - 2.0GHz P4  (0.18u) */
-        //{  0x0F20, CPU_F_I686MMX, 0x0B, "Pentium 4" }, /* >=2.0GHz P4-512k (0.13u) */
-          {  0x8F00, CPU_F_I686MMX, 0x0B, "Pentium 4" },
-          {  0xEF00, CPU_F_I686MMX, 0x0B, "Xeon" },
-          {  0x8F10, CPU_F_I686MMX, 0x0B, "Pentium 4" },
-          {  0xAF10, CPU_F_I686MMX, 0x0B, "Celeron 4" },
-          {  0xBF10, CPU_F_I686MMX, 0x0B, "Xeon MP" },
-          {  0xEF10, CPU_F_I686MMX, 0x0B, "Xeon" },
-          {  0x9F20, CPU_F_I686MMX, 0x0B, "Pentium 4 (Northwood)" },
-          {  0xAF20, CPU_F_I686MMX, 0x0B, "Celeron 4 (Northwood)" },
-          {  0xBF20, CPU_F_I686MMX, 0x0B, "Xeon" },
-          {  0xEF20, CPU_F_I686MMX, 0x0B, "Mobile Pentium 4-M" },
-          {  0xFF20, CPU_F_I686MMX, 0x0B, "Mobile Celeron 4" },
+        //{  0x0680, CPU_F_I686,    2, "Pentium III" },
+          {  0x1680, CPU_F_I686,    2, "Celeron" },
+          {  0x2680, CPU_F_I686,    2, "Pentium III" },
+/* !!! */ {  0x2680, CPU_F_I686,    2, "Mobile Pentium III" },
+          {  0x3680, CPU_F_I686,    2, "Pentium III Xeon" },
+          {  0x0690, CPU_F_I686,    2, "Pentium III (Timna)" }, /* Timna:6547:0692 */
+          {  0x6690, CPU_F_I686, 0x0B, "Pentium M" }, /* brand id 0x16 ? */ /* #3323 */
+        //{  0x06A0, CPU_F_I686,    2, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
+          {  0x36A0, CPU_F_I686,    2, "Pentium III Xeon" },
+        //{  0x06B0, CPU_F_I686,    2, "Pentium III" }, /* Tualatin:6547:46B1 */
+          {  0x16B0, CPU_F_I686,    2, "Celeron (Tualatin)" },
+          {  0x26B0, CPU_F_I686,    2, "Pentium III (Tualatin)" },
+          {  0x36B0, CPU_F_I686,    2, "Celeron (Tualatin)" },
+          {  0x46B0, CPU_F_I686,    2, "Pentium III (Tualatin)" },
+          {  0x66B0, CPU_F_I686,    2, "Mobile Pentium III-M" },
+          {  0x0700, CPU_F_I686,    5, "Itanium" }, /* 6547:0701. #5 == RG RISC-rotate II */
+        //{  0x0F00, CPU_F_I686, 0x0B, "Pentium 4" }, /* 1.3 - 1.5GHz P4  (0.18u) */
+        //{  0x0F10, CPU_F_I686, 0x0B, "Pentium 4" }, /* 1.4 - 2.0GHz P4  (0.18u) */
+        //{  0x0F20, CPU_F_I686, 0x0B, "Pentium 4" }, /* >=2.0GHz P4-512k (0.13u) */
+          {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4" },
+          {  0xEF00, CPU_F_I686, 0x0B, "Xeon" },
+          {  0x8F10, CPU_F_I686, 0x0B, "Pentium 4" },
+          {  0xAF10, CPU_F_I686, 0x0B, "Celeron 4" },
+          {  0xBF10, CPU_F_I686, 0x0B, "Xeon MP" },
+          {  0xEF10, CPU_F_I686, 0x0B, "Xeon" },
+          {  0x9F20, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
+          {  0xAF20, CPU_F_I686, 0x0B, "Celeron 4 (Northwood)" },
+          {  0xBF20, CPU_F_I686, 0x0B, "Xeon" },
+          {  0xEF20, CPU_F_I686, 0x0B, "Mobile Pentium 4-M" },
+          {  0xFF20, CPU_F_I686, 0x0B, "Mobile Celeron 4" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel"; 
@@ -1184,10 +1213,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           simpleid     = internalxref[pos].simpleid;
           featureflags = internalxref[pos].cpufeatures;
           detectedtype = dettype;
-          // HACK!!!
-          if ((featureflags & CPU_F_MMX) == CPU_F_MMX)
-            simpleid |= 0x100;
-          // KCAH !!!
           if ( internalxref[pos].cpuname )
           {
             strcpy( namebuf, vendorname );
@@ -2021,7 +2046,7 @@ long GetProcessorID()
 unsigned long GetProcessorFeatureFlags()
 {
   #if (CLIENT_CPU == CPU_X86)
-  return __GetRawProcessorID(NULL, 'f');
+  return (__GetRawProcessorID(NULL, 'f')) | (x86features());
   #else
   return 0;
   #endif

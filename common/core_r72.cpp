@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.12 2003/11/28 00:43:31 snake Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.13 2004/01/06 19:46:19 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -205,7 +205,7 @@ int apply_selcore_substitution_rules_rc572(int cindex)
 #elif (CLIENT_CPU == CPU_X86)
   {
     long det = GetProcessorType(1);
-    //int have_mmx = (det >= 0 && (det & 0x100)!=0);
+    //int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
     int have_3486 = (det >= 0 && (det & 0xff)==1);
 
     #if !defined(HAVE_NO_NASM)
@@ -311,7 +311,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
   // ===============================================================
   #elif (CLIENT_CPU == CPU_X86)
   {
-    int have_mmx = ((detected_flags & CPU_F_MMX) == CPU_F_MMX);
+    int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
       if (detected_type >= 0)
       {
         #if !defined(HAVE_NO_NASM)

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_rc5_cpp(void) {
-return "@(#)$Id: core_rc5.cpp,v 1.1.2.7 2003/11/28 00:43:31 snake Exp $"; }
+return "@(#)$Id: core_rc5.cpp,v 1.1.2.8 2004/01/06 19:46:19 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -322,7 +322,7 @@ int apply_selcore_substitution_rules_rc564(int cindex)
     cindex = 1;                         /* force lintilla */
 # elif (CLIENT_CPU == CPU_X86)
   long det = GetProcessorType(1);
-  int have_mmx = (det >= 0 && (det & 0x100)!=0);
+  int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
   int have_3486 = (det >= 0 && (det & 0xff)==1);
   int have_smc = 0;
   int have_nasm = 0;
@@ -420,7 +420,7 @@ int selcoreGetPreselectedCoreForProject_rc564()
   // ===============================================================
   #elif (CLIENT_CPU == CPU_X86)
 
-    int have_mmx = ((detected_flags & CPU_F_MMX) == CPU_F_MMX);
+    int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
 
     if (detected_type >= 0)
       {

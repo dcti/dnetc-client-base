@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.4 2003/11/28 00:43:31 snake Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.5 2004/01/06 19:46:19 snikkel Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -17,9 +17,14 @@
   #define CPU_F_I586            (0x00000004L | CPU_F_I486)
   #define CPU_F_I686            (0x00000008L | CPU_F_I586)
   #define CPU_F_MMX             (0x00000100L)
-// CPU_F_SSE, CPU_F_SSE2, ...
-  #define CPU_F_I586MMX         (CPU_F_I586  | CPU_F_MMX)
-  #define CPU_F_I686MMX         (CPU_F_I686  | CPU_F_MMX)
+  #define CPU_F_CYRIX_MMX_PLUS  (0x00000200L)
+  #define CPU_F_AMD_MMX_PLUS    (0x00000400L)
+  #define CPU_F_3DNOW           (0x00000800L)
+  #define CPU_F_3DNOW_PLUS      (0x00001000L)
+  #define CPU_F_SSE             (0x00002000L)
+  #define CPU_F_SSE2            (0x00004000L)
+  #define CPU_F_SSE3            (0x00008000L)
+  #define CPU_F_HYPERTHREAD     (0x00010000L)	/* supported and enabled */
 #endif
 
 
