@@ -20,7 +20,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.20 2001/01/19 02:28:39 andreasb Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.21 2001/01/20 13:22:03 cyp Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -176,7 +176,7 @@ extern const char *w32pre_cpp(void);
 extern const char *w32util_cpp(void);
 extern const char *w32svc_cpp(void);
 #endif
-#if defined(HAVE_OGR_CORES)
+#if 0 //defined(HAVE_OGR_CORES) //can't do this unless everyone uses .cpp
 extern const char *ogr_cpp(void);
 extern const char *ogr_core(void);
 extern const char *ogr_sup_cpp(void);
@@ -231,7 +231,7 @@ static const char * (*ident_table[])(void) =
   w32util_cpp,
   w32svc_cpp,
   #endif
-  #if defined(HAVE_OGR_CORES)
+  #if 0 //defined(HAVE_OGR_CORES) //can't do this unless everyone uses .cpp
   ogr_cpp,
   ogr_core,
   ogr_sup_cpp,
