@@ -3,8 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: modereq.h,v $
-// Revision 1.5.2.4  1998/11/11 03:12:58  remi
-// *** empty log message ***
+// Revision 1.5.2.5  1998/12/28 15:46:10  remi
+// Fixed $Log comments.
 //
 // Revision 1.5.2.3  1998/11/11 03:12:21  remi
 // Synced with :
