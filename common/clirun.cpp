@@ -5,7 +5,7 @@
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.25 1999/12/15 06:19:35 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.26 1999/12/22 17:42:22 chrisb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -29,6 +29,9 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.25 1999/12/15 06:19:35 mfeiri Exp $"; }
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
 
+#if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
+#include <thread.h>
+#endif
 #if (CLIENT_OS == OS_FREEBSD)
 #include <sys/mman.h>     /* minherit() */
 #include <sys/wait.h>     /* wait() */
@@ -62,7 +65,9 @@ static struct __dyn_timeslice_struct
 
 struct thread_param_block
 {
-  #if (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+  #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
+    thread_t threadID;
+  #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
   #elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)
     unsigned long threadID;
@@ -102,7 +107,7 @@ static void __thread_sleep__(int secs)
 
 static void __thread_yield__(void)
 {
-  #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+  #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
     thr_yield();
   #elif (CLIENT_OS == OS_BSDI)
     #if defined(__ELF__)
@@ -212,6 +217,17 @@ void Go_mt( void * parm )
       thrparams->thread_restart_time = 0;  
       usepollprocess = 1;
     }
+  }
+#elif ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))  
+  if (thrparams->realthread)
+  {
+    sigset_t signals_to_block;
+    sigemptyset(&signals_to_block);
+    sigaddset(&signals_to_block, SIGINT);
+    sigaddset(&signals_to_block, SIGTERM);
+    sigaddset(&signals_to_block, SIGKILL);
+    sigaddset(&signals_to_block, SIGHUP);
+    thr_sigsetmask(SIG_BLOCK, &signals_to_block, NULL);
   }
 #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
   if (thrparams->realthread)
@@ -402,7 +418,10 @@ void Go_mt( void * parm )
 
   thrparams->threadID = 0; //the thread is dead
 
-  #if (CLIENT_OS == OS_BEOS)
+  #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
+  if (thrparams->realthread)
+    thr_exit((void *)0);
+  #elif (CLIENT_OS == OS_BEOS)
   if (thrparams->realthread)
     _exit(0);
   #endif
@@ -419,7 +438,9 @@ static int __StopThread( struct thread_param_block *thrparams )
     {
       if (thrparams->realthread) //real thread
       {
-        #if (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
+        #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
+        thr_join(0, 0, NULL); //all at once
+        #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
         #elif (CLIENT_OS == OS_OS2)
         DosSetPriority( 2, PRTYC_REGULAR, 0, 0); /* thread to normal prio */
@@ -672,7 +693,11 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
                thread_name, be_priority, (void *)thrparams );
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
-          success = 1;
+	    success = 1;
+      #elif ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
+         if (thr_create(NULL, 0, (void *(*)(void *))Go_mt, 
+                         (void *)thrparams, THR_BOUND, &thrparams->threadID ) == 0)
+           success = 1;                         
       #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
         #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
           SetGlobalPriority( thrparams->priority );
