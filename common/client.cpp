@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.173  1998/11/28 19:44:34  cyp
+// InitializeLogging() and DeinitializeLogging() are no longer Client class
+// methods.
+//
 // Revision 1.172  1998/11/26 06:54:25  cyp
 // Updated client contructor.
 //
@@ -129,7 +133,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.172 1998/11/26 06:54:25 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.173 1998/11/28 19:44:34 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -239,11 +243,13 @@ static const char *GetBuildOrEnvDescription(void)
   Only useful for win-weenies I suppose. 
   */
 
-  #if ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
-  static char buffer[64];
+  #if (CLIENT_OS == OS_DOS)
+  return dosCliGetEmulationDescription(); //if in win/os2 VM 
+  #elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S))
+  static char buffer[32];
   int major, minor;
   w32ConGetWinVersion(&major,&minor);
-  sprintf(buffer,"Running under Windows%s %u.%u", (major>20)?(" NT"):(""), major%20, minor );
+  sprintf(buffer,"under Windows%s %u.%u", (major>20)?(" NT"):(""), major%20, minor );
   return buffer;
   #else
   return "";
@@ -303,10 +309,6 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
       }
     else if ( level == 1 )
       {  
-      #if (CLIENT_OS == OS_DOS)
-        dosCliCheckPlatform(); //show warning if pure DOS client is in win/os2 VM
-      #endif
-  
       #if ((CLIENT_OS==OS_DOS) || (CLIENT_OS==OS_WIN16) || \
            (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_OS2) || \
            ((CLIENT_OS==OS_WIN32) && !defined(NEEDVIRTUALMETHODS)))
@@ -324,10 +326,11 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
         }
       #endif
 
-      LogRaw("\nRC5DES Client %s for %s started.\n", CLIENT_VERSIONSTRING,
-                                                     CLIENT_OS_NAME );
       const char *msg = GetBuildOrEnvDescription();
-      if (msg && *msg) LogRaw( "%s\n", msg );
+      if (msg == NULL) msg="";
+
+      LogRaw("\nRC5DES Client %s for %s%s%s%s started.\n",CLIENT_VERSIONSTRING,
+             CLIENT_OS_NAME, ((*msg)?(" ("):("")), msg, ((*msg)?(")"):("")) );
   
       LogRaw( "Using distributed.net ID %s\n\n", dnet_id );
       
@@ -393,7 +396,9 @@ int Client::Main( int argc, const char *argv[], int restarted )
         {
         if (InitializeConsole(quietmode,domodes) == 0)
           {
-          InitializeLogging(1);
+          InitializeLogging( (quietmode!=0), (percentprintingoff!=0), 
+                             logname, LOGFILETYPE_NOLIMIT, 0, messagelen, 
+                             smtpsrvr, smtpport, smtpfrom, smtpdest, id );
           PrintBanner(id,0,restarted);
           ParseCommandline( 1, argc, argv, NULL, (quietmode==0)); //show overrides
         

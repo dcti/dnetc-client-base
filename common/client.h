@@ -12,6 +12,10 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.100  1998/11/28 19:44:34  cyp
+// InitializeLogging() and DeinitializeLogging() are no longer Client class
+// methods.
+//
 // Revision 1.99  1998/11/26 22:15:54  cyp
 // ::WriteFullConfig() is now ::WriteConfig(1) [default is 0]; threw out
 // useless ::CheckForcedKeyport() and ::CheckForcedKeyproxy()
@@ -392,9 +396,6 @@ public:
   s32  smtpport;
   char smtpfrom[128];
   char smtpdest[128];
-
-  void InitializeLogging(int spool_on);
-  void DeinitializeLogging(void); 
 
   char logname[128];
   char exit_flag_file[128];

@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.h,v $
+// Revision 1.7  1998/11/28 19:44:34  cyp
+// InitializeLogging() and DeinitializeLogging() are no longer Client class
+// methods.
+//
 // Revision 1.6  1998/10/06 21:29:14  cyp
 // Removed prototype for LogSetTimeStampingMode()
 //
@@ -32,6 +36,24 @@
 #ifndef __LOGSTUFF_H__
 #define __LOGSTUFF_H__
 
+#define LOGFILETYPE_NONE    0 //
+#define LOGFILETYPE_NOLIMIT 1 //unlimited (or limit == -1)
+#define LOGFILETYPE_ROTATE  2 //then logLimit is in days
+#define LOGFILETYPE_RESTART 4 //then logLimit is in KByte 
+#define LOGFILETYPE_FIFO    8 //then logLimit is in KByte (minimum 100K)
+
+#define LOGTO_NONE       0x00 
+#define LOGTO_SCREEN     0x01
+#define LOGTO_FILE       0x02
+#define LOGTO_MAIL       0x04
+#define LOGTO_RAWMODE    0x80    
+
+#define MAX_LOGENTRY_LEN 1024 //don't make this smaller than 1K!
+
+#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
+
+/* ---------------------------------------------------- */
+
 //Flush mail and if last screen write didn't end with a LF then do that now. 
 extern void LogFlush( int forceflush );
 
@@ -58,5 +80,12 @@ extern void LogScreenPercent( unsigned int load_problem_count );
 //or "" if logfile hasn't been accessed yet.
 extern const char *LogGetCurrentLogFilename( void );
 
+//init/deinit prototypes
+void DeinitializeLogging(void);
+void InitializeLogging( int noscreen, int nopercent, const char *logfilename, 
+                        unsigned int logfiletype, int logfilelimit, 
+                        long mailmsglen, const char *smtpsrvr, 
+                        unsigned int smtpport, const char *smtpfrom, 
+                        const char *smtpdest, const char *id );
 #endif //__LOGSTUFF_H__
 
