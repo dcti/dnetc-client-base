@@ -1,5 +1,15 @@
 /*
-** $Id: amiga.h,v 1.1.2.2 2001/04/16 21:04:57 oliver Exp $
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: amiga.h,v 1.1.2.3 2002/04/11 11:30:32 oliver Exp $
+ *
+ * Created by Oliver Roberts <oliver@futaura.co.uk>
+ *
+ * ----------------------------------------------------------------------
+ * Global includes, prototypes and defines for AmigaOS
+ * ----------------------------------------------------------------------
 */
 
 #ifndef _AMIGA_H_
@@ -47,6 +57,7 @@ extern "C" {
    #include <proto/dos.h>
    #include <dos/dos.h>
    #include <dos/dostags.h>
+   #include <devices/timer.h>
 
    #ifdef __PPC__
    #pragma pack()
@@ -102,9 +113,10 @@ __BEGIN_DECLS
 int amigaNetworkingInit(BOOL lurking);
 void amigaNetworkingDeinit(void);
 BOOL amigaOpenSocketLib(void);
-void amigaCloseSocketLib(void);
+void amigaCloseSocketLib(BOOL delayedclose);
 int amigaIsNetworkingActive(void);
 int amigaOnOffline(int online, char *ifacename);
+BOOL amigaIsTermiteTCP(void);
 
 // console.c
 int amigaInitializeConsole(int runhidden, int runmodes);
@@ -112,10 +124,15 @@ int amigaConGetSize(int *width, int *height);
 int amigaConGetPos(int *col, int *row);
 int getch(void);
 int amigaConIsScreen(void);
-int MyzarIsRunning(void);
+int amigaConIsGUI(void);
+int amigaConOut(const char *msg);
+int amigaConOutModal(const char *msg);
+int amigaConOutErr(const char *msg);
+BPTR amigaOpenNewConsole(char *conname);
+void amigaCloseNewConsole(void);
 
 // support.c
-int amigaInit(void);
+int amigaInit(int *argc, char **argv[]);
 void amigaExit(void);
 const char *amigaGetOSVersion(void);
 int amigaThreadInit(void);
@@ -124,13 +141,28 @@ ULONG amigaGetTriggerSigs(void);
 int amigaPutTriggerSigs(ULONG trigs);
 
 // memory.c
-
 BOOL MemInit(VOID);
 VOID MemDeinit(VOID);
 
 // time.c
 void amigaSleep(unsigned int secs, unsigned int usecs);
 int amigaGetMonoClock(struct timeval *tp);
+
+// gui.c
+BOOL amigaGUIInit(char *programname, struct WBArg *iconname);
+void amigaGUIDeinit(void);
+void amigaGUIOut(char *msg);
+#if !defined(__PPC__)
+void amigaHandleGUI(struct timerequest *tr);
+#elif !defined(__POWERUP__)
+void amigaHandleGUI(struct timeval *tr);
+#else
+void amigaHandleGUI(void *timer, ULONG timesig);
+#endif
+
+// install.c
+int amigaInstall(int quiet, const char *progname);
+int amigaUninstall(int quiet, const char *progname);
 
 /* unistd prototypes - we can't include unistd.h as the prototypes interfere with
 ** with the Amiga socket prototype macros
