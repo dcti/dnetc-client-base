@@ -3,17 +3,13 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: pclbench.cpp,v 1.1.2.2 2003/03/03 02:05:02 andreasb Exp $
+ * $Id: pclbench.cpp,v 1.1.2.3 2003/04/01 15:42:08 andreasb Exp $
  */
 
 #include "baseincs.h"
 #include "ccoreio.h"
 #include <pcl.h>
-
-// define _only one_ of these:
-#define ATHLON
-//#define PENTIUM
-//#define PENTIUM4
+#include "config.h"
 
 
 struct perfctr_set_t {
@@ -105,8 +101,82 @@ perfctr_set[] = {
   #error FIXME!
   { { -1 } } // terminate list
 }
+#elif defined(ULTRASPARC)
+/* 2 counters, each may count only a subset of the events (from hpm -s)
+  0     PCL_L1DCACHE_READ
+  0     PCL_L1DCACHE_WRITE
+  0     PCL_L1DCACHE_MISS
+  0     PCL_L1ICACHE_READWRITE
+  1     PCL_L1ICACHE_HIT
+  comp. PCL_L1ICACHE_MISS
+  0     PCL_L2CACHE_READWRITE
+  1     PCL_L2CACHE_HIT
+  1     PCL_L2CACHE_MISS
+  0,1   PCL_CYCLES
+  TC    PCL_ELAPSED_CYCLES
+  0?,1? PCL_INSTR                   !!! BUG BUG BUG in libpcl 2.2 NEEDS FIX !!!
+  comp. PCL_IPC
+  comp. PCL_L2DCACHE_MISSRATE
+*/
+perfctr_set[] = {
+  /* preload cache */
+  { { PCL_CYCLES,
+      PCL_INSTR,
+      -1
+  } },
+  /* calculate IPC */
+  { { PCL_CYCLES,
+      PCL_INSTR,
+      -1
+  } },
+  #if 1
+  /* all events */
+  { { PCL_L1DCACHE_READ,
+      -1
+  } },
+  { { 
+      PCL_L1DCACHE_WRITE,
+      -1
+  } },
+  { { 
+      PCL_L1DCACHE_MISS,
+      -1
+  } },
+  { { PCL_L1ICACHE_READWRITE,
+      PCL_L1ICACHE_HIT,
+      -1
+  } },
+  { { 
+      PCL_L1ICACHE_MISS,
+      -1
+  } },
+  { { PCL_L2CACHE_READWRITE,
+      PCL_L2CACHE_HIT,
+      -1
+  } },
+  { { 
+      PCL_L2CACHE_MISS,
+      PCL_INSTR,
+      -1
+  } },
+  { { PCL_CYCLES,
+      PCL_ELAPSED_CYCLES,
+      -1
+  } },
+  { { PCL_IPC,
+      -1
+  } },
+  { { PCL_L2DCACHE_MISSRATE,
+      -1
+  } },
+  #endif
+  { { -1 } } // terminate list
+}
 #else
-  #error FIXME!
+  #error FIXME! FIXME! FIXME!
+  #error "Did you edit config.h to select your target cpu?"
+  #error "Maybe you need to define the events available for your cpu ..."
+  #error FIXME! FIXME! FIXME!
 #endif
 ;
 
