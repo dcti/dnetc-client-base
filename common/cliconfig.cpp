@@ -17,6 +17,64 @@ char *menutable[4]=
   "Miscellaneous Options"
   };
 
+#if (CLIENT_CPU == CPU_X86)
+char cputypetable[7][60]=
+  {
+  "Autodetect",
+  "Intel Pentium, Intel Pentium MMX, Cyrix 486/5x86/MediaGX",
+  "Intel 80386, Intel 80486",
+  "Intel Pentium Pro, Intel Pentium II",
+  "AMD 486, Cyrix 6x86/6x86MX/M2",
+  "AMD K5",
+  "AMD K6",
+  };
+#elif (CLIENT_CPU == CPU_ARM)
+char cputypetable[3][60]=
+  {
+  "Autodetect"
+  "ARM"
+  "StrongARM"
+  };
+#elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
+char cputypetable[3][60]=
+  {
+  "Autodetect"
+  "PowerPC 601"
+  "PowerPC 603/604/750"
+  };
+#endif
+
+char uuehttptable[6][60]=
+  {
+  "No special encoding",
+  "UUE encoding (telnet proxies)",
+  "HTTP encoding",
+  "HTTP+UUE encoding",
+  "SOCKS4 proxy",
+  "SOCKS5 proxy"
+  };
+
+char contesttable[3][60]=
+  {
+  "",//need a null placeholder since this is 1/2 based
+  "RC5",
+  "DES"
+  };
+
+char offlinemodetable[3][60]=
+  {
+  "Normal Operation",
+  "Offline Always (no communication)",
+  "Finish Buffers and exit"
+  };
+
+char lurkmodetable[3][60]=
+  {
+  "Normal mode",
+  "Dial-up detection mode",
+  "Dial-up detection ONLY mode"
+  };
+
 struct optionstruct
   {
   char *name;//name of the option in the .ini file
@@ -27,6 +85,10 @@ struct optionstruct
   s32 type;//type: 0=other, 1=string, 2=integer, 3=boolean (yes/no)
   s32 menuposition;//number on that menu to appear as
   void *thevariable;//pointer to the variable
+  char *choicelist;//pointer to the char* array of choices
+                   //(used for numeric responses)
+  s32 choicemin;//minimum choice number
+  s32 choicemax;//maximum choice number
   };
 
 optionstruct options[OPTION_COUNT]=
@@ -61,75 +123,65 @@ optionstruct options[OPTION_COUNT]=
      "\n  mode 0) (recomended) Very nice, should not interfere with any other process\n"
      "  mode 1) Nice, runs with slightly higher priority than idle processes\n"
      "          Same as mode 0 in OS/2 and Win32\n"
-     "  mode 2) Normal, runs with same priority as normal user processes\n",4,2,2},
+     "  mode 2) Normal, runs with same priority as normal user processes\n",4,2,2,NULL},
 //9
-{ "logname", "File to log to", "", "(128 characters max, blank = no log)\n",2,1,1},
+{ "logname", "File to log to", "", "(128 characters max, blank = no log)\n",2,1,1,NULL},
 //10
-{ "uuehttpmode", "Firewall Communications mode (UUE/HTTP/SOCKS)", "0",
-       "\n  mode 0) No special encoding\n"
-       "  mode 1) UUE encoding (telnet proxies)\n"
-       "  mode 2) HTTP encoding\n"
-       "  mode 3) HTTP+UUE encoding\n"
-       "  mode 4) SOCKS4 proxy\n"
-       "  mode 5) SOCKS5 proxy\n",3,2,1},
+{ "uuehttpmode", "Firewall Communications mode (UUE/HTTP/SOCKS)", "No special encoding",
+  "",3,2,1,NULL,&uuehttptable[0][0],0,5},
 //11
 { "keyproxy", "Preferred KeyServer Proxy", "us.v27.distributed.net",
    "\nThis specifies the DNS or IP address of the keyserver your client will\n"
    "communicate with. Unless you have a special configuration, use the setting\n"
-   "automatically set by the client.",3,1,2},
+   "automatically set by the client.",3,1,2,NULL},
 //12
-{ "keyport", "Preferred KeyServer Port", "2064", "(TCP/IP port on preferred proxy)",3,2,3},
+{ "keyport", "Preferred KeyServer Port", "2064", "(TCP/IP port on preferred proxy)",3,2,3,NULL},
 //13
 { "httpproxy", "Local HTTP/SOCKS proxy address",
-       "wwwproxy.corporate.com", "(DNS or IP address)\n",3,1,4},
+       "wwwproxy.corporate.com", "(DNS or IP address)\n",3,1,4,NULL},
 //14
-{ "httpport", "Local HTTP/SOCKS proxy port", "80", "(TCP/IP port on http proxy)",3,2,5},
+{ "httpport", "Local HTTP/SOCKS proxy port", "80", "(TCP/IP port on http proxy)",3,2,5,NULL},
 //15
-{ "httpid", "HTTP/SOCKS proxy userid/password", "", "(Enter userid (. to reset it to empty) )",3,1,6},
+{ "httpid", "HTTP/SOCKS proxy userid/password", "", "(Enter userid (. to reset it to empty) )",3,1,6,NULL},
 #if (CLIENT_CPU == CPU_X86)
 //16
-{ "cputype", "Optimize performance for CPU type", "-1",
-      "\n   mode -1) Autodetect\n"
-      "   mode 0) Intel Pentium, Intel Pentium MMX, Cyrix 486/5x86/MediaGX\n"
-      "   mode 1) Intel 80386, Intel 80486\n"
-      "   mode 2) Intel Pentium Pro, Intel Pentium II\n"
-      "   mode 3) AMD 486, Cyrix 6x86/6x86MX/M2\n"
-      "   mode 4) AMD K5\n"
-      "   mode 5) AMD K6\n"
+{ "cputype", "Optimize performance for CPU type", "Autodetect",
+      "\n",1,2,8,NULL,&cputypetable[1][0],-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
-  { "cputype", "Optimise performance for CPU type", "-1",
+  { "cputype", "Optimize performance for CPU type", "-1",
       "\n   mode -1) Autodetect\n"
       "   mode 0) ARM\n"
       "   mode 1) StrongARM\n"
-
+      ,1,2,8,NULL,&cputypetable[1][0],-1,1},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
 { "cputype", "Optimize performance for CPU type", "-1",
       "\n   mode -1) Autodetect\n"
       "   mode 0) PowerPC 601\n"
       "   mode 1) PowerPC 603/604/750\n"
+  ,1,2,8,NULL,&cputypetable[1][0],-1,1},
 #else
 //16
-{ "cputype", "CPU type...not applicable in this client", "-1", "(default -1)"
+{ "cputype", "CPU type...not applicable in this client", "-1", "(default -1)",1,2,8,
+  NULL,NULL,0,0},
 #endif
-,1,2,8},
 //17
-{ "messagelen", "Message Mailing (bytes)", "0", "(0=no messages mailed.  10000 recommended.  125000 max.)\n",2,2,2},
+{ "messagelen", "Message Mailing (bytes)", "0", "(0=no messages mailed.  10000 recommended.  125000 max.)\n",2,2,2,NULL},
 //18
-{ "smtpsrvr", "SMTP Server", "your.smtp.server", "(128 characters max)",2,1,3},
+{ "smtpsrvr", "SMTP Server", "your.smtp.server", "(128 characters max)",2,1,3,NULL},
 //19
-{ "smtpport", "SMTP Port", "25", "(SMTP port on mail server -- default 25)",2,2,4},
+{ "smtpport", "SMTP Port", "25", "(SMTP port on mail server -- default 25)",2,2,4,NULL},
 //20
-{ "smtpfrom", "Mail ID that logs will be mailed from", "RC5notify", "\n(Some servers require this to be a real address)\n",2,1,5},
+{ "smtpfrom", "Mail ID that logs will be mailed from", "RC5notify", "\n(Some servers require this to be a real address)\n",2,1,5,NULL},
 //21
-{ "smtpdest", "Mail ID that logs will be sent to", "you@your.site", "\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n",2,1,6},
+{ "smtpdest", "Mail ID that logs will be sent to", "you@your.site", "\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n",2,1,6,NULL},
 //22
 #if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS))
   { "numcpu", "Number of CPUs in this machine", "-1 (autodetect)", "\n"
 #else
   { "numcpu", "Number of CPUs in this machine", "1", "\n"
 #endif
-,4,2,12},
+,4,2,12,NULL},
 //23
 { "checkpointfile", "RC5 Checkpoint information filename","none","\n(Non-shared file required.  "
 #if (CLIENT_OS == OS_RISCOS)
@@ -137,7 +189,7 @@ optionstruct options[OPTION_COUNT]=
 #else
   "ckpoint.rc5"
 #endif
-  " recommended.  'none' to disable)\n",4,1,4},
+  " recommended.  'none' to disable)\n",4,1,4,NULL},
 //24
 { "checkpointfile2", "DES Checkpoint information filename","none","\n(Non-shared file required.  "
 #if (CLIENT_OS == OS_RISCOS)
@@ -145,67 +197,68 @@ optionstruct options[OPTION_COUNT]=
 #else
   "ckpoint.des"
 #endif
-  " recommended.  'none' to disable)\n",4,1,5},
+  " recommended.  'none' to disable)\n",4,1,5,NULL},
 //25
-{ "randomprefix", "High order byte of random blocks","100","Do not change this",0,2},
+{ "randomprefix", "High order byte of random blocks","100","Do not change this",0,2,0,NULL},
 //26
-{ "preferredblocksize", "Preferred Block Size (2^28 through 2^31) ","30","28 -- 31",4,2,6},
+{ "preferredblocksize", "Preferred Block Size (2^28 through 2^31) ","30","28 -- 31",4,2,6,NULL},
 //27
-{ "preferredcontest", "Preferred Contest (1=RC5, 2=DES) ","2","2 recommended",4,2,7},
+{ "preferredcontest", "Preferred Contest","DES","- DES strongly recommended",4,2,7,
+  NULL,&contesttable[0][0],1,2},
 //28
 { "quiet", "Disable all screen output? (quiet mode)","no","",4,3,8,NULL},
 //29
-{ "noexitfilecheck", "Disable exit file checking?","no","",4,3,9},
+{ "noexitfilecheck", "Disable exit file checking?","no","",4,3,9,NULL},
 //30
-{ "percentoff", "Disable block percent completion indicators?","no","",4,3,10},
+{ "percentoff", "Disable block percent completion indicators?","no","",4,3,10,NULL},
 //31
-{ "frequent", "Attempt keyserver connections frequently?","no","",3,3,7},
+{ "frequent", "Attempt keyserver connections frequently?","no","",3,3,7,NULL},
 //32
 { "nodisk", "Buffer blocks in ram only? (no disk I/O)","no",
     "\nNote: This option will cause all buffered, unflushable blocks to be lost\n"
-    "during client shutdown!",4,3,11},
+    "during client shutdown!",4,3,11,NULL},
 //33
 { "nofallback", "Disable fallback to US Round-Robin?","no",
   "\nIf your specified proxy is down, the client normally falls back\n"
   "to the US Round robin (us.v27.distributed.net) - this option causes\n"
   "the client to NEVER attempt a fallback if the local proxy is down.",
-  3,3,8},
+  3,3,8,NULL},
 //34
 { "cktime", "Interval between saving of checkpoints (minutes):","5",
-  "",4,2,0},
+  "",4,2,0,NULL},
 //35
-{ "nettimeout", "Network Timeout (seconds)", "60"," ",3,2,0},
+{ "nettimeout", "Network Timeout (seconds)", "60"," ",3,2,0,NULL},
 //36
-{ "exitfilechecktime", "Exit file check time (seconds)","30","",4,2,0},
+{ "exitfilechecktime", "Exit file check time (seconds)","30","",4,2,0,NULL},
 //37
-{ "runbuffers", "Offline operation mode","0",
-  "\nmode 0) Normal operation. The client will connect to a keyserver as needed,\n"
+{ "runbuffers", "Offline operation mode","Normal Operation",
+  "\nNormal operation: The client will connect to a keyserver as needed,\n"
   "        and use random blocks if a keyserver connection cannot be made.\n"
-  "mode 1) Offline mode (client never connects to a keyserver, and will\n"
+  "Offline Always: The client will never connect to a keyserver, and will\n"
   "        generate random blocks if the block buffers empty.)\n"
-  "mode 2) Finish Buffers and exit mode. The client will never connect\n"
+  "Finish Buffers and exit: The client will never connect\n"
   "        to a keyserver, and when the block buffers empty, it will\n"
-  "        terminate.\n",3,2,0},
+  "        terminate.\n",3,2,0,NULL,&offlinemodetable[0][0],0,2},
 //38
-{ "lurk", "Modem detection options","0",
-  "\nmode 0) Normal mode; the client will send/receive blocks only when it\n"
+{ "lurk", "Modem detection options","Normal mode",
+  "\nNormal mode: the client will send/receive blocks only when it\n"
   "        empties the in buffer, hits the flush threshold, or the user\n"
   "        specifically requests a flush/fetch.\n"
-  "mode 1) Dial-up detection mode. This acts like mode 0, with the addition\n"
+  "Dial-up detection mode: This acts like mode 0, with the addition\n"
   "        that the client will automatically send/receive blocks when a\n"
   "        dial-up networking connection is established. Modem users\n"
   "        will probably wish to use this option so that their client\n"
   "        never runs out of blocks.\n"
-  "mode 2) Dial-up detection ONLY mode. Like mode 1, this will cause\n"
+  "Dial-up detection ONLY mode: Like the previous mode, this will cause\n"
   "        the client to automatically send/receieve blocks when\n"
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n",
-  3,2,0},
-{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",4,1,0},
-{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",4,1,0},
-{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",4,1,0},
-{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",4,1,0}
+  3,2,0,NULL,&lurkmodetable[0][0],0,2},
+{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",4,1,0,NULL},
+{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",4,1,0,NULL},
+{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",4,1,0,NULL},
+{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",4,1,0,NULL}
 };
 
 #define CONF_ID 0
@@ -258,6 +311,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
 {
   char parm[128],parm2[128];
   s32 choice;
+  s32 temp;
   s32 contestidtemp;//since it's 0/1 based now, we need a temp for
                     //screen I/O
   char str[3];
@@ -383,7 +437,10 @@ printf("------------------------------------------------------------\n\n");
                printf("%s\n",(char *)options[choice].thevariable);
              }
           else if (options[choice].type==2)
-             printf("%li\n",(long)*(s32 *)options[choice].thevariable);
+             if (options[choice].choicelist == NULL)
+               printf("%li\n",(long)*(s32 *)options[choice].thevariable);
+             else printf("%s\n",options[choice].choicelist+
+             ((long)*(s32 *)options[choice].thevariable*60));
           else if (options[choice].type==3)
              {
              sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
@@ -450,17 +507,33 @@ printf("------------------------------------------------------------\n\n");
     }
 
 
-    printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
-            options[choice].description, options[choice].comments,
-            options[choice].defaultsetting);
 
     // prompt for new value
     if (options[choice].type==1)
-      printf("%s\nNew Setting --> ",(char *)options[choice].thevariable);
+      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+              options[choice].description, options[choice].comments,
+              options[choice].defaultsetting,(char *)options[choice].thevariable);
     else if (options[choice].type==2)
-      printf("%li\nNew Setting --> ",(long)*(s32 *)options[choice].thevariable);
+      if (options[choice].choicelist == NULL)
+        printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
+                options[choice].description, options[choice].comments,
+                options[choice].defaultsetting, (long)*(s32 *)options[choice].thevariable);
+      else {
+        printf("\n%s %s\n",options[choice].description,options[choice].comments);
+           for ( temp = options[choice].choicemin;
+                 temp < options[choice].choicemax+1; temp++)
+             {
+             printf("   %d) %s\n",temp,options[choice].choicelist+temp*60);
+             }
+           printf("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+                  options[choice].defaultsetting,options[choice].choicelist+
+                  ((long)*(s32 *)options[choice].thevariable*60));
+           }
     else if (options[choice].type==3)
       {
+      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: ",
+              options[choice].description, options[choice].comments,
+              options[choice].defaultsetting);
       sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
       printf("%s\nNew Setting --> ",str);
       };
