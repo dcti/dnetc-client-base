@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.25  1998/11/03 00:42:36  cyp
+// Client now runs only one problem per thread. Merged go_nonmt into go_mt.
+//
 // Revision 1.24  1998/11/02 04:40:18  cyp
 // Removed redundant ::numcputemp. ::numcpu does it all.
 //
@@ -101,7 +104,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.24 1998/11/02 04:40:18 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.25 1998/11/03 00:42:36 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -128,6 +131,15 @@ return "@(#)$Id: clirun.cpp,v 1.24 1998/11/02 04:40:18 cyp Exp $"; }
 #include "probman.h"   //GetProblemPointerFromIndex()
 #include "probfill.h"  //LoadSaveProblems(), RandomWork(), FILEENTRY_xxx macros
 #include "modereq.h"   //ModeReq[Set|IsSet|Run]()
+
+// --------------------------------------------------------------------------
+
+static struct
+{
+  int nonmt_ran;
+  unsigned long yield_run_count;
+  volatile int refillneeded;
+} runstatics = {0,0,0};  
 
 // --------------------------------------------------------------------------
 
@@ -283,19 +295,13 @@ struct thread_param_block
 
 // ----------------------------------------------------------------------
 
-static struct
-{
-  int nonmt_ran;
-  unsigned long yield_run_count;
-} runcounters = {0,0};  
-
 static void yield_pump( void *tv_p )
 {
   #if (CLIENT_OS == OS_MACOS)
     EventRecord event;
   #endif
   static int pumps_without_run = 0;
-  runcounters.yield_run_count++;
+  runstatics.yield_run_count++;
 
   #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
     thr_yield();
@@ -325,10 +331,10 @@ static void yield_pump( void *tv_p )
     NonPolledUSleep( 0 ); /* yield */
   #endif
 
-  // used in conjunction with go_nonmt
+  // used in conjunction with non-threaded go_mt
   if (tv_p)  
     {
-    if (runcounters.nonmt_ran)
+    if (runstatics.nonmt_ran)
       pumps_without_run = 0;
     #ifdef NON_PREEMPTIVE_OS_PROFILING
     else if ((++pumps_without_run) > 5)
@@ -427,10 +433,10 @@ unsigned long do_ts_profiling( unsigned long tslice, int contest, int threadnum 
     if (usecs) /* will also be zero if running backwards */
       perc = (((unsigned long)(TIMER_GRANULARITY))*100) / usecs;
     if (perc)  /* yield count in one hundred timer units */
-      hgrain_run_count = (runcounters.yield_run_count * 10000) / perc; 
+      hgrain_run_count = (runstatics.yield_run_count * 10000) / perc; 
 #ifdef DEBUG
 printf("%d. oldslice = %lu, y_real = %lu/%lu, y_adj (%lu%%) = %lu/%lu ",
-          threadnum, tslice_table[contest], runcounters.yield_run_count, usecs,
+          threadnum, tslice_table[contest], runstatics.yield_run_count, usecs,
           perc, hgrain_run_count, (unsigned long)(TIMER_GRANULARITY * 100) );
 fflush(stdout);
 #endif
@@ -464,7 +470,7 @@ fflush(stdout);
 #endif
           under_par--;
           }
-        ts = (totalslice_table[0]/runcounters.yield_run_count)/
+        ts = (totalslice_table[0]/runstatics.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[0] > ts)
           {
@@ -478,7 +484,7 @@ printf("-%lu=> ", ts );
                                        (tslice_lkg[0] > tslice_table[0]))
             tslice_table[0] = tslice_lkg[0];
           }
-        ts = (totalslice_table[1]/runcounters.yield_run_count)/
+        ts = (totalslice_table[1]/runstatics.yield_run_count)/
                                     (MIN_RUNS_PER_TIME_GRAIN-under_par);
         if (tslice_table[1] > ts)
           {
@@ -510,7 +516,7 @@ printf("-%lu=> ", ts );
 #endif
           over_par++;
           }
-        tslice_table[0] += (totalslice_table[0]/runcounters.yield_run_count)/
+        tslice_table[0] += (totalslice_table[0]/runstatics.yield_run_count)/
                                      (over_par-MAX_RUNS_PER_TIME_GRAIN);
 #ifdef DEBUG
 printf("+%u=> ", tslice_table[0]-ts );
@@ -521,7 +527,7 @@ printf("+%u=> ", tslice_table[0]-ts );
         else if ( tslice_table[0] < tslice_lkg[0])
           tslice_table[0] = tslice_lkg[0];
 
-        tslice_table[1] += (totalslice_table[1]/runcounters.yield_run_count)/
+        tslice_table[1] += (totalslice_table[1]/runstatics.yield_run_count)/
                                      (over_par-MAX_RUNS_PER_TIME_GRAIN);
         if (tslice_table[1] > MAX_SANE_TIMESLICE_DES)
           tslice_table[1] = MAX_SANE_TIMESLICE_DES;
@@ -534,7 +540,7 @@ printf("+%u=> ", tslice_table[0]-ts );
       fubared_run_count = 0;
       underrun_count = 0;
 
-      ts = (totalslice_table[0]/runcounters.yield_run_count);
+      ts = (totalslice_table[0]/runstatics.yield_run_count);
       if (ts > tslice_lkg[0])
         {
         tslice_lkg[0] = ts;
@@ -542,7 +548,7 @@ printf("+%u=> ", tslice_table[0]-ts );
           tslice_lkg[0] =  MIN_SANE_TIMESLICE_RC5;
         }
       tslice_table[0] = tslice_lkg[0] + ((tslice_lkg[0]/10) * goodrun_count);
-      ts = (totalslice_table[1]/runcounters.yield_run_count);
+      ts = (totalslice_table[1]/runstatics.yield_run_count);
       if (ts > tslice_lkg[1])
         {
         tslice_lkg[1] = ts;
@@ -575,7 +581,7 @@ printf("%u\n", tslice_table[contest] );
       tvstop.tv_sec += tvstop.tv_usec/1000000L;
       tvstop.tv_usec %= 1000000L;
       }
-    runcounters.yield_run_count = 0; 
+    runstatics.yield_run_count = 0; 
     reset_profiling_flag = 0; 
     }
   
@@ -594,84 +600,21 @@ printf("%u\n", tslice_table[contest] );
 }
 #endif
 
-
 // ----------------------------------------------------------------------
 
-static void Go_nonmt( void * parm )
-{
-  unsigned int threadnum, prob_i;
-  u32 run;
-  runcounters.nonmt_ran = 1;
-
-  if (!CheckExitRequestTriggerNoIO())
-    {
-    if (CheckPauseRequestTriggerNoIO()) 
-      {
-      #ifdef NON_PREEMPTIVE_OS_PROFILING
-      reset_ts_profiling();
-      #endif
-      }
-    else
-      {
-      struct thread_param_block *targ = (thread_param_block *)parm;
-      threadnum = targ->threadnum;
-      prob_i = (unsigned int)((targ->thread_data1) & 1);
-      run = 1; /* assume not initialized, ie switch to other problem */
-
-      Problem *thisprob = GetProblemPointerFromIndex((threadnum<<1)+prob_i);
-
-      if (thisprob && thisprob->IsInitialized())
-        {
-        if ((targ->thread_data1 & 2)==0) /* haven't adjusted timeslice yet */
-          {
-          targ->thread_data1 |= 2;
-          //adjust timeslice here
-          }
-
-        #ifdef NON_PREEMPTIVE_OS_PROFILING
-        thisprob->tslice = do_ts_profiling( thisprob->tslice, 
-                           thisprob->contest, threadnum );
-        #endif
-
-        run = thisprob->Run( threadnum );
-        }
-      if (run != 0) /* flip the order */
-        {
-        targ->thread_data1 &= ~1L; /* assume only one problem loaded */
-        if (targ->numthreads >= 2 && !prob_i) 
-          targ->thread_data1 |= 1L;
-        targ->thread_data1 &= ~2L; /* timeslice needs to be reset */
-        #ifdef NON_PREEMPTIVE_OS_PROFILING
-        reset_ts_profiling();
-        #endif
-        }
-      }
-    RegPolledProcedure( Go_nonmt, parm, NULL, 0 );
-    }
-  return;
-}
-
-// ----------------------------------------------------------------------
-
-
-#if defined(MULTITHREAD)
 void Go_mt( void * parm )
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-  struct thread_param_block FAR *targ = (thread_param_block FAR *)parm;
-  #else
   struct thread_param_block *targ = (thread_param_block *)parm;
-  #endif
-
-  Problem *thrprob[2];
+  Problem *thisprob = NULL;
   unsigned int threadnum = targ->threadnum;
   u32 run;
 
 #if (CLIENT_OS == OS_WIN32)
+if (targ->realthread)
   {
   DWORD LAffinity, LProcessAffinity, LSystemAffinity;
   OSVERSIONINFO osver;
-  s32 numthreads = targ->numthreads;
+  unsigned int numthreads = targ->numthreads;
 
   osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
   GetVersionEx(&osver);
@@ -686,12 +629,14 @@ void Go_mt( void * parm )
     }
   }
 #elif (CLIENT_OS == OS_NETWARE)
+if (targ->realthread)
   {
   nwCliInitializeThread( threadnum+1 ); //in netware.cpp
   }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
-#else
+#elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H))
+if (targ->realthread)
   {
   sigset_t signals_to_block;
   sigemptyset(&signals_to_block);
@@ -703,62 +648,66 @@ void Go_mt( void * parm )
   }
 #endif
 
-  SetThreadPriority( targ->priority ); /* 0-9 */
+  if (targ->realthread)
+    SetThreadPriority( targ->priority ); /* 0-9 */
+
   targ->is_suspended = 1;
   targ->do_refresh = 1;
 
   while (!CheckExitRequestTriggerNoIO())
     {
-    for (s32 probnum = 0; probnum < 2 ; probnum++ )
+    if (targ->do_refresh)
+      thisprob = GetProblemPointerFromIndex(threadnum);
+    run = 1; //assume didn't run
+    if (thisprob && thisprob->IsInitialized() && !thisprob->finished && 
+       !CheckPauseRequestTriggerNoIO() && !targ->do_suspend)
       {
-      run = 0;
-      while (!CheckExitRequestTriggerNoIO() && (run == 0))
-        {
-        if (CheckPauseRequestTriggerNoIO() || targ->do_suspend) 
-          {
-          run = 0;
-          NonPolledSleep(1); // don't race in this loop
-          }
-        else if (targ->do_refresh)
-          {
-          run = 0;
-          thrprob[0] = GetProblemPointerFromIndex((threadnum<<1)+0);
-          thrprob[1] = GetProblemPointerFromIndex((threadnum<<1)+1);
-          targ->do_refresh = 0;
-          }
-        else if (thrprob[probnum])
-          {
-          targ->is_suspended = 0;
-          // This will return without doing anything if uninitialized...
-          #if (CLIENT_OS == OS_NETWARE)
-          (thrprob[probnum])->tslice = (GetTimesliceBaseline() >> 1);
-          run = (thrprob[probnum])->Run( threadnum ); 
-          yield_pump(NULL);
-          #else
-          run = (thrprob[probnum])->Run( threadnum );
-          //#if (CLIENT_OS==OS_WIN32) // change to accomodate new CLI
-          //  yield_pump(NULL);
-          //  #endif
-          #endif
-          targ->is_suspended = 1;
-          } 
-        else
-          run = 1;
-        }
+      #ifdef NON_PREEMPTIVE_OS_PROFILING
+      thisprob->tslice = do_ts_profiling( thisprob->tslice, 
+                          thisprob->contest, threadnum );
+      #endif
+
+      targ->is_suspended = 0;
+      // This will return without doing anything if uninitialized...
+      run = thisprob->Run( threadnum ); 
+      targ->is_suspended = 1;
+      
+      #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32)//accomodate new CLI
+      yield_pump(NULL);
+      #endif
       }
-    yield_pump(NULL);
+    if (run != 0)
+      {
+      if (thisprob == NULL || !thisprob->IsInitialized() || thisprob->finished)
+        {
+        runstatics.refillneeded = 1;
+        yield_pump(NULL);
+        }
+      else //(CheckPauseRequestTriggerNoIO() || targ->do_suspend)
+        NonPolledSleep(1); // don't race in this loop
+      #ifdef NON_PREEMPTIVE_OS_PROFILING
+      reset_ts_profiling();
+      #endif
+      targ->do_refresh = 1;
+      }
+    if (!targ->realthread)
+      {
+      RegPolledProcedure( Go_mt, parm, NULL, 0 );
+      runstatics.nonmt_ran = 1;
+      break;
+      }
     }
   
-  //the thread is dead
-  targ->threadID = 0;
+  targ->threadID = 0; //the thread is dead
   
-  SetThreadPriority( 9 ); /* allow it to exit faster (specially for OS2) */
+  if (targ->realthread)
+    SetThreadPriority( 9 ); /* for OSs that need to "exit faster" (OS2) */
 
   #if (CLIENT_OS == OS_BEOS)
-  exit(0);
+  if (targ->realthread)
+    exit(0);
   #endif
 }
-#endif
 
 // -----------------------------------------------------------------------
 
@@ -797,7 +746,8 @@ static int __StopThread( struct thread_param_block *thrparams )
 // -----------------------------------------------------------------------
 
 static struct thread_param_block *__StartThread( unsigned int thread_i,
-                    s32 numthreads, s32 timeslice, unsigned int priority )
+         unsigned int numthreads, s32 timeslice, unsigned int priority, 
+         int no_realthreads )
 {
   int success = 0, use_poll_process = 0;
   
@@ -807,8 +757,8 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     {
     // Start the thread for this cpu
     memset( (void *)(thrparams), 0, sizeof( struct thread_param_block ));
-    thrparams->threadID = (THREADID)(0);  /* whatever type */
-    thrparams->numthreads = numthreads;   /* s32 */
+    thrparams->threadID = 0;              /* whatever type */
+    thrparams->numthreads = numthreads;   /* unsigned int */
     thrparams->threadnum = thread_i;      /* unsigned int */
     thrparams->realthread = 1;            /* int */
     thrparams->timeslice = timeslice;     /* s32 */
@@ -819,23 +769,21 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->thread_data2 = 0;          /* ulong, free for thread use */
     thrparams->next = NULL;
   
-    #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
-       (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
-       //core routines are not thread safe
-       #ifdef MULTITHREAD
-       #undef MULTITHREAD
-       #endif
-    #endif
-
-    if (numthreads == 0) /* polled process */
+    use_poll_process = 0;
+    if ( no_realthreads )
       use_poll_process = 1;
     else
       {
-      #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
+      #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
+         (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
+         use_poll_process = 1; //core routines are not thread safe
+      #elif (CLIENT_OS == OS_FREEBSD) /* pthreads disabled */
+         use_poll_process = 1;
+      #elif (CLIENT_OS == OS_WIN32) 
         unsigned int thraddr;
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
         success = ( (thrparams->threadID) != 0);
-      #elif (CLIENT_OS == OS_OS2) && defined(MULTITHREAD)
+      #elif (CLIENT_OS == OS_OS2)
         thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
         success = ( thrparams->threadID != -1);
       #elif (CLIENT_OS == OS_NETWARE) && defined(MULTITHREAD)
@@ -843,11 +791,11 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           use_poll_process = 1;
         else 
           success = ((thrparams->threadID = BeginThread( Go_mt, NULL, 8192, 
-                                 (void *)thrparams )) != -1);
-      #elif (CLIENT_OS == OS_BEOS) && defined(MULTITHREAD)
+                                   (void *)thrparams )) != -1);
+      #elif (CLIENT_OS == OS_BEOS)
         char thread_name[32];
         long be_priority;
-    
+      
         #error "please check be_prio (priority is now 0-9 [9 is highest/normal])"
         be_priority = ((10*(B_LOW_PRIORITY + B_NORMAL_PRIORITY + 1))/
                                      (9-(thrparams->priority)))/10;
@@ -892,7 +840,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       thrparams->realthread = 0;            /* int */
       if (timeslice > (1<<12)) 
         thrparams->timeslice = (1<<12);
-      thrparams->threadID = RegPolledProcedure(Go_nonmt, 
+      thrparams->threadID = RegPolledProcedure(Go_mt, 
                               (void *)thrparams , NULL, 0 );
       success = (thrparams[thread_i].threadID != (THREADID)(-1));
       }
@@ -924,17 +872,16 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
 int Client::Run( void )
 {
   FileEntry fileentry;
-  unsigned int thread_i, cont_i, prob_i;
-  unsigned int numthreads = (unsigned int)numcpu;
-  Problem *mainprob = NULL; //used in single threaded mode
+  unsigned int cont_i, prob_i;
+  int force_no_realthreads = 0;
   struct thread_param_block *thread_data_table = NULL;
 
   #ifdef OLDNICENESS //fake priority if 'niceness' is used intead of 'priority'
   unsigned int priority = ((niceness==2)?(9):((niceness==1)?(4):(0)));
   #endif
 
-  int TimeToQuit = 0, exitcode = 0, running_threaded = 0;
-  unsigned int load_problem_count = 0, planned_problem_count = 0;
+  int TimeToQuit = 0, exitcode = 0;
+  unsigned int load_problem_count = 0;
   unsigned int getbuff_errs = 0;
   
   time_t timeNow;
@@ -995,24 +942,28 @@ int Client::Run( void )
 
   if (!TimeToQuit)
     {
+    force_no_realthreads = 0; /* this is a hint. it does not reflect capability */
+    unsigned int numcrunchers = (unsigned int)numcpu;
+
     #if (CLIENT_OS == OS_FREEBSD) //freeBSD multithreading is disabled
-    if (numthreads > 1)
-      LogScreen("Threading has been disabled for FreeBSD clients\n");
-    numthreads = 0;
+    force_no_realthreads = 1;
+    if (numcrunchers > 0)
+      LogScreen("POSIX threads are disabled for FreeBSD clients.\n"
+                "Threading will be emulated.\n");
     #endif
     #if (CLIENT_OS == OS_NETWARE)
-    if (numthreads == 1) // NetWare client prefers non-threading  
-      numthreads = 0;    // if only one thread/processor is to used
+    if (numcrunchers == 1) // NetWare client prefers non-threading  
+      numcrunchers = 0;    // if only one thread/processor is to used
     #endif
 
-    if (numthreads == 0) //user requests non-mt
-      load_problem_count = numthreads = 1;
-    else
+    if (numcrunchers <= 1) /* == 0 = user requested non-mt */
       {
-      if (numthreads > GetNumberOfSupportedProcessors()) //max by cli instance
-        numthreads = GetNumberOfSupportedProcessors();   //not by platform
-      load_problem_count = (2 * numthreads);
+      force_no_realthreads = 1;
+      numcrunchers = 1;
       }
+    if (numcrunchers > GetNumberOfSupportedProcessors()) //max by cli instance
+      numcrunchers = GetNumberOfSupportedProcessors();   //not by platform
+    load_problem_count = numcrunchers;
     }
 
   // -------------------------------------
@@ -1021,13 +972,12 @@ int Client::Run( void )
 
   if (!TimeToQuit)
     {
-    planned_problem_count = load_problem_count;
-    if ( load_problem_count > 1 )
-      Log( "Loading two blocks per thread...\n" );
+    if (load_problem_count > 1)
+      Log( "Loading one block per thread...\n" );
     load_problem_count = LoadSaveProblems( load_problem_count, 0 );
-    numthreads = (load_problem_count + 1) >> 1;
     if (load_problem_count == 0)
       {
+      Log("Unable to load any blocks. Quitting...\n");
       TimeToQuit = 1;
       exitcode = -2;
       }
@@ -1056,19 +1006,42 @@ int Client::Run( void )
     exitcode = -1;
     }
 
+  // -------------------------------
+  // create a yield pump for OSs that need one 
+  // -------------------------------
+
+  #if defined(NON_PREEMPTIVE_OS)
+  if (!TimeToQuit)
+    {
+    static struct timeval tv = {0,500};
+    #if (CLIENT_OS == OS_MACOS)
+      tv.tv_usec = 10000;
+    #endif
+   
+    if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
+      {
+      Log("Unable to initialize yield pump\n" );
+      TimeToQuit = -1; 
+      exitcode = -1;
+      }
+    }
+  #endif
+
   // --------------------------------------
-  // Spin up the threads
+  // Spin up the crunchers
   // --------------------------------------
 
-
-  if (!TimeToQuit && load_problem_count > 1 )
+  if (!TimeToQuit)
     {
     struct thread_param_block *thrparamslast = thread_data_table;
-    for ( thread_i = 0; thread_i < (load_problem_count>>1); thread_i++ )
+    char srange[20];
+    unsigned int planned_problem_count = load_problem_count;
+
+    for ( prob_i = 0; prob_i < load_problem_count; prob_i++ )
       {
       struct thread_param_block *thrparams = 
-                __StartThread( thread_i, numthreads, timeslice, priority );
-      
+         __StartThread( prob_i, load_problem_count, 
+                        timeslice, priority, force_no_realthreads );
       if ( thrparams )
         {
         if (!thread_data_table)
@@ -1079,122 +1052,60 @@ int Client::Run( void )
         }
       else
         {
-        Log("Could not start child thread '%c'.\n", thread_i+'A');
-
-        if ( thread_i == 0 ) //was it the first thread that failed?
-          load_problem_count = 1; //then switch to non-threaded mode
-        else
-          load_problem_count = thread_i << 1;
+        load_problem_count = prob_i+1;
         break;
         }
       }
-    if (load_problem_count == 1)
+
+    if (load_problem_count == 0)
       {
-      Log("Switching to single-threaded mode.\n" );
-      numthreads = 1;
+      Log("Unable to initialize cruncher(s). Quitting...\n");
+      TimeToQuit = 1;
+      exitcode = -1;
       }
     else
       {
-      running_threaded = 1;
-
-      numthreads = load_problem_count>>1;
-      if (load_problem_count == 2)
-        Log("1 Child thread has been started.\n");
-      else if (load_problem_count > 2)
-        Log("%d Child threads ('a'%s'%c') have been started.\n",
-         load_problem_count>>1, 
-            ((load_problem_count>4)?("-"):(" and ")),
-            'a'+((load_problem_count>>1)-1));
+      srange[0]=0;
+      if (load_problem_count > 1 && load_problem_count < 26 /* a-z */)
+        sprintf( srange, " ('a'%s'%c')", 
+          ((load_problem_count==2)?(" and "):("-")), 
+          'a'+(load_problem_count-1) );
+      Log("%u cruncher%s%s ha%s been started.%c%c%u failed to start)\n",
+             load_problem_count, 
+             ((load_problem_count==1)?(""):("s")), srange,
+             ((load_problem_count==1)?("s"):("ve")),
+             ((load_problem_count < planned_problem_count)?(' '):('\n')),
+             ((load_problem_count < planned_problem_count)?('('):(0)),
+             (planned_problem_count - load_problem_count) );
       }
-    } //if ( load_problem_count > 1 )
-
-  
-  // -------------------------------
-  // resize the problem table if we loaded too much
-  // -------------------------------
-
-  if (planned_problem_count != load_problem_count)
-    {
-    prob_i = load_problem_count;
-    if (load_problem_count == 1)
-      prob_i++;
-    
-    for ( ; prob_i < planned_problem_count; prob_i++ )
+      
+    // resize the problem table if we've loaded too much
+    if (load_problem_count < planned_problem_count)
       {
-      Problem *thisprob = GetProblemPointerFromIndex( prob_i );
-      if (thisprob && thisprob->IsInitialized())
+      prob_i = (TimeToQuit)?(0):(load_problem_count+1);
+      for (; prob_i <= planned_problem_count; prob_i++ )
         {
-        cont_i = (unsigned int)thisprob->RetrieveState( 
-                                         (ContestWork *) &fileentry, 1 );
-        fileentry.contest = (u8)(cont_i);
-        fileentry.op      = htonl( OP_DATA );
-        fileentry.cpu     = FILEENTRY_CPU;
-        fileentry.os      = FILEENTRY_OS;
-        fileentry.buildhi = FILEENTRY_BUILDHI; 
-        fileentry.buildlo = FILEENTRY_BUILDLO;
-        fileentry.checksum =
+        Problem *thisprob = GetProblemPointerFromIndex( prob_i );
+        if (thisprob && thisprob->IsInitialized())
+          {
+          cont_i = (unsigned int)thisprob->RetrieveState( 
+                                           (ContestWork *) &fileentry, 1 );
+          fileentry.contest = (u8)(cont_i);
+          fileentry.op      = htonl( OP_DATA );
+          fileentry.cpu     = FILEENTRY_CPU;
+          fileentry.os      = FILEENTRY_OS;
+          fileentry.buildhi = FILEENTRY_BUILDHI; 
+          fileentry.buildlo = FILEENTRY_BUILDLO;
+          fileentry.checksum =
              htonl( Checksum( (u32 *) &fileentry, (sizeof(FileEntry)/4)-2));
-        Scramble( ntohl( fileentry.scramble ),
+          Scramble( ntohl( fileentry.scramble ),
               (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
-        // put it back...
-        InternalPutBuffer( in_buffer_file[cont_i], &fileentry );
+          InternalPutBuffer( in_buffer_file[cont_i], &fileentry );
+          }
         }
       }
     }
-
-  // -------------------------------
-  // create a yield pump for OSs that need one 
-  // -------------------------------
-
-  #if defined(NON_PREEMPTIVE_OS)
-  if (!TimeToQuit)
-    {
-    static struct timeval tv = {0,500};
-    #if (CLIENT_OS == OS_WIN32) 
-      tv.tv_usec = 1000; 
-    #elif (CLIENT_OS == OS_MACOS)
-      tv.tv_usec = 10000;
-    #endif
-   
-    if (RegPolledProcedure(yield_pump, (void *)&tv, (timeval *)&tv, 32 ) == -1)
-      {
-      Log("Unable to initialize yield pump\n" );
-      TimeToQuit = -1; 
-      exitcode = -1;
-      }
-    #if 0
-    else
-      LogScreen("Yield pump has started... \n" );
-    #endif
-    }
-  #endif
-
-  // -------------------------------
-  // create a problem runner for non-preemptive OSs that are not threaded
-  // -------------------------------
-
-  #ifdef NON_PREEMPTIVE_OS
-  if (!TimeToQuit && !running_threaded /* load_problem_count == 1 */)
-    {
-    struct thread_param_block *thrparams = __StartThread( 
-                  0 /*thread_i*/, 0 /*numthreads*/, timeslice, priority );
-    if (thrparams)
-      {
-      #if 0
-      LogScreen("Crunch handler has started...\n" );
-      #endif
-      thread_data_table = thrparams;
-      running_threaded = 1;
-      }
-    else
-      {
-      Log("Unable to initialize crunch handler\n" );
-      TimeToQuit = -1; 
-      exitcode = -1;
-      } 
-    }
-  #endif
-
+  
   //------------------------------------
   // display the percent bar so the user sees some action
   //------------------------------------
@@ -1224,28 +1135,16 @@ int Client::Run( void )
     //------------------------------------
 
     SetGlobalPriority( priority );
-    if (running_threaded)
-      {
-      // prevent the main thread from racing & bogging everything down.
+    if (isPaused)
       sleep(3);
-      }
-    else if (isPaused)
+    else
       {
-      sleep(1);
-      }
-    else //only one problem and we are not paused
-      {
-      if (!mainprob)
-        mainprob = GetProblemPointerFromIndex(0);
-      if (mainprob)
-        {
-        //Actually run a problem
-        mainprob->Run( 0 ); //threadnum
-          
-        #if defined(NON_PREEMPTIVE_OS) 
-          yield_pump(NULL);
-        #endif
-        }
+      if (!runstatics.refillneeded)
+        sleep(1);
+      if (!runstatics.refillneeded)
+        sleep(1);
+      if (!runstatics.refillneeded)
+        sleep(1);
       }
     SetGlobalPriority( 9 );
 
@@ -1301,6 +1200,7 @@ int Client::Run( void )
       if (!percentprintingoff)
         LogScreenPercent( load_problem_count ); //logstuff.cpp
       getbuff_errs += LoadSaveProblems(load_problem_count, PROBFILL_GETBUFFERRS);
+      runstatics.refillneeded = 0;
       }
 
     //------------------------------------
