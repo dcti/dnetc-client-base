@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.36 1999/12/09 12:49:00 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.37 1999/12/11 00:46:49 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -179,14 +179,23 @@ return "@(#)$Id: problem.cpp,v 1.108.2.36 1999/12/09 12:49:00 cyp Exp $"; }
   extern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
   extern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
-#if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
+  #if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
   extern "C" s32 csc_unit_func_6b_mmx ( RC5UnitWork *, u32 *iterations, void *membuff );
-#endif
+  #endif
 #endif
 
 /* ------------------------------------------------------------- */
 static int __core_picker(Problem *problem, unsigned int contestid)
 {                               /* must return a valid core selection # */
+  #if (CLIENT_CPU == CPU_X86) //most projects have an mmx core
+  static int ismmx = -1; 
+  if (ismmx == -1) 
+  { 
+    long det = GetProcessorType(1 /* quietly */);
+    ismmx = (det >= 0) ? (det & 0x100) : 0;
+  }    
+  #endif
+
   int coresel;
   problem->pipeline_count = 2; /* most cases */
   problem->client_cpu = CLIENT_CPU; /* usual case */
@@ -392,14 +401,8 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     }
     #elif (CLIENT_CPU == CPU_X86)
     {
-      static int ismmx = -1;
       if (coresel < 0 || coresel > 5)
         coresel = 0;
-      if (ismmx == -1)
-      {
-        long det = GetProcessorType(1 /* quietly */);
-        ismmx = (det >= 0) ? (det & 0x100) : 0;
-      }
       problem->pipeline_count = 2; /* most cases */
       if (coresel == 1)   // Intel 386/486
       {
@@ -540,12 +543,6 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       #endif
       #if defined(MMX_BITSLICER) 
       {
-        static int ismmx = -1;
-        if (ismmx == -1)
-        {
-          long det = GetProcessorType(1 /* quietly */);
-          ismmx = (det >= 0) ? (det & 0x100) : 0;
-        }
         if (ismmx) 
           slicit = des_unit_func_mmx;
       }
@@ -643,16 +640,17 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       case 0 : problem->unit_func = csc_unit_func_6b_i;
                break;
       case 1 : problem->unit_func = csc_unit_func_6b;
+               #if (CLIENT_CPU == CPU_X86) && defined(MMX_CSC)
+               //6b-non-mmx isn't used (by default) on x86
+               if (ismmx) 
+                 problem->unit_func = csc_unit_func_6b_mmx;
+               #endif     
                break;
       default: coresel = 2;
       case 2 : problem->unit_func = csc_unit_func_1k_i;
                break;
       case 3 : problem->unit_func = csc_unit_func_1k;
                break;
-#if defined(MMX_CSC)
-      case 4 : problem->unit_func = csc_unit_func_6b_mmx;
-               break;
-#endif
     }
     return coresel;
   }
@@ -867,6 +865,7 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
   started = initialized = 0;
   timehi = timelo = 0;
   runtime_sec = runtime_usec = 0;
+  completion_timelo = completion_timehi = 0;
   last_runtime_sec = last_runtime_usec = 0;
   memset((void *)&profiling, 0, sizeof(profiling));
   startpermille = permille = 0;
@@ -1346,6 +1345,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   if (!started)
   {
     timehi = start.tv_sec; timelo = start.tv_usec;
+    completion_timelo = completion_timehi = 0;
     runtime_sec = runtime_usec = 0;
     memset((void *)&profiling, 0, sizeof(profiling));
     started=1;
@@ -1356,6 +1356,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
     runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
+    completion_timelo = 1;
     last_resultcode = RESULT_NOTHING;
     return RESULT_NOTHING;
 #endif    
@@ -1413,22 +1414,28 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
       start.tv_usec = pstart.tv_usec;
     }
   }
-  if (!using_ptime)
+  if (!using_ptime || core_resultcode != RESULT_WORKING )
   {
-    CliClock(&stop);
+    struct timeval clock_stop;
+    CliClock(&clock_stop);
+    if (!using_ptime)
+    {
+      stop.tv_sec = clock_stop.tv_sec;
+      stop.tv_usec = clock_stop.tv_usec;
+    }
     if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
     {
-      if (((u32)(stop.tv_sec)) > ((u32)(timehi)))
+      if (((u32)clock_stop.tv_usec) < timelo)
       {
-        u32 tmpdif = timehi - stop.tv_sec;
-        tmpdif = (((tmpdif >= runtime_sec) ?
-          (tmpdif - runtime_sec) : (runtime_sec - tmpdif)));
-        if ( tmpdif < core_run_count )
-        {
-          runtime_sec = runtime_usec = 0;
-          start.tv_sec = timehi;
-          start.tv_usec = timelo;
-        }
+        clock_stop.tv_usec += 1000000;
+        clock_stop.tv_sec--;
+      }
+      completion_timehi = (((u32)clock_stop.tv_sec) - timehi);
+      completion_timelo = (((u32)clock_stop.tv_usec) - timelo);
+      if (completion_timelo >= 1000000)
+      {
+        completion_timelo-= 1000000;
+        completion_timehi++;
       }
     }
   }
@@ -1446,7 +1453,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     }
     runtime_usec += (last_runtime_usec = (stop.tv_usec - start.tv_usec));
     runtime_sec  += (last_runtime_sec = (stop.tv_sec - start.tv_sec));
-    if (runtime_usec > 1000000L)
+    if (runtime_usec >= 1000000L)
     {
       runtime_sec++;
       runtime_usec-=1000000L;

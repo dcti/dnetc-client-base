@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.3 1999/11/23 22:48:27 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.4 1999/12/11 00:46:49 cyp Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -234,7 +234,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
 {
   static char str[160];
   ContestWork work;
-  struct timeval tv = {0,0};
+  struct timeval tv;
   char keyrate[64];
   unsigned int /* size=1, count=32, */ itermul;
   unsigned int mulfactor, contestid = 0;
@@ -242,7 +242,10 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
   int resultcode = prob->RetrieveState( &work, &contestid, 0 );
 
   if (resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
+  {
     memset((void *)&work,0,sizeof(work));
+    tv.tv_sec = tv.tv_usec = 0;
+  }
   else
   {
     if (CliGetContestInfoBaseData( contestid, &name, &mulfactor )==0) //clicdata
@@ -258,8 +261,10 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
     tv.tv_usec = prob->timelo;
     CliTimerDiff( &tv, &tv, NULL );
     */
-    tv.tv_sec = prob->runtime_sec;
-    tv.tv_usec = prob->runtime_usec;
+    //tv.tv_sec = prob->runtime_sec;  //thread user time
+    //tv.tv_usec = prob->runtime_usec;
+    tv.tv_sec = prob->completion_timehi;  //wall clock time
+    tv.tv_usec = prob->completion_timelo;
   }
   
   switch (contestid) 
