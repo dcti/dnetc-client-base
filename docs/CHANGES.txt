@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.42 2000/04/18 03:59:52 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.43 2000/04/18 20:35:52 jlawson Exp $
 ==========================================================================
 
 2.8000
@@ -37,12 +37,17 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.42 2000/04/18 03:59:52 jlawson Exp 
                    full, out-buffer not empty, or both).  Also a new mode
                    "update on per-project in-buffer empty" to prevent
                    rotation between open contests.
+                 all: out-buffer thresholds have been removed entirely;
+                   you can use the "additional buffer-level checking" to
+                   support updating/flushing that is more frequent than
+                   exhaustion of in-buffers.
             chg: macos: now supports all variants of System 7
                  Linux: now attempts to explicitly load resolv libraries for
                    dns resolution for greater glibc/libc cross compatibility.
                  all: checkpointing now done at 10% or 10 minute intervals,
                    instead of 10% with 10 minute minimum.
-                 winnt4: pause on process handling optimized
+                 winnt4: pause on process handling optimized and rewritten
+                   to use a more efficient alternate technique.
                  all: now logs, if exitfile was found during startup.
                  all: time threshold uses fetch work threshold > 0 as minimum
                    number of workunits to be fetched.
