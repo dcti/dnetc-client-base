@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.93 2001/01/15 01:39:18 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.94 2001/01/18 00:40:56 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -575,12 +575,11 @@ int ProblemLoadState( void *__thisprob,
         ** print the appropriate error message.
         */
         const char *msg = "Unknown error";
-        if (r == CORE_E_MEMORY)       msg = "CORE_E_MEMORY: Insufficient memory";
-        else if (r == CORE_E_IO)      msg = "CORE_E_IO: I/O error";
+        if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
         else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
-        else if (r == CORE_E_STOPPED) msg = "CORE_E_STOPPED:";
-        else if (r == CORE_E_STUB)    msg = "CORE_E_STUB: Stub is not golomb";
-        else if (r == CORE_E_CHOOSE)  msg = "CORE_E_CHOOSE: Too much marks";
+        else if (r == STUB_E_GOLOMB)  msg = "STUB_E_GOLOMB: Stub is not golomb";
+        else if (r == STUB_E_LIMIT)   msg = "STUB_E_LIMIT:\nStub has been obsoleted by a better core";
+        else if (r == STUB_E_MARKS)   msg = "STUB_E_MARKS:\nStub is not supported by this client";
         Log("OGR stub load failure: %s\n", msg );
         return -1;
       }
