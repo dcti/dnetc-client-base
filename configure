@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.13 1999/07/14 15:53:25 ivo Exp $
+# @(#)$Id: configure,v 1.222.2.14 1999/07/15 17:58:40 ivo Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -568,7 +568,7 @@ case "$1" in
 	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
 	;;
 
-    *sparc-solaris-gcc-crunch-slice)   # fastest rc5 & des for ultra
+    *sparc-solaris-gcc-crunch-slice)   # [ivo solaris/nonultra/nomt] fastest rc5 & des for ultra
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
@@ -578,7 +578,7 @@ case "$1" in
 	TARGET_LIBS="-lnsl -lsocket -ldl"
 	;;
 
-    *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
+    *sparc-solaris-gcc-crunch-slice-mt)   # [ivo solaris/nonultra/mt] fastest rc5 & des for ultra
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
 	TARGET_CC="gcc -pipe"
@@ -592,7 +592,7 @@ case "$1" in
     *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
         DELETECHARS="'/.\$\-'"
 	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc -pipe"
+	TARGET_CC="cc -pipe"
 	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
 			-DMULTITHREAD -DULTRA_CRUNCH=1"
 	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
