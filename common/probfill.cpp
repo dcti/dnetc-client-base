@@ -5,9 +5,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.28  1998/12/28 18:15:16  cyp
+// Net update (unconditionally, don't check other contests first) if no blocks
+// are available. Implemented generic event posting for started/finished probs.
+//
 // Revision 1.27  1998/12/28 04:01:07  silby
 // Win32gui icon now changed by probfill when new blocks are loaded.
-// If MacOS has an icon to change, this would be a good place to hook in as well.
+// If MacOS has an icon to change, this would be a good place to 
+// hook in as well.
 //
 // Revision 1.26  1998/12/23 03:24:56  silby
 // Client once again listens to keyserver for next contest start time,
@@ -118,7 +123,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.27 1998/12/28 04:01:07 silby Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.28 1998/12/28 18:15:16 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -141,7 +146,7 @@ return "@(#)$Id: probfill.cpp,v 1.27 1998/12/28 04:01:07 silby Exp $"; }
 #include "probfill.h"  // ourselves.
 #include "rsadata.h"   // Get cipher/etc for random blocks
 #include "confrwv.h"   // Needed to trigger .ini to be updated
-#include "guistuff.h"  // SetIcon()
+#include "clievent.h"  // ClientEventSyncPost( int event_id, long parm )
 
 // =======================================================================
 // each individual problem load+save generates 4 or more messages lines 
@@ -289,9 +294,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       norm_key_count = 
           (unsigned int)__iter2norm( ntohl(rc5result.iterations.lo) );
 
-      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-      FinishThreadProgress(prob_i, rc5result.iterations);
-      #endif
+      ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, (long)prob_i );
       }
 
     //we can purge the object now
@@ -388,16 +391,48 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   didrandom = didload = didupdate = 0;
   resetloop = 1;
 
+#ifdef DEBUG
+Log("Loadblock::Start Preferred contest: %u\n", contest_preferred);
+#endif
+
   while (resetloop && didload == 0)
     {
     resetloop = 0;
     for (cont_i = 0;(didload == 0 && cont_i < contest_count); cont_i++)
       {
       contest_selected = ((cont_i)?(contest_alternate):(contest_preferred));
+#ifdef DEBUG
+Log("Loadblock::loop %u (contest %u), isdone: %s\n", cont_i, 
+      contest_selected, (client->contestdone[contest_selected])?"Yes":"No" );
+#endif
       if ( client->contestdone[contest_selected] == 0)
         {
-//LogScreen("beginning getblock %u\n", contest_selected );        
         longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
+
+        if (longcount < 0 && didupdate == 0 && client->nonewblocks == 0)
+          {
+          didupdate = 
+            client->BufferUpdate((BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
+          if (client->randomchanged)        
+            RefreshRandomPrefix( client );
+          #ifdef DEBUG
+          Log("Loadblock::fetch([anycontest]) -> %s\n", 
+             (didupdate>0 && (didupdate&BUFFERUPDATE_FETCH)!=0)?("Success"):("Failed") );
+          #endif
+          if (!(didupdate < 0))
+            {
+            if (didupdate!=0)
+              *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
+            if ((didupdate & BUFFERUPDATE_FETCH) != 0) /* fetched successfully */
+              longcount = client->GetBufferRecord( &fileentry, contest_selected, 0 );
+            }
+          didupdate = 1; /* don't try another network update */
+          }
+
+#ifdef DEBUG
+Log("Loadblock::getfromdisk(contest = %u) -> %s\n",
+             contest_selected, (longcount>=0)?("Success"):("Failed") );
+#endif
         if (longcount >= 0)
           {
           if (((unsigned long)(longcount)) < (load_problem_count - prob_i))
@@ -406,21 +441,6 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           break;
           }
         }
-      }
-    if (didupdate == 0 && didload == 0 && client->nonewblocks == 0)
-      {
-      didupdate = 
-        client->BufferUpdate((BUFFERUPDATE_FETCH|BUFFERUPDATE_FLUSH),0);
-      if (client->randomchanged)        
-        RefreshRandomPrefix( client );
-      if (didupdate < 0)
-        break;
-      if (didupdate!=0)
-        *bufupd_pending&=~(didupdate&(BUFFERUPDATE_FLUSH|BUFFERUPDATE_FETCH));
-      if ((didupdate & BUFFERUPDATE_FETCH) == 0) /* didn't fetch */
-        break;
-      didupdate = 1; /* don't try another network update */
-      resetloop = 1; /* we refreshed buffers, so retry all */
       }
     }  
     
@@ -509,6 +529,10 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       fileentry.scramble = htonl( Random( NULL, 0 ) );
       }
     }
+
+#ifdef DEBUG
+Log("Loadblock::End. %s\n", (didrandom)?("Success (random)"):((didload)?("Success"):("Failed")) );
+#endif
     
   if (didload) /* success */
     {
@@ -518,14 +542,13 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
           (u32) (fileentry.contest), client->timeslice, client->cputype );
     norm_key_count = (unsigned int)__iter2norm(ntohl(fileentry.iterations.lo));
 
+    ClientEventSyncPost( CLIEVENT_PROBLEM_STARTED, (long)prob_i );
+
     if (load_problem_count <= COMBINEMSG_THRESHOLD)
       {
       const char *cont_name = CliGetContestNameFromID(*contest);
       unsigned int startpercent = (unsigned int)( thisprob->startpercent/10 );
-      
-      #if defined(GUICLIENT)
-      SetIcon(*contest);
-      #endif
+
       Log("Loaded %s%s %u*2^28 block %08lX:%08lX%c(%u.%02u%% done)",
               cont_name, ((didrandom)?(" random"):("")), norm_key_count,
               (unsigned long) ntohl( fileentry.key.hi ),
@@ -539,6 +562,16 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 }    
 
 // --------------------------------------------------------------------
+
+#ifdef DEBUG
+void __event_test( int event_id, long parm )
+{
+  if (event_id == CLIEVENT_PROBLEM_STARTED)
+    LogScreen("event: CLIEVENT_PROBLEM_STARTED. parm=%lu\n", parm );
+  else if (event_id == CLIEVENT_PROBLEM_FINISHED)
+    LogScreen("event: CLIEVENT_PROBLEM_FINISHED. parm=%lu\n", parm );
+}
+#endif
 
 unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 {
@@ -591,6 +624,10 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
   if (previous_load_problem_count == 0)
     {
     prob_step = 1;
+
+    #ifdef DEBUG
+    ClientEventAddListener(-1, __event_test );
+    #endif
 
     i = InitializeProblemManager(load_problem_count);
     if (i<=0)
