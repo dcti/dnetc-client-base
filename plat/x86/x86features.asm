@@ -13,7 +13,7 @@
 ;
 ; Modified for distributed.net by Steven Nikkel, Nov 2003
 ;
-; $Id: x86features.asm,v 1.1.2.16 2004/11/23 16:13:01 snikkel Exp $
+; $Id: x86features.asm,v 1.1.2.17 2005/01/20 19:23:12 snikkel Exp $
 ;
 ; return u32
 
@@ -80,7 +80,15 @@ x86features:
   je near NotSupported
 
 Standard:
+  xor eax, eax
+  cpuid
+  cmp eax, 1            ; See if CPUID code 1 is supported
+  jb near NotSupported
+
   mov eax, 1h
+  xor ebx, ebx          ; Some processors understand 'reserved' bits as
+  xor ecx, ecx          ; 'don't touch' bits and without clear registers
+  xor edx, edx          ; the following features tests fail
   cpuid
 MMX_test:
   mov edi, eax
