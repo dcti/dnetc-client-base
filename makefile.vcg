@@ -99,7 +99,7 @@ rc5desg: $(RC5_OBJS) $(GUI_OBJS) $(PREBUILT_OBJS)
         cl $(OPTS_MSVC) -Fe$(EXENAMEG) $(GUI_LIBS) $**
 
 clean:
-        del $(RC5_OBJS:/=\)
+        del $(RC5_OBJS:/=\) $(GUI_OBJS:/=\) 
 
 superclean: clean
         del $(EXENAMEG) rc5des.ini buff-in.rc5 buff-out.rc5
