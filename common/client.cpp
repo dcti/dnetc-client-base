@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.2 1999/05/18 18:34:21 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.3 1999/06/01 02:51:46 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -445,71 +445,138 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int 
 #elif defined(__unix__)
 int main( int argc, char *argv[] )
 {
+  /* the SPT_* constants refer to sendmail source (conf.[c|h]) */
+  char defname[]={('r'),('c'),('5'),('d'),('e'),('s'),0};
+  int needchange = 0;
   if (argv && argv[0])
   {
-    char defname[]={('r'^80),('c'^80),('5'^80),('d'^80),('e'^80),('s'^80),0};
+    char *p = strrchr( argv[0], '/' );
+    needchange = (strcmp( ((p)?(p+1):(argv[0])), defname )!=0);
+  }
+  #if (CLIENT_OS == OS_HPUX)                         //SPT_TYPE == SPT_PSTAT
+  if (needchange)
+  {
+    union pstun pst;
+    pst.pst_command = &defname[0];
+    pstat(PSTAT_SETCMD,pst,strlen(defname),0,0);
+  }
+  #elif (CLIENT_OS == OS_SCO)                        //SPT_TYPE == SPT_SCO
+  if (needchange)
+  {
+    #ifndef _PATH_KMEM /* should have been defined in <paths.h> */
+    # define _PATH_KMEM "/dev/kmem"
+    #endif
+    int kmem = open(_PATH_KMEM, O_RDWR, 0);
+    if (kmem >= 0)
+    {  
+      //pid_t kmempid = getpid();
+      struct user u;
+      off_t seek_off;
+      char buf[PSARGSZ];
+      (void) fcntl(kmem, F_SETFD, 1);
+      memset( buf, 0, PSARGSZ );
+      strncpy( buf, defname, PSARGSZ );
+      buf[PSARGSZ - 1] = '\0';
+      seek_off = UVUBLK + (off_t) u.u_psargs - (off_t) &u;
+      if (lseek(kmem, (off_t) seek_off, SEEK_SET) == seek_off)
+        (void) write(kmem, buf, PSARGSZ);
+      /* yes, it stays open */
+    }
+  }
+  #elif 0 /* eg, Rhapsody */                  /* SPT_TYPE==SPT_PSSTRINGS */
+  if (needchange)
+  {
+    PS_STRINGS->ps_nargvstr = 1;
+    PS_STRINGS->ps_argvstr = defname;
+  }
+  #elif 0                                     /*  SPT_TYPE == SPT_SYSMIPS */
+  if (needchange)
+  {
+    sysmips(SONY_SYSNEWS, NEWS_SETPSARGS, buf);
+  }
+  #else //SPT_TYPE == SPT_CHANGEARGV (mach) || SPT_NONE (OS_DGUX|OS_DYNIX)
+        //|| SPT_REUSEARGV (the rest)
+  /* [Net|Free|Open|BSD[i]] are of type SPT_BUILTIN, ie use setproctitle() 
+     but that is only a wrapper for SPT_PSSTRINGS (see above) which makes it 
+     useless for our purposes: ps will show "filename:rc5des (filename)", so 
+     we may as well stick with "rc5des (filename)". FreeBSD could use 
+     strcpy(__progname, defname) and so skip the exec(), but oh, well.
+  */
+  #if (CLIENT_OS != OS_FREEBSD) && (CLIENT_OS != OS_NETBSD) && \
+      (CLIENT_OS != OS_BSDOS) && (CLIENT_OS != OS_OPENBSD) && \
+      (CLIENT_OS != OS_DGUX) && (CLIENT_OS != OS_DYNIX)
+  /* ... all the SPT_REUSEARGV types */
+  if (needchange && strlen(argv[0]) >= strlen(defname))
+  {
+    char *q = "RC5PROG";
+    if (setenv( q, argv[0], 1 ) == 0)
+    {
+      if ((q = (char *)getenv(q)) != ((char *)0))
+      {
+        int padchar = 0; /* non-linux/qnx/aix may need ' ' here */
+        memset(argv[0],padchar,strlen(len));
+        memcpy(argv[0],defname,strlen(defname)-1);
+        argv[0] = q;
+        needchange = 0;
+      }
+    }
+  }
+  #endif
+  if (needchange)
+  {
     char buffer[512];
     unsigned int len;  char *p;
-    for (len=0;defname[len];len++)
-      defname[len]^=80; /* obfusciation 101 */
-    p = strrchr( argv[0], '/' );
-    if (p) 
-      p++; 
-    else 
-      p = argv[0];
-    if (strcmp( p, defname )!=0)
+    if (getenv("RC5INI") == NULL)
     {
-      if (getenv("RC5INI") == NULL)
+      int have_ini = 0;
+      for (len=1;len<((unsigned int)argc);len++)
       {
-        int have_ini = 0;
-        for (len=1;len<((unsigned int)argc);len++)
+        p = argv[len];
+        if (*p == '-')
         {
-          p = argv[len];
-          if (*p == '-')
+          if (p[1]=='-') 
+            p++;
+          if (strcmp(p,"-ini")==0)
           {
-            if (p[1]=='-') 
-              p++;
-            if (strcmp(p,"-ini")==0)
-            {
-              have_ini++;
-              break;
-            }
+            have_ini++;
+            break;
           }
         }
-        if (!have_ini)
-        {
-          strcpy( buffer, "RC5INI=" );
-          strncpy( &buffer[7], argv[0], sizeof(buffer)-7 );
-          buffer[sizeof(buffer)-5]='\0';
-          strcat( buffer, ".ini" );
-          setenv("RC5INI", &buffer[7], 1 );
-          //putenv( buffer );
-        }
       }
-      
-      p = argv[0];
-      argv[0] = defname;
-      if ((strlen(p) + 5) < sizeof(buffer))
+      if (!have_ini)
       {
-        char *s;
-        strcpy( buffer, p );
-        s = strrchr( buffer, '/' );
-        if (s != NULL)
-        {
-          s[1]='\0';
-          strcat( buffer, defname );
-          argv[0] = buffer;
-        }
+        strcpy( buffer, "RC5INI=" );
+        strncpy( &buffer[7], argv[0], sizeof(buffer)-7 );
+        buffer[sizeof(buffer)-5]='\0';
+        strcat( buffer, ".ini" );
+        setenv("RC5INI", &buffer[7], 1 );
+        //putenv( buffer );
       }
-      
-      if ( execvp( p, &argv[0] ) == -1)
-      {
-        ConOutErr("Unable to restart self");
-        return -1;
-      }
-      return 0;
     }
-  }    
+      
+    p = argv[0];
+    argv[0] = defname;
+    if ((strlen(p) + 5) < sizeof(buffer))
+    {
+      char *s;
+      strcpy( buffer, p );
+      s = strrchr( buffer, '/' );
+      if (s != NULL)
+      {
+        s[1]='\0';
+        strcat( buffer, defname );
+        argv[0] = buffer;
+      }
+    }
+
+    if ( execvp( p, &argv[0] ) == -1)
+    {
+      ConOutErr("Unable to restart self");
+      return -1;
+    }
+    return 0;
+  }
+  #endif
   return realmain( argc, argv );
 }      
 #else
