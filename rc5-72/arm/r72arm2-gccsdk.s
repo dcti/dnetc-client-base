@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <dnet@peter-teichmann.de>
-; $Id: r72arm2-gccsdk.s,v 1.1.2.1 2002/12/10 15:40:21 andreasb Exp $
+; $Id: r72arm2-gccsdk.s,v 1.1.2.2 2003/02/25 19:23:01 teichp Exp $
 
 r0	RN	0
 r1	RN	1
@@ -288,8 +288,8 @@ skip
 	cmp	A, C
 	beq	found_a
 
-increment_hi
 	sub	sp, sp, #25*4
+increment_hi
 	ldr	L2, [WORK, #4*4]
 	add	L2, L2, #1
 	ands	L2, L2, #0xff
