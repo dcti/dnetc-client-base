@@ -2,8 +2,14 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
-
+//
 // $Log: cliconfig.cpp,v $
+// Revision 1.87  1998/06/13 21:56:13  friedbait
+// 'id'variable added, such that we can use 'ident' on the resulting binary
+// in order to get a 'bill of material' on what versions the binary consists
+// of. Will have to add appropriate 'id' variables to all C/C++ modules
+// over time in order to make the 'ident' give a complete listing.
+//
 // Revision 1.86  1998/06/13 09:19:35  remi
 // Fix for Intel 386 and 486 SX/DX/DX2 detection. x86ident does *not* return
 // 0x6849 ('hI') but 0x6e49 ('nI') for these processors.
@@ -12,7 +18,7 @@
 
 #include "client.h"
 
-
+static char *id="@(#)$Id: cliconfig.cpp,v 1.87 1998/06/13 21:56:13 friedbait Exp $";
 
 // --------------------------------------------------------------------------
 
