@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.18 2004/01/12 23:44:55 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.19 2004/02/14 14:16:26 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -524,6 +524,24 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
     #if defined(HAVE_OGR_CORES)
     #if defined(HAVE_OGR_PASS2)
     case OGR_P2:
+    {
+      //24/2-22-32-21-5-1-12
+      //25/6-9-30-14-10-11
+      work->ogr_p2.workstub.stub.marks = 25;    //24;
+      work->ogr_p2.workstub.worklength = 6;     //7;
+      work->ogr_p2.workstub.stub.length = 6;    //7;
+      work->ogr_p2.workstub.stub.diffs[0] = 6;  //2;
+      work->ogr_p2.workstub.stub.diffs[1] = 9;  //22;
+      work->ogr_p2.workstub.stub.diffs[2] = 30;  //32;
+      work->ogr_p2.workstub.stub.diffs[3] = 14; //21;
+      work->ogr_p2.workstub.stub.diffs[4] = 10;  //5;
+      work->ogr_p2.workstub.stub.diffs[5] = 11;  //1;
+      work->ogr_p2.workstub.stub.diffs[6] = 0;  //12;
+      work->ogr_p2.nodes.lo = 0;
+      work->ogr_p2.nodes.hi = 0;
+      work->ogr_p2.minpos = 0;
+      return contestid;
+    }
     #endif
     case OGR:
     {
@@ -541,7 +559,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->ogr.workstub.stub.diffs[6] = 0;  //12;
       work->ogr.nodes.lo = 0;
       work->ogr.nodes.hi = 0;
-      work->ogr.minpos = 0;
+      work->ogr.iterations = 0;
       return contestid;
     }
     #endif
@@ -939,24 +957,24 @@ static int __InternalLoadState( InternalProblem *thisprob,
   case OGR_P2:
   {
     int r;
-    thisprob->priv_data.contestwork.ogr = work->ogr;
-    if (thisprob->priv_data.contestwork.ogr.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr.nodes.lo != 0)
+    thisprob->priv_data.contestwork.ogr_p2 = work->ogr_p2;
+    if (thisprob->priv_data.contestwork.ogr_p2.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr_p2.nodes.lo != 0)
     {
       if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
           CLIENT_OS != expected_os || CLIENT_VERSION != expected_build)
       {
         thisprob->pub_data.was_reset = 1;
-        thisprob->priv_data.contestwork.ogr.workstub.worklength = thisprob->priv_data.contestwork.ogr.workstub.stub.length;
-        thisprob->priv_data.contestwork.ogr.nodes.hi = thisprob->priv_data.contestwork.ogr.nodes.lo = 0;
+        thisprob->priv_data.contestwork.ogr_p2.workstub.worklength = thisprob->priv_data.contestwork.ogr_p2.workstub.stub.length;
+        thisprob->priv_data.contestwork.ogr_p2.nodes.hi = thisprob->priv_data.contestwork.ogr_p2.nodes.lo = 0;
       }
     }
 
     r = (thisprob->pub_data.unit_func.ogr)->init();
     if (r == CORE_S_OK)
     {
-      r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
+      r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr_p2.workstub,
                       sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE,
-                      thisprob->priv_data.contestwork.ogr.minpos);
+                      thisprob->priv_data.contestwork.ogr_p2.minpos);
     }
     if (r != CORE_S_OK)
     {
@@ -970,10 +988,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
       Log("%s load failure: %s\nStub discarded.\n", contname, msg );
       return -1;
     }
-    if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
+    if (thisprob->priv_data.contestwork.ogr_p2.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr_p2.workstub.stub.length)
     {
-      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr.nodes.hi;
-      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr.nodes.lo;
+      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr_p2.nodes.hi;
+      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr_p2.nodes.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
     }
     break;
@@ -1136,6 +1154,33 @@ int ProblemRetrieveState( void *__thisprob,
         #if defined(HAVE_OGR_CORES)
         #if defined(HAVE_OGR_PASS2)
         case OGR_P2:
+        {
+          (thisprob->pub_data.unit_func.ogr)->getresult(
+                       thisprob->priv_data.core_membuffer,
+                       &thisprob->priv_data.contestwork.ogr_p2.workstub,
+                       sizeof(WorkStub));
+          memcpy( (void *)work,
+                  (void *)&thisprob->priv_data.contestwork,
+                  sizeof(ContestWork));
+
+          /* is the stub invalid? */
+          if (thisprob->priv_data.last_resultcode == RESULT_NOTHING &&
+              work->ogr_p2.nodes.hi == 0 && work->ogr_p2.nodes.lo == 0)
+          {
+            #if defined(STUB_E_GOLOMB) /* newer ansi core */
+            if (!thisprob->pub_data.was_truncated)
+            {
+              unsigned int r = work->ogr_p2.workstub.worklength;
+              const char *reason = "STUB_E_*: Undefined core error";
+              if      (r == STUB_E_MARKS)  reason = "STUB_E_MARKS: Stub is not supported by this client";
+              else if (r == STUB_E_GOLOMB) reason = "STUB_E_GOLOMB: Stub is not golomb";
+              else if (r == STUB_E_LIMIT)  reason = "STUB_E_LIMIT: Stub is obsolete";
+              thisprob->pub_data.was_truncated = reason;
+            }
+            #endif
+          }
+          break;
+        }
         #endif
         case OGR:
         {
@@ -1547,6 +1592,64 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
         //Log("OGR Success!\n");
         thisprob->priv_data.contestwork.ogr.workstub.stub.length =
                   (u16)(thisprob->priv_data.contestwork.ogr.workstub.worklength);
+        *resultcode = RESULT_FOUND;
+        return RESULT_FOUND;
+      }
+      break;
+    }
+  }
+  /* Something bad happened */
+#endif
+ *resultcode = -1; /* this will cause the problem to be discarded */
+ return -1;
+}
+
+static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
+                    u32 *iterationsP, int *resultcode)
+{
+#if !defined(HAVE_OGR_CORES) || !defined(HAVE_OGR_PASS2)
+  thisprob = thisprob;
+  iterationsP = iterationsP;
+#else
+  int r, nodes;
+
+  nodes = (int)(*iterationsP);
+  r = (thisprob->pub_data.unit_func.ogr)->cycle(
+                          thisprob->priv_data.core_membuffer,
+                          &nodes,
+                          thisprob->pub_data.cruncher_is_time_constrained);
+  *iterationsP = (u32)nodes;
+
+  u32 newnodeslo = thisprob->priv_data.contestwork.ogr_p2.nodes.lo + nodes;
+  if (newnodeslo < thisprob->priv_data.contestwork.ogr_p2.nodes.lo) {
+    thisprob->priv_data.contestwork.ogr_p2.nodes.hi++;
+  }
+  thisprob->priv_data.contestwork.ogr_p2.nodes.lo = newnodeslo;
+
+  switch (r)
+  {
+    case CORE_S_OK:
+    {
+      r = (thisprob->pub_data.unit_func.ogr)->destroy(thisprob->priv_data.core_membuffer);
+      if (r == CORE_S_OK)
+      {
+        *resultcode = RESULT_NOTHING;
+        return RESULT_NOTHING;
+      }
+      break;
+    }
+    case CORE_S_CONTINUE:
+    {
+      *resultcode = RESULT_WORKING;
+      return RESULT_WORKING;
+    }
+    case CORE_S_SUCCESS:
+    {
+      if ((thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr_p2.workstub, sizeof(WorkStub)) == CORE_S_OK)
+      {
+        //Log("OGR-P2 Success!\n");
+        thisprob->priv_data.contestwork.ogr_p2.workstub.stub.length =
+                  (u16)(thisprob->priv_data.contestwork.ogr_p2.workstub.worklength);
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }
@@ -1992,6 +2095,8 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
         break;
       #ifdef HAVE_OGR_PASS2
       case OGR_P2:
+        retcode = Run_OGR_P2( core_prob, &iterations, &last_resultcode );
+        break;
       #endif
       case OGR:
         retcode = Run_OGR( core_prob, &iterations, &last_resultcode );
@@ -2572,6 +2677,13 @@ static unsigned int __compute_permille(unsigned int cont_i,
 #ifdef HAVE_OGR_CORES
   #ifdef HAVE_OGR_PASS2
     case OGR_P2:
+    if (work->ogr_p2.workstub.worklength > (u32)work->ogr_p2.workstub.stub.length)
+    {
+      // This is just a quick&dirty calculation that resembles progress.
+      permille = work->ogr_p2.workstub.stub.diffs[work->ogr_p2.workstub.stub.length]*10
+                +work->ogr_p2.workstub.stub.diffs[work->ogr_p2.workstub.stub.length+1]/10;
+    }
+    break;
   #endif
     case OGR:
     if (work->ogr.workstub.worklength > (u32)work->ogr.workstub.stub.length)
@@ -2658,6 +2770,17 @@ int WorkGetSWUCount( const ContestWork *work,
 #ifdef HAVE_OGR_CORES
   #ifdef HAVE_OGR_PASS2
       case OGR_P2:
+      {
+        if (swucount && rescode != RESULT_WORKING)
+        {
+          u32 lo, tcountlo = work->ogr_p2.nodes.lo + 5000000ul;
+          u32 hi, tcounthi = work->ogr_p2.nodes.hi + (tcountlo<work->ogr_p2.nodes.lo ? 1 : 0);
+          /* ogr stats unit is Gnodes */
+          __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
+          units = (unsigned int)(hi * 100)+(lo / 10000000ul);
+        }
+      } /* OGR-P2 */
+      break;
   #endif
       case OGR:
       {
@@ -2856,6 +2979,48 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
   #ifdef HAVE_OGR_CORES
         #ifdef HAVE_OGR_PASS2
             case OGR_P2:
+            {
+              dcounthi = work.ogr_p2.nodes.hi;
+              dcountlo = work.ogr_p2.nodes.lo;
+              if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
+              {
+                tcounthi = dcounthi;
+                tcountlo = dcountlo;
+              }
+              /* current = donecount - startpos */
+              ccountlo = dcountlo - thisprob->pub_data.startkeys.lo;
+              ccounthi = dcounthi - thisprob->pub_data.startkeys.hi;
+              if (ccountlo > dcountlo)
+                ccounthi--;
+
+              if (flags & P_INFO_SIGBUF)
+              {
+                ogr_stubstr_r( &work.ogr_p2.workstub.stub, info->sigbuf, sizeof(info->sigbuf), 0);
+              }
+              if (flags & P_INFO_CWPBUF)
+              {
+                ogr_stubstr_r( &work.ogr_p2.workstub.stub, info->cwpbuf, sizeof(info->sigbuf), work.ogr_p2.workstub.worklength);
+              }
+              if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
+              {
+                u32 nodeshi, nodeslo;
+                /* ogr stats unit is Gnodes, rounded to 0.01 Gnodes */
+                nodeslo = tcountlo + 5000000ul;
+                nodeshi = tcounthi + (nodeslo<tcountlo ? 1 : 0);
+                __u64div( nodeshi, nodeslo, 0, 1000000000ul, 0, &hi, 0, &lo);
+                info->swucount = (hi * 100)+(lo / 10000000ul);
+              }
+              if (flags & P_INFO_EXACT_PE)
+              {
+                if (flags & P_INFO_C_PERMIL)
+                  info->c_permille = 0;
+                if (flags & P_INFO_S_PERMIL)
+                  info->s_permille = 0;
+                /* do not do inexact permille calculation for OGR */
+                flags &= ~(P_INFO_C_PERMIL | P_INFO_S_PERMIL);
+              }
+            } /* OGR-P2 */
+            break;
         #endif
             case OGR:
             {

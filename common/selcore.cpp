@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.63 2003/12/13 12:57:14 kakace Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.64 2004/02/14 14:16:26 kakace Exp $"; }
 
 //#define TRACE
 
@@ -620,11 +620,11 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     case DES:
       return selcoreSelectCore_des( threadindex, client_cpuP, selinfo );
 #endif
+#ifdef HAVE_OGR_CORES
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
       return selcoreSelectCore_ogr_p2( threadindex, client_cpuP, selinfo );
 #endif
-#ifdef HAVE_OGR_CORES
     case OGR:
       return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo );
 #endif

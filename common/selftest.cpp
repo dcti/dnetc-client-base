@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.6 2004/01/12 23:44:55 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.7 2004/02/14 14:16:26 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -520,18 +520,18 @@ long SelfTest( unsigned int contest )
         case OGR_P2:
         {
           int tcd;
-          contestwork.ogr.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
-          contestwork.ogr.minpos              = (u32)((*test_cases)[testnum][2]);
-          contestwork.ogr.workstub.stub.length = 0;
+          contestwork.ogr_p2.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
+          contestwork.ogr_p2.minpos              = (u32)((*test_cases)[testnum][2]);
+          contestwork.ogr_p2.workstub.stub.length = 0;
           for (tcd = 0; tcd < TEST_CASE_DATA-3; tcd++) 
           {
-            contestwork.ogr.workstub.stub.diffs[tcd] = (u16)((*test_cases)[testnum][3+tcd]);
-            if (contestwork.ogr.workstub.stub.diffs[tcd] == 0)
+            contestwork.ogr_p2.workstub.stub.diffs[tcd] = (u16)((*test_cases)[testnum][3+tcd]);
+            if (contestwork.ogr_p2.workstub.stub.diffs[tcd] == 0)
               break;
-            contestwork.ogr.workstub.stub.length++;  
+            contestwork.ogr_p2.workstub.stub.length++;  
           }
-          contestwork.ogr.workstub.worklength = 0;
-          contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
+          contestwork.ogr_p2.workstub.worklength = 0;
+          contestwork.ogr_p2.nodes.lo = contestwork.ogr_p2.nodes.hi = 0;
           break;
         }  
         #endif
@@ -547,7 +547,7 @@ long SelfTest( unsigned int contest )
               break;
             contestwork.ogr.workstub.stub.length++;  
           }
-          contestwork.ogr.minpos = 0;
+          contestwork.ogr.iterations = 0;
           contestwork.ogr.workstub.worklength = 0;
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
           break;
@@ -741,6 +741,39 @@ long SelfTest( unsigned int contest )
               #ifdef HAVE_OGR_CORES
               #ifdef HAVE_OGR_PASS2
               case OGR_P2:
+              {
+                if (expectedsolution_lo & 0x80000000)  // no solution
+                {
+                  expectedsolution_lo = ~expectedsolution_lo;
+                  if (resultcode != RESULT_NOTHING ||
+                    contestwork.ogr_p2.nodes.lo != expectedsolution_lo)
+                  {
+                    resulttext = "FAILED";
+                    resultcode = -1;
+                  }
+                  else
+                  {
+                    resulttext = "passed";
+                    successes++;
+                  }
+                }
+                else if (resultcode != RESULT_FOUND ||
+                    contestwork.ogr_p2.nodes.lo != expectedsolution_lo)
+                {
+                  resulttext = "FAILED";
+                  resultcode = -1;
+                }
+                else
+                {
+                  resulttext = "passed";
+                  successes++;
+                }
+                LogScreen( "\r%s: Test %02d %s: %s %08X-%08X\n",
+                                  contname, testnum + 1, resulttext,
+                                  ogr_stubstr(&contestwork.ogr_p2.workstub.stub),
+                                  contestwork.ogr_p2.nodes.lo, expectedsolution_lo );
+                break;
+              }
               #endif
               case OGR:
               {
