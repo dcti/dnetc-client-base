@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.54 2001/03/24 17:01:02 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.55 2001/04/06 16:10:53 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -339,7 +339,7 @@
   /* make shure we are only using threads if the compiler suuports it */
   /* for egcs, we have to use -mthreads, for xlc, use cc_r */
   #if defined(_THREAD_SAFE)
-  #define MULTITHREAD
+  #define HAVE_POSIX_THREADS
   #endif
 #elif defined(macintosh)
   #define CLIENT_OS_NAME   "Mac OS"
@@ -483,7 +483,7 @@
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
 #elif (CLIENT_OS == OS_LINUX) && \
-  !defined(MULTITHREAD) && (CLIENT_CPU == CPU_X86)
+  !defined(HAVE_POSIX_THREADS) && (CLIENT_CPU == CPU_X86)
   #define HAVE_KTHREADS /* platforms/linux/li_kthread.c */
   /* uses clone() instead of pthreads ... */
   /* ... but first thread is polled ... */
@@ -492,7 +492,7 @@
 #elif (CLIENT_OS == OS_AMIGAOS)
   typedef long THREADID;
   #define OS_SUPPORTS_SMP
-#elif defined(MULTITHREAD)
+#elif defined(HAVE_POSIX_THREADS)
   /*
   Q: can't we simply use if defined(_POSIX_THREADS), as this is often defined
      if POSIX threads are supported. Patrick Hildenbrand (patrick@mail4you.de)
@@ -539,11 +539,9 @@
   typedef int THREADID;
 #endif
 
-/* Fix up MULTITHREAD to mean "SMP aware and thread safe" */
 #if (defined(CORES_SUPPORT_SMP) && defined(OS_SUPPORTS_SMP))
    #define CLIENT_SUPPORTS_SMP
 #endif
-#undef MULTITHREAD /* undef it to avoid 'unsafe' meaning */
 
 /* ----------------------------------------------------------------- */
 
