@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.128 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129 2002/09/23 01:54:06 acidblood Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -55,6 +55,7 @@ static struct __dyn_timeslice_struct
   {  OGR_NEXTGEN_SOMEDAY,  200000,  0x8000000,  0x00010,  0x10000 },
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
 };
+// OK!
 static struct __dyn_timeslice_struct
   non_preemptive_dyn_timeslice_table[CONTEST_COUNT] = /* for co-op crunchers */
 {                                  /* adjusted by ClientRun() if appropriate */
@@ -65,6 +66,8 @@ static struct __dyn_timeslice_struct
   {  OGR_NEXTGEN_SOMEDAY,  200000,  0x8000000,  0x00010,  0x10000 },
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
 };
+
+// OK!
 #if (CONTEST_COUNT != 6)
   #error PROJECT_NOT_HANDLED("timeslice_tables: static initializers expect CONTEST_COUNT == 6")
 #endif

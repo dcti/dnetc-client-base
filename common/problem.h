@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.85 2002/09/22 17:30:12 jlawson Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.86 2002/09/23 01:54:06 acidblood Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -93,13 +93,13 @@ typedef union
   } crypto;        /* 48 bytes */
   #endif
   struct {
-    struct {u16 vhi; u32 hi,lo;} key;     // starting key
+    struct {u32 hi,lo; u16 vlo;} key;     // starting key
     struct {u32 hi,lo;} iv;               // initialization vector
     struct {u32 hi,lo;} plain;            // plaintext we're searching for
     struct {u32 hi,lo;} cypher;           // cyphertext
     struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
     struct {u32 hi,lo;} iterations;       // iterations to do
-    struct {u16 count; u16 vhi; u32 hi,lo;} check;   // keyid of last found counter-measure check.
+    struct {u16 count; u32 hi,lo; u16 vlo;} check;   // keyid of last found counter-measure check.
   } bigcrypto;     /* 62 bytes */
   #if defined(HAVE_OGR_CORES)
   struct {
@@ -110,9 +110,10 @@ typedef union
   struct {
     char unused[80];
   } unused;
-  #if 0
-    PROJECT_NOT_HANDLED("in ContestWork");
-  #endif
+//  #if 0
+//    PROJECT_NOT_HANDLED("in ContestWork");
+//  #endif
+// OK!
 } ContestWork;
 
 typedef struct

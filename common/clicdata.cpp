@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.31 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.32 2002/09/23 01:54:06 acidblood Exp $"; }
 
 #include "baseincs.h" // for timeval
 #include "problem.h"  // for contest IDs
@@ -42,6 +42,7 @@ static struct contestInfo
                   { "OGR_NG", "nodes", OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { "RC5-72", "keys",  RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   {  NULL,    NULL,   -1,       0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
+// OK!
 // obsolete projects may be omitted
 #if (CONTEST_COUNT != 6)
   #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 6")

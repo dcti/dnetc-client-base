@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.151 2002/09/22 18:43:01 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.152 2002/09/23 01:54:06 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -90,6 +90,7 @@ typedef struct
   {
     /* the following must be protected for thread safety */
     /* --------------------------------------------------------------- */
+// TODO: acidblood/trashover
     RC5UnitWork rc5unitwork; /* MUST BE longword (64bit) aligned */
     struct {u32 hi,lo;} refL0;
     ContestWork contestwork;
@@ -242,6 +243,7 @@ Problem *ProblemAlloc(void)
     
   if (thisprob && !err)
   {
+// TODO: acidblood/trashover
     p = (char *)&(thisprob->iprobs[PICKPROB_CORE].priv_data.rc5unitwork);
     if ((((unsigned long)p) & (sizeof(void *)-1)) != 0)
     {
@@ -359,6 +361,10 @@ static inline void __copy_internal_problem( InternalProblem *dest,
 //
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_pub_data.unit_func().
+// Doesn't need to be changed for RC5-72, since the high byte is kept in a
+// separate variable and doesn't need client-side incrementing, given that
+// the keymaster isn't allowed to generate keys on 64-bit boundaries.
+// OK!
 
 static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 {
@@ -384,11 +390,13 @@ static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 //         - a contest identifier (0==RC5 1==DES 2==OGR 3==CSC)
 //
 // Output: the key incremented
+// OK!
 
 static void __IncrementKey(u32 *keyhi, u32 *keylo, u32 iters, int contest)
 {
   switch (contest)
   {
+    case RC5_72:
     case RC5:
       __SwitchRC5Format(keyhi,keylo);
       *keylo = *keylo + iters;
@@ -455,6 +463,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->bigcrypto.iterations.hi = ( 1 );
       return contestid;
     }
+// OK!
     #if defined(HAVE_OGR_CORES)
     case OGR:
     {
@@ -501,6 +510,7 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
   contestid = RC5; 
   work->crypto.key.lo   = (rnd & 0xF0000000L);
   work->crypto.key.hi   = (rnd & 0x00FFFFFFL) + (last_rc5_prefix<<24);
+// TODO: acidblood/trashover
   //constants are in rsadata.h
   work->crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
   work->crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
@@ -580,6 +590,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   //has to be done before anything else
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
   {
+// TODO?: acidblood/trashover
 #ifdef HAVE_RC564_CORES
     contestid = __gen_random_work(contestid, &for_magic);
     work = &for_magic;
@@ -727,7 +738,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   case RC5_72:
     {
       // copy over the state information
-      thisprob->priv_data.contestwork.bigcrypto.key.vhi = ( work->bigcrypto.key.vhi );
+      thisprob->priv_data.contestwork.bigcrypto.key.vlo = ( work->bigcrypto.key.vlo );
       thisprob->priv_data.contestwork.bigcrypto.key.hi = ( work->bigcrypto.key.hi );
       thisprob->priv_data.contestwork.bigcrypto.key.lo = ( work->bigcrypto.key.lo );
       thisprob->priv_data.contestwork.bigcrypto.iv.hi = ( work->bigcrypto.iv.hi );
@@ -753,12 +764,13 @@ static int __InternalLoadState( InternalProblem *thisprob,
               thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.hi = 0;
               thisprob->priv_data.contestwork.bigcrypto.check.count = 0;
               thisprob->priv_data.contestwork.bigcrypto.check.hi = thisprob->priv_data.contestwork.bigcrypto.check.lo = 0;
-              thisprob->priv_data.contestwork.bigcrypto.check.vhi = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.vlo = 0;
               thisprob->pub_data.was_reset = 1;
             }
         }
 
-      // TODO: acidblood/trashover      
+      // TODO: acidblood/trashover
+      // OK!
       break;
     }
 
@@ -907,6 +919,8 @@ int ProblemRetrieveState( void *__thisprob,
     {
       switch (thisprob->pub_data.contest) 
       {
+// TODO?: acidblood/trashover
+        case RC5_72:
         case RC5:
         case DES:
         case CSC:
@@ -1572,6 +1586,8 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     iterations      = core_prob->pub_data.tslice;
     switch (core_prob->pub_data.contest)
     {
+// TODO?: acidblood/trashover
+      case RC5_72:
       case RC5: retcode = Run_RC5( core_prob, &iterations, &last_resultcode );
                 break;
       case DES: retcode = Run_DES( core_prob, &iterations, &last_resultcode );
@@ -1714,6 +1730,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
 
   switch (contest_i)
   {
+    case RC5_72:
     case RC5:
     {
       return 1;
@@ -2077,6 +2094,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
   unsigned int permille = 0;
   switch (cont_i)
   {
+// TODO: acidblood/trashover
     case RC5:
     case DES:
     case CSC:
@@ -2132,6 +2150,7 @@ int WorkGetSWUCount( const ContestWork *work,
     unsigned int units = 0;
     switch (contestid)
     {
+// TODO: acidblood/trashover
       case RC5:
       case DES:
       case CSC:
@@ -2276,6 +2295,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
   
           switch (contestid)
           {
+// TODO: acidblood/trashover
             case RC5:
             case DES:
             case CSC:

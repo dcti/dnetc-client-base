@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.5 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.6 2002/09/23 01:54:06 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -207,6 +207,8 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
   // machines (only on PDP machines does this assumption fail).
   switch (dest->contest)
   {
+// TODO?: acidblood/trashover
+    case RC5_72:
     case RC5:
     case DES:
     case CSC:
