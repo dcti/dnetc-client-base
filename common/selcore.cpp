@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.87 2001/01/09 00:49:27 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.88 2001/01/16 17:36:04 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -683,16 +683,12 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           {
             case 0x00: cindex = 0; break; // P5 ("RG/BRF class 5")
             #if !defined(HAVE_NO_NASM)
-            case 0x01: cindex = 3; break; // 386/486 ("RG/HB re-pair II")
+            case 0x01: cindex = 6; break; // 386/486 ("RG/HB re-pair II") (#1939)
             #else
             case 0x01: cindex = 1; break; // 386/486 ("RG class 3/4")
             #endif
             case 0x02: cindex = 2; break; // PII/PIII ("RG class 6")
-            #if !defined(HAVE_NO_NASM)
-            case 0x03: cindex = 6; break; // Cx6x86 ("RG/HB re-pair II")
-            #else
-            case 0x03: cindex = 3; break; // Cx6x86 ("RG re-pair I")
-            #endif
+            case 0x03: cindex = 3; break; // Cx6x86/MII ("RG re-pair I") (#1913)
             case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
             case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II")
             #if defined(SMC)    
@@ -705,9 +701,9 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x07: cindex = 2; break; // Celeron
             case 0x08: cindex = 2; break; // PPro
             #if !defined(HAVE_NO_NASM)
-            case 0x09: cindex = 6; break; // AMD>=K7/Cx>=MII ("RG/HB re-pair II")
+            case 0x09: cindex = 6; break; // AMD>=K7/Cx>MII ("RG/HB re-pair II")
             #else
-            case 0x09: cindex = 3; break; // AMD>=K7/Cx>=MII ("RG re-pair I")
+            case 0x09: cindex = 3; break; // AMD>=K7/Cx>MII ("RG re-pair I")
             #endif
             case 0x0A: cindex = 1; break; // Centaur C6
             //no default
