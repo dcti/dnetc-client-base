@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.62 2000/09/17 12:23:50 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.63 2000/09/22 16:30:37 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -37,7 +37,13 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.62 2000/09/17 12:23:50 cyp Exp $
                  file in [/usr/local]/etc/. Refer to the man page for details.
             new: *nix: optional -multiok=0 switch to prohibit multiple 
                  instances of the client from running at the same time.
+            chg: all: network lookups/connects are verbose (screen only).
             chg: rc5: random-prefix is no longer written to the .ini
+            chg: all: If a dialup connection had been previously initiated 
+                 by the client AND the link drops while doing network i/o,
+                 the client will redial again.
+            new: the crunch-o-meter displays a twirling baton (by default) if
+                 not running with a GUI window and output is not redirected.
 
 2.8010.463  fix: linux/x86: resolved various dns lookup, lib and
                  portability issues by building against static libc5
