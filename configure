@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.93 2000/01/13 11:41:49 friedbait Exp $
+# @(#)$Id: configure,v 1.222.2.94 2000/01/14 23:12:07 friedbait Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -361,7 +361,7 @@ OPTS_EGCS_VAX="$OPTS_EGCS -O2 -DASM_VAX"
 
 #-- S390 - Linux
 
-OPTS_EGCS_S390_LINUX="$OPTS_EGCS -fno-caller-saves -D__S390__"
+OPTS_EGCS_S390_LINUX="$OPTS_EGCS -fno-caller-saves -D__S390__ -U__i386__"
 OPTS_RC5_S390_LINUX=""
 OPTS_DES_S390_LINUX="-DKWAN -DMEGGS -DHAVE_DES_CORES"
 OPTS_CSC_S390_LINUX="-DHAVE_CSC_CORES"
