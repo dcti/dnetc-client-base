@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-486-smc-rg.cpp,v $
+// Revision 1.7  1998/12/21 01:21:39  remi
+// Recommitted to get the right modification time.
+//
+// Revision 1.6  1998/12/21 16:37:28  remi
+// - supressed work_key2_ebp as it's the same as S2(25). Thanks Silby!
+// - put extern "C" in front of the *.cpp cores.
+//
 // Revision 1.5  1998/11/28 17:52:18  remi
 // Corrected BALIGN4 macro for *BSD.
 //
@@ -57,7 +64,7 @@
 // build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:33  remi
-// Lots of $Id: rc5-486-smc-rg.cpp,v 1.5 1998/11/28 17:52:18 remi Exp $ stuff.
+// Lots of $Id: rc5-486-smc-rg.cpp,v 1.7 1998/12/21 01:21:39 remi Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:43  remi
 // $Id fun ...
@@ -97,7 +104,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_486_smc_rg_cpp (void) {
-return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.5 1998/11/28 17:52:18 remi Exp $"; }
+return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.7 1998/12/21 01:21:39 remi Exp $"; }
 #endif
 
 #define CORE_INCREMENTS_KEY
@@ -138,30 +145,28 @@ return "@(#)$Id: rc5-486-smc-rg.cpp,v 1.5 1998/11/28 17:52:18 remi Exp $"; }
 struct work_struct {
     u32 add_iter;	// +  0
     u32 save_ebp;	// +  4
-    u32 key2_ebp;	// +  8
-    u32 key2_edi;	// + 12
-    u32 key2_esi;	// + 16
-    u32 key_hi;		// + 20
-    u32 key_lo;		// + 24
-    u32 iterations;	// + 28
-    u32 pre1_r1;	// + 32
-    u32 pre2_r1;	// + 36
-    u32 pre3_r1;	// + 40
+    u32 key2_edi;	// +  8
+    u32 key2_esi;	// + 12
+    u32 key_hi;		// + 16
+    u32 key_lo;		// + 20
+    u32 iterations;	// + 24
+    u32 pre1_r1;	// + 28
+    u32 pre2_r1;	// + 32
+    u32 pre3_r1;	// + 36
 };
 
 //  Offsets to access work_struct fields.
 
 #define	work_add_iter   "0+%0"
 #define	work_save_ebp   "4+%0" 
-#define	work_key2_ebp   "8+%0" 
-#define	work_key2_edi   "12+%0"
-#define	work_key2_esi   "16+%0"
-#define work_key_hi     "20+%0"
-#define work_key_lo     "24+%0"
-#define work_iterations "28+%0"
-#define work_pre1_r1    "32+%0"
-#define work_pre2_r1    "36+%0"
-#define work_pre3_r1    "40+%0"
+#define	work_key2_edi   "8+%0" 
+#define	work_key2_esi   "12+%0"
+#define work_key_hi     "16+%0"
+#define work_key_lo     "20+%0"
+#define work_iterations "24+%0"
+#define work_pre1_r1    "28+%0"
+#define work_pre2_r1    "32+%0"
+#define work_pre3_r1    "36+%0"
 
 //  Macros to access the S arrays.
 
@@ -346,10 +351,7 @@ _modif486_r3_"_(Sx)"_"_(N2)":			#	24
 // (can't use static variables, and can't use push/pop in this
 //  function because &work_struct is relative to %esp)
 
-extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice ) ;
-
-//static
-u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice ) 
+extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * rc5unitwork, u32 timeslice ) 
 {
     work_struct work;
 
@@ -496,7 +498,6 @@ _modif486_r2_S1_2:
 
     /* Save 2nd key parameters and initialize result variable */
 "_end_round2_486:
-	movl	%%ebp,"work_key2_ebp"
 	movl	%%esi,"work_key2_esi"
 	movl	%%edi,"work_key2_edi" \n"
 
@@ -576,15 +577,15 @@ _modif486_work_C_1_1:
 	je	_full_exit_486
 
 "BALIGN4"
-nop	# spacers, won't be executed anyway
-nop
+nop	# spacers, will be executed every 2^32 keys, not a big deal
 nop
 __exit_1_486: \n"
 
     /* Restore 2nd key parameters */
 "	movl	"work_key2_edi", %%edx
 	movl	"work_key2_esi", %%ebx
-	movl	"work_key2_ebp", %%eax\n"
+	movl	_modif486_r3_S2_25+1, %%eax
+\n"
 
     /* ---------------------------------------------------- */
     /* Begin round 3 of key expansion mixed with encryption */
@@ -746,3 +747,4 @@ _full_exit_486:
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }
+

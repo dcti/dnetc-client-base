@@ -3,6 +3,22 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.7  1998/12/21 01:21:39  remi
+// Recommitted to get the right modification time.
+//
+// Revision 1.6  1998/12/21 14:23:57  remi
+// Fixed the weirdness of proxy, keyport, uuehttpmode etc... handling :
+// - if keyproxy ends in .distributed.net, keyport and uuehttpmode are
+//   kept in sync in ::ValidateConfig()
+// - if uuehttpmode == 2|3, keyport = 80 and can't be changed
+//   (port 80 is hardwired in the http code somewhere in network.cpp)
+// - do not delete uuehttpmode from the .ini file when it's > 1 (!!)
+//   this bug makes client <= 422 difficult to use with http or socks...
+// - write keyport in the .ini only if it differs from the default
+//   (2064 | 80 | 23) for a given uuehttmode
+// - fixed bugs in ::ConfigureGeneral() related to autofindkeyserver,
+//   uuehttpmode, keyproxy, and keyport.
+//
 // Revision 1.5  1998/12/21 00:21:01  silby
 // Universally scheduled update time is now retrieved from the proxy,
 // and stored in the .ini file.  Not yet used, however.
@@ -35,7 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.5 1998/12/21 00:21:01 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.7 1998/12/21 01:21:39 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -47,6 +63,7 @@ return "@(#)$Id: confrwv.cpp,v 1.5 1998/12/21 00:21:01 silby Exp $"; }
 #include "lurk.h"      // lurk stuff
 #include "cpucheck.h"  // GetProcessorType() for mmx stuff
 #include "confopt.h"   // conf_option table
+#include "network.h"   // ntohl()
 
 // --------------------------------------------------------------------------
 
@@ -344,10 +361,18 @@ void Client::ValidateConfig( void ) //DO NOT PRINT TO SCREEN HERE!
     nettimeout=conf_options[CONF_NETTIMEOUT].choicemax;
 
   confopt_killwhitespace(keyproxy);
-  if (keyproxy[0]==0 || strcmpi(keyproxy,"auto")==0 || 
-      strcmpi(keyproxy,"(auto)")==0)
+  if (keyproxy[0]==0 || strcmpi(keyproxy,"auto")==0 || strcmpi(keyproxy,"(auto)")==0)
     keyproxy[0]=0;
-  
+  if (keyproxy[0] == 0 || confopt_IsHostnameDNetHost( keyproxy ))
+    switch (uuehttpmode) {
+      case 1 : if (keyport != 23) keyport = 23; break;
+      case 2 :
+      case 3 : if (keyport != 80) keyport = 80; break;
+      default: if (keyport != 2064 && keyport != 3064) keyport = 2064; break;
+    }
+  else if (uuehttpmode == 2 || uuehttpmode == 3)
+    keyport = 80; // for some reasons, the http code has port 80 hardwired in it
+
   confopt_killwhitespace(httpproxy);
   confopt_killwhitespace(smtpsrvr);
 
@@ -536,47 +561,50 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
   
     if ((tempptr = ini.findfirst( "networking", "autofindkeyserver"))!=NULL)
       tempptr->values.Erase();
+
+    INISETKEY( CONF_UUEHTTPMODE, uuehttpmode );
+    
     if (uuehttpmode <= 1)
       {
       // wipe out httpproxy and httpport & httpid
-      tempptr = INIFIND( CONF_UUEHTTPMODE );
-      if (tempptr) tempptr->values.Erase();
       tempptr = INIFIND( CONF_HTTPPROXY );
       if (tempptr) tempptr->values.Erase();
       tempptr = INIFIND( CONF_HTTPPORT );
       if (tempptr) tempptr->values.Erase();
       tempptr = INIFIND( CONF_HTTPID );
       if (tempptr) tempptr->values.Erase();
-  
-      if (confopt_isstringblank(keyproxy) || (autofindkeyserver && confopt_IsHostnameDNetHost(keyproxy)))
-        {
-        //autokeyserver is enabled (because its on AND its a dnet host), so delete 
-        //the old ini keys so that old inis stay compatible. We could at this 
-        //point set keyproxy=rc5proxy.distributed.net, but why clutter up the ini?
-        tempptr = ini.findfirst(OPTION_SECTION, "keyproxy");
-        if (tempptr) tempptr->values.Erase();
-        }
-      else 
-        {
-        if (confopt_IsHostnameDNetHost(keyproxy))
-          ini.setrecord("networking", "autofindkeyserver", IniString("0"));
-        INISETKEY( CONF_KEYPROXY, keyproxy );
-        }
-      if (keyport!=2064 || INIFIND(CONF_KEYPORT)!=NULL)
-        INISETKEY( CONF_KEYPORT, keyport );
       }
     else
       {
-      INISETKEY( CONF_UUEHTTPMODE, uuehttpmode );
       INISETKEY( CONF_HTTPPROXY, httpproxy );
       INISETKEY( CONF_HTTPPORT, httpport );
       INISETKEY( CONF_HTTPID, httpid);
+      }
   
-      tempptr = INIFIND( CONF_KEYPROXY );
-      if (tempptr) tempptr->values.Erase();
-      tempptr = INIFIND( CONF_KEYPORT );
+    if (confopt_isstringblank(keyproxy) || 
+	(autofindkeyserver && confopt_IsHostnameDNetHost(keyproxy)))
+      {
+      //autokeyserver is enabled (because its on AND its a dnet host), so delete 
+      //the old ini keys so that old inis stay compatible. We could at this 
+      //point set keyproxy=rc5proxy.distributed.net, but why clutter up the ini?
+      tempptr = ini.findfirst(OPTION_SECTION, "keyproxy");
       if (tempptr) tempptr->values.Erase();
       }
+    else 
+      {
+      if (confopt_IsHostnameDNetHost(keyproxy))
+        ini.setrecord("networking", "autofindkeyserver", IniString("0"));
+      INISETKEY( CONF_KEYPROXY, keyproxy );
+      }
+    // write keyport only if it differs from the default for the given uuehttpmode
+    if (((uuehttpmode == 0 || uuehttpmode == 4 || uuehttpmode == 5) && keyport != 2064) || 
+	((uuehttpmode == 2 || uuehttpmode == 3) && keyport != 80) ||
+	(uuehttpmode == 1 && keyport != 23))
+      INISETKEY( CONF_KEYPORT, keyport );
+    else {
+      tempptr = ini.findfirst(OPTION_SECTION, "keyport");
+      if (tempptr) tempptr->values.Erase();
+    }
   
     if (messagelen == 0)
       {
@@ -619,5 +647,6 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
 }
 
 // --------------------------------------------------------------------------
+
 
 

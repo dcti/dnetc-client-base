@@ -3,6 +3,22 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.6  1998/12/21 01:21:39  remi
+// Recommitted to get the right modification time.
+//
+// Revision 1.5  1998/12/21 14:23:58  remi
+// Fixed the weirdness of proxy, keyport, uuehttpmode etc... handling :
+// - if keyproxy ends in .distributed.net, keyport and uuehttpmode are
+//   kept in sync in ::ValidateConfig()
+// - if uuehttpmode == 2|3, keyport = 80 and can't be changed
+//   (port 80 is hardwired in the http code somewhere in network.cpp)
+// - do not delete uuehttpmode from the .ini file when it's > 1 (!!)
+//   this bug makes client <= 422 difficult to use with http or socks...
+// - write keyport in the .ini only if it differs from the default
+//   (2064 | 80 | 23) for a given uuehttmode
+// - fixed bugs in ::ConfigureGeneral() related to autofindkeyserver,
+//   uuehttpmode, keyproxy, and keyport.
+//
 // Revision 1.4  1998/12/21 00:21:01  silby
 // Universally scheduled update time is now retrieved from the proxy,
 // and stored in the .ini file.  Not yet used, however.
@@ -30,7 +46,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.4 1998/12/21 00:21:01 silby Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.6 1998/12/21 01:21:39 remi Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -143,15 +159,27 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
     
     conf_options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
     conf_options[CONF_KEYPROXY].thevariable=(char *)(&keyproxy[0]);
-    conf_options[CONF_KEYPROXY].optionscreen=((uuehttpmode < 2)?(3):(0));
+    conf_options[CONF_KEYPROXY].optionscreen=3;
+    // keyport is always shown :
+    // if uuehttpmode == 1 (uue+telnet), the port can be changed to use some
+    //   redirection service from datapide, wingate, of any firewall program
+    // if uuehttpmode == 2|3 (http[+uue]), the port is hardwired somewhere else
+    //   in the code, but the user must be aware that this variable can't be 
+    //   changed. The menu handling code will force it to 80 whatever the user
+    //   will type.
+    // if uuehttpmode != 1|2|3 the keyport can be freely modified from its default.
     conf_options[CONF_KEYPORT].thevariable=&keyport;
-    conf_options[CONF_KEYPORT].optionscreen=((uuehttpmode < 2)?(3):(0));
+    conf_options[CONF_KEYPORT].optionscreen = 3;
+    // available only with http or socks proxy
     conf_options[CONF_HTTPPROXY].thevariable=(char *)(&httpproxy[0]);
-    conf_options[CONF_HTTPPROXY].optionscreen=((uuehttpmode < 2)?(0):(3));
+    conf_options[CONF_HTTPPROXY].optionscreen=((uuehttpmode >= 2) ? (3):(0));
     conf_options[CONF_HTTPPORT].thevariable=&httpport;
-    conf_options[CONF_HTTPPORT].optionscreen=((uuehttpmode < 2)?(0):(3));
+    conf_options[CONF_HTTPPORT].optionscreen=((uuehttpmode >= 2) ? (3):(0));
+    // available only with a http(+uue) or socks5 proxy setup
     conf_options[CONF_HTTPID].thevariable=(char *)(&httpid[0]);
-    conf_options[CONF_HTTPID].optionscreen=((uuehttpmode < 2)?(0):(3));
+    conf_options[CONF_HTTPID].optionscreen=((uuehttpmode == 2 || 
+					     uuehttpmode == 3 || 
+					     uuehttpmode == 5)?(3):(0));
 
     conf_options[CONF_MESSAGELEN].thevariable=&messagelen;
     conf_options[CONF_SMTPSRVR].thevariable=(char *)(&smtpsrvr[0]);
@@ -336,7 +364,7 @@ conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
         choice = findmenuoption(currentmenu,choice); // returns -1 if !found
       else
         choice = -1;
-      } while ( choice == -1 ); //while findmenuoption() says this is illegal
+    } while ( choice == -1 ); //while findmenuoption() says this is illegal
 
     if ( choice >= 0 ) //if valid CONF_xxx option
       {
@@ -414,18 +442,6 @@ conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
       strcpy( keyproxy, lkg_keyproxy ); //copy whatever they had back
       autofindkeyserver = (lkg_autofind != 0);
       }
-    else
-      {
-      autofindkeyserver = 0; //OFF unless the user left it at auto
-      if (!parm[0] || strcmpi(parm,"(auto)")==0 || strcmpi(parm,"auto")==0)
-        {
-        autofindkeyserver = 1;
-        strcpy( parm, lkg_keyproxy ); //copy back what was in there before
-        if (confopt_isstringblank( parm )) //dummy value so that we don't fall into
-          strcpy( parm, "rc5proxy.distributed.net" ); //the null string trap.
-        }
-      }
-
     
     if ( choice >= 0 ) 
       {
@@ -482,6 +498,22 @@ conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
             logname[0]=0;
           break;
         case CONF_KEYPROXY:
+	  autofindkeyserver = 0; //OFF unless the user left it at auto
+	  if (( parm[0] && (strcmpi(parm,"(auto)")==0 || strcmpi(parm,"auto")==0)) || 
+	      (!parm[0] && (!lkg_keyproxy[0] || 
+			    confopt_IsHostnameDNetHost( lkg_keyproxy ))))
+	    {
+	    autofindkeyserver = 1;
+	    // if the keyproxy read from .ini is part of d.net
+	    // we keep it for backward compatibility
+	    if (confopt_IsHostnameDNetHost( lkg_keyproxy ))
+	      strcpy (keyproxy, lkg_keyproxy);
+	    // else we put in some known DNS alias
+	    else
+	      strcpy (keyproxy, "rc5proxy.distributed.net");
+	    break;
+	    }
+	  if (!parm[0]) strcpy( parm, lkg_keyproxy ); //copy whatever they had back
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
           keyproxy[sizeof(keyproxy)-1]=0;
           confopt_killwhitespace(keyproxy);
@@ -495,18 +527,47 @@ conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
                 { p++; break; }
               } while (isdigit(*p));
             choice = ((!isdigit(*p))?(2064):(atoi(p)));
-            strcpy( p, ".v27.distributed.net");
-            if (choice == 2064 || choice == 80 || choice == 23)
+            if (choice == 3064 || choice == 2064 || choice == 80 || choice == 23)
               keyport = choice;
-            else if (keyport != 3064 || keyport != 2064 || choice != 80 || choice != 23)
+            else
               keyport = 2064;
+
+	    switch (keyport) 
+	      {
+	      case 23 : // switch to UUE mode (telnet)
+		uuehttpmode = 1;
+	        strcpy( p, "23.v27.distributed.net");
+		break;
+	      
+	      case 80 : // switch to HTTP or HTTP+UUE mode
+		if (uuehttpmode != 3) uuehttpmode = 2;
+		strcpy( p, "80.v27.distributed.net");
+		break;
+
+	      default :
+		if (uuehttpmode != 0 && uuehttpmode != 4 && uuehttpmode != 5)
+		  uuehttpmode = 0;
+		// rc5proxy.v27.distributed.net is *NOT* a valid name
+		if (strcmpi(keyproxy,"rc5proxy.distributed.net") != 0)
+		    strcpy( p, ".v27.distributed.net");
+	      }
             }
           break;
         case CONF_KEYPORT:
           choice = atoi(parm);
-          if (confopt_IsHostnameDNetHost( keyproxy ) && 
-             (keyport!=3064 || keyport!=2064 || choice!=80 || choice!=23))
-            keyport = 2064;
+          if (confopt_IsHostnameDNetHost( keyproxy ))
+	    {
+	    if ((uuehttpmode == 0 || uuehttpmode == 4 || uuehttpmode == 5) && 
+		choice != 2064 && choice != 3064)
+	      choice = 2064;
+	    else if (uuehttpmode == 1)
+	      choice = 23; // no other ports in d.net network accept telnet connections
+	    else if (uuehttpmode == 2 || uuehttpmode == 3)
+	      choice = 80; // no other ports in d.net network accept http connections
+	    keyport = choice;
+	    }
+	  else if (uuehttpmode == 2 || uuehttpmode == 3)
+	    keyport = 80; // for some reasons, http code has port 80 hardwired in it
           else if (choice > 0 && choice <= 65535)
             keyport = choice;
           break;
@@ -545,27 +606,24 @@ conf_options[CONF_SCHEDULEDUPDATETIME].thevariable=(s32*)&scheduledupdatetime;
             }
           break;
         case CONF_UUEHTTPMODE:
-          choice = atoi(parm);
+          choice = (parm[0]) ? (atoi(parm)) : (-1);
           if (choice >= conf_options[CONF_UUEHTTPMODE].choicemin && 
               choice <= conf_options[CONF_UUEHTTPMODE].choicemax)
             {
             uuehttpmode = choice;
-            if ( choice > 0 )
+	    autofindkeyserver=1; //we are using a default, so turn it back on
+	    switch (uuehttpmode)
               {
-              autofindkeyserver=1; //we are using a default, so turn it back on
-              switch (uuehttpmode)
-                {
-                case 1: /* UUE mode (telnet) */ p = "23"; keyport = 23; break;   
-                case 2: /* HTTP mode */
-                case 3: /* HTTP+UUE mode */     p = "80"; keyport = 80; break;
-                case 4: /* SOCKS4 */
-                case 5: /* SOCKS5 */
-                default:/* normal */            p = ""; keyport = 2064; break;
-                }
-              strcpy(keyproxy,"rc5proxy.distributed.net");
-              //sprintf(keyproxy,"us%s.v27.distributed.net", p );
+	      case 1: /* UUE mode (telnet) */ p = "23"; keyport = 23; break;   
+	      case 2: /* HTTP mode */
+	      case 3: /* HTTP+UUE mode */     p = "80"; keyport = 80; break;
+	      case 4: /* SOCKS4 */
+	      case 5: /* SOCKS5 */
+	      default:/* normal */            p = ""; keyport = 2064; break;
               }
-            }
+	    strcpy(keyproxy,"rc5proxy.distributed.net");
+	    //sprintf(keyproxy,"us%s.v27.distributed.net", p );
+	    }
           break;
         case CONF_CPUTYPE:
           choice = ((parm[0] == 0)?(-1):(atoi(parm)));
@@ -830,4 +888,5 @@ s32 Client::Configure( void )
 }
 
 //----------------------------------------------------------------------------
+
 
