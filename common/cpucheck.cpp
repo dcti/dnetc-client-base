@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.50 2004/04/12 17:32:13 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.51 2004/04/17 18:36:56 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -763,7 +763,8 @@ static long __GetRawProcessorID(const char **cpuname)
        break;
     }
 
-    isaltivec = (vec == VECTORTYPE_ALTIVEC);
+    // Altivec support disabled for now!
+    //isaltivec = (vec == VECTORTYPE_ALTIVEC);
     #elif !defined(__POWERUP__)
     /* WarpOS */
     struct TagItem cputags[2] = { {GETINFO_CPU, 0}, {TAG_END,0} };
