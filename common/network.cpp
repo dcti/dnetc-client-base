@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.50  1998/11/12 07:33:36  remi
+// Solved the round-robin bug. Network::Close() sets retries=0, and it was
+// called by Network::Open(), so multiple Network::Open() won't see
+// anything but retries==0. Network::LowLevelCreateSocket() also called
+// Network::Close(), instead of Network::LowLevelCloseSocket() I think.
+//
 // Revision 1.49  1998/10/26 02:55:04  cyp
 // win16 changes
 //
@@ -133,7 +139,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.49 1998/10/26 02:55:04 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.50 1998/11/12 07:33:36 remi Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -410,7 +416,14 @@ int Network::Open( void )               // returns -1 on error, 0 on success
   mode = startmode;
   const char *conntohost = "";
 
-  Close();
+  //Close();
+  //LowLevelCloseSocket(); // will be called by LowLevelCreateSocket()
+  //retries = 0;
+  gethttpdone = puthttpdone = 0;
+  netbuffer.Clear();
+  uubuffer.Clear();
+  gotuubegin = gothttpend = 0;
+  httplength = 0;
 
   if (!NetCheckIsOK())
     return -1;
@@ -1186,7 +1199,7 @@ int Network::GetHostName( char *buffer, unsigned int len )
 
 int Network::LowLevelCreateSocket(void)
 {
-  Close(); //make sure the socket is closed already
+  LowLevelCloseSocket(); //make sure the socket is closed already
 
   if (!NetCheckIsOK())
     return -1;
