@@ -1,21 +1,25 @@
+#
+# distributed.net makefile for AmigaOS
+#
+
 PROGNAME_PPC = dnetc_ppc
 PROGNAME_68K = dnetc_68k
 
 DEBUG    = 
 OPTIMIZE = optimize optsched
-CFLAGS   = unsignedchars nostkchk strmerge parms=reg define=LESS_GETENV define=_CPU_32BIT_ define=BIT_32 define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
+CFLAGS   = unsignedchars nostkchk strmerge parms=reg define=LESS_GETENV define=KWAN define=MEGGS includedir=netinclude: includedir=platforms/ includedir=common/ utillib nover NOLINK
 DISASM   =
 LFLAGS   = #farcode fardata
 
 DEBUG_PPC    = $(DEBUG) #DEBUG=S
 OPTIMIZE_PPC = $(OPTIMIZE)
-CFLAGS_PPC   = $(DEBUG_PPC) $(OPTIMIZE_PPC) $(CFLAGS) define=PIPELINE_COUNT=1 HUNKOBJ
+CFLAGS_PPC   = $(DEBUG_PPC) $(OPTIMIZE_PPC) $(CFLAGS) HUNKOBJ
 DISASM_PPC   = $(DISASM)
 LFLAGS_PPC   = $(LFLAGS)
 
 DEBUG_68K    = $(DEBUG) #DEBUG=S
 OPTIMIZE_68K = $(OPTIMIZE)
-CFLAGS_68K   = $(DEBUG_68K) $(OPTIMIZE_68K) $(CFLAGS) define=PIPELINE_COUNT=2 CPU=68040 DATA=FAR CODE=FAR
+CFLAGS_68K   = $(DEBUG_68K) $(OPTIMIZE_68K) $(CFLAGS) CPU=68040 DATA=FAR CODE=FAR
 DISASM_68K   = $(DISASM)
 LFLAGS_68K   = $(LFLAGS)
 
@@ -79,7 +83,6 @@ platforms/amiga/usleep.o_ppc
 
 AMIGA_OBJS_68K =\
 platforms/amiga/_tzset.o_68k\
-platforms/amiga/globals.o_68k\
 platforms/amiga/amiga_version.o_68k\
 
 COMMON_OBJS_68K =\
@@ -248,7 +251,6 @@ platforms/amiga/usleep.o_ppc	:	platforms/amiga/usleep.c
 #	
  
 platforms/amiga/_tzset.o_68k	:	platforms/amiga/_tzset.c
-platforms/amiga/globals.o_68k	:	platforms/amiga/globals.c
 platforms/amiga/amiga_version.o_68k	:	platforms/amiga/amiga_version.c common/client.h
 common/confrwv.o_68k	:	common/confrwv.cpp
 common/confopt.o_68k	:	common/confopt.cpp

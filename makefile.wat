@@ -6,7 +6,7 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.27.2.5 1999/11/15 04:48:55 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.6 1999/12/08 02:49:14 cyp Exp $
 
 BASENAME = dnetc
 
@@ -42,8 +42,7 @@ BASENAME = dnetc
                    output\csc-6b-i.obj output\csc-6b.obj &
                    output\convcsc.obj output\csc-common.obj
 %cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc
-%cscstd_SYMALIAS = 
-#                  csc_unit_func_1k=_csc_unit_func_1k
+%cscstd_SYMALIAS =
 #                  csc_unit_func_6b_i=_csc_unit_func_6b_i &
 #                  csc_unit_func_1k=_csc_unit_func_1k &
 #                  csc_unit_func_6b=_csc_unit_func_6b
@@ -77,12 +76,12 @@ BASENAME = dnetc
 %rc5mmxamd_SYMALIAS = #
 #---
 %desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
-%desmmx_DEFALL   = /DMEGGS /DMMX_BITSLICER /DBIT_64 #/DBITSLICER_WITH_LESS_BITS
+%desmmx_DEFALL   = /DMEGGS /DMMX_BITSLICER #/DBITSLICER_WITH_LESS_BITS
 %desmmx_SYMALIAS = #
 #---
 %des_mt_LINKOBJS = output\p2bdespro.obj output\bbdeslow.obj &
                    output\des-slice.obj output\deseval.obj output\sboxes-kwan4.obj 
-%des_mt_DEFALL   = /DKWAN #/DBIT_32
+%des_mt_DEFALL   = /DKWAN 
 %des_mt_SYMALIAS = #
 #---
 
@@ -93,7 +92,7 @@ BASENAME = dnetc
 %LINK=wlink #\develop\watcom\binnt\wlink.exe
 
 %NASMEXE  = nasm           #point this to nasm (don't call the envvar 'NASM'!)
-%NASMFLAGS= -f win32 -s #-f obj -D__OMF__ -DOS2 -s
+%NASMFLAGS= -f obj -D__OMF__ -DOS2 -s
 %TASMEXE  =                #point this to tasm in your section if you have it
 %TFLAGS   = /ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE= 32K            #may be redefined in the platform specific section
@@ -524,7 +523,7 @@ output\csc-1k.obj : csc\x86\csc-1k.asm $(%dependall) .AUTODEPEND
   @if exist $[*.obj copy $[*.obj $^@ >nul: 
   @if exist $[*.obj wtouch $^@
   @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -l $[*.lst -i $[: $[@ 
+  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
 output\csc-1k-i.obj : csc\x86\csc-1k-i.asm $(%dependall) .AUTODEPEND
@@ -671,7 +670,7 @@ output\os2inst.obj : platforms\os2cli\os2inst.cpp $(%dependall) .AUTODEPEND
 #-----------------------------------------------------------------------
 
 platform: .symbolic
-  @set CFLAGS    = $(%CFLAGS) /zq #-DBETA      ## compile quietly
+  @set CFLAGS    = $(%CFLAGS) /zq -DBETA      ## compile quietly
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
   @set isused=0
@@ -756,7 +755,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
      #-------------------------
@@ -792,7 +791,7 @@ os2: .symbolic                                       # OS/2
      @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
 
@@ -830,7 +829,7 @@ w16: .symbolic                                       # Windows/16
      ##@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
      #---------------------------
@@ -868,13 +867,13 @@ w32: .symbolic                               # win32
      @set ZIPOPTS   = -exo
      @set ZIPFILE   = #$(BASENAME)-win32-x86-cli
      @set BINNAME   = $(BASENAME).exe
-     #@set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
+     @set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
      @%make declare_for_des
      @%make declare_for_desmt
      @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
      #---------------------------------
@@ -973,7 +972,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      #@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
      @%make declare_for_csc
      @%make platform
      #

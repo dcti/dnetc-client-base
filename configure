@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.69 1999/12/06 10:04:38 myshkin Exp $
+# @(#)$Id: configure,v 1.222.2.70 1999/12/08 02:49:11 cyp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -270,8 +270,8 @@ OPTS_MIPSPRO_SRCS="rc5/ansi/2-rg.c ${MEGGS_SLICE_SRCS2} ${CSC_ANSI_SRCS}"
 OPTS_MIPSPRO_DOCS="docs/readme._ix"
 
 # Common to a specific ABI:
-OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} -n32 -DBIT_32"
-OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS}  -64 -DBIT_64"
+OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} -n32 "
+OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS}  -64 "
 
 ## GNU
 
@@ -366,12 +366,12 @@ OPTS_OS390="-D_ALL_SOURCE"
 # See Also: platforms/ultrasparc/s_paramaters.h
 #
 OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
-		  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 \
+		  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION  \
 		  -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
 # a bit hairy, isn't it ? ;-)
 OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
 		    -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM \
-		    -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DBIT_64 \
+		    -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE  \
 		    -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL \
 		    -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc \
 		    -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
@@ -381,7 +381,7 @@ OPTS_DES_ULTRA_ASM="-DASM_SPARC -DIN_DCTI_CLIENT \
 
 #-- MMX/DES
 
-OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS -DBIT_64"
+OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS "
 
 #
 # Define the default compilation options
@@ -607,7 +607,7 @@ case "$1" in
     *mips-linux)	# For Cobalt Qube - doesn't work yet - Peter
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -mcpu=r3000 -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
+			 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -624,7 +624,7 @@ case "$1" in
 	#  mips-crunch.cpp doesn't yet compile with CC
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -O3 -r5000 -IPA -64 -mips4 \
-			-DBIT_64 -DKWAN -DMEGGS"
+			 -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static -64 -IPA -mips4"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -634,7 +634,7 @@ case "$1" in
 	#  mips-crunch.cpp doesn't compile with CC
 	TARGET_CC="CC"
 	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -D_irix5_ \
-			-DBIT_32 -DKWAN -DMEGGS"
+			 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -644,7 +644,7 @@ case "$1" in
 	TARGET_CC="CC"
 	TARGET_LDFLAGS="-n32"
 	TARGET_CCFLAGS="$OPTS_CC_MIPSPRO -n32 -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
+			 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -653,7 +653,7 @@ case "$1" in
     *mips-gcc-irix5-crunch)	# faster than mips-gcc for IRIX
         DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS -D_irix5_ \
-			-D_CPU_32BIT_ -DBIT_32 -DKWAN -DMEGGS"
+			-DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -661,7 +661,7 @@ case "$1" in
     *mips-egcs-crunch-64)     #needs very recent egcs
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=64 \
 			-DMULTITHREAD \
-			-DBIT_64 -DKWAN -DMEGGS"
+			 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
 	TARGET_LDFLAGS="-mabi=64"
@@ -671,7 +671,7 @@ case "$1" in
     *mips-egcs-crunch)	# faster than mips-gcc for IRIX
 	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=n32 \
 			-DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS"
+			 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -682,7 +682,7 @@ case "$1" in
         TARGET_CC="gcc"
         TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
                         -DHAVE_DES_CORES -DHAVE_CSC_CORES \
-                        -DBIT_32 -DKWAN -DMEGGS"
+                         -DKWAN -DMEGGS"
         TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2 \
                         $CSC_ANSI_SRCS"
         #TARGET_LIBS="-lpthread"
@@ -698,7 +698,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC_MIPS   \
                         -DHAVE_DES_CORES -DHAVE_CSC_CORES \
 			-DMULTITHREAD \
-                        -DBIT_32 -DKWAN -DMEGGS"
+                         -DKWAN -DMEGGS"
         TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2 \
                         $CSC_ANSI_SRCS"
         TARGET_LIBS="-lpthread"
@@ -710,7 +710,7 @@ case "$1" in
     *mips-gcc-ultrix)	# For mips based DEC Ultrix machines
 	DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_MIPS \
-			-DBIT_32 -DKWAN -DMEGGS"
+			 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -720,7 +720,7 @@ case "$1" in
 
     *hpux-hppa-CC)
 	TARGET_CC="CC"
-	TARGET_CCFLAGS="-DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CCFLAGS=" -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="rc5/parisc/parisc.s $MEGGS_SLICE_SRCS2"
 	TARGET_LDFLAGS="$LDFLAGS_CC_HPUX"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -730,7 +730,7 @@ case "$1" in
         #DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_GCC_HPUX  \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES \
-                        -DBIT_32 -DKWAN -DMEGGS"
+                         -DKWAN -DMEGGS"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
         TARGET_ADDASMS="rc5/parisc/parisc.s"
         #TARGET_LDFLAGS="-lpthread"
@@ -740,7 +740,7 @@ case "$1" in
 
     *hpux-m68k-gcc)
 	TARGET_CCFLAGS="$OPTS_GCC_HPUX_M68K \
-			-DBIT_32 -DKWAN"
+			 -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_AFLAGS="$OPTS_GAS_M68030K"
 	TARGET_ADDASMS="rc5/crunch.68k.gcc.s"
@@ -762,7 +762,7 @@ case "$1" in
 ###### Sparc/UltraSparc or Sun/SunOS/Solaris
 
     *sparc-openbsd)                   # snake
-	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1 -DBIT_32 -DKWAN -DMEGGS"
+	TARGET_CCFLAGS="$OPTS_GCC272_SPARC1  -DKWAN -DMEGGS"
 	TARGET_LDFLAGS="-static"
 	#TARGET_ADDSRCS="$KWAN_SLICE_SRCS3"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
@@ -774,7 +774,7 @@ case "$1" in
 	TARGET_AS="egcc -c"
 	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -DHAVE_CSC_CORES \
 			-D__showids__ -DLURK -DMULTITHREAD \
-			-DBIT_32 -DKWAN -DMEGGS $CSC_ANSI_CCOPTS"
+			 -DKWAN -DMEGGS $CSC_ANSI_CCOPTS"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c common/lurk.cpp \
 			des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp \
 			$CSC_ANSI_SRCS"
@@ -790,7 +790,7 @@ case "$1" in
         TARGET_CC="gcc -pipe" 
         TARGET_CCFLAGS="$OPTS_GCC295_SPARC -Dsolaris \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES \
-                        -DBIT_32 -DKWAN -DMEGGS"
+                         -DKWAN -DMEGGS"
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
                         $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
         TARGET_LIBS="-lnsl -lsocket -ldl"
@@ -804,7 +804,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC295_SPARC -Dsolaris \
                         -DMULTITHREAD \
                         -DHAVE_CSC_CORES -DHAVE_DES_CORES \
-                        -DBIT_32 -DKWAN -DMEGGS"
+                         -DKWAN -DMEGGS"
         TARGET_ADDSRCS="rc5/ultra/rc5-ultra-crunch.cpp \
                         $MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
         TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
@@ -857,7 +857,7 @@ case "$1" in
     *alpha-gcc-digital_unix-mt)
 	TARGET_CC="g++"
 	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DDEC_UNIX_CPU_SELECT \
-                            -DBIT_64 -DMEGGS -DKWAN \
+                             -DMEGGS -DKWAN \
                             -DMULTITHREAD -D_THREAD_SAFE -D_REENTRANT \
                             -DCORES_SUPPORT_SMP \
                             -Ddes_alpha_osf_ev5=des_alpha_osf_ev4"
@@ -873,7 +873,7 @@ case "$1" in
 
     *alpha-gcc-digital_unix-static)
 	TARGET_CC="g++"
-	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6 -DBIT_64 -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT"
+	TARGET_BASE_CCFLAGS="-Wa,-02 $OPTS_GCC -O6  -DMEGGS -DKWAN -DDEC_UNIX_CPU_SELECT"
 	TARGET_CCFLAGS="-mcpu=ev4 $TARGET_BASE_CCFLAGS"
 	TARGET_EV5_CCFLAGS="-mcpu=ev5 $TARGET_BASE_CCFLAGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/alphaasm/rc5-digital-unix-alpha-ev4.cpp"
@@ -886,7 +886,7 @@ case "$1" in
 
     *alpha-netbsd)
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA -DBIT_64 -DKWAN -DDWORZ \
+	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA  -DKWAN -DDWORZ \
 			-DHAVE_CSC_CORES -DHAVE_DES_CORES"
 	TARGET_TARBALL="netbsd-alpha"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS \
@@ -900,7 +900,7 @@ case "$1" in
     *alpha-openbsd)                  # snake
 	TARGET_AS="g++ -c"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DBIT_64 -DKWAN -DDWORZ"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA  -DKWAN -DDWORZ"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
 #            rc5/alpha/axp-bmeyer.s"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
@@ -911,7 +911,7 @@ case "$1" in
     *alpha-linux)                     # jlawson
 	TARGET_AS="as"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DBIT_64 -DKWAN -DDWORZ \
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA  -DKWAN -DDWORZ \
 			-DHAVE_CSC_CORES"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp \
 			${CSC_ANSI_SRCS}"
@@ -924,7 +924,7 @@ case "$1" in
     *alpha-linux-egcs)                     # daa
 	TARGET_AS="as"
 	TARGET_CC="g++"
-	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA -DBIT_64 -DKWAN -DDWORZ"
+	TARGET_CCFLAGS="$OPTS_EGCS_ALPHA  -DKWAN -DDWORZ"
 	TARGET_ADDSRCS="$DWORZ_SLICE_SRCS rc5/alpha/axp-bmeyer.cpp"
 	TARGET_ADDASMS="rc5/alpha/axp-bmeyer.s"
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
@@ -938,7 +938,7 @@ case "$1" in
     *ppc-601-linux-egcs)		# [cramer] PPC 601 target
 	TARGET_CC="gcc -pipe -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 \
-			-DBIT_32 -DMEGGS -DKWAN"
+			 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -947,7 +947,7 @@ case "$1" in
     *ppc-601-linux-mt-egcs)		# [cramer] PPC 601-mt target
 	TARGET_CC="gcc -pipe -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC601 \
-			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
+			-DMULTITHREAD  -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
@@ -957,7 +957,7 @@ case "$1" in
     *ppc-604-linux-egcs)		# [cramer] PPC 604 target
 	TARGET_CC="gcc -pipe -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 \
-			-DBIT_32 -DMEGGS -DKWAN"
+			 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -966,7 +966,7 @@ case "$1" in
     *ppc-604-linux-mt-egcs)		# [cramer] PPC 604-mt target
 	TARGET_CC="gcc -pipe -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC604 \
-			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
+			-DMULTITHREAD  -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
@@ -976,7 +976,7 @@ case "$1" in
     *ppc-860-linux-egcs)		# [cramer] PPC 860 target
 	TARGET_CC="gcc -pipe -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 \
-			-DBIT_32 -DMEGGS -DKWAN"
+			 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -985,7 +985,7 @@ case "$1" in
     *ppc-860-linux-mt-egcs)		# [cramer] PPC 860-mt target
 	TARGET_CC="gcc -pipe -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_PPC860 \
-			-DMULTITHREAD -DBIT_32 -DMEGGS -DKWAN"
+			-DMULTITHREAD  -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
 	TARGET_LIBS="-lpthread"
@@ -994,7 +994,7 @@ case "$1" in
 
     *ppc-gcc)		# [myshkin-out-of-date] generic PPC target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC \
-			-DBIT_32 -DHAVE_CSC_CORES"
+			 -DHAVE_CSC_CORES"
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
 	TARGET_ADDSRCS="common/lurk.cpp $RC5PPC_SRCS $CSC_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1003,7 +1003,7 @@ case "$1" in
 
     *ppc860-gcc)	# [myshkin-out-of-date] PPC 821/860 target
 	TARGET_CCFLAGS="$OPTS_GCC_PPC \
-			-DBIT_32 -DMEGGS -DKWAN"
+			 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1011,7 +1011,7 @@ case "$1" in
 
     *ppc-gcc272)	# [myshkin] generic PPC target, gcc 2.7.2
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC \
-			-DBIT_32 -DHAVE_CSC_CORES -DNO_ALTIVEC"
+			 -DHAVE_CSC_CORES -DNO_ALTIVEC"
 	TARGET_LDFLAGS=""  #NEVER STATIC FOR GLIBC!!!
 	TARGET_ADDSRCS="common/lurk.cpp $RC5PPC_SRCS $CSC_ANSI_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1020,7 +1020,7 @@ case "$1" in
 
     *ppc860-gcc272)	# [myshkin-out-of-date] PPC 821/860 target, gcc 2.7.2
 	TARGET_CCFLAGS="$OPTS_GCC272_PPC860 \
-			-DBIT_32 -DMEGGS -DKWAN"
+			 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 			$RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1032,7 +1032,7 @@ case "$1" in
     *aix4-ppc-xlc)	 # This is the fastest build for AIX 4.x PPC machines
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC_PPC -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_XLC_PPC  -DMEGGS -DKWAN"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lCns"
@@ -1042,7 +1042,7 @@ case "$1" in
     *aix4-ppc601-xlc)      # AIX 4.x PPC, 601 chip
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC_PPC601 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_XLC_PPC601  -DMEGGS -DKWAN"
 	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_LIBS="-lCns"
@@ -1052,7 +1052,7 @@ case "$1" in
     *aix32-ppc-xlc)	# AIX 3.2.x PPC
 	DELETECHARS="'/.\$\-'"
 	TARGET_CC="xlC"
-	TARGET_CCFLAGS="$OPTS_XLC3_PPC601 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_XLC3_PPC601  -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
 		rc5/ppc/crunch_allitnil_552.ppc.s \
 		rc5/ppc/crunch_lintilla_296.ppc.s"
@@ -1062,14 +1062,14 @@ case "$1" in
 
     *ppc-gcc-aix32)	# AIX 3.2.x gcc [patrick] <patrick@mail4you.de>
 	DELETECHARS="'/.\$\-'"
-	TARGET_CCFLAGS="$OPTS_GCC_PPC -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_PPC  -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
     *aix4-ppc-egcs)			# [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
-        TARGET_CCFLAGS="$OPTS_EGCS -D_AIX -mcpu=ppc601 -DASM_PPC -DBIT_32 -DMEGGS -DKWAN"
+        TARGET_CCFLAGS="$OPTS_EGCS -D_AIX -mcpu=ppc601 -DASM_PPC  -DMEGGS -DKWAN"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
@@ -1081,7 +1081,7 @@ case "$1" in
     *power-aix-gcc)                     # [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX \
-		-DBIT_32 -DMEGGS -DKWAN"
+		 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/rc5ansi_2-rg.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -1089,7 +1089,7 @@ case "$1" in
     *power-aix-egcs)                     # [patrick] <patrick@mail4you.de>
         DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_EGCS -DASM_POWER -mcpu=power -D_AIX \
-		-DBIT_32 -DMEGGS -DKWAN"
+		 -DMEGGS -DKWAN"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/rc5ansi-2-rg.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
@@ -1101,7 +1101,7 @@ case "$1" in
         DELETECHARS="'/.\$\-'"
 	AIXALL=TRUE
         TARGET_CCFLAGS="$OPTS_EGCS -mcpu=common -D_AIX -D_AIXALL \
-                        -DBIT_32 -DMEGGS -DKWAN"
+                         -DMEGGS -DKWAN"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $RC5PPC_SRCS \
                 rc5/ansi/rc5ansi_2-rg.cpp "
         AIXPPC601FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
@@ -1368,7 +1368,7 @@ case "$1" in
     *x86-dynix4)
 	TARGET_CC="ec++"
 	TARGET_CCFLAGS="$OPTS_EPC_DYNIX -DMMX_RC5 \
-			-DBIT_32 -DMEGGS -DKWAN"
+			 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS1"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LIBS="-lsocket -lnsl -lseq -L/opt/epc/ec++/lib -lec++"
@@ -1377,7 +1377,7 @@ case "$1" in
 
     *x86-dynix2)
 	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DMMX_RC5 \
-			-DBIT_32 -DMEGGS -DKWAN"
+			 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS $NASM_DESMMX_SRCS"
 	TARGET_LDFLAGS="-L."
@@ -1392,7 +1392,7 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 -D_NeXT_ \
-			-DBIT_32"
+			"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S des/brydgnu/p1bdespro.S"
 	TARGET_ADDNASMS="$RC5X86_SRCS $NASM_DESMMX_SRCS"
@@ -1402,7 +1402,7 @@ case "$1" in
     *m68k-next-gcc)
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ \
-			-DBIT_32 -DKWAN"
+			 -DKWAN"
 	TARGET_ADDSRCS="rc5/68k/crunch.68k.gcc.s $KWAN_SLICE_SRCS4"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -1416,7 +1416,7 @@ case "$1" in
     *sparc-next)
 	TARGET_CC="cc++"
 	TARGET_CCFLAGS="$OPTS_NEXT_SPARC -arch sparc -D_NeXT_  \
-			-DBIT_32"
+			"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/des-slice.cpp des/deseval.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -1424,7 +1424,7 @@ case "$1" in
     *hppa-next)
 	TARGET_CC="cc++"
 	TARGET_CCFLAGS="$OPTS_NEXT_HPPA -arch hppa -D_NeXT_ \
-			-DBIT_32"
+			"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c des/des-slice.cpp des/deseval.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
@@ -1442,7 +1442,7 @@ case "$1" in
 			-J/home/cberry/play/riscoslib/CLib \
 			-D__showids__ \
 			-DCOMPAT_INET4 -D__riscos \
-			 -DBIT_32 -DKWAN"
+			  -DKWAN"
 	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
 	TARGET_ADDASMS="platforms/riscos/riscosasm.s \
 			rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s \
@@ -1458,7 +1458,7 @@ case "$1" in
     *arm-linux)					# chrisb
 	TARGET_CC="gcc"
 	TARGET_AS="as"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux -DBIT_32 -DKWAN"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -Dlinux  -DKWAN"
 	TARGET_ADDSRCS=""
 	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
 			rc5/arm/rc5-arm-3-gnu.s \
@@ -1471,7 +1471,7 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_AS="as"
 	TARGET_TARBALL="netbsd-arm32"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -DBIT_32 -DKWAN -DHAVE_CSC_CORES \
+	TARGET_CCFLAGS="$OPTS_GCC_ARM  -DKWAN -DHAVE_CSC_CORES \
 			-DHAVE_DES_CORES"
 	TARGET_ADDSRCS="${CSC_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
@@ -1484,7 +1484,7 @@ case "$1" in
 ###### NetBSD/vax
     *vax-netbsd-gcc)
         TARGET_CC="g++"
-        TARGET_CCFLAGS="$OPTS_GCC_VAX -DBIT_32 \
+        TARGET_CCFLAGS="$OPTS_GCC_VAX  \
                         -DMEGGS -DKWAN -DRC5ANSICORE"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
         TARGET_LIBS="-ltermcap"
@@ -1496,7 +1496,7 @@ case "$1" in
 	TARGET_CC="gcc"
 	TARGET_AS=""
 	TARGET_CCFLAGS="$OPTS_OS390 -D__showids__ \
-			-DBIT_32 -DKWAN -DMEGGS -DHAVE_DES_CORES"
+			 -DKWAN -DMEGGS -DHAVE_DES_CORES"
 	TARGET_ADDSRCS="rc5/ansi/2-rg.c $MEGGS_SLICE_SRCS2"
 	TARGET_ADDASMS=""
 	TARGET_LIBS="$SOCKS_LIBS"
