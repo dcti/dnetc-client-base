@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.11 2004/03/12 06:40:03 snikkel Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.12 2004/03/12 07:08:54 snikkel Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -151,7 +151,11 @@ struct WorkStub { /* size is 28 */
   u32 worklength;      /* depth of current state */
 } DNETC_PACKED;
 
-#include "pack0.h"
+#ifndef __SUNPRO_CC
+  #include "pack0.h"
+#else
+  #undef DNETC_PACKED
+#endif
 
 // Internal stuff that's not part of the interface but we need for
 // declaring the problem work area size.
