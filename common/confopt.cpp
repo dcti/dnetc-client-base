@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.2 1999/06/06 22:23:41 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.3 1999/06/16 18:07:28 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -81,8 +81,8 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
 { CFGTXT("Disable exit file checking?"),"0",
   CFGTXT(
   "When disabled, this option will cause the client to watch for a file named\n"
-  "\"exitrc5.now\", the presence of which being a request to the client to\n"
-  "shut itself down. (The name of the exit flag file may be set in the ini.)\n"
+  "\"exitrc5.now\" the presence of which being a request to the client to\n"
+  "shut itself down.\n"
   ),CONF_MENU_MISC,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //7
 { CFGTXT("Disable the packet completion indicator?"),"0",
@@ -94,15 +94,15 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "Enter the order in which the client will search for work, for instance\n"
   "the oder \"OGR,RC5\" specifies that OGR packets (if available) will be\n"
   "crunched before RC5 packets.\n"
-  "To disable a project, append \":0\" to project's name. For example,\n"
-  "\"DES,OGR=0,RC5\" will disable the client's OGR support.\n"
+  "To disable a project, append \":0\" (or \"=0\") to project's name. For\n"
+  "example, \"DES,OGR=0,RC5\" will disable the client's OGR support.\n"
   "Project names not found on the list when the client starts will be\n"
   "inserted automatically according to their default priority. Thus,\n"
   "specifying \"RC5,OGR\" is equivalent to specifying \"DES,CSC,RC5,OGR\",\n"
   "and \"OGR,DES\" is equivalent to \"CSC,OGR,DES,RC5\".\n"
   "Note: DES micro-contests are of extremely short duration, and when active\n"
   "(and not disabled) the client will clear the input buffers of all other\n"
-  "projects and so ensure that clients sharing buffers do not inadvertantly\n"
+  "projects and so ensure that clients sharing buffers do not inadvertently\n"
   "work on the \"wrong\" project during the few hours that DES is running.\n"
   ),CONF_MENU_MISC,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 
@@ -194,10 +194,10 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   CFGTXT(
   "Enabling this option will cause the client to check the input buffers\n"
   "every few minutes or so. You might want to use this if you have a\n"
-  "single computer with a network connecting \"feeding\" other clients via\n"
+  "single computer with a network connection \"feeding\" other clients via\n"
   "a common input file.\n"
   "Note: enabling (modem-) connection detection implies that buffers will\n"
-  "updated frequently while a connection is detected.\n" 
+  "be updated frequently while a connection is detected.\n" 
   ),CONF_MENU_BUFF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //19
 { CFGTXT("Preferred RC5 packet size (2^X keys/packet)"),"31 (default)",
@@ -231,7 +231,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "if you have a fixed (static) connection to the internet, or the cost of your\n"
   "dialup connection is negligible.\n"
   "In general, you should not buffer more than your client(s) can complete in\n"
-  "one day (running the client with -benchmark will give you a hint)\n"
+  "one day (running the client with -benchmark will give you a hint).\n"
   "You may also force a buffer exchange by starting the client with -update.\n"
   "*Note*: this option is scheduled to disappear. It will be replaced by a\n"
   "time-based option, ie something along the lines of \"Number of work-hours\n"
@@ -313,7 +313,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "0) none      altogether disables logging to file.\n"
   "1) no limit  the size of the file is not limited. This is the default if\n"
   "             a limit is not specified in the \"Log file limit\" option.\n"
-  "2) restart   the log will deleted/recreated when the file size specified\n"
+  "2) restart   the log will be deleted/recreated when the file size specified\n"
   "             in the \"Log file limit\" option is reached.\n"
   "3) fifo      the oldest lines in the file will be discarded when the size\n"
   "             of the file exceeds the limit in the \"Log file limit\" option.\n"
@@ -387,7 +387,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   "Set this option to 'Yes' UNLESS your client will be communicating\n"
   "with a personal proxy (instead of one of the main distributed.net\n"
   "keyservers) OR your client will be connecting through an HTTP proxy\n"
-  "(firewall) and you have been explicitely advised by distributed.net\n"
+  "(firewall) and you have been explicitly advised by distributed.net\n"
   "staff to use a specific IP address.\n"
   ),CONF_MENU_NET,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL},
 //36
@@ -528,7 +528,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT]=
   CFGTXT(
   "Enter any valid shell command or script name to use to initiate a\n"
   "network connection. \"Dial the Internet as needed?\" must be enabled for\n"
-  "this to be of any use.\n"
+  "this option to be of any use.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL},
 //51
 { CFGTXT("Command/script to stop dialup"),"",
