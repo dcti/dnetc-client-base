@@ -497,7 +497,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           break;
         case CONF_LOGNAME:
           strncpy( ini_logname, parm, sizeof(ini_logname) - 1 );
-          if (isblank(ini_logname)) strcpy (ini_logname,"none");
+          if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
           if (strcmpi(ini_logname,"none") != 0)
             strcpy(logname,InternalGetLocalFilename(ini_logname));
           else strcpy(logname, "none");
@@ -697,7 +697,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
 #endif
         case CONF_CHECKPOINT:
           strncpy( ini_checkpoint_file[0] , parm, sizeof(ini_checkpoint_file)/2 -1 );
-          if (isblank(ini_checkpoint_file[0])) strcpy (ini_checkpoint_file[0],"none");
+          if (isstringblank(ini_checkpoint_file[0])) strcpy (ini_checkpoint_file[0],"none");
           if (strcmpi(ini_checkpoint_file[0],"none") != 0)
             strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
           else
@@ -705,7 +705,7 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           break;
         case CONF_CHECKPOINT2:
           strncpy( ini_checkpoint_file[1] , parm, sizeof(ini_checkpoint_file)/2 -1 );
-          if (isblank(ini_checkpoint_file[1])) strcpy (ini_checkpoint_file[1],"none");
+          if (isstringblank(ini_checkpoint_file[1])) strcpy (ini_checkpoint_file[1],"none");
           if (strcmpi(ini_checkpoint_file[1],"none") != 0)
             strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
           else
@@ -783,27 +783,27 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
 #endif
         case CONF_RC5IN:
           strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
-          if (isblank(ini_in_buffer_file[0])) strcpy (ini_in_buffer_file[0],"buff-in.rc5");
+          if (isstringblank(ini_in_buffer_file[0])) strcpy (ini_in_buffer_file[0],"buff-in.rc5");
           strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
           break;
         case CONF_RC5OUT:
           strncpy( ini_out_buffer_file[0] , parm, sizeof(ini_out_buffer_file)/2 -1 );
-          if (isblank(ini_out_buffer_file[0])) strcpy (ini_out_buffer_file[0],"buff-out.rc5");
+          if (isstringblank(ini_out_buffer_file[0])) strcpy (ini_out_buffer_file[0],"buff-out.rc5");
           strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
           break;
         case CONF_DESIN:
           strncpy( ini_in_buffer_file[1] , parm, sizeof(ini_in_buffer_file)/2 -1 );
-          if (isblank(ini_in_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-in.des");
+          if (isstringblank(ini_in_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-in.des");
           strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
           break;
         case CONF_DESOUT:
           strncpy( ini_out_buffer_file[1] , parm, sizeof(ini_out_buffer_file)/2 -1 );
-          if (isblank(ini_out_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-out.des");
+          if (isstringblank(ini_out_buffer_file[1])) strcpy (ini_in_buffer_file[1],"buff-out.des");
           strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
           break;
         case CONF_PAUSEFILE:
           strncpy( ini_pausefile, parm, sizeof(ini_pausefile) -1 );
-          if (isblank(ini_pausefile)) strcpy (ini_pausefile,"none");
+          if (isstringblank(ini_pausefile)) strcpy (ini_pausefile,"none");
           if (strcmpi(ini_pausefile,"none") != 0)
             strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
           else
@@ -1031,7 +1031,7 @@ while (strchr(string, ' ') != NULL)
 
 #if !defined(NOCONFIG)
 
-int Client::isblank( char *string )
+int Client::isstringblank( char *string )
 {
 s32 counter, summation=0;
 
@@ -1252,31 +1252,31 @@ void Client::ValidateConfig( void )
   if ( minutes < 0 ) minutes=0;
   if ( blockcount < 0 ) blockcount=0;
 
-  if (isblank(ini_in_buffer_file[0]))
+  if (isstringblank(ini_in_buffer_file[0]))
     strcpy(ini_in_buffer_file[0],"buff-in.rc5");
   strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
-  if (isblank(ini_out_buffer_file[0]))
+  if (isstringblank(ini_out_buffer_file[0]))
     strcpy(ini_out_buffer_file[0],"buff-out.rc5");
   strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
-  if (isblank(ini_in_buffer_file[1]))
+  if (isstringblank(ini_in_buffer_file[1]))
     strcpy(ini_in_buffer_file[1],"buff-in.des");
   strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
-  if (isblank(ini_out_buffer_file[1]))
+  if (isstringblank(ini_out_buffer_file[1]))
     strcpy(ini_out_buffer_file[1],"buff-out.des");
   strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
 
-  if (isblank(ini_pausefile)) strcpy(ini_pausefile,"none");
+  if (isstringblank(ini_pausefile)) strcpy(ini_pausefile,"none");
   if (strcmpi(ini_pausefile,"none") != 0)
     strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
 
-  if (isblank(ini_checkpoint_file[0])) strcpy(ini_checkpoint_file[0],"none");
+  if (isstringblank(ini_checkpoint_file[0])) strcpy(ini_checkpoint_file[0],"none");
   if (strcmpi(ini_checkpoint_file[0],"none") != 0)
     strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
-  if (isblank(ini_checkpoint_file[1])) strcpy(ini_checkpoint_file[1],"none");
+  if (isstringblank(ini_checkpoint_file[1])) strcpy(ini_checkpoint_file[1],"none");
   if (strcmpi(ini_checkpoint_file[1],"none") != 0)
     strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
 
-  if (isblank(ini_logname)) strcpy (ini_logname,"none");
+  if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
   if (strcmpi(ini_logname,"none") != 0)
     strcpy(logname,InternalGetLocalFilename(ini_logname));
 
