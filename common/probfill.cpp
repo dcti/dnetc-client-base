@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.73 2000/01/09 20:32:39 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.74 2000/01/13 05:20:06 michmarc Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -770,7 +770,7 @@ unsigned int LoadSaveProblems(Client *pass_client,
             int proc = GetNumberOfDetectedProcessors();
             if (proc < 1)
               proc = 1;
-            if (load_problem_count < proc)
+            if (load_problem_count < (unsigned int)proc)
               proc = load_problem_count;
             if (proc > 0)
             {
