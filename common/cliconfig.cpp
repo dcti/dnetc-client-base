@@ -1232,10 +1232,10 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_CKTIME, checkpoint_min );
   INISETKEY( CONF_NETTIMEOUT, nettimeout );
   INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
-  INISETKEY( CONF_RC5IN, in_buffer_file[0]);
-  INISETKEY( CONF_RC5OUT, out_buffer_file[0]);
-  INISETKEY( CONF_DESIN, in_buffer_file[1]);
-  INISETKEY( CONF_DESOUT, out_buffer_file[1]);
+//  INISETKEY( CONF_RC5IN, in_buffer_file[0]);
+//  INISETKEY( CONF_RC5OUT, out_buffer_file[0]);
+//  INISETKEY( CONF_DESIN, in_buffer_file[1]);
+//  INISETKEY( CONF_DESOUT, out_buffer_file[1]);
 
   if (offlinemode == 0)
     {
