@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.59 2004/06/16 21:39:42 teichp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.60 2004/06/22 15:38:43 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1795,7 +1795,9 @@ static long __GetRawProcessorID(const char **cpuname)
   {19, "UltraSPARC-IIi", "UltraSPARC-IIi"},
   {20, "UltraSPARC-III", "UltraSPARC-III"},
   {20, "UltraSPARC-III+", "UltraSPARC-III"},  /* UltraSPARC-III Cu */
-  {21, "UltraSPARC-IIIi", "UltraSPARC-IIIi"}
+  {21, "UltraSPARC-IIIi", "UltraSPARC-IIIi"},
+  {22, "UltraSPARC-IV", "UltraSPARC-IV"},
+  {23, "SPARC64-IV", "SPARC64-IV"}
   };
 
   detectedtype = -1L;  /* detection supported, but failed */
