@@ -65,7 +65,7 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 
     // check nbbits
     if (nbbits != MIN_DES_BITS) {
-	printf ("Bad nbbits ! (%d)\n", nbbits);
+	printf ("Bad nbbits ! (%d)\n", (int)nbbits);
 	exit (-1);
     }
 
