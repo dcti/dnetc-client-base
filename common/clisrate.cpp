@@ -9,7 +9,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.12 2000/07/01 13:43:28 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.13 2000/07/02 16:47:16 andreasb Exp $"; }
 
 #include "cputypes.h"  // u32
 #include "problem.h"   // Problem class
@@ -318,7 +318,7 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
                     #ifdef HAVE_OGR_CORES
                     ogr_stubstr( &work.ogr.workstub.stub ),
                     #else
-                    "??/??-??-??-??"
+                    "??/??-??-??-??",
                     #endif
                     num_sep(CliGetU64AsString(work.ogr.nodes.hi, 
                                               work.ogr.nodes.lo, 0, -1)),
