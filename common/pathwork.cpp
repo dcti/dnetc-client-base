@@ -23,7 +23,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15.2.4 2001/04/13 12:31:32 cyp Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15.2.5 2001/04/14 14:19:01 cyp Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
@@ -107,7 +107,7 @@ static const char *__finalize_fixup(char *path, unsigned int maxlen)
     while (*rempath && *rempath != '/' && 
            usernamelen < (sizeof(username)-1))
     {
-      username[usernamelen] = *rempath++;
+      username[usernamelen++] = *rempath++;
     } 
     if (usernamelen < (sizeof(username)-1))
     {
