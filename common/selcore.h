@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.1 2002/12/29 02:56:05 andreasb Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.2 2003/01/07 15:04:31 oliver Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -16,8 +16,8 @@
 
 #if (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ )
   #define CDECL cdecl
-#elif (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-  #error "can we '#define CDECL __regargs' here and get rid of the special handling below?"
+#elif  (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+  #define CDECL __regargs
 #endif
 #ifndef CDECL
   #define CDECL /* nothing */
@@ -29,11 +29,7 @@ extern "C" {
 #endif
 
 typedef s32 gen_func( RC5UnitWork *, u32 *, void * );
-#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-typedef u32 __regargs rc5_func( RC5UnitWork *, u32 );
-#else
 typedef u32 CDECL rc5_func( RC5UnitWork *, u32 );
-#endif
 typedef u32 des_func( RC5UnitWork *, u32 *, char * );
 #if defined(HAVE_OGR_CORES)
 typedef CoreDispatchTable *ogr_func;
@@ -47,11 +43,7 @@ typedef union
   s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
 
   /* old style: RC5-64, DES */
-  #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
-  u32 __regargs (*rc5)( RC5UnitWork *, u32 iterations );
-  #else
   u32 CDECL (*rc5)( RC5UnitWork *, u32 iterations );
-  #endif
   #if defined(HAVE_DES_CORES)
   u32 (*des)( RC5UnitWork *, u32 *iterations, char *membuf );
   #endif
