@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.8  1998/12/15 13:28:22  cyp
+// Prettified: reformatted long msgs, converted LogScreenRaw() to LogScreen() etc
+//
 // Revision 1.7  1998/12/08 05:29:45  dicamillo
 // MacOS updates for timeslice and GUI display
 //
@@ -15,7 +18,6 @@
 // Revision 1.4  1998/10/09 00:42:50  blast
 // Benchmark was looking at contest 2=DES, other=RC5 and cmdline.cpp
 // was setting 0=RC5, 1=DES, made it run two rc5 benchmarks. FIXED
-//
 // Changed Calling convention for Benchmark() from u8 to unsigned int.
 //
 // Revision 1.3  1998/10/04 21:31:08  blast
@@ -33,7 +35,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.7 1998/12/08 05:29:45 dicamillo Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.8 1998/12/15 13:28:22 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -52,7 +54,7 @@ return "@(#)$Id: bench.cpp,v 1.7 1998/12/08 05:29:45 dicamillo Exp $"; }
 
 // --------------------------------------------------------------------------
 
-//returns keys/sec or 0 if break
+//returns preferred block size or 0 if break
 u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
 {
   ContestWork contestwork;
@@ -118,7 +120,7 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
   contestwork.iterations.lo = htonl( (1<<itersize) );
   contestwork.iterations.hi = htonl( 0 );
 
-  problem.LoadState( &contestwork , (u32) (contestid), tslice, cputype );
+  problem.LoadState( &contestwork, contestid, tslice, cputype );
 
   problem.percent = 0;
   sm0 = "%cBenchmarking %s with 1*2^%d tests (%u keys):%s%c%u%%";
@@ -130,13 +132,13 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
 
   #if (CLIENT_OS == OS_MACOS)
     // fixup log window display
-    LogScreenRaw( "%c", '\n');
+    LogScreen( "\n" );
     cm1 = cm3;
     // start rate timing from now
     #if defined(MAC_GUI)    
     UpdateThreadProgress(0, 0, 0, true );
     UpdateClientInfo(&client_info);
-	#endif
+  #endif
   #endif
 
   do{
@@ -149,16 +151,15 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
       {
       if (problem.percent >= 100)
         {
-        sm4 = ((problem.percent == 101)?(" *Break* \n"):("             \n"));
+        sm4 = ((problem.percent == 101)?("    \n*Break*\n"):("    \n"));
         cm2 = 0;
         }
+      #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
+      UpdateThreadProgress(0, problem.percent, problem.GetKeysDone(), true );
+      UpdateClientInfo(&client_info);
+      #endif
 
-	  #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
-		UpdateThreadProgress(0, problem.percent, problem.GetKeysDone(), true );
-		UpdateClientInfo(&client_info);
-	  #endif
-
-      LogScreenRaw( sm0, cm1, contestname, itersize+keycountshift,
+      LogScreen( sm0, cm1, contestname, itersize+keycountshift,
           (unsigned int)(1<<(itersize+keycountshift)), sm4, cm2, 
           (unsigned int)(problem.percent) );
       }
@@ -195,14 +196,13 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
   tv.tv_sec = problem.timehi;  //read the time the problem:run started
   tv.tv_usec = problem.timelo;
   CliTimerDiff( &tv, &tv, NULL );    //get the elapsed time
-  LogScreenRaw("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
+  LogScreen("Completed in %s [%skeys/sec]\n",  CliGetTimeString( &tv, 2 ),
                     CliGetKeyrateAsString( ratestr, rate ) );
 
   #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
     {
     char smsg[128];
-    char *contestname[2] = {"RC5", "DES"};
-    sprintf(smsg, "%s benchmark: %.0fKkeys/sec", contestname[contest], rate/1000.0);
+    sprintf(smsg, "%s benchmark: %.0fKkeys/sec", contestname, rate/1000.0);
     SetStatusMessage(smsg);
     }
   #endif
@@ -217,28 +217,15 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
     itersize++;
     }
 
-  LogScreenRaw(
-  "The preferred %s blocksize for this machine should be set to %d (%d*2^28 keys).\n"
-  "At the benchmarked keyrate (ie, under ideal conditions) each processor\n"
-  "would finish a block of that size in approximately %s.\n", contestname, 
-   (unsigned int)itersize, (unsigned int)((((u32)(1<<itersize))/((u32)(1<<28)))),
-   CliGetTimeString( &tv, 2 ));  
+  LogScreen( "The preferred %s blocksize for this machine should be\n"
+             "set to %d (%d*2^28 keys). At the benchmarked keyrate\n"
+             "(ie, under ideal conditions) each processor would finish\n"
+             "a block of that size in approximately %s.\n", contestname, 
+             (unsigned int)itersize, 
+             (unsigned int)((((u32)(1<<itersize))/((u32)(1<<28)))),
+             CliGetTimeString( &tv, 2 ));  
 
-  #if 0 //for proof-of-concept testing plehzure...
-  //what follows is probably true for all processors, but oh well...
-  u32 krate = ((contest==2)?(451485):(127254)); //real numbers for a 90Mhz P5
-  u32 prate = 90;
-
-  LogScreenRaw( 
-  "If this client is running on a cooperative multitasking system, then a good\n"
-  "%s timeslice setting may be determined by dividing the benchmarked rate by\n"
-  "the processor clock rate in MHz. For example, if the %s keyrate is %d\n"
-  "and this is %dMHz machine, then an ideal %s timeslice would be about %u.\n", 
-  contestname, contestname, (int)(krate), (int)(prate), contestname, 
-                                         (int)(((krate)+(prate>>1))/prate) );
-  #endif  
-  
-  return (u32)(rate);
+  return (u32)(itersize);
 }
 
 // ---------------------------------------------------------------------------
