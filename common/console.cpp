@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.39 2000/06/13 00:31:26 mfeiri Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.40 2000/06/14 08:58:46 oliver Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -128,6 +128,8 @@ int InitializeConsole(int *runhidden,int doingmodes)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
         constatics.conisatty = 1;
+      #elif (CLIENT_OS == OS_AMIGAOS)
+        constatics.conisatty = amigaConIsScreen();
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
       #endif
