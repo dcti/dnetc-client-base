@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.175  1998/08/20 00:10:26  silby
+// Change in syntax to make GCC happy.
+//
 // Revision 1.174  1998/08/15 21:28:05  jlawson
 // added ifdef MMX_BITSLICE around mmx core selection to allow compilation
 // without mmx cores
@@ -192,7 +195,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.174 1998/08/15 21:28:05 jlawson Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.175 1998/08/20 00:10:26 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1927,8 +1930,9 @@ if (!nodiskbuffers)
   #else
   return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
   #endif
-} 
-else return 0;
+};
+
+return 0;
 
 }
 
