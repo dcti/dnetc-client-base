@@ -1,8 +1,16 @@
-/* dual-key, mixed round 3 and encryption, A1/A2 use for last value,
+/* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * dual-key, mixed round 3 and encryption, A1/A2 use for last value,
  * non-arrayed S1/S2 tables, direct use of last value, run-time
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.9.2.5  2002/04/12 23:56:57  andreasb
+ * 2002 copyright update - round 2
+ *
  * Revision 1.9.2.4  2000/02/03 22:50:16  ivo
  * removed some warnings.
  *
@@ -52,7 +60,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5_ultra_crunch_cpp (void) {
-return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.9.2.4 2000/02/03 22:50:16 ivo Exp $"; }
+return "@(#)$Id: rc5-ultra-crunch.cpp,v 1.9.2.5 2002/04/12 23:56:57 andreasb Exp $"; }
 #endif
 
 #include <stdio.h>

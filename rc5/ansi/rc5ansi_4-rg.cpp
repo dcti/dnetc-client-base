@@ -1,10 +1,7 @@
 /*
- * Copyright distributed.net 1997 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * new version of the RC5 ANSI 2-rg core. Replaces 2-rg.c. 
- * Can be compiled using g++. Has both old and new naming conventions.
  *
  * ---------------------------------------------------------------
  * dual-key, mixed round 3 and encryption, A1/A2 use for last value,
@@ -20,7 +17,7 @@
 */
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_4_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_4-rg.cpp,v 1.1.2.2 2001/02/18 23:31:48 sampo Exp $"; }
+return "@(#)$Id: rc5ansi_4-rg.cpp,v 1.1.2.3 2002/04/12 23:56:57 andreasb Exp $"; }
 #endif
 //
 //*Run-time generation of S0[] :

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32CONF_H__
-#define __W32CONF_H__ "@(#)$Id: w32ini.h,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $"
+#define __W32CONF_H__ "@(#)$Id: w32ini.h,v 1.1.2.2 2002/04/12 23:56:52 andreasb Exp $"
 
 /* the next four funcs follow the same format at [Get|Write]ProfileString().
    For win32 (registry) HKLM\SoftWare\D C T I\sect.key = value

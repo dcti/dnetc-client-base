@@ -1,14 +1,14 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
- *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * 
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
 */
 #ifndef __CLIDOS_IDLE_H__
-#define __CLIDOS_IDLE_H__ "@(#)$Id: cdosidle.h,v 1.1.2.1 2001/01/21 15:10:22 cyp Exp $"
+#define __CLIDOS_IDLE_H__ "@(#)$Id: cdosidle.h,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,4 +1,8 @@
 /*
+ * Copyright distributed.net 2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * Trivial -install and -uninstall support for MacOS X
  * a test main() is at the end of this file.
  *
@@ -10,7 +14,7 @@
  * For more information about Mac OS X StartupItems go to http://www.opensource
  * .apple.com/projects/documentation/howto/html/SystemStarter_HOWTO.html
  *
- * $Id: c_install.c,v 1.1.2.3 2002/03/29 12:55:39 mfeiri Exp $
+ * $Id: c_install.c,v 1.1.2.4 2002/04/12 23:56:48 andreasb Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>

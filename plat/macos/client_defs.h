@@ -1,8 +1,12 @@
 /*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * This header file prototypes the macos client CUSTOM functions 
  * referenced by code in the ./common/ subdirectory.
  *
- * @(#)$Id: client_defs.h,v 1.1.2.1 2001/01/21 15:15:10 cyp Exp $
+ * @(#)$Id: client_defs.h,v 1.1.2.2 2002/04/12 23:56:48 andreasb Exp $
 */ 
 
 #ifndef __MACCLIENT_DEFS_H__

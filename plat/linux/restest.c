@@ -1,3 +1,11 @@
+/*
+ * Copyright distributed.net 2001-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: restest.c,v 1.1.2.2 2002/04/12 23:56:48 andreasb Exp $
+ */
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <netdb.h>       /* struct hostent */
@@ -125,5 +133,3 @@ int main(int argc, char *argv[])
 
   return 0;
 }
-
-

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,7 +13,7 @@
  *
 */
 #ifndef __CLIDOSCON_H__
-#define __CLIDOSCON_H__ "@(#)$Id: cdoscon.h,v 1.1.2.1 2001/01/21 15:10:18 cyp Exp $"
+#define __CLIDOSCON_H__ "@(#)$Id: cdoscon.h,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"
 
 extern int dosCliConIsScreen(void);
 extern int dosCliConGetPos( int *colP, int *rowP );

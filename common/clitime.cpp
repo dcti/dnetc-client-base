@@ -1,8 +1,9 @@
-/* Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
- *
+/*
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ----------------------------------------------------------------------
  * This file contains functions for obtaining/formatting/manipulating
@@ -13,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.55 2002/03/28 01:07:41 andreasb Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.56 2002/04/12 23:56:32 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc

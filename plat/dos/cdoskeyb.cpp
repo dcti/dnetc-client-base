@@ -1,10 +1,10 @@
 /*
- * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
- *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * 
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ *
  * -----------------------------------------------------------------
  * This module is for hooking IRQ1 (int 9h) and clearing the keyboard
  * buffer when a ^C is seen.
@@ -17,7 +17,7 @@
  * -----------------------------------------------------------------
 */
 const char *cdoskeyb_cpp(void) {
-return "@(#)$Id: cdoskeyb.cpp,v 1.1.2.1 2001/01/21 15:10:22 cyp Exp $"; }
+return "@(#)$Id: cdoskeyb.cpp,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"; }
 
 #if !defined(__WATCOMC__)
 #error This is watcom C specific

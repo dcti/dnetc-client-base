@@ -1,10 +1,14 @@
 /* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * This module contains general utility stuff including some functions
  * that are called from the installer.
  * 
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: w32exe.cpp,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $
+ * $Id: w32exe.cpp,v 1.1.2.2 2002/04/12 23:56:52 andreasb Exp $
 */
 #include <stdio.h>
 #include <stddef.h>

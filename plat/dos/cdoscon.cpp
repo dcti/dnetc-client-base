@@ -1,7 +1,5 @@
 /*
- * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
- *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * 
@@ -18,7 +16,7 @@
  *
 */
 const char *cdoscon_cpp(void) {
-return "@(#)$Id: cdoscon.cpp,v 1.1.2.1 2001/01/21 15:10:18 cyp Exp $"; }
+return "@(#)$Id: cdoscon.cpp,v 1.1.2.2 2002/04/12 23:56:46 andreasb Exp $"; }
 
 #include "cdoscon.h" /* keep prototypes in sync */
 

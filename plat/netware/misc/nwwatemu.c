@@ -1,4 +1,8 @@
 /* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * This module consists of functions required by plib[mt]3s.lib when 
  * building C++ apps which (theoretically) requires linking Watcom's 
  * static CLIB. 
@@ -11,7 +15,7 @@
 */   
 #if defined(__showids__)
 const char *nwwatemu_c(void) {
-return "@(#)$Id: nwwatemu.c,v 1.1.2.1 2001/01/21 15:10:31 cyp Exp $"; }
+return "@(#)$Id: nwwatemu.c,v 1.1.2.2 2002/04/12 23:56:50 andreasb Exp $"; }
 #endif
 
 #ifdef __cplusplus

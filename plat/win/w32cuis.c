@@ -1,4 +1,8 @@
 /*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * Console <-> GUI std handle redirector for use with distributed.net projects.
  * Comes in two flavors:
  *   1) HAVE_EXEC_AS_TEMPFILE (davehart's solution)
@@ -12,7 +16,7 @@
  * The pipe shim itself is generic and will work without changes with any
  * backend that SetStdHandle()s the 'advertised' pipe ends.
  *
- * $Id: w32cuis.c,v 1.1.2.3 2002/03/12 22:55:13 jlawson Exp $
+ * $Id: w32cuis.c,v 1.1.2.4 2002/04/12 23:56:52 andreasb Exp $
 */
 
 /* #define HAVE_EXEC_AS_TEMPFILE */  /* davehart's solution */

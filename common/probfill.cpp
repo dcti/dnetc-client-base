@@ -1,8 +1,9 @@
-/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
- *
+/*
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * -----------------------------------------------------------------
  * NOTE: this file (the problem loader/saver) knows nothing about
@@ -12,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.76 2002/03/28 01:07:44 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.77 2002/04/12 23:56:38 andreasb Exp $"; }
 
 //#define TRACE
 

@@ -1,11 +1,11 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 const char *client_boot_cpp(void) {
-return "@(#)$Id: client_boot.cpp,v 1.1.2.3 2001/07/27 08:19:26 mfeiri Exp $"; }
+return "@(#)$Id: client_boot.cpp,v 1.1.2.4 2002/04/12 23:56:48 andreasb Exp $"; }
 
 #pragma mark -
 

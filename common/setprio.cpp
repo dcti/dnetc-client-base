@@ -1,4 +1,5 @@
-/* Copyright distributed.net 1997-2000 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +11,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.20 2002/04/11 10:55:16 oliver Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.21 2002/04/12 23:56:40 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

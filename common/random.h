@@ -1,6 +1,6 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
-// Copyright distributed.net 1997-1999 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -13,7 +13,7 @@
 #include "cputypes.h" /* for u32 */
 
 #ifndef __RANDOM_H__
-#define __RANDOM_H__ "@(#)$Id: random.h,v 1.7.2.1 2002/03/29 20:34:51 sampo Exp $"
+#define __RANDOM_H__ "@(#)$Id: random.h,v 1.7.2.2 2002/04/12 23:56:39 andreasb Exp $"
 
 u32  Random( const u32 * u32data, unsigned int u32count );
   // count = # of u32s of data...

@@ -1,8 +1,9 @@
-/* Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
  *
  * --------------------------------------------------------------------
  * The polling process is essentially an event handler that gets called 
@@ -39,7 +40,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.9.2.7 2000/07/02 20:57:57 oliver Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.9.2.8 2002/04/12 23:56:38 andreasb Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */

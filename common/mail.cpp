@@ -1,13 +1,13 @@
 /*
- * Created by Tim Charron (tcharron@interlog.com) 97.9.17
- * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
- *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Created by Tim Charron (tcharron@interlog.com) 97.9.17
+ * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.13 2001/03/26 17:51:39 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.14 2002/04/12 23:56:36 andreasb Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 

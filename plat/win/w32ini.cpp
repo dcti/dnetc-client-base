@@ -1,4 +1,8 @@
 /* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * portable (between win16/32) interface to profile/configuration as
  * used for windows-client specific things, such as location of 
  * executable, window position etc. 
@@ -11,7 +15,7 @@
  * ('D C T I' expands to "Distributed Computing Technologies, Inc.")
  * 'sect' is optional. If NULL or "", the format becomes key=value.
  *
- * $Id: w32ini.cpp,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $
+ * $Id: w32ini.cpp,v 1.1.2.2 2002/04/12 23:56:52 andreasb Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */

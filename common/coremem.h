@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
 */
 
 #ifndef __COREMEM_H__
-#define __COREMEM_H__ "@(#)$Id: coremem.h,v 1.1.2.2 2001/03/20 09:15:48 cyp Exp $"
+#define __COREMEM_H__ "@(#)$Id: coremem.h,v 1.1.2.3 2002/04/12 23:56:34 andreasb Exp $"
 
 #ifdef __cplusplus /* header may be included by cores */
 extern "C" {

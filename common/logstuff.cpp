@@ -1,6 +1,8 @@
-/* Copyright distributed.net 1997-2001 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  *
  * ------------------------------------------------------
@@ -13,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.61 2001/05/14 16:49:34 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.62 2002/04/12 23:56:35 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes

@@ -1,9 +1,13 @@
 ;
+; Copyright distributed.net 1998-2002 - All Rights Reserved
+; For use in distributed.net projects only.
+; Any other distribution or use of this source violates copyright.
+;
 ; x86 Processor identification for rc5 distributed.net effort
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.1.2.1 2001/01/21 15:09:27 cyp Exp $
+; $Id: x86ident.asm,v 1.1.2.2 2002/04/12 23:56:55 andreasb Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:

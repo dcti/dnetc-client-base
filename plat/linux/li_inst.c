@@ -1,8 +1,12 @@
 /*
+ * Copyright distributed.net 2000-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * -install and -uninstall support for Linux (maybe all SysV style init?)
  *
  * Created Aug 23 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: li_inst.c,v 1.1.2.2 2001/02/18 23:58:40 cyp Exp $
+ * $Id: li_inst.c,v 1.1.2.3 2002/04/12 23:56:47 andreasb Exp $
  *
 */
 #define __NO_STRING_INLINES /* work around bugs in glibc bits/string2.h */

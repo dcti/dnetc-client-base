@@ -1,6 +1,8 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ----------------------------------------------------------------------
@@ -20,7 +22,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.17.2.23 2001/02/02 13:09:04 cyp Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.17.2.24 2002/04/12 23:56:30 andreasb Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"

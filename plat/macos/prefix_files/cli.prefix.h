@@ -1,4 +1,10 @@
-/* $Id: cli.prefix.h,v 1.1.2.1 2001/01/21 15:14:28 cyp Exp $ */
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: cli.prefix.h,v 1.1.2.2 2002/04/12 23:56:48 andreasb Exp $
+*/
 
 /* ========================== build specific stuff ===================== */
 //#define MAC_FBA /* if building FBA */

@@ -1,4 +1,8 @@
 /*
+ * Copyright distributed.net 1998-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * CPU detection routines for rc5 distributed.net effort
  * Written in a dark and stormy night by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
@@ -7,7 +11,7 @@
 */
 
 .data
-_id:	        .ascii "@(#)$Id: x86ident.S,v 1.1.2.1 2001/01/21 15:09:27 cyp Exp $"
+_id:	        .ascii "@(#)$Id: x86ident.S,v 1.1.2.2 2002/04/12 23:56:53 andreasb Exp $"
 		.byte 0
 		.align 4
 _savident:	.long 0              // avoid serialization caused by CPUID

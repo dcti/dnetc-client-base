@@ -1,4 +1,5 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,7 +8,7 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.1.2.6 2001/05/14 16:23:28 cyp Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.1.2.7 2002/04/12 23:56:53 andreasb Exp $"; }
 
 #include "cputypes.h"
 #define INCLUDE_COMMDLG_H

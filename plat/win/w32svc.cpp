@@ -1,4 +1,5 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -6,7 +7,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.1.2.5 2001/04/12 14:57:22 cyp Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.1.2.6 2002/04/12 23:56:53 andreasb Exp $"; }
 
 //#define TRACE
 

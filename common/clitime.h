@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,10 +8,9 @@
  * This module contains functions for obtaining/formatting/manipulating 
  * the time. 
  * ----------------------------------------------------------------------
- *
 */ 
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.19.2.3 2000/05/25 19:27:45 cyp Exp $"
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.19.2.4 2002/04/12 23:56:32 andreasb Exp $"
 
 #include "baseincs.h" /* struct timeval */
 

@@ -1,5 +1,9 @@
 /* Hey, Emacs, this is *not* a -*-C++-*- file !
  *
+ * Copyright distributed.net 2000-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * TCP/IP network base functions with automatic stack and 
  * dialup-device initialization and shutdown.
  * Written October 2000 by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -9,7 +13,7 @@
  * module.
 */
 #ifndef __NETBASE_H__
-#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.1.2.2 2000/10/24 21:36:35 cyp Exp $"
+#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.1.2.3 2002/04/12 23:56:37 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 

@@ -1,17 +1,16 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * this module contains netconn_xxx() and support routines which are
  * high level connection open/close/read/write/reset with optional
  * on-the-fly http/uue tunneling and http/socks proxy support.
- *
 */
 
 #ifndef __NETCONN_H__
-#define __NETCONN_H__ "@(#)$Id: netconn.h,v 1.1.2.2 2000/10/24 21:36:35 cyp Exp $"
+#define __NETCONN_H__ "@(#)$Id: netconn.h,v 1.1.2.3 2002/04/12 23:56:38 andreasb Exp $"
 
 /* netconn_open(): create a new connection. Returns a 'handle' for
  * subsequent netconn_xxx() operations or NULL on error.

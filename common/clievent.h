@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2001 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * 
@@ -9,7 +9,7 @@
 */
 
 #ifndef __CLIEVENT_H__
-#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.10.2.4 2001/01/20 12:32:19 cyp Exp $"
+#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.10.2.5 2002/04/12 23:56:30 andreasb Exp $"
 
                                               /* parm is ptr to... */
 #define CLIEVENT_CLIENT_STARTED        0x0001 /* ...client */

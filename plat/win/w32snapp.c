@@ -1,4 +1,9 @@
-/* Cobbled together from various sources (NtQuerySystemInformation() from
+/* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * Cobbled together from various sources (NtQuerySystemInformation() from
  * EnTeHandle from Fred Forester http://www.cyberenet.net/~fforest/, and
  * NT Performance counters from various msdn support documents), by
  * Cyrus Patel <cyp@fb14.uni-mainz.de> for use by the distributed.net client.
@@ -26,7 +31,7 @@
  * and pe.szExeFile usually (I've seen a few ".com"s, but not all .com's
  * appear with ".com") does not have an extension.
  *
- * $Id: w32snapp.c,v 1.1.2.3 2002/03/12 22:55:13 jlawson Exp $
+ * $Id: w32snapp.c,v 1.1.2.4 2002/04/12 23:56:52 andreasb Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN

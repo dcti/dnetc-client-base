@@ -1,4 +1,8 @@
 /*
+ * Copyright distributed.net 2000-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * TCP/IP networking API abstraction layer, with automatic stack and
  * dialup-device initialization and shutdown.
  * Written October 2000 by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -59,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.24 2002/04/11 10:50:31 oliver Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.25 2002/04/12 23:56:37 andreasb Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */

@@ -2,6 +2,7 @@
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
  * Created by Jeff Lawson and Tim Charron. Rewritten by Cyrus Patel.
 */
 
@@ -9,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.99 2002/03/28 01:07:39 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.100 2002/04/12 23:56:30 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes

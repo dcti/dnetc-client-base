@@ -1,4 +1,8 @@
-! $Id: rc5-ultra-crunch.s,v 1.1.2.1 2001/05/20 00:30:02 andreasb Exp $
+! Copyright distributed.net 1997-2002 - All Rights Reserved
+! For use in distributed.net projects only.
+! Any other distribution or use of this source violates copyright.
+!
+! $Id: rc5-ultra-crunch.s,v 1.1.2.2 2002/04/12 23:56:58 andreasb Exp $
 ! Generated from Id: rc5-ultra-crunch.cpp,v 1.9.2.4 2000/02/03 22:50:16 ivo Exp
 ! using command:
 ! gcc -S -W ... -fcaller-saves -fomit-frame-pointer -fno-inline-functions \

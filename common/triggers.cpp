@@ -1,7 +1,9 @@
-/* Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
+/*
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * This module contains functions for raising/checking flags normally set
  * (asynchronously) by user request. Encapsulating the flags in 
@@ -16,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.70 2002/04/01 17:46:25 sampo Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.71 2002/04/12 23:56:41 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

@@ -1,9 +1,13 @@
 /* #define DEBUG */
 /*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * This file contains startup code similar to what crt0 does elsewhere.
  * Written August 1997 Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: nwpre3x.c,v 1.1.2.1 2001/01/21 15:10:31 cyp Exp $
+ * $Id: nwpre3x.c,v 1.1.2.2 2002/04/12 23:56:49 andreasb Exp $
  *
  * Unlike Novell's prelude, its in source, is backwards compatible with 
  * NetWare 3.x, zeroes the BSS segment, and supports Watcom c/cpp lib 

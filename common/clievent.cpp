@@ -1,8 +1,9 @@
-/* Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
- *
- * Copyright distributed.net 1997-2001 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  *
  * ----------------------------------------------------------------------
  * This is an amazingly trivial :p event handling mechanism for client 
@@ -30,7 +31,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.10.2.1 2001/01/20 12:32:19 cyp Exp $"; }
+return "@(#)$Id: clievent.cpp,v 1.10.2.2 2002/04/12 23:56:30 andreasb Exp $"; }
 
 #include "baseincs.h"   /* NULL, memset */
 #include "clievent.h"   /* keep prototypes in sync */

@@ -1,11 +1,15 @@
 /* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * Catch-all source file for the distributed.net client for NetWare 
  * written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  * 
  * (no, its not nice to do things this way, but its the only way
  * when one doesn't want to repeatedly muck with a shared makefile)
  *
- * $Id: netware.cpp,v 1.1.2.1 2001/01/21 15:10:29 cyp Exp $
+ * $Id: netware.cpp,v 1.1.2.2 2002/04/12 23:56:49 andreasb Exp $
 */
 
 #include "nwlemu.c"     /* kernel/clib portability stubs */

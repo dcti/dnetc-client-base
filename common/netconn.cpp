@@ -1,4 +1,8 @@
 /*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * This module contains netconn_xxx() and support routines which are
  * high level connection open/close/read/write/reset with optional
  * on-the-fly http/uue tunneling and http/socks proxy support.
@@ -13,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.10 2001/05/06 11:01:10 teichp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.11 2002/04/12 23:56:37 andreasb Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET

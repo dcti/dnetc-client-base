@@ -1,6 +1,8 @@
-/* Copyright distributed.net 1997-2002 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
  * -------------------------------------------------------------------
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
@@ -13,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.79 2002/04/11 10:43:48 oliver Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.80 2002/04/12 23:56:32 andreasb Exp $"; }
 
 //#define TRACE
 

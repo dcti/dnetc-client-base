@@ -2,6 +2,7 @@
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * This module contains hardware identification stuff.
@@ -9,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.86 2002/03/31 00:49:00 mfeiri Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.87 2002/04/12 23:56:34 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files

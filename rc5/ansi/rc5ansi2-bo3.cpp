@@ -1,13 +1,16 @@
+// Copyright distributed.net 1997-2002 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+
 // dual-key, mixed round 3 and encryption, direct use of last value,
 // non-arrayed S1/S2 tables
 
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
 // $Log: rc5ansi2-bo3.cpp,v $
+// Revision 1.6.2.1  2002/04/12 23:56:57  andreasb
+// 2002 copyright update - round 2
+//
 // Revision 1.6  1998/07/08 22:59:49  remi
-// Lots of $Id$ stuff.
+// Lots of $Id: rc5ansi2-bo3.cpp,v 1.6.2.1 2002/04/12 23:56:57 andreasb Exp $ stuff.
 //
 // Revision 1.5  1998/06/14 08:27:33  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
@@ -23,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_bo3_cpp (void) {
-return "@(#)$Id: rc5ansi2-bo3.cpp,v 1.6 1998/07/08 22:59:49 remi Exp $"; }
+return "@(#)$Id: rc5ansi2-bo3.cpp,v 1.6.2.1 2002/04/12 23:56:57 andreasb Exp $"; }
 #endif
 
 #include "problem.h"

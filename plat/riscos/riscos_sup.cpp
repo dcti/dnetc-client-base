@@ -1,10 +1,11 @@
 /*
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
- * $Id: riscos_sup.cpp,v 1.1.2.2 2001/05/06 10:43:53 teichp Exp $
+ *
+ * $Id: riscos_sup.cpp,v 1.1.2.3 2002/04/12 23:56:51 andreasb Exp $
 */
 
 #include <stdio.h> /* printf() for debugging */

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
 */
 
 #ifndef __CLIDOS_H__
-#define __CLIDOS_H__ "@(#)$Id: clidos.h,v 1.1.2.1 2001/01/21 15:10:23 cyp Exp $"
+#define __CLIDOS_H__ "@(#)$Id: clidos.h,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"
 
 //#include <sys/timeb.h>
 #include <io.h>

@@ -1,9 +1,9 @@
 /* 
- * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
- *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ------------------------------------------------------------------
  * real sleep() and usleep() for DOS.
@@ -12,7 +12,7 @@
  *
 */
 const char *cdosidle_cpp(void) {
-return "@(#)$Id: cdosidle.cpp,v 1.1.2.1 2001/01/21 15:10:19 cyp Exp $"; }
+return "@(#)$Id: cdosidle.cpp,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"; }
 
 #include <stdlib.h>   /* getenv() */
 #include <string.h>   /* strcmp() */

@@ -1,4 +1,5 @@
-/* Copyright distributed.net 1997-1998 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * 
@@ -14,7 +15,7 @@
  *
 */
 const char *cdosemu_cpp(void) {
-return "@(#)$Id: cdosemu.cpp,v 1.1.2.1 2001/01/21 15:10:19 cyp Exp $"; }
+return "@(#)$Id: cdosemu.cpp,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"; }
 
 #include <stdlib.h>   /* getenv() */
 #include <stdio.h>    /* sprintf() */

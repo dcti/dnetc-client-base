@@ -1,4 +1,10 @@
-/* $Id: ogr_dat.cpp,v 1.1.2.3 2000/12/18 01:51:09 cyp Exp $ */
+/* 
+ * Copyright distributed.net 1999-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: ogr_dat.cpp,v 1.1.2.4 2002/04/12 23:56:44 andreasb Exp $
+*/
 
 #ifdef __cplusplus
 extern "C" const unsigned char ogr_choose_dat[];

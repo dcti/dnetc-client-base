@@ -1,4 +1,8 @@
 /*
+ * Copyright distributed.net 1998-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * This is the console driver backend, and supports the GUI window,
  * the pipe interface and a native console interface through the
  * common w32ConXXX() layer. Interface selection is automatic, and the
@@ -7,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.1.2.9 2002/03/12 22:55:05 jlawson Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.1.2.10 2002/04/12 23:56:51 andreasb Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE

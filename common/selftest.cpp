@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2001 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.48 2001/02/19 08:12:04 mfeiri Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.49 2002/04/12 23:56:40 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT

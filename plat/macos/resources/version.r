@@ -1,14 +1,16 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved			*/
-/* For use in distributed.net projects only.                         */
-/* Any other distribution or use of this source violates copyright.  */
-/*                                                                   */
-/* @(#)$Id: version.r,v 1.1.2.1 2001/01/21 15:14:28 cyp Exp $     */
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
+ * @(#)$Id: version.r,v 1.1.2.2 2002/04/12 23:56:48 andreasb Exp $
+*/
 
 #include "Types.r"
 #include "SysTypes.r"
 #include "version.h"
 
-#define the_copystr "©1997-2001 distributed.net"
+#define the_copystr "©1997-2002 distributed.net"
 #define the_stage final 
 
 resource 'vers' (1, preload) {

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1998-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32CONS_H__
-#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $"
+#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.1.2.2 2002/04/12 23:56:52 andreasb Exp $"
 
 /* ********* DO NOT EVER CHANGE THE W32CLI_*_NAME defines ********** */
 #define W32CLI_MUTEX_NAME       "Bovine RC5/DES Win32 Client"

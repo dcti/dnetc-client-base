@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-2001 - All Rights Reserved
+# Copyright distributed.net 1998-2002 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.273 2002/04/11 11:58:59 oliver Exp $
+# @(#)$Id: configure,v 1.222.2.274 2002/04/12 23:56:25 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"

@@ -1,8 +1,13 @@
-// Copyright distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
+// $Id: rotate.h,v 1.5.2.5 2002/04/12 23:56:57 andreasb Exp $
+//
 // $Log: rotate.h,v $
+// Revision 1.5.2.5  2002/04/12 23:56:57  andreasb
+// 2002 copyright update - round 2
+//
 // Revision 1.5.2.4  2001/05/20 21:30:22  andreasb
 // disable sparc specific SHL/SHR macros when using Sun CC
 //

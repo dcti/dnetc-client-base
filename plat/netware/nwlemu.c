@@ -1,4 +1,8 @@
 /* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * Emulation functions/stubs for portability across NetWare versions.
  * All functions here are CLIB safe (don't require context). 
  * References to GetNLMHandle() are to a CLIB safe version therof in
@@ -10,7 +14,7 @@
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: nwlemu.c,v 1.1.2.2 2001/10/19 10:45:32 cyp Exp $
+ * $Id: nwlemu.c,v 1.1.2.3 2002/04/12 23:56:49 andreasb Exp $
 */
 
 //#define DEMO_TIMEFUNC

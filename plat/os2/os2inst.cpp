@@ -1,4 +1,5 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,6 +9,9 @@
  * ----------------------------------------------------------------
  *
  * $Log: os2inst.cpp,v $
+ * Revision 1.1.2.2  2002/04/12 23:56:50  andreasb
+ * 2002 copyright update - round 2
+ *
  * Revision 1.1.2.1  2001/01/21 15:10:27  cyp
  * restructure and discard of obsolete elements
  *
@@ -20,7 +24,7 @@
  *
 */
 const char *os2inst_cpp(void) {
-return "@(#)$Id: os2inst.cpp,v 1.1.2.1 2001/01/21 15:10:27 cyp Exp $"; }
+return "@(#)$Id: os2inst.cpp,v 1.1.2.2 2002/04/12 23:56:50 andreasb Exp $"; }
 
 #include <stdio.h>  /* sprintf() */
 #include <string.h> /* strrchr(), strcat() */

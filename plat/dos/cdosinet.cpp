@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1998 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * 
@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------
 */
 const char *cdosinet_cpp(void) {
-return "@(#)$Id: cdosinet.cpp,v 1.1.2.1 2001/01/21 15:10:22 cyp Exp $"; }
+return "@(#)$Id: cdosinet.cpp,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"; }
 
 
 #if 0

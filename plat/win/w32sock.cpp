@@ -1,4 +1,8 @@
 /* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * Shim layer between Winsock DLL and application.
  * The only functions in the Winsock 1.x spec that are not in this file are
  * the WSAAsyncXXX() calls (WSAxyzBlockingXYZ() functions are available though)
@@ -39,7 +43,7 @@
  *   #endif
 */
 const char *w32sock_cpp(void) {
-return "@(#)$Id: w32sock.cpp,v 1.1.2.3 2001/06/08 07:04:17 cyp Exp $"; }
+return "@(#)$Id: w32sock.cpp,v 1.1.2.4 2002/04/12 23:56:52 andreasb Exp $"; }
 
 #include <windows.h>
 #include "w32sock.h" // <windows.h> and <winsock.h> as documented above.

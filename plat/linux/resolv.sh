@@ -1,8 +1,12 @@
 #!/bin/sh
+# Copyright distributed.net 2000-2002 - All Rights Reserved
+# For use in distributed.net projects only.
+# Any other distribution or use of this source violates copyright.
+#
 # shell script versions of gethostbyname() and gethostbyaddr()
 #
 # Created July 27 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
-# $Id: resolv.sh,v 1.1.2.1 2001/01/21 15:10:24 cyp Exp $
+# $Id: resolv.sh,v 1.1.2.2 2002/04/12 23:56:48 andreasb Exp $
 #
 # this script does these things: 
 #   - determine if called to process a hostname or hostaddress

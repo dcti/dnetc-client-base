@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,10 +12,9 @@
  * non-zero if the client should not use checkpointing. The checkpoint 
  * interval is controlled from Run()
  * -----------------------------------------------------------------
- *
 */
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.11.2.14 2001/07/16 18:29:18 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.11.2.15 2002/04/12 23:56:30 andreasb Exp $"; }
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()

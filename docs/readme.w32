@@ -1,6 +1,6 @@
 
- distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.13 2002/04/12 10:59:17 zebe Exp $
+ distributed.net client for Win32 (Win9x/WinNT/Win2K/WinXP/Win32s)
+ document revision $Id: readme.w32,v 1.1.2.14 2002/04/12 23:56:42 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -85,7 +85,7 @@
     Installation involves...
     a) simply copying the *.scr file included with the client 
        distribution to one of the following locations: 
-       on Win95:  your \WINDOWS\ or \WINDOWS\SYSTEM\ directory
+       on Win9x:  your \WINDOWS\ or \WINDOWS\SYSTEM\ directory
        on WinNT:  your \WINNT\ or \WINNT\SYSTEM32\ directory
     b) Once you have copied it, go to the Display properties in the Control
        Panel and select the distributed.net screen saver as the active 

@@ -1,10 +1,13 @@
+; Copyright distributed.net 1997-2002 - All Rights Reserved
+; For use in distributed.net projects only.
+; Any other distribution or use of this source violates copyright.
 ;-------------------------------------------------------------------
 ; RISC OS assembler support functions
 ;
 
         AREA    |C$$code|, CODE, READONLY
 
-        DCB     "@(#)$Id: riscos_asm_gccsdk.s,v 1.1.2.1 2001/05/06 11:08:34 teichp Exp $", 0
+        DCB     "@(#)$Id: riscos_asm_gccsdk.s,v 1.1.2.2 2002/04/12 23:56:51 andreasb Exp $", 0
         ALIGN
 
 OS_EnterOS              *       &16

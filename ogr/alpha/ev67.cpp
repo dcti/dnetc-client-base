@@ -1,11 +1,12 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ev67.cpp,v 1.1.2.2 2002/03/30 06:16:01 sampo Exp $"; }
+return "@(#)$Id: ev67.cpp,v 1.1.2.3 2002/04/12 23:56:42 andreasb Exp $"; }
 
 #if defined(__GNUC__)
   #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* seems to be a win */

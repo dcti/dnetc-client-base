@@ -1,4 +1,8 @@
 /*
+** Copyright distributed.net 1998-2002 - All Rights Reserved
+** For use in distributed.net projects only.
+** Any other distribution or use of this source violates copyright.
+**
 ** memfile.cpp created 1998/08/16 Cyrus Patel <cyp@fb14.uni-mainz.de>
 **
 ** This code is POSIXly correct. Please keep it that way.
@@ -11,7 +15,7 @@
 ** mdup(). The stream object used/created by these functions is a MEMFILE *. 
 */
 const char *memfile_cpp(void) {
-return "@(#)$Id: memfile.cpp,v 1.4 1999/04/05 17:56:52 cyp Exp $"; }
+return "@(#)$Id: memfile.cpp,v 1.4.2.1 2002/04/12 23:56:37 andreasb Exp $"; }
 
 #include <stdio.h>
 #include <string.h>

@@ -1,11 +1,11 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1999-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- */
+*/
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.1.2.9 2000/11/17 00:44:49 mfeiri Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.1.2.10 2002/04/12 23:56:45 andreasb Exp $"; }
 
 #ifdef __VEC__ /* compiler supports AltiVec */
   #if (__MWERKS__)

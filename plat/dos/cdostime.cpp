@@ -1,4 +1,8 @@
-/* 
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * ------------------------------------------------------------------
  * POSIX gettimeofday() and clock_gettime() with 
  * real micro/nanosec granularity/resolution.
@@ -10,7 +14,7 @@
  * ------------------------------------------------------------------
 */
 const char *cdostime_cpp(void) {
-return "@(#)$Id: cdostime.cpp,v 1.1.2.1 2001/01/21 15:10:23 cyp Exp $"; }
+return "@(#)$Id: cdostime.cpp,v 1.1.2.2 2002/04/12 23:56:47 andreasb Exp $"; }
 
 //#define DEBUG_MONOTONIC
 //#define DEBUG_TIMEOFDAY

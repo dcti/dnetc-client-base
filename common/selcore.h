@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.11 2001/03/06 04:35:43 sampo Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.3.2.12 2002/04/12 23:56:40 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"

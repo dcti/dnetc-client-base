@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef _RISCOS_X86_H_
-#define _RISCOS_X86_H_ "@(#)$Id: riscos_x86.h,v 1.1.2.1 2001/01/21 15:10:28 cyp Exp $";
+#define _RISCOS_X86_H_ "@(#)$Id: riscos_x86.h,v 1.1.2.2 2002/04/12 23:56:51 andreasb Exp $";
 
 #ifdef __cplusplus
 extern "C" {

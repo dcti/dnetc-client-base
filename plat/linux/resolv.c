@@ -1,4 +1,8 @@
 /*
+ * Copyright distributed.net 2000-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * gethostbyname(), gethostbyname2(), gethostbyname_r(), gethostbyname2_r(),
  * ['2' versions not for AF_INET6] and gethostbyaddr(), gethostbyaddr_r(), 
  * functions for linux (broken resolver library/routines)
@@ -9,7 +13,7 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.1.2.2 2001/02/18 23:58:40 cyp Exp $
+ * $Id: resolv.c,v 1.1.2.3 2002/04/12 23:56:48 andreasb Exp $
  *
  * The functions exported from here will first check if a bypass 
  * (described below) has been provided. 

@@ -1,5 +1,9 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  * 
+ * Copyright distributed.net 2001-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * Simple, lightweight synchronization primitives, used by the client 
  * for lightweight protection of small and fast critical sections 
  * (eg mem copy operations from memory in one scope to memory in another), 
@@ -14,7 +18,7 @@
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.20 2002/03/27 22:55:46 sampo Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.21 2002/04/12 23:56:31 andreasb Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */

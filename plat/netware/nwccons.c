@@ -1,4 +1,8 @@
 /*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * distributed.net client-for-NetWare console management functions.
  * written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
@@ -9,7 +13,7 @@
  *   int nwCliKbHit(void);
  *   int nwCliGetCh(void);
  *
- * $Id: nwccons.c,v 1.1.2.2 2001/04/12 15:12:37 cyp Exp $
+ * $Id: nwccons.c,v 1.1.2.3 2002/04/12 23:56:49 andreasb Exp $
 */
 
 #include <stdio.h>    /* printf(), EOF */

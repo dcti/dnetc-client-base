@@ -1,7 +1,8 @@
 /*
- * Copyright distributed.net 1997-2001 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> to be able to throw
  * away some very ugly hackery in buffer open code.
  *
@@ -23,7 +24,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.15.2.9 2001/05/19 18:42:34 andreasb Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.15.2.10 2002/04/12 23:56:38 andreasb Exp $"; }
 
 #include <stdio.h>
 #include <string.h>

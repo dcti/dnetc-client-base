@@ -1,5 +1,8 @@
-//#define TRACE_STAT
 /*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * ANSI/POSIX functions not available, poorly implemented, or incompatible
  *                      between NetWare versions
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -16,8 +19,10 @@
  *   access(2) [POSIX 1]    - w/a broken NCPGetEntryAttributes on 5.0-pre SP3 
  *   fopen(3)  [POSIX 1]    - workaround for exclusive open 
  *
- * $Id: nwlcomp.c,v 1.1.2.1 2001/01/21 15:10:29 cyp Exp $
+ * $Id: nwlcomp.c,v 1.1.2.2 2002/04/12 23:56:49 andreasb Exp $
 */
+
+//#define TRACE_STAT
 
 /* ===================================================================== */
 

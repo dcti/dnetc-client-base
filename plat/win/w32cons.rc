@@ -1,9 +1,12 @@
 /* 
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * This resource file is shared by the client and screensaver.
  * (the client can also run as a screensaver)
- * For use in distributed.net projects only. YEAH! :)
  *
- * Revision $Id: w32cons.rc,v 1.1.2.4 2002/03/28 01:07:48 andreasb Exp $
+ * Revision $Id: w32cons.rc,v 1.1.2.5 2002/04/12 23:56:52 andreasb Exp $
 */
 
 #define DNETC_EXE_ICO "plat\\win\\w32cons.ico" //dnet2.ico,w32cons.ico

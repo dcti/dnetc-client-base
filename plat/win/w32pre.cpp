@@ -1,4 +1,5 @@
-/* Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +11,7 @@
 */
 
 const char *w32pre_cpp(void) {
-return "@(#)$Id: w32pre.cpp,v 1.1.2.1 2001/01/21 15:10:25 cyp Exp $"; }
+return "@(#)$Id: w32pre.cpp,v 1.1.2.2 2002/04/12 23:56:52 andreasb Exp $"; }
 
 #include "cputypes.h"  //CLIENT_OS
 #define WIN32_LEAN_AND_MEAN

@@ -1,8 +1,9 @@
-/* Created by Cyrus Patel <cyp@fb14.uni-mainz.de> 
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+/*
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> 
  *
  * ---------------------------------------------------------------
  * This file contains functions for getting/setting/clearing
@@ -11,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.28.2.12 2001/06/17 17:20:04 andreasb Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.28.2.13 2002/04/12 23:56:37 andreasb Exp $"; }
 
 //#define TRACE
 

@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CHECKPT_H__
-#define __CHECKPT_H__ "@(#)$Id: checkpt.h,v 1.4.2.4 2000/10/28 15:43:24 cyp Exp $"
+#define __CHECKPT_H__ "@(#)$Id: checkpt.h,v 1.4.2.5 2002/04/12 23:56:30 andreasb Exp $"
 
 /* action flags */
 #define CHECKPOINT_REFRESH 0x00       /* save current to checkpoint */

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this is *not* a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.3.2.3 2000/10/05 22:39:00 cyp Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.3.2.4 2002/04/12 23:56:30 andreasb Exp $"
 
 typedef enum
 {

@@ -1,5 +1,9 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * For use in distributed.net projects only.
+ * Any other distribution or use of this source violates copyright.
+ *
  * ----------------------------------------------------
  * this header file is essential for win386 (win16 extender), non-essential
  * for everything else, but doesn't hurt to include.
@@ -37,7 +41,7 @@
  *   #endif
 */
 #ifndef __W32SOCK_H__
-#define __W32SOCK_H__ "@(#)$Id: w32sock.h,v 1.1.2.1 2001/01/21 15:10:26 cyp Exp $"
+#define __W32SOCK_H__ "@(#)$Id: w32sock.h,v 1.1.2.2 2002/04/12 23:56:53 andreasb Exp $"
 
 #if !defined(_INC_WINDOWS)
   /* windows.h must be included first! (don't default LEAN_AND_MEAN, 

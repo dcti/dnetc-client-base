@@ -1,8 +1,13 @@
-// Copyright distributed.net 1997 - All Rights Reserved
+// Copyright distributed.net 1997-2002 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Id: rotate.h,v 1.1.2.1 2002/04/12 23:56:58 andreasb Exp $
 // 
 // $Log: rotate.h,v $
+// Revision 1.1.2.1  2002/04/12 23:56:58  andreasb
+// 2002 copyright update - round 2
+//
 // Revision 1.1  1999/03/01 04:09:03  foxyloxy
 // *** empty log message ***
 //
