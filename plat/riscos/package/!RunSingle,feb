@@ -1,4 +1,6 @@
 Set Dnetc$Dir <Obey$Dir>
+RMENSURE FPEmulator 4.00 RMLOAD System:Modules.FPEmulator
+RMENSURE FPEmulator 4.00 Error You need FPEmulator 4.00 or later
 IfThere <Dnetc$Dir>.exitrc5/now Then Delete <Dnetc$Dir>.exitrc5/now
 Echo <22><25>
 Run <Dnetc$Dir>.Dnetc

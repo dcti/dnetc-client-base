@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.8 2003/10/16 21:49:42 jr_brady Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.9 2003/10/28 17:11:58 teichp Exp $"; }
 
 //#define TRACE
 
@@ -300,6 +300,12 @@ int selcoreGetPreselectedCoreForProject_ogr()
       }
   // ===============================================================
   #elif (CLIENT_CPU == CPU_ARM)
+    {
+      extern signed int default_ogr_core;
+
+      cindex = default_ogr_core;
+    }
+#if 0
     if (detected_type > 0)
     {
       if (detected_type == 0x200  || /* ARM 2 */
@@ -318,6 +324,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
                detected_type == 0xB11)   /* StrongARM 1110 */
         cindex = 0;
     }
+#endif
   // ===============================================================
   #endif
 

@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.27 2003/10/19 12:11:55 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.28 2003/10/28 17:11:58 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -48,7 +48,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.27 2003/10/19 12:11:55 jlawson Exp $"; }
                                        to NULL 
    if we have a name, but no ID:       return ID==0, set cpuname to the 
                                        raw name (eg "PCA56" )
-   if we have an ID and a name:        return ID and fully formatted 
+   if we have an ID and a name:        return ID and fully formatted
                                        name (eg "Alpha EV5.6 (21164PC)")
    if we have an ID but no name:       return ID, set cpuname to ""
                                                    -  cyp April/03/1999
@@ -569,7 +569,7 @@ static long __GetRawProcessorID(const char **cpuname)
     {
       detectedtype = si.wProcessorRevision;
       if (detectedtype == 0)
-        detectedtype = si.wProcessorLevel; 
+        detectedtype = si.wProcessorLevel;
       if (detectedtype == 0)
         detectedtype = -1;
     }
@@ -874,7 +874,7 @@ static u32 __os_x86ident_fixup(u32 x86ident_result)
             vendor_id = 0x7943;
           else
             break;
-        }  
+        }
         else if (strcmp(buf, "model name")==0)
         {
           if (strncmp(p, "5x86", 4)!=0)
@@ -919,7 +919,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     const char *vendorname = NULL;
     const char *chipname_override = NULL;
     int cpuidbmask, cpuid, vendorid; u32 dettype; 
-    struct cpuxref { int cpuid, cpufeatures, simpleid; 
+    struct cpuxref { int cpuid, cpufeatures, simpleid;
                      const char *cpuname; } *internalxref = NULL;
 
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
@@ -974,7 +974,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x7943 /* 'yC' */ ) /* CyrixInstead */
-    {                                  
+    {
       static struct cpuxref cyrixxref[]={
           {  0x0400, CPU_F_I486,       6, "486SLC/DLC/SR/DR" },
           {  0x0410, CPU_F_I486,       6, "486S/Se/S2/DX/DX2" },
@@ -1217,45 +1217,65 @@ static void ARMident_catcher(int)
 #endif
 
 #if (CLIENT_CPU == CPU_ARM)
+signed int default_rc5_core = -1;
+signed int default_r72_core = -1;
+signed int default_ogr_core = -1;
+
 static long __GetRawProcessorID(const char **cpuname )
 {
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
-  static char namebuf[60];
+  static char namebuf[17];
+  static struct {
+    unsigned int id, mask;
+    signed int rc5, r72, ogr;
+    char *name;
+  } ids[] = {
+    // ARM
+    { 0x41560200, 0xfffffff0, 2, 1, 1, "ARM 2" },
+    { 0x41560250, 0xfffffff0, 2, 1, 1, "ARM 250" },
+    { 0x41560300, 0xfffffff0, 0, 1, 1, "ARM 3" },
+    { 0x41560600, 0xfffffff0, 0, 1, 1, "ARM 600" },
+    { 0x41560610, 0xfffffff0, 0, 1, 1, "ARM 610" },
+    { 0x41560200, 0xfffffff0, 0, 1, 1, "ARM 620" },
+    { 0x41007000, 0xfffffff0, 0, 1, 1, "ARM 700" },
+    { 0x41007100, 0xfffffff0, 0, 1, 1, "ARM 710" },
+    { 0x41007500, 0xffffffff, 0, 1, 1, "ARM 7500" },	// 7500/FEL are "artificial" ids
+    { 0x410F7500, 0xffffffff, 0, 1, 1, "ARM 7500FEL" },	// created by IOMD detection
+    { 0x41047100, 0xfffffff0, 0, 1, 1, "ARM 7100" },
+    { 0x41807100, 0xfffffff0, 0, 1, 1, "ARM 710T" },
+    { 0x41807200, 0xfffffff0, 0, 1, 1, "ARM 720T" },
+    { 0x41807400, 0xfffffff0, 0, 1, 1, "ARM 740T8K" },
+    { 0x41817400, 0xfffffff0, 0, 1, 1, "ARM 740T4K" },
+    { 0x41018100, 0xfffffff0, 1, 0, 0, "ARM 810" },
+    { 0x41129200, 0xfffffff0, 1, 0, 0, "ARM 920T" },
+    { 0x41029220, 0xfffffff0, 1, 0, 0, "ARM 922T" },
+    { 0x41009260, 0xff00fff0, 1, 0, 0, "ARM 926" },
+    { 0x41029400, 0xfffffff0, 1, 0, 0, "ARM 940T" },
+    { 0x41049460, 0xfffffff0, 1, 0, 0, "ARM 946ES" },
+    { 0x41049660, 0xfffffff0, 1, 0, 0, "ARM 966ES" },
+    { 0x41059660, 0xfffffff0, 1, 0, 0, "ARM 966ESR" },
+    { 0x4100a200, 0xff00fff0, 1, 0, 0, "ARM 1020" },
+    { 0x4100a260, 0xff00fff0, 1, 0, 0, "ARM 1026" },
+    // ?
+    { 0x54029150, 0xfffffff0, 1, 0, 0, "ARM 915" },
+    { 0x54029250, 0xfffffff0, 1, 0, 0, "ARM 925" },
+    // Digital
+    { 0x4401a100, 0xfffffff0, 1, 0, 0, "Digital StrongARM 110" },
+    { 0x4401a110, 0xfffffff0, 1, 0, 0, "Digital StrongARM 1100" },
+    // Intel
+    { 0x6901b110, 0xfffffff0, 1, 0, 0, "Intel StrongARM 1110" },
+    { 0x69052120, 0xffffe3f0, 1, 0, 0, "Intel PXA210" },
+    { 0x69052100, 0xffffe3f0, 1, 0, 0, "Intel PXA250/255" },
+    { 0x69052000, 0xffffe3f0, 1, 0, 0, "Intel 80200" },
+    { 0x69052C30, 0xffffe3f0, 1, 0, 0, "Intel IOP321" },
+    { 0x00000000, 0x00000000, -1, -1, -1, "" }
+  };
 
   #if (CLIENT_OS == OS_RISCOS)
   if ( detectedtype == -2L )
   {
-    /*
-       ARMident() will throw SIGILL on an ARM 2 or ARM 250, because they 
-       don't have the system control coprocessor. (We ignore the ARM 1
-       because I'm not aware of any existing C++ compiler that targets it...)
-    */
-    signal(SIGILL, ARMident_catcher);
-    if (setjmp(ARMident_jmpbuf))
-    {
-      /* we can't differentiate between ARM 2 and 250 */
-      detectedtype = 0x2000;  /* fake up value from ARMident() */
-      detectedname = "ARM 2 or 250"; /* set the name here too */
-    }
-    else
-      detectedtype = ARMident();
-    signal(SIGILL, SIG_DFL);
-
-    detectedtype = (detectedtype >> 4) & 0xfff; // extract part number field
-    if ((detectedtype & 0xf00) == 0) //old-style ID (ARM 3 or prototype ARM 600)
-      detectedtype <<= 4;            // - shift it into the new form
-    if (detectedtype == 0x710)
-    {
-      // the ARM 7500 returns an ARM 710 ID - need to look at its
-      // integral IOMD unit to spot the difference
-      u32 detectediomd = IOMDident();
-      detectediomd &= 0xff00; // just want most significant byte
-      if (detectediomd == 0x5b00)
-        detectedtype = 0x7500;
-      else if (detectediomd == 0xaa00)
-        detectedtype = 0x7500FEL;
-    }
+    detectedtype = ARMident();
   }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2)
@@ -1379,28 +1399,26 @@ static long __GetRawProcessorID(const char **cpuname )
   } /* if (detectedtype == -2) */
   #endif
 
-  if (detectedtype > 0 && detectedname == NULL)
+  if (detectedtype != -2)
   {
-    detectedname = ((const char *)&(namebuf[0]));
-    switch (detectedtype)
+    for (int n=0; detectedname==NULL; n++)
     {
-      case 0x200: strcpy( namebuf, "ARM 2" ); break;
-      case 0x300: strcpy( namebuf, "ARM 3" ); break;
-      case 0xA10: strcpy( namebuf, "StrongARM 110" ); break;
-      case 0xA11: strcpy( namebuf, "StrongARM 1100" ); break;
-      case 0xB11: strcpy( namebuf, "StrongARM 1110" ); break;
-      case 0x250:
-      case 0x600:
-      case 0x610:
-      case 0x700:
-      case 0x7500:
-      case 0x7500FEL:
-      case 0x710:
-      case 0x810: sprintf( namebuf, "ARM %lX", detectedtype );
-                  break;
-      default:    sprintf( namebuf, "%lX", detectedtype );
-                  detectedtype = 0;
-                  break;
+      if ((detectedtype & ids[n].mask) == (ids[n].id & ids[n].mask))
+      {
+        if (ids[n].id == 0)
+        {
+          sprintf(namebuf, "%0lX", detectedtype);
+	  detectedname = namebuf;
+	  detectedtype = 0;
+        }
+        else
+        {
+          detectedname = ids[n].name;
+        }
+        default_rc5_core = ids[n].rc5;
+        default_r72_core = ids[n].r72;
+        default_ogr_core = ids[n].ogr;
+      }
     }
   }
 

@@ -5,7 +5,7 @@
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.h,v 1.2.4.3 2003/01/29 01:29:58 andreasb Exp $
+ * $Id: riscos_sup.h,v 1.2.4.4 2003/10/28 17:11:58 teichp Exp $
 */
 #ifndef __RISCOS_SUP_H__
 #define __RISCOS_SUP_H__
@@ -27,6 +27,7 @@ void riscos_backspace(void);
 static const char *riscos_get_local_directory(const char *appname);
 const char *riscos_localise_filename(const char *filename);
 int riscos_find_local_directory(const char *progname);
+int riscos_versioncode(void);
 char *riscos_version(void);
 
 //unsigned int sleep(unsigned int s); /* unistd replacement */

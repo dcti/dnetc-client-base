@@ -1,2 +1,6 @@
 [triggers]
 exit-flag-filename=exitrc5/now
+
+[logging]
+log-file=logfile
+log-file-type="no limit"

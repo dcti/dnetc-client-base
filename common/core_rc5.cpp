@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_rc5_cpp(void) {
-return "@(#)$Id: core_rc5.cpp,v 1.1.2.5 2003/09/12 13:25:16 mweiser Exp $"; }
+return "@(#)$Id: core_rc5.cpp,v 1.1.2.6 2003/10/28 17:11:58 teichp Exp $"; }
 
 //#define TRACE
 
@@ -460,7 +460,12 @@ int selcoreGetPreselectedCoreForProject_rc564()
 
   // ===============================================================
   #elif (CLIENT_CPU == CPU_ARM)
+    {
+      extern signed int default_rc5_core;
 
+      cindex = default_rc5_core;
+    }
+#if 0
     if (detected_type > 0)
     {
       if (detected_type == 0x300  || /* ARM 3 */
@@ -480,7 +485,7 @@ int selcoreGetPreselectedCoreForProject_rc564()
                detected_type == 0x250)   /* ARM 250 */
         cindex = 2;
     }
-
+#endif
   // ===============================================================
   #elif (CLIENT_CPU == CPU_SPARC)
 
