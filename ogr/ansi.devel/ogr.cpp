@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.40 2001/02/07 16:56:37 andreasb Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.41 2001/02/09 03:16:03 sampo Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -41,6 +41,14 @@
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0
   #endif
   #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
+#elif defined(__IA64__)
+  #define OGROPT_BITOFLIST_DIRECT_BIT             0 /* 'no' irrelevant */
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM     0 /* 'no' no asm */
+  #define OGROPT_COPY_LIST_SET_BIT_JUMPS          1 /* 0-2 - default is 1 */
+  #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE   2 /* 0-2 - default is 2 */
+  #define OGROPT_STRENGTH_REDUCE_CHOOSE           1 /* 0/1 - default is 1 ('yes') */
+  #define OGROPT_ALTERNATE_CYCLE                  1 /* 0/1 - default is 0 ('no') */
+  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT   0 /* 0-2 - default is 0 */
 #elif defined(ASM_68K)
   #define OGROPT_BITOFLIST_DIRECT_BIT 0          /* we want 'no' */
 #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
