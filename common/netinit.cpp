@@ -10,6 +10,10 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.16  1999/01/23 21:25:40  patrick
+//
+// sock_init not used by OS2-EMX
+//
 // Revision 1.15  1999/01/01 02:45:15  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -65,7 +69,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.15 1999/01/01 02:45:15 cramer Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.16 1999/01/23 21:25:40 patrick Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -272,7 +276,9 @@ static int __netInitAndDeinit( int doWhat )
         success = 1;
       else
         {
+    #if !defined(__EMX__)
         sock_init();
+    #endif
         success = 1;
 
         #if defined(LURK)
