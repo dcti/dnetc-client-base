@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.47 2000/03/11 01:10:29 andreasb Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.48 2000/03/18 00:30:17 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -641,6 +641,7 @@ int ParseCommandline( Client *client,
     for (pos = 1; pos < argc; pos += (1+skip_next))
     {
       int missing_value = 0;
+      int invalid_value = 0;
       skip_next = 0;
       thisarg = argv[pos];
       if (thisarg && *thisarg=='-' && thisarg[1]=='-')
@@ -658,12 +659,14 @@ int ParseCommandline( Client *client,
                 strcmp( thisarg, "-bout" ) == 0 ||
                 strcmp( thisarg, "-b2" ) == 0 ||
                 strcmp( thisarg, "-bin2")==0 ||
-                strcmp( thisarg, "-bout2") == 0 )
+                strcmp( thisarg, "-bout2") == 0 ||
+                strcmp( thisarg, "-btime") == 0 )
       {
         if (!argvalue)
           missing_value = 1;
         else
         {
+          // isthresh: 1 = in, 2 = out, 4 = time_in
           int n, maxval = 0, minval = 0, isthresh = 0, isblsize = 0;
           int contest_defaulted = 0;
           unsigned int contest;
@@ -677,6 +680,8 @@ int ParseCommandline( Client *client,
             isthresh = 2;
           else if (strcmp( thisarg, "-b" )==0 || strcmp( thisarg, "-b2" )==0)
             isthresh = 1+2;
+          else if (strcmp( thisarg, "-btime" ) == 0)
+            isthresh = 4;
 
           skip_next = 1;
           op = argvalue;
@@ -713,12 +718,16 @@ int ParseCommandline( Client *client,
               n = -123;
           }
           else if (isthresh)
+          {
             maxval = minval = 1;
+            if ((isthresh & 4) && (contest == OGR)) /* time threshold invalid for ogr */
+              n = -123;
+          }
           else /* coretype */
             maxval = minval = -1;
 
           if (n < minval || ((maxval > minval) && (n > maxval)))
-            missing_value = 1;
+            invalid_value = 1;
           else if (run_level == 0)
           {
             inimissing = 0; // Don't complain if the inifile is missing
@@ -731,9 +740,16 @@ int ParseCommandline( Client *client,
             else if (isthresh)
             {
               if ((isthresh & 1)!=0)
+              {
                 client->inthreshold[contest] = n;
+                /* {-b,-bin} <pn> <n> overrides time threshold,
+                   user may add -btime <pn> <n> if needed */
+                client->timethreshold[contest] = 0;
+              }
               if ((isthresh & 2)!=0)
                 client->outthreshold[contest] = n;
+              if ((isthresh & 4)!=0)
+                client->timethreshold[contest] = n;
             }
             else /* coretype */
             {
@@ -749,19 +765,28 @@ int ParseCommandline( Client *client,
                   client->preferred_blocksize[contest] );
               if (contest_defaulted)
                 LogScreenRaw("DES preferred packet size set to 2^%d\n",
-                  CliGetContestNameFromID(contest),
+                  /*CliGetContestNameFromID(contest),*/
                   client->preferred_blocksize[DES] );
             }
             else if (isthresh)
             {
               if ((isthresh & 1)!=0)
+              {
                 LogScreenRaw("%s fetch threshold set to %d work unit%s\n",
                   CliGetContestNameFromID(contest),
                   client->inthreshold[contest], (client->inthreshold[contest]==1)?"":"s" );
+                if (contest != OGR)
+                  LogScreenRaw("%s fetch time threshold cleared\n",
+                    CliGetContestNameFromID(contest) );
+              }
               if ((isthresh & 2)!=0)
                 LogScreenRaw("%s flush threshold set to %d work unit%s\n",
                   CliGetContestNameFromID(contest),
                   client->outthreshold[contest], (client->outthreshold[contest]==1)?"":"s" );
+              if ((isthresh & 4)!=0)
+                LogScreenRaw("%s fetch time threshold set to %d hour%s\n",
+                  CliGetContestNameFromID(contest),
+                  client->timethreshold[contest], (client->timethreshold[contest]==1)?"":"s" );
             }
             else /* coretype */
             {
@@ -1428,8 +1453,9 @@ int ParseCommandline( Client *client,
         havemode = 0;
         break;
       }
-      if (run_level!=0 && missing_value && logging_is_initialized)
-        LogScreenRaw ("%s option ignored. (argument missing)\n", thisarg );
+      if (run_level!=0 && (missing_value || invalid_value) && logging_is_initialized)
+        LogScreenRaw ("%s option ignored. (argument %s)\n", thisarg,
+          ((missing_value)?("missing"):("invalid")) );
     }
   }
 
