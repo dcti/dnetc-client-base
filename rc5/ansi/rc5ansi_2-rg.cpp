@@ -1,30 +1,10 @@
-// dual-key, mixed round 3 and encryption, A1/A2 use for last value,
-// non-arrayed S1/S2 tables, run-time generation of S0[]
-//
-// Copyright distributed.net 1997 - All Rights Reserved
-// For use in distributed.net projects only.
-// Any other distribution or use of this source violates copyright.
-//
-// $Log: rc5ansi_2-rg.cpp,v $
-// Revision 1.3.2.1  1999/12/31 20:03:58  patrick
-//
-//
-// new version of the RC5 ANSI 2-rg core. Replaces 2-rg.c. Can be compiled
-// using g++ Uses new nameing convention.
-//
-// Revision 1.2  1999/12/27 12:45:36  patrick
-//
-// incorporated changes to 2-rg.c from cyp
-//
-// Revision 1.1  1999/12/27 12:22:16  patrick
-//
-// new version of the RC5 ANSI 2-rg core. Replaces 2-rg.c. Can be compiled using g++. Uses new naming convention.
-//
-
 /*
  * Copyright distributed.net 1997 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * new version of the RC5 ANSI 2-rg core. Replaces 2-rg.c. 
+ * Can be compiled using g++. Has both old and new naming conventions.
  *
  * ---------------------------------------------------------------
  * dual-key, mixed round 3 and encryption, A1/A2 use for last value,
@@ -38,7 +18,11 @@
  *            //returns timeslice
  * ---------------------------------------------------------------
 */
-
+#if (!defined(lint) && defined(__showids__))
+const char *rc5ansi_2_rg_cpp (void) {
+return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.3.2.2 2000/01/01 21:21:40 cyp Exp $"; }
+#endif
+//
 //*Run-time generation of S0[] :
 //
 //	- loading a large constant on RISC need two instructions.
@@ -63,11 +47,6 @@
 //	- PA8000
 // in order :
 //	- all others
-
-#if (!defined(lint) && defined(__showids__))
-const char *rc5ansi_2_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_2-rg.cpp,v 1.3.2.1 1999/12/31 20:03:58 patrick Exp $"; }
-#endif
 
 #define PIPELINE_COUNT 2
 #define USE_ANSI_INCREMENT
@@ -351,7 +330,39 @@ u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *rc5unitwork, u32 tslice)
   	      ROTL3(S2_25 + A2 + ROTL(Llo2 + A2 + Lhi2, A2 + Lhi2))) return ++kiter;
     }
     // "mangle-increment" the key number by the number of pipelines
-    ansi_increment(rc5unitwork);
+    // ansi_increment(rc5unitwork);
+    #define key rc5unitwork->L0
+    key.hi = (key.hi + ( 2 << 24)) & 0xFFFFFFFF;
+    if (!(key.hi & 0xFF000000))
+      {
+      key.hi = (key.hi + 0x00010000) & 0x00FFFFFF;
+      if (!(key.hi & 0x00FF0000))
+        {
+        key.hi = (key.hi + 0x00000100) & 0x0000FFFF;
+        if (!(key.hi & 0x0000FF00))
+          {
+          key.hi = (key.hi + 0x00000001) & 0x000000FF;
+        // we do not need to mask here, was done above
+          if (!(key.hi))
+            {
+            key.lo = key.lo + 0x01000000;
+            if (!(key.lo & 0xFF000000))
+              {
+              key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
+              if (!(key.lo & 0x00FF0000))
+                {
+                key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
+                if (!(key.lo & 0x0000FF00))
+                  {
+                  key.lo = (key.lo + 0x00000001) & 0x000000FF;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
     kiter += PIPELINE_COUNT;
   }
   return kiter;
@@ -363,22 +374,38 @@ extern "C" s32 rc5_ansi_2_rg_unified_form( RC5UnitWork * work,
 #endif
 
 s32 rc5_ansi_rg_unified_form( RC5UnitWork *work,
-                              u32 *timeslice, void *scratch_area )
+                              u32 *keystocheck, void *scratch_area )
 {
-  /*  this is a two pipeline core, so ... iterations_to_do == timeslice / 2
-   *                              and ... iterations_done  == retval * 2
+  u32 keyschecked, iterstodo;
+  /*  
+   *  since the caller does not care about how many pipelines we have,
+   *  and since this is a N pipeline core, we do ...
+   *         ... iterations_to_do == timeslice / PIPELINE_COUNT
+   *
+   *  It _is_ the caller's responsibility to ensure keystocheck AND
+   *  the starting key # are an even multiple of PIPELINE_COUNT.
+   *  The client guarantees this by
+   *  - resetting work if core #s don't match
+   *  - ensuring that 'keystocheck' is always an even multiple of 24
+   *    (which covers all pipeline_count's currently (Dec/99) in use)
   */
-  u32 kiter, xiter = (*timeslice / 2);
-  scratch_area = scratch_area; /* shaddup compiler */
+  iterstodo = (*keystocheck / PIPELINE_COUNT); /* how many iterations? */
+  
+  if ((iterstodo * PIPELINE_COUNT) != *keystocheck) /* misaligned! */
+    return -1; /* error because (keystocheck % PIPELINE_COUNT) != 0 */
+  /* could also check the starting key #, but just take that on good faith */
 
-  kiter = rc5_unit_func_ansi_2_rg( work, xiter );
-  *timeslice = kiter * 2;
+  keyschecked = rc5_unit_func_ansi_2_rg( work, iterstodo );
 
-  if (xiter == kiter) {
-    return RESULT_WORKING;
-  } else if (xiter < kiter) {
-    return RESULT_FOUND;
+  if (keyschecked == *keystocheck) { /* tested all */
+    return RESULT_NOTHING; /* _WORKING and _NOTHING are synonymous here */
+             /* since only the caller knows whether there is more to do */
+  } else if (keyschecked < *keystocheck) {
+    *keystocheck = keyschecked; /* save how many we actually did */
+    return RESULT_FOUND;        /* so that we can point to THE key */
   }
 
+  scratch_area = scratch_area; /* unused arg. shaddup compiler */
   return -1; /* error */
 }
+ 
