@@ -6,6 +6,11 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.23  1998/07/09 21:09:45  friedbait
+// added some simple logic to display keyrates like: [657,661.45 k/s]
+// which means I have added a number separater ',' to separate groups
+// of 3 digits from the right.
+//
 // Revision 1.22  1998/07/08 08:11:07  cyruspatel
 // Added '#include "network.h"' for ntohl()/htonl() prototypes.
 //
@@ -98,7 +103,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.22 1998/07/08 08:11:07 cyruspatel Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.23 1998/07/09 21:09:45 friedbait Exp $";
 return id; }
 #endif
 
@@ -111,6 +116,68 @@ return id; }
 #include "clicdata.h"  // for CliGetContestInfo[Base|Summary]Data()
 #include "network.h"   // for ntohl()/htonl()
 #include "clisrate.h"  // included just to keep prototypes accurate
+
+/*
+ *
+ * Synopsis:
+ *
+ *  char *num_sep(char *number)
+ *
+ * Description:
+ *
+ *  This routine takes a string which actually represents a numer
+ *  for instance "1234567" and converts it to "1,234,567". Effectively
+ *  it adds a colon for each 3 digits. The function checks whether
+ *  a 'fractional part' indicated by a '.' is present and takes care
+ *  of this by skipping the '.' and the fraction and whatever follows
+ *  the fraction.
+ *
+ * Return Value:
+ *
+ *  char * to buffer with number separators inserted.
+ *
+ */
+
+char *num_sep(char *number)
+{
+
+    #define STR_LEN 32
+    static char num_string[STR_LEN + 1];
+
+    char *cp, *wp, *xp;
+    char digits;
+    register int i, j;
+
+    /*
+     * just in case somebody passes a pointer to a long string which
+     * then obviously holds much more than just a number. In this case
+     * we simply return what we got and don't do anything.
+     */
+
+    if (strlen(number) >= STR_LEN)
+        return(number);
+
+    strcpy(num_string, number);
+    digits = strlen(num_string);
+    cp = num_string + digits - 1;
+    wp = num_string + STR_LEN;
+    *wp-- = '\0';
+    if ((xp = strchr(num_string, '.')) != NULL) {
+        while (cp >= xp) {
+            *wp-- = *cp--;
+            digits--;
+        }
+    }
+    for (i = digits, j = 1; i; i--, j++) {
+        *wp-- = *cp--;
+        if (j && ((j % 3) == 0))
+           *wp-- = ',';
+    }
+    if (wp[1] == ',')
+       wp++;
+    return(wp + 1);
+}
+
 
 // ---------------------------------------------------------------------------
 
@@ -139,7 +206,7 @@ char *CliGetKeyrateAsString( char *buffer, double rate )
          t3[t2] );
     }
   }
-  return buffer;
+  return num_sep(buffer);
 }
 
 // ---------------------------------------------------------------------------
