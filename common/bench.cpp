@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.47 2000/11/12 02:00:13 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.48 2000/11/17 16:16:14 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -110,7 +110,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                              contestid, tslice, 0, 0, 0, 0) == 0)
     {
       const char *contname = CliGetContestNameFromID(contestid);
-      int silent = 1, run = RESULT_WORKING;
+      int silent = 1, run = RESULT_WORKING; u32 bestlo = 0;
       unsigned long last_permille = 1001;
 
       //ClientEventSyncPost(CLIEVENT_BENCHMARK_STARTED, (long)thisprob );
@@ -125,7 +125,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     
         if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
         {
-          if (non_preemptive_os.did_adjust < 30 /* don't do this too often */
+          if (!thisprob->pub_data.last_runtime_is_invalid &&
+             non_preemptive_os.did_adjust < 30 /* don't do this too often */
              && thisprob->pub_data.runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
           {
             u32 newtslice;
@@ -155,22 +156,30 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           ThreadSwitchLowPriority();
           #endif
         }
-        else /* preemptive environment */ if (thisprob->pub_data.last_runtime_sec < 2)
+        else /* preemptive environment */ 
+             if (!thisprob->pub_data.last_runtime_is_invalid)
         {
-          /* this tweak is only meaningful for contests that slice */
-          /* precisely and don't have a cap on the maximum tslice, */
-          /* and is probably only useful during the calibration phase. */
-          /* (a simple counter test showed that it only came here one */
-          /* time after tslice had been calibrated) */
-          u32 newtslice; 
-          u32 elapsedus = (thisprob->pub_data.last_runtime_sec * 100000ul)+
-                           thisprob->pub_data.last_runtime_usec;
-          tslice = thisprob->pub_data.tslice;                           
-          newtslice = tslice + ((tslice/100)*(100-(elapsedus/20000ul)));
-          if (newtslice > tslice)
+          u32 donehi, donelo;
+          if (ProblemGetInfo(thisprob, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             &donehi, &donelo, 0, 0 ) == -1)
           {
-            thisprob->pub_data.tslice = tslice = newtslice;
-          }                                    
+            run = -2;
+            break;
+          }
+          ProblemComputeRate( contestid, thisprob->pub_data.runtime_sec, 
+                                         thisprob->pub_data.runtime_usec,
+                              donehi, donelo, &ratehi, &ratelo, 0, 0 );
+          if (!ratehi && ratelo > bestlo)
+            bestlo = ratelo; 
+          if (ratehi)
+            ratelo = 0x0fffffff;
+          tslice = thisprob->pub_data.tslice;
+//printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, ((bestlo==ratelo)?("BEST!"):("")));
+          if (bestlo > ratelo)
+            ratelo = bestlo;
+          if (ratelo > tslice)
+            tslice = thisprob->pub_data.tslice = ratelo;
         }
         run = ProblemRun(thisprob);
         if ( run < 0 )
@@ -217,6 +226,11 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           {
             run = -4;
             break;
+          }
+          if (bestlo)
+          {
+            ProblemComputeRate( contestid, 0, 0, 0, bestlo, &ratehi, 
+                                &ratelo, ratebuf, sizeof(ratebuf) );                                       
           }
           retvalue = (long)ratelo;
           if (!silent)
