@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60 1999/05/08 19:05:30 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.61 1999/05/23 09:20:38 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -53,7 +53,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
         GetPrivateProfileIntB(OPTION_SECTION, "win95hidden", 0, fn ))
     {
       client->quietmode = 1;
-      modfail+=(!WritePrivateProfileIntB( OPTSECT_BUFFERS, "quiet", 1, fn));
+      modfail += (!WritePrivateProfileIntB( OPTION_SECTION, "quiet", 1, fn));
     }
   }
   
@@ -109,7 +109,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   }  
   if (!GetPrivateProfileStringB( OPTSECT_NET, "enable-start-stop", "", buffer, sizeof(buffer), fn ))
   {
-    if ((i = GetPrivateProfileIntB( OPTION_SECTION, "dialwhenneeded", -123, fn ))!=-123)
+    if ((i = GetPrivateProfileIntB( OPTION_SECTION, "dialwhenneeded", -123, fn )) != -123)
     {
       #ifdef LURK
       dialup.dialwhenneeded = i;
@@ -143,7 +143,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
     {
       int doneclient = 0, doneini = 0;
       projectmap_build( buffer, "" );
-      for (i=0;i<((int)CONTEST_COUNT) && (!doneclient || !doneini);i++)
+      for (i = 0; i < ((int)CONTEST_COUNT) && (!doneclient || !doneini); i++)
       {
         if (client->loadorder_map[i] == 1)
         {
