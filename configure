@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.49  1998/06/23 20:37:01  remi
+# *** empty log message ***
+#
 # Revision 1.48  1998/06/23 09:36:23  remi
 # Added -lcurses to x86-linux entries. Other *nixes porters may want to do the
 # same, see "common/disphelp.cpp".
@@ -540,8 +543,9 @@ case "$1" in
     *x86-linux-egcs)    # uses EGCS options
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
-	TARGET_LDFLAGS="-lcurses -static"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
+	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
@@ -549,8 +553,8 @@ case "$1" in
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DPIPELINE_COUNT=2"
-	TARGET_LDFLAGS="-lcurses"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DPIPELINE_COUNT=2 -D__showids__"
+	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_STRIP="touch"
@@ -560,8 +564,8 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc -g"
 	# -Wno-unused to avoid tons of warnings on some ultra files
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
-	TARGET_LDFLAGS="-lcurses"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
+	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_STRIP="touch"
@@ -569,8 +573,9 @@ case "$1" in
 
     *x86-linux-old)   # uses standard GCC options plus '-pipe'
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
-	TARGET_LDFLAGS="-lcurses -static"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
+	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
@@ -578,8 +583,9 @@ case "$1" in
     *x86-linux-aout)
 	TARGET_AS="i486-pc-linux-gnuaout-gcc -c"
 	TARGET_CC="i486-pc-linux-gnuaout-gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
-	TARGET_LDFLAGS="-lcurses -static"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2"
+	TARGET_LDFLAGS="-static"
+	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	;;
@@ -587,8 +593,9 @@ case "$1" in
     *x86-linux-mt-egcs)
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
-	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
-	TARGET_LDFLAGS="-lcurses -static"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
+	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lpthread"
@@ -596,8 +603,9 @@ case "$1" in
 
     *x86-linux-mt-gcc)
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
-	TARGET_LDFLAGS="-lcurses -static"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_LDFLAGS="-static"
+	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
 	TARGET_LIBS="-lpthread"
@@ -605,8 +613,9 @@ case "$1" in
 
     *x86-linux-mt-slice-kwan-gcc)     # using slice not bryddes
 	TARGET_AS="gcc -c"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
-	TARGET_LDFLAGS="-lcurses -static"
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -D__showids__ -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
+	TARGET_LDFLAGS="-static"
+	TARGET_LIBS="-lcurses"
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_LIBS="-lpthread"
