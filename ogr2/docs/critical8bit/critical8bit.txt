@@ -1,0 +1,57 @@
+$Id: critical8bit.txt,v 1.1.2.1 2001/04/01 16:38:27 andreasb Exp $
+
+Definitions:
+============
+
+A 'diff' (difference) is the distance between two adjacent marks.
+
+The 'maximum diff' is the longest diff in a ruler.
+
+
+Calculating an upper limit for the maximum diff of a Golomb ruler
+=================================================================
+
+Take a ruler with N marks. It has D = N-1 diffs and length(N) = OGR_length(D).
+We want one maximum diff (length = MD), so all other diffs will be minimal.
+The Golombness property forces all diffs to be distinct.
+We select D diffs with following lengths:
+    1, 2, 3, 4, ..., (D-2), (D-1), MD
+Their total length should be equal to the rulers length:
+    1 + 2 + 3 + ... + (D-2) + (D-1) + MD = length(N)
+so MD can be calculated as
+    MD = length(N) - 1 - 2 - 3 - ... - (D-2) - (D-1)
+MD is an upper bound for the maximum diff that may occur when going through
+the tree.
+
+I won't proof whether a Golomb ruler can be constructed using these diffs.
+The construction will be impossible in most cases.
+
+
+255 is an upper bound for the maximum diff for rulers up to 29 marks.
+=====================================================================
+
+For any N, N <= 29, the resulting MD value is below 255. (See table below,
+further see and compile critical8bit.cpp.) 
+So it's safe to use 8 bit values to store the diffs without loosing any data.
+
+
+MD values for N = 20 .. 29:
+===========================
+
+OGR-20, length = 283, sum(1, ..., 18) = 171, MD = 112
+OGR-21, length = 333, sum(1, ..., 19) = 190, MD = 143
+OGR-22, length = 356, sum(1, ..., 20) = 210, MD = 146
+OGR-23, length = 372, sum(1, ..., 21) = 231, MD = 141
+OGR-24, length = 425, sum(1, ..., 22) = 253, MD = 172
+OGR-25, length = 480, sum(1, ..., 23) = 276, MD = 204
+OGR-26, length = 492, sum(1, ..., 24) = 300, MD = 192
+OGR-27, length = 553, sum(1, ..., 25) = 325, MD = 228
+OGR-28, length = 585, sum(1, ..., 26) = 351, MD = 234
+OGR-29, length = 623, sum(1, ..., 27) = 378, MD = 245
+
+(Values were generated with critical8bit.cpp)
+
+
+
+
+2001-04-01 Andreas Beckmann
