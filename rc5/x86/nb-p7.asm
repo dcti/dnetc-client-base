@@ -107,34 +107,33 @@
         rol     ecx, 3
         rol     ebx, 3
         rol     eax, 3
-        mov     ebp, [work_Llo4]
         mov     S4(%1), edx
+        mov     S3(%1), ecx
+        mov     S2(%1), ebx
+        mov     S1(%1), eax
+        mov     ebp, [work_Llo4]
         lea     ecx, [edx+edi]
         add     ebp, ecx
         rol     ebp, cl                     ; Llo4 = ROTL (Llo4 + A4 + Lhi4, A4 + Lhi4);
         mov     [work_Lhi4], edi
         mov     edi, [work_Llo3]
-        mov     S3(%1), ecx
         add     ecx, esi
         add     edi, ecx
         rol     edi, cl                     ; Llo3 = ROTL (Llo3 + A3 + Lhi3, A3 + Lhi3);
         mov     [work_Lhi3], esi
         mov     ecx, [work_Lhi1]
         mov     esi, [work_Llo1]
-        mov     S1(%1), eax
         add     ecx, eax
         add     esi, ecx
         rol     esi, cl                     ; Llo1 = ROTL (Llo1 + A1 + Lhi1, A1 + Lhi1);
         mov     edx, [work_Lhi2]
         mov     [work_Llo4],ebp
         mov     ebp, [work_Llo2]
-        mov     S2(%1), ebx
         lea     ecx, [ebx+edx]
         add     ebp, ecx
         rol     ebp, cl                     ; Llo2 = ROTL (Llo2 + A2 + Lhi2, A2 + Lhi2);                                
         mov     ecx, S3(%1)
         lea     ecx, [S_not(%1+1)+ecx+edi]
-        mov     eax, S1(%1)
         mov     ebx, S2(%1)
 %endmacro
 
@@ -551,35 +550,40 @@ _loaded_p7:
     ; Begin round 1 of key expansion
     ; ------------------------------
 
-        mov     ecx, [work_Lhi1]
+        mov     eax, [work_Lhi1]
         mov     edx, [work_Lhi2]
         mov     esi, [work_Lhi3]
         mov     edi, [work_Lhi4]
 
         mov     ecx, [work_pre3_r1]
 
-        add     ecx, ebx
-        rol     ecx, cl
-        add     edx, ebx
+        add     eax, ecx
+        rol     eax, cl
+        add     edx, ecx
         rol     edx, cl
-        add     esi, ebx
+        add     esi, ecx
         rol     esi, cl
-        add     edi, ebx
+        add     edi, ecx
         rol     edi, cl
         
+        mov     ecx, eax
         mov		eax, [work_pre1_r1]
         mov		[work_Llo1], eax
         mov		[work_Llo2], eax
         mov		[work_Llo3], eax
         mov		[work_Llo4], eax
+        mov     ebp, eax
         mov     eax, [work_pre2_r1]
         mov     ebx, eax
-        mov     [work_A3], eax
-        mov     [work_A4], eax
+        mov     S3(1), eax
+        mov     S4(1), eax
         lea     eax, [S_not(2)+eax+ecx]
+        mov     [work_Lhi1], ecx
+        mov     [work_Lhi2], edx
 
-
+_one_odd_p7:
 	ROUND_1_EVEN             2
+_one_even_p7:
 	ROUND_1_ODD_AND_EVEN  3, 4
 	ROUND_1_ODD_AND_EVEN  5, 6
 	ROUND_1_ODD_AND_EVEN  7, 8
