@@ -6,6 +6,12 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
+6-01-98 - Remi Guyomarch
+  New Bug: In 407+ (406?) a call to client.WriteConfig() overwrites the
+           .ini file with parameters given on the command line. This
+           is probably not the expected behaviour, at least from the 
+           user point of view.
+
 5-31-98 - Oscar Chang
   New Bug: Between 403 and 406, there is a drop of almost 50k keys/sec on my
            K6-200 using the same CPU core. I've tried taking out the new
