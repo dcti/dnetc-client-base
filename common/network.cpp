@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.17 1999/12/31 19:56:29 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.18 2000/01/01 13:11:35 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -416,6 +416,17 @@ int Network::Open( void )               // returns -1 on error, 0 on success
 
   didfallback = 0; /* have we fallen back already? */
   maxtries = 3; /* two for preferred, one for fallback (if permitted) */
+
+  if ((startmode & (MODE_SOCKS4 | MODE_SOCKS5))!=0)
+  {
+    if (fwall_hostname[0] == 0 || fwall_hostport == 0)
+    {
+      Log("Network::Invalid %s proxy hostname or port.\n"
+          "Connect cancelled.\n",
+          ((startmode & MODE_HTTP) ? ("HTTP") : ("SOCKS")));
+      return -1;
+    }
+  }
   
   for (whichtry = 0; whichtry < maxtries; whichtry++) /* forever true */
   {
@@ -439,41 +450,15 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         break;
     }
 
-    if ((startmode & (MODE_SOCKS4 | MODE_SOCKS5))!=0)
-    {
-      if (fwall_hostname[0] == 0 || fwall_hostport == 0)
-      {
-        Log("Network::Invalid %s proxy hostname or port.\n"
-            "Connect cancelled.\n",
-            ((startmode & MODE_HTTP) ? ("HTTP") : ("SOCKS")));
-        break; /* return -1; */
-      }
-    }
-
     if (!NetCheckIsOK()) /* connection broken */
     {
       LogScreen(netcheckfailed);
       break; /* return -1; */
     }
 
-    /* ---------- create a new socket --------------- */
-
-    success = (LowLevelCreateSocket() == 0);
-    isnonblocking = 0;
-
-    if (!success)
-    {
-      if (verbose_level > 0)
-      {
-        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-        LogScreen("Network::failed to create network socket. (err=%d)\n",
-                   WSAGetLastError());
-        #else
-        LogScreen("Network::failed to create network socket.\n");
-        #endif
-      }
-      break; /* return -1; */
-    }
+    /* ---------- get the show on the road ---------- */
+    
+    success = 1; /* assumed */
 
     /* --- resolve the addresses(es) --- */
 
@@ -622,8 +607,30 @@ int Network::Open( void )               // returns -1 on error, 0 on success
       }
     }
 
+    /* ---------- create a new socket --------------- */
+
+    if (success)
+    {
+      if (LowLevelCreateSocket() != 0)
+      {
+        success = 0;
+        if (verbose_level > 0)
+        {
+          #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+          LogScreen("Network::failed to create network socket. (err=%d)\n",
+                     WSAGetLastError());
+          #else
+          LogScreen("Network::failed to create network socket.\n");
+          #endif
+        }
+        /* no point retrying is we can't create a socket */
+        break; /* return -1; */
+      }
+    }
+
     /* ------ connect ------- */
 
+    isnonblocking = 0;
     if (success)
     {
       #ifndef ENSURE_CONNECT_WITH_BLOCKING_SOCKET
