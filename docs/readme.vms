@@ -1,0 +1,42 @@
+README.VMS
+RC5.6403.320
+12/24/97
+
+By David Sowder - davids@cosmic.swau.edu
+
+
+This is a rather simple readme.  The OpenVMS client currently only runs on the
+Alpha architecture.
+
+First, unzip .ZIP file, preferrably with UNZIP running on your VMS machine as
+transferring from a non-VMS machine may be problematic.
+
+Type
+
+@GO-VMS
+
+to start.  You'll only need to do this the first time you run an
+executable in a particular login session, once you've told it the right
+options for your environment.  The first time you run it, GO-VMS will ask you
+a few questions about your network stack, your processor and which way to get
+your executable.
+
+If you have difficulties with a particular set of options, try a
+different set of options by typing
+
+@GO-VMS RECHOOSE
+
+If you have any problems or questions, Email me at the address above.
+I'm working on a VAX port, but it's a very much a "when I get the time
+kind of thing" so please be patient.  If anyone could share the source
+to a C++ program that uses TCP/IP networking and how to properly compile
+it under GXX on a VAX, I would appreciate it.  Email me at the above
+address if you have such information.
+
+
+Changes:
+12/22/97 - Added UCX and nonet support
+12/22/97 - Added linking to local shared libraries
+12/22/97 - Reworked go-vms.com for menu driven executable selection
+12/24/97 - Added forgotten multinet.opt file and cleaned up go-vms.com
+

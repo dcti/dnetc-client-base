@@ -1,0 +1,253 @@
+Dual mode (RC5DES) clients
+--------------------------
+v2.7021.405 98.05.23 Resolved a number of signal handling problems from Cyrus Patel
+v2.7021.405 98.05.23 Mail doesn't clear buffers on mail send failure from Cyrus Patel
+v2.7021.405 98.05.23 Cleaned up Client::Run from Cyrus Patel
+v2.7021.405 98.05.23 Improved client display, block transfer progress, and keyrate computation from Cyrus Patel
+v2.7021.405 98.05.23 NetWare changes from Cyrus Patel
+v2.7021.405 98.05.21 New parisc rc5 core from Katsuomi Hamajima
+v2.7021.405 98.05.21 New cpu/os codes added OS_OS390=39, CPU_S390=14
+v2.7021.404 98.05.19 Increased temp space allocated for headers in http mode
+v2.7021.404 98.05.17 "-n" setting now forces a minimum of 1 block
+v2.7021.404 98.05.04 ForcedKeyPort changes for euro23.v27.distributed.net/jp.v27.distributed.net/port 3064
+v2.7020.403 98.04.28 Fixed starting of NT service from command line
+v2.7020.403 98.04.28 Fixed DOS buffer problems
+v2.7020.403 98.04.28 Fixed bug in -offlinemode, when ini file doesn't know that DES is over.
+v2.7020.403 98.04.23 Improved x86 chip identification
+v2.7020.403 98.04.23 Faster generic des core
+v2.7020.403 98.04.21 Fixed final buffer flush when using "nodisk" mode.
+v2.7020.403 98.04.21 Faster generic rc5 core
+v2.7020.403 98.04.21 Added "-forcefetch"/"-forceflush".  These deal with corrupted buffer entries much better.
+v2.7019.402 98.04.13 Fixed Socks4/Socks5 support
+v2.7019.402 98.04.13 Arm/StrongArm fixes
+v2.7018.401 98.04.02 Benchmark / test now do both contests
+v2.7018.401 98.04.02 Fixed dates in mail messages
+v2.7018.401 98.04.02 New HP-PA RC5 core from Katsuomi Hamajima <hamajima@ydc.co.jp>
+v2.7018.401 98.04.02 Lurk mode 'sticks' now in win32gui client.
+v2.7017.400 98.03.15 New K6 core
+v2.7017.400 98.03.15 Updated Alpha RC5 core (by Pedro Miguel Teixeira)
+v2.7016.399 98.03.13 Fixed buffer flushing problem
+v2.7015.398 98.03.08 Memory buffers are now allocated only as they're needed.
+v2.7015.398 98.03.07 Added 'contestdone' flags to ini to smooth contest transitions
+v2.7015.398 98.03.06 Fixed problem with "-2" sized buffers
+v2.7015.398 98.03.06 Changed default exitfilecheck time to 30 seconds
+v2.7015.398 98.03.06 Fixed shared buffer open problem
+v2.7015.398 98.03.06 Fixed bug where mail might be sent, even in offline mode.
+v2.7015.398 98.03.06 Fixed treatment of "empty" checkpoint filenames.
+v2.7015.398 98.03.06 Fixed key speed calculation for 2^31 size DES blocks
+v2.7015.398 98.03.06 Fixed block size reported for 2^31 DES blocks
+v2.7014.397b 98.02.27 New x86 CPP cores which fix the core dump problem
+v2.7013.396c 98.02.09 HTTP modes no longer force port keyport=2064.
+v2.7013.396b 98.02.13 Made "-quiet" even quieter
+v2.7013.396b 98.02.13 Fixed fault when missing final parameter of 2-param option
+v2.7013.396 98.02.13 Fixed mail bug related to sending empty mail messages
+v2.7012.395 98.02.05 Yet another new bitslice driver.
+v2.7010.393 98.01.30 New, much faster bitslice driver and s-boxes.
+v2.7010.393 98.01.30 Got RC5 assembly running on AIX/PowerPC client.
+v2.7010.393 98.01.30 Fixed mailing to multiple destinations
+v2.7010.392 98.01.30 NT Service version default startup option changed to auto-start
+v2.7010.392 98.01.30 Warning message about "-hide" when running win32 client on NT
+v2.7010.392 98.01.28 BEOS, HP, Netware changes
+v2.7009.391 98.01.25 Added duplicate x86 core to allow 2 DES threads.
+v2.7008.390 98.01.24 New non-x86 DES core routines
+v2.7008.390 98.01.24 -runbuffers/-runoffline ignored when doing fetch/flush/update
+v2.7007.389 98.01.21 "sent to server"/"received from server" messages include DES/RC5 type
+v2.7007.389 98.01.20 CPU identification for non-unix X86 from Cyrus Patel
+v2.7006.388 98.01.20 Newer x86 DES core -- 8% faster on PPros
+v2.7005.387 98.01.19 Added 2nd method for proxies to notify clients about contest status.
+v2.7005.387 98.01.18 DES Bitslice cores from Remi
+v2.7004.386 98.01.17 Client will properly identify a 3*2^28 block now
+v2.7004.386 98.01.17 Fixed negative block sizes
+v2.7004.386 98.01.17 Added ansi core des routine
+v2.7003.385 98.01.15 Don't process a partial block started on another cpu/os/build
+v2.7002.383 98.01.13 Banner problem
+v2.7002.382 98.01.13 Client shows size of block being processed
+v2.7002.382 98.01.13 Win32 clients no longer set  processor affinity when only 1
+                     cpu is configured.
+v2.7002.382 98.01.13 Fixed RC5 blocks being sent to server with wrong contestid
+                     when they were downloaded by older non-dual clients.
+                     This also caused various other buffer problems, and faults.
+v2.7002.382 98.01.13 "Block ready" message now identifies what kind of block.
+98.01.12 v2.7001.378 Fixed up code to detect end of DES contest
+98.01.12 v2.7001.376 Problem with block counting fixed
+98.01.12 v2.7001.375 Cosmetic changes to key speed reporting
+98.01.11 v2.7001.369 des key incrementation stuff from Remi, new des-x86.cpp
+98.01.10 v2.7001.368 X86 des core from Remi Guyomarch
+98.01.06 v2.7001.365 Initial Changes to incorporate DESII contest
+
+2.6403
+------
+98.01.06 v2.6403.357 RISCOS changes
+98.01.06 v2.6403.357 QNX Changes
+98.01.06 v2.6403.356 Network http bug in 355 fixed
+98.01.05 v2.6403.355 BEOS changes
+98.01.05 v2.6403.355 K6 core removed (486 core used in this case as it's actually faster)
+98.01.04 v2.6403.350 New p5/k5/486/6x86 cores
+98.01.03 v2.6403.345 Limited checking of exitrc5.now file to once every 3 seconds
+98.01.03 v2.6403.340 Checkpoint files re-written immediately after blocks finished
+98.01.03 v2.6403.340 keyserver port can now be explictly specified when using http
+98.01.03 v2.6403.340 PutBufferOutput() no longer returns error if Update() fails.  Only
+                     actual buffer updating problems result in a returned error.
+97.12.31 v2.6403.340 Random prefix changes cause ini file to be rewritten sooner
+97.12.31 v2.6403.340 Firemodes 2/3 now default to rc5proxy23.distributed.net
+97.12.31 v2.6403.340 Fixed exit problem that occasionally caused blocks to be lost
+97.12.25 v2.6403.335 Fixed issue that some clients don't read their checkpoint files
+97.12.19 v2.6403.330 StrongArm/RiscOS changes
+97.12.17 v2.6403.325 PPC/Linux changes for core selection
+97.12.16 v2.6403.320 Fixed date field in mail messages
+97.12.15 v2.6403.310 Fixed "-ini" command line option not working
+97.12.15 v2.6403.305 New Random number generator added (with much longer periodicity)
+97.12.15 v2.6403.305 Fixed problem with sharing 6401 buffers (lost email/cpu/ver info)
+97.12.08 v2.6403.290 Fixed problems caused by buffers of size 0
+97.12.08 v2.6403.285 Increased network pause for Solaris clients
+97.12.08 v2.6403.280 Fixed issue with blocks being re-retrieved from buff-in.rc5
+
+2.6402
+------
+97.12.04 v2.6402.275 Added 5 second pause in MT clients when quitting to allow
+                     child threads to quit.
+97.12.02 v2.6402.270 Client will now 'pause' when a 'pause' file is detected
+                     (configure with "-pausefile filename" on command line,
+                     or pausefile=fn in ini)
+97.12.02 v2.6402.270 Small message on x86 clients when autodetecting CPU
+                     indicating that it's only a guess
+97.12.01 v2.6402.270 Build "fraction" added to logfile/mail logs
+97.12.01 v2.6402.270 "The proxy says" messages not printed when network
+                     errors occur to prevent logfile overflow
+97.12.01 v2.6402.270 Random blocks now use (prior prefix) + 1 to avoid
+                     generating blocks that have been checked
+97.12.01 v2.6402.265 Added Y2K support to print routines
+97.11.29 v2.6402.260 Fixed support for multiple CPU's on non-windows machines
+97.11.26 2.6402 Released
+
+2.6401
+------
+* note that 2.6401 clients were released with various combinations
+  of these changes.
+
+97.11.26 Tightened up -test routines
+97.11.25 Buffer files now retain information on cpu/os/build of client
+         that cracked the block
+97.11.24 K6 Core was slower in 11.10 update.  Rolled back to pre-11/10
+97.11.24 Misc Internal cleanups
+97.11.12 Added numcpu autodetect under Win32
+97.11.12 Added client support for better http proxy communications
+97.11.11 Added "Proxy-Connection: Keep-Alive" to http-proxy headers
+97.11.10 Faster PPC/X86 cores
+97.11.8  Added "-noexitfilecheck" option (noexitfilecheck=1 in ini file)
+97.11.8  Added "-nettimeout" option (nettimeout=xxx in ini file)
+97.11.7  "-1" returned on kill/break
+97.10.31 Added "-until HHMM"
+97.10.31 Increased mt support to 16 processors
+97.10.31 Added 1/10 second pause on error in network get routine
+97.10.31 RAS functions dynamically loaded in Win32 client
+97.10.30 Added -lurk ("lurk=1" in ini) to detect modem connection win32/win95
+         -lurkonly ("lurkonly=1" in ini) to only connect when modem connection
+         is detected
+97.10.29 Combined win32 console and win95 hidden clients into one
+         Added "-hide" option for win95.  INI setting: "win95hidden=1"
+         No longer appears in task list when hidden
+97.10.28 Added support for other items in the INI file.
+         "runoffline=1", "runbuffers=1", "in=filename", "out=filename",
+         "percentoff=1", "frequent=1", "nofallback=1", "quiet=1",
+         "nodisk=1", "cktime=nnn"
+97.10.28 Fixed mail bug.  No mail was sent when logging was off
+97.10.28 Client will now quit when 'exitrc5.now' file is found
+97.10.28 Fixed -runbuffers problem
+97.10.27 Changed default directory for buffers to be same as executable
+97.10.27 Added -quiet option
+97.10.27 Added shutdown mechanism to clients
+97.10.27 Removed 'sleep' in network routines
+97.10.26 Update is forced when user types "U", exit on "X" (win32 os2 dos)
+97.10.25 Amiga/m68k port made
+97.10.25 Fixed "-out" and "-l"
+97.10.22 modified to attack RC5-32/12/8 (64-bit)
+
+2.0051
+------
+97.10.10 x86 Cores multithread-safe
+97.10.10 New K6 core
+97.10.10 Ability to set input/output thresholds independently
+97.10.10 Email id added to logs and mail subject line
+97.10.10 Fixed overlapping % meters at startup with partially done blocks
+97.10.10 niceness 0 is now even lower priority in Win32 version
+97.10.9 Added -nodisk and -forceunlock options
+97.10.9 Fixed http proxy userid/password encoding (hopefully)
+
+2.005
+------------------
+97.10.5 Added support for userid/password http proxy firewalls
+97.10.4 Multithreading extended to unix clients using pthreads
+97.10.1 Added -frequent option to make best use of intermittent connections.
+97.9.29 Checkpointing added (5 minute intervals)
+97.9.25 Windows multithreaded client
+97.9.25 Divide by zero problem fixed (blocks ending in 0000001)
+97.9.23 Corrections to speed calculations throughout
+97.9.19 Whenever network access is required, both a fetch & flush occur,
+        This should synchronize/minimize network connections.
+97.9.18 Added mailing of logs
+97.9.17 "Network::" errors no longer logged to disk
+97.9.17 Added -ini, -in, and -out command line overrides
+97.9.11 'Total completed' information added to logs
+97.9.10 Added command line options for all current INI file settings
+97.9.10 Added command line options -benchmark2, -runoffline, -runbuffers
+
+v2 Build 4 (2.004)
+------------------
+problems with -update resolved
+automatic core selection added to Win32 & OS/2 clients
+problems with automatically fetching new blocks resolved
+
+
+v2 Build 3 (2.003)
+------------------
+new, faster checking cores for more processors
+changes in networking code to allow for more http proxy support
+preferred keyserver can now be specified when doing http
+network timeouts increased
+improved block buffering code
+maximum block count increased
+buffer files explictly placed in exe directory on win32
+
+
+
+v2 Build 2 (2.002)
+------------------
+shadow count variable
+hour timout saves work
+timing output problem
+*break* text in win32
+help message fixed
+fetch and flush counts return
+flush core dump fixed
+fclose in Ini
+
+
+v2 Build 1 (2.001)
+------------------
+OS/CPU additions to cputypes.h
+partial block restart notify (the R)
+break works during -test
+buffer lock timeout fixed
+default email now rc5@distributed.net
+-update option = fetch+flush
+rename files to be 8.3 filename compliant
+zero extra email to help email mangling problem
+strncpy lengths fixed to insure terminated strings
+ini file location specification via RC5INI environment variable
+random keys if client can't connect
+partial block rates are now correct
+time in hh:mm:ss
+fseeks() for ANSI compliance
+flush checks count before opening connection
+negative run times fixed
+buffer count reporting
+times in benchmark also fixed
+3 nice levels
+logging to file
+error messages more clear
+new autobuff and iniread code - memory leak fixed
+new faster ANSI C and ASM cores
+httpd fixed - checked under CERN and WinProxy
+proxy hunting now works
+

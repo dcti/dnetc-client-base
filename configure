@@ -1,0 +1,615 @@
+#!/bin/sh
+
+echo ""
+echo "RC5DES client makefile generator"
+echo "by Jeff Lawson for distributed.net"
+echo "see http://www.distributed.net/"
+echo ""
+
+if [ -z "$1" ]; then
+  echo "No platform specified on command line.";
+  echo "Run with 'list' as an argument to see available platforms."
+  exit 1
+fi
+
+
+
+#
+# Common compiler options
+#
+OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
+    -fexpensive-optimizations -fomit-frame-pointer \
+    -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
+    -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms'
+
+OPTS_XLC3='-O3 -qansialias -qlibansi'
+
+OPTS_EGCS='-Os -fomit-frame-pointer -Wall'
+
+
+#
+# Common platform compiler options
+#
+OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC'
+OPTS_GCC_SPARC="$OPTS_GCC -O6 -msupersparc -DASM_SPARC"
+
+#--
+
+OPTS_GCC_SUN68K="$OPTS_GCC -O2 -DASM_68K -D_SUN68K_"
+
+#--
+
+#-mips1 -OPT:fold_arith_limit=2000 -OPT:Olimit=2396 -OPT:unroll_analysis=ON
+OPTS_CC_MIPS='-O2 -xansi -DASM_MIPS -Icommon -Ides -Irc5 -Iplatforms'
+OPTS_GCC_MIPS="$OPTS_GCC -O6 -DASM_MIPS"
+
+#--
+
+OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
+OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
+OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
+OPTS_GCC_ALPHA="$OPTS_GCC -O6 -DASM_ALPHA -static"
+
+#--
+
+OPTS_CC_HPUX='+A +a1 +O3 -D_HPUX -DCPU_ID=CPU_PA_RISC -DOS_ID=OS_HPUX'
+OPTS_GCC_HPUX="$OPTS_GCC -O6 -DASM_HPPA -static"
+
+#--
+
+OPTS_GCC_DGUX="$OPTS_GCC -O6 -D_DGUX -DPIPELINE_COUNT=2 \
+        -DCPU_ID=CPU_88K -DOS_ID=OS_DGUX"
+
+#--
+
+OPTS_GCC_PPC601="$OPTS_GCC -O6 -DASM_PPC -mcpu=601"
+OPTS_GCC_PPC="$OPTS_GCC -O6 -DASM_PPC -mcpu=604"
+OPTS_GCC_POWER="$OPTS_GCC -O6 -DASM_POWER"
+
+OPTS_XLC_PPC601="$OPTS_XLC -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
+OPTS_XLC_PPC="$OPTS_XLC -qarch=ppc -qtune=604 -D_AIX -D_ARCH_PPC"
+OPTS_XLC_POWER="$OPTS_XLC -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
+OPTS_XLC_POWER2="$OPTS_XLC -qarch=pwr2 -qtune=pwr2 -D_AIX"
+
+OPTS_XLC3_PPC601="$OPTS_XLC3 -qarch=ppc -qtune=601 -D_AIX -D_ARCH_PPC"
+OPTS_XLC3_POWER="$OPTS_XLC3 -qarch=pwr -qtune=pwr -D_AIX -D_ARCH_PWR"
+
+OPTS_GCC_AIX="$OPTS_GCC -O6 -D_ARCH_PPC -D_AIX"
+
+#--
+
+OPTS_GCC_X86="$OPTS_GCC -O6 -m486 -DASM_P5"
+OPTS_EGCS_X86="$OPTS_EGCS -mcpu=pentium -DASM_P5"
+
+#--
+
+OPTS_GCC_M68K="$OPTS_GCC -m68040 -DASM_68K"
+OPTS_GAS_M68K="-v -V --register-prefix-optional -m68040"
+
+OPTS_NEXT_M68K="$OPTS_GCC -O6 -m68040 -DASM_68K"
+OPTS_NEXT_SPARC="$OPTS_GCC -O6 -DASM_SPARC -D_OLD_NEXT_"
+OPTS_NEXT_HPPA="$OPTS_GCC -O6 -DASM_HPPA -D_OLD_NEXT_"
+
+OPTS_OS390 = -D_ALL_SOURCE  #-D__STRING_CODE_SET__="ISO8859-1"
+
+
+
+
+#
+# Source C++ files making up the base client code
+#
+COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
+    common/autobuff.cpp common/iniread.cpp common/network.cpp
+    common/scram.cpp common/buffwork.cpp common/mail.cpp
+    common/convdes.cpp common/clicdata.cpp common/clirate.cpp 
+    common/clisrate.cpp common/clitime.cpp"
+SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
+SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
+SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
+SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
+MEGGS_SLICE_SRCS="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
+XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil.ppcxlc.s"
+RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
+DESX86_SRCS="des/des-x86.cpp"
+
+
+#
+# Define the default compilation options
+#
+TARGET_CC="g++"
+TARGET_CCFLAGS="$OPTS_GCC"
+TARGET_LIBS=""
+TARGET_AS="gas"
+TARGET_ASFLAGS=""
+TARGET_STRIP="strip"
+TARGET_ADDSRCS=""
+TARGET_ADDASMS=""
+TARGET_ADDOBJS=""
+EXENAME="rc5des"
+
+
+#
+# Determine the platform specific options for this target
+#
+case "$1" in
+
+###### MIPS based platforms
+    *mips-sni-gcc)
+	RC5CORECOPY="mips-crunch.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DPIPELINE_COUNT=2 -DMIPS_CRUNCH=1 -Dsinix"
+	TARGET_LIBS="-lsocket -lnsl -lc -L/usr/ucblib -lucb"
+	;;
+
+    *mips-cc)
+        #  mips-crunch.cpp doesn't compile with CC
+	RC5CORECOPY="rc5ansi2-rg2.cpp"
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_MIPS -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
+
+    *mips-gcc)
+        RC5CORECOPY="rc5ansi2-rg.cpp"
+        TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN"
+        TARGET_ADDSRCS="$SLICE_SRCS3"
+        ;;
+
+    *mips-gcc)
+	RC5CORECOPY="rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_MIPS -DBIT_32 -DPIPELINE_COUNT=2 -DKWAN"
+	TARGET_ADDSRCS="$SLICE_SRCS3"
+	;;
+
+
+###### HPUX
+
+    *hpux-CC)
+	RC5CORECOPY="parisc.cpp"
+	TARGET_CC="CC"
+	TARGET_CCFLAGS="$OPTS_CC_HPUX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="platforms/parisc.s $MEGGS_SLICE_SRCS"
+	;;
+
+    *hpux-gcc)
+	RC5CORECOPY="parisc.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_HPUX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="platforms/parisc.s $MEGGS_SLICE_SRCS"
+	;;
+
+###### DGUX (Data General Unix)
+    *dgux-gcc)
+	RC5CORECOPY="rc5ansi2-rg.cpp"
+	TARGET_CC="/usr/local/bin/g++"
+	TARGET_CCFLAGS="$OPTS_GCC_DGUX -static"
+	;;
+
+    *dgux-gcc-mt)
+	RC5CORECOPY="rc5ansi2-rg.cpp"
+	TARGET_CC="/usr/local/bin/g++"
+	TARGET_CCFLAGS="$OPTS_GCC_DGUX -D_POSIX4A_DRAFT6_SOURCE -DMULTITHREAD"
+	TARGET_LIBS="-lthread"
+	;;
+
+###### Sparc/UltraSparc or Sun/SunOS/Solaris
+
+    *sparc-linux)
+	RC5CORECOPY="rc5-ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -DPIPELINE_COUNT=2 -DSPARCLINUX=1"
+	TARGET_LIBS="-ldl"
+	;;
+
+    *sparc-cc)
+	RC5CORECOPY="rc5-ultra-crunch.cpp"
+	TARGET_CC="cc"
+	TARGET_CCFLAGS="$OPTS_CC_SPARC -DPIPELINE_COUNT=1"
+	TARGET_LIBS="-lnsl -lsocket"
+	;;
+
+    *sunos-gcc-static)	
+	RC5CORECOPY="rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -DPIPELINE_COUNT=2"
+	TARGET_LIBS="-static"
+	;;
+
+    *sun3-gcc)
+	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS crunch.sun68k.gcc.s"
+	;;
+
+    *sun2-sunos3-gcc)
+	TARGET_CCFLAGS="$OPTS_GCC_SUN68K -D_SUNOS3_ -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS crunch.sun68k.gcc.s"
+	;;
+    *m68k-linux-gcc)
+        TARGET_CFLAGS="$(OPTS_GCC_M68K) -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
+	TARGET_AFLAGS="$(OPTS_GAS_M68K)"
+ 	TARGET_ADDSRCS=" $(SLICE_SRCS3)"
+ 	TARGET_ADDASMS="crunch.68k.gcc.s"
+ 	TARGET_LIBS="-static"
+	;;
+    #####
+
+    *sparc-solaris-gcc-mt)        # slower rc5, slower des
+	RC5CORECOPY="rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 -DKWAN"
+	TARGET_ADDSRCS="$SLICE_SRCS3"
+	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	;;
+
+    *sparc-solaris-gcc-crunch-mt)    # fastest rc5, slower des
+	RC5CORECOPY="rc5-ultra-crunch.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1 -DKWAN"
+	TARGET_ADDSRCS="$SLICE_SRCS3"
+	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	;;
+
+    *sparc-solaris-gcc-crunch-slice-mt)   # fastest rc5 & des for ultra
+	RC5CORECOPY="rc5-ultra-crunch.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DMULTITHREAD -DULTRA_CRUNCH=1"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	;;
+
+    #####
+
+    *x86-solaris)
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDASMS="output/bdeslow-clean.s output/bbdeslow-clean.s"
+	TARGET_LIBS="-lnsl -lsocket -ldl"
+	sed -e 's/#.*$//' des/bdeslow.s > output/bdeslow-clean.s
+	sed -e 's/#.*$//' des/bbdeslow.s > output/bbdeslow-clean.s
+	;;
+
+    *x86-solaris-mt)
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -Dsolaris -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDASMS="output/bdeslow-clean.s output/bbdeslow-clean.s"
+	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+	sed -e 's/#.*$//' des/bdeslow.s > output/bdeslow-clean.s
+	sed -e 's/#.*$//' des/bbdeslow.s > output/bbdeslow-clean.s
+	;;
+
+###### Alpha
+    *alpha-cc-ev5-static)
+	RC5CORECOPY="rc5ansi2-bo2.cpp"
+	TARGET_CC="cxx"
+	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV5 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-non_shared"
+	;;
+
+    *alpha-cc-ev4-static)
+        RC5CORECOPY="rc5ansi2-bo2.cpp"
+	TARGET_CC="cxx"
+	TARGET_CCFLAGS="$OPTS_CC_ALPHA_EV4 -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-non_shared"
+	;;
+
+    *alpha-cc)
+	RC5CORECOPY="rc5ansi2-bo2.cpp"
+	TARGET_CC="cxx"
+	TARGET_CCFLAGS="$OPTS_CC_ALPHA -DPIPELINE_COUNT=2 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
+
+    *alpha-gcc)
+	RC5CORECOPY="rc5ansi1-b2.cpp"
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
+
+
+###### PowerPC/POWER
+
+    *ppc-gcc)
+	TARGET_CCFLAGS="$OPTS_GCC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS rc5/crunch_noload_c64.ppc.s rc5/crunch_lintilla.ppc.s"
+	;;
+
+    *power-gcc)
+	TARGET_CCFLAGS="$OPTS_GCC_POWER -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
+
+    *aix-ppc)       # This is the fastest build for AIX 4.x PPC machines
+	TARGET_CC="xlC"
+	TARGET_CCFLAGS="$OPTS_XLC_PPC -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lCns"
+	;;
+
+
+    *aix32-ppc)     # AIX 3.2.x PPC
+	TARGET_CC="xlC"
+	TARGET_CCFLAGS="$OPTS_XLC3_PPC601 -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN -DNO_STRCASECMP"
+	TARGET_ADDASMS="$XLC_LINTILLA_ASMS"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lCns"
+	;;
+
+    *aix-gcc)      # possibly useful for POWER machines
+	RC5CORECOPY="rc5ansi1-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_AIX -DPIPELINE_COUNT=1 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
+
+    *aix-gcc2)     # possibly useful for POWER machines
+	RC5CORECOPY="rc5ansi2-rg.cpp"
+	TARGET_CCFLAGS="$OPTS_GCC_AIX -DPIPELINE_COUNT=2 -DBIT_32 -DMEGGS -DKWAN"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	;;
+
+###### Intel X86 Linux platforms
+    *x86-linux)    # uses EGCS options
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_LIBS="-Xlinker --format -Xlinker a.out-i386"
+	;;
+
+    *x86-linux-old)   # uses standard GCC options plus '-pipe'
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_LIBS="-Xlinker --format -Xlinker a.out-i386"
+	;;
+
+    *x86-linux-aout)
+	TARGET_CC="i486-pc-linux-gnuaout-gcc"
+	TARGET_CCFLAGS="$(OPTS_EGCS_P5) -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$(X86_CPP)"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	;;
+
+    *x86-linux-mt)
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_LIBS="-Xlinker --format -Xlinker a.out-i386 -lpthread"
+	;;
+
+    *x86-linux-mt-old)
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_LIBS="-Xlinker --format -Xlinker a.out-i386-linux -lpthread"
+	;;
+
+    *x86-linux-mt-slice)     # using slice not bryddes
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
+	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
+	TARGET_LIBS="-lpthread"
+	;;
+
+    *x86-linux-mt-slice-meggs)     # using slice not bryddes
+	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
+	TARGET_ADDSRCS="$RC5X86_SRCS $SLICE_SRCS"
+	TARGET_LIBS="-lpthread"
+	;;
+
+###### Intel X86 FreeBSD/NetBSD/OpenBSD
+
+    *x86-freebsd)
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	;;
+
+    *x86-freebsd-mt)
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -DMULTITHREAD"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_LIBS="-lc_r"
+	;;
+
+    *x86-netbsd)
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	;;
+
+    *x86-openbsd)
+	TARGET_CCFLAGS="$OPTS_GCC_P5 -static -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	;;
+
+####### Intel X86 SCO5
+
+    *x86-sco5)
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -static -DPIPELINE_COUNT=2 -belf -Dsco5"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	TARGET_LIBS="-lsocket"
+	;;
+
+###### NeXT (x86, m68k, sparc, hppa)
+
+    *x86-next)
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_GCC_X86 -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDOBJS="des/bdeslow.aout.o des/bbdeslow.aout.o"
+	;;
+
+    *m68k-next-gcc)
+	TARGET_CC="gcc"
+	TARGET_CCFLAGS="$OPTS_NEXT_M68K -D_NeXT_ -DPIPELINE_COUNT=1 -DBIT_32 -DKWAN"
+	TARGET_ADDSRCS="rc5/crunch.68k.gcc.s $SLICE_SRCS4"
+	;;
+
+    *m68k-next)
+	RC5CORECOPY="rc5ansi1-b2.cpp"
+	TARGET_CC="cc++"
+	TARGET_CCLAGS="$OPTS_NEXT_M68K -arch m68k -D_NeXT_ -DPIPELINE_COUNT=1"
+	;;
+
+    *sparc-next)
+	RC5CORECOPY="rc5ansi2-rg.cpp"
+	TARGET_CC="cc++"
+	TARGET_CCFLAGS="$OPTS_NEXT_SPARC -arch sparc -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
+	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
+	;;
+
+    *hppa-next)
+	RC5CORECOPY="rc5ansi2-b2.cpp"
+	TARGET_CC="cc++"
+	TARGET_CCFLAGS="$OPTS_NEXT_HPPA -arch hppa -D_NeXT_ -DPIPELINE_COUNT=2 -DBIT_32"
+	TARGET_ADDSRCS="des/des-slice.cpp des/deseval.cpp"
+	;;
+
+###### RISCOS
+
+    *riscos)
+        TARGET_CC="armcpp"
+	TARGET_AS="armasm"
+	TARGET_CCFLAGS="-LIttleend -apcs 3/26bit/swst/hardfp/fpe3 -J/home/cberry/play/unixlib -D__riscos -Driscos -Otime -DPIPELINE_COUNT=1 -DBIT_32"
+	TARGET_ADDSRCS="platforms/riscos.c"
+	TARGET_ADDASMS="rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s"
+	TARGET_LIBS="-lcpplib -lunixlib"
+	;;
+
+    *arm-linux)
+        TARGET_CC="gcc"
+	TARGET_AS="as"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32 -Dlinux"
+	TARGET_ADDSRCS=""
+	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-arm-gnu.s"
+	TARGET_LIBS="-lm"
+	;;
+
+    *arm-netbsd)
+        TARGET_CC="gcc"
+	TARGET_AS="as"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -DPIPELINE_COUNT=1 -DBIT_32"
+	TARGET_ADDSRCS=""
+	TARGET_ADDASMS="rc5/rc5-sa-gnu.s rc5/rc5-arm-gnu.s des/des-slice-arm-gnu.s"
+	TARGET_LIBS="-lm"
+	;;
+
+###### OS390
+    *os390)
+	RC5CORECOPY="rc5ansi2-rg2.cpp"
+        TARGET_CC="cxx"
+	TARGET_AS=""
+	TARGET_CCFLAGS="$OPTS_OS390 -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS=""
+	TARGET_ADDASMS=""
+	TARGET_LIBS="$SOCKS_LIBS"
+	;;
+
+###### Unknown
+    *list)
+	egrep "^[ ]*\*" $0
+	echo ""
+	exit 1
+	;;
+    *)
+        echo "Unknown target platform \"$1\" specified."
+	echo "Run with 'list' as an argument to see available platforms."
+	echo ""
+	exit 1
+esac
+echo "Platform target for \"$1\" recognized."
+
+
+
+#
+# Generate the list of output objects, making note of what
+# source file it was derrived from.
+#
+echo "Scanning output C++ dependencies..."
+for target in ${COMMON_SRCS} ${TARGET_ADDSRCS}; do
+    TARGETOBJECT=output/`basename $target .cpp`.o
+    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$-'`
+    echo "  $target -> $TARGETOBJECT ($SAFENAME)"
+    eval "DEPEND_${SAFENAME}=$target"
+    TARGET_ALLCCOBJS="${TARGET_ALLCCOBJS} ${TARGETOBJECT}"
+done
+echo "Scanning output AS dependencies..."
+for target in ${TARGET_ADDASMS}; do
+    TARGETOBJECT=output/`basename $target`.o
+    SAFENAME=`echo ${TARGETOBJECT} | tr -d '/.\$-'`
+    echo "  $target -> $TARGETOBJECT ($SAFENAME)"
+    eval "DEPEND_${SAFENAME}=$target"
+    TARGET_ALLASOBJS="${TARGET_ALLASOBJS} ${TARGETOBJECT}"
+done
+
+
+#
+# Start building the output makefile
+#
+echo "Generating output Makefile prologue code..."
+rm -f Makefile
+
+echo "# Autogenerated RC5DES client makefile ($1)" > Makefile
+echo "# see http://www.distributed.net/" >> Makefile
+echo "" >> Makefile
+
+echo "CC = ${TARGET_CC}" >> Makefile
+echo "CCFLAGS = ${TARGET_CCFLAGS}" >> Makefile
+echo "LIBS = ${TARGET_LIBS}" >> Makefile
+echo "AS = ${TARGET_AS}" >> Makefile
+echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
+echo "STRIP = ${TARGET_STRIP}" >> Makefile
+echo "ALLOBJS = ${TARGET_ALLCCOBJS} ${TARGET_ALLASOBJS}" >> Makefile
+echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
+echo "" >> Makefile
+
+
+
+#
+# Generate the main production targets in the makefile
+#
+echo "Generating Makefile production targets..."
+echo "# Regular targets follow" >> Makefile
+
+echo "${EXENAME}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
+echo "	\${CC} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${EXENAME}" >> Makefile
+echo "	\${STRIP} ${EXENAME}" >> Makefile
+echo "" >> Makefile
+
+echo "clean:" >> Makefile
+echo "	rm -f \${ALLOBJS} ${EXENAME}" >> Makefile
+echo "" >> Makefile
+echo "superclean:	clean" >> Makefile
+echo "	rm -f Makefile buff-in.* buff-out.* *.ini" >> Makefile
+echo "	rm -f `find . -name '*~' `" >> Makefile
+echo "" >> Makefile
+
+
+#
+# Generate the dependency targets in the makefile
+#
+echo "Generating Makefile C++ dependency targets..."
+echo "# Dependency targets follow" >> Makefile
+for target in ${TARGET_ALLCCOBJS}; do
+  SAFENAME=`echo $target | tr -d '/.\$-'`
+  eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+  if [ -n "${RC5CORECOPY}" -a `basename ${TARGETSRC}` = problem.cpp ]; then
+    echo "$target:	${TARGETSRC} rc5/${RC5CORECOPY}" >> Makefile
+    echo "	cp -f rc5/${RC5CORECOPY} rc5/rc5stub.cpp" >> Makefile
+    echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
+    echo "	rm -f rc5/rc5stub.cpp" >> Makefile
+  else
+    echo "$target:	${TARGETSRC}" >> Makefile
+    echo "	\${CC} -c \${CCFLAGS} ${TARGETSRC} -o $target" >> Makefile
+  fi
+  echo "" >> Makefile
+done
+echo "Generating Makefile AS dependency targets..."
+for target in ${TARGET_ALLASOBJS}; do
+  SAFENAME=`echo $target | tr -d '/.\$-'`
+  eval TARGETSRC=$`echo DEPEND_$SAFENAME`
+  echo "$target:	${TARGETSRC}" >> Makefile
+  echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
+  echo "" >> Makefile
+done
+echo "Makefile auto-generation complete!"
+echo ""

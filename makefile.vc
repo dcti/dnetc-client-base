@@ -1,0 +1,27 @@
+# RC5 client makefile (MS Visual C++ for Win32)
+# see http://www.distributed.net/
+
+
+OPTS_MSVC = -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -DMULTITHREAD -D__WIN32__ -O1 -MD
+
+# --------------------------------------------
+
+EXENAME = rc5des.exe
+
+RC5_SRCS = client.cpp problem.cpp autobuff.cpp iniread.cpp network.cpp \
+           scram.cpp mail.cpp cliconfig.cpp buffwork.cpp des-x86.cpp convdes.obj
+
+RC5_OBJS = rg-486.obj rg-6x86.obj rg-k5.obj rg-k6.obj rc5p5brf.obj rg-p6.obj \
+           bdeslow.obj bbdeslow.obj x86ident.obj
+
+RC5_LIBS = wsock32.lib advapi32.lib
+
+# --------------------------------------------
+
+.cpp.obj:
+        cl -c $(OPTS_MSVC) $**
+
+rc5v2: $(RC5_SRCS) $(RC5_OBJS)
+        cl $(OPTS_MSVC) -Fe$(EXENAME) $** $(RC5_LIBS)
+
+# --------------------------------------------

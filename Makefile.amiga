@@ -1,0 +1,36 @@
+PROGNAME = rc5des
+
+DEBUG = symbol
+
+CFLAGS = debug=$(DEBUG) nostkchk strmerge parms=reg optimize define=PIPELINE_COUNT=1 define=_CPU_32BIT_ includedir=netinclude: utillib NOLINK
+DISASM =
+
+LFLAGS = #farcode fardata
+
+OBJS = cliconfig.o client.o problem.o autobuff.o iniread.o network.o scram.o buffwork.o mail.o keycheck_opt.o desansi.o libdes.o
+LIBS = LIB:scm.lib LIB:sc.lib LIB:amiga.lib LIB:debug.lib
+
+.cpp.o:
+	sc $(CFLAGS) $(DISASM) CPU=68040 $*.cpp
+
+.a.o:
+	hx68 from $*.a to $*.o addsym debug
+
+# build the stripped load file
+$(PROGNAME): $(PROGNAME).ld
+	slink from $(PROGNAME).ld to $(PROGNAME) stripdebug
+
+# build a load file with the debugging info still present
+$(PROGNAME).ld: $(OBJS)
+	slink noicons with lib:utillib.with <with < (rc5des.lnk)
+FROM LIB:c.o $(OBJS)
+TO $(PROGNAME).ld
+LIB $(LIBS)
+$(LFLAGS)
+ADDSYM
+MAP $(PROGNAME).map fhlsx plain
+<
+
+##############################################################################
+# dependancies for various objects
+

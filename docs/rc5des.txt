@@ -1,0 +1,1515 @@
+Distributed.Net RC5-64/DES Client Readme file version 404
+Last modified May 12th by Mike Silbersack (silby@execpc.com)
+
+Copyright distributed.net 1998 - All Rights Reserved
+For use in distributed.net projects only.
+Any other distribution or use of this program violates copyright.
+
+Use of this client or its variants implies agreement with
+the prize terms listed on http://www.distributed.net/rc5/ and
+http://www.distributed.net/des/
+
+Index:
+------
+
+1.  Introduction
+2.  System requirements
+3.  Installation of the client
+    a.  Windows 95/98/NT CLI installation instructions
+    b.  Windows NT Service installation instructions
+    c.  OS/2 CLI installation instructions
+    d.  Unix installation instructions
+    e.  MS-DOS client installation instructions
+    f.  Amiga client installation instructions
+   (Windows and Macintosh GUI installation instructions are included with
+   their respective programs.)
+4.  Upgrading from a previous version of the client
+5.  Configuration of the client via the client config menu
+6.  Client commands
+7.  Client options
+8.  Operation of the client
+9.  Format of the log file
+10. Platform specific information
+    a.  Windows NT Service client
+    b.  MS-DOS client
+    c.  Amiga client
+11. Frequently asked questions
+12. Firewall support / Network protocol description
+13. Flushing and fetching buffers via e-mail
+14. How to get help
+15. Revisions to this document
+
+
+1.  Introduction
+----------------
+
+Congratulations! This distributed.net client will make your computer a
+part of the world's largest computer, distributed.net. The client you
+have downloaded is capable of working on two of Distributed.Net's
+ongoing projects: The brute-force decryption of a RC5-64 message, and
+the brute force decryption of a DES message. The RC5-64 contest is a
+long-term contest, which may take a couple of years to solve. The DES
+contests, run twice a year, are short, and should take less than a month
+to solve. As a result, this client will work on DES during DES contests,
+and switch back to RC5-64 when no DES contest is going on. No user
+intervention is required for this switchover.
+
+If you'd like more information on our current project status, you should
+view the RC5-64 and DES homepages.  RC5-64 may be found at
+"http://www.distributed.net/rc5/", and DES may be found at
+"http://www.distributed.net/des". In the next few months, Distributed.net
+will begin working on other (non-encryption related) projects. For
+information on other projects, please look at
+"http://www.distributed.net/projects/".
+
+2.  System Requirements
+-----------------------
+
+The system requirements for this client vary from platform to platform;
+in general, all that is required is a 32-bit processor with less than 1
+megabyte of ram, less than a megabyte of disk space, and a TCP/IP
+internet connection or a method of sharing files with another computer
+that has internet connectivity.
+
+Note that there may be systems that meet this requirement, but lack a
+client.  If you have one of these systems, e-mail
+coders@lists.distributed.net to request a client for it.  Please
+include processor type an operating system in your request.
+
+The most important requirement for running the distributed.net client,
+of course, is authorization to run the client on the computer that it
+is installed on. This is not an issue with your home computer, but many
+companies and schools have policies against running outside programs on
+their computers. In cases where such a policy exists, ask your system
+administrator BEFORE attempting to install the client. It is very
+possible that he/she will like the idea, and choose to install the
+client on all computers at that site. However, if the answer is a 'no',
+do not push the issue. RSA's contest rules stipulate that all clients
+must be run on authorized systems. The only support we will give to
+unauthorized installations is help in uninstalling them.
+
+
+3.  Installation of the client
+------------------------------
+
+3a.  Windows 95/98/NT CLI installation instructions:
+
+     a.  Unzip the compressed file into the directory in which you
+         will be running the client, most likely
+         "c:\program files\rc5des\".
+     b.  Run rc5des.exe.  This will initiate the menu-driven
+         configuration (described below.)  Set the options for your
+         configuration.
+     c.  Run "rc5des.exe -install" this will set the client so that
+         it will automatically start itself when you enter windows.
+     d.  Start the client up again; it should now receive some
+         blocks, and begin working.
+
+3b.  Windows NT Service installation instructions:
+
+     a.  Unzip the compressed file into the directory from which you
+         will be running the client, most likely
+         "c:\program files\rc5des\".
+     b.  Execute rc5dessrv.exe - this will begin the menu driven
+         configuration utility. Set the options for your client as
+         described in section 5 of this document. (Note that you
+         will not need to configure most of the options unless you
+         are behind a firewall or have other special configuration
+         needs.) When you are done, type 0 [ENTER] to exit and save
+         the settings.
+     c.  Run "rc5dessrv.exe -install" so that the client will
+         install itself as a system service. You must have
+         administrator access for this to work properly.
+     d.  Go into the windows control panel and into "Services". If
+         the client installed properly, you should see the listing
+         "Distributed.Net RC5/DES service client". In the startup
+         column you should see the listing "Automatic", indicating
+         that the client will start on each boot automatically. If
+         the current status is blank, click "Start" to begin the
+         client's operation.
+     e.  If you have logging enabled (which is highly recommended in
+         this case, as the service client has no user feedback
+         otherwise) you may wish to inspect the log file a few hours
+         later to ensure that the client is operating properly.
+
+3c.  OS/2 CLI installation instructions:
+
+     a.  Unzip the compressed file into the directory in which
+         you will be running the client, most likely "c:\program
+         files\rc5des\".
+     b.  Read the documentation (this file) through so that you
+         completely understand how to operate the client.
+     c.  Run rc5des.exe.  This will initiate the menu-driven
+         configuration (described below.)  Set the options for your
+         configuration.
+     d.  Start the client up again; it should now receive some
+         blocks, and begin working.
+     e.  Make sure to set the client to start on each bootup by
+         right clicking on the icon and creating a shadow in the
+         startup directory.
+
+3d.  Unix client installation instructions:
+
+     a.  Untar/gzip the compressed file into the directory in which
+         you will be running the client.
+     b.  Read the documentation (this file) through so that you
+         completely understand how to operate the client.
+     c.  Run rc5des.  This will initiate the menu-driven
+         configuration (described below.)  Set the options for your
+         configuration.
+     d.  Set the client so that it will auto-start on system boot.
+     e.  Start the client up again; it should now receive some
+         blocks, and begin working.
+
+3e.  MS-DOS client installation instructions:
+
+The MS-DOS client is not a standalone client; it requires "feeding" of
+buffer files from a networkable client. Please see section 10b for more
+information on how to use it.
+
+3f.  Amiga client installation instructions:
+
+     a.  Unpack the compressed file into the directory from which you
+         will be running the client.
+     b.  From a shell, use "rc5des -config". This will initiate the
+         menu-driven configuration (described below.) Set the options for
+         your client as described in section 5 of this document. (Note
+         that you will not need to configure most of the options unless
+         you are behind a firewall or have other special configuration
+         needs.) When you are done, type 0 [ENTER] to exit and save the
+         settings.
+     c.  Run rc5des to start up the client; make sure you are connected
+         to the internet at this time so it may obtain blocks to work
+         on.
+     d.  Make sure to add rc5des to your system startup sequence so that
+         it will automatically start in the future.
+
+      If you are running a PPC accelerator board in your amiga, you should
+      also download and run the PPC version of the client (installing it
+      in the same manner as above.) Both a 680x0 and PPC client can be run
+      at the same time. Make sure to use seperate checkpoint files for each
+      client, as sharing checkpoint files will result in duplicate work.
+
+      Please read section 10c of this document for more Amiga specific
+      information.
+
+
+4.  Upgrading from a previous version of the client
+---------------------------------------------------
+
+If you are upgrading from a version of the client older than the 2.7xxx
+series, please stop the existing client, flush its buffers, delete all
+of its files before installing the new client. Buffer files formats
+have changed, and this will help prevent compatibility problems. If you
+are sharing buffer files between multiple clients, please make sure that
+the clients have compatible buffer formats.
+
+5.  Configuration of the client via the client config menu
+----------------------------------------------------------
+
+When you first run a CLI client (all versions excluding the windows and
+macintosh GUI), it will take you to this menu, which allows you to
+configure the client in a manner a little simpler than by .ini file
+editing.  (If you are .ini inclined, check section #7.)
+
+(Note that some options on this menu are dependant on other options,
+and will not initially show.)
+
+CLIENT CONFIG MENU
+------------------
+1)  Email to report as [default:rc5@distributed.net] ==> rc5@distributed.net
+2)  RC5 Blocks to Buffer [in:out] [default:10] ==> 10:10
+3)  DES Blocks to Buffer [in:out] [default:10] ==> 10:10
+4)  Blocks to complete in run [default:0] ==> 0
+5)  Hours to complete in a run [default:0.0] ==> 0.0
+6)  Keys per timeslice - for Macs, Netware, Win16, etc [default:65536] ==> 65536
+7)  Level of niceness to run at [default:0] ==> 0
+8)  File to log to [default:] ==>
+9)  Network communication mode [default:1] ==> 1
+10)  Preferred KeyServer Proxy
+     [default:us.v27.distributed.net] ==> us.v27.distributed.net
+11)  Preferred KeyServer Port [default:2064] ==> 2064
+12)  Local HTTP/SOCKS proxy address
+     [default:wwwproxy.corporate.com] ==> wwwproxy.corporate.com
+13)  Local HTTP/SOCKS4 proxy port [default:80] ==> 80
+14)  UUE/HTTP/SOCKS mode [default:0] ==> 0
+15)  HTTP/SOCKS4 proxy userid/password [default:] ==>
+16)  Optimize performance for CPU type [default:-1] ==> -1
+17)  Message Mailing (bytes) [default:0] ==> 0
+18)  SMTP Server [default:your.smtp.server] ==> your.smtp.server
+19)  SMTP Port [default:25] ==> 25
+20)  Mail ID that logs will be mailed from [default:RC5notify] ==> RC5notify
+21)  Mail ID that logs will be sent to
+     [default:you@your.site] ==> you@your.site
+22)  Number of CPUs in this machine [default:-1 (autodetect)] ==> -1
+23)  RC5 Checkpoint information filename [default:none] ==> none
+24)  DES Checkpoint information filename [default:none] ==> none
+26)  Preferred Block Size (2^28 through 2^31)  [default:30] ==> 30
+27)  Preferred Contest (1=RC5, 2=DES)  [default:2] ==> 2
+0)  Quit and Save
+Choice -->
+
+To change an option, type the number of the option and press the
+[ENTER] key.  The client will prompt you for the value of the option
+you wish to change.  Type in the number of the option you wish to
+change, and press [ENTER] again.  Now, type in the value you wish to
+set for the option. The default settings are listed in brackets.
+
+All of these options are settable through .ini files entries; the name
+in brackets is the equivalent option.  wish to configure via .ini file
+editing, see section #7.
+
+1) [id] This is the email address that will show up at the statistics
+   site (http://rc5stats.diststributed.net).  It is also the address
+   that will be used to find the winner!  Consequently, this needs to
+   be your personal address, not a team's.  Please see the questions
+   regarding teams in the FAQ section for more information.
+
+2) [threshold] This is how many RC5 blocks your client will buffer between
+   communications with the proxies.  The client operates directly on
+   blocks stored in the input buffer, and puts finished blocks into the
+   output buffer.  When the number of blocks in the input buffer reaches 0,
+   the client will attempt to connect to the proxies, fill the input buffer
+   to the in threshold, and send in all completed blocks.  When the number
+   of blocks in the out buffer reaches the out threshold, the client will
+   try to connect in the same way.
+
+   If your computer is only connected to the internet once a day, you
+   should probably specify 50 or more blocks so that there will be enough
+   blocks for it to process.  In this case, you should either enable
+   "lurk mode" (described below), or run "rc5des -update" each time you
+   are connected.
+
+3) [threshold2] This operates the same as #2 above, but applies to DES
+   blocks.
+
+4) [count] The client will do the specified number of blocks and then
+   exit.
+
+5) [hours] The client will work for the specified number of  hours and
+   then exit.
+
+6) [timeslice] This should be left alone for optimal performance on
+   true pre-emptive multitasking systems.  It should only be changed on
+   mac/netware/win 3.1 clients where it will change the multitasking
+   priority.
+
+7) [niceness] This allows you to select the priority that the client will
+   execute at.  A setting of 0, or 'very nice' will ensure that the client
+   will use *only* idle processor time.  A setting of 1, or 'nice'
+   allows the client to take priority over a few background processes.
+   A setting of 2, or 'normal' allows the client to run at the same
+   priority as a normal program.  In almost all cases, you should leave
+   this at the default setting of zero so that it does not impact the
+   performance of the computer.  In most instances a higher setting will
+   not make the client operate any fast anyway.
+
+8) [logname] This specifies the name of a file the client will log its
+   output to.  Make sure to include the path along with the filename.
+
+9) [firemode] The network communication mode determines how the client
+   will communicate with the proxies.  You will only need to change
+   this if you're connecting through a firewall.
+
+10) [keyproxy] This determines which proxy the client will attempt to
+    connect to for sending and receiving blocks.
+
+11) [keyport] This determines the port on the keyserver to which the
+    client will try to connect.
+
+12) [httpproxy] This tells the client the address of the http/socks proxy
+    which it should attempt to connect through.
+
+13) [httpport] This determines the port on the proxy server which the
+    client will try to connect to.  See the section on httpport for
+    more information.
+
+14) [uuehttpmode] This determines the mode the client will use to
+    communicate with a proxy server.
+
+15) [httpid] This is the username/password the client will tell the
+    proxy server it attempts to connect through.
+
+16) [cputype] (applies to x86 and PPC clients only)  This determines which
+    processor the client will optimize RC5 operations for.  Auto-detect
+    should work for most processors, but if your processor is not
+    auto-detected, you will wish to set it here.
+
+17) [messagelen] Specifies how often (size of the log wise in bytes) that
+    the client should mail out logs.  A setting of 0 means that no logs
+    will be mailed.
+
+18) [smtpsrvr] If you use log mailing (enabled by option 17), this sets
+    the address of the SMTP server that will be used to mail out the logs.
+
+19) [smtpport] If you use log mailing (enabled by option 17), this sets
+    the port that the SMTP server will be connect to on (usually 25).
+
+20) [smtpfrom] If you use log mailing (enabled by option 17), this sets
+    the name that the logs will be "from".
+
+21) [smtpdest] If you use log mailing (enabled by option 17), this is
+    the e-mail address that the log files will be sent to.
+
+22) [numcpu] Allows you to specify how many CPUs are in this computer.
+
+23) [checkpointfile] Sets the location of the RC5 checkpoint file.
+    This is the place where your client writes its progress to disk in
+    case there's a crash or power outage in the middle of a block.
+    Don't share this between clients.
+
+24) [checkpointfile2] Sets the location of the DES checkpoint file.
+
+26) [preferredblocksize] Sets the preferred block size for the client.
+
+27) [preferredcontest] Sets the preferred contest for you client.
+
+6.  Client commands
+-------------------
+
+Commands that can be invoked from the command line only:
+
+-config	  Invokes the configuration menu
+
+-test	        Tests the client's integrity and ensures it contains no
+              errors
+
+-flush	  Flushes the output buffers (buff-out.*) file by returning all
+              completed blocks back to the keyserver.
+
+-forceflush   Forces a repeated flushing (no matter what error occurs) until
+              all completed blocks have been sent in. This may be useful
+              if you have a corrupted bufferfile that contains some good
+              blocks, but will not flush with the -flush option.
+
+-fetch	  Fills up the input buffer file (buff-in.*) to the limit by
+              fetching additional blocks from the keyserver.
+
+-forcefetch   Will continually fetch until the input buffer has been filled
+              to the specified limit. You may wish to use this option if
+              -fetch frequently fails before getting the requested number
+              of blocks.
+
+-update	  Combination of flush/fetch
+
+-benchmark    Benchmarks the client's speed on the system.
+
+-benchmark2   Performs a shorter and less accurate benchmark.
+
+-forceunlock <filename>
+                Unlocks the buffer file indicated by <filename>
+
+-run	        Runs the client in normal mode. Invoking the client with
+              no arguments is identical to this option.  If no .ini
+              file exists, the client configuration menu will appear.
+
+-install      Under Windows, this causes the client to install
+              itself so that it will start on each boot-up.
+
+-uninstall    Under Windows, this causes the client to uninstall
+              itself so that it will no longer start on boot-up.
+
+-ini <path/name of .ini file>
+              Tells the client an alternate place to look for the .ini
+              file. Normally the client uses a file with the name of
+              the executable+".ini" in the executable's directory.
+
+              You may also specify the .ini file's location with the
+              environment variable $RC5INI.
+
+7.  Client options
+------------------
+
+There are two places from which the client can get its configuration
+options; from command line parameters and .ini file settings.  The most
+reliable way to specify options is by using settings in the .ini.  We
+strongly suggest that you use rc5des -config to configure the client, as
+it provides the easiest avenue for configuration.  For more advanced
+configurations, however, this section may be useful.
+
+----------------------------------
+Command line argument: -runoffline
+Config file entry: runoffline=<0/1>
+Default setting: 0
+
+Runs the client in offline mode.  In this mode, the client will not
+automatically fetch or flush. If the input buffer becomes empty, the
+client will generate random RC5 blocks to work on.
+
+---------------------------------
+Command line argument: -runbuffers
+Config file entry: runbuffers=<0/1>
+Default setting: 0
+
+Similar to -runoffline except that when the client runs out of blocks
+to process, it will exit.
+
+---------------------------------------------
+Command line argument: -a <keyserver address>
+Config file entry: keyproxy=<keyserver address>
+Default setting: us.v27.distributed.net
+
+This allows you to specify the hostname or IP address of a specific
+keyserver you wish to use. The default setting automatically rotates
+among the keyservers, so you should not normally need to change this
+address.  You may need to change this value if you are sending blocks to
+a personal proxy, or you're trying to connect through a firewall. If
+you're trying to connect through a firewall, you're probably best off
+picking a nearby keyserver and doing a nslookup to get the true IP
+address of the server in the form x.x.x.x - many proxies won't connect
+if you enter the hostname of the proxy.
+
+If you are located outside of the continental united states, you should
+check to see if there is an alternate keyproxy round-robin for your
+continent.
+
+A list of currently operating proxies and round-robins can be found at
+http://www.distributed.net/rc5/proxyinfo.html.
+
+--------------------------------
+Command line argument: -p <port>
+Config file entry: keyport=<port>
+Default setting: 2064
+
+This option tells the client which port of the specified proxy to
+connect to. The default port, 2064, should not need to be changed
+unless you have set your personal proxy to answer on a different port or
+are trying to connect through a http or telnet proxy.
+
+-----------------------------------------
+Command line argument: -e <e-mail address>
+Config file entry: id=<e-mail address>
+Default setting: <your e-mail address!>
+
+This is the place where you set your e-mail address.  Please note that
+you should specify *your* e-mail address at all times, not one of a team
+or a friend.  The reason for this policy is that if you win, and are not
+using your own address, we'll have an extremely difficult time finding
+you, and your friend/team captain will end up with the prize.  There are
+only two cases where more than one computer should be using the same
+e-mail address:
+
+1)  They're all your computers.
+2)  The computers are all in a large cluster, such as a computer lab.
+    In this case, the e-mail address of the administrator of these
+    computers should be used.
+
+See the FAQ of this document for an explanation of teams.
+
+---------------------------------
+Command line argument: -c <cpuID>
+Config file entry: cputype=<cpuID>
+Default setting: -1
+
+If you are using a x86 or PPC client, this will allow you to set which
+optimized rc5 core you wish to use.  All x86 cores will work on all 386+
+processors, and all PPC cores will work on all PPC processors. The
+autoselected core will usually be the fastest, so unless there is a
+misdetection (as may occur with Cyrix processors), you need not manually
+set a core.
+
+x86 CPU types:
+     -1  : Auto detect
+      0  : Intel Pentium, Intel Pentium MMX, Cyrix
+      1  : Intel 80386 (386), Intel 80486 (486)
+      2  : Intel Pentium Pro, Intel Pentium II
+      3  : AMD 486, Cyrix 6x86/6x86MMX/M2
+      4  : AMD K5
+      5  : AMD K6
+
+PPC CPU types:
+     -1  : Auto detect
+      0  : PPC 601
+      1  : PPC 603/603e/604/604e/750
+
+--------------------------------------------
+Command line argument: -l <path/logfilename>
+Config file entry: /logname=<path/logfilename>
+Default setting: None
+
+This is the name of the file to which the client will log its activity.
+Make sure to specify the full path, as otherwise the log file will end up
+in the current directory.  If the entry is left blank, no log will be
+recorded.
+
+----------------------------------------------------------
+Command line argument: -b <number of RC5 blocks to buffer>
+Config file entry: threshold=X:Y
+Default setting: 10:10
+
+Specifies the number of RC5 blocks to buffer.  Using -b sets both X
+and Y to the same value.  -bin sets the X parameter, and
+-bout sets the Y parameter.
+
+The X parameter is the maximum size of the in buffer. The client will
+refuse to fetch any more blocks into the in buffer than is specified by
+X. If you lower the in-buffer size, it will just process blocks until
+it gets down to that high water mark, and proceed normally from there.
+The client has a built in limit of 1000 blocks as a maximum in-buffer
+size.  Note that having a in buffer larger than X is not a problem; the
+client will simply not receive any new blocks until the buffer is
+depleted to below the value of X.
+
+The Y parameter sets the send threshold. Whenever the size of the out-
+buffer reaches Y, it will automatically initiate a flush/fetch,
+regardless of the status of the in buffer.  Note that there is no limit
+to the amount of blocks that will fit in an out buffer; this parameter
+just determines when flushes of the out buffer will be attempted.
+
+--------------------------------------------------------------------
+Command line argument: -bin <number of RC5 blocks for the in buffer>
+Config file entry: None
+
+This parameter sets the X argument of the threshold .ini option above on
+the fly for RC5 blocks.
+
+----------------------------------------------------------------
+Command line argument: -bout <size of buff-out.rc5 before flush>
+Config file entry: None
+
+This parameter sets the Y argument of the threshold .ini option above on
+the fly for RC5 blocks.
+
+-----------------------------------------------------------
+Command line argument: -b2 <number of DES blocks to buffer>
+Config file entry: threshold2=X:Y
+Default setting: 10:10
+
+This operates exactly the same way as the -b / threshold .ini option
+described above, only on the DES buffer files instead.
+
+---------------------------------------------------------------------
+Command line argument: -bin2 <number of RC5 blocks for the in buffer>
+Config file entry: None
+
+The DES equivalent of -bin.
+
+-----------------------------------------------------------------
+Command line argument: -bout2 <size of buff-out.rc5 before flush>
+Config file entry: None
+
+The DES equivalent of -bout.
+
+---------------------------------------------
+Command line argument: -h <# of hours to run>
+Config file entry: hours=<# of hours to run>
+Default setting: 0
+
+This tells the client to terminate after running for the specified period
+of hours.  The default value will cause the client to run infinitely.
+
+--------------------------------------------------
+Command line argument: -n <# of blocks to process>
+Config file entry: count=<# of blocks to process>
+Default setting: 0
+
+This tells the client to terminate after processing the specified number
+of blocks.  The default setting eliminates causes client to process an
+infinite amount of blocks.
+
+--------------------------------------------------
+Command line argument: -until <HHMM time to quit at>
+Config file entry:
+Default setting: <none>
+
+This setting will tell the client to start execution, and run until
+the time specified has been reached, at which point it will terminate.
+This may be useful if you wish to run the client during known low usage
+periods on a system; simply start it with a CRON job, and tell it to
+run until a specific period of time.
+
+--------------------------------------------------
+Command line argument: -nice <client nice setting>
+Config file entry: niceness=<client nice setting>
+Default setting: 0
+
+This sets the client priority level, based off the following chart:
+   0  : Very nice. DOES NOT intefere with system operations at all.
+        Runs on idle CPU time only.
+   1  : Runs with slightly higher priority than idle processes.
+   2  : Runs as a normal process with higher priority.
+
+Note that these numbers don't correspond to unix nice settings; the client
+internally converts 0 to the nicest setting possible for a platform, 1 to
+slightly higher than idle, and 2 to normal user-level process.  Don't
+bother trying to re-nice the clients, level 0 nices the client as much
+as possible.
+
+-----------------------------------------
+Command line argument: -u <UUE/HTTP mode>
+Config file entry: uuehttpmode=<UUE/HTTP mode>
+Default setting: 0
+
+If the firemode option is set to 5, this option determines the firewall
+communications mode the client will use. The types of modes are:
+
+   0  : Direct communications mode, no firewall support
+   1  : UUE encoding (for telnet proxies)
+   2  : HTTP encoding
+   3  : HTTP+UUE encoding
+   4  : SOCKS4 proxy
+
+The operation of these modes is influenced greatly by the other related
+options.
+
+-----------------------------------------------
+Command line argument: -ha <HTTP Proxy address>
+Config file entry: httpproxy=<HTTP Proxy address>
+Default setting:
+
+Specifies the IP address or hostname of the HTTP proxy.
+
+--------------------------------------------
+Command line argument: -hp <HTTP proxy port>
+Config file entry: httpport=<HTTP proxy port>
+Default setting:
+
+Specifies the port of the HTTP proxy to which the client should connect.
+
+---------------------------------------------------------
+Command line argument: -in <location/name of RC5 in buffer>
+Config file entry: in=<location/name of RC5 in buffer>
+Default setting: buff-in.rc5
+
+Allows you to override the default name buff-in.rc5 and specify a
+different path/file name for the RC5 in buffer.
+
+-----------------------------------------------------------
+Command line argument: -out <location/name of RC5 out buffer>
+Config file entry: out=<location/name of RC5 out buffer>
+Default setting: buff-out.rc5
+
+Allows you to override the default name buff-out.rc5 and specify a
+different path/file name for the RC5 out buffer.
+
+----------------------------------------------------------
+Command line argument: -in2 <location/name of DES in buffer>
+Config file entry: in2=<location/name of DES in buffer>
+Default setting: buff-in.des
+
+Allows you to override the default name buff-in.des and specify a
+different path/file name for the DES in buffer.
+
+--------------------------------------------------------------
+Command line argument: -out2 <location/name of DES out buffer>
+Config file entry: out2=<location/name of DES out buffer>
+Default setting: buff-out.des
+
+Allows you to override the default name buff-out.des and specify a
+different path/file name for the DES out buffer.
+
+
+---------------------------------------------------
+Command line argument: -smtpsrvr <SMTP server name>
+Config file entry: smtpsrvr=<SMTP server name>
+Default setting: None
+
+This specifies the address of the SMTP server through which your client
+will e-mail log files (if log file mailing is enabled.)
+
+--------------------------------------------------------------
+Command line argument: -smtplen <mail message length in bytes>
+Config file entry: messagelen=<mail message length in bytes>
+Default setting: 0
+
+This determines the size of the parts of the log file that will be e-
+mailed. As a result, it also determines send interval.  0 indicates
+that log mailing is disabled.
+
+---------------------------------------
+Command line argument: -smtpport <port>
+Config file entry: smtpport=<port>
+Default setting: 25
+
+This tells the client the port of the SMTP server to use for message
+mailing. The default SMTP port used is 25; you should not need to
+change this.
+
+---------------------------------------------
+Command line argument: -smtpfrom <Identifier>
+Config file entry: smtpfrom=<Indentifier>
+Default setting: None
+
+This just tells the client what to put in the From: field of any log
+files it mails to you. You can use this to make different systems send
+with different names so that you can auto-sort them in your mail
+program.
+
+-------------------------------------------------
+Command line argument: -smtpdest <e-mail address>
+Config file entry: smtpdest=<e-mail address>
+Default setting: None
+
+This specifies the e-mail address to which the client will send log
+files if log file mailing is enabled.
+
+-----------------------------------------------------------------
+Command line argument: -ckpoint <checkpoint file path / filename>
+Config file entry: checkpointfile=<checkpoint file path / filename>
+Default setting: None
+
+This specifies the name of the file the client will use to store
+checkpoints of its work during a RC5 block. This is an extremely useful
+option: if you have a system which experiences frequent crashes or
+terminates the client abruptly, you will want to enable this option
+so that you loose only a few minutes' work, rather than an entire block.
+Please note that checkpoint files MUST be unique for EACH RUNNING
+CLIENT. Sharing checkpoint files will cause major problems.
+
+------------------------------------------------------------------
+Command line argument: -ckpoint2 <checkpoint file path / filename>
+Config file entry: checkpointfile2=<checkpoint file path / filename>
+Default setting: None
+
+Has the same effect as -ckpoint, except that it affects DES blocks
+being processed.
+
+--------------------------------------
+Command line argument: -cktime [# min]
+Config file entry: checkpoint_min=#
+Default setting:
+
+Time in minutes between the client would saving current work to the
+checkpoint file.
+
+--------------------------------
+Command line argument: -frequent
+Config file entry: connectoften=1
+Default setting: 0
+
+This will cause the client to flush/fetch every few minutes or so. You
+might want to use this if you have a single computer with a network
+connecting "feeding" other clients via a buff-in.* file so that the
+buffer never reaches empty. If you're behind a firewall and experience
+frequent connection failures, this may be useful as well.
+
+----------------------------------
+Command line argument: -nofallback
+Config file entry: nofallback=1
+Default setting: 0
+
+If this is set, the client will not attempt to fall back to the main
+RC5/DES proxy round-robin address after a connection failure.
+
+----------------------------
+Command line argument: -lurk
+Config file entry: lurk=<0/1>
+Default setting: 0
+
+If you're using Windows, this will cause the client to automatically do
+a -update whenever you're connected. If you're on a dial-up connection,
+you'll probably want to use this option, as it will allow you to not
+have to worry about updating (as long as you connect to the internet on
+a regular basis.)  Note that if you're offline and run out of blocks,
+lurk will still try to do an update.
+
+--------------------------------
+Command line argument: -lurkonly
+Config file entry: lurkonly=<0/1>
+Default setting: 0
+
+Works like lurk, except that lurkonly will *never* try to -update unless
+you're already online.
+
+---------------------------------------
+Command line argument: -noexitfilecheck
+Config file entry: noexitfilecheck=1
+Default setting: 0
+
+If the client sees the existence of the exit file, exitrc5.now, it will
+shut down. If set to 1, this will cause the client NOT to check for
+exitrc5.now.
+
+-----------------------------------------
+Command line argument: -exitfilechecktime <number of seconds>
+Config file entry: exitfilechecktime=<number of seconds>
+Default setting: 30
+
+Determines how often the client checks for the existence of the
+exitfile. If your computer does not cache properly and you are
+experiencing a lot of disk activity, you may wish to set this value
+higher.
+
+------------------------------
+Command line argument: -nodisk
+Config file entry: nodiskbuffers=1
+Default setting: 0
+
+If enabled, this will cause the client NOT to buffer to disk. Unless
+you have an extreme circumstance that requires the client not to
+access a disk anywhere, this option is highly discouraged. If it is
+enabled, you tend to loose hours worth of work if the computer crashes
+or restarts.
+
+-----------------------------
+Command line argument: -quiet
+Config file entry: quietmode=<0/1>
+Default setting: 0
+
+When set, this option will cause the client to run with no output to
+the screen.
+
+-------------------------------------------
+Command line argument: -blsize <block size>
+Config file entry: preferredblocksize=<block size>
+Default setting: 30
+
+This determines the size of blocks (of 2^<block size> keys) that the
+client will request. You can choose block sizes from 28 -> 31 bits in
+size. We suggest that you use larger blocks (30 or 31), as it helps to
+keep network activity down and keep our system running smoothly. Note
+that the client may receive blocks smaller than the requested size on
+occasion.
+
+------------------------------
+Command line argument: -prefer
+Config file entry: preferredcontest=
+Default setting: 2
+
+Sets the contest that the client will work on when possible. 1 is the
+setting for RC5-64, 2 is the setting for DES.  Since the DES contests
+are timed and we need all processor power to get them done, it's
+suggested that you keep this set to two, even when no DES contest is
+going on so that when a DES contest starts, the client will auto-switch
+to DES.
+
+----------------------------------
+Command line argument: -nettimeout <timeout in seconds>
+Config file entry: nettimeout=<timeout in seconds>
+Default setting: 60
+
+This sets the length in seconds before attempts to connect to keyservers
+will time out.  You may need to increase this setting if your connection
+is slow or unreliable.
+
+--------------------------------------------------
+Command line argument: -pausefile <pausefile name>
+Config file entry: pausefile=<pausefile name>
+Default setting: None
+
+If the client detects the existence of this file, it will temporarily
+stop working until the pausefile disappears.
+
+----------------------------------------------------------
+Command line argument: -numcpu <number of cpus to utilize>
+Config file entry: numcpu=<number of cpus to utilize>
+Default setting: -1
+
+This tells the client how many CPUs on the computer to use for
+decryption. -1 indicates that the client will try to auto-detect.
+
+----------------------------------
+Command line argument: -percentoff
+Config file entry: percentprintingoff=<0/1>
+Default setting: 0
+
+If this command line option is specified, or the config file option is
+set to 1, the percent indicator will not be shown on screen during the
+progress of a block.
+
+---------------------------
+Command line argument: none
+Config file entry: randomprefix=<some number>
+Default setting: Whatever it's at - leave it alone.
+This setting is used / set by the client to specify where in the RC5
+keyspace random blocks should be created from.  Please do not change it.
+
+---------------------------
+Command line argument: none
+Config file entry: firemode=<firewall communications mode>
+Default setting: 1
+
+   Here are the different modes:
+
+1) I can communicate freely to the Internet on all ports.
+
+This is the preferred option of commmunications. It communicates
+directly with the keyproxy network, and is the most reliable mode of
+communication. Unfortunately, this option will not allow you to connect
+through some firewalls.
+
+2) I can communicate freely on telnet ports
+
+If you are behind a firewall that blocks normal communications (network
+mode 1), but does allow telnet connections, this communication option
+should work. Enabling it will cause the client to connect through port 23,
+as if it were a telnet program. When you enable this option, you must also
+make sure to change the keyproxy selected to the specific IP address of
+a keyproxy that is accepting connections on port 23 (not all do.)  Check
+http://www.distributed.net/rc5/proxyinfo.html - proxies that answer on
+port 23 will have "US23" in the far right column.
+
+3) I can communicate freely on telnet ports, but need uuencoding
+
+If the telnet proxy you are connecting through only passes the lower 7-
+bits of each character, you will need to use this option to connect.  In
+short, if option 2 should work, but doesn't, try this option.
+
+4) I have a local HTTP proxy that I can go through
+
+If your firewall includes a http proxy (almost all do), this
+communications mode should be tried. It connects to the keyproxies as if
+they were websites it was accessing. When configuring this option, make
+sure to specify the keyserver you are going to use by IP alone. Not all
+keyservers accept http connections - check the proxy listing at
+http://www.distributed.net/rc5/proxyinfo.html and look for proxies that
+are in the US80 DNS.  Also, check the section on proxy configuration
+below for more information.
+
+5) Let me specify custom network settings (expert mode)
+
+If you need to tweak the telnet/http proxy support, or use the SOCKS4
+proxy support, you'll need to enable this mode.
+
+8.  Operation of the client
+---------------------------
+
+The RC5/DES client is quite simple in overall operation, and should not
+be hard to adapt to any configuration. The basic operation for a
+multi-threaded client is as follows:
+
+1.  The client attempts to load two blocks from the buff-in.* file, and
+    begins working on decrypting the first block.
+2.  The client (in a seperate thread) checks if the buff-in.* file is
+    empty, or the buff-out.* file has reached its thresholds as set in the
+    configuration. If this has occured, a network update will be
+    attempted, which will send all completed blocks in the buff-out.*
+    files to the server, and fill the buff-in.* file up fresh blocks.
+    If an error occurs in the network communications, the computer will
+    attempt to connect a few more times, and then not try until the
+    completion of the next block.
+3.  When the client has finished with a block from the buff-in.*, it
+    will write it to the buff-out.* file, at which point the above
+    empty/full check will occur again.
+4.  The client will loop back to step one. This process will go on
+    until the completion of the RC5-64 contest.
+
+Note that this is only a basic description of a multi-threaded client's
+operation, of course. Non-multithreaded clients must do these steps
+sequentially. There are a few primary ways to change overall operation:
+If you use the runoffline option, the client will never try to connect
+to the servers, and start creating random blocks to decrypt if the
+buff-in.* files become empty.  By specifying runbuffers, you would cause
+the client to exit when the buffers empty.
+
+9.  Format of the log file
+--------------------------
+
+The RC5/DES client log file may seem very confusing at first sight; the
+important thing to remember is that the client (on most platforms) is
+multithreaded, so the order of entries in the log sometimes doesn't make
+much sense; this is normal, as the network code may retrieve and send in
+some blocks while another block is being worked on. The buff-in.* file is
+a stack.  As a result, you may notice that if the client is stopped and
+new blocks are put into the buffer, blocks will *appear* to diappear.
+Don't worry; the block that was saved during client shutdown was put back
+on top of the stack, and then covered over by the newer blocks.  The
+partially completed block will surface again.
+
+Here are the basic entries you will see in the log file:
+
+[dd/mm/yy hh:mm:ss GMT] Shutdown message received - Block being saved.
+
+This message tells you that the client has begun its shutdown, either
+due to system shutdown, client termination, or the creation of the
+exitrc5.now file.
+
+[dd/mm/yy hh:mm:ss GMT] Saved block xxxxxxxx:yyyyyyyy (xx.xx percent complete)
+
+Immediately after the client begins shutdown, you will see this line
+twice per each processor in the system.  There are two lines because each
+thread of the client keeps two blocks in memory at all times in case of
+network errors.
+
+[dd/mm/yy hh:mm:ss GMT] RC5 1*2^bb Block: xxxxxxxx:xxxxxxxx ready to process
+[dd/mm/yy hh:mm:ss GMT] xxx Blocks remain in file <path/name of in buffer>
+[dd/mm/yy hh:mm:ss GMT] xxx Blocks are in file <path/name of in buffer>
+
+Each time a block is completed by the client (or at startup), the client
+needs to load
+
+Child thread # x has been started.
+
+During startup, you should see this message once per processor.
+
+[dd/mm/yy hh:mm:ss GMT] Completed block xxxxxxxx:xxxxxxxx (xxxxxxxxxx keys)
+                        hh:mm:ss.ms - [xxxxxx.xx keys/sec]
+
+This message is printed to indicate the completion of each block. Note
+that the time and keys/sec rate given here are for the duration of that
+block only.
+
+[dd/mm/yy hh:mm:ss GMT] The proxy says: "<insert some message>"
+
+Each time the client connects to send or receive blocks, you'll see a
+message from the proxy. Generally, this is just whatever the proxy
+operator decided to set as a message. So, if it doesn't make sense,
+just ignore it.
+
+>
+
+You'll see a '>' for each block that the client successfully sent to the
+server during the connection.
+
+<
+
+You'll see a '<' for each block that the client successfully receives
+from the server during the connection.
+
+[dd/mm/yy hh:mm:ss GMT] Sent x <type> block(s) to server
+
+If the client just recieved some blocks from the server, it'll tell you
+how many and what kind.
+
+[dd/mm/yy hh:mm:ss GMT] Retrieved x block(s) from server
+
+If the client just sent some blocks to the server, it'll tell you how
+many.
+
+[dd/mm/yy hh:mm:ss GMT] Tot: x RC5 blocks hh:mm:ss.ms - [xxxxxx.xx keys/sec]
+                        Tot: x DES blocks hh:mm:ss.ms - [xxxxxx.xx keys/sec]
+
+These averages are printed after the completion of each block.  Be careful
+how you read them.  The averages
+
+10. Platform specific information
+---------------------------------
+    10a.  Windows NT Service client
+
+          For those running windows NT, especially on multiuser systems,
+          the NT service client is the best choice of a client to run.
+          The service client can run without requiring a user to be
+          logged in, and can not be stopped by a non administrator.
+          Users of NT workstation who are always logged in may still
+          consider using the GUI client, as the service has no user
+          interface.
+
+    10b.  MS-DOS client
+
+          The MS-DOS client operates in the same manner as the other
+          non-GUI clients, with two major differences:
+
+          1. Due to the fact that MS-DOS is not a multitasking operating
+             system, this client has no way to run in the background.
+             The only two ways known to multitask it effectively are under
+             Desqview and windows 3.x; it is meant primarily for use on
+             systems which are running older operating systems, but can
+             be dedicated for periods of time (overnight, for example.)
+          2. Due to a lack of standards for TCP/IP stacks (and a lack
+             of time), there is no TCP/IP support in the MS-DOS client.
+             To use this client, you must use a file sharing method to
+             feed it buffer files (NFS, netware, SMB, etc are all
+             acceptable.) You may also transfer buffers to an offline
+             MS-DOS machine via a floppy disk if you so desire.
+
+          Also:
+
+          1. To run the DOS client, it is necessary to have dos4gw.exe
+             (which is distributed with the client) in your path.
+          2. The DOS client will not save it's partial work when it is
+             shutdown (DOS doesn't provide adequate signal handling).
+             For this reason, you should use checkpoint files.
+
+    10c.  Amiga client
+
+          The Amiga client requires:
+
+          -Amiga Workbench 2.04 or greater
+          -A 68020 or better 680x0 processor, or a PPC processor
+          -AmiTCP v3 or greater, or other a different compatible stack
+           (Miami, TermiteTCP). The iw225 with the emulation library should
+           also work, but has not been tested.
+
+          The original amiga port was made by `caw', and rewritten for
+          RC5-64 and DES by Stefan Smietanowski (aka Blast).
+
+          For help with the Amiga client, you can either ask through
+          "standard" support channels (listed below), or visit the Amiga
+          RC5 team homepage (http://homepage.cistron.nl/~ttavoly/rc5/) for
+          more Amiga-specific information. (Or e-mail rc5@amiga.cistron.nl)
+
+          If you have problems with the AMIGA port you believe to be AMIGA
+          specific, mail blast@amiganet.org, or look for him as `Blast' or
+          `Blast2' on ANet #Amiga. (irc.amiganet.org or any other ANet
+          server will work.)
+
+11.  Frequently asked questions
+------------------------------
+
+Q:  What is a team?
+
+    A team is an entity on our stats server that allows a group of
+people to work together in order to show their combined keyrate. Note
+that creating a team doesn't necessarily mean you'll hit the top 100
+listings, because teams are ranked separately from individuals.
+
+Q:  Do I need to join a team?
+
+    No, you do not need to join a team.  Teams exist so that you can show
+group strength, help advocate a platform, etc. You can see a listing of
+teams based sorted by their type at
+http://stats.distributed.net/teamlist.html.
+
+Q:  Are there any disadvantages to joining a team?
+
+    The only disadvantage to joining a team is that part of the prize money
+that would normally go to you will be split with your team.
+
+Q:  How do I join a team?
+
+    To join a team, go to http://stats.distributed.net/ and search
+for your "personal page". To do this, scroll down to the entry "search
+for team" and enter your e-mail address, then click "go". You should be
+gived a screen that shows your current rank, e-mail address, total
+blocks, time working, date of last block, and averate keyrate. Click on
+your e-mail address, and you will be taken to your personal page.
+
+From your personal page, scroll to the bottom where it says 'Mail me a
+password' and click. Then, wait for your password to arrive. If it
+hasn't arrived in your e-mail in 15 minutes or so, go back to your
+personal page and click 'Whoops! I can't seem to find my password.
+Can you send it to me again?'.
+
+Once your password arrives, enter your password on your personal page,
+and click "Edit participant information". Once inside, you'll see a
+screen with your e-mail address, team affiliation, Charity selection,
+and a button that says "update participant information." Here enter the
+team id of the team you wish to join (the team id of the team is on the
+page of the team you decided to join.) You may also wish to vote on
+where the charity part of the prize money will go to at this time as
+well. When you're done, click "update participant information."
+
+Q:  I can't find my personal stats page!
+
+A:  It will take an average of 24 hours since the time you sent your
+first block in for your name to appear on the stats page; the database
+is updated only daily.
+
+Q:  What does "stats are offline for the daily update" mean?
+
+A:  To keep calculations simpler and cause less load on the stats server,
+the stats server is only updated once a day at approximately 0:00 GMT.
+During this time, only the top 100 listings from the previous day are
+available. The update (at this time) usually takes 2.5 hours or so.
+
+Q:  How can I create a team?
+
+A:  Go to http://stats.distributed.net/tm_new.html
+
+Q:  I have to switch e-mail accounts / I typed in the wrong e-mail address.
+Can you move my blocks to my new e-mail?
+
+A:  No. We have no provisions for moving blocks from one e-mail to another.
+However, if you e-mail rc5help@distributed.net you can request the password
+for the incorrect/dead e-mail address so that you can join it to your
+team.
+
+Q:  I'm behind a firewall, can I send and recieve blocks?
+
+A:  Please read section 12 of this document, which describes life with
+firewalls.
+
+Q:  My <insert computer name> doesn't have an internet connection, how
+can I get it blocks to work on?
+
+There are three ways you can get blocks to a computer that does not have
+a direct internet connection:
+
+#1 - If you have a single computer that has a constant connection to the
+internet, and a TCP/IP network between the other computers, you can set up
+a personal proxy on the computer with the connection, and direct the other
+computers to connect to that computer (see the section on "network
+settings" for more explanation on how to do this.)
+
+#2 - If you have a method of file sharing (Novell Netware, NT server,
+NFS, etc), you can share the same set of buff*.* files between clients.
+Simply run all the clients from the same directory, making sure to set
+the ones without the direct connection to -runoffline so that they will
+not attempt to make a network connection. Then, use just one client to
+fetch/flush buffers at your convenience (or automatically).
+
+#3 - If worst comes to worst, and you can't automate the transfer between
+computers in any manner, you can always manually copy buffer files between
+computers. To do this, simply set up a second copy of the client on the
+computer with the internet connection. Then, MOVE the buff*.* files to that
+computer (via FTP, e-mail, or a floppy disk), perform a flush/fetch, then
+MOVE them back to the offline computer. This procedure can get somewhat
+messy if not done properly, but is effective for a small number of
+computers.  If you're working this way, you'll probably want to use large
+buffers so that you need to flush only once a week or so.
+
+Q:  The display is bugging me, how can I hide the display of the client?
+
+A:  This is a simple process on unix machines; instead of using the
+command "./rc5des", use the command "./rc5des >/dev/null &". This
+should start the client running in the background with all output
+redirected to /dev/null. If you need to kill it, do a kill -HUP <pid>,
+or create the exitrc5.now file in the directory, as described below.
+
+On Windows 95, you're best off installing the GUI version of the client,
+which has the option "Run hidden and without system tray icon". Under
+Windows NT, you can(/should) run the NT service client, which will be
+hidden all of the time (and start running before login).
+
+In all cases, enabling logging will still let you go back and see what
+the client has done.
+
+Q:  I see this R in the middle of my percentage bar - what does it mean?
+
+A:  A 'R' in the middle of a percentage bar stands for 'resume'. This
+is the point at which the client was working on last time it was
+shutdown; it just resumed and jumped to that point in the block. Note
+that as a result of not having to process the entire block, resumed
+blocks will be processed faster than normal blocks; the time difference
+this makes obviously depends on where in the block it resumed.
+
+Q:  I just saw the message:  "Read partial DES block from another
+cpu/os/build.  Marking entire block as unchecked."  What does this mean,
+and how can I fix it?
+
+A:  This message means that the client just loaded in a partially
+completed block that had been started with a different version of the
+client.  This normally occurs if you upgrade the client revision or are
+sharing buffer files with a dissimilar computer.  Note that this is not
+a problem; all that is happening is that the client is reprocessing that
+entire block.  This is a precaution in the circumstance that an
+incompatibility between partial buffer formats occurs.  If this is an
+upgrade, you probably won't see that message again.  If you're sharing
+buffer files, you can minimize the occurance by never shutting down the
+clients.
+
+Q:  But it just did two blocks with 'R'! How is that possible?
+
+A:  Partially completed blocks can be 'buried' in the buff-in.* files; if
+you routinely shut the client down and then fetch new blocks, new, full
+blocks will be added to the buff-in.*.  The partially completed blocks
+will not resurface for a while, perhaps a couple of days.
+
+Q:  How can I stop hidden clients / I need to upgrade an entire network of
+    clients, how can I stop them all?
+
+A:  The easiest, most reliable way to stop all clients is to create
+a file named 'exitrc5.now' in the directory where the client is running
+from. Upon seeing this file, the client will perform a proper shutdown
+and exist. The client checks for the existance of this file every few
+seconds, so the shutdown should be almost instant.  (Note that this will
+not work if noexitfilecheck=1 is set in the .ini file.)
+
+Q:  Why is my client downloading both RC5 and DES blocks?
+
+A:  Even during a DES contest, the dual-mode client will attempt to keep
+the RC5 and DES in buffers full; this is not a problem. The client
+won't revert to RC5 blocks until it has completed all DES blocks, so
+you won't loose a bit of DES keyrate. If a DES is not currently in
+progress, and you would like the client to stop getting DES blocks, set
+the DES in and out buffer to 0.
+
+Q:  Will this slowdown my computer at all? I raytrace/play
+quake/compile large programs, and I can't afford any slowdown.
+
+A:  If you leave the client at its default niceness setting (0), it will
+run at the lowest priority level on your system so that it does not
+interfere with the running of any program. The only two exceptions to this
+rule are the Windows 3.1 and the Macintosh clients, which are hindered
+by non-preemptively multitasking operating systems.
+
+Q:  I've been watching my keyrate, and it seems that it gets SLOWER
+during the times I'm not at my computer! Shouldn't the processor be
+busier while I'm working?
+
+A:  If you're seeing slowdown during the night / lunch / whenever you're
+away from the computer, it's probably due to one of two things. The
+most likely cause is that another program is hogging processor time. Some
+web browsers are known to eat processor time, especially while on pages
+with animated images. However, the programs that eat the most processor
+time are screensavers. OpenGL and 3-D screensavers in particular are known
+to consume a LOT of processor time. For this reason, we recommend that you
+either disable your screen saver, or switch to a less CPU intensive one
+(a blank screen one, or one that shows a simple text message, perhaps.)
+The other cause of a slowdown could be your computer entering a 'sleep
+mode' where it powers most components down. To disable automatic power
+down, consult your system's documentation.
+
+Q:  I set my client to receive 2^30 sized blocks.  However, I have been
+watching, and it has done many differently sized blocks smaller than
+2^30. What is going on?
+
+A:  The block size is really only a "request" by the client. Depending
+on the fragmentation of the current keyspace we are working on, the
+keyproxy may be forced to give you a block smaller than requested. This
+is not a problem, just an oddity.
+
+Q:  I just got all blocks smaller than expected, and I ran out of blocks
+too soon as a result! How am I supposed to calculate how many blocks to
+get if they aren't always the same size?
+
+A:  This is a known problem; for now, simply buffer more blocks than you
+plan on needing. We will probably add a more exact count to future clients.
+There is no ETA at this time.
+
+12. Firewall support / Network protocol description
+---------------------------------------------------
+
+For network communications, the Distributed.Net RC5/DES client uses a
+proprietary communications method which talks to our network of proxy
+servers via TCP packets on port 2064. If you are connected through a
+strict firewall, port 2064 will probably be blocked by default. There
+are five primary methods to comminucating through a firewall:
+
+1.  Run a personal proxy on the machine that runs the firewall.  A
+personal proxy will receive connections from the client, buffer them,
+and then communicate with the main proxy network to send/receive
+blocks. The setup of this is simple and reliable; all you must do is
+download a personal proxy (http://www.distributed.net/rc5/proxies.html),
+set it up to run on the machine that functions as the firewall, and set
+all the clients to connect to that machine to receive blocks (via
+firemode=5 and keyproxy=<IP/DNS of the computer with the personal
+proxy.)  The major downside to this option is that you must be
+authorized to run an outside program on the firewall computer.
+
+2.  The next most reliable option is to set the firewall to allow
+connections through port 2064 (the port the client uses for
+communication to the keyservers.)  If this is done correctly, you will
+be able to set the client with firemode=5 and keyproxy=<IP/DNS of the
+firewall> and have the proxy redirect communications to one of the main
+proxies.  The problem with this configuration is that it requires that
+you have access to the configuration of the firewall.  This method will
+be referred to as "direct port mapping" throughout the rest of the
+documentation.
+
+3.  The most reliable option for sending/receiving blocks through the
+firewall if you are unable to directly modify the firewall's
+confguration is to use SOCKS support (if your firewall supports it, of
+course.)  To configure SOCKS, enter the menu configuration and select
+option 9 (network communications mode) - set it to 5 (Let me specify
+custom network settings). Now, select option 14 (UUE/HTTP/SOCKS mode).
+If you are using a SOCKS4 proxy, choose option 4, or choose option 5
+if you are using a SOCKS5 proxy. If you are unsure as to which version
+of SOCKS you are using, select SOCKS4. Now, edit options 12 and 13
+(Proxy address and port, respectively), ensuring that they point to
+the SOCKS proxy you will be communicating through. If you must use a
+SOCKS userid/password, enter it in option 15. In some situations,
+option 10 (the address of the keyproxy to use) may need to be changed
+to the specific IP address of a proxy. However, SOCKS support *should*
+work "out of the box" on most proxies.
+
+4.  The most compatible firewall communications option is to use the
+http proxy support of the client. To setup http proxy support, enter
+the client's configuration utility (rc5des -config) and select option
+9 (network communication mode). Choose mode 5 (Let me specify custom
+network settings). Next, select option 14 (UUE/HTTP/SOCKS mode) and
+select mode 2 (HTTP encoding). Next, select option 12, and input
+the address of the HTTP proxy you will be connecting through. Finally,
+select option 10 and enter "us80.v27.distributed.net". Also, if you
+must use a username/password to connect through your http proxy,
+make sure to set option 15 (HTTP/SOCKS userid/password).
+
+*This should work, but it may not.*
+
+If the HTTP proxy support does not work at this point, there are a few
+more options to fiddle with. One of the first things to try is to edit
+option ten again, and enter the IP address of one of the us80 proxies
+directly (obtainable by nslookup us80.v27.distributed.net). If this does
+not fix the problem, try changing option 14 (UUE/HTTP/SOCKS mode) to 3
+(HTTP+UUE encoding).
+
+In all cases, whether it works or not, please e-mail silby@execpc.com so
+the list of known working/non-working proxies can be kept up to date.
+
+5.  If you can not get any of the above methods working, please see section
+13 on the use of e-mail to flush/fetch buffers.
+
+Known working firewalls/proxies:
+(If you know of other working proxies/modes, please e-mail silby@execpc.com)
+
+Name: Wingate 2.x
+Connection method: HTTP proxy, Direct port mapping
+
+Name: Internet Gate v1.30 for OS/2.
+Connection method: Direct port mapping
+
+Name: Microsoft Proxy Server 2.0
+Connection method: http proxy
+Notes: userid + password are the normal NT domain login and password
+
+13.  Flushing and fetching buffers via e-mail
+---------------------------------------------
+
+If you can not get your client to flush/fetch directly (due to a very
+stringent firewall), or are running a networkless client, such as the
+MS-DOS client, there is one last way for you two receive blocks to
+process: e-mail.
+
+To receive blocks via e-mail:
+
+1. Create a message to fetch@distributed.net with the following two lines
+in the body:
+
+blocksize=<number between 28 and 31>
+numblocks=<number less than 1000>
+
+(For explanations of the two options, please see the section of this
+document on .ini file options.)
+
+Within a few hours, you should receive a message back with the specified
+number/size of blocks attached as "buff-in.rc5".
+
+2. Extract this file from your mail program to the directory from which
+you are running the RC5/DES client.
+
+3. Start the client running.
+
+Once your client has completed the blocks provided to it, you may send
+in the completed blocks via e-mail in the following way:
+
+1. Create a message to flush@distributed.net with the file "buff-out.rc5"
+attached as either a uuencoded or MIME64 encoded file. You will be send a
+"receipt" of the proper flushing of the blocks a few hours later.
+
+2. Delete the buff-out.rc5 file so that you do not accidently send part
+of its contents twice.
+
+14.  How to get help
+--------------------
+
+If you've having a problem with the client, the first place you should
+visit is http://www.distributed.net/des/clients.html to see if a newer
+version is available. It is likely that a given bug you have been
+experiencing will be fixed by the new version.
+
+If you are still having problems, there are a few places you can find
+help:
+
+The quickest, though least reliable, way to get question(s) answered
+about the operation and setup of the client is to connect to an EFNet
+IRC server and join the channel #distributed. Although there are no
+'official' support people there, the channel is often populated with
+people who are familiar with the operation of distributed.net programs
+and can offer quick answers.
+
+More in depth questions, comments, or suggestions can be directed to
+rc5help@distributed.net. Messages sent to this address will be reviewed
+daily, and you should receive a quick answer to your question.
+
+If you don't mind your mailbox receiving a few messages a day, you may
+consider subscribing to the general RC5 mailing list; if you wish to do
+so, send a message to majordomo@lists.distributed.net with the body
+"subscribe rc5". Note that this is a moderated mailing list, so there
+may be some lag in messages getting posted to the list.
+
+15.  Revisions to this document
+------------------------------
+
+The original (v2.6401) version of this document was prepared by Daniel
+"dbaker" Baker (dbaker@cuckoo.com).
+
+Kiddo (alex) helped dbaker with some of the command line options.
+
+Mike "Silby" Silbersack (silby@execpc.com) updated and greatly expanded
+this document on 13/2/1998.
+
+Paul Gentle (gentleps@muohio.edu) converted this document to a windows
+help file.
+
+Mike "Silby" Silbersack (silby@execpc.com) updated this document and
+added information about specific platforms on 13/05/1998

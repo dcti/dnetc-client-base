@@ -1,0 +1,29 @@
+# RC5 client makefile (Borland C++ for Win32)
+# see http://www.distributed.net/
+
+
+OPTS_BORLAND = -DPIPELINE_COUNT=2 -D_CPU_32BIT_ -O -tWM -DMULTITHREAD
+
+# --------------------------------------------
+
+EXENAME = rc5des.exe
+
+RC5_SRCS = common\client.cpp common\problem.cpp common\autobuff.cpp \
+	common\iniread.cpp common\network.cpp common\scram.cpp common\mail.cpp
+	common\cliconfig.cpp common\buffwork.cpp des\des-x86.cpp des\convdes.obj
+
+RC5_OBJS = platforms\win32-os2\rg-486.obj platforms\win32-os2\rg-6x86.obj &
+	platforms\win32-os2\rg-k5.obj platforms\win32-os2\rg-k6.obj &
+	platforms\win32-os2\rc5p5brf.obj platforms\win32-os2\rg-p6.obj &
+	platforms\win32-os2\bdeslow.obj platforms\win32-os2\bbdeslow.obj &
+	platforms\win32-os2\x86ident.obj
+
+# --------------------------------------------
+
+rc5v2: $(RC5_SRCS) $(RC5_OBJS)
+	bcc32 @&&|
+$(OPTS_BORLAND) -e$(EXENAME) $**
+|
+
+# --------------------------------------------
+

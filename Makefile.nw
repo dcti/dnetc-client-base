@@ -1,0 +1,324 @@
+## Compiler, linker, and lib stuff
+## Makefile for use with *ALL* Watcom platforms.
+##
+##   Run as WMAKE <platform>
+##   where <platform> is one of [dos | netware | os2 | w32 | w_h | wsv ]
+##                       or anything else defined at the end of this makefile
+##
+
+CC=wpp386
+CCASM=wasm
+LINK=wlink
+TASM=tasm32.exe
+TOPT=/ml /zi /m
+%HAVE_TASM =               #set to 1 if you have it
+
+%LINKOBJS = cliconfig.obj autobuff.obj buffwork.obj mail.obj BDESLOW.OBJ client.obj &
+           iniread.obj network.obj problem.obj scram.obj des-x86.obj convdes.obj &
+           RG-486.OBJ RG-6X86.OBJ RG-K5.OBJ RG-K6.OBJ RC5P5BRF.OBJ RG-P6.OBJ &
+           BBDESLOW.OBJ X86IDENT.OBJ
+           # this list can be added to in the platform specific section
+
+%VERSION  = 70.18          #may be redefined in the platform specific section
+%VERSTRING= v2.7018.401
+%STACKSIZE= 16384          #may be redefined in the platform specific section
+%AFLAGS   =                #may be defined in the platform specific section
+%LFLAGS   =                #may be defined in the platform specific section
+%CFLAGS   = /6s /fp3 /ei   #may be defined in the platform specific section
+%OPT_SIZE = /s /os /zp1    #may be redefined in the platform specific section
+%OPT_SPEED= /oneatx /oh /oi+ /zp8 #redefine in platform specific section
+%LIBPATH  =                #may be defined in the platform specific section
+%LIBFILES =                #may be defined in the platform specific section
+%EXTOBJS  =                #extra objs (made elsewhere) but need linking here
+%MODULES  =                #may be defined in the platform specific section
+%IMPORTS  =                #may be defined in the platform specific section
+%BINNAME  =                #may be defined in the platform specific section
+%COPYRIGHT=                #may be defined in the platform specific section
+%FORMAT   =                #may be defined in the platform specific section
+
+!ifdef HAVE_TASM
+%have_tasm=1
+!endif
+!ifdef SILENT
+.silent
+!endif
+
+#-----------------------------------------------------------------------
+
+LNKbasename = rc5des     # for 'rc564'.err 'rc564'.lnk 'rc5des'.err etc
+noplatform: .symbolic
+  @echo .>CON:
+  @echo Platform has to be specified. >CON:
+  @echo      eg: WMAKE [-f makefile] os2 >CON:
+  @echo          WMAKE [-f makefile] netware >CON:
+  @echo .>CON:
+  @%abort
+
+#-----------------------------------------------------------------------
+
+cliconfig.obj : cliconfig.cpp client.h problem.h scram.h mail.h network.h iniread.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ 
+  @set isused=1
+
+client.obj : client.cpp client.h problem.h scram.h mail.h network.h iniread.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ 
+  @set isused=1
+
+problem.obj : problem.cpp problem.h network.h cputypes.h autobuff.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ 
+  @set isused=1
+
+convdes.obj : convdes.cpp makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ 
+  @set isused=1
+
+deseval-meggs2.obj : deseval-meggs2.cpp makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ 
+  @set isused=1
+
+deseval-meggs3.obj : deseval-meggs3.cpp makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ 
+  @set isused=1
+
+deseval-slice-meggs.obj : deseval-slice-meggs.cpp makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ 
+  @set isused=1
+
+des-x86.obj : des-x86.cpp problem.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@ 
+  @set isused=1
+
+autobuff.obj : autobuff.cpp autobuff.h cputypes.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ 
+  @set isused=1
+
+network.obj : network.cpp network.h cputypes.h autobuff.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ 
+  @set isused=1
+
+iniread.obj : iniread.cpp iniread.h cputypes.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ 
+  @set isused=1
+
+scram.obj : scram.cpp scram.h cputypes.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ 
+  @set isused=1
+
+mail.obj : mail.cpp mail.h network.h client.h cputypes.h autobuff.h problem.h scram.h mail.h network.h iniread.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ 
+  @set isused=1
+
+buffwork.obj : buffwork.cpp client.h problem.h scram.h mail.h network.h iniread.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ 
+  @set isused=1
+
+rg-486.obj : rg-486.asm makefile
+  *$(CCASM) $(%AFLAGS) $[@ 
+  @set isused=1
+
+rg-6x86.obj : rg-6x86.asm makefile
+  *$(CCASM) $(%AFLAGS) $[@ 
+  @set isused=1
+
+rc5p5brf.obj : rc5p5brf.asm makefile
+  *$(CCASM) $(%AFLAGS) $[@ 
+  @set isused=1
+
+rg-p5.obj : rg-p5.asm makefile
+  *$(CCASM) $(%AFLAGS) $[@ 
+  @set isused=1
+
+rg-p6.obj : rg-p6.asm makefile
+  *$(CCASM) $(%AFLAGS) $[@ 
+  @set isused=1
+
+rg-k5.obj : rg-k5.asm makefile
+  *$(CCASM) $(%AFLAGS) $[@ 
+  @set isused=1
+
+rg-k6.obj : rg-k6.asm makefile
+  *$(CCASM) $(%AFLAGS) $[@ 
+  @set isused=1
+
+bdeslow.obj: bdeslow.asm bdesmac.inc bdeschg.inc bdesdat.inc
+  @if not $(%have_tasm).==. *$(TASM) $(TOPT) $[@ 
+  @set isused=1
+
+Bbdeslow.obj: Bbdeslow.asm Bbdesmac.inc Bbdeschg.inc Bbdesdat.inc
+  @if not $(%have_tasm).==. *$(TASM) $(TOPT) $[@ 
+  @set isused=1
+
+bdeshgh.obj: bdeshgh.asm
+  @if not $(%have_tasm).==. *$(TASM) $(TOPT) $[@ 
+  @set isused=1
+
+Bbdeshgh.obj: Bbdeshgh.asm
+  @if not $(%have_tasm).==. *$(TASM) $(TOPT) $[@ 
+  @set isused=1
+
+x86ident.obj : x86ident.asm makefile
+  *$(CCASM) $(%AFLAGS) $[@ 
+  @set isused=1
+
+netware.obj : netware.cpp client.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@
+  @set isused=1
+
+clicdata.obj : clicdata.cpp clicdata.h client.h makefile 
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@
+  @set isused=1
+
+clitime.obj : clitime.cpp clitime.h client.h makefile 
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@
+  @set isused=1
+
+clisrate.obj : clisrate.cpp clisrate.h client.h clitime.h clirate.h clicdata.h makefile 
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@
+  @set isused=1
+
+clirate.obj : clirate.cpp clirate.h clicdata.h makefile
+  *$(CC) $(%CFLAGS) $(%OPT_SPEED) $[@
+  @set isused=1
+
+#-----------------------------------------------------------------------
+
+platform: .symbolic
+  @set isused=
+  @if not ($(HAVE_TASM)).==. @set have_tasm=1
+  @for %i in ($(%LINKOBJS)) do @%make %i
+  @if not exist $(%BINNAME) @set isused=1
+  @if $(%isused).==. @echo All targets are up to date
+  @if not $(%isused).==. @%make platlink
+
+platlink: .symbolic
+  @if exist  $(%BINNAME) @del $(%BINNAME)
+  @if exist  $(LNKbasename).lnk @del $(LNKbasename).lnk
+  @%append   $(LNKbasename).lnk Name $(%BINNAME)
+  @for %i in ($(%STACKSIZE)) do @%append $(LNKbasename).lnk Op Stack=%i
+  @for %i in ($(%LINKOBJS))   do @%append $(LNKbasename).lnk File %i
+  @for %i in ($(%EXTOBJS))   do @%append $(LNKbasename).lnk File %i
+  @for %i in ($(%LIBPATH))   do @%append $(LNKbasename).lnk Libpath %i
+  @for %i in ($(%MODULES))   do @%append $(LNKbasename).lnk Module %i
+  @for %i in ($(%IMPORTS))   do @%append $(LNKbasename).lnk Import %i
+  @set isused=
+  @for %i in ($(%VERSION))  do @set isused=1
+  @if not $(%isused).==. @%append $(LNKbasename).lnk Op Version=$(%VERSION)
+  @set isused=
+  @for %i in ($(%LIBFILES))  do @set isused=1
+  @if not $(%isused).==. @%append $(LNKbasename).lnk Library $(%LIBFILES)
+  @set isused=
+  @for %i in ($(%FORMAT))    do @set isused=1
+  @if not $(%isused).==. @%append $(LNKbasename).lnk Format $(%FORMAT)
+  @set isused=
+  @for %i in ($(%COPYRIGHT)) do @set isused=1
+  @if not $(%isused).==. @%append $(LNKbasename).lnk Op Copyright $(%COPYRIGHT)
+  @set isused=
+
+  *$(LINK) $(%LFLAGS) @$(LNKbasename).lnk > $(LNKbasename).err
+  @if exist $(%BINNAME) @del $(LNKbasename).err
+  @if exist $(LNKbasename).err @type $(LNKbasename).err
+
+#---------------------- platform specific settings come here ----------
+
+dos: .symbolic                                       # DOS/DOS4GW
+     @set AFLAGS    = /5s /fp3 /bt=dos /mf
+     @set LFLAGS    = sys dos4g op dosseg op eliminate op stub=d4GwStUb.CoM
+     @set CFLAGS    = /6s /fp3 /fpc /zm /ei /mf /bt=dos /dDOS4G /DNONETWORK /I$(%watcom)\h
+     @set OPT_SIZE  = /s /os /zp1
+     @set OPT_SPEED = /oneatx /oh /oi+ /zp8
+     @set LINKOBJS  = $(%LINKOBJS) clicdata.obj clitime.obj clisrate.obj clirate.obj
+     @set LIBFILES  =
+     @set MODULES   =
+     @set EXTOBJS   =
+     @set IMPORTS   =
+     @set BINNAME   = $(LNKbasename).com
+     @%make platform
+
+os2: .symbolic                                       # OS/2
+     @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
+     @set LFLAGS    = sys os2v2
+     @set CFLAGS    = /5s /fp5 /bm /mf /bt=os2 /DOS2 /DMULTITHREAD -i$(%watcom)\h\os2
+     @set OPT_SIZE  = /oantrlexih /zp4
+     @set OPT_SPEED = /oantrlexih /oi+ /zp8
+     @set LIBFILES  = libf so32dll.lib,tcp32dll.lib
+     @set MODULES   =
+     @set EXTOBJS   =
+     @set IMPORTS   =
+     @set BINNAME   = $(LNKbasename).exe
+     @%make platform
+
+w32: .symbolic                               # win95/winnt standard executable
+     @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
+     @set LFLAGS    = sys nt
+     @set CFLAGS    = /fpd /5s /fp5 /bm /mf /bt=nt /DWIN32 /DMULTITHREAD
+     @set OPT_SIZE  = /oantrlexih /zp4
+     @set OPT_SPEED = /oantrlexih /oi+ /zp8
+     @set LIBFILES  =
+     @set MODULES   =
+     @set EXTOBJS   =
+     @set IMPORTS   =
+     @set BINNAME   = $(LNKbasename).exe
+     @%make platform
+
+w_h: .symbolic                               # win95 hidden executable
+     @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
+     @set LFLAGS    = sys nt_win
+     @set CFLAGS    = /fpd /6s /fp6 /bm /mf /bt=nt /DWIN32 /DMULTITHREAD
+     @set OPT_SIZE  = /oantrlexih /zp4
+     @set OPT_SPEED = /oantrlexih /oi+ /zp8
+     @set LIBFILES  =
+     @set MODULES   =
+     @set EXTOBJS   =
+     @set IMPORTS   =
+     @set BINNAME   = $(LNKbasename)h.exe
+     @%make platform
+
+wsv: .symbolic                               # winnt service
+     @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
+     @set LFLAGS    = sys nt
+     @set CFLAGS    = /fpd /6s /fp6 /bm /mf /bt=nt /DWIN32 /DMULTITHREAD /DWINNTSERVICE="bovrc5nt"
+     @set OPT_SIZE  = /oantrlexih /zp4
+     @set OPT_SPEED = /oantrlexih /oi+ /zp8
+     @set LIBFILES  =
+     @set MODULES   =
+     @set EXTOBJS   =
+     @set IMPORTS   =
+     @set BINNAME   = $(LNKbasename)srv.exe
+     @%make platform
+
+netware_all: .symbolic                       # NetWare NLM
+     @set AFLAGS    = /5s /fp3 /bt=NETWARE /ms
+     @set LFLAGS    = op multiload op nod op scr 'none' op map op osname='NetWare NLM' # symtrace systemConsoleScreen  #sys netware
+     @set OPT_SIZE  = /os /s /zp1 
+     @set OPT_SPEED = /oneatx /oh /oi+ /zp8  
+     @set CFLAGS    = $(%CFLAGS) /6s /fp3 /ei /ms /d__NETWARE__ /i$(inc_386) $(wcc386opt) #/fpc /bt=netware /i$(%watcom)\novh
+     ###  LIBFILES  = plibmt3s,clib3s,math387s,emu387#, #if compiled with /bm use 'plibmt3s' instead
+     @set MODULES   = clib a3112 # tcpip netdb
+     @set EXTOBJS   =
+     @set LINKOBJS  = $(%LINKOBJS) netware.obj clicdata.obj clitime.obj clisrate.obj clirate.obj
+     @set IMPORTS   = GetNestedInterruptLevel AllocateResourceTag &
+                      GetCurrentTime OutputToScreenWithPointer OutputToScreen &
+                      ActivateScreen ImportPublicSymbol UnImportPublicSymbol &
+                      ScheduleNoSleepAESProcessEvent CancelNoSleepAESProcessEvent &
+                      ScheduleSleepAESProcessEvent CancelSleepAESProcessEvent &
+                      RingTheBell GetFileServerMajorVersionNumber Alloc &
+                      @$(%watcom)\novi\clib.imp @$(%watcom)\novi\mathlib.imp
+     @set LIBPATH   = $(%watcom)\lib386 $(%watcom)\lib386\netware
+     @set BINNAME   = $(LNKbasename).nlm
+     @set COPYRIGHT ='Visit http://www.distibuted.net/ for more information'
+     @set FORMAT    = Novell NLM 'RC5-DES $(%VERSTRING) Client [Project Monarch]'
+     @%make platform
+     @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(LNKbasename).nlm /b:$(LNKbasename).map 
+
+netware_smp: .symbolic                            # NetWare NLM (SMP)
+     @set CFLAGS   = /dMULTITHREAD # /bm
+     @set LIBFILES = netware/nwwatemu,plib3s #plibmt3s,clib3s,math387s,emu387
+     @%make netware_all
+     #@\develop\sdkcd13\nwsdk\tools\nlmpackx $(LNKbasename).nlm $(LNKbasename).nlx
+     #@del $(LNKbasename).nlm
+     #@ren $(LNKbasename).nlx $(LNKbasename).nlm
+
+netware: .symbolic                            # NetWare NLM (non-SMP)
+     @set CFLAGS   = 
+     @set LIBFILES = netware/nwwatemu,plib3s #,math387s,emu387 #,clib3s
+     @%make netware_all
