@@ -21,12 +21,13 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.59 2004/04/17 12:07:30 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.60 2004/04/20 09:30:56 oliver Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9008-490  new: all: Enable OGR-24 and OGR-25 Phase 2 (finalization)
+            new: amigaos: native OS4 port
 
 2.9007-489  new: x86: new rc5-72 cores (#3265, #3398)
             fix: ppc: now detects 745/755 (G3) cpu under linux

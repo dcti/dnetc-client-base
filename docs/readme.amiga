@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.10.4.2 2003/04/05 09:58:05 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.10.4.3 2004/04/20 09:30:56 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -32,12 +32,18 @@
      - ClassAct or ReAction GUI classes are required in order to use the
        built-in GUI (will use shell output if not present).
 
-    There are three versions of the client: a 68k version (with cores
-    optimized for each CPU) and two PPC versions (WarpOS and PowerUp).
-    Choose the PPC version according to your preferred PPC kernel.
+    There are current four versions of the client: a 68k version (with
+    cores optimized for each CPU type of the 68k family) and three PowerPC
+    versions (AmigaOS 4, WarpOS and PowerUp).  Choose the PPC version
+    according to your installed system.
 
      The 68k version requires:
      - An 68000 or higher. An 040 or preferably 060 is HIGHLY recommended.
+
+     The OS4 PPC version requires:
+     - A 603e or higher PPC processor.
+     - AmigaOS 4.0 pre-release or newer.
+     - The Roadshow TCP/IP stack supplied with OS4.
 
      The WarpOS PPC version requires:
      - A 603e or higher PPC processor. Tested on 603e and 604e.
@@ -50,7 +56,6 @@
      - Stack must be set to at least 200000 bytes.
      - Also works under WarpUp with PPCLibEmu 0.8a or higher (although
        you should really use the native WarpOS version instead, of course).
-     - This version is recommended for MorphOS users too.
 
  2.0  Getting started ------------------------------------------------
 
@@ -90,16 +95,15 @@
 
   3.1  Ensuring stack size is large enough ---------------------------
 
-    The 68k client always allocates its own 64K stack, which is enough for
-    the client to operate, so you should not need any special stack
-    settings in this.  Similarly with the WarpOS version, WarpOS programs
-    always get assigned a largish stack.  However, if you're using the
-    PowerUp version, you will need to set the stack to at least 200000
-    bytes, otherwise the client will exit telling you to increase the
-    stack size (instead of running with the potential for crashes to
-    happen).  Stack size can be increased by calling the stack command
-    before running the client or by adjusting the stack value in the
-    client's icon.
+    The 68k and OS4 clients always allocate their own suitably sized
+    stack, so you should not need any special stack settings for these.
+    Similarly with the WarpOS version, WarpOS programs always get
+    assigned a largish stack.  However, if you're using the PowerUp
+    version, you will need to set the stack to at least 200000 bytes,
+    otherwise the client will exit telling you to increase the stack size
+    (instead of running with the potential for crashes to happen).  Stack
+    size can be increased by calling the stack command before running the
+    client or by adjusting the stack value in the client's icon.
 
   3.2  Setting the time zone -----------------------------------------
 
