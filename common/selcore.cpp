@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.96 2001/02/08 22:45:53 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.97 2001/02/12 05:01:51 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -44,7 +44,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
    they are different from their predecessor(s). If only one core,
    use the obvious "MIPS optimized" or similar.
   */
-  #define LARGEST_SUBLIST 9 /* including the terminating null */
+  #define LARGEST_SUBLIST 10 /* including the terminating null */
   static const char *corenames_table[CONTEST_COUNT][LARGEST_SUBLIST]= 
   #undef LARGEST_SUBLIST
   /* ================================================================== */
@@ -62,6 +62,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG RISC-rotate II",     /* 5. K6 - may become mmx-k6-2 core at runtime */
       "RG/HB re-pair II",      /* 6. K7 Athlon and Cx-MII, based on Cx re-pair */
       "RG/BRF self-modifying", /* 7. SMC */
+      "NB class 7",            /* 8. P4 */
       NULL
     },
     { /* DES */
@@ -1019,6 +1020,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
   //extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k7( RC5UnitWork * , u32 iterations );
+  extern "C" u32 rc5_unit_func_p7( RC5UnitWork *, u32 iterations );
 #elif (CLIENT_CPU == CPU_ARM)
   extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , u32 );
   extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , u32 );
@@ -1476,6 +1478,13 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           #if defined(SMC)  /* first thread or benchmark/test */
           if (x86_smc_initialized > 0 && threadindex == 0)
             unit_func.rc5 = rc5_unit_func_486_smc;
+          #endif
+          break;
+        case 8:
+          unit_func.rc5 = rc5_unit_func_p6; /* P4 core is based on the P3 core */
+          #if !defined(HAVE_NO_NASM)
+          unit_func.rc5 = rc5_unit_func_p7;
+          pipeline_count = 4; // RC5 P4 core is 4 pipelines
           #endif
           break;
         default: // hmm!
