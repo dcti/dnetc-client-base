@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.46 1999/11/16 13:39:23 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.47 1999/11/16 16:45:42 ivo Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -66,10 +66,10 @@ TARGET_ARCTYPE="tgz"  # or "zip"
 OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
 	  -fexpensive-optimizations -fomit-frame-pointer \
 	  -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
-	  -funroll-loops -fno-inline-functions -fno-handle-exceptions \
+	  -funroll-loops -fno-inline-functions -fno-exceptions \
 	  -Wall'
 OPTS_GCC272='-fomit-frame-pointer -fno-inline-functions \
-	     -fno-handle-exceptions -fno-rtti -Wall'
+	     -fno-exceptions -fno-rtti -Wall'
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 OPTS_EGCS='-O2 -fstrict-aliasing -fno-exceptions -fomit-frame-pointer -Wall'
 #OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall'
@@ -653,41 +653,47 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
-    *sparc-solaris-gcc-crunch-slice)   # [ivo solaris/nonultra/nomt] fastest rc5 & des for ultra
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc -pipe"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-lnsl -lsocket -ldl"
+    *sparc-solaris-gcc-nomt)   # [ivo solaris/nonultra/nomt] fastest rc5 & des for ultra
+        #DELETECHARS="'/.\$\-'"
+        RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
+        TARGET_CC="gcc -pipe -fpermissive" 
+        TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+                        -DHAVE_CSC_CORES -DHAVE_DES_CORES \
+                        -DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+        TARGET_LIBS="-lnsl -lsocket -ldl"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        TRAGET_TARBALL="sparc-solaris26-nomt"
+        ;;
 
-    *sparc-solaris-gcc-crunch-slice-mt)   # [ivo solaris/nonultra/mt] fastest rc5 & des for ultra
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="gcc -pipe"
-	TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
-			-DMULTITHREAD \
-			-DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+    *sparc-solaris-gcc)   # [ivo solaris/nonultra/mt] fastest rc5 & des for ultra
+        #DELETECHARS="'/.\$\-'"
+        RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
+        TARGET_CC="gcc -pipe -fpermissive"
+        TARGET_CCFLAGS="$OPTS_GCC_SPARC -Dsolaris \
+                        -DMULTITHREAD \
+                        -DHAVE_CSC_CORES -DHAVE_DES_CORES \
+                        -DULTRA_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 $CSC_ANSI_SRCS"
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        TARGET_TARBALL="sparc-solaris26"
+        ;;
 
-    *sparc-solaris-gcc-crunch-asmslice-mt)   # fastest rc5 & VIS DES
-        DELETECHARS="'/.\$\-'"
-	RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
-	TARGET_CC="cc -pipe"
-	TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
-			-DMULTITHREAD -DULTRA_CRUNCH=1"
-	TARGET_ADDSRCS="$DESULTRA_SRCS_ASM"
- 	TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
-	TARGET_ASFLAGS="$OPTS_AS_ULTRA"
-	TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
+    *sparc-solaris-gcc-ultra)   # [ivo ultra] fastest rc5 & VIS DES
+        #DELETECHARS="'/.\$\-'"
+        RC5CORECOPY="rc5/ultra/rc5-ultra-crunch.cpp"
+        TARGET_CC="gcc -pipe -fpermissive"
+        TARGET_CCFLAGS="$OPTS_DES_ULTRA_ASM -Dsolaris \
+                        -DMULTITHREAD -DULTRA_CRUNCH=1 \
+                        -DHAVE_CSC_CORES -DHAVE_DES_CORES "
+        TARGET_ADDSRCS="$DESULTRA_SRCS_ASM $CSC_ANSI_SRCS"
+        TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
+        TARGET_ASFLAGS="$OPTS_AS_ULTRA"   
+        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-	;;
+        TARGET_TARBALL="ultrasparc-solaris26"
+        ;;
 
     #####
 
