@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.129  1998/11/22 15:19:22  cyp
+# Removed cliconfig.cpp; Added confopt.cpp, confmenu.cpp, confrwv.cpp
+#
 # Revision 1.128  1998/11/16 20:09:49  foxyloxy
 # egcs now allows the existence of a mips-gcc-64 target! Whee!
 #
@@ -555,7 +558,7 @@ OPTS_DES_MMX="-DMMX_BITSLICER -DKWAN -DMEGGS -DBIT_64"
 #
 # Source C++ files making up the base client code
 #
-COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
+COMMON_SRCS="common/client.cpp common/problem.cpp
     common/autobuff.cpp common/iniread.cpp common/network.cpp
     common/scram.cpp common/buffwork.cpp common/mail.cpp 
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp
@@ -566,7 +569,8 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/cmdline.cpp common/selftest.cpp common/guistuff.cpp
     common/bench.cpp common/probman.cpp common/clirun.cpp
     common/probfill.cpp common/pollsys.cpp common/setprio.cpp
-    common/console.cpp common/modereq.cpp"
+    common/console.cpp common/modereq.cpp common/confmenu.cpp
+    common/confrwv.cpp common/confopt.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
