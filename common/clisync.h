@@ -9,7 +9,7 @@
  * and are therefore intended to behave more like spinlocks than mutexes.
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.4 2001/02/05 01:13:36 oliver Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.1.2.5 2001/02/05 03:08:31 sampo Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -35,7 +35,7 @@
 #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
                                
   #include <thread.h>
-  #include <sync.h>
+  #include <synch.h>
 
 #elif (CLIENT_OS == OS_WIN32) && (CLIENT_CPU == CPU_ALPHA)
 
