@@ -12,9 +12,15 @@
  * ----------------------------------------------------------------
 */ 
 #ifndef __UTIL_H__ 
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.18.2.3 2003/04/22 11:44:51 andreasb Exp $"
+#define __UTIL_H__ "@(#)$Id: util.h,v 1.18.2.4 2003/05/24 23:07:09 andreasb Exp $"
 
-void trace_out( int indlevel, const char *fmt, ... );
+#if defined(__GNUC__)
+#define __CHKFMT_TRACE_OUT __attribute__((__format__(__printf__,2,3)))
+#else
+#define __CHKFMT_TRACE_OUT
+#endif
+
+void trace_out( int indlevel, const char *fmt, ... ) __CHKFMT_TRACE_OUT;
 void trace_setsrc( const char *src_filename );
 #ifdef TRACE
 #define TRACE_OUT(x) trace_setsrc(__FILE__); trace_out x
