@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.119  1999/01/28 01:34:10  cyp
+// fixed fork()
+//
 // Revision 1.118  1999/01/22 18:48:56  cyp
 // ignore a missing .ini if -nodisk
 //
@@ -143,7 +146,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.118 1999/01/22 18:48:56 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.119 1999/01/28 01:34:10 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1301,10 +1304,12 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
        (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
   else if (run_level == 0 && (ModeReqIsSet(-1) == 0) && quietmode)
     {
-    terminate_app = 1;
-    if (fork() == -1)
-      { // Parrent || Error
-      ConOutErr("fork() failed.  Unable to start quiet/hidden.");
+    pid_t x = fork();
+    if (x) //Parent gets pid or -1, child gets 0
+      { 
+      terminate_app = 1;          
+      if (x == -1) //Error
+        ConOutErr("fork() failed.  Unable to start quiet/hidden.");
       }
     }
   #endif
