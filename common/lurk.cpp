@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.cpp,v $
+// Revision 1.17  1999/02/03 20:18:57  patrick
+//
+// changed the define for the SIOSTATIF call
+//
 // Revision 1.16  1999/01/29 18:49:05  jlawson
 // fixed formatting.
 //
@@ -46,7 +50,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.16 1999/01/29 18:49:05 jlawson Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.17 1999/02/03 20:18:57 patrick Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -145,8 +149,7 @@ static FARPROC LoadRASAPIProc( const char *procname )
   #include <process.h>
   #endif
   #ifndef SIOSTATIF
-  #define SIOSTATIF         _IOR('n', 48, char /*struct ifmib*/)
-				// in the OS2 TCPIP Toolkit
+  #define SIOSTATIF         _IOR('n', 48, struct ifmib)
   #endif
 #endif  //(CLIENT_OS ...)
 
