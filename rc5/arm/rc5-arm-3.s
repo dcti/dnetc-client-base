@@ -1,20 +1,10 @@
-;-------------------------------------------------------------------
 ; ARM optimised RC5-64 core, 3 keys at a time
 ;
 ; Steve Lee, Chris Berry, Tim Dobson 1997,1998
 ;
-;
-; $Log: rc5-arm-3.s,v $
-; Revision 1.1  1998/09/25 11:33:33  chrisb
-; rc5-arm-1.s rc5-arm-2.s and rc5-arm-3.s replace rc5-arm.s and rc5-sa.s
-;
-;
-;
 
-	AREA	fastrc5area, CODE
+	AREA	fastrc5area, CODE, READONLY
 
-        DCB     "@(#)$Id: rc5-arm-3.s,v 1.1 1998/09/25 11:33:33 chrisb Exp $", 0
-        ALIGN
 
 	EXPORT	rc5_unit_func_arm_3
 
@@ -242,8 +232,8 @@ regtodo	SETS	""
 
  [ Inner = 0
 	ADR	r1, pqtable
-regpool	SETS	"r8,r9"  ; odd number of registers
-pool2	SETS	"rA,rB"     ; plus one of these makes it even
+regpool	SETS	"r8,r9"  ; "odd" number of registers
+pool2	SETS	"rA,rB"     ; plus one of these makes it "even"
 rcount	SETA	T*3
 
 	LoadRegs	IA, r1!,"""XX,XX,r4,XX,XX,r5,r8,r9,rB""", 2
@@ -610,16 +600,14 @@ rc5_unit_func_arm_3
 	cmps	r12,r10
 	bllt	__rt_stkovf_split_big
 
-	mov	r14, r1
+	ADD	r14, r1, r1,ASL#1
 
 	stmfd	r13!,{r11}
 
 	LDMIA	r0!,{r4-r7}
 	LDMIA	r0, {r2-r3}
 
-	ADD	r12,r14,r14,ASL#1
-
-	STR	r12,[r13,#-(T*4*3 +36)]!
+	STR	r14,[r13,#-(T*4*3 +36)]!
 	STR	r0,[r13,#4]
 	ADD	r12,r13,#36+T*4
 	STMFD	r13!, {r4-r7}
@@ -661,8 +649,8 @@ missed
 	LDR	r14,[r13,#32]
 	ADD	r12,r13,#36+16+T*4
 	ldr	r2,[r13,#24]
-	subs	r14,r14,#1
-	beq	the_end
+	subs	r14,r14,#3
+	bls	the_end
 
 
 ; increments 32107654
@@ -670,100 +658,108 @@ inc_1st
 	adds	r2,r2,#&03000000
 	bcc	timingloop2
 
-carry_1st
 	add	r2,r2,#&00010000
 	tst	r2,   #&00ff0000
 	bne	timingloop2
-	sub	r2,r2,#&01000000
 
+	sub	r2,r2,#&01000000
 	add	r2,r2,#&00000100
 	tst	r2,   #&0000ff00
 	bne	timingloop2
-	sub	r2,r2,#&00010000
 
+	sub	r2,r2,#&00010000
 	add	r2,r2,#&00000001
-;	ands	r2,r2,#&000000ff
-; will never increment high word
-	b	timingloop2
-;	bne	timingloop2
-;
-;; not likely to happen very often...
-;	ldr	r3,[r13,#28]
-;	adds	r3,r3,#&01000000
-;	bcc	timingloop
-;
-;	add	r3,r3,#&00010000
-;	tst	r3,   #&00ff0000
-;	bne	timingloop
-;	sub	r3,r3,#&01000000
-;	add	r3,r3,#&00000100
-;	tst	r3,   #&0000ff00
-;	bne	timingloop
-;	sub	r3,r3,#&00010000
-;	add	r3,r3,#&00000001
-;	and	r3,r3,#&000000ff
-;	b	timingloop
+	tst	r2,   #&000000ff
+	bne	timingloop2
+	add	r14,r14,r2,ASR#24
+
+redo_extras
+; not likely to happen very often...
+	ldr	r3,[r13,#28]
+	mov	r2,   #0
+
+	adds	r3,r3,#&01000000
+	bcc	timingloop
+
+	add	r3,r3,#&00010000
+	tst	r3,   #&00ff0000
+	bne	timingloop
+	sub	r3,r3,#&01000000
+	add	r3,r3,#&00000100
+	tst	r3,   #&0000ff00
+	bne	timingloop
+	add	r3,r3,#&00000001
+	and	r3,r3,#&000000ff
+	b	timingloop
 
 
 r6_overflow
 	add	r6,r6,#&00010000
 	tst	r6,   #&00ff0000
 	movne	pc,lr
-	sub	r6,r6,#&01000000
 
+	sub	r6,r6,#&01000000
 	add	r6,r6,#&00000100
 	tst	r6,   #&0000ff00
 	movne	pc,lr
 
+	sub	r6,r6,#&00010000
 	add	r6,r6,#&00000001
-;	ands	r6,r6,#&000000ff
-; no need to fiddle r7 as this is beyond end of block
+	tst	r6,   #&000000ff
+; spare 1 or 2 pipelines will check fffffffc on a 2^32 boundary.
+; this should be safe, as it should be known to not be THE key by now.
+	moveq	r6,   #&fffffffc
 	mov	pc,lr
-;	movne	pc,lr
-; ... (mangle increment r7, force recalc of first section, etc.)
+
 
 the_end
 ; increments 32107654 before leaving
-	add	r13,r13,#16
-	ldmia	r13!,{r0-r3}
+	add	r14,r14,#3
 
-	adds	r2,r2,#&03000000
+no_key_yet
+	add	r11,r13,#16
+	ldmia	r11!,{r0,r1,r6,r7}
+
+	adds	r6,r6,r14,ASL#24
 	bcc	function_exit
 
-	add	r2,r2,#&00010000
-	tst	r2,   #&00ff0000
+	add	r6,r6,#&00010000
+	tst	r6,   #&00ff0000
 	bne	function_exit
-	sub	r2,r2,#&01000000
 
-	add	r2,r2,#&00000100
-	tst	r2,   #&0000ff00
+	sub	r6,r6,#&01000000
+	add	r6,r6,#&00000100
+	tst	r6,   #&0000ff00
 	bne	function_exit
-	sub	r2,r2,#&00010000
 
-	add	r2,r2,#&00000001
-;	ands	r2,r2,#&000000ff
-;	bne	function_exit
-;
-;; not likely to happen very often...
-;	adds	r3,r3,#&01000000
-;	tst	r3,   #&ff000000
-;	bne	function_exit
-;
-;	add	r3,r3,#&00010000
-;	tst	r3,   #&00ff0000
-;	bne	function_exit
-;	sub	r3,r3,#&01000000
-;	add	r3,r3,#&00000100
-;	tst	r3,   #&0000ff00
-;	bne	function_exit
-;	sub	r3,r3,#&00010000
-;	add	r3,r3,#&00000001
-;	and	r3,r3,#&000000ff
+	sub	r6,r6,#&00010000
+	add	r6,r6,#&00000001
+
+	tst	r6,   #&000000ff
+	bne	function_exit
+
+	movs	r14,r6,ASR#24
+	bne	redo_extras
+	sub	r6,r6,#&00000100
+
+; not likely to happen very often...
+	adds	r7,r7,#&01000000
+	bcc	function_exit
+
+	add	r7,r7,#&00010000
+	tst	r7,   #&00ff0000
+	bne	function_exit
+	sub	r7,r7,#&01000000
+	add	r7,r7,#&00000100
+	tst	r7,   #&0000ff00
+	bne	function_exit
+	add	r7,r7,#&00000001
+	and	r7,r7,#&000000ff
 
 
 function_exit
-	ldr	r11,[r13,#(T*3)*4+36-16]
-	stmia	r1,{r2,r3}
+	ldr	r11,[r13,#(T*3)*4+36+16]
+	stmia	r1,{r6,r7}
 	ldmdb	r11, {r4-r11,r13, pc}
 
 check_pipe3
@@ -790,14 +786,13 @@ check_pipe3
 
 ;it's r4,r5!
 	LDR	r14,[r13,#32]
-	add	r13,r13,#16
-	ldmia	r13!,{r0-r3}
-	sub	r0,r0,r14,ASL#1
-	SUB	r0,r0,r14
-	add	r0,r0,#1
-	adds	r6,r2,#&01000000
+	SUBS	r12,r14,#1
+	BLS	no_key_yet
+	add	r11,r13,#16
+	ldmia	r11!,{r0,r1,r6,r7}
+	SUB	r0,r0,r12
+	adds	r6,r6,#&01000000
 	blcs	r6_overflow
-	mov	r2,r6
 
 	b	function_exit
 
@@ -826,9 +821,8 @@ check_pipe2
 
 ; it's r2,r3!
 	LDR	r14,[r13,#32]
-	add	r13,r13,#16
-	ldmia	r13!,{r0-r3}
-	sub	r0,r0,r14,ASL#1
+	add	r11,r13,#16
+	ldmia	r11!,{r0,r1,r6,r7}
 	SUB	r0,r0,r14
 	b	function_exit
 
@@ -852,16 +846,14 @@ check_pipe1
 	BNE	missed_pipe1
 
 	LDR	r14,[r13,#32]
-	ADD	r13,r13,#16
-	LDMIA	r13!,{r0-r3}
-	SUB	r0,r0,r14,ASL#1
-	SUB	r0,r0,r14
-	ADD	r0,r0,#2
-	ADDS	r6,r2,#&02000000
+	SUBS	r12,r14,#2
+	BLS	no_key_yet
+	ADD	r11,r13,#16
+	LDMIA	r11!,{r0,r1,r6,r7}
+	SUB	r0,r0,r12
+	ADDS	r6,r6,#&02000000
 	BLCS	r6_overflow
-	MOV	r2,r6
 	b	function_exit
 
 
 	END
-
