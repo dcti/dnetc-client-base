@@ -16,7 +16,7 @@
 ;# - LR register not used nor saved in caller's stack.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.5 2004/08/15 14:43:26 kakace Exp $
+;# $Id: OGR_PPC_hybrid.gas.s,v 1.1.2.6 2004/08/18 18:36:19 kakace Exp $
 ;#
 ;#============================================================================
 
@@ -73,9 +73,10 @@
 .set          FIRST_NV_GPR, 13          ;# Save r13..r31
 .set          GPRSaveArea, (32-FIRST_NV_GPR) * 4
 
-.set          aDiffs, 16                ;# diffs control array
+.set          aStorage, 16              ;# Private storage area
+.set          aDiffs, 528               ;# diffs control array
 .set          wVRSave,-(GPRSaveArea+4)
-.set          localTop, 1040
+.set          localTop, 1552
 .set          FrameSize, (localTop + GPRSaveArea + 15) & (-16)
 
 
@@ -84,7 +85,6 @@
 
 ;.set         r0,0
 ;.set         r1,1
-;.set         RTOC,2                    ;# Alias for AIX/COFF
 ;.set         r3,3
 ;.set         r4,4
 ;.set         r5,5
@@ -132,7 +132,6 @@
 ;#                      int *pnodes (r4)
 ;#                      const unsigned char *choose (r5)
 ;#                      const int *OGR (r6)
-;#                      const vector unsigned char Varray[] (r7)
 
 cycle_ppc_hybrid:                       ;# elf
 _cycle_ppc_hybrid:                      ;# a.out
@@ -181,6 +180,18 @@ _cycle_ppc_hybrid:                      ;# a.out
 ;#   v7  := list bitmap
 ;#   v8  := comp bitmap
 
+    ;# Initialize VArray[x] = (vector unsigned char) (x)
+    li        r12,0
+    addi      r7,r1,aStorage            ;# &VArray[0]
+    vspltisb  v0,0
+    vspltisb  v1,1
+L_init_array: 
+    stvx      v0,r12,r7
+    addi      r12,r12,16
+    vadduwm   v0,v0,v1
+    cmpwi     r12,512
+    blt       L_init_array
+
     mr        r13,r3                    ;# Copy oState
     lwz       r16,STATE_DEPTH(r3)       ;# oState->depth
     addi      r16,r16,1                 ;# ++depth
@@ -228,7 +239,6 @@ _cycle_ppc_hybrid:                      ;# a.out
     add       r0,r3,r0                  ;# (dist0 >> DIST_SHIFT) * DIST_BITS
     lbzx      r24,r5,r0                 ;# choose(dist0 >> ttmDISTBITS, remdepth)
     b         L_comp_limit
-    nop       
 
     .align    4
 L_push_level: 
