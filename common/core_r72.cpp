@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.1 2003/09/01 06:28:40 jlawson Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.2 2003/09/01 18:30:20 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -426,6 +426,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 21: cindex = 5; break; // UltraSPARC-IIIi  == AnBe 2-pipe
         default: cindex =-1; break; // no default 
       }
+    }
     #else /* non-Solaris */
     /* cpu detection and core preselection for all the SPARC OSes needs a
        complete overhaul and generalization
