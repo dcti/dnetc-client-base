@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.8 2000/01/08 23:11:25 cyp Exp $"; }
+return "@(#)$Id: logstuff-conflict.cpp,v 1.37.2.9 2000/01/09 00:00:05 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -122,9 +122,9 @@ static void InternalLogScreen( const char *msgbuffer, unsigned int msglen, int /
 
 // ------------------------------------------------------------------------
 
-#if 0 //(CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
-      //(CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
-      //(CLIENT_OS == OS_OS2)
+#if 0 /*(CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || \
+        (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
+        (CLIENT_OS == OS_OS2) */
 static FILE *__fopenlog( const char *fn, const char *mode )
 {
   FILE *file;
