@@ -7,7 +7,7 @@
 ;     Jeff Lawson <bovine@distributed.net>
 ;
 ; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
-; $Id: r72-snjl.asm,v 1.1.2.1 2003/10/19 11:48:34 jlawson Exp $
+; $Id: r72-snjl.asm,v 1.1.2.2 2003/10/19 11:49:15 jlawson Exp $
 
 [SECTION .text]
 BITS 64
