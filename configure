@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.236 1999/10/15 23:30:09 cyp Exp $
+# @(#)$Id: configure,v 1.237 1999/11/01 19:58:36 patrick Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -905,7 +905,7 @@ case "$1" in
         DELETECHARS="'/.\$\-'"
 	TARGET_CCFLAGS="$OPTS_GCC_POWER -D_AIX \
 		-DBIT_32 -DMEGGS -DKWAN"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/2-rg.c"
+	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/rc5ansi_2-rg.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
@@ -913,7 +913,7 @@ case "$1" in
         DELETECHARS="'/.\$\-'"
         TARGET_CCFLAGS="$OPTS_EGCS -DASM_POWER -mcpu=power -D_AIX \
 		-DBIT_32 -DMEGGS -DKWAN"
-        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/2-rg.c"
+        TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 rc5/ansi/rc5ansi-2-rg.cpp"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         ;;
 
@@ -926,7 +926,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_EGCS -mcpu=common -D_AIX -D_AIXALL \
                         -DBIT_32 -DMEGGS -DKWAN"
         TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2 \
-                rc5/ansi/2-rg.c \
+                rc5/ansi/rc5ansi_2-rg.cpp \
                 rc5/ppc/crunch_allitnil_552.ppc.s \
                 rc5/ppc/crunch_lintilla_296.ppc.s"
         AIXPPC601FLAGS="$OPTS_EGCS_PPC601 -D_AIX -DBIT32 -DMEGGS -DKWAN"
@@ -1925,7 +1925,7 @@ if [ "$AIXALL" = "TRUE" ]; then
   awk '
 /allitnil_552.ppc.s -o/ { print "\t\${CC} -c ${PPC601FLAGS} " $4 " " $5 " " $6 ; next }
 /lintilla_296.ppc.s -o/ { print "\t\${CC} -c ${PPC604FLAGS} " $4 " " $5 " " $6 ; next }
-/2-rg.c -o/ { print "\t\gcc -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
+/rc5ansi_2-rg.cpp -o/ { print "\t\${CC} -c ${POWERFLAGS} " $4 " " $5 " " $6 ; next }
 { print $0 }' Makefile.tmp > Makefile
 rm Makefile.tmp
 fi
