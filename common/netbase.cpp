@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.18 2001/03/24 17:03:21 cyp Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.19 2001/03/26 16:30:12 cyp Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -96,6 +96,9 @@ extern "C" {
   #include <windows.h>
   #include "w32sock.h" //winsock wrappers
   #include "w32util.h" //winGetVersion()
+  #if defined(_MSC_VER)
+  #pragma warning(disable:4127) /* 'conditional expression is constant' */
+  #endif              /* caused by do{}while(0) in winsock.h fd_set ops */
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
   #include <socklib.h>
