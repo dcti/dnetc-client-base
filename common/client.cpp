@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.24 1999/11/02 16:03:43 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.25 1999/11/02 18:54:56 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -15,6 +15,7 @@ return "@(#)$Id: client.cpp,v 1.206.2.24 1999/11/02 16:03:43 cyp Exp $"; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client class
 #include "cliident.h"  // CliGetFullVersionDescriptor()
+#include "clievent.h"  // ClientEventSyncPost(),_CLIENT_STARTED|FINISHED
 #include "random.h"    // InitRandom()
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
@@ -246,24 +247,24 @@ static int ClientMain( int argc, char *argv[] )
   int retcode = 0;
   int restart = 0;
 
-  TRACE_OUT((+1,"Client.Main()\n"));
+  srand( (unsigned) time(NULL) );
+  InitRandom();
 
+  TRACE_OUT((+1,"Client.Main()\n"));
   client = (Client *)malloc(sizeof(Client));
   if (!client)
   {
     ConOutErr( "Unable to initialize client. Out of memory." );
     return -1;
   }
-  ResetClientData(client);
-  srand( (unsigned) time(NULL) );
-  InitRandom();
-
+  
   do
   {
     int restarted = restart;
     restart = 0;
 
     ResetClientData(client); /* reset everything in the object */
+    ClientEventSyncPost( CLIEVENT_CLIENT_STARTED, *((long*)(&client)) );
     //ReadConfig() and parse command line - returns !0 if shouldn't continue
 
     TRACE_OUT((0,"Client.parsecmdline restarted?: %d\n", restarted));
@@ -281,7 +282,8 @@ static int ClientMain( int argc, char *argv[] )
           TRACE_OUT((0,"initializeconsole\n"));
           if (InitializeConsole(client->quietmode,domodes) == 0)
           {
-	    int con_waitforuser = 0;
+            //some plats need to wait for user input before closing the screen
+            int con_waitforuser = 0; //only used if doing modes (and !-config)
             TRACE_OUT((+1,"initializelogging\n"));
             InitializeLogging( (client->quietmode!=0), 
                                (client->percentprintingoff!=0),
@@ -307,7 +309,7 @@ static int ClientMain( int argc, char *argv[] )
 
             if (domodes)
             {
-	      con_waitforuser = (ModeReqIsSet(MODEREQ_CONFIG)==0);
+              con_waitforuser = (ModeReqIsSet(MODEREQ_CONFIG)==0);
               TRACE_OUT((+1,"modereqrun\n"));
               ModeReqRun( client );
               TRACE_OUT((-1,"modereqrun\n"));
@@ -335,8 +337,10 @@ static int ClientMain( int argc, char *argv[] )
         DeinitializeTriggers();
       }
     }
+    ClientEventSyncPost( CLIEVENT_CLIENT_FINISHED, (long)restart );
     TRACE_OUT((0,"client.parsecmdline restarting?: %d\n", restart));
   } while (restart);
+
   free((void *)client);
 
   TRACE_OUT((-1,"Client.Main()\n"));
