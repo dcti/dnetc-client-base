@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.23  1998/09/23 22:07:55  blast
+// problem.h updated, but I noticed I did something wrong, updating in 1 sec.
+//
 // Revision 1.22  1998/08/20 19:34:30  cyruspatel
 // Removed that terrible PIPELINE_COUNT hack: Timeslice and pipeline count
 // are now computed in Problem::LoadState(). Client::SelectCore() now saves
@@ -169,9 +172,12 @@ typedef enum
   #endif
   extern int whichcrunch;
 #elif (CLIENT_CPU == CPU_68K)
+  extern "C" extern __asm u32 (*rc5_unit_func)( register __a0 RC5UnitWork *work, register __d0 u32 timeslice);
+  extern "C" __asm u32 rc5_unit_func_000_030( register __a0 RC5UnitWork * work, register __d0 unsigned long timeslice );
+  extern "C" __asm u32 rc5_unit_func_040_060( register __a0 RC5UnitWork * work, register __d0 unsigned long timeslice );
   #if (CLIENT_OS == OS_AMIGAOS)
-    #if (PIPELINE_COUNT != 256)
-    #error "Expecting PIPELINE_COUNT=256"
+    #if (PIPELINE_COUNT != 2)
+    #error "Expecting PIPELINE_COUNT=2"
     #endif
   #else
     #if (PIPELINE_COUNT != 1)
