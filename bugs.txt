@@ -6,6 +6,31 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
+06-08-98 - Jeff Lawson
+
+  A user reported: (note this occurs under the gui clients where
+  client member functions may be run many times, so it's likely that
+  some variable isn't getting rezeroed at the start of the benchmark
+  function):
+
+  I noticed when you run a benchmark after the client has been running
+  it displays the total number of blocks completed and the key rate
+  instead of the actual benchmark results.
+
+  Selecting Intel Pentium, Intel Pentium MMX, Cyrix 5x86 code
+  Benchmarking RC5 with 10000000 tests:
+  .....10%.....20%.....30%.....40%.....50%.....60%.....70%...(etc)...100
+  Completed 5 RC5 Blocks 0.00:32:15.64 - [559887.82 keys/s]
+
+06-08-98 - Jeff Lawson
+  Suggestion: A user reported: the send and recieve messages seem
+  rather redundent.  For both send and recieve there is the proxy
+  message.  Thats fine once, for the revieve say, but then gets
+  redundent for the send.  Also, it first tells you that it "Retrieved
+  block 1 of 1 (100.00% transferred)" and then tells you "Retrieved 1
+  RC5 block(s) from server" One of these messages is nice, but two gets
+  cluttering.
+
 06-08-98 - Kevin Bracey
   New Bug: Run the client offline, with contestdone2 set to 1, and
            nothing in the input buffer. Instead of generating a random
