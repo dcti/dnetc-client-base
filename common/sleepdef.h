@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: sleepdef.h,v $
+// Revision 1.4  1998/06/14 11:25:13  ziggyb
+// Made the sleep/usleep defines work correctly in OS/2
+//
 // Revision 1.3  1998/06/14 08:13:10  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -47,17 +50,17 @@
     #error sleep()/usleep() are still undefined in sleepdef.h
   #endif
 #elif (CLIENT_OS == OS_DOS)
-  #if defined(__WATCOMC__) || defined(__TURBOC__)
+  #if defined(__WATCOMC__) || defined(__TURBOC__) && defined(CLIENT_OS != OS_OS2)
     #include <dos.h>
     #define usleep(x) delay((x)/1000)
   #elif defined(DJGPP)
     #include <unistd.h>
   #endif
 #elif (CLIENT_OS == OS_OS2)
-  #ifndef INCL_DOS
-  #define INCL_DOS
+  #include "platforms/os2cli/os2defs.h"
+  #ifdef sleep
+  #undef sleep    // gets rid of warning messages
   #endif
-  #include <os2.h> //which ties in bsedos.h
   #define sleep(x) DosSleep(1000*(x))
   #define usleep(x) DosSleep((x)/1000)
 #elif (CLIENT_OS == OS_NETWARE)
