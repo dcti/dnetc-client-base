@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.18 2000/01/16 04:34:08 michmarc Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.19 2000/01/24 19:52:04 chrisb Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -157,6 +157,11 @@ int GetFileLengthFromStream( FILE *file, u32 *length )
     u32 result = filelength( fileno(file) );    
     if (result == 0xFFFFFFFFL) return -1;
     *length = result;
+  #elif (CLIENT_OS == OS_RISCOS)
+    if (riscos_get_filelength(fileno(file),(unsigned long *)length) != 0)
+    {
+	return -1;
+    }
   #else
     struct stat statbuf;
     #if (CLIENT_OS == OS_NETWARE)
