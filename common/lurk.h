@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.h,v $
+// Revision 1.13  1999/02/09 03:17:59  remi
+// Added Lurk::GetDefaultIFaceMask(void).
+//
 // Revision 1.12  1999/02/07 16:00:09  cyp
 // Lurk changes: genericified variable names, made less OS-centric.
 //
@@ -78,6 +81,7 @@ const char **GetConnectionProfileList(void);
   // Gets the list of possible dial-up networking connections for the
   // user to select. - called in cliconfig
 
+char *GetDefaultIFaceMask(void);   //return the default interface mask
 int GetCapabilityFlags(void);      //return supported CONNECT_* bits 
 int CheckIfConnectRequested(void); // -> 0=no, !0=yes
 int CheckForStatusChange(void);    // -> 0 = nochange, !0 connection dropped
