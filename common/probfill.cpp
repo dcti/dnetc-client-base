@@ -5,6 +5,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.13  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.12  1998/11/30 23:41:12  cyp
 // Probfill now handles blockcount limits; can resize the loaded problem
 // table; closes checkpoint files when the problem table is closed; can
@@ -55,7 +66,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.12 1998/11/30 23:41:12 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.13 1998/12/01 19:49:14 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -370,7 +381,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   contest_count     = 2;
     
   #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
-  /* Must do RC5.  DES x86 cores aren't multithread safe. */
+  /* Must do RC5.  Bryd DES x86 cores aren't thread safe. */
   if ( prob_i != 0 && prob_i != 1 ) /* Not the 1st or 2nd cracking thread... */
     {
     #if (defined(MMX_BITSLICER) && defined(KWAN) && defined(MEGGS))

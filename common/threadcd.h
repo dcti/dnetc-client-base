@@ -3,6 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.13  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.12  1998/07/16 20:14:37  nordquist
 // DYNIX port changes.
 //
@@ -42,82 +53,13 @@
 #ifndef __CLITHREAD_H__
 #define __CLITHREAD_H__
 
-#include "cputypes.h"
+#include "cputypes.h" /* THREADID typedef */
 
 //-----------------------------------------------------------------------
-// Note: #ifdef MULTITHREAD is intentionally avoided until
-// the #if/#elif falls into the #else, and that too should be
-// removed. This is to support platforms that support threading
-// independantly of whether the client.cpp is being built with
-// multithread support or not.
-//
 // Once portable thread creation/destruction is guaranteed, it
 // isn't a big step to add functionality to the client - For example:
 // 1. a 'pipe' proxy (perhaps with IPX/NetBios support).
 // 2. a 'lurk' mechanism running asynchronously.
-//-----------------------------------------------------------------------
-
-#define OS_SUPPORTS_THREADING  //#undef this IN *YOUR* SECTION if untrue
-#define THREADING_IS_AVAILABLE //special define in case OS_SUPPORTS_THREADING
-                               //is true, but special libs (or whatever) must 
-                               //be linked. see pthread support for example.
-
-#if (CLIENT_OS == OS_WIN32)
-  #include <process.h>
-  typedef unsigned long THREADID;
-  #define OS_SUPPORTS_THREADING
-  #define THREADING_IS_AVAILABLE
-#elif (CLIENT_OS == OS_OS2)
-//Headers defined elsewhere in a separate file.
-  typedef long THREADID;
-  #define OS_SUPPORTS_THREADING
-  #define THREADING_IS_AVAILABLE
-#elif (CLIENT_OS == OS_NETWARE)
-  #include <process.h>
-  typedef long THREADID;
-  extern int CliWaitForThreadExit( int threadID );
-  #define OS_SUPPORTS_THREADING
-  #define THREADING_IS_AVAILABLE
-#elif (CLIENT_OS == OS_BEOS)
-  #include <OS.h>
-  typedef thread_id THREADID;
-  #define OS_SUPPORTS_THREADING
-  #define THREADING_IS_AVAILABLE
-#elif (CLIENT_OS == OS_DOS)
-  typedef int THREADID ; //dummy
-  #undef OS_SUPPORTS_THREADING
-  #undef THREADING_IS_AVAILABLE
-#elif (CLIENT_OS == OS_MACOS)
-  typedef int THREADID ; //dummy
-  #undef OS_SUPPORTS_THREADING
-  #undef THREADING_IS_AVAILABLE
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-  #include <stdlib.h>
-  typedef int THREADID ; //dummy
-  #undef OS_SUPPORTS_THREADING
-  #undef THREADING_IS_AVAILABLE
-#elif (CLIENT_OS == OS_RISCOS)
-  typedef int THREADID ; //dummy
-  #undef OS_SUPPORTS_THREADING
-  #undef THREADING_IS_AVAILABLE
-#elif (CLIENT_OS == OS_DYNIX)
-  typedef int THREADID ; //dummy
-  #undef OS_SUPPORTS_THREADING
-#else
-  #if !defined(MULTITHREAD)
-    typedef int THREADID ; //dummy
-    #undef THREADING_IS_AVAILABLE
-    #if ((CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_DGUX) && \
-        (CLIENT_OS != OS_SOLARIS) && (CLIENT_OS != OS_FREEBSD))
-      #undef OS_SUPPORTS_THREADING
-    #endif 
-  #else
-    #include <pthread.h>
-    typedef pthread_t THREADID;
-    #define THREADING_IS_AVAILABLE
-  #endif
-#endif
-
 //-----------------------------------------------------------------------
 
 // create a thread (blocks till running) - returns threadid or NULL if error
@@ -129,4 +71,3 @@ extern int CliDestroyThread( THREADID cliThreadID );
 //-----------------------------------------------------------------------
 
 #endif //ifndef __CLITHREAD_H__
-

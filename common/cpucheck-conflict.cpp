@@ -3,6 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.46  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.45  1998/12/01 11:24:11  chrisb
 // more riscos x86 changes
 //
@@ -159,13 +170,12 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.45 1998/12/01 11:24:11 chrisb Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.46 1998/12/01 19:49:14 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
 #include "cpucheck.h"  //just to keep the prototypes in sync.
-#include "threadcd.h"  //for the OS_SUPPORTS_THREADING define
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
 
 #if (CLIENT_OS == OS_SOLARIS)
@@ -282,27 +292,13 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
   //-------------------------------------------------------------
   // Validate processor/thread count.
   // --------------------
-  // The use of -numcpu on the command line is legal for non-mt clients.
-  // Simply put, if it ain't MULTITHREAD, there's ain't gonna be a thread,
-  // no matter what the user puts on the command line or in the ini file.
+  // numcpu with zero implies "force-single-threaded"
   //
-  // On MULTITHREAD systems, numcpu with zero implies "force_non-mt"
-  //
-  // The MAX CPUS limit is no longer the business of the select cpu logic.
-  // The thread data and Problem tables are (or rather, will soon be) grown
-  // dynamically.
-  //
-  // Whether a CLIENT_CPU (core) is thread safe or not the responsibility of
-  // select cpu logic either.
-  // 
+  // Whether a CLIENT_CPU (core) is thread safe or not, or whether the client
+  // was built with thread support or not, is not the responsibility of
+  // select cpu logic.
   //--------------------
 
-  #ifndef MULTITHREAD           //this is the only place in the config where
-#if (CLIENT_OS != OS_RISCOS)
-  detected_count = 0;           //we check this - implies force non-mt
-#endif
-  #endif
-  
   if (numcpu < 0)                //numcpu == 0 implies force non-mt; 
     {                            //numcpu < 0  implies autodetect
     if (detected_count == -2)
@@ -319,13 +315,15 @@ unsigned int ValidateProcessorCount( int numcpu, int quietly )
       else
         {
         if (!quietly)
+          {
           LogScreen("Automatic processor detection found %d processor%s.\n",
              detected_count, ((detected_count==1)?(""):("s")) );
+          }
         }
       }
     numcpu = detected_count;
-    if (numcpu < 0) //zero is legal for multithread (implies force non-mt)
-      numcpu = 1;
+    if (numcpu < 0) //zero is legal (implies force-single-threaded)
+      numcpu = 0;
     }
   return (unsigned int)numcpu;
 }
@@ -801,33 +799,25 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     {
     sprintf( cpuid_b, "%X", cpuidb );
     }
-
   if (riscos_count_cpus() == 2)
-  {
-      strcat(cpuid_b,riscos_x86_determine_name());
-  }
-
+    {
+    strcat(cpuid_b,riscos_x86_determine_name());
+    }
   cpuid_s = ((const char *)(&cpuid_b[0]));      
-  
 #else
   cpuid_s = "none (client does not support identification)";
 #endif    
 
-  #if defined(MULTITHREAD)
+  #if defined(CLIENT_SUPPORTS_SMP)
     static char maxcpu_b[80]; 
-    sprintf( maxcpu_b, "%d (threading may be disabled "
-         "by setting -numcpu to zero)", GetNumberOfSupportedProcessors() ); 
+    sprintf( maxcpu_b, "%d", (int)GetNumberOfSupportedProcessors() ); 
     maxcpu_s = ((const char *)(&maxcpu_b[0]));
-  #elif defined(OS_SUPPORTS_THREADING) //from threadcd.h
-    maxcpu_s = "1 (threading is emulated - client built without thread support)";
-  #elif ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
-        (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC) && \
-        (CLIENT_CPU != CPU_ARM))
-    maxcpu_s = "1 (threading is emulated - cores are not thread-safe)";
+  #elif (!defined(CORES_SUPPORT_SMP))
+    maxcpu_s = "1 (cores are not thread-safe)";
   #elif (CLIENT_OS == OS_RISCOS)
     maxcpu_s = "2 (with RiscPC x86 card)";
   #else
-    maxcpu_s = "1 (threading is emulated - OS does not support threads)";
+    maxcpu_s = "1 (OS or client-build does not support threads)";
   #endif  
 
   int cpucount = GetNumberOfDetectedProcessors();

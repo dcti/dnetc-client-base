@@ -5,6 +5,17 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.30  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.29  1998/11/28 17:45:58  remi
 // Integration of the 386/486 self-modifying core.
 //
@@ -62,7 +73,7 @@
 // Added support for the MMX bitslicer.
 //
 // Revision 1.14  1998/06/23 21:58:56  remi
-// Use only two x86 DES cores (P5 & PPro) when not multithreaded.
+// Use only two x86 DES cores (P5 & PPro) when not multi-threaded.
 //
 // Revision 1.13  1998/06/20 10:04:16  cyruspatel
 // Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
@@ -173,7 +184,7 @@ typedef enum
   #endif
   extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
-  #if defined(MULTITHREAD)
+  #if defined(CLIENT_SUPPORTS_SMP)
     extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
     extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
   #endif

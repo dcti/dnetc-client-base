@@ -5,6 +5,17 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.37  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.36  1998/11/25 06:04:17  dicamillo
 // Update for BeOS R4 for Intel- defined constants changed.
 //
@@ -22,7 +33,22 @@
 // <patrick@de.ibm.com> advices.
 //
 // Revision 1.31  1998/11/10 09:33:03  silby
-// Added AIX POWER type so that optimizations in rotate.h would be triggered for better rc5 performance.
+// Added 
+// AIX 
+// POWER 
+// type 
+// so 
+// that 
+// optimizations 
+// in 
+// rotate.h 
+// would 
+// be 
+// triggered 
+// for 
+// better 
+// rc5 
+// performance.
 //
 // Revision 1.30  1998/09/29 07:56:57  remi
 // #if defined(SPARCLINUX) is redundant.
@@ -59,8 +85,6 @@
 // impact on the anything (I checked).
 //
 // Revision 1.20  1998/06/17 00:29:45  snake
-//
-//
 // #ifdefs for OpenBSD on Sparc were in the Linux section instead of the
 // OpenBSD section of 'configure'. Fixed by moving it to the right position.
 //
@@ -133,7 +157,7 @@ struct s128 { s64 hi, lo; };
 #define CPU_88K         12
 #define CPU_KSR1        13
 #define CPU_S390        14
-#define CPU_MASPAR  15
+#define CPU_MASPAR      15
 
 // Major OS Architectures.
 #define OS_UNKNOWN      0
@@ -190,12 +214,12 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_OS     OS_WIN32
     #define CLIENT_CPU    CPU_POWERPC
   #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)
-    // win16 gui
+    // win16 
     #define CLIENT_OS     OS_WIN16
     #define CLIENT_CPU    CPU_X86
     #undef CLIENT_OS_NAME
     #define CLIENT_OS_NAME "Win16"
-  #elif defined(NOMAIN) && !defined(MULTITHREAD)
+  #elif defined(__WIN32S__) /* may need to be defined in makefile */
     // win32s gui
     #define CLIENT_OS     OS_WIN32S
     #define CLIENT_CPU    CPU_X86
@@ -439,6 +463,48 @@ struct s128 { s64 hi, lo; };
   #endif
 #endif
 
+/* ----------------------------------------------------------------- */
+
+#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_88K) || \
+     (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_POWERPC) || \
+     (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM))
+   #define CORES_SUPPORT_SMP
+#endif   
+
+#if (CLIENT_OS == OS_WIN32)
+  #include <process.h>
+  typedef unsigned long THREADID;
+  #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_OS2)
+  //Headers defined elsewhere in a separate file.
+  typedef long THREADID;
+  #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_NETWARE)
+  #include <process.h>
+  typedef long THREADID;
+  #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_BEOS)
+  #include <OS.h>
+  typedef thread_id THREADID;
+  #define OS_SUPPORTS_SMP
+#elif defined(MULTITHREAD)
+  #include <pthread.h>
+  typedef pthread_t THREADID;
+  #define OS_SUPPORTS_SMP
+  //egcs always includes pthreads.h, so use something other than PTHREAD_H 
+  #define _POSIX_THREADS_SUPPORTED
+#else 
+  typedef int THREADID;
+#endif
+
+// Fix up MULTITHREAD to mean "SMP aware and thread safe"
+#if (defined(CORES_SUPPORT_SMP) && defined(OS_SUPPORTS_SMP))
+   #define CLIENT_SUPPORTS_SMP
+#endif  
+#undef MULTITHREAD //undef it to avoid 'unsafe' meaning
+
+/* ----------------------------------------------------------------- */
+
 // Some compilers/platforms don't yet support bool internally.
 // When creating new rules here, please try to use compiler-specific macro tests
 // since not all compilers on a specific platform (or even a newer version of
@@ -463,7 +529,7 @@ struct s128 { s64 hi, lo; };
 #endif
 
 #if defined(NEED_FAKE_BOOL)
-    typedef char bool;
+    typedef int bool;
     #define true (!0)
     #define false (0)
 #endif

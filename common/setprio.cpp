@@ -11,6 +11,17 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.38  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.37  1998/12/01 15:06:31  cyp
 // Changed sucky win32 priorities again. This time with davehart's guidance,
 // so hopefully it can stay this way.
@@ -34,7 +45,7 @@
 // normal priority (but in the idle class). Crunch threads are locked at idle.
 //
 // Revision 1.3  1998/10/20 17:20:17  remi
-// Added two missing #ifdef(MULTITHREAD) in __SetPriority()
+// Added two missing #ifdef(MULT1THREAD) in __SetPriority()
 //
 // Revision 1.2  1998/10/11 08:20:34  silby
 // win32 is now locked at max idle priority for cracking threads.
@@ -45,7 +56,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.37 1998/12/01 15:06:31 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.38 1998/12/01 19:49:14 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -235,12 +246,12 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
             schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
         }
       }
-  #else
+  #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
     if ( set_for_thread )
       {
-      #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && defined(MULTITHREAD)
+      #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
         //nothing - priority is set when created
-      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
+      #else
         //SCHED_OTHER policy
         int newprio;
         if ( prio == 9 )

@@ -3,6 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.h,v $
+// Revision 1.7  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.6  1998/10/11 00:43:22  cyp
 // Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
 //
@@ -37,7 +48,7 @@ int GetProcessorType(int quietly);
 //-------
 
 //returns the number of cpus (>=0). 
-//Zero is valid and symbolizes 'no-multithreading'.
+//Zero is valid and symbolizes 'force-single-threading'.
 unsigned int ValidateProcessorCount(int numcpu, int quietly);
 
 //-------

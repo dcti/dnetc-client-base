@@ -3,6 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: lurk.cpp,v $
+// Revision 1.11  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.10  1998/11/17 05:49:02  silby
 // Fixed an uninit variable that was causing updates that should not have been.
 //
@@ -19,7 +30,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.10 1998/11/17 05:49:02 silby Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.11 1998/12/01 19:49:14 cyp Exp $"; }
 #endif
 
 /* --------------------------------- */
@@ -489,7 +500,7 @@ s32 Lurk::TerminateConnection(void)
   if (Status() == 0) 
     return 0; // We're already disconnected
 
-  #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
+  #if (CLIENT_OS == OS_WIN32)
   if (rasenumconnections && rasgetconnectstatus)
     {
     RASCONN rasconn[8];

@@ -3,6 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.46  1998/12/01 19:49:14  cyp
+// Cleaned up MULT1THREAD #define: The define is used only in cputypes.h (and
+// then undefined). New #define based on MULT1THREAD, CLIENT_CPU and CLIENT_OS
+// are CORE_SUPPORTS_SMP, OS_SUPPORTS_SMP. If both CORE_* and OS_* support
+// SMP, then CLIENT_SUPPORTS_SMP is defined as well. This should keep thread
+// strangeness (as foxy encountered it) out of the picture. threadcd.h
+// (and threadcd.cpp) are no longer used, so those two can disappear as well.
+// Editorial note: The term "multi-threaded" is (and has always been)
+// virtually meaningless as far as the client is concerned. The phrase we
+// should be using is "SMP-aware".
+//
 // Revision 1.45  1998/12/01 07:11:50  foxyloxy
 // Fixed IRIX MT finally! Woohoo! (Embarrasingly trivial and stupid fix...
 // doh)
@@ -67,7 +78,7 @@
 // be the cause for the FreeBSD crashes.
 //
 // Revision 1.27  1998/11/03 04:23:54  cyp
-// Added missing #if ... defined(MULTITHREAD) to def out pthread_sigmask
+// Added missing #if ... defined(MULT1THREAD) to def out pthread_sigmask
 //
 // Revision 1.26  1998/11/03 01:46:51  cyp
 // Commit to overwrite corrupted clirun in the tree.
@@ -111,7 +122,7 @@
 // Promoted u8 contestids in Fetch/Flush/Update to unsigned ints.
 //
 // Revision 1.142 1998/10/20 17:26:43  remi
-// Added 3 missing #ifdef(MULTITHREAD) to allow compilation of a non-mt client
+// Added 3 missing #ifdef(MULT1THREAD) to allow compilation of a non-mt client
 // on glibc-based systems.
 //
 // Revision 1.141 1998/10/18 21:51:26  dbaker
@@ -173,7 +184,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.45 1998/12/01 07:11:50 foxyloxy Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.46 1998/12/01 19:49:14 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -200,6 +211,7 @@ return "@(#)$Id: clirun.cpp,v 1.45 1998/12/01 07:11:50 foxyloxy Exp $"; }
 #include "probman.h"   //GetProblemPointerFromIndex()
 #include "probfill.h"  //LoadSaveProblems(), FILEENTRY_xxx macros
 #include "modereq.h"   //ModeReq[Set|IsSet|Run]()
+
 // --------------------------------------------------------------------------
 
 static struct
@@ -246,8 +258,7 @@ struct thread_param_block
     int threadID;
   #elif (CLIENT_OS == OS_BEOS)
     thread_id threadID;
-  #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H) || \
-    defined(_POSIX_THREAD_PRIORITY_SCHEDULING)) && defined(MULTITHREAD)
+  #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
   #else
     int threadID;
@@ -706,7 +717,7 @@ if (targ->realthread)
   }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
-#elif ((defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD))
+#elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
 if (targ->realthread)
   {
   sigset_t signals_to_block;
@@ -803,9 +814,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_NETWARE)
         nwCliWaitForThreadExit( thrparams->threadID ); //in netware.cpp
-        #elif (defined(_POSIX_THREAD_PRIORITY_SCHEDULING) || \
-              defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && \
-        defined(MULTITHREAD)
+        #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
         pthread_join( thrparams->threadID, (void **)NULL);
         #endif
         }
@@ -847,15 +856,14 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->next = NULL;
   
     use_poll_process = 0;
-	no_realthreads = 0;
+
+    
     if ( no_realthreads )
-	use_poll_process = 1;
+      use_poll_process = 1;
     else
       {
-      #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
-         (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC) \
-	&& (CLIENT_CPU != CPU_MIPS))
-         use_poll_process = 1; //core routines are not thread safe
+      #if (!defined(CLIENT_SUPPORTS_SMP)) //defined in cputypes.h 
+        use_poll_process = 1; //no thread support or cores are not thread safe
       #elif (CLIENT_OS == OS_WIN32) 
         unsigned int thraddr;
         thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
@@ -863,7 +871,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #elif (CLIENT_OS == OS_OS2)
         thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
         success = ( thrparams->threadID != -1);
-      #elif (CLIENT_OS == OS_NETWARE) && defined(MULTITHREAD)
+      #elif (CLIENT_OS == OS_NETWARE)
         if (!nwCliIsSMPAvailable())
           use_poll_process = 1;
         else 
@@ -872,34 +880,33 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       #elif (CLIENT_OS == OS_BEOS)
         char thread_name[32];
         long be_priority = thrparams->priority+1; 
-  // Be OS priority for rc5des should be adjustable from 1 to 10
-  // 1 is lowest, 10 is higest for non-realtime and non-system tasks
+        // Be OS priority for rc5des should be adjustable from 1 to 10
+        // 1 is lowest, 10 is higest for non-realtime and non-system tasks
         sprintf(thread_name, "RC5DES crunch#%d", thread_i + 1);
         thrparams->threadID = spawn_thread((long (*)(void *)) Go_mt, 
                thread_name, be_priority, (void *)thrparams );
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
           success = 1;
-      #elif defined(_POSIX_THREAD_PRIORITY_SCHEDULING) && defined(MULTITHREAD)
-	SetGlobalPriority( thrparams->priority );  
-        pthread_attr_t thread_sched;
-        pthread_attr_init(&thread_sched);
-        pthread_attr_setscope(&thread_sched,PTHREAD_SCOPE_SYSTEM);
-        pthread_attr_setinheritsched(&thread_sched,PTHREAD_INHERIT_SCHED);
-        if (pthread_create( &(thrparams->threadID), &thread_sched, 
-              (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0)
-          success = 1;
-        SetGlobalPriority( 9 ); //back to normal
-      #elif (defined(_POSIX_THREADS) || defined(_PTHREAD_H)) && defined(MULTITHREAD)
-	if (pthread_create( &(thrparams->threadID), NULL, 
-           (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0 )
-          success = 1;
+      #elif defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
+        #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
+          SetGlobalPriority( thrparams->priority );  
+          pthread_attr_t thread_sched;
+          pthread_attr_init(&thread_sched);
+          pthread_attr_setscope(&thread_sched,PTHREAD_SCOPE_SYSTEM);
+          pthread_attr_setinheritsched(&thread_sched,PTHREAD_INHERIT_SCHED);
+          if (pthread_create( &(thrparams->threadID), &thread_sched, 
+                (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0)
+            success = 1;
+          SetGlobalPriority( 9 ); //back to normal
+        #else
+          if (pthread_create( &(thrparams->threadID), NULL, 
+             (void *(*)(void*)) Go_mt, (void *)thrparams ) == 0 )
+            success = 1;
+        #endif
       #else
-#error usepoolprocess	
-	use_poll_process = 1;
+        use_poll_process = 1;
       #endif
-      //everything from this point on shouldn't need MULTITHREAD so ...
-      #undef MULTITHREAD 
       }
 
     if (use_poll_process)
