@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.99  1998/11/15 11:49:42  cyp
+// ModeReq(-1) == 0 (not != 0) before the unix the system call.
+//
 // Revision 1.98  1998/11/15 11:00:16  remi
 // Moved client->SelectCore() for -test and -benchmark* from cmdline.cpp to
 // modereq.cpp and told it to not be quiet.
@@ -68,7 +71,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.98 1998/11/15 11:00:16 remi Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.99 1998/11/15 11:49:42 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1015,7 +1018,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
        (CLIENT_OS == OS_AIX)         || (CLIENT_OS == OS_AUX)     || \
        (CLIENT_OS == OS_OPENBSD)     || (CLIENT_OS == OS_SUNOS)   || \
        (CLIENT_OS == OS_ULTRIX)      || (CLIENT_OS == OS_DGUX))
-  else if (run_level == 0 && (ModeReqIsSet(-1) != 0) && 
+  else if (run_level == 0 && (ModeReqIsSet(-1) == 0) && 
           quietmode && isatty(fileno(stdout)))
     {
     terminate_app = 1; //always return !0
