@@ -1,5 +1,11 @@
 ;
 ; $Log: rg-p5.asm,v $
+; Revision 1.7  1998/07/12 13:22:33  cyruspatel
+; Added padding to the end of the intel asm RC5 cores so that the entry
+; point of the function in the next module (in the link order) will be
+; aligned to a paragraph boundary. This was needed for some linkers (notably
+; Watcom's) that just mash them front to back.
+;
 ; Revision 1.6  1998/06/17 18:53:02  cyruspatel
 ; modified model definition directives to work with any (intel asm)
 ; assembler - model is overridden to flat unless small model was explicitely
@@ -28,6 +34,7 @@ ifndef __SMALL__
 endif
 
 _TEXT   segment dword public use32 'CODE'
+CODE_START:
 align 4
 public _rc5_unit_func_p5
 _rc5_unit_func_p5 proc near
@@ -1482,6 +1489,8 @@ pop ebp
 add esp,256
 ret
 _rc5_unit_func_p5 endp
+
+       db ((10h - (($ - CODE_START) and 0fh))) dup (90h)
 _TEXT   ends
 end
 
