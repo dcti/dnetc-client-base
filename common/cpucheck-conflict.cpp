@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.77 1999/04/05 20:08:28 patrick Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.78 1999/04/13 06:47:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -658,7 +658,7 @@ static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       vendorname = "Intel "; 
       if ((cpuid == 0x30) || (cpuid == 0x40))
         vendorname = ""; //not for generic 386/486
-      cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
+      cpuidbmask = 0x0ff0; //strip type AND stepping bits.
     }
   
     if (internalxref != NULL) /* we know about this vendor */
