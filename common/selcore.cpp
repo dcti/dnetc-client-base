@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.29 2003/03/16 16:58:47 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.30 2003/03/16 18:21:16 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -451,9 +451,6 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #if (CLIENT_CPU == CPU_X86)
     { /* RC5-72 */
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
-      "ANSI 1-pipe",
       "SES 1-pipe",
       "SES 2-pipe",
       "DG 2-pipe",
@@ -631,8 +628,8 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     }
     else if (contestid == RC5_72)
     {
-      if (have_3486 && cindex >= 5)      /* dg-* cores use the bswap instr that's not available on 386 */
-        cindex = 3;                     /* "SES 1-pipe" */
+      if (have_3486 && cindex >= 2)     /* dg-* cores use the bswap instr that's not available on 386 */
+        cindex = 0;                     /* "SES 1-pipe" */
     }
     else if (contestid == DES)
     {
@@ -1395,18 +1392,18 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
       {
         switch (detected_type & 0xff) // FIXME remove &0xff
         {
-          case 0x00: cindex = 5; break; // P5             == DG 2-pipe
-          case 0x01: cindex = 3; break; // 386/486        == SES 1-pipe
-          case 0x02: cindex = 4; break; // PII/PIII       == SES 2-pipe
-          case 0x03: cindex = 5; break; // Cx6x86         == DG 2-pipe
-          case 0x04: cindex = 5; break; // K5             == DG 2-pipe
-          case 0x05: cindex = 5; break; // K6             == DG 2-pipe
-          case 0x06: cindex = 3; break; // Cx486          == SES 1-pipe
+          case 0x00: cindex = 2; break; // P5             == DG 2-pipe
+          case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
+          case 0x02: cindex = 1; break; // PII/PIII       == SES 2-pipe
+          case 0x03: cindex = 2; break; // Cx6x86         == DG 2-pipe
+          case 0x04: cindex = 2; break; // K5             == DG 2-pipe
+          case 0x05: cindex = 2; break; // K6             == DG 2-pipe
+          case 0x06: cindex = 0; break; // Cx486          == SES 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
           case 0x08: cindex =-1; break; // PPro           == ?
-          case 0x09: cindex = 5; break; // K7             == DG 2-pipe
+          case 0x09: cindex = 2; break; // K7             == DG 2-pipe
           case 0x0A: cindex =-1; break; // Centaur C6     == ?
-          case 0x0B: cindex = 6; break; // Pentium 4      == DG 3-pipe
+          case 0x0B: cindex = 3; break; // Pentium 4      == DG 3-pipe
           default:   cindex =-1; break; // no default
         }
         #if defined(HAVE_NO_NASM)
@@ -2212,7 +2209,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     use_generic_proto = 1;
     switch (coresel)
     {
-
+     /* architectures without ansi cores */
      #if (CLIENT_CPU == CPU_ARM)
       case 0:
       default:
@@ -2235,7 +2232,31 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         pipeline_count = 2;
         coresel = 1;
         break;
-     #else
+     #elif (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
+      case 0:
+        unit_func.gen_72 = rc5_72_unit_func_ses;
+        pipeline_count = 1;
+        break;
+      case 1:
+      default:
+        unit_func.gen_72 = rc5_72_unit_func_ses_2;
+        pipeline_count = 2;
+        coresel = 1;
+        break;
+      case 2:
+        unit_func.gen_72 = rc5_72_unit_func_dg_2;
+        pipeline_count = 2;
+        break;
+      case 3:
+        unit_func.gen_72 = rc5_72_unit_func_dg_3;
+        pipeline_count = 3;
+        break;
+      case 4:
+        unit_func.gen_72 = rc5_72_unit_func_dg_3a;
+        pipeline_count = 3;
+        break;
+
+     #else /* the ansi cores */
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;
         pipeline_count = 4;
@@ -2252,29 +2273,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         break;
      #endif
 
-     #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
-      case 3:
-        unit_func.gen_72 = rc5_72_unit_func_ses;
-        pipeline_count = 1;
-        break;
-      case 4:
-        unit_func.gen_72 = rc5_72_unit_func_ses_2;
-        pipeline_count = 2;
-        break;
-      case 5:
-        unit_func.gen_72 = rc5_72_unit_func_dg_2;
-        pipeline_count = 2;
-        break;
-      case 6:
-        unit_func.gen_72 = rc5_72_unit_func_dg_3;
-        pipeline_count = 3;
-        break;
-      case 7:
-        unit_func.gen_72 = rc5_72_unit_func_dg_3a;
-        pipeline_count = 3;
-        break;
-     #endif
-
+     /* additional cores */
      #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
       case 4:
           unit_func.gen_72 = rc5_72_unit_func_KKS2pipes;
