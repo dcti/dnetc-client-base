@@ -1,86 +1,77 @@
-This is the new RC5DES v2.7100.412 client for IBM S/390
-servers running the OS/390 operating system.
 
-The client code has been ported and tested on an IBM 9672 System
-running OS/390 V2R5. Currently the client is single threaded. In
-order to exploit multiple CPUs on an SMP system, start multiple
-instances of the client.
+ RC5-DES Client for IBM S/390 servers running the OS/390 operating system.
+ Released by Friedemann Baitinger <fb@baiti.net>
+ Document revision $Id: readme.os390,v 1.5 1999/05/06 18:35:51 cyp Exp $
 
-Currently neither the HTTP enconding nor SOCKS support is available
-in this client. It depends on a direct connection to a keyserver or
-keyserver proxy.
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
+ This document covers information specific to the client for OS/390.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
 
-There are 2 installation procedures:
+    1.0  port specific notes
+    2.0  Getting started
+ 
+ 1.0  Notes: ---------------------------------------------------------
+    
+  The client code has been ported and tested on an IBM 9672 System
+  running OS/390 V2R5. 
+  
+  Currently the client is single threaded. In order to exploit multiple 
+  CPUs on an SMP system, start multiple instances of the client.
 
-1) download and unpack on a non S/390 system
+  Currently neither the HTTP enconding nor SOCKS support is available
+  in this client. It depends on a direct connection to a keyserver or
+  keyserver proxy.
 
-   o  unpack the archive to some temp directory for instance like:
+ 2.0  Getting started ------------------------------------------------
 
-      tar xvzf rc5des412-os390-nomt.tar.gz
+   There are 2 installation procedures:
 
-   o  you will get 3 files:
+   1) download and unpack on a non S/390 system
+      o  unpack the archive to some temp directory for instance like:
+         tar xvzf rc5des412-os390-nomt.tar.gz
+      o  you will get 3 files:
+            readme.OS390          (This file)
+            rc5des.txt            (generic documentation)
+            rc5des                (the binary)
+      o  the Readmes are in ASCII and you can read them right away,
+         in fact, you are reading them already ;)
+      o  The 'rc5des' is a binary file which only runs on an IBM S/390
+         mainframe system. ftp it to the target system in binary, do
+         a 'chmod +x rc5des', then you can execute it as 'rc5des'
 
-          1629 May 27 17:27 Readme.OS390
-         12638 Apr 28 23:38 Readme.txt
-        716800 May 25 22:32 rc5des
+   2) download and unpack on a S/390 system
+      o  ftp the rc5des412-os390-nomt.tar.gz to the target IBM S/390 machine
+      o  gunzip rc5des412-os390-nomt.tar.gz
+         if you don't have 'gunzip', to obtain it, go to:
+         http://www.s390.ibm.com/oe/bpxqp1.html
+      o  export A2E='-o from=ISO8859-1,to=IBM-1047'
+      o  pax $A2E -rf rc5des412-os390-nomt.tar
+   *) o  pax -rf rc5des412-os390-nomt.tar rc5des
+      o  chmod +x rc5des
+         *) The reason why this statement is there is because the tar 
+	    archive contains files which need to be translated from ASCII 
+	    to EBCDIC during extracting them from the archive, and it also 
+	    holds a binary executable (rc5des) which gets garbled by applying 
+	    this translation.  the 2nd call to pax extracts the binary 
+	    'straight', without applying any conversion. Sorry for the 
+	    confusion, I don't know (yet) of a way to ship binary and 
+	    ASCII data in a tar archive and treat them separately via 
+	    one call to 'pax'.
 
-   o  the Readmes are in ASCII and you can read them right away,
-      in fact, you are reading them already ;)
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help'.
 
-   o  The 'rc5des' is a binary file which only runs on an IBM S/390
-      mainframe system. ftp it to the target system in binary, do
-      a 'chmod +x rc5des', then you can execute it like:
+    A detailed guide to the various configuration options as well as 
+    applicable command line switches is in the enclosed rc5des.txt.
+    FAQs are available online at http://www.distributed.net/FAQ/
 
-      'rc5des -config'
-
-
-
-2) download and unpack on a S/390 system
-
-   o  ftp the rc5des412-os390-nomt.tar.gz to the target IBM S/390 machine
-
-   o  gunzip rc5des412-os390-nomt.tar.gz
-      if you don't have 'gunzip', to obtain it, go to:
-         
-               http://www.s390.ibm.com/oe/bpxqp1.html
-
-   o  export A2E='-o from=ISO8859-1,to=IBM-1047'
-
-   o  pax $A2E -rf rc5des412-os390-nomt.tar
-
-*) o  pax -rf rc5des412-os390-nomt.tar rc5des
-
-   o  chmod +x rc5des
-
-
-*) The reason why this statement is there is because the tar archive
-   contains files which need to be translated from ASCII to EBCDIC
-   during extracting them from the archive, and it also holds a binary
-   executable (rc5des) which gets garbled by applying this translation.
-   the 2nd call to pax extracts the binary 'straight', without applying
-   any conversion. Sorry for the confusion, I don't know (yet) of a
-   way to ship binary and ASCII data in a tar archive and treat them
-   separately via one call to 'pax'.
-
-
-In case of questions, feel free to contact:
-
-   Friedemann Baitinger <fb@baiti.net>
-
-
-#
-# $Log: readme.os390,v $
-# Revision 1.4  1998/11/13 02:36:35  friedbait
-# updated my email addr. to fb@baiti.net
-#
-# Revision 1.3  1998/06/27 22:43:14  friedbait
-# v2.7100.412
-#
-# Revision 1.2  1998/06/09 20:37:29  friedbait
-# v2.7023.408
-#
-# Revision 1.1  1998/06/01 17:01:17  friedbait
-# Initial release
-#
-#

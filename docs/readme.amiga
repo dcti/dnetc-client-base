@@ -1,76 +1,100 @@
-AmigaOS 2.7021.405 client - Released 1998-05-31
 
- Requirements:
+ RC5-DES Client for AmigaOS or later.
+ Released by Stefan `Blast' Smietanowski <blast@amiganet.org>
+ Document revision $Id: readme.amiga,v 1.7 1999/05/06 18:35:50 cyp Exp $
+                                                          
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
--AmigaOS 2.04 or greater (3.0 if you're running the PPC client)
--A TCP stack compatible with AmiTCP 3.0 or newer..
- There are several. Miami for example.
- Also AS225R2 with a special emulation library, look on the Amiga effort
- homepage/misc section for the archive link (address below).
+ This document covers information specific to the client for RISCOS.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
 
- There are two versions of the client.
- One 68k version and one PPC version.
+    0.0  System Requirements
+    1.0  Getting started
+    2.0  Platform/port specific notes
+    3.0  Thank you...
 
- The 68k version requires:
--An 020 or higher. An 040 or preferably 060 is HIGHLY recommended.
+ 0.0  System Requirements --------------------------------------------
 
- The PPC version requires:
--A 603e or higher PPC processor. Tested on 603e and 604e.
--Phase5's ppc.library version 45.15 or higher.
- Recommended you use at least 45.20 as that's what I use and it works fine
- for me.
+     - AmigaOS 2.04 or greater (3.0 if you're running the PPC client)
+     - A TCP stack compatible with AmiTCP 3.0 or newer..
+       There are several. Miami for example.
+       Also AS225R2 with a special emulation library, look on the Amiga 
+       effort homepage/misc section for the archive link (address below).
 
-Read rc5des.txt for instructions on installation and a FAQ and other info.
+  There are two versions of the client: One 68k version and one PPC version.
 
-Have any general problems? First try to read the rc5des.txt's FAQ section.
-Doesn't help? Mail me. blast@amiganet.org is my email.
+     The 68k version requires:
+     - An 020 or higher. An 040 or preferably 060 is HIGHLY recommended.
 
+     The PPC version requires:
+     - A 603e or higher PPC processor. Tested on 603e and 604e.
+     - Phase5's ppc.library version 45.15 or higher.
+       Recommended you use at least 45.20 as that's what I use and it 
+       works fine for me.
 
-If you want to contribute to the Amiga RC5 Team Effort, visit the effort
-homepage at http://homepage.cistron.nl/~ttavoly/rc5, it contains all the
-necessary info along with extensive information on usage, configuration,
-trouble shooting etc. IMPORTANT: the client defaults to rc5@distributed.net,
-unless you change this your work is going to Bovine instead of the Amiga
-effort. The usage section on the Amiga effort pages contains all you need to
-know to change this.
+ 1.0  Getting started ------------------------------------------------
 
+    Just unpack the client in a directory of your choice and fire it up.
 
-I just have to say Thank You to:
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help'.
 
-Steve Krueger - The man behind SAS/C and SAS/C for PPC.
+    If you prefer to have the client start automatically when the computer
+    is powered up, run the client with the -install switch. To remove the
+    client from the startup folder, run the client with -uninstall.
 
-- You helped a lot with the client from the compiler's point of view.
-  Also, you were right. A big THANK YOU.
+    A "Complete Step-by-Step Guide to Running Your First Client" is 
+    available at http://distributed.net/FAQ/
 
-My whole betatesting team - Oliver Wagner.
+ 2.0  client for AmigaOS specific notes ------------------------------------
 
-- You've tested more unstable clients than anyone would dare to. You've
-  crashed, you've had system problems due to the PPC client and you never
-  said "I don't want to test the client anymore". Another THANK YOU.
+    If you want to contribute to the Amiga RC5 Team Effort, visit the effort
+    homepage at http://homepage.cistron.nl/~ttavoly/rc5, it contains all the
+    necessary info along with extensive information on usage, configuration,
+    trouble shooting etc. 
+    
+    IMPORTANT: the client's default distributed.net ID is rc5@distributed.net.
+    Unless you change this your work is wasted effort.
+    The usage section on the Amiga effort pages contains all you need to
+    know to change this.
 
-Thomas Tavoly - coordinator of the Amiga RC5 Team.
+ 3.0  THANK YOU -----------------------------------------------------------
+ 
+    I just have to say Thank You to:
 
-- How many members are there now? Slightly over 1000 members? Well, without
-  you there wouldn't be. Even when I scared them away with my unstable
-  releases :). Keep up the good work!
+    -- Steve Krueger - The man behind SAS/C and SAS/C for PPC.
+       You helped a lot with the client from the compiler's point of view.
+       Also, you were right. A big THANK YOU.
 
-Various people emailing about the client.
+    -- My whole betatesting team - Oliver Wagner.
+       You've tested more unstable clients than anyone would dare to. You've
+       crashed, you've had system problems due to the PPC client and you 
+       never said "I don't want to test the client anymore". 
+       Another THANK YOU.
 
-There are generally three kinds of people:
+    -- Thomas Tavoly - coordinator of the Amiga RC5 Team.
+       How many members are there now? Slightly over 1000 members? Well, 
+       without you there wouldn't be. Even when I scared them away with my 
+       unstable releases :). Keep up the good work!
 
-1. The "There's a bug in there, and I think it could be related to ... " or
-   "maybe you should try to.." person. - You know you're appreciated.
+    -- Various people emailing about the client.
+       There are generally three kinds of people:
+       1. The "There's a bug in there, I think it could be related to ..." 
+          or "maybe you should try .." person. - You know you're appreciated.
+       2. The "Good work! Keep it up!" person - Can't say much except it's 
+          higly appreciated, makes me feel I've got somebody behind me.
+       3. The "You suck! Fix the client! It doesn't work!" - for you I can 
+          only say: GET A LIFE. I'm doing my best.
 
-2. The "Good work! Keep it up!" person - Can't say much except it's higly
-   appreciated, makes me feel I've got somebody behind me.
-
-3. The "You suck! Fix the client! It doesn't work!" - for you I can only say:
-   GET A LIFE. I'm doing my best.
-
-The whole Amiga RC5 Team
-
-- Without you there wouldn't be much of a point in doing the client, so keep
-  on cracking! Maybe YOU can find the key with the client.
-
-
-// Stefan `Blast' Smietanowski
+    -- The whole Amiga RC5 Team
+       Without you there wouldn't be much of a point in doing the client, 
+       so keep on cracking! Maybe YOU can find the key with the client.

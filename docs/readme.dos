@@ -1,12 +1,16 @@
-                                                    
+
  RC5-DES Client for x86 DOS (PC-,MS-,DR- or whatever) 5.0 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
-                                                          
- Welcome to the new RC5-DES (Project Monarch) Client for DOS.
+ document revision $Id: readme.dos,v 1.6 1999/05/06 18:35:51 cyp Exp $
+
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+
+ This document covers information specific to the client for DOS.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
     2.0  DOS specific notes
-    3.0  Help! 
    
  1.0  Getting started ------------------------------------------------
  
@@ -82,15 +86,3 @@
     to use DOS calls (buffer I/O etc), since the DOS kernel is not reentrant 
     and the timer interrupt can fire from within the kernel.
 
- 3.0  Help: ----------------------------------------------------------
-
-    Please report problems, suggestions to the port maintainer
-    Cyrus Patel <cyp@fb14.uni-mainz.de>  Don't fret if you don't get 
-    a response right away.
- 
-    If you need assistance regarding use or operation, post a message to 
-    the mailing list at <rc5@lists.distributed.net> (To subscribe to the 
-    mailing list, send a message to <majordomo@lists.distributed.net> with 
-    "subscribe rc5" as the message text).
-
-    Document revision $Id: readme.dos,v 1.5 1999/04/20 18:23:17 cyp Exp $

@@ -1,11 +1,15 @@
-                                                    
- distributed.net RC5-DES Client for *nix 
+
+ distributed.net RC5-DES client for the unix (-family)
+ document revision $Id: readme._ix,v 1.5 1999/05/06 18:35:50 cyp Exp $
                                                           
- Welcome to the new RC5-DES (Project Bovine/Project Monarch) Client.
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+
+ This document covers information specific to the client for *ix.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
-    2.0  *nix specific notes
-    3.0  Help! 
+    2.0  *ix specific notes
    
  1.0  Getting started ------------------------------------------------
  
@@ -53,41 +57,11 @@
     the client has started successfully if you do not get a message to the
     contrary. 
     
+    Beginning with v2.7110.442, the process name (as seen from ps) is always
+    'rc5des'. This is to facilitate scripted or system-wide 
+    -shutdowns/restarts.
+    
     As of November 7th, 1998, much of the client source, including all the 
     core crunch code that was previously scattered about, is available 
-    online at http://www.distributed.net/source/  All the above mentioned 
-    changes in 2.7102 were submitted by Cyrus Patel <cyp@fb14.uni-mainz.de>
-
- 3.0  Help: ----------------------------------------------------------
-
-    An immediate source of help is the IRC channel on EFnet. The 
-    #distributed channel is open 24 hours a day, 7 days a week.
-
-    If you need further assistance with client use or operation, refer to 
-    the the list of "Frequently asked Questions" (FAQs) available online 
-    at http://www.distributed.net/FAQ/ Documents cover every aspect of 
-    running a client including "The Complete Step by Step Guide to 
-    Running Your First Client", "How To Join A Team", and the popular 
-    "Statistics Server FAQ".
-
-    If you prefer, you may also post a message to the mailing list at 
-    <rc5@lists.distributed.net> (To subscribe to the mailing list, send 
-    a message to <majordomo@lists.distributed.net> with "subscribe rc5" 
-    as the message text).
-
-    A public database of known problems and incompatibilities is available
-    at http://www.distributed.net/cgi/buglist.cgi
-
-    More user support is available from <rc5help@distributed.net> as well
-    as from our regional support representatives listed at 
-    http://www.distributed.net/regional/index.html
+    online at http://www.distributed.net/source/
     
-    If you believe you have found a bug in the client or would like to
-    make a suggestion, please send a message to the coders at 
-    <coders@lists.distributed.net>. Don't forget to specify which platform 
-    you are running the client on. 
-    
-    If you believe you have found a bug specific to this port, or would
-    like to make a suggestion specific to this port, send a message to the 
-    port maintainer as listed on http://www.distributed.net/credits.html
-    Don't fret if you don't get a response right away.

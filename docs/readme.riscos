@@ -1,12 +1,16 @@
-                                                    
- RC5-DES CLI Client for RISC OS v3.10 or later.
+
+ distributed.net RC5-DES Client for RISC OS v3.10 or later.
  Released by Chris "chrisb" Berry <chrisb@distributed.net>
+ Document revision $Id: readme.riscos,v 1.1 1999/05/06 18:35:51 cyp Exp $
                                                           
- Welcome to the new RC5-DES (Project Bovine/Project Monarch) Client.
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+
+ This document covers information specific to the client for RISCOS.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
     2.0  RISC OS specific notes
-    3.0  Help! 
    
  1.0  Getting started ------------------------------------------------
  
@@ -56,37 +60,3 @@
 
     You may alternatively wish to install the RISC OS GUI client.
 
- 3.0  Help: ----------------------------------------------------------
-
-    An immediate source of help is the IRC channel on EFnet. The 
-    #distributed channel is open 24 hours a day, 7 days a week.
-
-    If you need further assistance with client use or operation, refer to 
-    the the list of "Frequently asked Questions" (FAQs) available online 
-    at http://www.distributed.net/FAQ/ Documents cover every aspect of 
-    running a client including "The Complete Step by Step Guide to 
-    Running Your First Client", "How To Join A Team", and the popular 
-    "Statistics Server FAQ".
-
-    If you prefer, you may also post a message to the mailing list at 
-    <rc5@lists.distributed.net> (To subscribe to the mailing list, send 
-    a message to <majordomo@lists.distributed.net> with "subscribe rc5" 
-    as the message text).
-
-    A public database of known problems and incompatibilities is available
-    at http://www.distributed.net/cgi/buglist.cgi
-
-    More user support is available from <rc5help@distributed.net> as well
-    as from our regional support representatives listed at 
-    http://www.distributed.net/regional/index.html
-    
-    If you believe you have found a bug in the client or would like to
-    make a suggestion, please send a message to the coders at 
-    <coders@lists.distributed.net>. Don't forget to specify which platform 
-    you are running the client on. 
-    
-    If you believe you have found a bug specific to this port, or would
-    like to make a suggestion specific to this port, send a message to the 
-    port maintainer as listed on http://www.distributed.net/credits.html
-    Don't fret if you don't get a response right away.
-    

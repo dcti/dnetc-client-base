@@ -1,18 +1,19 @@
-                                                    
- RC5-DES Client for NetWare 3.11 and above
+
+ distributed.net RC5-DES Client for NetWare 3.11 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ Document revision $Id: readme.nw,v 1.5 1999/05/06 18:35:51 cyp Exp $
                                                           
- Welcome to the new RC5-DES (Project Monarch) Client for NetWare.
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
  This version is a unified client for both SMP and non-SMP machines.
 
-    1.0  Getting started
-    2.0  NetWare specific notes
-    3.0  Help! 
-   
-    Refer to the enclosed rc5des.txt or browse the online FAQ at
-    http://www.distributed.net/FAQ/client-2.7.html for non-NetWare 
-    specific issues or command line and ini file options.
+ This document covers information specific to the client for RISCOS.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
 
+    1.0  Getting started
+    2.0  distributed.net client for NetWare specific notes
+    3.0  distributed.net client for NetWare Help!
+   
     NetWare 3.1x specific note:
      
     A3112.NLM is required by this version of the client. NetWare 3.x 
@@ -119,3 +120,4 @@
     a) If you get a startup message saying:
           Cannot find public symbol XXX
        read the section on "Getting Started".
+

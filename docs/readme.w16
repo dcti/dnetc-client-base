@@ -1,12 +1,16 @@
-                                                    
- RC5-DES Client for Win16 (MS-Windows,WINE or whatever) 3.1 and above
+
+ RC5-DES Client for Win16 (MS-Windows 3.1,WINE or whatever) and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
+ Document revision $Id: readme.w16,v 1.6 1999/05/06 18:35:52 cyp Exp $
                                                           
- Welcome to the new RC5-DES (Project Monarch) Client for Win16.
+ Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
+
+ This document covers information specific to the client for Win16.
+ Refer to the enclosed rc5des.txt or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
     2.0  Win16 specific notes
-    3.0  Help! 
    
  1.0  Getting started ------------------------------------------------
  
@@ -72,15 +76,4 @@
     world - DOS adds the number of hours to local time to determine what
     GMT/UTC time is. Unix adds the offset to GMT/UTC to determine what 
     local time is.
-
- 3.0  Help: ----------------------------------------------------------
-
-    Please report problems, suggestions to the port maintainer
-    Cyrus Patel <cyp@fb14.uni-mainz.de>  Don't fret if you don't get 
-    a response right away.
- 
-    If you need assistance regarding use or operation, post a message to 
-    the mailing list at <rc5@lists.distributed.net> (To subscribe to the 
-    mailing list, send a message to <majordomo@lists.distributed.net> with 
-    "subscribe rc5" as the message text).
 

@@ -1,5 +1,6 @@
 
-  distributed.net's RC5DES client
+  distributed.net's RC5DES client documentation
+  document revision $Id: rc5des.txt,v 1.36 1999/05/06 18:35:50 cyp Exp $
 
   Copyright distributed.net 1997-1999 - All Rights Reserved
   For use in distributed.net projects only.
@@ -21,29 +22,6 @@
          5.2 via e-mail
          5.3 to/from "remote" buffers that are serviced by another client 
     6.0  Help!
-
-
- This document's revision history ------------------------------------
-
-    Revision $Id: rc5des.txt,v 1.35 1999/05/04 15:55:08 cyp Exp $
-    Nov 13. 1998 Cyrus Patel <cyp@fb14.uni-mainz.de> moved platform
-                 specific information to separate readmes, replaced a 
-                 great deal with references to documentation available
-                 online or built-in to the client, cleaned up and
-                 reorganized the file.
-    Nov 08. 1998 Mike "Silby" Silbersack <silby@silby.com> gutted the 
-                 options sections for 2.7102
-    Jun 26. 1998 Mike "Silby" Silbersack <silby@silby.com> slightly 
-                 updated this document for 2.7100
-    May 13. 1998 Mike "Silby" Silbersack <silby@silby.com> updated this 
-                 document and added information about specific platforms.
-    Feb 13. 1998 Mike "Silby" Silbersack <silby@silby.com> updated and 
-                 expanded this document.
-                 Paul Gentle <gentleps@muohio.edu> converted this document 
-                 to a Windows help file.
-    Dec 20. 1997 The original (v2.6401) version of this document was 
-                 created by Daniel "dbaker" Baker, assisted by 
-                 Alex "kiddo" Wong
 
  1.0  Introduction ---------------------------------------------------
 
@@ -67,9 +45,8 @@
     In general, all that is required is:
     - a 32-bit processor
     - one megabyte of free memory
-    - a TCP/IP internet connection or another method of sharing files 
-      with another computer that is also running the client.
-    - less than a megabyte of disk space (optional if TCP/IP is available)
+    - a method to update local buffers (fetch/flush work). See section 5.
+    - less than a megabyte of disk space (optional)
 
     The most important requirement for running the distributed.net client,
     of course, is authorization to run the client on the computer that it
