@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.39 2000/10/13 22:12:10 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.40 2000/10/20 21:08:45 cyp Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -76,10 +76,11 @@ void trace_out( int indlevel, const char *format, ... )
   if (file)
   {
     char buffer[64];
-    time_t t = time(NULL);
-    struct tm *lt = localtime( &t );
-    fprintf(file, "%02d:%02d:%02d: %s", lt->tm_hour, lt->tm_min, lt->tm_sec,
-                  __trace_tracing_filename);
+    struct timeval tv;
+    if (CliClock(&tv)!=0)
+      tv.tv_sec = tv.tv_usec = 0;
+    fprintf(file, "%05d.%03d: %s ", (int)tv.tv_sec, (int)(tv.tv_usec/1000),
+                  __trace_tracing_filename );
     if (indentlevel > 0)
     {
       size_t spcs = ((size_t)indentlevel);
