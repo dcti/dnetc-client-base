@@ -18,47 +18,49 @@ all: rc5des
 # --------------------------------------------
 
 RC5_OBJS =                    \
-        $(OUTPUTPATH)/client.obj     \
-        $(OUTPUTPATH)/threadcd.obj   \
-        $(OUTPUTPATH)/disphelp.obj   \
-        $(OUTPUTPATH)/autobuff.obj   \
-        $(OUTPUTPATH)/iniread.obj    \
-        $(OUTPUTPATH)/network.obj    \
-        $(OUTPUTPATH)/scram.obj      \
-        $(OUTPUTPATH)/mail.obj       \
-        $(OUTPUTPATH)/cliconfig.obj  \
-        $(OUTPUTPATH)/clitime.obj    \
-        $(OUTPUTPATH)/clirate.obj    \
-        $(OUTPUTPATH)/clisrate.obj   \
-        $(OUTPUTPATH)/clicdata.obj   \
-        $(OUTPUTPATH)/buffwork.obj   \
-        $(OUTPUTPATH)/convdes.obj    \
-        $(OUTPUTPATH)/problem.obj    \
-        $(OUTPUTPATH)/des-x86.obj
+	$(OUTPUTPATH)/client.obj     \
+	$(OUTPUTPATH)/threadcd.obj   \
+	$(OUTPUTPATH)/disphelp.obj   \
+	$(OUTPUTPATH)/autobuff.obj   \
+	$(OUTPUTPATH)/iniread.obj    \
+	$(OUTPUTPATH)/network.obj    \
+	$(OUTPUTPATH)/scram.obj      \
+	$(OUTPUTPATH)/mail.obj       \
+	$(OUTPUTPATH)/cliconfig.obj  \
+	$(OUTPUTPATH)/clitime.obj    \
+	$(OUTPUTPATH)/clirate.obj    \
+	$(OUTPUTPATH)/clisrate.obj   \
+	$(OUTPUTPATH)/clicdata.obj   \
+	$(OUTPUTPATH)/buffwork.obj   \
+	$(OUTPUTPATH)/convdes.obj    \
+	$(OUTPUTPATH)/problem.obj    \
+	$(OUTPUTPATH)/des-x86.obj
 
 PREBUILT_OBJS =                   \
-        $(OUTPUTPATH)/rg-486.obj   \
-        $(OUTPUTPATH)/rg-6x86.obj  \
-        $(OUTPUTPATH)/rg-k5.obj    \
-        $(OUTPUTPATH)/rg-k6.obj    \
-        $(OUTPUTPATH)/rc5p5brf.obj \
-        $(OUTPUTPATH)/rg-p6.obj    \
-        $(OUTPUTPATH)/bdeslow.obj  \
-        $(OUTPUTPATH)/bbdeslow.obj \
-        $(OUTPUTPATH)/x86ident.obj
+	$(OUTPUTPATH)/rg-486.obj   \
+	$(OUTPUTPATH)/rg-6x86.obj  \
+	$(OUTPUTPATH)/rg-k5.obj    \
+	$(OUTPUTPATH)/rg-k6.obj    \
+	$(OUTPUTPATH)/rc5p5brf.obj \
+	$(OUTPUTPATH)/rg-p6.obj    \
+	$(OUTPUTPATH)/bdeslow.obj  \
+	$(OUTPUTPATH)/bbdeslow.obj \
+	$(OUTPUTPATH)/p1bdespro.obj  \
+	$(OUTPUTPATH)/p2bdespro.obj  \
+	$(OUTPUTPATH)/x86ident.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib
 
 # --------------------------------------------
 
 {$(DESPATH)}.cpp{$(OUTPUTPATH)}.obj:
-        cl -c $(OPTS_MSVC) -Fo$@ $**
+	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj:
-        cl -c $(OPTS_MSVC) -Fo$@ $**
+	cl -c $(OPTS_MSVC) -Fo$@ $**
 
 {$(WIN32OS2)}.asm{$(OUTPUTPATH)}.obj:
-        tasm32 /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+	tasm32 /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
 
 # --------------------------------------------
 
