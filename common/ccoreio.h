@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.10 2002/09/23 16:58:36 acidblood Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.11 2002/09/24 01:11:09 acidblood Exp $"
 
 typedef enum
 {
@@ -46,6 +46,7 @@ typedef struct
   struct {u32 hi,lo;} plain;  /* plaintext (already mixed with iv!) */
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,mid,lo;} L0; /* key, changes with every unit * PIPELINE_COUNT. */
+  struct {u16 count; u32 hi,mid,lo;} check; /* counter-measure check */
 } RC5_72UnitWork;
 
 #ifndef MIPSpro

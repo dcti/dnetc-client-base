@@ -3,6 +3,10 @@
 #define Q 0x9E3779B9
 #define ROTL(x,y) (((x)<<(y&(0x1F))) | ((x)>>(32-(y&(0x1F)))))
 
+#ifdef __cplusplus
+extern "C" u32 rc5_72_unit_func_ansi_4 ( RC5_72UnitWork *, u32 );
+#endif
+
 u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 {
   u32 i, j, k;
@@ -11,13 +15,13 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
   u32 kiter = 0;
   while (timeslice--)
   {
-    L1[0] = rc5unitwork->L0.hi;
+    L1[0] = rc5_72unitwork->L0.hi;
     L2[0] = 0x01 + L1[0];
     L3[0] = 0x01 + L2[0];
     L4[0] = 0x01 + L3[0];
 
-    L1[1] = L2[1] = L3[1] = L4[1] = rc5unitwork->L0.mid;
-    L1[2] = L2[2] = L3[2] = L4[2] = rc5unitwork->L0.lo;
+    L1[1] = L2[1] = L3[1] = L4[1] = rc5_72unitwork->L0.mid;
+    L1[2] = L2[2] = L3[2] = L4[2] = rc5_72unitwork->L0.lo;
 
     for (S1[0] = S2[0] = S3[0] = S4[0] = P, i = 1; i < 26; i++)
       S1[i] = S2[i] = S3[i] = S4[i] = S1[i-1] + Q;
@@ -86,7 +90,7 @@ u32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
     if (A4 == rc5_72unitwork->cypher.hi)
     {
       ++rc5_72unitwork->check.count;
-      rc5_72unitwork->check.hi = rc5_72unitwork->L0.vlo + 0x03;
+      rc5_72unitwork->check.hi = rc5_72unitwork->L0.hi + 0x03;
       rc5_72unitwork->check.lo = rc5_72unitwork->L0.lo;
       rc5_72unitwork->check.hi = rc5_72unitwork->L0.hi;
       if (B4 == rc5_72unitwork->cypher.lo)

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.85 2002/09/24 00:33:05 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.86 2002/09/24 01:11:09 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -333,7 +333,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     #if defined(__VEC__)                /* OS+compiler support altivec */ 
     have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
     #endif
-
+#ifdef HAVE_OLD_CRYPTO
     if (contestid == RC5)
     {
       if (have_pwr)
@@ -345,7 +345,9 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       if (!have_vec && cindex == 5)     /* "crunch-vec-7450" */
         cindex = 1;                     /* "lintilla" */
     }
-    else if (contestid == OGR)
+    else
+#endif
+    if (contestid == OGR)
     {
       if (have_pwr)
         cindex = 1;                     /* "PowerRS" */
@@ -369,7 +371,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     #if defined(SMC)
     have_smc = (x86_smc_initialized > 0);
     #endif
-
+#ifdef HAVE_OLD_CRYPTO
     if (contestid == RC5)
     {
       if (!have_nasm && cindex == 6)    /* "RG/HB re-pair II" */ 
@@ -400,6 +402,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       if (!have_mmx && cindex == 3)   /* "BRF MMX bitslice */
         cindex = 1;                   /* "movzx Bryd" */ 
     }
+#endif /* HAVE_OLD_CRYPTO */
   }
   #endif         
   contestid = contestid; /* possibly unused */
@@ -817,7 +820,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
 
   // While no core benchmark data is available, run microbenchs for every target
-  if (contestid == RC5-72)
+  if (contestid == RC5_72)
     selcorestatics.corenum[RC5_72] = -1;
   
   // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch and cpu here")

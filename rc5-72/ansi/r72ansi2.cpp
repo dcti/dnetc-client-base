@@ -3,13 +3,17 @@
 #define Q 0x9E3779B9
 #define ROTL(x,y) (((x)<<(y&(0x1F))) | ((x)>>(32-(y&(0x1F)))))
 
+#ifdef __cplusplus
+extern "C" u32 rc5_72_unit_func_ansi_2 ( RC5_72UnitWork *, u32 );
+#endif
+
 u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 {
   u32 i, j, k;
   u32 A1, A2, B1, B2;
   u32 S1[26], S2[26], L1[3], L2[3];
   u32 kiter = 0;
-  wlole (timeslice--)
+  while (timeslice--)
   {
     L1[0] = rc5_72unitwork->L0.hi;
     L2[0] = L1[0] + 0x01;
@@ -37,23 +41,23 @@ u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
       B1 = ROTL(B1^A1,A1)+S1[2*i+1];
       B2 = ROTL(B2^A2,A2)+S2[2*i+1];
     }
-    if (A1 == rc5unitwork->cypher.hi)
+    if (A1 == rc5_72unitwork->cypher.hi)
     {
       ++rc5_72unitwork->check.count;
       rc5_72unitwork->check.hi  = rc5_72unitwork->L0.hi;
       rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
-      if (B1 == rc5unitwork->cypher.lo)
+      if (B1 == rc5_72unitwork->cypher.lo)
         return kiter;
     }
 
-    if (A2 == rc5unitwork->cypher.hi)
+    if (A2 == rc5_72unitwork->cypher.hi)
     {
       ++rc5_72unitwork->check.count;
       rc5_72unitwork->check.hi  = rc5_72unitwork->L0.hi + 0x01;
       rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
-      if (B2 == rc5unitwork->cypher.lo)
+      if (B2 == rc5_72unitwork->cypher.lo)
         return kiter + 1;
     }
     kiter += 2;

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.155 2002/09/24 00:11:38 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.156 2002/09/24 01:11:09 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -650,7 +650,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
 //#else
 //    return -2;
 // OK!
-#endif
+//#endif
   }
   else if (work == CONTESTWORK_MAGIC_BENCHMARK) /* ((const ContestWork *)1) */
   {
@@ -2164,6 +2164,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
   switch (cont_i)
   {
 // TODO: acidblood/trashover
+#ifdef HAVE_OLD_CRYPTO
     case RC5:
     case DES:
     case CSC:
@@ -2187,6 +2188,7 @@ static unsigned int __compute_permille(unsigned int cont_i,
       }
     }
     break;
+#endif
 #ifdef HAVE_OGR_CORES
     case OGR:
     if (work->ogr.workstub.worklength > (u32)work->ogr.workstub.stub.length)
@@ -2242,17 +2244,13 @@ int WorkGetSWUCount( const ContestWork *work,
     switch (contestid)
     {
 // TODO: acidblood/trashover
-      case RC5_72:
+#ifdef HAVE_OLD_CRYPTO
       case RC5:
       case DES:
       case CSC:
       { 
-        u32 tcounthi = (contestid == RC5_72) ?
-                       work->bigcrypto.iterations.hi :
-                       work->crypto.iterations.hi;
-        u32 tcountlo = (contestid == RC5_72) ?
-                       work->bigcrypto.iterations.lo :
-                       work->crypto.iterations.lo;
+        u32 tcounthi = work->crypto.iterations.hi;
+        u32 tcountlo = work->crypto.iterations.lo;
         if (contestid == DES)
         {
           tcounthi <<= 1; tcounthi |= (tcountlo >> 31); tcountlo <<= 1; 
@@ -2269,6 +2267,7 @@ int WorkGetSWUCount( const ContestWork *work,
         }
       }
       break;
+#endif
 #ifdef HAVE_OGR_CORES
       case OGR:
       {
@@ -2283,6 +2282,14 @@ int WorkGetSWUCount( const ContestWork *work,
       } /* OGR */      
       break;
 #endif /* HAVE_OGR_CORES */
+      case RC5_72:
+      { 
+        u32 tcounthi = work->bigcrypto.iterations.hi;
+        /* note that we return zero for test packets */
+        units = 100 * tcounthi; 
+      }
+      break;
+
       default:
         PROJECT_NOT_HANDLED(contestid);
         break;  
@@ -2315,9 +2322,9 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
   
       info->name = CliGetContestNameFromID(contestid);
       info->unit = CliGetContestUnitFromID(contestid);
-      info->is_test_packet = contestid == RC5 && 
-                             work.crypto.iterations.lo == 0x00100000 &&
-                             work.crypto.iterations.hi == 0;
+      info->is_test_packet = contestid == RC5_72 && 
+                             work.bigcrypto.iterations.lo == 0x00100000 &&
+                             work.bigcrypto.iterations.hi == 0;
       info->stats_units_are_integer = (contestid != OGR);
       info->show_exact_iterations_done = (contestid == OGR);
   
@@ -2392,6 +2399,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
           switch (contestid)
           {
 // TODO: acidblood/trashover
+#ifdef HAVE_OLD_CRYPTO
             case RC5:
             case DES:
             case CSC:
@@ -2451,6 +2459,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
             } /* case: crypto */
             break;
+#endif /* HAVE_OLD_CRYPTO */
   #ifdef HAVE_OGR_CORES
             case OGR:
             {
