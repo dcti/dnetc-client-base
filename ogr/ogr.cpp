@@ -2,8 +2,11 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * @(#)$Id: ogr.cpp,v 1.3.2.11 2000/01/24 16:09:13 gregh Exp $
-*/
+ */
+
+const char *clisrate_cpp(void) {
+return "@(#)$Id:"; }
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
