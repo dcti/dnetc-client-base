@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.45 2000/03/14 23:08:18 mfeiri Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.46 2000/03/18 00:29:43 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1171,6 +1171,17 @@ int ClientRun( Client *client )
     }
   }
 
+  #ifdef DEBUG
+  for (int i = 0; i < CONTEST_COUNT; ++i)
+    if (IsProblemLoadPermitted(0, i))
+      Log( "%s thresholds: in: %d (%d wu/%d h) out: %d (%d wu)\n",
+           CliGetContestNameFromID(i),
+           ClientGetInThreshold(client, i, 1),
+           client->inthreshold[i],
+           client->timethreshold[i],
+           ClientGetOutThreshold(client, i),
+           client->outthreshold[i] );
+  #endif
 
   //============================= MAIN LOOP =====================
   //now begin looping until we have a reason to quit
