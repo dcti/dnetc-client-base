@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.20 1999/10/16 16:37:44 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.21 1999/10/18 01:42:03 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -52,7 +52,7 @@ void ResetClientData(Client *client)
     memset((void *)&(client->membufftable[contest]),0,sizeof(client->membufftable[0]));
 
   /* -- general -- */
-  strcpy(client->id, "rc5@distributed.net" );
+  client->id[0]='\0';
   client->quietmode=0;
   client->blockcount = 0;
   client->minutes = 0;
@@ -83,7 +83,7 @@ void ResetClientData(Client *client)
   for (contest=0; contest<CONTEST_COUNT; contest++)
   {
     client->inthreshold[contest] = client->outthreshold[contest] = 10;
-    client->preferred_blocksize[contest] = 31;
+    client->preferred_blocksize[contest] = 30;
   }
 
   /* -- perf -- */
@@ -221,7 +221,14 @@ static void PrintBanner(const char *dnet_id,int level,int restarted)
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
-      LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n", dnet_id );
+      if (dnet_id[0] == '\0' || strcmp(dnet_id,"rc5@distributed.net")==0)
+        LogRaw( "\n* =========================================================================="
+                "\n* The client is not configured with your email address (distributed.net ID) "
+                "\n* Work done cannot be credited until it is set. Please run '%s -config'"
+                "\n* =========================================================================="
+                "\n\n", utilGetAppName());
+      else              
+        LogRaw( "Using email address (distributed.net ID) \'%s\'\n\n",dnet_id);
 
       if (CliIsTimeZoneInvalid()) /*clitime.cpp (currently DOS,OS/2,WIN[16] only)*/
       {
