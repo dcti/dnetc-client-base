@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.5  1998/06/29 17:05:43  daa
+// bump to 413.
+//
 // Revision 1.4  1998/06/28 20:52:11  jlawson
 // added version string without leading "v" character
 //
@@ -22,10 +25,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        00
-#define CLIENT_BUILD_FRAC   412
+#define CLIENT_BUILD_FRAC   413
 
-#define CLIENT_VERSIONSTRING    "v2.7100.412"
-#define CLIENT_VERSIONSTRING2   "2.7100.412"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7100.413"
+#define CLIENT_VERSIONSTRING2   "2.7100.413"        // no leading "v"
 
 #endif // _VERSION_H
 
