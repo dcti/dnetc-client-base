@@ -7,7 +7,7 @@
 .section	".rodata"
 
 Id_tag:
-	.ascii	"@(#)$Id: r72-anbe1.gcc.S,v 1.1.2.2 2003/04/19 17:33:54 andreasb Exp $\000"
+	.ascii	"@(#)$Id: r72-anbe1.gcc.S,v 1.1.2.3 2003/04/19 17:34:24 andreasb Exp $\000"
 
 
 .section	".text"
@@ -95,6 +95,12 @@ rc5_72_unit_func_anbe_1:
 	st	%l7,[s_uw(r72unitwork_check_lo)]
 	st	%i1,[s_save_iterationsP]
 
+#define pred3(j)	_pred3(j)
+#define _pred3(j)	pred3_##j
+#define pred3_0		2
+#define pred3_1		0
+#define pred3_2		1
+
 #define P		0xB7E15163
 #define Q		0x9E3779B9
 #define P_ROTL3		0xBF0A8B1D
@@ -112,14 +118,13 @@ rc5_72_unit_func_anbe_1:
 
 
 #define R1SS		%g1
-#define R1L(i)		R1L_##i
+#define R1L(j)		_R1L(j)
+#define _R1L(j)		R1L_##j
 #define R1L_0		%l0
 #define R1L_1		%l1
 #define R1L_2		%l2
-#define R1Lpred(i)	R1L##i##pred
-#define R1L0pred	R1L_2
-#define R1L1pred	R1L_0
-#define R1L2pred	R1L_1
+#define R1Lpred(j)	R1L(pred3(j))
+
 
 #define R1A		%l6
 #define R1B		%l7
@@ -127,23 +132,8 @@ rc5_72_unit_func_anbe_1:
 #define T1a		%o4
 #define	T1b		%o5
 
-
-#define R2SS		%g2
-#define R2L(i)		R2L_##i
-#define R2L_0		%g3
-#define R2L_1		%g4
-#define R2L_2		%g5
-#define R2Lpred(i)	R2L##i##pred
-#define R2L0pred	R2L_2
-#define R2L1pred	R2L_0
-#define R2L2pred	R2L_1
-
-#define R2A		%g6
-#define R2B		%g7
-
-#define T2a		%i3
-#define	T2b		%i4
-
+#define Tc		%g2
+#define Td		%g3
 
 	ld	[%i1],RGiterations
 	ld	[%i0+r72unitwork_L0_hi],RGLhi
@@ -192,6 +182,7 @@ mainloop:
 ! L(i)   = ROTL(L(i), tmp)
 
 #define ROUND1(i,j)				\
+ROUND1_i##i##_j##j:				\
 /* ! ROUND 1 (i,j) */				\
 	add	RGSinit,RCQ,RGSinit		;\
 	add	R1SS,R1Lpred(j),R1SS		;\
@@ -263,6 +254,7 @@ mainloop:
 ! L(i)   = ROTL(L(i), tmp)
 
 #define ROUND2(i,j)				\
+ROUND2_i##i##_j##j:				\
 /* ! ROUND 2 (i,j) */				\
 	ld	[s_S1(i)],T1a			;\
 	add	R1SS,R1Lpred(j),R1SS		;\
@@ -305,10 +297,17 @@ mainloop:
 	ROUND2(24,2)
 	ROUND2(25,0)
 
+! ##########################################################################
+
 ! ROUND 3 - key expansion and encryption
 ! do not save expanded key, not referenced after encryption
 
+#define OLDROUND3 0
+
+#if OLDROUND3
+
 #define ROUND3(i,j)				\
+ROUND3_i##i##_j##j:				\
 /* ! ROUND 3 (i,j) */				\
 	ld	[s_S1(i)],T1a			;\
 	add	R1SS,R1Lpred(j),R1SS		;\
@@ -325,6 +324,7 @@ mainloop:
 	or	R1L(j),T1b,R1L(j)		;\
 
 #define ROUND3S(i,j)				\
+ROUND3_S_i##i##_j##j:				\
 /* ! ROUND 3 (i,j) */				\
 	ld	[s_S1(i)],T1a			;\
 	add	R1SS,R1Lpred(j),R1SS		;\
@@ -335,6 +335,7 @@ mainloop:
 	/* !st	R1SS,[s_S1(i)]	*/		;\
 
 #define ROUND3L(i,j)				\
+ROUND3_L_i##i##_j##j:				\
 /* ! ROUND 3 (i,j) */				\
 	add	R1SS,R1Lpred(j),T1a		;\
 	add	R1L(j),T1a,R1L(j)		;\
@@ -343,6 +344,67 @@ mainloop:
 	srl	R1L(j),T1a,R1L(j)		;\
 	or	R1L(j),T1b,R1L(j)		;\
 
+#else
+
+#define ROUND3_i0(i,j)  ROUND3_S(i,j,pred3(pred3(j)),pred3(j))
+#define ROUND3(i,j)     ROUND3_L_S(i,j,pred3(pred3(j)),pred3(j))
+#define ROUND3EVEN(i,j) ROUND3_L_S_A(i,j,A,B,pred3(pred3(j)),pred3(j))
+#define ROUND3ODD(i,j)  ROUND3_L_S_A(i,j,B,A,pred3(pred3(j)),pred3(j))
+
+#define ROUND3_S(i,j,Lpred,Lcurr)		\
+ROUND3_S_i##i##_j##j:				\
+/*S*/	ld	[s_S1(i)],T1a			;\
+/*S*/	add	R1SS,R1L(Lcurr),R1SS		;\
+/*S*/	add	R1SS,T1a,R1SS			;\
+/*S*/	sll	R1SS,3,T1a			;\
+/*S*/	srl	R1SS,29,R1SS			;\
+/*S*/	or	R1SS,T1a,R1SS			;\
+/*S*/	/* !st	R1SS,[s_S1(i)]	*/		;\
+
+#define ROUND3_L_S(i,j,Lpred,Lcurr)		\
+ROUND3_L_S_i##i##_j##j:				\
+/*L*/	add	R1SS,R1L(Lpred),T1a		;\
+/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+/*S*/	ld	[s_S1(i)],T1a			;\
+/*S*/	add	R1SS,R1L(Lcurr),R1SS		;\
+/*S*/	add	R1SS,T1a,R1SS			;\
+/*S*/	sll	R1SS,3,T1a			;\
+/*S*/	srl	R1SS,29,R1SS			;\
+/*S*/	or	R1SS,T1a,R1SS			;\
+/*S*/	/* !st	R1SS,[s_S1(i)]	*/		;\
+
+#define ROUND3_L_S_A(i,j,A,B,Lpred,Lcurr)	\
+ROUND3_L_S_A_i##i##_j##j:			\
+/*L*/	add	R1SS,R1L(Lpred),T1a		;\
+/*A*/	xor	R1##A,R1##B,R1##A		;\
+						\
+/*A*/	sll	R1##A,R1##B,Tc			;\
+/*L*/	add	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+						\
+/*L*/	sll	R1L(Lcurr),T1a,T1b		;\
+/*L*/	neg	T1a				;\
+						\
+/*L*/	srl	R1L(Lcurr),T1a,R1L(Lcurr)	;\
+/*A*/	neg	R1##B,Td			;\
+/*S*/	ld	[s_S1(i)],T1a			;\
+						\
+/*A*/	srl	R1##A,Td,R1##A			;\
+/*L*/	or	R1L(Lcurr),T1b,R1L(Lcurr)	;\
+						\
+/*S*/	add	R1SS,T1a,R1SS			;\
+/*S*/	add	R1SS,R1L(Lcurr),R1SS		;\
+/*S*/	sll	R1SS,3,T1a			;\
+/*A*/	or	R1##A,Tc,R1##A			;\
+/*S*/	srl	R1SS,29,R1SS			;\
+/*S*/	or	R1SS,T1a,R1SS			;\
+/*S*/	/* !st	R1SS,[s_S1(i)]	*/		;\
+/*A*/	add	R1##A,R1SS,R1##A		;\
+
+#endif
 
 ! #define FINAL_BLOCK(i) \
 !    A = ROTL(A^B,B)+S[2*i]; \
@@ -357,7 +419,10 @@ mainloop:
 ! B  = ROTL(B,A)
 ! B += SS
 
+#if OLDROUND3
+
 #define ENCRYPTION_EVEN(i)			\
+ENCR_EVEN_i##i:					\
 /* ! ENCRYPTION EVEN (i) */			\
 	xor	R1A,R1B,R1A			;\
 	sll	R1A,R1B,T1a			;\
@@ -367,6 +432,7 @@ mainloop:
 	add	R1A,R1SS,R1A			;\
 
 #define ENCRYPTION_ODD(i)			\
+ENCR_ODD_i##i:					\
 /* ! ENCRYPTION ODD (i)	*/			\
 	xor	R1B,R1A,R1B			;\
 	sll	R1B,R1A,T1a			;\
@@ -375,7 +441,19 @@ mainloop:
 	or	R1B,T1a,R1B			;\
 	add	R1B,R1SS,R1B			;\
 
+#endif
 
+#define ENCRYPTION(i,A,B)			\
+ENCR_i##i:					\
+/*A*/	xor	R1##A,R1##B,R1##A		;\
+/*A*/	sll	R1##A,R1##B,T1a			;\
+/*A*/	neg	R1##B,T1b			;\
+/*A*/	srl	R1##A,T1b,R1##A			;\
+/*A*/	or	R1##A,T1a,R1##A			;\
+/*A*/	add	R1##A,R1SS,R1##A		;\
+
+
+#if OLDROUND3
 
 	ld	[s_uw(r72unitwork_plain_lo)],R1A
 	ld	[s_uw(r72unitwork_plain_hi)],R1B
@@ -438,6 +516,45 @@ mainloop:
 	ENCRYPTION_ODD(25)
 */
 
+#else
+
+	ld	[s_uw(r72unitwork_plain_lo)],R1A
+	ld	[s_uw(r72unitwork_plain_hi)],R1B
+
+	ROUND3_i0(0,1)
+	add	R1A,R1SS,R1A
+
+	ROUND3(1,2)
+	add	R1B,R1SS,R1B
+
+	ROUND3EVEN(2,0)
+	ROUND3ODD (3,1)
+	ROUND3EVEN(4,2)
+	ROUND3ODD (5,0)
+	ROUND3EVEN(6,1)
+	ROUND3ODD (7,2)
+	ROUND3EVEN(8,0)
+	ROUND3ODD (9,1)
+	ROUND3EVEN(10,2)
+	ROUND3ODD (11,0)
+	ROUND3EVEN(12,1)
+	ROUND3ODD (13,2)
+	ROUND3EVEN(14,0)
+	ROUND3ODD (15,1)
+	ROUND3EVEN(16,2)
+	ROUND3ODD (17,0)
+	ROUND3EVEN(18,1)
+	ROUND3ODD (19,2)
+	ROUND3EVEN(20,0)
+	ROUND3ODD (21,1)
+	ROUND3EVEN(22,2)
+	ROUND3ODD (23,0)
+	ROUND3EVEN(24,1)
+/* ! delayed after cypher_lo test	
+	ROUND3ODD (25,2)
+*/
+
+#endif
 
 
 
@@ -520,9 +637,13 @@ complex_increment:
 
 
 partial_success:
+#if OLDROUND3
 	ROUND3L(24,1)
 	ROUND3(25,2)
 	ENCRYPTION_ODD(25)
+#else
+	ROUND3ODD (25,2)
+#endif
 	!ld	[s_uw(r72unitwork_cypher_lo)],RGcypher_lo
 	!cmp	R1A,RGcypher_lo
 	!be	test_pipe_1_lo_success
@@ -544,7 +665,7 @@ test_pipe_1_lohi_success:
 	sub	T1b,RGiterations,T1b
 	st	T1b,[T1a]
 	!b	finish
-	mov	RESULT_FOUND,%i0
+	 mov	RESULT_FOUND,%i0
 
 
 finish:
