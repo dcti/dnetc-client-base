@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.27 2000/03/08 08:34:55 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.28 2000/03/09 11:42:06 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -198,6 +198,7 @@ extern "C" {
   #include <sys/select.h>	// fd_set on AIX 4.1
 #elif (CLIENT_OS == OS_LINUX)
   #include <sys/time.h>
+  #include <sys/file.h>
   #include <unistd.h>
   #if defined(__ELF__)
     #include <sched.h>
