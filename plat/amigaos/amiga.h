@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amiga.h,v 1.2.4.3 2004/01/09 01:23:32 piru Exp $
+ * $Id: amiga.h,v 1.2.4.4 2004/04/17 18:53:48 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -26,7 +26,7 @@ extern "C" {
       #define NO_MIAMI
    #endif
 
-   #if defined(__PPC__) && !defined(__amigaos4__) && !defined(__MORPHOS__)
+   #if defined(__PPC__) && !(defined(__amigaos4__) || defined(__MORPHOS__))
       #define __OS3PPC__
    #endif
 
