@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.35  1998/08/29 08:06:49  cyp
+// Worked around coincidence: INVALID_SOCKET is already defined for win32
+//
 // Revision 1.34  1998/08/28 22:05:49  cyp
 // Added prototypes for new/extended "low level" methods.
 //
@@ -265,11 +268,13 @@ extern "C" {
 #define MODE_SOCKS5     8
 #define DEFAULT_RRDNS   "us.v27.distributed.net"
 #define DEFAULT_PORT    2064
-#define INVALID_SOCKET  ((SOCKET)(-1))
 #define CONDSOCK_BLOCKING_ON     0x00000011L
 #define CONDSOCK_BLOCKING_OFF    0x00000010L
 #define CONDSOCK_NONBLOCKING_ON  CONDSOCK_BLOCKING_OFF
 #define CONDSOCK_NONBLOCKING_OFF CONDSOCK_BLOCKING_ON
+#ifndef INVALID_SOCKET
+#define INVALID_SOCKET  ((SOCKET)(-1))
+#endif
 
 //-------------------------------------------------------------------------
 
