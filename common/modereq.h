@@ -3,11 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 
 // $Log: modereq.h,v $
+// Revision 1.5.2.4  1998/11/11 03:12:58  remi
+// *** empty log message ***
+//
 // Revision 1.5.2.3  1998/11/11 03:12:21  remi
 // Synced with :
-//  Revision 1.7  1998/11/10 21:37:48  cyp
-//  added support for -forceunlock.
-//
 //  Revision 1.6  1998/11/08 19:03:20  cyp
 //  -help (and invalid command line options) are now treated as "mode" requests.
 //
