@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: csc-6bits-driver.cpp,v $
+// Revision 1.2.2.5  1999/10/20 16:15:34  cyp
+// added cast where compiler was complaining about potential underflow when
+// assigning an int value to u8 var.
+//
 // Revision 1.2.2.4  1999/10/08 00:07:01  cyp
 // made (mostly) all extern "C" {}
 //
@@ -34,7 +38,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char * PASTE(csc_6bits_driver_,CSC_SUFFIX) (void) {
-return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.4 1999/10/08 00:07:01 cyp Exp $"; }
+return "@(#)$Id: csc-6bits-driver.cpp,v 1.2.2.5 1999/10/20 16:15:34 cyp Exp $"; }
 #endif
 
 /*
@@ -132,13 +136,13 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
   for( int i=0; i<6; i++ ) {
     int n = csc_bit_order[i];
     key[0][n] = _0;
-    keyB[7-n/8] &= ~(1 << (n%8));
+    keyB[7-n/8] &= (u8)(~(1 << (n%8)));
   }
   {
   for (u32 i=0; i<nbits-CSC_BITSLICER_BITS; i++) {
     int n = csc_bit_order[i+CSC_BITSLICER_BITS];
     key[0][n] = _0;
-    keyB[7-n/8] &= ~(1 << (n%8));
+    keyB[7-n/8] &= (u8)(~(1 << (n%8)));
   }
   }
   
@@ -158,7 +162,7 @@ PASTE(csc_unit_func_,CSC_SUFFIX)
     while( !(bkey & (1 << i)) ) i++;
     i = csc_bit_order[i+CSC_BITSLICER_BITS];
     key[0][i] ^= _1;
-    keyB[7-i/8] ^= (1 << (i%8));
+    keyB[7-i/8] ^= (u8)(1 << (i%8));
   }
 
   // have we found something ?
