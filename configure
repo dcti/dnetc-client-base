@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.136.2.4 2004/08/11 16:47:06 bdragon Exp $
+# @(#)$Id: configure,v 1.288.2.136.2.5 2004/08/11 20:00:56 snikkel Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -328,9 +328,14 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_64
 
     if [ "$HAVE_RC5_72" = "1" ]; then
-      # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2.s \
-                      rc5-72/sparc/r72-anbe1.s rc5-72/sparc/r72-anbe2.s"
+      if [ "$2" = "sparc" ]; then
+        # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2.s \
+                        rc5-72/sparc/r72-anbe1.s rc5-72/sparc/r72-anbe2.s"
+      else
+        # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2-64.s"
+      fi
     fi # HAVE_RC5_72
 
     if [ "$HAVE_DES" = "1" ]; then
@@ -360,6 +365,12 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ADDSRCS="$TARGET_ADDSRCS $DESSPARC_SRCS_C"
       fi
     fi # HAVE_DES
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+      if [ "$2" = "sparc64" ]; then
+        DEFAULT_OGR="0"       # don't add the ansi core
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
+      fi # sparc64
+    fi # HAVE_OGR/P2
   #-----------------------------------------------------------------
   elif [ "$2" = "mips" ]; then
     if [ "$HAVE_RC5_64" = "1" ]; then
@@ -2030,7 +2041,7 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"
         ;;
 
-    *sparc-solaris-cc-universal)   # [snikkel sparc 32/64 bit, sun cc]
+    *sparc-solaris-cc-32)   # [snikkel sparc 32bit client for 32/64bit machines, sun cc]
         TARGET_CC="CC"
         TARGET_LD="cc"
         TARGET_LDFLAGS="-mt"      
@@ -2038,8 +2049,21 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -mt -Dsolaris"
         TARGET_LIBS="-ldl -lc -lnsl -lsocket -lthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="solaris26-sparc"
+        TARGET_TARBALL="solaris26-sparc32"
         add_sources "solaris" "sparc" "cc"   
+        ;;
+
+    *sparc-solaris-cc-64)   # [snikkel sparc 64bit client, sun cc]
+        TARGET_CC="CC"
+        TARGET_LD="cc"
+        TARGET_LDFLAGS="-mt -xarch=v9"
+        TARGET_ASFLAGS="-xarch=v9"
+        OPTS_CC_SOLARIS="-fast -xtarget=generic64 -xarch=generic64 -DASM_SPARC"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -mt -Dsolaris"
+        TARGET_LIBS="-ldl -lc -lnsl -lsocket -lthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris7-sparc64"   
+        add_sources "solaris" "sparc64" "cc"
         ;;
 
     *sparc-solaris-gcc-ultra-des)   # [ivo ultra] very fast DES -> hence obsolete
