@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.66 2000/10/31 03:21:23 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.67 2000/10/31 17:08:56 cyp Exp $
 ==========================================================================
 
 2.8000
@@ -56,8 +56,9 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.66 2000/10/31 03:21:23 cyp Exp $
             new: all: by default displays a different crunch-o-meter when an
                  OGR packet is being worked on. (any sug. for improvement?)
             chg: minor adjustments to Loaded/Saved/Completed/Summary messages
-                 for project independance (format doesn't to be processed
-                 differently for different projects)
+                 for project independance (format doesn't have to be processed
+                 differently for different projects). Inexact percentages 
+                 (ie, for OGR) are no longer displayed at load/save time.
 
 2.8010.463  fix: linux/x86: resolved various dns lookup, lib and
                  portability issues by building against static libc5
