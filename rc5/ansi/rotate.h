@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: rotate.h,v $
+// Revision 1.5.2.4  2001/05/20 21:30:22  andreasb
+// disable sparc specific SHL/SHR macros when using Sun CC
+//
 // Revision 1.5.2.3  2001/02/09 04:16:57  sampo
 // let ia64 use alpha rotate macro, 50% speedup
 //
@@ -81,7 +84,7 @@ static __inline__ void ansi_increment( RC5UnitWork *rc5unitwork ) {
 #undef key
 #endif // USE_ANSI_INCREMENT
 
-#if (CLIENT_CPU == CPU_SPARC)
+#if (CLIENT_CPU == CPU_SPARC) && !defined(__SUNPRO_CC)
 
 #define SHL(x, s) ((u32) ((x) << (s) ))
 #define SHR(x, s) ((u32) ((x) >> (32 - (s)) ))
