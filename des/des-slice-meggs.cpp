@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.22  1999/01/17 21:48:50  cyp
+// deseval-mmx whack16() is now passed a memblock from the problem object.
+//
 // Revision 1.21  1999/01/09 08:56:24  remi
 // Fixed the previous fix : it's only for alpha/nt + defined(bit_64) + msvc++
 //
@@ -74,7 +77,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *des_slice_meggs_cpp(void) {
-return "@(#)$Id: des-slice-meggs.cpp,v 1.21 1999/01/09 08:56:24 remi Exp $"; }
+return "@(#)$Id: des-slice-meggs.cpp,v 1.22 1999/01/17 21:48:50 cyp Exp $"; }
 #endif
 
 #include <stdio.h>
@@ -92,6 +95,7 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.21 1999/01/09 08:56:24 remi Exp $"; }
 #endif
 
 #if defined(MMX_BITSLICER)
+  #include "logstuff.h"
   #if defined(__GNUC__)
     #define BASIC_SLICE_TYPE unsigned long long
     #define NOTZERO ~(0ull)
@@ -122,8 +126,12 @@ return "@(#)$Id: des-slice-meggs.cpp,v 1.21 1999/01/09 08:56:24 remi Exp $"; }
 #error "You must define BIT_32 or BIT_64"
 #endif
 
-#if (CLIENT_OS == OS_BEOS) || defined(MMX_BITSLICER) \
-    || ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
+#if defined(MMX_BITSLICER)
+extern "C" BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
+            BASIC_SLICE_TYPE *cypher,
+            BASIC_SLICE_TYPE *key, char *coremem);
+#elif (CLIENT_OS == OS_BEOS) || \
+      ((CLIENT_OS == OS_MACOS) && defined(MRCPP_FOR_DES))
 extern "C" BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
             BASIC_SLICE_TYPE *cypher,
             BASIC_SLICE_TYPE *key);
@@ -131,20 +139,6 @@ extern "C" BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
 extern BASIC_SLICE_TYPE whack16 (BASIC_SLICE_TYPE *plain,
             BASIC_SLICE_TYPE *cypher,
             BASIC_SLICE_TYPE *key);
-#endif
-
-#if defined(__WATCOMC__) && (CLIENT_OS == OS_OS2)
-#pragma aux whack16 "_*";
-extern "C" void *_malloc (size_t size) 
-   { return malloc(size); }
-extern "C" void _free (void *ptr)
-   { free(ptr); }
-#endif
-
-#if defined(MMX_BITSLICER)
-  #define des_unit_func des_unit_func_mmx
-#elif (CLIENT_CPU == CPU_X86)
-  #define des_unit_func des_unit_func_slice
 #endif
 
 // ------------------------------------------------------------------
@@ -155,7 +149,11 @@ extern "C" void _free (void *ptr)
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
+#if defined(MMX_BITSLICER)
+u32 des_unit_func_mmx( RC5UnitWork * rc5unitwork, u32 nbbits, char *coremem )
+#else
 u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
+#endif
 {
   BASIC_SLICE_TYPE key[56];
   BASIC_SLICE_TYPE plain[64];
@@ -284,7 +282,16 @@ u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
 #endif
 
   // Launch a crack session
+//LogScreen("beginning whack\n");  
+
+#if defined(MMX_BITSLICER)
+  BASIC_SLICE_TYPE result = whack16( plain, cypher, key, coremem);
+#else  
   BASIC_SLICE_TYPE result = whack16( plain, cypher, key);
+#endif  
+
+//LogScreen("ended whack\n");  
+
   // Test also the complementary key
   if (result == 0 && complement == false) {
     keyhi = ~keyhi;
