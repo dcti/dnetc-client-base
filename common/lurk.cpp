@@ -14,9 +14,11 @@
 
 */
 // $Log: lurk.cpp,v $
+// Revision 1.29  1999/02/10 03:49:30  cyp
+// fixed a couple of LogScreen()s that weren't terminated with '\n'
+//
 // Revision 1.28  1999/02/10 00:30:11  trevorh
-// Removed #include for platforms\os2cli\os2defs.h to make this portable
-// back to proxy code.
+// Removed #include for platforms\os2cli\os2defs.h
 //
 // Revision 1.27  1999/02/10 00:01:56  trevorh
 // Change delay() to sleep() for ifdefed OS/2 code
@@ -93,10 +95,8 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.28 1999/02/10 00:30:11 trevorh Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.29 1999/02/10 03:49:30 cyp Exp $"; }
 #endif
-
-/* --------------------------------- */
 
 #include "cputypes.h"
 #include "lurk.h"
@@ -106,8 +106,6 @@ return "@(#)$Id: lurk.cpp,v 1.28 1999/02/10 00:30:11 trevorh Exp $"; }
 #else
 #include "logstuff.h"
 #endif
-
-/* -------------------------------- */
 
 Lurk dialup;
 
@@ -148,7 +146,7 @@ int Lurk::CheckIfConnectRequested(void) //yes/no
     lastcheckshowedconnect = 0;        // So we know next time through this loop
     if (lurkmode == CONNECT_LURKONLY) // Lurk-only mode
       msg = "\nConnections will not be initiated by the client.";
-    LogScreen("Dialup Connection Disconnected.%s",msg);
+    LogScreen("Dialup Connection Disconnected.%s\n",msg);
     }
   return 0;
 }
@@ -201,22 +199,33 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
 
 #elif (CLIENT_OS == OS_OS2)
 
-#define TCPIPV4               //should also work with V3 though
-#if defined(__WATCOMC__)
-#include <stdio.h>
-#include <string.h>
-#include <types.h>
 #define INCL_DOSPROCESS
 #include <os2.h>
-extern "C" {
+
+#define TCPIPV4               //should also work with V3 though
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
+#if defined(__EMX__)
+#include <sys/process.h>
+#include <sys/types.h>
+#else //IBM distributed OS/2 developers toolkit
+#include <process.h>
+#include <types.h>  
+#endif
+extern "C" {
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 }
-#endif
 #include <net/if.h>          // ifmib
+
+#ifndef SIOSTATIF
+#define SIOSTATIF  _IOR('n', 48, struct ifmib)
+#endif
 #ifndef ULONG
-typedef unsigned long ULONG;
+  typedef unsigned long ULONG;
 #endif
 #pragma pack(2)
 struct ifact
@@ -231,15 +240,6 @@ struct ifact
     } iftable[IFMIB_ENTRIES];
 };
 #pragma pack()
-#if defined(__EMX__)
-#include  <sys/process.h>     // P_NOWAIT, spawnl()
-#else
-#include <process.h>
-#endif
-#ifndef SIOSTATIF
-#define SIOSTATIF         _IOR('n', 48, struct ifmib)
-#endif
-
 #endif
 
 /* ========================================================== */
@@ -254,7 +254,7 @@ int Lurk::GetCapabilityFlags(void)
   #define OF_SEARCH 0x0400
   #endif
   if ( OpenFile( "RASAPI32.DLL", &ofstruct, OF_EXIST|OF_SEARCH) != HFILE_ERROR)
-    what = (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DOD|CONNECT_DODBYPROFILE);
+    what = (CONNECT_LURK|CONNECT_LURKONLY|CONNECT_DODBYPROFILE);
 #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   OFSTRUCT ofstruct;
   ofstruct.cBytes = sizeof(ofstruct);
@@ -349,7 +349,7 @@ int Lurk::Start(void)// Initializes Lurk Mode. returns 0 on success.
       LogScreen( "Dial-up must be installed for lurk/lurkonly/dialing\n" );
       dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
-      LogScreen("Winsock must be available for -lurk/-lurkonly.");
+      LogScreen("Winsock must be available for -lurk/-lurkonly.\n");
       dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
       #else
       LogScreen("-lurk/-lurkonly is not supported. Option ignored.\n");
@@ -646,8 +646,6 @@ int Lurk::IsConnected(void)               // Checks status of connection
        ifc.ifc_buf = (caddr_t)p;
        }
 
-     // now browse through the interface watch list
-     // and check if there is an interface up and running
      if (ifc.ifc_len)
        {
        #if (CLIENT_OS == OS_LINUX)
@@ -801,9 +799,9 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
     HRASCONN connhandle = NULL;
 
     //if (passwordretrieved != TRUE)
-    //  LogScreen("Password could not be found, connection may fail.");
+    //  LogScreen("Password could not be found, connection may fail.\n");
 
-    LogScreen("Dialing %s...",dialparameters.szEntryName);
+    LogScreen("Dialing '%s'...\n",dialparameters.szEntryName);
     returnvalue = RasDial(NULL,NULL,&dialparameters,NULL,NULL,&connhandle);
 
     if (returnvalue == 0)
@@ -812,23 +810,28 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
       dohangupcontrol = 1;  // we also control hangup
       return 0;
       }
+    else if (connhandle != NULL)
+      {
+      RasHangUp(connhandle);
+      Sleep(3000);
+      }
     }
 
   if (returnvalue == ERROR_CANNOT_FIND_PHONEBOOK_ENTRY)
     {
-    LogScreen("Dial Cancelled. Unable to find phonebook entry\n%s\n",
+    LogScreen("Dial cancelled: Unable to find phonebook entry\n%s\n",
                dialparameters.szEntryName);
     }
   else if (returnvalue == ERROR_CANNOT_OPEN_PHONEBOOK)
     {
-    LogScreen("Dial Cancelled. Unable to open phonebook\n");
+    LogScreen("Dial cancelled: Unable to open phonebook.\n");
     }
   else
     {
     if (RasGetErrorString(returnvalue,buffer,sizeof(buffer)) == 0)
-      LogScreen("Connection initiation error:\n%s",buffer);
+      LogScreen("Dial cancelled: %s\n", buffer);
     else
-      LogScreen("Dial Cancelled. Unknown RAS error %ld\n", (long) returnvalue);
+      LogScreen("Dial cancelled: Unknown RAS error %ld\n", (long) returnvalue);
     }
   return -1;
 
@@ -849,11 +852,7 @@ int Lurk::DialIfNeeded(int force /* !0== override lurk-only */ )
   int retry;
   for (retry = 0; retry < 30; retry++)  // 30s max to connect with a modem
     {
-    #if (CLIENT_OS == OS_OS2)
-    sleep(1000);
-    #else
     sleep(1);
-    #endif
     if (IsConnected())
       {
       dohangupcontrol = 1;  // we should also control hangup
@@ -954,20 +953,17 @@ int Lurk::HangupIfNeeded(void) //returns 0 on success, -1 on fail
 
   if (isconnected)
     {
-    int retry = 0, droppedconn = 0;
+    int droppedconn = 0;
     if (connstopcmd[0] == 0) //what can we do?
       droppedconn = 1;
     else if (system( connstopcmd ) == 127 /* exec error */)
       LogScreen("Unable to exec '%s'\n%s\n", connstopcmd, strerror(errno));
     else
       {
+      int retry = 0;
       while (((droppedconn = (!IsConnected())) == 0) && ((++retry)<10))
         {
-        #if (CLIENT_OS == OS_OS2)
-        sleep(1000);
-        #else
         sleep(1);
-        #endif
         }
       }
     if (!droppedconn)
