@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.14 2003/09/12 22:29:25 mweiser Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.15 2003/11/01 14:20:12 mweiser Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 

@@ -7,7 +7,7 @@
  * Specify 'build_dependancies' as argument 
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.9 2003/09/12 22:29:26 mweiser Exp $
+ * $Id: testplat.cpp,v 1.10 2003/11/01 14:20:14 mweiser Exp $
 */ 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */

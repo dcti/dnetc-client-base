@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.32 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.33 2003/11/01 14:20:14 mweiser Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -687,7 +687,7 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
 {
   /* io_cycle_allowed is non-zero when called through CheckExitRequestTrigger
   ** and is zero when called through CheckExitRequestTriggerNoIO() */
-  DNETC_UNUSED_PARAM(io_cycle_allowed)
+  DNETC_UNUSED_PARAM(io_cycle_allowed);
 
   #if (CLIENT_OS == OS_RISCOS)
 /* This hs no equivalent in Unixlib but strange as it is, it seems to be not

@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.39 2003/09/12 22:29:25 mweiser Exp $
+## $Id: makefile.wat,v 1.40 2003/11/01 14:20:12 mweiser Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -392,7 +392,6 @@ output\brf-smc.obj : rc5\x86\brf-smc.asm $(%dependall)
   @set isused=1
 
 # ----------------------------------------------------------------
-
 output\x86ident.obj : plat\x86\x86ident.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   #*$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
@@ -475,6 +474,26 @@ output\buffupd.obj : common\buffupd.cpp $(%dependall) .AUTODEPEND
   @set isused=1
 
 output\selcore.obj : common\selcore.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\core_rc5.obj : common\core_rc5.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\core_r72.obj : common\core_r72.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\core_des.obj : common\core_des.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\core_csc.obj : common\core_csc.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  @set isused=1
+
+output\core_ogr.obj : common\core_ogr.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
@@ -1113,7 +1132,7 @@ os2: .symbolic                                       # OS/2
      @set AFLAGS    = /5s /fp5 /bt=OS2 /mf
      @set TASMEXE   = 
      @set LFLAGS    = sys os2v2
-     @set CWARNLEV  = $(%CWARNLEV)
+     @set CWARNLEV  = $(%CWARNLEV) /wcd=555
      @set CFLAGS    = /zp4 /5s /fp5 /bm /mf /zm /bt=os2 /DOS2 /DLURK &
                       /iplat\os2
      @set OPT_SIZE  = /s /os

@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.36 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.37 2003/11/01 14:20:12 mweiser Exp $"; }
 
 //#define TRACE
 

@@ -5,7 +5,7 @@
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.cpp,v 1.3 2003/09/12 22:29:27 mweiser Exp $
+ * $Id: riscos_sup.cpp,v 1.4 2003/11/01 14:20:15 mweiser Exp $
 */
 
 #include <stdio.h> /* printf() for debugging */
@@ -215,7 +215,7 @@ int riscos_find_local_directory(const char *progname)
   return -1;
 }
 
-char *riscos_version(void)
+int riscos_versioncode(void)
 {
   _kernel_swi_regs regs;
   _kernel_oserror *e;
@@ -225,37 +225,45 @@ char *riscos_version(void)
   regs.r[2]=255;
   e = _kernel_swi(XOS_Bit|OS_Byte, &regs, &regs);
   if (!e)
-  {
-    switch (regs.r[1])
-    {
-      case 0xa0:
-        return "Arthur 1.2";
-      case 0xa1:
-        return "RISC OS 2.00";
-      case 0xa2:
-        return "RISC OS 2.01";
-      case 0xa3:
-        return "RISC OS 3.00";
-      case 0xa4:
-        return "RISC OS 3.1X";
-      case 0xa5:
-        return "RISC OS 3.5";
-      case 0xa6:
-        return "RISC OS 3.6";
-      case 0xa7:
-        return "RISC OS 3.7";
-      default:
-        if (regs.r[1]>=0xa8)
-        {
-          regs.r[0]=9;
-          regs.r[1]=0;
-          _kernel_swi(XOS_Bit|OS_ReadSysInfo, &regs, &regs);
-          return (char *)regs.r[0];
-        }
-        else
-          return "";
-    }
-  }
+    return regs.r[1];
   else
-    return "";
+    return 0;
+}
+
+char *riscos_version(void)
+{
+  int c;
+  _kernel_swi_regs regs;
+  _kernel_oserror *e;
+
+  c=riscos_versioncode();
+  switch (c)
+  {
+    case 0xa0:
+      return "Arthur 1.2";
+    case 0xa1:
+      return "RISC OS 2.00";
+    case 0xa2:
+      return "RISC OS 2.01";
+    case 0xa3:
+      return "RISC OS 3.00";
+    case 0xa4:
+      return "RISC OS 3.1X";
+    case 0xa5:
+      return "RISC OS 3.5";
+    case 0xa6:
+      return "RISC OS 3.6";
+    case 0xa7:
+      return "RISC OS 3.7";
+    default:
+      if (c>=0xa8)
+      {
+        regs.r[0]=9;
+        regs.r[1]=0;
+        e=_kernel_swi(XOS_Bit|OS_ReadSysInfo, &regs, &regs);
+        return (char *)regs.r[0];
+      }
+      else
+        return "";
+  }
 }

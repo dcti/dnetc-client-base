@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BUFFUPD_H__
-#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.13 2003/09/12 22:29:25 mweiser Exp $"
+#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.14 2003/11/01 14:20:12 mweiser Exp $"
 
 // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
 // if interactive, prints "Input buffer full. No fetch required" etc.

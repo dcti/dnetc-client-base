@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.15 2003/09/12 22:29:25 mweiser Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.16 2003/11/01 14:20:13 mweiser Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file

@@ -7,7 +7,7 @@
  * RISC OS assembler support functions
 */
 #ifndef __RISCOS_ASM_H__
-#define __RISCOS_ASM_H__ "@(#)$Id: riscos_asm.h,v 1.2 2002/09/02 00:35:52 andreasb Exp $"
+#define __RISCOS_ASM_H__ "@(#)$Id: riscos_asm.h,v 1.3 2003/11/01 14:20:15 mweiser Exp $"
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,7 +15,6 @@ extern "C" {
 
 extern unsigned int read_monotonic_time(void);
 extern unsigned long ARMident(void);
-extern unsigned int IOMDident(void);
 extern void riscos_upcall_6(void);
 
 #if 0

@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.73 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.74 2003/11/01 14:20:13 mweiser Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72ansi4_cpp(void) {
-return "@(#)$Id: r72ansi4.cpp,v 1.21 2003/09/12 22:29:27 mweiser Exp $"; }
+return "@(#)$Id: r72ansi4.cpp,v 1.22 2003/11/01 14:20:15 mweiser Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"

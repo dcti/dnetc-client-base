@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.7 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.8 2003/11/01 14:20:12 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class

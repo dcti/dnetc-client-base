@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __TRIGGERS_H__
-#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.10 2003/09/12 22:29:26 mweiser Exp $"
+#define __TRIGGERS_H__ "@(#)$Id: triggers.h,v 1.11 2003/11/01 14:20:14 mweiser Exp $"
 
 #if defined(SIGCONT) && defined(SIGTSTP)
   /* These constants define symbolically the signal names used by the

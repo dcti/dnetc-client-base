@@ -2,17 +2,18 @@
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
-; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.5 2003/11/01 14:20:15 mweiser Exp $
+; AMD64 (x86_64) 3-pipe core by:
+;     Steven Nikkel <snikkel@distributed.net>
+;     Jeff Lawson <bovine@distributed.net>
+;
+; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
+; $Id: r72-snjl.asm,v 1.2 2003/11/01 14:20:15 mweiser Exp $
 
-%ifdef __OMF__ ; Borland and Watcom compilers/linkers
-[SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
-%else
 [SECTION .text]
-%endif
+BITS 64
 
-[GLOBAL _rc5_72_unit_func_dg_3]
-[GLOBAL rc5_72_unit_func_dg_3]
+[GLOBAL _rc5_72_unit_func_snjl]
+[GLOBAL rc5_72_unit_func_snjl]
 
 %define P         0xB7E15163
 %define Q         0x9E3779B9
@@ -24,7 +25,7 @@
 %assign work_size 0
 
 %macro defidef 2
-    %define %1 esp+%2
+    %define %1 rsp+%2
 %endmacro
 
 %macro defwork 1-2 1
@@ -32,9 +33,8 @@
     %assign work_size work_size+4*(%2)
 %endmacro
 
-defwork work_L1,3
-defwork work_L2,3
-defwork work_L3,3
+;; local storage variables
+defwork work_L3,1
 defwork work_s1,26
 defwork work_s2,26
 defwork work_s3,26
@@ -46,72 +46,37 @@ defwork work_P_1
 defwork work_C_0
 defwork work_C_1
 defwork work_iterations
-defwork save_ebx
-defwork save_esi
-defwork save_edi
-defwork save_ebp
+defwork save_rbx,2
+defwork save_rbp,2
+defwork save_r12,2
+defwork save_r13,2
+defwork save_r14,2
+defwork save_r15,2
+defwork RC5_72UnitWork,2	; 1st argument (64-bit pointer), passed in rdi
+defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
 
-%define RC5_72UnitWork_plainhi  eax+0
-%define RC5_72UnitWork_plainlo  eax+4
-%define RC5_72UnitWork_cipherhi eax+8
-%define RC5_72UnitWork_cipherlo eax+12
-%define RC5_72UnitWork_L0hi     eax+16
-%define RC5_72UnitWork_L0mid    eax+20
-%define RC5_72UnitWork_L0lo     eax+24
-%define RC5_72UnitWork_CMCcount eax+28
-%define RC5_72UnitWork_CMChi    eax+32
-%define RC5_72UnitWork_CMCmid   eax+36
-%define RC5_72UnitWork_CMClo    eax+40
+;; offsets within the parameter structure
+%define RC5_72UnitWork_plainhi  rax+0
+%define RC5_72UnitWork_plainlo  rax+4
+%define RC5_72UnitWork_cipherhi rax+8
+%define RC5_72UnitWork_cipherlo rax+12
+%define RC5_72UnitWork_L0hi     rax+16
+%define RC5_72UnitWork_L0mid    rax+20
+%define RC5_72UnitWork_L0lo     rax+24
+%define RC5_72UnitWork_CMCcount rax+28
+%define RC5_72UnitWork_CMChi    rax+32
+%define RC5_72UnitWork_CMCmid   rax+36
+%define RC5_72UnitWork_CMClo    rax+40
 
-%define RC5_72UnitWork          esp+work_size+4
-%define iterations              esp+work_size+8
-
+;; convenience aliases
 %define S1(N)                   [work_s1+((N)*4)]
 %define S2(N)                   [work_s2+((N)*4)]
 %define S3(N)                   [work_s3+((N)*4)]
-%define L1(N)                   [work_L1+((N)*4)]
-%define L2(N)                   [work_L2+((N)*4)]
-%define L3(N)                   [work_L3+((N)*4)]
+%define L3_2			[work_L3]
 %define L1backup(N)             [work_backup_L1+((N)*4)]
 %define L2backup(N)             [work_backup_L2+((N)*4)]
 %define L3backup(N)             [work_backup_L3+((N)*4)]
-
-%macro k7nop 1
-    %if %1>3
-        %error k7nop max 3
-    %endif
-    %if %1>2
-        rep
-    %endif
-    %if %1>1
-        rep
-    %endif
-    nop
-%endmacro
-
-%macro k7align 1
-    %assign unal ($-startseg)&(%1-1)
-    %if unal
-        %assign fill %1 - unal
-        %if fill<=9
-            %rep 3
-                %if fill>3
-                    k7nop 3
-                    %assign fill fill-3
-                %else
-                    k7nop fill
-                    %exitrep
-                %endif
-            %endrep
-        %else
-            jmp short %%alend
-            align %1
-        %endif
-    %endif
-    %%alend:
-%endmacro
-
-%define A1         eax
+%define A1         eax 
 %define A2         ebx
 %define A3         edx
 %define B1         esi
@@ -119,6 +84,14 @@ defwork save_ebp
 %define B3         ebp
 %define shiftreg   ecx
 %define shiftcount cl
+%define L1_0    r8d 
+%define L1_1    r9d
+%define L1_2    r10d   
+%define L2_0    r11d  
+%define L2_1    r12d  
+%define L2_2    r13d  
+%define L3_0    r14d  
+%define L3_1    r15d  
 
 
 %macro KEYSETUP_BLOCK 3
@@ -127,7 +100,7 @@ defwork save_ebp
         rol     A3, 3
 
         lea     shiftreg, [A1 + B1]
-        add     B1, L1(%3)
+        add     B1, L1_%3
         mov     S1(%2), A1
 
         add     B1, A1
@@ -140,7 +113,7 @@ defwork save_ebp
 
         add     B2, A2
         mov     shiftreg, B2
-        add     B2, L2(%3)
+        add     B2, L2_%3
 
         add     B3, A3
         mov     S2(%2), A2
@@ -154,9 +127,9 @@ defwork save_ebp
         lea     A2, [A2 + B2 + S_not(%2+1)]
 %endif
 
-        mov     L1(%3), B1
+        mov     L1_%3, B1
         mov     shiftreg, B3
-        add     B3, L3(%3)
+        add     B3, L3_%3
 
         rol     B3, shiftcount
 %ifidn %1,S
@@ -166,8 +139,8 @@ defwork save_ebp
         lea     A3, [A3 + B3 + S_not(%2+1)]
 %endif
 
-        mov     L2(%3), B2
-        mov     L3(%3), B3
+        mov     L2_%3, B2
+        mov     L3_%3, B3
 %ifidn %1,S
         add     A3, B3
 %endif
@@ -211,24 +184,29 @@ defwork save_ebp
 
 align 16
 startseg:
-rc5_72_unit_func_dg_3:
-rc5_72_unit_func_dg_3_:
-_rc5_72_unit_func_dg_3:
+rc5_72_unit_func_snjl:
+rc5_72_unit_func_snjl_:
+_rc5_72_unit_func_snjl:
 
-        sub     esp, work_size
-        mov     eax, [RC5_72UnitWork]
+        sub     rsp, work_size
+	mov	[RC5_72UnitWork],rdi ; 1st argument is passed in rdi
+	mov	[iterations],rsi ; 2nd argument is passwd in rsi
+	
+        mov     rax, rdi	; rax points to RC5_72UnitWork
 
-        mov     [save_ebp], ebp
-        mov     [save_ebx], ebx
-        mov     [save_esi], esi
-
-        mov     [save_edi], edi
+	;; rbp, rbx, and r12 thru r15 must be preserved!
+        mov     [save_rbp], rbp
+        mov     [save_rbx], rbx
+        mov     [save_r12], r12
+        mov     [save_r13], r13
+        mov     [save_r14], r14
+        mov     [save_r15], r15
+	
         mov     edx, [RC5_72UnitWork_plainlo]
         mov     edi, [RC5_72UnitWork_plainhi]
 
         mov     ebx, [RC5_72UnitWork_cipherlo]
         mov     ecx, [RC5_72UnitWork_cipherhi]
-        mov     esi, [iterations]
 
         mov     [work_P_0], edx
         mov     [work_P_1], edi
@@ -236,18 +214,19 @@ _rc5_72_unit_func_dg_3:
 
         mov     [work_C_0], ebx
         mov     [work_C_1], ecx
-        mov     edi, [esi]
+        mov     edi, [rsi]	; rsi points to iterations
 
         imul    edi, 2863311531
         mov     ecx, [RC5_72UnitWork_L0mid]
         mov     ebx, [RC5_72UnitWork_L0lo]
 
         mov     [work_iterations], edi
-        mov     L1(2), edx
+        mov     L1_2, edx
+        mov     L1_1, ecx 
+        mov     L1_0, ebx
+
         mov     L1backup(2), edx
-        mov     L1(1), ecx
         mov     L1backup(1), ecx
-        mov     L1(0), ebx
         mov     L1backup(0), ebx
 
         add     dl, 1
@@ -260,9 +239,9 @@ _rc5_72_unit_func_dg_3:
         bswap   ecx
         bswap   ebx
 
-        mov     L2(2), edx
-        mov     L2(1), ecx
-        mov     L2(0), ebx
+        mov     L2_2, edx
+        mov     L2_1, ecx
+        mov     L2_0, ebx
 
         mov     L2backup(2), edx
         mov     L2backup(1), ecx
@@ -278,20 +257,20 @@ _rc5_72_unit_func_dg_3:
         bswap   ecx
         bswap   ebx
 
-        mov     L3(2), edx
-        mov     L3(1), ecx
-        mov     L3(0), ebx
+        mov     L3_2, edx
+        mov     L3_1, ecx
+        mov     L3_0, ebx
 
         mov     L3backup(2), edx
         mov     L3backup(1), ecx
         mov     L3backup(0), ebx
 
 
-k7align 16
+align 16
 key_setup_1:
-        mov     B1, L1(0)
-        mov     B2, L2(0)
-        mov     B3, L3(0)
+        mov     B1, L1_0
+        mov     B2, L2_0
+        mov     B3, L3_0
 
         mov     A1, 0xBF0A8B1D ; 0xBF0A8B1D is S[0]
         mov     A2, A1
@@ -313,9 +292,9 @@ key_setup_1:
         lea     A2, [A2 + B2 + S_not(1)]
         lea     A3, [A3 + B3 + S_not(1)]
 
-        mov     L1(0), B1
-        mov     L2(0), B2
-        mov     L3(0), B3
+        mov     L1_0, B1
+        mov     L2_0, B2
+        mov     L3_0, B3
 
         KEYSETUP_BLOCK S_not,1,1
         KEYSETUP_BLOCK S_not,2,2
@@ -347,7 +326,8 @@ key_setup_1:
         rol     A3, 3
 
         lea     shiftreg, [A1 + B1]
-        add     B1, L1(1)
+
+        add     B1, L1_1
         mov     S1(25), A1
 
         mov     S2(25), A2
@@ -360,23 +340,23 @@ key_setup_1:
 
         rol     B1, shiftcount
         mov     shiftreg, B2
-        add     B2, L2(1)
+        add     B2, L2_1
 
         add     A2, S2(0)
         add     A1, B1
-        mov     L1(1), B1
+        mov     L1_1, B1
 
         rol     B2, shiftcount
         mov     shiftreg, B3
-        add     B3, L3(1)
+        add     B3, L3_1
 
         add     A3, S3(0)
         add     A2, B2
-        mov     L2(1), B2
+        mov     L2_1, B2
 
         rol     B3, shiftcount
 
-        mov     L3(1), B3
+        mov     L3_1, B3
         add     A3, B3
 
 key_setup_2:
@@ -412,7 +392,7 @@ key_setup_2:
         rol     A3, 3
 
         lea     shiftreg, [A1 + B1]
-        add     B1, L1(0)
+        add     B1, L1_0
         mov     S1(25), A1
 
         mov     S2(25), A2
@@ -425,23 +405,23 @@ key_setup_2:
 
         rol     B1, shiftcount
         mov     shiftreg, B2
-        add     B2, L2(0)
+        add     B2, L2_0
 
         add     A2, S2(0)
         add     A1, B1
-        mov     L1(0), B1
+        mov     L1_0, B1
 
         rol     B2, shiftcount
         mov     shiftreg, B3
-        add     B3, L3(0)
+        add     B3, L3_0
 
         add     A3, S3(0)
         add     A2, B2
-        mov     L2(0), B2
+        mov     L2_0, B2
 
         rol     B3, shiftcount
 
-        mov     L3(0), B3
+        mov     L3_0, B3
         add     A3, B3
 
 key_setup_3:
@@ -519,7 +499,7 @@ encryption:
 
 test_key_1:
         cmp     A1, [work_C_0]
-        mov     eax, [RC5_72UnitWork]
+        mov     rax, [RC5_72UnitWork] ; 64-bit pointer
 
         jne     short test_key_2
 
@@ -541,7 +521,7 @@ test_key_1:
 
         jmp     finished_found
 
-k7align 16
+align 16
 test_key_2:
         cmp     A2, [work_C_0]
 
@@ -565,7 +545,7 @@ test_key_2:
 
         jmp     finished_found
 
-k7align 16
+align 16
 test_key_3:
         cmp     A3, [work_C_0]
         mov     edx, [RC5_72UnitWork_L0hi]
@@ -591,7 +571,7 @@ test_key_3:
         jmp     finished_found
 
 
-k7align 16
+align 16
 inc_key:
         cmp     dl, 0xFD
         mov     ecx, [RC5_72UnitWork_L0mid]
@@ -602,32 +582,32 @@ inc_key:
         add     dl, 3
 
         mov     [RC5_72UnitWork_L0hi], edx
-        mov     L1(2), edx
+        mov     L1_2, edx
         mov     L1backup(2), edx
         inc     edx
 
-        mov     L2(2), edx
+        mov     L2_2, edx
         mov     L2backup(2), edx
         inc     edx
 
-        mov     L3(2), edx
+        mov     L3_2, edx
         mov     L3backup(2), edx
         dec     dword [work_iterations]
 
-        mov     L1(1), ecx
-        mov     L2(1), ecx
-        mov     L3(1), ecx
+        mov     L1_1, ecx
+        mov     L2_1, ecx
+        mov     L3_1, ecx
 
-        mov     L1(0), ebx
-        mov     L2(0), ebx
-        mov     L3(0), ebx
+        mov     L1_0, ebx
+        mov     L2_0, ebx
+        mov     L3_0, ebx
 
         jnz     key_setup_1
 
         xor     eax, eax
         jmp     finished
 
-k7align 16
+align 16
 complex_incr:
         add     dl, 3
         bswap   ecx
@@ -639,9 +619,9 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        mov     L1(2), edx
-        mov     L1(1), ecx
-        mov     L1(0), ebx
+        mov     L1_2, edx
+        mov     L1_1, ecx
+        mov     L1_0, ebx
 
         mov     L1backup(2), edx
         mov     L1backup(1), ecx
@@ -661,9 +641,9 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        mov     L2(2), edx
-        mov     L2(1), ecx
-        mov     L2(0), ebx
+        mov     L2_2, edx
+        mov     L2_1, ecx
+        mov     L2_0, ebx
 
         mov     L2backup(2), edx
         mov     L2backup(1), ecx
@@ -680,9 +660,9 @@ complex_incr:
         bswap   ecx
         bswap   ebx
 
-        mov     L3(2), edx
-        mov     L3(1), ecx
-        mov     L3(0), ebx
+        mov     L3_2, edx
+        mov     L3_1, ecx
+        mov     L3_0, ebx
 
         mov     L3backup(2), edx
         mov     L3backup(1), ecx
@@ -693,21 +673,25 @@ complex_incr:
         xor     eax, eax
         jmp     short finished
 finished_found:
-        mov     esi, [iterations]
+        mov     rsi, [iterations] ; 64-bit pointer
         add     ecx, [work_iterations]
         add     ecx, [work_iterations]
         add     ecx, [work_iterations]
-        sub     [esi], ecx
+        sub     [rsi], ecx
 
         xor     eax, eax
         inc     eax
 finished:
         inc     eax
-        mov     ebx, [save_ebx]
-        mov     esi, [save_esi]
 
-        mov     edi, [save_edi]
-        mov     ebp, [save_ebp]
-        add     esp, work_size
+	;; rbp, rbx, and r12 thru r15 must be restored
+        mov     rbp, [save_rbp]
+        mov     rbx, [save_rbx]
+        mov     r12, [save_r12]
+        mov     r13, [save_r13]
+        mov     r14, [save_r14]
+        mov     r15, [save_r15]
+	
+        add     rsp, work_size
 
         ret

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __SELFTEST_H__
-#define __SELFTEST_H__ "@(#)$Id: selftest.h,v 1.10 2003/09/12 22:29:26 mweiser Exp $"
+#define __SELFTEST_H__ "@(#)$Id: selftest.h,v 1.11 2003/11/01 14:20:14 mweiser Exp $"
 
 /* returns number of tests if all passed or negative number if a test failed */
 long SelfTest( unsigned int contest );

@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.84 2003/09/12 22:29:25 mweiser Exp $
+# $Id: makefile.vc,v 1.85 2003/11/01 14:20:12 mweiser Exp $
 #
 
 BASENAME = dnetc

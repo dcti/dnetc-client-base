@@ -7,7 +7,7 @@
  * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.43 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.44 2003/11/01 14:20:13 mweiser Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 

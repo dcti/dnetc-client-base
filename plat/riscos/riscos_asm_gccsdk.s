@@ -7,14 +7,18 @@
 
         AREA    |C$$code|, CODE, READONLY
 
-        DCB     "@(#)$Id: riscos_asm_gccsdk.s,v 1.2 2002/09/02 00:35:53 andreasb Exp $", 0
+        DCB     "@(#)$Id: riscos_asm_gccsdk.s,v 1.3 2003/11/01 14:20:15 mweiser Exp $", 0
         ALIGN
 
+OS_Byte			*	&06
 OS_EnterOS              *       &16
+OS_LeaveOS		*	&7C
+OS_IntOn		*	&13
+OS_IntOff		*	&14
 XOS_Module              *       &2001E
 XOS_Upcall              *       &20033
 OS_ReadMonotonicTime    *       &42
-XTaskWindow_TaskInfo    *       &63380
+;XTaskWindow_TaskInfo    *       &63380
 
 a1	RN	0
 a2	RN	1
@@ -40,34 +44,85 @@ r3	RN	3
 
 c0	CN	0
 
+cp15	CP	15
+
         EXPORT  read_monotonic_time
 read_monotonic_time
         SWI     OS_ReadMonotonicTime
-        MOVS    pc,lr
+        MOV     pc,lr
 
 ;
 ; Read the processor ID.
 ;
         EXPORT  ARMident
 ARMident
-        MOV     a2,lr
-        SWI     OS_EnterOS
-        DCD	&EE100F10	;MRC     cp15,0,a1,c0,c0
-        MOVS    pc,a2
+	STMDB	sp!,{lr}
 
-IOMD_Base       *       &03200000
-IOMD_ID0        *       &94
-IOMD_ID1        *       &98
+	TEQ	r0,r0
+	TEQ	pc,pc
+	BEQ	ident_32bit
 
-        EXPORT  IOMDident
-IOMDident
-        MOV     a2,lr
+	MOV	r0,#129
+	MOV	r1,#0
+	MOV	r2,#255
+	SWI	OS_Byte
+	CMP	r1,#&A5
+	BGE	ident_new
+
+	SWI	OS_IntOff
+	MOV	r0,#4
+	LDR	r1,[r0]
+	STMDB	sp!,{r1}
+	LDR	r1,=&E1A0F00E
+	STR	r1,[r0]
+
+	LDR	r0,=&41560200
+	LDR	r1,=&41560250
+	STMDB	sp!,{r1}
+	SWP	r0,r0,[r13]
+
+	SWI	OS_EnterOS
+	MRC	cp15,0,r0,c0,c0
+	TEQP	pc,#0
+	MOV	r0,r0
+
+	MOV	r1,#4
+	ADD	sp,sp,#4
+	LDMIA	sp!,{r2}
+	STR	r2,[r1]
+	SWI	OS_IntOn
+
+	LDMIA	sp!,{pc}
+
+ident_32bit
         SWI     OS_EnterOS
-        MOV     a3,#IOMD_Base
-        LDRB    a1,[a3,#IOMD_ID0]
-        LDRB    a4,[a3,#IOMD_ID1]
-        ADD     a1,a1,a4,LSL #8
-        MOVS    pc,a2
+        MRC	cp15,0,r0,c0,c0
+	SWI	OS_LeaveOS
+	LDMIA	sp!,{pc}
+
+ident_new
+        SWI     OS_EnterOS
+        MRC	cp15,0,r0,c0,c0
+	TEQP	pc,#0
+	MOV	r0,r0
+	LDR	r1,=&ff00fff0
+	AND	r1,r0,r1
+	LDR	r2,=&41007100
+	CMP	r1,r2
+	BEQ	iomd		;ARM7500/FE report as ARM710, identify by integral IOMD id
+        LDMIA	sp!,{pc}
+
+iomd
+	SWI	OS_EnterOS
+	LDR	r1,=&03200098	;IOMD_ID1
+	LDRB	r1,[r1]
+	TEQP	pc,#0
+	MOV	r0,r0
+	CMP	r1,#&5b
+	LDREQ	r0,=&41007500
+	CMP	r1,#&aa
+	LDREQ	r0,=&410F7500
+	LDMIA	sp!,{pc}
 
         EXPORT  riscos_upcall_6
 riscos_upcall_6
@@ -77,7 +132,7 @@ riscos_upcall_6
         TEQS    r1,#0
         BEQ     allocate_nonzero
         SWI     XOS_Upcall
-        MOVS    pc,lr
+        MOV     pc,lr
 
         IMPORT  atexit
 allocate_nonzero
@@ -85,7 +140,7 @@ allocate_nonzero
         MOV     r0,#6
         MOV     r3,#4
         SWI     XOS_Module
-        LDMVSFD sp!,{v1,pc}^
+        LDMVSFD sp!,{v1,pc}
         STR     r2,[ip]
         STR     r2,[r2]                 ; a non-zero value...
         MOV     v1,r2
@@ -94,14 +149,14 @@ allocate_nonzero
         MOV     r0,#6
         MOV     r1,v1
         SWI     XOS_Upcall
-        LDMFD   sp!,{v1,pc}^
+        LDMFD   sp!,{v1,pc}
 
 deallocate_nonzero
         LDR     r2,adcon_nonzero
         MOV     r0,#7
         LDR     r2,[r2]
         SWI     XOS_Module
-        MOVS    pc,lr
+        MOV     pc,lr
 
 adcon_nonzero
         DCD     nonzero

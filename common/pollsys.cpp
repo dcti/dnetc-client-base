@@ -40,7 +40,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.16 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: pollsys.cpp,v 1.17 2003/11/01 14:20:14 mweiser Exp $"; }
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */

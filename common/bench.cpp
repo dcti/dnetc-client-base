@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.57 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.58 2003/11/01 14:20:12 mweiser Exp $"; }
 
 //#define TRACE
 

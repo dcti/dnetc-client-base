@@ -10,7 +10,7 @@
 */
 
 #ifndef __NETCONN_H__
-#define __NETCONN_H__ "@(#)$Id: netconn.h,v 1.3 2003/09/12 22:29:26 mweiser Exp $"
+#define __NETCONN_H__ "@(#)$Id: netconn.h,v 1.4 2003/11/01 14:20:14 mweiser Exp $"
 
 /* netconn_open(): create a new connection. Returns a 'handle' for
  * subsequent netconn_xxx() operations or NULL on error.

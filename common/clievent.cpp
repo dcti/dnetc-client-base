@@ -31,7 +31,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.12 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: clievent.cpp,v 1.13 2003/11/01 14:20:13 mweiser Exp $"; }
 
 #include "baseincs.h"   /* NULL, memset */
 #include "clievent.h"   /* keep prototypes in sync */

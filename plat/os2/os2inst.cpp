@@ -13,7 +13,7 @@
  *
 */
 const char *os2inst_cpp(void) {
-return "@(#)$Id: os2inst.cpp,v 1.3 2003/09/12 22:29:27 mweiser Exp $"; }
+return "@(#)$Id: os2inst.cpp,v 1.4 2003/11/01 14:20:15 mweiser Exp $"; }
 
 // #define TRACE
 
@@ -56,10 +56,9 @@ int os2CliUninstallClient(int do_the_uninstall_without_feedback)
 int os2CliInstallClient(int do_the_install_without_feedback, const char *exename)
 {
 #define PSZSTRINGSIZE 4068
-  static char
-    pszClassName[] = "WPProgram",
-    pszTitle[]     = "distributed.net client",
-    pszLocation[]  = "<WP_START>";    // Startup Folder
+  static char pszClassName[] = "WPProgram";
+  static char pszTitle[] = "distributed.net client";
+  static char pszLocation[] = "<WP_START>";    // Startup Folder
 
   int rc, was_installed;
   char pszSetupString[PSZSTRINGSIZE];
@@ -260,6 +259,8 @@ int os2CliSendSignal(int action, const char *exename)
     case DNETC_MSG_SHUTDOWN:
       rc = DosKillProcess(DKP_PROCESS, pids[i]);
       break;
+#if defined(__EMX__)
+/* watcom has no kill() */
    case DNETC_MSG_PAUSE:
       rc = kill(pids[i], TRIGGER_PAUSE_SIGNAL);
       break;
@@ -269,6 +270,7 @@ int os2CliSendSignal(int action, const char *exename)
    case DNETC_MSG_RESTART:
       rc = kill(pids[i], SIGHUP);
       break;
+#endif
    default: // others are not supported. yet.
       rc = 0;
       ret = -1; // error

@@ -2,9 +2,12 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.8 2003/09/12 22:29:27 mweiser Exp $
+// $Id: rotate.h,v 1.9 2003/11/01 14:20:15 mweiser Exp $
 //
 // $Log: rotate.h,v $
+// Revision 1.9  2003/11/01 14:20:15  mweiser
+// merge forward changes from release-2-90xx
+//
 // Revision 1.8  2003/09/12 22:29:27  mweiser
 // merge release-2-90xx as of 20030913 back into HEAD
 //

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.76 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: console.cpp,v 1.77 2003/11/01 14:20:13 mweiser Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -360,6 +360,13 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       {
         fflush(stdout);
         ch = getch();
+      }
+      #elif (CLIENT_OS == OS_VMS)
+      {
+        fflush(stdout);       /* OpenVMS doesn't support select() */
+        ch = getchar();       /* for non-socket devices such as   */
+        if (ch == EOF)        /* stdin.  Use getchar() instead.   */
+          ch = 0;
       }
       #elif (defined(HAVE_TERMIOS))
       {

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.17 2003/09/12 22:29:26 mweiser Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.18 2003/11/01 14:20:14 mweiser Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"

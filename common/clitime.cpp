@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.57 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.58 2003/11/01 14:20:13 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -695,6 +695,14 @@ int CliGetMonotonicClock( struct timeval *tv )
         return -1;
       tv->tv_sec = ts.tv_sec;
       tv->tv_usec = ts.tv_nsec / 1000;
+    }
+    #elif (CLIENT_OS == OS_VMS)
+    {
+      struct timespec ts;            /* OpenVMS only supports   */
+      if (getclock(TIMEOFDAY, &ts))  /* TIMEOFDAY for getclock, */
+        return -1;                   /* which is the number of  */
+      tv->tv_sec  = ts.tv_sec;       /* seconds since 00:00:00  */
+      tv->tv_usec = ts.tv_nsec / 1000; /* UTC on 1-Jan-1970.    */
     }
     #elif 0
     {

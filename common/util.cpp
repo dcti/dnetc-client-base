@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.30 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: util.cpp,v 1.31 2003/11/01 14:20:14 mweiser Exp $"; }
 
 //#define TRACE
 

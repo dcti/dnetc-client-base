@@ -17,7 +17,7 @@
 */
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_4_rg_cpp (void) {
-return "@(#)$Id: rc5ansi_4-rg.cpp,v 1.3 2003/09/12 22:29:27 mweiser Exp $"; }
+return "@(#)$Id: rc5ansi_4-rg.cpp,v 1.4 2003/11/01 14:20:15 mweiser Exp $"; }
 #endif
 //
 //*Run-time generation of S0[] :

@@ -12,7 +12,7 @@
  * -----------------------------------------------------------------------
 */
 #ifndef __THREADCD_H__
-#define __THREADCD_H__ "@(#)$Id: threadcd.h,v 1.16 2003/09/12 22:29:26 mweiser Exp $"
+#define __THREADCD_H__ "@(#)$Id: threadcd.h,v 1.17 2003/11/01 14:20:14 mweiser Exp $"
 
 #include "cputypes.h" /* THREADID typedef */
 

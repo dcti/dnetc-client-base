@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.25 2003/09/12 22:29:25 mweiser Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.26 2003/11/01 14:20:13 mweiser Exp $"
 
 enum /* anonymous */
 {

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.150 2003/09/12 22:29:25 mweiser Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.151 2003/11/01 14:20:13 mweiser Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */

@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.4 2003/09/17 00:17:53 bdragon Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.5 2003/11/01 14:20:13 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */

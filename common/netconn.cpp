@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.4 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.5 2003/11/01 14:20:14 mweiser Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET

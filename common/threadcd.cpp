@@ -9,7 +9,7 @@
  *
 */
 const char *threadcd_cpp(void) {
-return "@(#)$Id: threadcd.cpp,v 1.18 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: threadcd.cpp,v 1.19 2003/11/01 14:20:14 mweiser Exp $"; }
 
 #include <stdio.h>      //NULL
 #include "threadcd.h"   //includes implementation and porting notes.

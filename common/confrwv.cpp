@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.93 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.94 2003/11/01 14:20:13 mweiser Exp $"; }
 
 //#define TRACE
 

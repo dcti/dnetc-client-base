@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.16 2003/09/12 23:58:17 mweiser Exp $
+Version change log: $Id: CHANGES.txt,v 1.17 2003/11/01 14:20:14 mweiser Exp $
 ==========================================================================
 
 2.9000
@@ -34,6 +34,8 @@ Version change log: $Id: CHANGES.txt,v 1.16 2003/09/12 23:58:17 mweiser Exp $
             new: macosx: use IOHWSensor to read CPU temperature (#3334)
             imp: some: allow for fractional temperature thresholds (#3315)
             chg: x86: made Pentium M preselection like Pentium 4 (#3323)
+            imp: aix: include assembler cores on ppc
+            fix: aix: smp: threads now get correctly spread over all cpus
 
 2.9006-485  new: decunix: cpu temperature detection
             new: macosx: use AppleCPUthermo to read CPU temperature (#3315)

@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.37 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.38 2003/11/01 14:20:12 mweiser Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.86 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.87 2003/11/01 14:20:14 mweiser Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT

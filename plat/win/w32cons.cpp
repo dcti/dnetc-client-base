@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.5 2003/09/12 22:29:27 mweiser Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.6 2003/11/01 14:20:15 mweiser Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE

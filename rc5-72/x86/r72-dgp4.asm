@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dgp4.asm,v 1.5 2003/09/12 22:29:27 mweiser Exp $
+; $Id: r72-dgp4.asm,v 1.6 2003/11/01 14:20:15 mweiser Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]

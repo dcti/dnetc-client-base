@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.291 2003/09/12 22:29:25 mweiser Exp $
+# @(#)$Id: configure,v 1.292 2003/11/01 14:20:12 mweiser Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -56,9 +56,11 @@ TARGET_LDFLAGS=""
 TARGET_LIBS=""
 TARGET_HDIRS="./common" # the rest are added as needed
 TARGET_AS="as"
-TARGET_NASM="nasm"     #<- set this to "" if you have no nasm
-TARGET_NASM_FMT="elf"  #<- set this to "" if you have no nasm
 TARGET_ASFLAGS=""
+TARGET_NASM="nasm"     #<- set this to "" if you have no nasm
+TARGET_NASM_FMT="elf"
+TARGET_YASM="yasm"     #<- set this to "" if you have no yasm
+TARGET_YASM_FMT="elf"
 TARGET_STRIP="strip"
 TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
 TARGET_IS_CROSSCOMPILE="" #
@@ -66,6 +68,7 @@ TARGET_IS_CROSSCOMPILE="" #
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
 TARGET_ADDNASMS=""
+TARGET_ADDYASMS=""
 TARGET_ADDOBJS=""
 
 # Certain source files need to be compiled without optimization
@@ -637,7 +640,23 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_64
   #-----------------------------------------------------------------
   elif [ "$2" = "x86_64" ]; then
-    : # pure ansi targets for now.
+    if [ "X$TARGET_YASM" = "X" -o "X$TARGET_YASM_FMT" = "X" ]; then #no YASM
+      echo You need YASM to build.
+      exit 1
+    else
+      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/x86_64/x86ident.asm"
+    fi
+
+    # -------------- rc5-72 --------------
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      if [ "X$TARGET_YASM" != "X" -a "X$TARGET_YASM_FMT" != "X" ]; then
+        # -- yasm/rc5 --
+        #DEFAULT_RC5_72="0"     # don't add the ansi cores
+        TARGET_ADDYASMS="$TARGET_ADDYASMS \
+                         rc5-72/x86_64/r72-snjl.asm"
+      fi
+    fi # HAVE_RC5_72
+
   #-----------------------------------------------------------------
   else
     echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
@@ -1374,10 +1393,10 @@ case "$1" in
 
     *arm-riscos-gccsdk) # RiscOS client crosscompiled under Unix using GCCSDK
                         # and Unixlib (http://hard-mofo.dsvr.net/)
-        TARGET_CC="/home/peter/gccsdk-2.95.4-v3/cross/bin/gcc"
+        TARGET_CC="/home/peter/gccsdk-32/cross/bin/gcc"
         generate_gcc_opts "arm" "riscos"
         TARGET_CCFLAGS="$OPTS_GCC -Iplat/riscos -D__riscos"
-        TARGET_AS="/home/peter/gccsdk-2.95.4-v3/cross/bin/gcc"
+        TARGET_AS="/home/peter/gccsdk-32/cross/bin/gcc"
         TARGET_ASFLAGS="-c"
         TARGET_DOCFILES="docs/readme.riscos"   #platform specific docfile
         TARGET_TARBALL="riscos-arm"
@@ -2369,21 +2388,17 @@ case "$1" in
 
     *x86_64-linux*)                # generic. works everywhere
         infer_arch_and_version "Linux"
-        TARGET_NASM_FMT="elf"
+        TARGET_YASM_FMT="elf"
         TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
         TARGET_CC="gcc"
         generate_gcc_opts "${inferred_arch}" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_LIBS="-lstdc++"
-        TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}"
+        TARGET_TARBALL="linux-${inferred_arch}-${TARGET_YASM_FMT}"
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "x86_64" ""
-
-        #TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_POSIX_THREADS"
-        #TARGET_LIBS="$TARGET_LIBS -lpthread"
-        #TARGET_TARBALL="${TARGET_TARBALL}-pthreads"
 
         ;;
 
@@ -2736,6 +2751,21 @@ else
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__AOUT__" #for both aout and aoutb
 fi
 
+#
+# Finalize the YASM compilation options.
+#
+if [ -z "$TARGET_YASM_FMT" ]; then
+  TARGET_YASM_FMT="elf"
+fi
+TARGET_YASMFLAGS="-f $TARGET_YASM_FMT -m amd64 -p nasm -r nasm"
+#if [ "$TARGET_YASM_FMT" = "elf" ]; then
+#  TARGET_YASMFLAGS="$TARGET_YASMFLAGS -d__ELF__"
+#elif [ "$TARGET_YASM_FMT" = "obj" ]; then
+#  TARGET_YASMFLAGS="$TARGET_YASMFLAGS -d__OMF__"
+#else
+#  TARGET_YASMFLAGS="$TARGET_YASMFLAGS -d__AOUT__" #for both aout and aoutb
+#fi
+
 
 #
 # Finalize the LD that will be used.
@@ -2811,6 +2841,17 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
   done
 fi
+if [ -n "${TARGET_ADDYASMS}" ]; then
+  echo "Scanning output YASM dependencies..."
+  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} yasm"
+  for target in ${TARGET_ADDYASMS}; do
+      TARGETOBJECT=`basename $target .asm`
+      TARGETOBJECT=output/`basename $target .asm`.o
+      echo "  $target -> $TARGETOBJECT"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
+  done
+fi
 if [ -n "${TARGET_ADDSRCS}" ]; then
   echo "Scanning additional C/C++ dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} cc"
@@ -2863,6 +2904,8 @@ echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
+echo "YASM = ${TARGET_YASM}" >> Makefile
+echo "YASMFLAGS = ${TARGET_YASMFLAGS}" >> Makefile
 echo "STRIP = ${TARGET_STRIP}" >> Makefile
 echo "ALLOBJS = ${TARGET_ALLOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
@@ -2939,7 +2982,7 @@ if [ -n "$TARGET_TARBALL" ]; then
       echo "	cp plat/riscos/package/*,??? $FULLTARNAME" >> Makefile
       echo "	mkdir -p $FULLTARNAME/!System/310/Modules" >> Makefile
       echo "	cp plat/riscos/package/!System/310/Modules/*,??? $FULLTARNAME/!System/310/Modules" >> Makefile
-      echo "	/home/peter/gccsdk-2.95.4-v2/cross/bin/zip -r -, $FULLTARNAME.zip $FULLTARNAME" >> Makefile
+      echo "	/home/peter/gccsdk-32/cross/bin/zip -r -, $FULLTARNAME.zip $FULLTARNAME" >> Makefile
       echo "	rm -rf $FULLTARNAME" >> Makefile
     else
       echo "Warning: Unknown TARGET_ARCTYPE ${TARGET_ARCTYPE}"
@@ -3034,6 +3077,8 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     elif [ "${target}" = "as" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "nasm" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "yasm" ]; then
       TARGETTYP="$target"
     # ------------------------------------
     elif [ "${TARGETSRC}X" = "X" ]; then
@@ -3146,6 +3191,24 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       fi
       echo "$target:	${TARGETSRC}" >> Makefile
       echo "	\${NASM} \${NASMFLAGS} ${incswitch} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "yasm" ]; then
+      dirlist=`echo "${TARGETSRC}"|tr '/' ' '`
+      incswitch=""
+      prevdir=""
+      for subdir in $dirlist; do
+        if [ -n "$prevdir" ]; then
+          incswitch="$incswitch$prevdir/"
+        fi
+        prevdir="$subdir"
+      done
+      if [ -d "$incswitch" ]; then
+        incswitch="-I $incswitch"
+      fi
+      echo "$target:	${TARGETSRC}" >> Makefile
+      echo "	\${YASM} \${YASMFLAGS} ${incswitch} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------

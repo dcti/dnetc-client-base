@@ -7,7 +7,7 @@
  * This file should be shared between client and proxynet some day ...
  */
 #ifndef __PROJDATA_H__
-#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.2 2003/09/12 22:29:26 mweiser Exp $"
+#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.3 2003/11/01 14:20:14 mweiser Exp $"
 
 #include "cputypes.h"   // u32 ...
 

@@ -11,7 +11,7 @@
 */
 
 .data
-_id:	        .ascii "@(#)$Id: x86ident.S,v 1.3 2003/09/12 22:29:27 mweiser Exp $"
+_id:	        .ascii "@(#)$Id: x86ident.S,v 1.4 2003/11/01 14:20:15 mweiser Exp $"
 		.byte 0
 		.align 4
 _savident:	.long 0              // avoid serialization caused by CPUID

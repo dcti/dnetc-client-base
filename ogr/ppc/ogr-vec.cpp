@@ -5,7 +5,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.4 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.5 2003/11/01 14:20:15 mweiser Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
   #if (__MWERKS__)

@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.161 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.162 2003/11/01 14:20:13 mweiser Exp $"; }
 
 //#define TRACE
 

@@ -6,7 +6,7 @@
 */
 
 #ifndef __CONFRWV_H__
-#define __CONFRWV_H__ "@(#)$Id: confrwv.h,v 1.17 2003/09/12 22:29:25 mweiser Exp $"
+#define __CONFRWV_H__ "@(#)$Id: confrwv.h,v 1.18 2003/11/01 14:20:13 mweiser Exp $"
 
 int  ConfigRead(Client *client);
 int  ConfigWrite(Client *client);

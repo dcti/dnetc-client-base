@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.4 2003/09/12 22:29:27 mweiser Exp $
+; $Id: x86ident.asm,v 1.5 2003/11/01 14:20:15 mweiser Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:

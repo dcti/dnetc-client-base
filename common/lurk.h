@@ -6,7 +6,7 @@
 //
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.26 2003/09/12 22:29:25 mweiser Exp $"
+#define __LURK_H__ "@(#)$Id: lurk.h,v 1.27 2003/11/01 14:20:13 mweiser Exp $"
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
 #define CONNECT_LURK         0x01 

@@ -6,7 +6,7 @@
  */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ev67.cpp,v 1.3 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: ev67.cpp,v 1.4 2003/11/01 14:20:14 mweiser Exp $"; }
 
 #if defined(__GNUC__)
   #define OGROPT_BITOFLIST_DIRECT_BIT           1 /* seems to be a win */

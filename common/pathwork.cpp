@@ -24,7 +24,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.22 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.23 2003/11/01 14:20:14 mweiser Exp $"; }
 
 // #define TRACE
 

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.179 2003/09/12 22:29:26 mweiser Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.180 2003/11/01 14:20:14 mweiser Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)

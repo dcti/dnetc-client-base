@@ -2,7 +2,7 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.5 2003/09/12 22:29:27 mweiser Exp $
+// $Id: rotate.h,v 1.6 2003/11/01 14:20:15 mweiser Exp $
 //
 
 #ifndef __ROTATE_H__

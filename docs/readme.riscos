@@ -1,7 +1,7 @@
 
  distributed.net client for RISC OS v3.10 or later.
- Released by Peter Teichmann <dnet@peter-teichmann.de>
- Document revision $Id: readme.riscos,v 1.5 2003/09/12 22:29:26 mweiser Exp $
+ Released by Peter Teichmann <teichp@distributed.net>
+ Document revision $Id: readme.riscos,v 1.6 2003/11/01 14:20:14 mweiser Exp $
 
  Welcome to the distributed.net client.
 
@@ -10,36 +10,52 @@
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
-    2.0  RISC OS specific notes
+    2.0  Several notes
 
- 1.0  Getting started ------------------------------------------------
+ 1.0  Getting started -------------------------------------------------------
 
-    Just unpack the client in a directory of your choice. Copy the
-    included !System directory over your !System directory, this will
-    install the SharedUnixLib module which is needed by the client.
-    Now start the client using the file "!Run", or start it manually
-    in a task window.
+    Just unpack the client in a directory of your choice. Install the
+    included !System update, which contains the SharedUnixLibrary 1.02
+    and a recent FPEmulator for machines running RISC OS 3.1. On a machine
+    with a recent !Boot application, start this application, select "System"
+    and follow the instructions. On older machines you need install these
+    modules manually.
+
+    Since the client originates from the Unix world, it is a command line
+    program which is controlled by command line options. If you like to
+    make use of all the opportunities it offers, you have to run it
+    manually using the CLI, be it a taskwindow or singletasking. However,
+    for the most common tasks there are obey files supplied:
+
+    !Bench      benchmarks the client in singletasking mode
+    !Config     starts the client's configuration dialog
+    !Help       shows the client's help
+    !Run        starts the client in a taskwindow
+    !RunQuiet   starts the client without any output in background
+    !RunSingle  starts the client in singletasking mode
+    !Stop       stops the client if it was started without output
+    !Test       tests the cores for compliance
+    !Update     starts a buffer update
+
+    Usually you will not need anything else than these obey files.
+    Start the client using the file "!Run".
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the
     configuration file "dnetc/ini" will be saved in the same directory
     as the client. Then, simply restart the client. From that point on
     it will use the saved configuration.
-    
+
     The configuration options are fairly self-explanatory and can be run
-    at any time by starting the client with the '-config' option.
-    A list of command line options is available by starting the client
-    with '-help'. You can also start the file "!Config" or "!Help"
-    instead. 
+    at any time by starting the file "!Config" or starting the client with
+    the '-config' option. A list of command line options is available by
+    starting "!Help" or starting the client with '-help'.
 
     A "Complete Step-by-Step Guide to Running Your First Client" is
     available at http://distributed.net/FAQ/
 
- 2.0  Notes: ---------------------------------------------------------
+ 2.0  Several notes ---------------------------------------------------------
 
-    The client for RISC OS requires the Acorn Internet module, or a
-    compatible TCP/IP stack (eg FreeNet).
-    
     If you want to run the client quiet, start "!RunQuiet" instead. To
     stop a running client, press the "Esc" key in its task window. If
     you have started it quiet, start the file "!Stop". This will
@@ -47,7 +63,8 @@
     that this method may take up to 30 seconds. This method of
     stopping the client will only work if you have configured the
     exit flag file name "exitrc5/now". This is already done for you in
-    the supplied "dnetc/ini" file.
+    the supplied "dnetc/ini" file by default, but you should take care
+    not to change this option.
 
     If you want to run the client automatically when the computer
     starts, you can not simply copy "!Run" or "!RunQuiet" to your
@@ -60,7 +77,7 @@
     the client to use a checkpoint file. That will make the client save
     its state every couple of minutes, so that it can be recovered if
     the client is killed by accident.
-    
+
     This version does not support the x86 coprocessor card.
 
     This version is not compatible with the previously released

@@ -25,7 +25,7 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.78 2003/09/12 22:29:26 mweiser Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.79 2003/11/01 14:20:14 mweiser Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
 /* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */

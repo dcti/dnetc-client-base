@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __SETPRIO_H__
-#define __SETPRIO_H__ "@(#)$Id: setprio.h,v 1.4 2003/09/12 22:29:26 mweiser Exp $"
+#define __SETPRIO_H__ "@(#)$Id: setprio.h,v 1.5 2003/11/01 14:20:14 mweiser Exp $"
 
 // 'prio' is a value on the scale of 0 to 9, where 0 is the lowest
 // priority and 9 is the highest priority [9 is what the priority would 

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amGUI.c,v 1.3 2003/09/12 22:29:26 mweiser Exp $
+ * $Id: amGUI.c,v 1.4 2003/11/01 14:20:15 mweiser Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *

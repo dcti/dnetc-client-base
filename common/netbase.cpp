@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.6 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.7 2003/11/01 14:20:13 mweiser Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -91,28 +91,10 @@ return "@(#)$Id: netbase.cpp,v 1.6 2003/09/12 22:29:25 mweiser Exp $"; }
 #include "baseincs.h"
 
 #if (CLIENT_OS == OS_VMS)
-  #ifdef __VMS_UCX__ // define for UCX instead of Multinet on VMS
-    #include <sys/socket.h>
-    #include <arpa/inet.h>
-    #include <sys/time.h>
-    #include <unistd.h>
-    #include <netdb.h>
-    #include <unixio.h>
-  #elif defined(MULTINET)
-    #include "multinet_root:[multinet.include.sys]types.h"
-    #include "multinet_root:[multinet.include.sys]ioctl.h"
-    #include "multinet_root:[multinet.include.sys]param.h"
-    #include "multinet_root:[multinet.include.sys]time.h"
-    #include "multinet_root:[multinet.include.sys]socket.h"
-    #include "multinet_root:[multinet.include]netdb.h"
-    #include "multinet_root:[multinet.include.netinet]in_systm.h"
-    #ifndef multinet_inet_addr
-      extern "C" unsigned long int inet_addr(const char *cp);
-    #endif
-    #ifndef multinet_inet_ntoa
-      extern "C" char *inet_ntoa(struct in_addr in);
-    #endif
-  #endif
+  #include <ioctl.h>
+  #include <inet.h>
+  #include <netdb.h>
+  #include <unixio.h>
 #elif (CLIENT_OS == OS_OS2)
   #define BSD_SELECT
   #include <netdb.h>
@@ -200,6 +182,8 @@ return "@(#)$Id: netbase.cpp,v 1.6 2003/09/12 22:29:25 mweiser Exp $"; }
   extern "C" int gethostname(char *, size_t);
 #elif (CLIENT_OS == OS_AMIGAOS)
   #define socklen_t long
+#elif (CLIENT_OS == OS_VMS)
+  #define socklen_t uint
 #else
   #define socklen_t int
 #endif
@@ -1561,20 +1545,10 @@ static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
     #endif
     return 0;
   #elif (CLIENT_OS == OS_VMS)
-    unsigned long optval = (unsigned long)*i_optval;
-    #if defined(FIONBIO) && defined(__VMS_UCX__)
-    // nonblocking sockets not directly supported by UCX
-    // - DIGITAL's work around requires system privileges to use
-    if (opt = FIONBIO) { errno = EPERM; return ps_stdneterr; }
-    #endif
-    /* defined(MULTINET) or opt!=FIONBIO */
-    if (socket_ioctl(sock, opt, &optval)!=0)
+    int optval = (int)*i_optval;
+    if (ioctl(sock, (int)opt, (char *) &optval)!=0)
       return ps_stdneterr;
-    #if (UINT_MAX != ULONG_MAX)
-    *i_optval = (int)((optval > UINT_MAX) ? (UINT_MAX) : (optval));
-    #else
     *i_optval = (int)optval;
-    #endif
     return 0;
   #elif (CLIENT_OS == OS_RISCOS)
     int optval = (int)*i_optval;
