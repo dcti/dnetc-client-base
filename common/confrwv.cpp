@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.84 2002/09/02 00:35:41 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.85 2002/09/14 23:11:58 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -44,10 +44,10 @@ static const char *__getprojsectname( unsigned int ci )
   if (ci < CONTEST_COUNT)
   {
     #if 1
-      #if (CONTEST_COUNT != 4)
-        #error fixme: (CONTEST_COUNT != 4) static table
+      #if (CONTEST_COUNT != 6)
+        #error fixme: (CONTEST_COUNT != 6) static table
       #endif
-      static const char *sectnames[CONTEST_COUNT]={"rc5","des","ogr","csc"};
+      static const char *sectnames[CONTEST_COUNT]={"rc5","des","ogr","csc","ogr-nextgen-someday","rc5-72"};
       return sectnames[ci];
     #else
       const char *cname = CliGetContestNameFromID(ci);

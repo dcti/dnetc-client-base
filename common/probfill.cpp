@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.81 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.82 2002/09/14 23:11:58 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -134,9 +134,11 @@ static struct {
   { { { 0, 0 }, { 0, 0 } }, 0, 0 },
   { { { 0, 0 }, { 0, 0 } }, 0, 0 },
   { { { 0, 0 }, { 0, 0 } }, 0, 0 },
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
   { { { 0, 0 }, { 0, 0 } }, 0, 0 }
-  #if (CONTEST_COUNT != 4)
-    #error static initializer expects CONTEST_COUNT == 4
+  #if (CONTEST_COUNT != 6)
+    #error static initializer expects CONTEST_COUNT == 6
   #endif
 };
 

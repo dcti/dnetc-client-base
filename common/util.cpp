@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.24 2002/09/02 00:35:43 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.25 2002/09/14 23:11:58 andreasb Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -348,10 +348,10 @@ const char *projectmap_expand( const char *map )
 
 const char *projectmap_build( char *buf, const char *strtomap )
 {
-  #if (CONTEST_COUNT != 4)
-    #error static table needs fixing. (CONTEST_COUNT is not 4).
+  #if (CONTEST_COUNT != 6)
+    #error static table needs fixing. (CONTEST_COUNT is not 6).
   #endif
-  static char default_map[CONTEST_COUNT] = { 1,3,2,0 };
+  static char default_map[CONTEST_COUNT] = { DES,CSC,OGR,RC5,RC5_72,OGR_NEXTGEN_SOMEDAY };
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;
   int contestid;
