@@ -56,7 +56,11 @@ NOPE - Silby
   block 1 of 1 (100.00% transferred)" and then tells you "Retrieved 1
   RC5 block(s) from server" One of these messages is nice, but two gets
   cluttering.
-
+Partially Fixed (Silby + Kevin Bracey)
+  The "retrieved block 1 of 1" message is now overwritten by the
+  "Retrieved 1 block" message (same applies to send.)
+  Duplicate proxy messages have not yet been fixed.
+  
 06-08-98 - Kevin Bracey
   New Bug: Run the client offline, with contestdone2 set to 1, and
            nothing in the input buffer. Instead of generating a random
