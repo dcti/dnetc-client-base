@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.26 2000/02/25 20:24:40 patrick Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.27 2000/03/06 20:21:45 patrick Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -309,7 +309,7 @@
   #endif
   #define CLIENT_OS_NAME   "AIX"
   #define CLIENT_OS     OS_AIX
-  /* AIXALL hides itself as POWER, it's more easy copy with this problem */
+  /* AIXALL hides itself as POWER, it's more easy to cope with this problem */
   /* in the POWER tree, because this is used on AIX only */
   #if defined(_ARCH_PPC) || defined(ASM_PPC) || defined(_AIXALL)
     #define CLIENT_CPU    CPU_POWERPC
