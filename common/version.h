@@ -23,12 +23,12 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.58 1999/11/15 03:29:51 cyp Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.59 1999/11/24 03:47:20 cyp Exp $"
 
 #define CLIENT_MAJOR_VER     2
 #define CLIENT_CONTEST       80
-#define CLIENT_BUILD         02
+#define CLIENT_BUILD         04
 #define CLIENT_BUILD_FRAC    446
-#define CLIENT_VERSIONSTRING "2.8002-446"
+#define CLIENT_VERSIONSTRING "2.8004-DEV"
 
 #endif /* __VERSION_H__ */
