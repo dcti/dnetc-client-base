@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.35 2000/06/02 06:24:57 jlawson Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.36 2000/07/03 07:16:03 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -100,7 +100,7 @@ static int __netInitAndDeinit( int doWhat )
     }
     else if (doWhat > 0)                  //request to initialize
     {
-      if ((++net_init_level)!=1)     //don't initialize more than once
+      if ((++net_init_level) != 1)     //don't initialize more than once
         success = 1;
       else if ((success = w32sockInitialize()) == 0)
         --net_init_level;
@@ -127,7 +127,7 @@ static int __netInitAndDeinit( int doWhat )
     }
     else if (doWhat > 0)   //request to initialize
     {
-      if ((++net_init_level)!=1) //don't initialize more than once
+      if ((++net_init_level) != 1) //don't initialize more than once
         success = 1;
       else
       {
@@ -145,7 +145,7 @@ static int __netInitAndDeinit( int doWhat )
     }
     else //if (doWhat < 0) //request to de-initialize
     {
-      if ((--net_init_level)!=0) //don't deinitialize more than once
+      if ((--net_init_level) != 0) //don't deinitialize more than once
         success = 1;
       else
       {
@@ -244,7 +244,7 @@ static int __globalInitAndDeinit( int doWhat )
     if (global_is_init != 0)
     {
       global_is_init = 0; // assume all success
-      
+
       #if (CLIENT_OS == OS_WIN32)
       WSACleanup();
       #elif (CLIENT_OS == OS_MACOS)
@@ -285,9 +285,10 @@ int NetClose( Network *net )
 //----------------------------------------------------------------------
 
 Network *NetOpen( const char *servname, int servport,
-           int _nofallback/*= 1*/, int _iotimeout/*= -1*/, int _enctype/*=0*/,
-           const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/,
-           const char *_fwalluid /*= NULL*/ )
+                  bool _nofallback/*= true*/,
+                  int _iotimeout/*= -1*/, int _enctype/*=0*/,
+                  const char *_fwallhost /*= NULL*/, int _fwallport /*= 0*/,
+                  const char *_fwalluid /*= NULL*/ )
 {
   Network *net;
   int success;
@@ -301,8 +302,12 @@ Network *NetOpen( const char *servname, int servport,
     return NULL;
 
   net = new Network( servname, servport,
-           _nofallback /*=1*/, _iotimeout/*=-1*/, _enctype /*= 0*/,
-           _fwallhost /*= NULL*/, _fwallport /*= 0*/, _fwalluid /*= NULL*/ );
+                     _nofallback /*=true*/,
+                     _iotimeout/*=-1*/,
+                     _enctype /*= 0*/,
+                     _fwallhost /*= NULL*/,
+                     _fwallport /*= 0*/,
+                     _fwalluid /*= NULL*/ );
   success = ( net != NULL );
 
   if (success)
