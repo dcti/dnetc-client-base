@@ -9,7 +9,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.97 2001/06/17 17:20:03 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.98 2002/03/25 01:45:50 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1890,9 +1890,15 @@ int ClientRun( Client *client )
        && timeRun >= timeNextConnect
        && (client->max_buffupd_interval <= 0 ||
           client->last_buffupd_time == 0 ||
-          timeRun >= (((time_t)client->last_buffupd_time) +
-                       (time_t)(client->max_buffupd_interval * 60))) )
+          timeRun >= ((client->last_buffupd_failed_time == 0)
+                      ?((time_t)(client->last_buffupd_time +
+                                 client->max_buffupd_interval * 60))
+                      :((time_t)(client->last_buffupd_failed_time +
+                                 client->max_buffupd_retry_interval * 60))) ) )
     {
+      TRACE_OUT((0, "FREQ timeRun=%d  timeNextConnect=%d  local_connectoften=%d\n", timeRun, timeNextConnect, local_connectoften));
+      TRACE_OUT((0, "FREQ last_buffupd_time=%d  last_buffupd_time+interval=%d\n", client->last_buffupd_time, client->last_buffupd_time+ client->max_buffupd_interval * 60));
+      TRACE_OUT((0, "FREQ last_buffupd_failed_time=%d  last_buffupd_failed_time+interval=%d\n", client->last_buffupd_failed_time, client->last_buffupd_failed_time+ client->max_buffupd_retry_interval * 60));
       timeNextConnect = timeRun + 30; /* never more often than 30 seconds */
       if (ModeReqIsSet(MODEREQ_FETCH|MODEREQ_FLUSH) == 0)
       {
@@ -1912,6 +1918,12 @@ int ClientRun( Client *client )
         {
           ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
         }
+      }
+      if (client->last_buffupd_time == 0)
+      {
+        // initial connectoften check has been finished
+        // now obey client->max_buffupd_[retry_]interval
+        client->last_buffupd_time = 1;
       }
     }
 

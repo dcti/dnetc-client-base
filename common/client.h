@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.23 2001/03/03 03:58:58 sampo Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.133.2.24 2002/03/25 01:45:46 andreasb Exp $"
 
 #include "problem.h" /* WorkRecord, CONTEST_COUNT */
 #include "lurk.h"    /* lurk_conf structure */
@@ -46,7 +46,8 @@ typedef struct
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[MINCLIENTOPTSTRLEN*2];
-  u32  last_buffupd_time; /* monotonic. goes with max_buffupd_interval */
+  u32  last_buffupd_time; /* monotonic. goes with max_buffupd_[retry_]interval */
+  int  last_buffupd_failed_time;
   char project_flags[CONTEST_COUNT]; /* do NOT save to disk! */
 
   /* -- general -- */
@@ -82,6 +83,7 @@ typedef struct
   int inthreshold[CONTEST_COUNT]; 
   int timethreshold[CONTEST_COUNT];  /* in hours */
   int max_buffupd_interval; /* the better 'outthreshold'. in minutes */
+  int max_buffupd_retry_interval;
   #if (!defined(NO_OUTBUFFER_THRESHOLDS))
   int outthreshold[CONTEST_COUNT];
   #endif

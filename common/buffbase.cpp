@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.65 2001/07/16 18:29:17 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.66 2002/03/25 01:45:41 andreasb Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -1123,14 +1123,18 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
     req_flags |= BUFFERUPDATE_FLUSH;
   if (didfetch)
     req_flags |= BUFFERUPDATE_FETCH;
-  if (didfetch || didflush || didnews)
   {
     struct timeval tv;
     if (CliClock(&tv) == 0)
     {
       if (!tv.tv_sec) tv.tv_sec++;
-      client->last_buffupd_time = tv.tv_sec;
+      if (didfetch || didflush || didnews)
+        client->last_buffupd_time = tv.tv_sec;
+      else
+        client->last_buffupd_failed_time = tv.tv_sec;
     }  
+    if (didfetch || didflush || didnews)
+      client->last_buffupd_failed_time = 0; /* forget previous failures */
   }
 
   /* -------------------------------------- */

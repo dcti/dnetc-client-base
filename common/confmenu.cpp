@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.41.2.34 2002/03/24 01:39:27 andreasb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.41.2.35 2002/03/25 01:45:51 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -391,6 +391,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_REMOTEUPDATEDIR].thevariable=&(client->remote_update_dir[0]);
   conf_options[CONF_FREQUENT].thevariable=&(client->connectoften);
   conf_options[CONF_FREQUENT_FREQUENCY].thevariable=&(client->max_buffupd_interval);
+  conf_options[CONF_FREQUENT_RETRY_FREQUENCY].thevariable=&(client->max_buffupd_retry_interval);
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
     preferred_blocksize[cont_i] = client->preferred_blocksize[cont_i];
@@ -628,12 +629,21 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_FREQUENT_FREQUENCY].disabledtext=
                   ((client->offlinemode && noremotedir) ? na : NULL );
+      conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
+                  ((client->offlinemode && noremotedir) ? na : NULL );
       conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDI].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDT].disabledtext= 
                   (client->offlinemode && noremotedir ? na : NULL );
+
+      if (client->max_buffupd_interval == 0)
+        conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
+                    "n/a [buffer check interval is default]";
+      if (!client->connectoften)
+        conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
+                    "n/a [need additional buffer level checking]";
     }
     else if (whichmenu == CONF_MENU_LOG)
     {

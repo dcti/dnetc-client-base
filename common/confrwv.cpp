@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.50 2000/12/14 23:18:34 oliver Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.51 2002/03/25 01:45:55 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1331,6 +1331,7 @@ int ConfigRead(Client *client)
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
   client->connectoften = GetPrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften , fn );
   client->max_buffupd_interval = __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", NULL, client->max_buffupd_interval, fn, 0 );
+  client->max_buffupd_retry_interval = __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-retry-interval", NULL, client->max_buffupd_retry_interval, fn, 0 );
   GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn );
   projectmap_build(client->loadorder_map, buffer);
 
@@ -1477,6 +1478,7 @@ int ConfigWrite(Client *client)
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 0 );
     __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", &(client->max_buffupd_interval), 0, fn, 0 );
+    __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-retry-interval", &(client->max_buffupd_retry_interval), 0, fn, 0 );
 
     /* --- CONF_MENU_MISC __ */
 

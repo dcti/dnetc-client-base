@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.60 2001/07/27 08:05:01 mfeiri Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.61 2002/03/25 01:45:52 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -407,7 +407,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   CONF_FREQUENT_FREQUENCY      , /* CONF_MENU_BUFF */
   CFGTXT("Buffer-level check interval"), "0:00 (on buffer change)",
   /*CFGTXT(*/
-  "This option determines how how often '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
+  "This option determines how often '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
   "should be performed. (More precisely: how much time must elapse between\n"
   "buffer-level checks)\n" 
   "\n"
@@ -418,6 +418,23 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "The interval specified here is in hours and minutes, and the default denotes\n"
   "that the client should check buffer-levels whenever it detects a change (by any\n"
   "client) to a buffer file, but not more often than twice per minute.\n"
+  /*)*/,CONF_MENU_BUFF,CONF_TYPE_TIMESTR,NULL,NULL,0,0,NULL,NULL
+},   
+{  
+  CONF_FREQUENT_RETRY_FREQUENCY      , /* CONF_MENU_BUFF */
+  CFGTXT("Buffer-level check retry interval"), "0:00 (no delay)",
+  /*CFGTXT(*/
+  "This option determines how often '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
+  "should be retried after failure. (More precisely: how much time must elapse\n"
+  "between buffer-level check retries)\n" 
+  "\n"
+  "This setting is meaningful only if one of the extensions to normal threshold\n"
+  "management is enabled: either implicitly when 'Dialup detection options' are\n"
+  "active or explicitly with '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'.\n"
+  "\n"
+  "The interval specified here is in hours and minutes, and the default denotes\n"
+  "that the client should retry the buffer-level checks at most twice per minute\n"
+  "until it succeeds.\n"
   /*)*/,CONF_MENU_BUFF,CONF_TYPE_TIMESTR,NULL,NULL,0,0,NULL,NULL
 },   
 { 
