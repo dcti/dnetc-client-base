@@ -9,13 +9,31 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.50.2.1 1999/07/25 23:03:16 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.50.2.2 1999/12/20 11:40:18 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
 #include "baseincs.h"  // basic (even if port-specific) #includes
 
 // -----------------------------------------------------------------------
+
+// Internal helper function to set the operating-system priority level
+// for the current process or thread, as appropriate.  If it is indicated
+// that the caller is a computational worker thread, then the specified
+// priority is scaled to be even "nicer".
+//
+//    prio - scaled priority level (0 through 9 inclusive).
+//
+//    set_for_thread - nonzero if being called from a computational
+//        worker thread.
+//
+// Returns 0 on success, -1 on error.
+//
+// 'prio' is a value on the scale of 0 to 9, where 0 is the lowest
+// priority and 9 is the highest priority [9 is what the priority would 
+// be if priority were not set, ie is 'normal' priority.] 
+//
+// prio 9 code should be valid, since the priority is raised when exiting. 
 
 static int __SetPriority( unsigned int prio, int set_for_thread )
 {
@@ -44,12 +62,12 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   }
   #elif (CLIENT_OS == OS_WIN32)
   {
-    static int useidleclass = -1;
+    static int useidleclass = -1;           // persistent var to track detection state.
     int threadprio = 0, classprio = 0;
-    HANDLE our_thrid = GetCurrentThread();
+    HANDLE our_thrid = GetCurrentThread();  // really a Win32 pseudo-handle constant.
 
     if (set_for_thread && !win32ConIsLiteUI()) // full-GUI crunchers always
-      prio=0;                                  // run at idle prio
+      prio = 0;                                // run at idle prio
   
     /* ************************** Article ID: Q106253 *******************
                               process priority class
@@ -66,6 +84,9 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   
     if (useidleclass == -1) /* not yet detected */
     {
+      // This is the first pass through this function, and we have
+      // not yet detected whether setting the thread priority is 
+      // allowed on this environment.
       SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
       Sleep(1);
       SetThreadPriority( our_thrid, THREAD_PRIORITY_TIME_CRITICAL);    
@@ -79,6 +100,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       }
       SetThreadPriority( our_thrid, THREAD_PRIORITY_NORMAL );    
     }
+
     if (useidleclass == 1)
     {
       classprio = IDLE_PRIORITY_CLASS;
@@ -100,6 +122,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     }
     //SetPriorityClass( GetCurrentProcess(), classprio );
     //Sleep(1);
+
     SetThreadPriority( our_thrid, threadprio );
   }
   #elif (CLIENT_OS == OS_MACOS)
@@ -218,7 +241,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     else if (prio < 9)
       schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
   }
-  #else
+  #else // all other UNIX-like environments
   {
     #if (CLIENT_OS == OS_FREEBSD)
     #ifndef PRI_OTHER_MAX
@@ -273,12 +296,30 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
 
 // -----------------------------------------------------------------------
 
+// Function to set the operating-system priority level for the current
+// process or thread, as appropriate.  This function should not be called
+// by computational worker threads, a separate function is provided for
+// them below.
+//
+//    prio - scaled priority level (0 through 9 inclusive).
+//
+// Returns 0 on success, -1 on error.
+
 int SetGlobalPriority(unsigned int prio) 
 {
   return __SetPriority( prio, 0 );
 }
 
 // -----------------------------------------------------------------------
+
+// Function to set the operating-system priority level for the current
+// process or thread, as appropriate.  This function is intended to be
+// called by each computational worker threads at their startup, since
+// different scaled priorities are used for them.
+//
+//    prio - scaled priority level (0 through 9 inclusive).
+//
+// Returns 0 on success, -1 on error.
 
 int SetThreadPriority(unsigned int prio)
 {
