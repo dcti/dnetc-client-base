@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.147  1998/07/11 02:26:21  cyruspatel
+// Removed an obsolete 'Overriding Autodetect' message from x86
+// section of ::SelectCore()
+//
 // Revision 1.146  1998/07/11 01:12:16  silby
 // Added code so that the win32 cli will change its title on start.
 //
@@ -10,15 +14,16 @@
 // Augmented the domain name requirements for logging.  If no domain is
 // specified, then the smtpsrvr will be appended -- for both user, and user@
 // entries.  [Silby's modification could be tricked into allowing user@.]
-//
 // TODO: fix it for no smtpsrvr being specified.  (just don't display those
-//                                                 options?)
+// options?)
 //
 // Revision 1.144  1998/07/10 04:04:27  silby
 // Change to thread priorities for win32 gui.
 //
 // Revision 1.143  1998/07/09 17:08:09  silby
-// Ok, DES MMX core selection override code now works. The output of cpucheck and usemmx are the only things it cares about; everyone who's mmx capable will use it now.
+// Ok, DES MMX core selection override code now works. The output of 
+// cpucheck and usemmx are the only things it cares about; everyone who's
+// mmx capable will use it now.
 //
 // Revision 1.142  1998/07/09 05:27:51  silby
 // Changes to the MMX autodetect - still appear to be some overrides from user-set settings happening on pentium mmxes.
@@ -46,8 +51,7 @@
 // Revision 1.135  1998/07/08 09:46:31  remi
 // Added support for the MMX bitslicer.
 // Added -nommx command line option and 'usemmx' ini file setting so the user
-// can disable MMX usage.
-// Wrapped $Log comments to some reasonable value.
+// can disable MMX usage. Wrapped $Log comments to some reasonable value.
 //
 // Revision 1.134  1998/07/08 05:19:18  jlawson
 // updates to get Borland C++ to compile under Win32.
@@ -258,7 +262,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.146 1998/07/11 01:12:16 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.147 1998/07/11 02:26:21 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -2292,34 +2296,33 @@ s32 Client::SelectCore(void)
 #elif (CLIENT_CPU == CPU_X86)
   // benchmark all cores
   s32 fastcore = cputype;
-  s32 detectedtype;
-  detectedtype=GetProcessorType(); // run autodetect
-  if (fastcore != -1) // if specified by user
-    LogScreen("Overriding autodetect - ");
-  else
-    fastcore=detectedtype; // use autodetect
+  s32 detectedtype = GetProcessorType(); //was x86id() now in cpucheck.cpp
 
-  LogScreenf("Selecting %s code\n", cputypetable[(int)(fastcore & 0xFF)+1]);
+  if (fastcore == -1) 
+    fastcore = detectedtype; //use autodetect
+
+  LogScreenf("Selecting %s code.\n", cputypetable[(int)(fastcore & 0xFF)+1]);
 
   // select the correct core engine
-  #if (defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER)
-    #define DESUNITFUNC51 des_unit_func_slice
-    #define DESUNITFUNC52 des_unit_func_slice
-    #define DESUNITFUNC61 des_unit_func_slice
-    #define DESUNITFUNC62 des_unit_func_slice
-  #elif defined(MULTITHREAD)
-    #define DESUNITFUNC51 p1des_unit_func_p5
-    #define DESUNITFUNC52 p2des_unit_func_p5
-    #define DESUNITFUNC61 p1des_unit_func_pro
-    #define DESUNITFUNC62 p2des_unit_func_pro
-  #else
-    #define DESUNITFUNC51 p1des_unit_func_p5
-    #define DESUNITFUNC52 NULL
-    #define DESUNITFUNC61 p1des_unit_func_pro
-    #define DESUNITFUNC62 NULL
-  #endif
   switch(fastcore & 0xFF)
-  {
+    {
+    #if (defined(KWAN) || defined(MEGGS)) && !defined(MMX_BITSLICER)
+      #define DESUNITFUNC51 des_unit_func_slice
+      #define DESUNITFUNC52 des_unit_func_slice
+      #define DESUNITFUNC61 des_unit_func_slice
+      #define DESUNITFUNC62 des_unit_func_slice
+    #elif defined(MULTITHREAD)
+      #define DESUNITFUNC51 p1des_unit_func_p5
+      #define DESUNITFUNC52 p2des_unit_func_p5
+      #define DESUNITFUNC61 p1des_unit_func_pro
+      #define DESUNITFUNC62 p2des_unit_func_pro
+    #else
+      #define DESUNITFUNC51 p1des_unit_func_p5
+      #define DESUNITFUNC52 NULL
+      #define DESUNITFUNC61 p1des_unit_func_pro
+      #define DESUNITFUNC62 NULL
+    #endif
+    
     case 1:
       rc5_unit_func = rc5_unit_func_486;
       des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
@@ -2327,17 +2330,13 @@ s32 Client::SelectCore(void)
       break;
     case 2:
       rc5_unit_func = rc5_unit_func_p6;
-        {
-        des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-        des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-        }
+      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
       break;
     case 3:
       rc5_unit_func = rc5_unit_func_6x86;
-        {
-        des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-        des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-        }
+      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
       break;
     case 4:
       rc5_unit_func = rc5_unit_func_k5;
@@ -2346,31 +2345,29 @@ s32 Client::SelectCore(void)
       break;
     case 5:
       rc5_unit_func = rc5_unit_func_k6;
-        {
-        des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
-        des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
-        }
+      des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+      des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
       break;
     default:
       rc5_unit_func = rc5_unit_func_p5;
-      {
       des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
       des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
-      }
       break;
-  }
-#ifdef MMX_BITSLICER
+    
+    #undef DESUNITFUNC61
+    #undef DESUNITFUNC62
+    #undef DESUNITFUNC51
+    #undef DESUNITFUNC52
+    } //switch(fastcore & 0xff)
+
+  #ifdef MMX_BITSLICER
   if ((detectedtype & 0x100) && usemmx)   // use the MMX DES core ?
     { // MMX core doesn't care about selected Rc5 core at all
     des_unit_func = des_unit_func2 = des_unit_func_mmx;
-    LogScreen("Using MMX DES cores\n");
-    };
-#endif
+    LogScreen("Using MMX DES cores.\n");
+    }
+  #endif
 
-  #undef DESUNITFUNC61
-  #undef DESUNITFUNC62
-  #undef DESUNITFUNC51
-  #undef DESUNITFUNC52
 #elif (CLIENT_CPU == CPU_ARM)
   s32 fastcore = cputype;
   #if (CLIENT_OS == OS_RISCOS)
@@ -2428,8 +2425,6 @@ s32 Client::SelectCore(void)
     }
 
     fastcore = (4-(fastcoretest[0] + (fastcoretest[1]<<1)))&3;
-    CliClearContestInfoSummaryData( 0 ); //clear the totals for contest 0
-    CliClearContestInfoSummaryData( 1 ); //clear the totals for contest 1
   }
 
   LogScreenf("Selecting %s code.\n",cputypetable[(int)(fastcore+1)]);
