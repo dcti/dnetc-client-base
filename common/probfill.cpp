@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.54 2000/11/13 13:26:02 oliver Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.55 2000/11/27 19:31:04 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -537,7 +537,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   *load_needed = 0;
   if (bufcount >= 0) /* load from file suceeded */
     *load_needed = 0;
-  else if (client->rc564closed)
+  else if (client->rc564closed || client->blockcount < 0) /* runbuffers */
     *load_needed = NOLOAD_NORANDOM; /* -1 */
   else if (client->nonewblocks)
     *load_needed = NOLOAD_NONEWBLOCKS;
