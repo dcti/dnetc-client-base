@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.24  1998/06/26 06:56:38  daa
+// convert all the strncmp's in the http code with strncmpi to deal with proxy's case shifting HTML
+//
 // Revision 1.23  1998/06/22 01:04:58  cyruspatel
 // DOS changes. Fixes various compile-time errors: removed extraneous ')' in
 // sleepdef.h, resolved htonl()/ntohl() conflict with same def in client.h
@@ -33,7 +36,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: network.cpp,v 1.23 1998/06/22 01:04:58 cyruspatel Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.24 1998/06/26 06:56:38 daa Exp $";
 #endif
 
 #include "network.h"
@@ -737,12 +740,12 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
       while (uubuffer.RemoveLine(line))
       {
         nothing_done = false;
-        if (strncmp(line, "Content-Length: ", 16) == 0)
+        if (strncmpi(line, "Content-Length: ", 16) == 0)
         {
           httplength = atoi((const char*)line + 16);
         }
         else if ((lasthttpaddress == 0) &&
-          (strncmp(line, "X-KeyServer: ", 13) == 0))
+          (strncmpi(line, "X-KeyServer: ", 13) == 0))
         {
 #if defined(_OLD_NEXT_)
           if (Resolve((char *)line + 13, lasthttpaddress) < 0)
@@ -756,7 +759,7 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
           // got blank line separating header from body
           gothttpend = true;
           if (uubuffer.GetLength() >= 6 &&
-            strncmp(uubuffer.GetHead(), "begin ", 6) == 0)
+            strncmpi(uubuffer.GetHead(), "begin ", 6) == 0)
           {
             mode |= MODE_UUE;
             gotuubegin = false;
@@ -797,9 +800,9 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
       {
         nothing_done = false;
 
-        if (strncmp(line, "begin ", 6) == 0) gotuubegin = true;
-        else if (strncmp(line, "POST ", 5) == 0) mode |= MODE_HTTP;
-        else if (strncmp(line, "end", 3) == 0)
+        if (strncmpi(line, "begin ", 6) == 0) gotuubegin = true;
+        else if (strncmpi(line, "POST ", 5) == 0) mode |= MODE_HTTP;
+        else if (strncmpi(line, "end", 3) == 0)
         {
           gotuubegin = gothttpend = false;
           httplength = 0;
@@ -866,14 +869,14 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
 
         // see if we should upgrade to different mode
         if (tempbuffer.GetLength() >= 6 &&
-            strncmp(tempbuffer.GetHead(), "begin ", 6) == 0)
+            strncmpi(tempbuffer.GetHead(), "begin ", 6) == 0)
         {
           mode |= MODE_UUE;
           uubuffer = tempbuffer;
           gotuubegin = false;
         }
         else if (tempbuffer.GetLength() >= 5 &&
-            strncmp(tempbuffer.GetHead(), "POST ", 5) == 0)
+            strncmpi(tempbuffer.GetHead(), "POST ", 5) == 0)
         {
           mode |= MODE_HTTP;
           uubuffer = tempbuffer;
