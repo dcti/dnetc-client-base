@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.65 2004/08/17 16:53:40 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.66 2004/08/18 20:18:30 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -682,7 +682,11 @@ static long __GetRawProcessorID(const char **cpuname)
             if (memcmp( p, sigs[n].sig, l)==0 && (!p[l] || isspace(p[l]) || p[l]==','))
             {
               detectedtype = (long)sigs[n].rid;
-              if (detectedtype == 0x000C || detectedtype & 0x8000) /* 7400, 7410, 7450, 7455 (G4) */
+              /* 7400, 7410, 7450, 7455 (G4), 970, 970FX (G5) */
+              if (detectedtype == 0x000C ||
+                  detectedtype == 0x0039 ||
+                  detectedtype == 0x003C ||
+                  detectedtype & 0x8000)
               {
                 if (memcmp( &p[l], ", altivec supported", 19)==0)
                   isaltivec = 1;
