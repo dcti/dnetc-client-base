@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.11 1999/06/10 18:19:53 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.12 1999/06/11 19:02:04 patrick Exp $"; }
 
 //#define TRACE
 
@@ -217,7 +217,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
-                (CLIENT_OS == OS_DEC_UNIX) 
+                (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX) 
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
           #else
           #error fixme: select an appropriate ps syntax
