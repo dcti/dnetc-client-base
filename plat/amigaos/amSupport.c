@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.10 2004/05/08 11:19:00 oliver Exp $
+ * $Id: amSupport.c,v 1.2.4.11 2004/05/22 18:00:45 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -387,7 +387,7 @@ int amigaInit(int *argc, char **argv[])
       }
 
       if (!(amigaGUIInit((char *)wbs->sm_ArgList->wa_Name,arg))) {
-         if (!(amigaOpenNewConsole("CON://630/200/distributed.net client/CLOSE/WAIT"))) {
+         if (!(amigaOpenNewConsole("CON://630/300/distributed.net client/CLOSE/WAIT"))) {
             done = FALSE;
          }
       }

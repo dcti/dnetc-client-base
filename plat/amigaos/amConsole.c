@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amConsole.c,v 1.2.4.3 2004/04/17 18:44:33 oliver Exp $
+ * $Id: amConsole.c,v 1.2.4.4 2004/05/22 18:00:45 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -135,7 +135,7 @@ int amigaConOut(const char *msg)
    if (DnetcBase) {
       if (ModeReqIsSet(MODEREQ_CONFIG|MODEREQ_CONFRESTART)) {
          if (!forcecon) {
-            amigaOpenNewConsole("CON://630/200/distributed.net client configuration");
+            amigaOpenNewConsole("CON://630/300/distributed.net client configuration");
             forcecon = 1;
 	 }
       }
