@@ -1,0 +1,48 @@
+Choosing the correct Irix client.
+$Id: readme.irix,v 1.1.2.1 1999/11/29 21:40:34 lyndon Exp $
+
+As of release 2.8002, system specific builds of the client are
+available. These builds are targetted at particular SGI
+motherboard/CPU pairings. Choosing the correct client for your
+system will ensure you get the best performance available.
+
+The distributions are named dnetcNNN-mips-ipXX.tar.gz for 32 bit
+clients, and dnetcNNN-mips-ipXX-64.tar.gz for 64 bit clients.
+NNN represents the client build number, and NN is a model number
+for a specific SGI system. Not all models have 64 bit clients
+available.
+
+Select your client based on your system model type and OS
+architecture. To determine the model:
+
+% uname -m
+IP27
+
+The model number is IP27.
+
+Next, determine if you are running a 64 bit version of Irix:
+
+% uname -s
+IRIX64
+
+This indicates a 64 bit kernel. If you see 'IRIX' then you have
+a 32 bit kernel.
+
+The example system is an IP27 running a 64 bit kernel, therefore
+you should download dnetcNNN-mips-ip27-64.tar.gz. If there is no
+-64 distribution, download dnetcNNN-irix6-mips-ip27.tar.gz.
+
+The clients should run on any Irix 6.X release.
+
+===================================================================
+Irix client build information (for *-irix6-mips-ipXX packages only).
+
+2.8002
+------
+Built using MIPSpro 7.3 compilers. All clients have multithread
+support.
+
+The IPxx targetted builds use the ANSI (rg2) RC5 core. This is
+slower than the mips-crunch core used in earlier builds. For MP
+systems this is offset by the increase gained by adding thread
+support back in. Work is ongoing to speed up the RC5 core.
