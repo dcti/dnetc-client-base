@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.91 2002/06/23 10:25:34 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.92 2002/07/25 20:06:45 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1037,46 +1037,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       cpuidbmask = 0xfff0; // brand/family/model/-, strip stepping bits
       if (cpuid == 0x0545) /* buggy mmx */
         cpuidbmask = 0xffff; // don't strip stepping bits
-
-#if 0
-      if ((cpuid & 0x0ff0) >= 0x650) /* have brand bits */
-      {
-        switch (cpuid & 0xf000) { /* brand from cpuid 1, ebx & 0x0f */
-          case 0x1000: if ((cpuid & 0x0f00) == 0x0500) // !!! FIXME !!! DOES (0x0500 < 0x0650) HAVE BRAND?
-                         chipname_override = "Celeron (Covington)"; 
-                       else if ((cpuid & 0x0f00) == 0x0600)
-                         chipname_override = "Celeron-A (Mendocino/Dixon)"; 
-                       else if ((cpuid & 0x00f0) < 0x00B0)
-                         chipname_override = "Celeron-A (Coppermine)";
-                       else
-                         chipname_override = "Mobile Celeron (Tualatin)";
-                       break;
-          case 0x2000: chipname_override = "Pentium III"; break;
-          case 0x3000: chipname_override = "Celeron (Tualatin)"; break;
-          case 0x4000: if ((cpuid & 0x0f00) < 0x0700)
-                         chipname_override = "Pentium II Xeon";
-                       else if ((cpuid & 0x00f0) < 0x00B0)
-                         chipname_override = "Pentium III Xeon";
-                       else
-                         chipname_override = "Pentium III-S";
-                       break;
-          case 0x6000: chipname_override = "Pentium III-M"; break;
-          case 0x8000: chipname_override = "Pentium 4"; break;
-          case 0x9000: chipname_override = "Pentium 4 (Northwood)"; break;
-          case 0xB000: if ((cpuid & 0x00f0) == 0x0010)
-                         chipname_override = "Xeon MP";
-                       else
-                         chipname_override = "Xeon DP";
-                       break;
-          case 0xE000: if ((cpuid & 0x00f0) == 0x0020 )
-                         chipname_override = "Pentium 4-M";
-                       else
-                         chipname_override = "Xeon";
-                       break;
-          default:     chipname_override = NULL;
-        }
-      }
-#endif
     }
     if (internalxref != NULL) /* we know about this vendor */
     {
