@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.86 2001/01/04 14:16:01 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.87 2001/01/09 00:49:27 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -609,8 +609,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #else /* PPC */
     if ((detected_type & (1L<<24)) != 0 ) //is power?
     {
-      Log("WARNING::Running a PowerPC client on Power architecture will result i
-n bad performance.\n");
+      Log("WARNING::Running a PowerPC client on Power architecture will "
+          "result in bad performance.\n");
     }
     #endif
   }  
