@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.243 2000/01/16 04:54:14 michmarc Exp $"; }
+return "@(#)$Id: client.cpp,v 1.244 2000/01/16 17:09:13 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -20,10 +20,10 @@ return "@(#)$Id: client.cpp,v 1.243 2000/01/16 04:54:14 michmarc Exp $"; }
 #include "pathwork.h"  // EXTN_SEP
 #include "clitime.h"   // CliTimer()
 #include "clicdata.h"  // CliGetContestWorkUnitSpeed()
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "util.h"      // projectmap_build(), trace, utilCheckIfBetaExpired
 #include "modereq.h"   // ModeReqIsSet()/ModeReqRun()
 #include "cmdline.h"   // ParseCommandLine() and load config
-#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()

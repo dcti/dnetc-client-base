@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.108 2000/01/13 09:24:14 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.109 2000/01/16 17:09:14 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -27,6 +27,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.108 2000/01/13 09:24:14 cyp Exp $"; }
 #  include <machine/cpuconf.h>
 #elif (CLIENT_OS == OS_MACOS)
 #  include <Gestalt.h>
+#  include <Multiprocessing.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
 #elif ((CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
@@ -113,7 +114,9 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         while(fgets(buffer, sizeof(buffer), cpuinfo))
         {
           buffer[sizeof(buffer) - 1] = '\0';
-          #if (CLIENT_CPU == CPU_X86 || CLIENT_CPU == CPU_POWERPC)
+          #if (CLIENT_CPU == CPU_X86      || \
+               CLIENT_CPU == CPU_POWERPC  || \
+               CLIENT_CPU == CPU_S390)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
           #elif (CLIENT_CPU == CPU_SPARC)
@@ -178,7 +181,14 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     }
     #elif (CLIENT_OS == OS_MACOS)
     {
-      cpucount = 1; // I am just a workaround: FIX ME!
+      #if (CLIENT_CPU == CPU_POWERPC)
+        if (MPLibraryIsLoaded())
+          cpucount = MPProcessors();
+        else
+          cpucount = 1;
+      #else // Dont support MP on 68k CPUs
+        cpucount = 1;
+      #endif
     }
     #elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP))
     {
@@ -424,11 +434,8 @@ static long __GetRawProcessorID(const char **cpuname)
   {
     // Note: need to use gestaltNativeCPUtype in order to get the correct
     // value for G3 upgrade cards in a 601 machine.
-    // Some Mac people are idiots, so I'll spell it out again:
-    // ******* detected type reference is (PVR value >> 16) ***********
     // PVR is a hardware value from the cpu and is available on every 
-    // PPC CPU on every PPC Based OS. So, don't just make up 
-    // cpu numbers!
+    // PPC CPU on every PPC Based OS.
     long result;
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)

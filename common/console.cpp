@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.69 2000/01/09 20:32:39 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.70 2000/01/16 17:09:14 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -177,12 +177,11 @@ int ConOut(const char *msg)
       w32ConOut(msg);
     #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
       os2conout(msg);
+    #elif (CLIENT_OS == OS_MACOS)
+      macosConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
       fflush(stdout);
-      #if (CLIENT_OS == OS_MACOS)
-      MacShowCursor(); // restore cursor
-      #endif
     #endif
     return 0;
   }
@@ -266,6 +265,10 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       {
         ch = _swi(OS_ReadC, _RETURN(0));
       }
+      #elif (CLIENT_OS == OS_MACOS)
+      {
+        ch = macosConGetCh();
+      }
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
       {
         if (w32ConKbhit())
@@ -321,14 +324,6 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         ch = getchar();                  /* Read a single character */
         tcsetattr(fd,TCSAFLUSH,&stored); /* Restore the original settings */
         if (ch == EOF) ch = 0;
-      }
-      #elif (CLIENT_OS == OS_MACOS)
-      {
-        ch = getch();
-        #if (CLIENT_CPU == CPU_68K)
-        ch = (ch & 0x000000ff);
-        #endif
-        if (ch == 3) ch = 13; /* In MacOS its common that "enter" equals "return". */
       }
       #else
       {

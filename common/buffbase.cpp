@@ -6,10 +6,10 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.27 2000/01/16 04:54:14 michmarc Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.28 2000/01/16 17:09:12 cyp Exp $"; }
 
 #include "cputypes.h"
-#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
+#include "cpucheck.h" //GetNumberOfDetectedProcessors()
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
 #include "network.h"  //ntohl(), htonl()
