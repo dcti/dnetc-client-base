@@ -6,6 +6,7 @@
 ; Version 1.0    2003/09/08  23:53
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
+; $Id: r72-sgp3.asm,v 1.1.2.2 2003/09/10 21:39:04 andreasb Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -13,8 +14,8 @@
 [SECTION .text]
 %endif
 
-[GLOBAL _rc5_72_unit_func_deen_3]
-[GLOBAL rc5_72_unit_func_deen_3]
+[GLOBAL _rc5_72_unit_func_sgp_3]
+[GLOBAL rc5_72_unit_func_sgp_3]
 
 %define P         0xB7E15163
 %define Q         0x9E3779B9
@@ -83,66 +84,66 @@ defwork save_ebp
 
 
 %macro KEYSETUP_BLOCK 3
-		lea		shiftreg, [A1+B1]	; count1 (1)
-		add		B1, L1(%3)
-		add		B1, A1
-		mov		S1(%2), A1
+        lea     shiftreg, [A1+B1]   ; count1 (1)
+        add     B1, L1(%3)
+        add     B1, A1
+        mov     S1(%2), A1
 
-		rol		B1, shiftcount		; rol2   (1)
+        rol     B1, shiftcount      ; rol2   (1)
 
-		lea		shiftreg, [A2+B2]	; count1 (2)
-		add		B2, L2(%3)
-		add		B2, A2
-		mov		S2(%2), A2
+        lea     shiftreg, [A2+B2]   ; count1 (2)
+        add     B2, L2(%3)
+        add     B2, A2
+        mov     S2(%2), A2
 
-		rol		B2, shiftcount		; rol2   (2)
+        rol     B2, shiftcount      ; rol2   (2)
 
-		lea		shiftreg, [A3+B3]	; count1 (3)
-		add		B3, L3(%3)
-		add		B3, A3
-		mov		S3(%2), A3
+        lea     shiftreg, [A3+B3]   ; count1 (3)
+        add     B3, L3(%3)
+        add     B3, A3
+        mov     S3(%2), A3
 
-		rol		B3, shiftcount		; rol2   (3)
+        rol     B3, shiftcount      ; rol2   (3)
 
-%ifidn %1,S							; count2 (1)
-		add		A1, S1(%2+1)
+%ifidn %1,S                         ; count2 (1)
+        add     A1, S1(%2+1)
 %else
-		add		A1, S_not(%2+1)
+        add     A1, S_not(%2+1)
 %endif
-		add		A1, B1
-		mov		L1(%3), B1
+        add     A1, B1
+        mov     L1(%3), B1
 
-		rol		A1, 3				; rol1   (1)
+        rol     A1, 3               ; rol1   (1)
 
-%ifidn %1,S							; count2 (2)
-		add		A2, S2(%2+1)
+%ifidn %1,S                         ; count2 (2)
+        add     A2, S2(%2+1)
 %else
-		add		A2, S_not(%2+1)
+        add     A2, S_not(%2+1)
 %endif
-		add		A2, B2
-		mov		L2(%3), B2
+        add     A2, B2
+        mov     L2(%3), B2
 
-		rol		A2, 3				; rol1   (2)
+        rol     A2, 3               ; rol1   (2)
 
-%ifidn %1,S							; count2 (3)
-		add		A3, S3(%2+1)
+%ifidn %1,S                         ; count2 (3)
+        add     A3, S3(%2+1)
 %else
-		add		A3, S_not(%2+1)
+        add     A3, S_not(%2+1)
 %endif
-		add		A3, B3
-		mov		L3(%3), B3
+        add     A3, B3
+        mov     L3(%3), B3
 
-		rol		A3, 3				; rol1   (3)
+        rol     A3, 3               ; rol1   (3)
 %endmacro
 
 %macro KEYSETUP_BLOCK_PRE 1
-		rol     A1, 3
-		rol     A2, 3
-		rol     A3, 3
+        rol     A1, 3
+        rol     A2, 3
+        rol     A3, 3
 %ifnidn %1,-1
-		mov     L1(%1), B1
-		mov     L2(%1), B2
-		mov     L3(%1), B3
+        mov     L1(%1), B1
+        mov     L2(%1), B2
+        mov     L3(%1), B3
 %endif
 %endmacro
 
@@ -187,9 +188,9 @@ defwork save_ebp
 
 align 16
 startseg:
-rc5_72_unit_func_deen_3:
-rc5_72_unit_func_deen_3_:
-_rc5_72_unit_func_deen_3:
+rc5_72_unit_func_sgp_3:
+rc5_72_unit_func_sgp_3_:
+_rc5_72_unit_func_sgp_3:
 
         sub     esp, work_size
         mov     eax, [RC5_72UnitWork]
@@ -465,17 +466,17 @@ encryption:
         ENCRYPTION_BLOCK 12
 
 test_key:
-		cmp		A1, [work_C_0]
+        cmp     A1, [work_C_0]
         mov     eax, [RC5_72UnitWork]
-		je		near test_key_1
+        je      near test_key_1
 back_after_key_1:
 
-		cmp		A2, [work_C_0]
-		je		near test_key_2
+        cmp     A2, [work_C_0]
+        je      near test_key_2
 back_after_key_2:
 
-		cmp		A3, [work_C_0]
-		je		near test_key_3
+        cmp     A3, [work_C_0]
+        je      near test_key_3
 back_after_key_3:
 
         mov     edx, [RC5_72UnitWork_L0hi]
@@ -486,8 +487,8 @@ inc_key:
 
         jae     near complex_incr
 
-		lea		esi, [edx + 3]
-		lea		edi, [edx + 4]
+        lea     esi, [edx + 3]
+        lea     edi, [edx + 4]
         add     edx, 5
         sub     dword [work_iterations], 3
 
@@ -509,7 +510,7 @@ inc_key:
         mov     L2(0), ebx
         mov     L3(0), ebx
 
-		ja		key_setup_1
+        ja      key_setup_1
 
         mov     eax, RESULT_NOTHING
 
@@ -527,37 +528,37 @@ finished:
 complex_incr:
 %macro ADD_TO_EBX_ECX_DL 1
         add     dl, %1
-        jnc		%%inc_stop
+        jnc     %%inc_stop
 
-        add		ecx, 0x01000000
-        jnc		%%inc_stop
-        add		ecx, 0x00010000
-        test	ecx, 0xff000000
-        jz		%%inc_stop
-        add		ecx, 0xff000100
-        test	ecx, 0xffff0000
-        jz		%%inc_stop
-        add		ecx, 0xffff0001
-        test	ecx, 0xffffff00
-        jz		%%inc_stop
-        add		ecx, 0xffffff00
+        add     ecx, 0x01000000
+        jnc     %%inc_stop
+        add     ecx, 0x00010000
+        test    ecx, 0xff000000
+        jz      %%inc_stop
+        add     ecx, 0xff000100
+        test    ecx, 0xffff0000
+        jz      %%inc_stop
+        add     ecx, 0xffff0001
+        test    ecx, 0xffffff00
+        jz      %%inc_stop
+        add     ecx, 0xffffff00
 
-        add		ebx, 0x01000000
-        jnc		%%inc_stop
-        add		ebx, 0x00010000
-        test	ebx, 0xff000000
-        jz		%%inc_stop
-        add		ebx, 0xff000100
-        test	ebx, 0xffff0000
-        jz		%%inc_stop
-        add		ebx, 0xffff0001
-        test	ebx, 0xffffff00
-        jz		%%inc_stop
-        add		ebx, 0xffffff00
+        add     ebx, 0x01000000
+        jnc     %%inc_stop
+        add     ebx, 0x00010000
+        test    ebx, 0xff000000
+        jz      %%inc_stop
+        add     ebx, 0xff000100
+        test    ebx, 0xffff0000
+        jz      %%inc_stop
+        add     ebx, 0xffff0001
+        test    ebx, 0xffffff00
+        jz      %%inc_stop
+        add     ebx, 0xffffff00
 %%inc_stop:
 %endmacro
 
-		ADD_TO_EBX_ECX_DL 3
+        ADD_TO_EBX_ECX_DL 3
 
         mov     L1(2), edx
         mov     L1(1), ecx
@@ -571,7 +572,7 @@ complex_incr:
         mov     [RC5_72UnitWork_L0mid], ecx
         mov     [RC5_72UnitWork_L0lo], ebx
 
-		ADD_TO_EBX_ECX_DL 1
+        ADD_TO_EBX_ECX_DL 1
 
         mov     L2(2), edx
         mov     L2(1), ecx
@@ -581,7 +582,7 @@ complex_incr:
         mov     L2backup(1), ecx
         mov     L2backup(0), ebx
 
-		ADD_TO_EBX_ECX_DL 1
+        ADD_TO_EBX_ECX_DL 1
 
         mov     L3(2), edx
         mov     L3(1), ecx
@@ -592,10 +593,10 @@ complex_incr:
         mov     L3backup(0), ebx
 
         sub     dword [work_iterations], 3
-		ja		key_setup_1
+        ja      key_setup_1
 
         mov     eax, RESULT_NOTHING
-        jmp		finished
+        jmp     finished
 
 
 test_key_1:
@@ -632,7 +633,7 @@ test_key_2:
         mov     ecx, [work_iterations]
         mov     esi, [iterations]
 
-		sub		ecx, 1
+        sub     ecx, 1
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
         jmp     finished
@@ -652,7 +653,7 @@ test_key_3:
         mov     ecx, [work_iterations]
         mov     esi, [iterations]
 
-		sub		ecx, 2
+        sub     ecx, 2
         sub     [esi], ecx
         mov     eax, RESULT_FOUND
         jmp     finished
