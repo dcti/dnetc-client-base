@@ -295,7 +295,7 @@ s32 Network::Resolve(const char *host, u32 &hostaddress)
          addrcount++) ;
     hp->h_addr_list += addrcount;
   #endif
-    
+
     // randomly select one
     for (addrcount = 0; hp->h_addr_list[addrcount]; addrcount++);
     int index = rand() % addrcount;
@@ -347,7 +347,7 @@ s32 Network::Open( void )
   Close();
   mode = startmode;
 
-  
+
   // create a new socket
   if ((int)(sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
   {
@@ -363,22 +363,26 @@ s32 Network::Open( void )
   setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
 #endif
 
+#if (CLIENT_OS == OS_RISCOS)
+  // allow blocking socket calls to preemptively multitask
+  ioctl(sock, FIOSLEEPTW, &on);
+#endif
 
   // resolve the address of keyserver, or if performing a proxied
   // connection, the address of the proxy gateway server.
   if (lastaddress == 0)
-  {    
+  {
     const char * hostname;
     if (mode & MODE_PROXIED) hostname = httpproxy;
     else
     {
-      hostname = (retries < 4 ? server_name : rrdns_name);    
+      hostname = (retries < 4 ? server_name : rrdns_name);
       if (!hostname[0]) {
         hostname = DEFAULT_RRDNS;
         lastport = DEFAULT_PORT;
       } else lastport = port;
     }
-      
+
 #ifdef VERBOSE_OPEN
     sprintf(logstr,"Connecting to %s...\n",hostname);
     LogScreen(logstr);
@@ -407,7 +411,7 @@ s32 Network::Open( void )
       hostname = DEFAULT_RRDNS;
       lastport = DEFAULT_PORT;
     } else lastport = port;
-    
+
 #ifdef VERBOSE_OPEN
     sprintf(logstr,"Connecting to %s...\n",hostname);
     LogScreen(logstr);
@@ -415,7 +419,7 @@ s32 Network::Open( void )
     if (Resolve(hostname, lasthttpaddress) < 0)
     {
       lasthttpaddress = 0;
-      
+
       if (mode & (MODE_SOCKS4 | MODE_SOCKS5))
       {
         // socks needs the address to resolve now.
@@ -899,8 +903,6 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
       sleep( 1 );  // Prevent racing on error (1 second)
 #elif (CLIENT_OS == OS_SOLARIS)
       sleep(1); // full 1 second on Solaris due to so many reported network problems.
-//#elif (CLIENT_OS == OS_RISCOS)
-//      sleep(1);
 #elif (CLIENT_OS == OS_HPUX)
   #ifdef _STRUCT_TIMESPEC
       // HP-UX 10.x has nanosleep() rather than usleep()
@@ -1100,13 +1102,8 @@ void MakeNonBlocking(SOCKET socket, bool nonblocking)
     socket_ioctl(socket, FIONBIO, &flagon);
   #endif
 #elif (CLIENT_OS == OS_RISCOS)
-    {
-      int one=1;
-      int flagon = nonblocking;
-
-      ioctl(socket, FIONBIO, &flagon);
-      ioctl(socket, FIOSLEEPTW, &one);
-    }
+  int flagon = nonblocking;
+  ioctl(socket, FIONBIO, &flagon);
 #elif (CLIENT_OS == OS_OS2)
   ioctl(socket, FIONBIO, (char *) &nonblocking, sizeof(nonblocking));
 #elif (CLIENT_OS == OS_AMIGA)

@@ -307,7 +307,7 @@ IniRecord *IniSection::findfirst(const IniString &Section, const IniString &Key)
   return NULL;
 }
 /////////////////////////////////////////////////////////////////////////////
-#if (CLIENT_CPU == CPU_STRONGARM && CLIENT_OS != OS_RISCOS)
+#if (CLIENT_CPU == CPU_ARM && CLIENT_OS != OS_RISCOS)
 IniStringList &IniSection::getkey(const IniString &Section, const IniString &Key,
   const IniStringList &DefValue, long AutoAdd)
 #else

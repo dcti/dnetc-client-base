@@ -83,8 +83,8 @@ extern "C" {
     #include <stdarg.h>
     #include <machine/endian.h>
     #include <kernel.h>
-    extern unsigned int find_core(void);
-    extern void riscos_check_taskwindow(int *);
+    extern unsigned int ARMident(), IOMDident();
+    extern bool riscos_check_taskwindow();
     extern int riscos_find_local_directory(const char *argv0);
     extern char *riscos_localise_filename(const char *filename);
 
@@ -95,8 +95,11 @@ extern "C" {
     #define fopen(f,m) my_fopen(f,m)
     #define unlink(f) my_unlink(f)
     #define stat(f,s) my_stat(f,s)
+
+    #define fileno(f) ((f)->__file)
+    #define isatty(f) ((f) == 0)
     }
-  extern int riscos_in_taskwindow;
+  extern bool riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
   #include <types.h>
   #define unlink remove
@@ -142,7 +145,7 @@ extern "C" {
   extern int  CliSetThreadName( int threadID, int crunchernumber );
   extern int  CliClearThreadContextSpecifier( int threadID );
   extern int  CliGetProcessorCount( void );
-  extern int  CliMigrateThreadToSMP( void ); 
+  extern int  CliMigrateThreadToSMP( void );
   extern int  CliRunProblemAsCallback( Problem *problem, int timeslice, int cpu_i, int niceness );
   extern int  CliWaitForThreadExit( int threadID );
   extern int  CliInitClient( int argc, char *argv[], void *client );
@@ -166,7 +169,7 @@ extern "C" {
   //used in clitime.cpp
   extern unsigned int CliConvertTicksToSeconds( unsigned int ticks, unsigned int *secs, unsigned int *hsecs );
   extern unsigned int CliConvertSecondsToTicks( unsigned int secs, unsigned int hsecs, unsigned int *ticks );
-    
+
   //symbol redefinitions
   int CliGetHostName(char *, unsigned int);  //used in mail.cpp
   long my_inet_addr( char *hostname ); //(in hbyname.cpp) used in network.cpp
@@ -606,6 +609,9 @@ public:
 #if (CLIENT_CPU == CPU_X86)
   int x86id();
     // Identify CPU type
+#elif (CLIENT_CPU == CPU_ARM)
+  int ARMid();
+    // Identify CPU type
 #endif
 
   s32 Client::SetContestDoneState( Packet * packet);
@@ -650,6 +656,9 @@ extern volatile u32 SignalTriggered, UserBreakTriggered;
 extern volatile s32 pausefilefound;
 extern void CliSetupSignals( void );
 
+#if (CLIENT_OS == OS_RISCOS)
+extern s32 guiriscos, guirestart;
+#endif
 
 #if (CLIENT_OS == OS_WIN32)
 typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
@@ -668,7 +677,7 @@ extern rasgetconnectstatusT rasgetconnectstatus;
   /*
   int gettimeofday(struct timeval *tv, struct timezone *tz)
     { tz=tz; CliTimer( tv ); return 0; }
-  const char * Client::Time( void )  
+  const char * Client::Time( void )
     { return CliGetTimeString(NULL,1); }
   */
 #endif

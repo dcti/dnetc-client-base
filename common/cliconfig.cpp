@@ -32,7 +32,7 @@ struct optionstruct
 optionstruct options[OPTION_COUNT]=
 {
 //0
-{ "id", "Email to report as", "rc5@distributed.net", "(64 characters max)",1,1,1,NULL}, 
+{ "id", "Email to report as", "rc5@distributed.net", "(64 characters max)",1,1,1,NULL},
 //1
 { "threshold", "RC5 Blocks to Buffer", "10", "(max 1000)",1,2,2,NULL},
 //2
@@ -96,7 +96,7 @@ optionstruct options[OPTION_COUNT]=
       "   mode 3) AMD 486, Cyrix 6x86/6x86MX/M2\n"
       "   mode 4) AMD K5\n"
       "   mode 5) AMD K6\n"
-#elif (CLIENT_CPU == CPU_STRONGARM)
+#elif (CLIENT_CPU == CPU_ARM)
   { "cputype", "Optimise performance for CPU type", "-1",
       "\n   mode -1) Autodetect\n"
       "   mode 0) ARM\n"
@@ -131,9 +131,21 @@ optionstruct options[OPTION_COUNT]=
 #endif
 ,4,2,12},
 //23
-{ "checkpointfile", "RC5 Checkpoint information filename","none","\n(Non-shared file required.  ckpoint.rc5 recommended.  'none' to disable)\n",4,1,4},
+{ "checkpointfile", "RC5 Checkpoint information filename","none","\n(Non-shared file required.  "
+#if (CLIENT_OS == OS_RISCOS)
+  "ckpoint/rc5"
+#else
+  "ckpoint.rc5"
+#endif
+  " recommended.  'none' to disable)\n",4,1,4},
 //24
-{ "checkpointfile2", "DES Checkpoint information filename","none","\n(Non-shared file required.  ckpoint.des recommended.  'none' to disable)\n",4,1,5},
+{ "checkpointfile2", "DES Checkpoint information filename","none","\n(Non-shared file required.  "
+#if (CLIENT_OS == OS_RISCOS)
+  "ckpoint/des"
+#else
+  "ckpoint.des"
+#endif
+  " recommended.  'none' to disable)\n",4,1,5},
 //25
 { "randomprefix", "High order byte of random blocks","100","Do not change this",0,2},
 //26
@@ -174,8 +186,6 @@ optionstruct options[OPTION_COUNT]=
   "mode 2) Finish Buffers and exit mode. The client will never connect\n"
   "        to a keyserver, and when the block buffers empty, it will\n"
   "        terminate.\n",3,2,0},
-
-#if (CLIENT_OS == OS_WIN32)
 //38
 { "lurk", "Modem detection options","0",
   "\nmode 0) Normal mode; the client will send/receive blocks only when it\n"
@@ -192,7 +202,6 @@ optionstruct options[OPTION_COUNT]=
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n",
   3,2,0},
-#endif
 { "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",4,1,0},
 { "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",4,1,0},
 { "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",4,1,0},
@@ -327,7 +336,7 @@ printf("------------------------------------------------------------\n\n");
            ((choice == CONF_HTTPPROXY || choice == CONF_HTTPPORT || choice == CONF_HTTPID) &&
                (uuehttpmode > 1)) ||
            (choice == CONF_UUEHTTPMODE)
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_STRONGARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
            || (choice == CONF_CPUTYPE)
 #endif
            || (choice == CONF_MESSAGELEN)
@@ -402,7 +411,7 @@ printf("------------------------------------------------------------\n\n");
            ((choice == CONF_HTTPPROXY || choice == CONF_HTTPPORT || choice == CONF_HTTPID) &&
                (uuehttpmode > 1)) ||
            (choice == CONF_UUEHTTPMODE)
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_STRONGARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
            || (choice == CONF_CPUTYPE)
 #endif
            || (choice == CONF_MESSAGELEN)
@@ -445,17 +454,17 @@ printf("------------------------------------------------------------\n\n");
     // prompt for new value
     if (options[choice].type==1)
       printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
-              options[choice].description, options[choice].comments, 
+              options[choice].description, options[choice].comments,
               options[choice].defaultsetting, (char *)options[choice].thevariable);
     else if (options[choice].type==2)
       printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %li\nNew Setting --> ",
-              options[choice].description, options[choice].comments, 
+              options[choice].description, options[choice].comments,
               options[choice].defaultsetting, *(s32 *)options[choice].thevariable);
     else if (options[choice].type==3)
       {
       sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
       printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
-              options[choice].description, options[choice].comments, 
+              options[choice].description, options[choice].comments,
               options[choice].defaultsetting, str);
       };
     fflush( stdout );
@@ -589,7 +598,7 @@ printf("------------------------------------------------------------\n\n");
           if (cputype < -1 || cputype > 5)
             cputype = -1;
           break;
-#elif (CLIENT_CPU == CPU_STRONGARM)
+#elif (CLIENT_CPU == CPU_ARM)
         case CONF_CPUTYPE:
           cputype = atoi(parm);
           if (cputype < -1 || cputype > 1)
@@ -706,7 +715,7 @@ printf("------------------------------------------------------------\n\n");
           if ((preferred_contest_id < 0) || (preferred_contest_id > 1))
              preferred_contest_id = 1;
           break;
-        case CONF_QUIETMODE: 
+        case CONF_QUIETMODE:
           choice=yesno(parm);
           if (choice >= 0) *(s32 *)options[CONF_QUIETMODE].thevariable=choice;
           break;
@@ -755,7 +764,7 @@ printf("------------------------------------------------------------\n\n");
           choice=atoi(parm);
           if (choice < 0) choice=0;
           if (choice > 2) choice=0;
-          if (choice==0) 
+          if (choice==0)
             {
             choice=0;lurk=0;connectoften=0;
             }
@@ -778,7 +787,7 @@ printf("------------------------------------------------------------\n\n");
         case CONF_DESOUT:
           strncpy( out_buffer_file[1] , parm, sizeof(out_buffer_file)/2 -1 );
           break;
-                      
+
         default:
           break;
       }
@@ -919,7 +928,7 @@ s32 Client::ReadConfig(void)
   httpport = INIGETKEY(CONF_HTTPPORT);
   uuehttpmode = INIGETKEY(CONF_UUEHTTPMODE);
   INIGETKEY(CONF_HTTPID).copyto(httpid, sizeof(httpid));
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_STRONGARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
   cputype = INIGETKEY(CONF_CPUTYPE);
 #endif
   messagelen = INIGETKEY(CONF_MESSAGELEN);
@@ -1016,7 +1025,7 @@ void Client::ValidateConfig( void )
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) uuehttpmode = 0;
 #if (CLIENT_CPU == CPU_X86)
   if ( cputype < -1 || cputype > 5) cputype = -1;
-#elif ((CLIENT_CPU == CPU_STRONGARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
+#elif ((CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
   if ( cputype < -1 || cputype > 1) cputype = -1;
 #endif
   if ( messagelen < 0) messagelen = 0;
@@ -1114,7 +1123,7 @@ void Client::ValidateConfig( void )
       LogScreen("Core routines not yet updated for thread safe operation.  Using 1 cpu.\n");
     }
   #endif
-    
+
   #if !defined(MULTITHREAD)
   if ( numcpu > 1) {
     numcpu = numcputemp = 1;
@@ -1128,30 +1137,30 @@ void Client::ValidateConfig( void )
   {
     //    (destbuff, destsize, defaultvalue, changetoNONEifempty, source)
 
-    CliValidateSinglePath( inifilename, sizeof(inifilename), 
+    CliValidateSinglePath( inifilename, sizeof(inifilename),
                              "rc5des.ini", 0, inifilename );
     if (!nodiskbuffers)
     {
-      CliValidateSinglePath( in_buffer_file[0], sizeof(in_buffer_file[0]), 
+      CliValidateSinglePath( in_buffer_file[0], sizeof(in_buffer_file[0]),
                                        "buff-in.rc5", 0, in_buffer_file[0] );
-      CliValidateSinglePath( out_buffer_file[0], sizeof(out_buffer_file[0]), 
+      CliValidateSinglePath( out_buffer_file[0], sizeof(out_buffer_file[0]),
                                        "buff-out.rc5", 0, out_buffer_file[0] );
-      CliValidateSinglePath( in_buffer_file[1], sizeof(in_buffer_file[1]), 
+      CliValidateSinglePath( in_buffer_file[1], sizeof(in_buffer_file[1]),
                                        "buff-out.des", 0, in_buffer_file[1] );
-      CliValidateSinglePath( out_buffer_file[1], sizeof(out_buffer_file[1]), 
+      CliValidateSinglePath( out_buffer_file[1], sizeof(out_buffer_file[1]),
                                        "buff-out.des", 0, out_buffer_file[1] );
     }
     if (strcmp(exit_flag_file,"none")!=0)
-      CliValidateSinglePath( exit_flag_file, sizeof(exit_flag_file), 
+      CliValidateSinglePath( exit_flag_file, sizeof(exit_flag_file),
                                      "exitrc5.now", 1, exit_flag_file);
     if (strcmp(pausefile,"none")!=0)
-      CliValidateSinglePath( pausefile, sizeof(pausefile), 
+      CliValidateSinglePath( pausefile, sizeof(pausefile),
                                      "none", 1, pausefile);
     if (strcmp(checkpoint_file[0],"none")!=0)
-      CliValidateSinglePath( checkpoint_file[0], sizeof(checkpoint_file[0]), 
+      CliValidateSinglePath( checkpoint_file[0], sizeof(checkpoint_file[0]),
                                        "ckpoint.rc5", 1, checkpoint_file[0]);
     if (strcmp(checkpoint_file[1],"none")!=0)
-      CliValidateSinglePath( checkpoint_file[1], sizeof(checkpoint_file[1]), 
+      CliValidateSinglePath( checkpoint_file[1], sizeof(checkpoint_file[1]),
                                        "ckpoint.des", 1, checkpoint_file[1]);
     if (strlen(logname)!=0)
       CliValidateSinglePath( logname, sizeof(logname), "", 0, logname);
@@ -1184,7 +1193,7 @@ s32 Client::WriteConfig(void)
   sprintf(buffer,"%d:%d",(int)inthreshold[1],(int)outthreshold[1]);
   INISETKEY( CONF_THRESHOLDI2, buffer );
   INISETKEY( CONF_COUNT, blockcount );
-  sprintf(hours,"%u.%02u", (unsigned)(minutes/60), 
+  sprintf(hours,"%u.%02u", (unsigned)(minutes/60),
     (unsigned)(minutes%60)); //1.000000 hours looks silly
   INISETKEY( CONF_HOURS, hours );
   INISETKEY( CONF_TIMESLICE, timeslice );
@@ -1196,7 +1205,7 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_HTTPPORT, httpport );
   INISETKEY( CONF_UUEHTTPMODE, uuehttpmode );
   INISETKEY( CONF_HTTPID, httpid);
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_STRONGARM) || ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX)) )
+#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX)) )
   INISETKEY( CONF_CPUTYPE, cputype );
 #endif
   INISETKEY( CONF_MESSAGELEN, messagelen );
@@ -1776,9 +1785,9 @@ s32 Client::SelectCore(void)
       struct timezone dummy;
       gettimeofday( &start, &dummy );
       #endif
-      
+
       problem.Run( benchsize / PIPELINE_COUNT , 0 );
-      
+
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
         double elapsed = CliGetKeyrateForProblem( &problem );
       #else
@@ -1821,18 +1830,13 @@ s32 Client::SelectCore(void)
       rc5_unit_func = rc5_unit_func_p5;
       break;
   }
-#elif (CLIENT_CPU == CPU_STRONGARM)
-
+#elif (CLIENT_CPU == CPU_ARM)
   int fastcore = cputype;
+#if (CLIENT_OS == OS_RISCOS)
+  if (fastcore == -1) fastcore = ARMid(); // will return -1 if unable to identify
+#endif
   if (fastcore == -1)
   {
-#if (CLIENT_OS == OS_RISCOS)
-
-    LogScreen("Determining CPU type...\n");
-    // determine CPU type from coprocessor
-    fastcore = find_core();
-#else
-
     const int benchsize = 50000;
     double fasttime = 0;
 
@@ -1873,7 +1877,6 @@ s32 Client::SelectCore(void)
       if (fastcore < 0 || elapsed < fasttime)
         {fastcore = i; fasttime = elapsed;}
     }
-#endif
   }
   // select the correct core engine
   switch(fastcore)
@@ -2002,7 +2005,7 @@ void CliSignalHandler( int sig )
     {
     CliActivateConsoleScreen();
     ConsolePrintf("RC5DES: Failed to shutdown gracefully. Forcing exit.\r\n");
-    CliForceClientShutdown(); //CliExitClient();  /* kill everything */    
+    CliForceClientShutdown(); //CliExitClient();  /* kill everything */
     }
   else
     ConsolePrintf("RC5DES: Client has shut down.\r\n");
@@ -2016,7 +2019,10 @@ void CliSignalHandler( int sig )
   #endif
 {
   #if (CLIENT_OS != OS_DOS)
-  fprintf(stderr, "*Break*\n");
+  #if (CLIENT_OS == OS_RISCOS)
+  if (!guiriscos)
+  #endif
+    fprintf(stderr, "*Break*\n");
   #endif
   SignalTriggered = UserBreakTriggered = 1;
 
@@ -2024,7 +2030,8 @@ void CliSignalHandler( int sig )
     signal( SIGINT, CliSignalHandler );
     signal( SIGTERM, CliSignalHandler );
   #elif (CLIENT_OS == OS_RISCOS)
-    // nothing
+    _kernel_escape_seen(); // clear escape flag for polling check in Problem::Run
+    signal( SIGINT, CliSignalHandler );
   #elif (CLIENT_OS == OS_NETWARE)
     /* see above. allow default handling otherwise may have infinite loop */
   #elif (CLIENT_OS == OS_BEOS)
@@ -2575,6 +2582,15 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
 
 void Client::PrintBanner(char * clname)
 {
+#if (CLIENT_OS == OS_RISCOS)
+  if (guiriscos)
+  {
+    if (guirestart)
+      return;
+    else
+      clname="";
+  }
+#endif
   LogScreenf( "\nRC5DES v2.%d.%d client - a project of distributed.net\n"
           "Copyright distributed.net 1997-1998\n"
 #if (CLIENT_CPU == CPU_X86)
@@ -2859,6 +2875,109 @@ int Client::x86id()
   {
     LogScreen("Detected an unknown processor from an unknown manufacturer\n");
     coretouse=-1;
+  }
+  return coretouse;
+}
+#else
+{ return -1; }
+#endif
+#endif
+
+// --------------------------------------------------------------------------
+
+#if (CLIENT_CPU == CPU_ARM)
+#if (CLIENT_OS == OS_RISCOS)
+#include <setjmp.h>
+
+static jmp_buf ARMident_jmpbuf;
+
+static void ARMident_catcher(int)
+{
+  longjmp(ARMident_jmpbuf, 1);
+}
+#endif
+
+int Client::ARMid()
+#if (CLIENT_OS == OS_RISCOS)
+{
+  u32 detectedvalue; // value ARMident returns, must be interpreted
+  int coretouse; // the core the client should use
+
+  LogScreen("Beginning CPU identification...\n");
+
+  // ARMident() will throw SIGILL on an ARM 2 or ARM 250, because
+  // they don't have the system control coprocessor. (We ignore the
+  // ARM 1 because I'm not aware of any existing C++ compiler that
+  // targets it...)
+
+  signal(SIGILL, ARMident_catcher);
+
+  if (setjmp(ARMident_jmpbuf))
+  {
+    detectedvalue = 0x2000;
+  }
+  else
+  {
+    detectedvalue = ARMident();
+  }
+
+  signal(SIGILL, SIG_DFL);
+
+  detectedvalue = (detectedvalue >> 4) & 0xfff; // extract part number field
+
+  if ((detectedvalue & 0xf00) == 0)
+  {
+    // an old-style ID (ARM 3 or prototype ARM 600) - shift it into the new form
+    detectedvalue <<= 4;
+  }
+
+  if (detectedvalue == 0x300)
+  {
+    detectedvalue = 3;
+  }
+  else if (detectedvalue == 0x710)
+  {
+    // the ARM 7500 returns an ARM 710 ID - need to look at its
+    // integral IOMD unit to spot the difference
+    u32 detectediomd = IOMDident();
+    detectediomd &= 0xff00; // just want most significant byte
+
+    if (detectediomd == 0x5b00)
+      detectedvalue = 0x7500;
+    else if (detectediomd == 0xaa00)
+      detectedvalue = 0x7500FE;
+  }
+
+  LogScreen("Completed CPU identification. ");
+
+  switch (detectedvalue)
+  {
+    case 0x200:
+      LogScreen("Detected an ARM 2 or ARM 250\n");
+      coretouse=0;
+      break;
+    case 0x3:
+    case 0x600:
+    case 0x610:
+    case 0x700:
+    case 0x710:
+    case 0x7500:
+    case 0x7500FE:
+      LogScreenf("Detected an ARM %X\n", detectedvalue);
+      coretouse=0;
+      break;
+    case 0x810:
+      LogScreenf("Detected an ARM %X\n", detectedvalue);
+      coretouse=1;
+      break;
+    case 0xA10:
+      LogScreen("Detected a StrongARM 110\n");
+      coretouse=1;
+      break;
+    default:
+      LogScreen("Detected an unknown processor\n");
+      coretouse=-1;
+      break;
   }
   return coretouse;
 }

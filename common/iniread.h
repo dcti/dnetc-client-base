@@ -421,7 +421,7 @@ public:
     const IniStringList &Values);
 
   IniRecord *findfirst(const IniString &Section, const IniString &Key = IniNULL);
-#if (CLIENT_CPU == CPU_STRONGARM && CLIENT_OS != OS_RISCOS)
+#if (CLIENT_CPU == CPU_ARM && CLIENT_OS != OS_RISCOS)
 // get round a bug in gcc 2.7.2.2
   IniStringList &getkey(const IniString &Section, const IniString &Key,
       const IniStringList &DefValue = IniStringList(IniNULL), long AutoAdd = true);

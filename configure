@@ -488,12 +488,14 @@ case "$1" in
 ###### RISCOS
 
     *riscos)
-	TARGET_CC="armcpp"
-	TARGET_AS="armasm"
-	TARGET_CCFLAGS="-LIttleend -apcs 3/26bit/swst/hardfp/fpe3 -J/home/cberry/play/unixlib -D__riscos -Driscos -Otime -DPIPELINE_COUNT=1 -DBIT_32"
-	TARGET_ADDSRCS="platforms/riscos.c"
-	TARGET_ADDASMS="rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s"
-	TARGET_LIBS="-lcpplib -lunixlib"
+	TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 -nounusedareas"
+	TARGET_AS="armasm -apcs 3/26bit"
+	TARGET_CCFLAGS="-Icommon -Irc5 -Ides -Iplatforms -J/home/cberry/play/riscoslib/CLib -I/home/cberry/play/riscoslib/OSLib -I/home/cberry/play/riscoslib/TCPIPLibs -D__riscos -DPIPELINE_COUNT=1 -DBIT_32"
+	TARGET_ADDSRCS="platforms/riscos/riscos.cpp"
+	TARGET_ADDASMS="platforms/riscos/riscosasm.s rc5/rc5-sa.s rc5/rc5-arm.s des/des-slice-arm.s"
+	TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/CLib/stubs.o /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
+	TARGET_STRIP=touch
+	EXENAME=rc5des,ff8
 	;;
 
     *arm-linux)

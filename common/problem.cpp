@@ -32,7 +32,7 @@
   int whichcrunch = 0;
 #elif (CLIENT_CPU == CPU_68K)
   extern "C" int rc5_unit_func( RC5UnitWork *work );
-#elif (CLIENT_CPU == CPU_STRONGARM)
+#elif (CLIENT_CPU == CPU_ARM)
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
   extern "C"  u32 des_unit_func_strongarm( RC5UnitWork * rc5unitwork, u32 timeslice  );
 #elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
@@ -48,8 +48,8 @@ extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)
-extern int riscos_in_taskwindow;
 extern "C" void riscos_upcall_6(void);
+extern void CliSignalHandler(int);
 #endif
 
 Problem::Problem()
@@ -183,7 +183,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   if ( finished )
     return ( 1 );
 
-  if (!started) 
+  if (!started)
   {
 #ifdef NEW_STATS_AND_LOGMSG_STUFF
     CliTimer(&stop);
@@ -227,7 +227,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-    
+
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
@@ -270,7 +270,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-    
+
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
@@ -308,7 +308,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-    
+
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
@@ -342,7 +342,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-    
+
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
@@ -367,7 +367,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     printf("kiter wrong %ld %d\n", kiter, timeslice*PIPELINE_COUNT);
   }
 }
-#elif (CLIENT_CPU == CPU_STRONGARM)
+#elif (CLIENT_CPU == CPU_ARM)
 {
   unsigned long kiter;
 #if (CLIENT_OS == OS_RISCOS)
@@ -409,7 +409,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     // protect the innocent
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-    
+
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
@@ -493,7 +493,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
   {
     timeslice *= PIPELINE_COUNT;
     u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
-    
+
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;

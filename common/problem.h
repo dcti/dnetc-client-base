@@ -98,7 +98,7 @@ typedef enum
   #if (PIPELINE_COUNT != 1)
   #error "Expecting PIPELINE_COUNT=1"
   #endif
-#elif (CLIENT_CPU == CPU_STRONGARM)
+#elif (CLIENT_CPU == CPU_ARM)
   #if (PIPELINE_COUNT != 1)
   #error "Expecting PIPELINE_COUNT=1"
   #endif

@@ -4,7 +4,7 @@
 ; Steve Lee, Chris Berry, Tim Dobson 1997,1998
 ;
 
-        AREA    fastrc5area, CODE
+        AREA    fastrc5area, CODE, READONLY
 
 
         EXPORT  rc5_unit_func_strongarm
@@ -522,7 +522,7 @@ function_exit
         ldr     r1,[r13]
         stmia   r1,{r2,r3}
         ldr     r11,[r12,#(T*2+4)*4]
-        ldmdb   r11, {r4-r11,r13, pc}
+        ldmdb   r11, {r4-r11,r13, pc}^
 
 
 check_r5
@@ -564,82 +564,8 @@ odd
 found_on_single
         movne   r0,r11
         ldr     r11,[r13]
-        ldmdb   r11, {r4-r11, r13, pc}
+        ldmdb   r11, {r4-r11, r13, pc}^
 
-
-        DCD  &DEAD
-
-OS_EnterOS              *       &16
-XOS_Module              *       &2001E
-XOS_Upcall              *       &20033
-OS_ReadMonotonicTime    *       &42
-XTaskWindow_TaskInfo    *       &63380
-
-read_monotonic_time
-        EXPORT  read_monotonic_time
-        swi     OS_ReadMonotonicTime
-        mov     pc,lr
-
-
-find_core
-        EXPORT  find_core
-        mov     r1,lr
-        swi     OS_EnterOS
-        mrc     p15, 0, r0, c0, c0, 0
-        and     r0, r0, #0xf000
-        teq     r0, #0xa000             ; StrongARM = 'axxx'
-        moveq   r0,#1
-        movne   r0,#0
-        movs    pc,r1
-
-riscos_check_taskwindow
-        EXPORT  riscos_check_taskwindow
-        mov     r1,r0
-        mov     r0,#0
-        swi     XTaskWindow_TaskInfo
-        movvs   r0,#0
-        str     r0,[r1]
-        movs    pc,lr
-
-riscos_upcall_6
-        EXPORT  riscos_upcall_6
-        LDR     ip,adcon_nonzero
-        MOV     r0,#6
-        LDR     r1,[ip]
-        TEQS    r1,#0
-        BEQ     allocate_nonzero
-        SWI     XOS_Upcall
-        MOVS    pc,lr
-
-        IMPORT  atexit
-allocate_nonzero
-        STMFD   sp!,{v1,lr}
-        MOV     r0,#6
-        MOV     r3,#4
-        SWI     XOS_Module
-        LDMVSFD sp!,{v1,pc}^
-        STR     r2,[ip]
-        STR     r2,[r2]                 ; a non-zero value...
-        MOV     v1,r2
-        ADR     a1,deallocate_nonzero
-        BL      atexit
-        MOV     r0,#6
-        MOV     r1,v1
-        SWI     XOS_Upcall
-        LDMFD   sp!,{v1,pc}^
-
-deallocate_nonzero
-        LDR     r2,adcon_nonzero
-        MOV     r0,#7
-        LDR     r2,[r2]
-        SWI     XOS_Module
-        MOVS    pc,lr
-
-adcon_nonzero
-        DCD     nonzero
-
-        AREA    fastrc5zidata, DATA, NOINIT
-nonzero %       4
 
         END
 

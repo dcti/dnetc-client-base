@@ -10,6 +10,10 @@ rasenumconnectionsT rasenumconnections = NULL;
 rasgetconnectstatusT rasgetconnectstatus = NULL;
 #endif
 
+#if (CLIENT_OS == OS_RISCOS)
+s32 guiriscos, guirestart;
+#endif
+
 Problem problem[2*MAXCPUS];
 volatile u32 SignalTriggered, UserBreakTriggered;
 volatile s32 pausefilefound = 0;
@@ -276,7 +280,7 @@ s32 Client::Fetch( u8 contest, Network *netin )
   if (offlinemode
 #if (CLIENT_OS == OS_NETWARE)
         || !CliIsNetworkAvailable(0)
-#endif  
+#endif
   ) return( -1 );
 
   if (contestdone[contest]) return( -1 );
@@ -548,14 +552,18 @@ s32 Client::Fetch( u8 contest, Network *netin )
     count++;
     if (proxymessage[0] != 0) {
 #ifdef NEW_STATS_AND_LOGMSG_STUFF  //handles linewrap //in clisrate.cpp
-      Log( CliReformatMessage( "The proxy says: ", proxymessage ) ); 
+      Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
 #else
       Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
 #endif
       proxymessage[0]=0;
     }
 #if !defined(NOMAIN)           // these two must match
+#if (CLIENT_OS == OS_RISCOS)
+    if (isatty(fileno(stdout))) {
+#else
     if (isatty(1)) {
+#endif
 #endif
       u32 percent2 = ((count*10000)/((inthreshold[contest]-more)+count));
       LogScreenf( "\r[%s] Retrieved block %u of %u (%u.%02u%% transferred) ",
@@ -627,10 +635,10 @@ s32 Client::Flush( u8 contest , Network *netin )
   s32 more;
   u32 i, retry;
 
-  if (offlinemode 
+  if (offlinemode
 #if (CLIENT_OS == OS_NETWARE)
         || !CliIsNetworkAvailable(0)
-#endif  
+#endif
      ) return( -1 );
 
   if (contestdone[contest]) return( -1 );
@@ -762,10 +770,10 @@ s32 Client::Flush( u8 contest , Network *netin )
     if ( ( more = GetBufferOutput( &data , contest) ) == -1 )
     {
       // no more to do
-      if (proxymessage[0] != 0) 
+      if (proxymessage[0] != 0)
         {
 #ifdef NEW_STATS_AND_LOGMSG_STUFF       //handles linewrap
-        Log( CliReformatMessage( "The proxy says: ", proxymessage ) ); 
+        Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
 #else
         Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
 #endif
@@ -809,8 +817,8 @@ s32 Client::Flush( u8 contest , Network *netin )
       packet.os = htonl( CLIENT_OS );
       packet.cpu = htonl( CLIENT_CPU );
       packet.build = htonl( 6401 );
-    } 
-    else 
+    }
+    else
     {
       // This block was written to the file by a client ver > 6401
       strncpy( packet.id, data.id, sizeof(data.id) - 1 );
@@ -914,17 +922,21 @@ s32 Client::Flush( u8 contest , Network *netin )
         return( count ? count : -1 );
       }
       count++;
-      if (proxymessage[0] != 0) 
+      if (proxymessage[0] != 0)
       {
 #ifdef NEW_STATS_AND_LOGMSG_STUFF       //handles linewrap
-        Log( CliReformatMessage( "The proxy says: ", proxymessage ) ); 
+        Log( CliReformatMessage( "The proxy says: ", proxymessage ) );
 #else
         Log( "\n[%s] The proxy says: \"%.64s\"\n", Time(), proxymessage );
 #endif
         proxymessage[0]=0;
       }
 #if !defined(NOMAIN)           // these two must match
+#if (CLIENT_OS == OS_RISCOS)
+      if (isatty(fileno(stdout))) {
+#else
       if (isatty(1)) {
+#endif
 #endif
         u32 percent2 = ((count*10000)/(more+count));
         LogScreenf( "\r[%s] Sent block %u of %u (%u.%02u%% transferred) ",
@@ -974,7 +986,7 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
   if (offlinemode
 #if (CLIENT_OS == OS_NETWARE)
         || !CliIsNetworkAvailable(0)
-#endif  
+#endif
     ) {
     mailmessage.quietmode=quietmode;
     mailmessage.checktosend(0);
@@ -1322,7 +1334,7 @@ void Go_mt( void * parm )
   CliSetThreadName( GetThreadID(), tempi2+1 );
   //sets callback context to nothing, so that a spun off polling process
   //isn't being forced to switch context the-trillion-or-so times per sec.
-  CliClearThreadContextSpecifier( GetThreadID() ); 
+  CliClearThreadContextSpecifier( GetThreadID() );
   //put the thread under MP control, controller decides when/whether to move it
   CliMigrateThreadToSMP();
   }
@@ -1351,11 +1363,11 @@ void Go_mt( void * parm )
         // This will return without doing anything if uninitialized...
         if (!pausefilefound) {
 #if (CLIENT_OS == OS_NETWARE)
-              //sets up and uses a polling procedure that runs as 
+              //sets up and uses a polling procedure that runs as
               //an OS callback when the system enters an idle loop.
-          run = CliRunProblemAsCallback( &(problem[tempi]), 
+          run = CliRunProblemAsCallback( &(problem[tempi]),
                          timeslice / PIPELINE_COUNT, tempi2, niceness );
-#else          
+#else
           run = (problem[tempi]).Run( timeslice / PIPELINE_COUNT , tempi2 );
 #endif
         } else {
@@ -1481,11 +1493,11 @@ s32 Client::Run( void )
   // Select an appropriate core, niceness and timeslice setting
   // --------------------------------------
 
-  if (SelectCore()) 
+  if (SelectCore())
     return -1;
 
   #if (CLIENT_CPU == CPU_POWERPC) //this should be in SelectCore()
-  switch (whichcrunch) 
+  switch (whichcrunch)
     {
     case 0:
       Log("Using the 601 core.\n\n");
@@ -1553,13 +1565,13 @@ s32 Client::Run( void )
       // Must do RC5.  DES x86 cores aren't multithread safe.  There are 2 separate cores.
       // Note that if rc5 contest is over, this will return -2...
       count = GetBufferInput( &fileentry , 0);
-      if (contestdone[0]) 
+      if (contestdone[0])
         count=-2; // means that this thread won't actually start.
-      } 
-    else 
+      }
+    else
 #endif
     {
-      if (getbuff_errs == 0) 
+      if (getbuff_errs == 0)
       {
         if (!contestdone[ preferred_contest_id ])
         {
@@ -1569,16 +1581,16 @@ s32 Client::Run( void )
           {
             goto PreferredIsDone1;
           }
-          else 
+          else
           {
-            if (count == -3) 
+            if (count == -3)
             {
               // No DES blocks available while in offline mode.  Do rc5...
               count = GetBufferInput( &fileentry , (u8) ( ! preferred_contest_id));
             }
           }
         }
-        else 
+        else
         {
           // Preferred contest is done...
 PreferredIsDone1:
@@ -1592,10 +1604,10 @@ PreferredIsDone1:
       }
     }
 
-    if (count == -1) 
+    if (count == -1)
     {
       getbuff_errs++;
-    } 
+    }
     else if ((!nonewblocks) && (count != -2))
     {
       // LoadWork expects things descrambled.
@@ -1603,22 +1615,22 @@ PreferredIsDone1:
                      (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
       // If a block was finished with an 'odd' number of keys done, then make it redo the last
       // key -- this will prevent a 2-pipelined core from looping forever.
-      if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1) 
+      if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1)
       {
         fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFEL) + 1);
         fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
       }
-      if (fileentry.contest != 1) 
+      if (fileentry.contest != 1)
         fileentry.contest=0;
 
       // If this is a partial DES block, and completed by a different cpu/os/build, then
       // reset the keysdone to 0...
-      if (fileentry.contest == 1) 
+      if (fileentry.contest == 1)
       {
-        if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) ) 
+        if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) )
         {
           if ((fileentry.cpu != CLIENT_CPU) || (fileentry.os != CLIENT_OS) ||
-              (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD)) 
+              (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD))
           {
             fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
             LogScreen("Read partial DES block from another cpu/os/build.\n");
@@ -1630,10 +1642,10 @@ PreferredIsDone1:
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
       {
         if (cpu_i==0 && load_problem_count>1)
-          Log( "[%s] %s\n", CliGetTimeString(NULL,1), 
+          Log( "[%s] %s\n", CliGetTimeString(NULL,1),
                                   "Loading two blocks per thread...");
-        
-        Log( "[%s] %s\n", CliGetTimeString(NULL,1), 
+
+        Log( "[%s] %s\n", CliGetTimeString(NULL,1),
                        CliGetMessageForFileentryLoaded( &fileentry ) );
 
         //only display the "remaining blocks in file" once
@@ -1646,7 +1658,7 @@ PreferredIsDone1:
             Log("[%s] 1 Child thread has been started.\n", Time());
           else if (load_problem_count > 2)
             Log("[%s] %d Child threads ('A'%s'%c') have been started.\n",
-              Time(), load_problem_count>>1, 
+              Time(), load_problem_count>>1,
               ((load_problem_count>4)?("-"):(" and ")),
               'A'+((load_problem_count>>1)-1));
 
@@ -1654,12 +1666,12 @@ PreferredIsDone1:
           {
             if (have_loaded_buffers[tmpc]) //load any of this type?
             {
-              Log( "[%s] %d %s Blocks remain in file %s\n", CliGetTimeString(NULL,1), 
-                CountBufferInput((u8) tmpc), 
+              Log( "[%s] %d %s Blocks remain in file %s\n", CliGetTimeString(NULL,1),
+                CountBufferInput((u8) tmpc),
                 CliGetContestNameFromID(tmpc),
                 (nodiskbuffers ? "(memory-in)" : in_buffer_file[tmpc]));
-              Log( " %s  %d %s Blocks are in file %s\n", CliGetTimeString(NULL,0), 
-                CountBufferOutput((u8) tmpc), 
+              Log( " %s  %d %s Blocks are in file %s\n", CliGetTimeString(NULL,0),
+                CountBufferOutput((u8) tmpc),
                 CliGetContestNameFromID(tmpc),
                 (nodiskbuffers ? "(memory-out)" : out_buffer_file[tmpc]) );
             }
@@ -1688,11 +1700,11 @@ PreferredIsDone1:
       #endif //NEW_STATS_AND_LOGMSG_STUFF
 
       (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
-        
+
       //----------------------------
       //spin off a thread for this problem
       //----------------------------
-        
+
 #if defined(MULTITHREAD)
       {
         //Only launch a thread if we have really loaded 2*threadcount buffers
@@ -1727,9 +1739,9 @@ PreferredIsDone1:
             case 2: be_priority = B_NORMAL_PRIORITY; break;
             default: be_priority = B_LOW_PRIORITY; break;
           }
-          if (fileentry.contest == 0) 
+          if (fileentry.contest == 0)
             sprintf(thread_name, "crunch#%d (RC5)", cpu_i + 1);
-          else 
+          else
             sprintf(thread_name, "crunch#%d (DES)", cpu_i + 1);
           the_threads[cpu_i] = spawn_thread((long (*)(void *)) Go_mt, thread_name,
                 be_priority, (void *)thstart[cpu_i]);
@@ -1753,8 +1765,8 @@ PreferredIsDone1:
           {
             Log("[%s] Could not start child thread '%c'.\n",Time(),cpu_i+'A');
             return(-1);  //All those loaded blocks are gonna get lost
-          } 
-          else 
+          }
+          else
           {
             #ifndef NEW_STATS_AND_LOGMSG_STUFF
               Log("[%s] Child thread '%c' has been started.\n",Time(),cpu_i+'A');
@@ -1765,7 +1777,7 @@ PreferredIsDone1:
 #endif
     } //if ((!nonewblocks) && (count != -2))
   } //for (cpu_i = 0; cpu_i < load_problem_count; cpu_i ++)
-    
+
 
   //------------------------------------
   // display the percent bar so the user sees some action
@@ -1803,7 +1815,7 @@ PreferredIsDone1:
         problem[cpu_i].percent = ((problem[cpu_i]).startpercent / 1000);
         if (numcputemp > 1)
         {
-          LogScreenPercentMulti((u32) cpu_i%numcputemp, 
+          LogScreenPercentMulti((u32) cpu_i%numcputemp,
             (u32) problem[cpu_i].percent, 0, (bool) problem[cpu_i].restart );
           cpu_i++;
         }
@@ -1840,7 +1852,7 @@ PreferredIsDone1:
         int hitchar = getch();
           if (hitchar == 0) //extended keystroke
             getch();
-          else 
+          else
           {
             if (hitchar == 3 || hitchar == 'X' || hitchar == 'x' || hitchar == '!')
             {
@@ -1850,7 +1862,7 @@ PreferredIsDone1:
               exitcode = 1;
             }
         #if (defined(MULTITHREAD) && !defined(NONETWORK))
-            if (hitchar == 'u' || hitchar == 'U') 
+            if (hitchar == 'u' || hitchar == 'U')
             {
               Log("Keyblock Update forced\n");
               connectrequested = 1;
@@ -1859,7 +1871,7 @@ PreferredIsDone1:
           }
         }
     }
-    #elif (CLIENT_OS == OS_NETWARE) 
+    #elif (CLIENT_OS == OS_NETWARE)
       //In the event that we get suspended (for hogging the cpu), the AES
       //process will resume the main thread so we can shut down gracefully.
       CliKickWatchdog(); //wonder what the RSPCA will say to that?
@@ -1867,7 +1879,7 @@ PreferredIsDone1:
 
 
     //------------------------------------
-    //Modem detection stuff for WinNT/Win95 
+    //Modem detection stuff for WinNT/Win95
     //------------------------------------
 
 #if (CLIENT_OS == OS_WIN32)
@@ -1928,11 +1940,11 @@ PreferredIsDone1:
     {
       // prevent the main thread from racing & bogging everything down.
       sleep(3);
-    }                  
+    }
     else if (pausefilefound) //threads have their own sleep section
     {
       #if (CLIENT_OS == OS_WIN16)
-        SurrenderCPU();        
+        SurrenderCPU();
       #elif (CLIENT_OS != OS_DOS)
         sleep(1);
       #endif
@@ -1943,14 +1955,14 @@ PreferredIsDone1:
       //Actually run a problem
       #if (CLIENT_OS == OS_NETWARE)
       {
-        //sets up and uses a polling procedure that runs as 
+        //sets up and uses a polling procedure that runs as
         //an OS callback when the system enters an idle loop.
-        CliRunProblemAsCallback( &(problem[0]), 
+        CliRunProblemAsCallback( &(problem[0]),
                                 timeslice/PIPELINE_COUNT, 0 , niceness );
       }
       #else
       {
-        (problem[0]).Run( timeslice / PIPELINE_COUNT , 0 );      
+        (problem[0]).Run( timeslice / PIPELINE_COUNT , 0 );
 #if (CLIENT_OS == OS_WIN16)
         SurrenderCPU();
 #endif
@@ -1967,7 +1979,7 @@ PreferredIsDone1:
       // -------------
       //  update the percent bar
       // -------------
-      if (!percentprintingoff) 
+      if (!percentprintingoff)
       {
         #if (defined(PERCBAR_ON_ONE_LINE) && MAXCPUS<=16)
         if (numcputemp > 1)
@@ -2030,7 +2042,7 @@ PreferredIsDone1:
         //only do something if RESULT_FOUND or RESULT_NOTHING
         //Q: when can it be finished AND result_working?
         //-----------------
-        
+
         if ((rc5result.result == RESULT_FOUND) || (rc5result.result == RESULT_NOTHING))
         {
           //---------------------
@@ -2050,11 +2062,11 @@ PreferredIsDone1:
             len = max(.01, ((double)stop.tv_sec - lenhi) + ((double)stop.tv_usec - lenlo)/1000000.0 );
 
             (problem[cpu_i]).timehi = (u32) len;
-            (problem[cpu_i]).timelo = (u32) ( ((u32) (len*1000000.0)) % 1000000L);
+            (problem[cpu_i]).timelo = (u32) ((len - (u32) len) * 1000000.0);
 
-            if ((ntohl( rc5result.iterations.lo ) * (tmpcontest == 1 ? 2 : 1)) == 0) 
+            if ((ntohl( rc5result.iterations.lo ) * (tmpcontest == 1 ? 2 : 1)) == 0)
               strcpy(keyscompleted,"4294967296");
-            else 
+            else
               sprintf(keyscompleted,"%u",ntohl( rc5result.iterations.lo ) * (tmpcontest == 1 ? 2 : 1));
 
             if ( (problem[cpu_i]).timehi > 0 )
@@ -2069,8 +2081,8 @@ PreferredIsDone1:
                 ( ( (double) (problem[cpu_i]).timehi) + (((double)((problem[cpu_i]).timelo))/1000000.0) ) ) *
                 ( 100000.0 - (double) (problem[cpu_i]).startpercent ) / 100000.0 )
                 );
-            } 
-            else 
+            }
+            else
             {
               Log( "\n[%s] Completed block %08lX:%08lX (%s keys)\n"
                  "                        %02d:%02d:%02d.%02d - [--- keys/sec]\n",
@@ -2092,18 +2104,18 @@ PreferredIsDone1:
           tmpcontest = fileentry.contest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 );
 
           // make it into a reply
-          if (rc5result.result == RESULT_FOUND) 
+          if (rc5result.result == RESULT_FOUND)
           {
             consecutivesolutions[fileentry.contest]++;
-            if (keyport == 3064) 
+            if (keyport == 3064)
                 LogScreen("Success\n");
             fileentry.op = htonl( OP_SUCCESS_MULTI );
             fileentry.key.lo = htonl( ntohl( fileentry.key.lo ) +
                                 ntohl( fileentry.keysdone.lo ) );
-          } 
-          else 
+          }
+          else
           {
-            if (keyport == 3064) 
+            if (keyport == 3064)
               LogScreen("Success was not detected!\n");
             fileentry.op = htonl( OP_DONE_MULTI );
           }
@@ -2121,7 +2133,7 @@ PreferredIsDone1:
                      (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
 
           // send it back...
-          if ( PutBufferOutput( &fileentry ) == -1 ) 
+          if ( PutBufferOutput( &fileentry ) == -1 )
             Log( "PutBuffer Error\n" );
           totalBlocksDone[tmpcontest]++;
 
@@ -2130,9 +2142,9 @@ PreferredIsDone1:
           //---------------------
 
           // Checkpoint info just became outdated...
-          if (strcmp(checkpoint_file[0],"none") != 0) 
+          if (strcmp(checkpoint_file[0],"none") != 0)
             unlink(checkpoint_file[0]);
-          if (strcmp(checkpoint_file[1],"none") != 0) 
+          if (strcmp(checkpoint_file[1],"none") != 0)
             unlink(checkpoint_file[1]);
 
           //---------------------
@@ -2140,7 +2152,7 @@ PreferredIsDone1:
           //---------------------
 
           // Get another block...
-          
+
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_OS == OS_BEOS))
           if ((cpu_i%numcputemp)>=2)
           {
@@ -2148,9 +2160,9 @@ PreferredIsDone1:
               // Must do RC5.  DES x86 cores aren't multithread safe.
               // Note that if rc5 contest is over, this will return -2...
               count = GetBufferInput( &fileentry , 0);
-            if (contestdone[0]) 
+            if (contestdone[0])
               count = -2;
-          } 
+          }
           else
 #endif
           {
@@ -2188,41 +2200,41 @@ PreferredIsDone1:
           }
 
 
-          if (count < 0) 
+          if (count < 0)
           {
             getbuff_errs++;
             TimeToQuit=1; // Force blocks to be saved
             exitcode = -2;
             continue;  //break out of the next cpu_i loop
-          } 
+          }
 
           //---------------------
           // correct any potential problems in the freshly loaded fileentry
           //---------------------
 
-          if ((!nonewblocks) && (count != -2)) 
+          if ((!nonewblocks) && (count != -2))
           {
             // LoadWork expects things descrambled.
             Descramble( ntohl( fileentry.scramble ),
                        (u32 *) &fileentry, ( sizeof(FileEntry) / 4 ) - 1 );
             // If a block was finished with an 'odd' number of keys done, then make it redo the last
             // key -- this will prevent a 2-pipelined core from looping forever.
-            if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1) 
+            if ((ntohl(fileentry.iterations.lo) & 0x00000001L) == 1)
             {
               fileentry.iterations.lo = htonl((ntohl(fileentry.iterations.lo) & 0xFFFFFFFE) + 1);
               fileentry.key.lo = htonl(ntohl(fileentry.key.lo) & 0xFEFFFFFFL);
             }
-            if (fileentry.contest != 1) 
+            if (fileentry.contest != 1)
               fileentry.contest=0;
 
-            // If this is a partial DES block, and completed by a different 
+            // If this is a partial DES block, and completed by a different
             // cpu/os/build, then reset the keysdone to 0...
-            if (fileentry.contest == 1) 
+            if (fileentry.contest == 1)
             {
-              if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) ) 
+              if ( (ntohl(fileentry.keysdone.lo)!=0) || (ntohl(fileentry.keysdone.hi)!=0) )
               {
                 if ((fileentry.cpu != CLIENT_CPU) || (fileentry.os != CLIENT_OS) ||
-                    (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD)) 
+                    (fileentry.buildhi != CLIENT_CONTEST) || (fileentry.buildlo != CLIENT_BUILD))
                 {
                   fileentry.keysdone.lo = fileentry.keysdone.hi = htonl(0);
                   LogScreen("Read partial DES block from another cpu/os/build.\n");
@@ -2245,8 +2257,8 @@ PreferredIsDone1:
                  CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),(nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
                  CliGetTimeString(NULL,0), CountBufferOutput(fileentry.contest), CliGetContestNameFromID(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]) );
 
-          }                         
-          #else          
+          }
+          #else
           {
             tmpblksize=log2x(ntohl(fileentry.iterations.lo));
             tmpblkcnt = ntohl(fileentry.iterations.lo) / (1<<tmpblksize);
@@ -2257,7 +2269,7 @@ PreferredIsDone1:
                  Time(), (fileentry.contest == 1 ? "DES":"RC5"),tmpblkcnt,tmpblksize,
                  ntohl( fileentry.key.hi ), ntohl( fileentry.key.lo ),
                  Time(), count, (nodiskbuffers? "(memory-in)":in_buffer_file[fileentry.contest]),
-                 Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]), 
+                 Time(), CountBufferOutput(fileentry.contest), (nodiskbuffers? "(memory-out)":out_buffer_file[fileentry.contest]),
                  ((load_problem_count>1)?("ready to process"):("being processed")));
 
             gettimeofday( &stop, &dummy );
@@ -2269,7 +2281,7 @@ PreferredIsDone1:
           //---------------------
           // now load the problem with the fileentry
           //---------------------
-         
+
           (problem[cpu_i]).LoadState( (ContestWork *) &fileentry , (u32) (fileentry.contest) );
         } // end (if 'found' or 'nothing')
         DoCheckpoint();
@@ -2279,7 +2291,7 @@ PreferredIsDone1:
     //----------------------------------------
     // Check for time limit...
     //----------------------------------------
-    
+
     if ( ( minutes > 0 ) &&
            (s32) ( time( NULL ) > (s32) ( timeStarted + ( 60 * minutes ) ) ) )
     {
@@ -2336,9 +2348,9 @@ PreferredIsDone1:
     //----------------------------------------
 
     if (nonewblocks == load_problem_count)
-    { 
-      TimeToQuit = 1; 
-      exitcode = 4; 
+    {
+      TimeToQuit = 1;
+      exitcode = 4;
     }
 
     //----------------------------------------
@@ -2359,10 +2371,10 @@ PreferredIsDone1:
 
     if (!noexitfilecheck) // Check if file "exitrc5.now" exists...
     {
-      if ( time( NULL ) > exitchecktime ) 
+      if ( time( NULL ) > exitchecktime )
       {
         exitchecktime = time( NULL ) + exitfilechecktime; // At most once every 30 seconds by default
-        if( stat( exit_flag_file, &buf ) != -1 ) 
+        if( stat( exit_flag_file, &buf ) != -1 )
         {
           Log( "[%s] Found \"exitrc5.now\" file.  Exiting.\n", Time() );
           TimeToQuit = 1;
@@ -2380,7 +2392,7 @@ PreferredIsDone1:
       // ----------------
       // Shutting down: shut down threads
       // ----------------
-      
+
       SignalTriggered = 1; // will make other threads exit
       LogScreen("Quitting...\n");
 
@@ -2435,7 +2447,7 @@ PreferredIsDone1:
           {
             Log( "Buffer Error\n" );
           }
-          else 
+          else
           {
             Log( "[%s] Saved block %08lX:%08lX (%d.%02d percent complete)\n",
                 Time(), temphi , templo , percent2/100, percent2%100 );
@@ -2447,9 +2459,9 @@ PreferredIsDone1:
       // Shutting down: delete checkpoint files
       // ----------------
 
-      if (strcmp(checkpoint_file[0],"none") != 0) 
+      if (strcmp(checkpoint_file[0],"none") != 0)
         unlink(checkpoint_file[0]);
-      if (strcmp(checkpoint_file[1],"none") != 0) 
+      if (strcmp(checkpoint_file[1],"none") != 0)
         unlink(checkpoint_file[1]);
 
       // ----------------
@@ -2501,8 +2513,8 @@ PreferredIsDone1:
         {
           if (old_totalBlocksDone[tmpc] != totalBlocksDone[tmpc])
           {
-            Log( "%c%s%c Summary: %s\n", 
-             ((i == 1) ? ('[') : (' ')), CliGetTimeString(NULL, i), 
+            Log( "%c%s%c Summary: %s\n",
+             ((i == 1) ? ('[') : (' ')), CliGetTimeString(NULL, i),
              ((i == 1) ? (']') : (' ')), CliGetSummaryStringForContest(tmpc) );
             if ((--i) < 0) i = 0;
           }
@@ -2653,7 +2665,7 @@ void Client::Log( const char *format, ...)
 void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted)
 {
 #ifdef NEW_LOGSCREEN_PERCENT_SINGLE
-  // fixes the problem of "100%" running off an 80 column screen and 
+  // fixes the problem of "100%" running off an 80 column screen and
   // also gives a '.' sooner for new blocks.
   u32 restartpercent =
               (!restarted || percent==100) ? 0 :
@@ -2674,7 +2686,7 @@ void Client::LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted
   }
   if (restarted) LogScreen( "R" );
   fflush( stdout );
-#endif  
+#endif
 }
 
 // ---------------------------------------------------------------------------
@@ -2728,11 +2740,6 @@ s32 Client::SetContestDoneState( Packet * packet)
 
 // ---------------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_RISCOS)
-  extern int riscos_in_taskwindow;
-  extern "C" void riscos_check_taskwindow(int *);
-#endif
-
 #if !defined(NOMAIN)
 int main( int argc, char *argv[] )
 {
@@ -2745,13 +2752,13 @@ int main( int argc, char *argv[] )
   static Client client;
 
 #if (CLIENT_OS == OS_RISCOS)
-  riscos_check_taskwindow(&riscos_in_taskwindow);
+  riscos_in_taskwindow = riscos_check_taskwindow();
   if (riscos_find_local_directory(argv[0])) return -1;
 #endif
 
 #if (CLIENT_OS == OS_NETWARE) // create stdout/screen, set cwd etc.
   // and save pointer to client so functions in netware.cpp can get at the
-  // filenames and niceness level 
+  // filenames and niceness level
   if ( CliInitClient( argc, argv, &client )  ) return -1;
 #endif
 
@@ -2806,7 +2813,8 @@ int main( int argc, char *argv[] )
 #elif (CLIENT_OS == OS_VMS)
     strcpy( client.inifilename, "rc5des.ini" );
 #elif (CLIENT_OS == OS_RISCOS)
-    strcpy( client.inifilename, argv[0] );
+    char *dot = strrchr(argv[0], '.');
+    strcpy( client.inifilename, dot ? dot + 1 : argv[0] );
     strcat( client.inifilename, "/ini" );
 #else
     strcpy( client.inifilename, argv[0] );
@@ -2871,6 +2879,26 @@ int main( int argc, char *argv[] )
     }
   }
 
+#if (CLIENT_OS == OS_RISCOS)
+  // See if we are a subtask of the GUI
+  for (i = 1; i < argc; i++)
+  {
+    if ( strcmp(argv[i], "-guiriscos" ) == 0) {
+      guiriscos=1;
+      argv[i][0] = 0;
+    }
+  }
+
+  // See if are restarting (hence less banners wanted)
+  for (i = 1; i < argc; i++)
+  {
+    if ( strcmp(argv[i], "-guirestart" ) == 0) {
+      guirestart=1;
+      argv[i][0] = 0;
+    }
+  }
+#endif
+
   // print a banner
   client.PrintBanner(argv[0]);
 
@@ -2885,7 +2913,7 @@ int main( int argc, char *argv[] )
 
   //'magic number' so ::Run gets executed only when unchanged
   #define OK_TO_RUN (-123)
-  int retcode = OK_TO_RUN; 
+  int retcode = OK_TO_RUN;
 
   // parse command line "modes"
   for (i = 1; ((retcode == OK_TO_RUN) && (i < argc)); i++)
@@ -2991,18 +3019,18 @@ int main( int argc, char *argv[] )
       client.offlinemode = 0;
       NetworkInitialize();
       client.ValidateConfig();
-      
+
       // RC5 We care about both the fetch & flush errors.
       int retcode2 = client.Update(1,1,1);
       if (client.randomchanged) client.WriteConfig();
 
       // DES We care about both the fetch & flush errors.
       retcode = client.Update(0,1,1);
-      
+
       client.mailmessage.quietmode = client.quietmode;
       client.mailmessage.checktosend(1);
       NetworkDeinitialize();
-      
+
       if (retcode < 0 || retcode2 < 0)
       {
         client.LogScreen( "\nAn error occured during the update.\n" );
@@ -3097,13 +3125,13 @@ int main( int argc, char *argv[] )
               "-forceunlock fn  Unlock file 'fn'        -nofallback  Don't fallback to r.d.n\n"
               "-prefer x    Preferred ctst 1=RC5, 2=DES -blsize n    Preferred blksize (2^n)\n"
               , argv[0]);
-    #endif //not-netware 
+    #endif //not-netware
     retcode = 0;
     }
   }
 
 
-  if (retcode == OK_TO_RUN) 
+  if (retcode == OK_TO_RUN)
   {
     // If we're this far, and argc>1, then some parameter must have been changed.
     fflush(stdout);
@@ -3128,7 +3156,10 @@ int main( int argc, char *argv[] )
       client.offlinemode=1;
     #endif
     if ((!client.offlinemode) || (client.messagelen > 0)) NetworkInitialize();
-    client.Log("\n\nRC5DES Client v2.%d.%d started.\nUsing %s as email address.\n\n",
+#if (CLIENT_OS == OS_RISCOS)
+    if (!guirestart)
+#endif
+      client.Log("\n\nRC5DES Client v2.%d.%d started.\nUsing %s as email address.\n\n",
              CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
 //client.LogScreenf("in: %s\n",client.in_buffer_file[0]);
 //client.LogScreenf("out: %s\n",client.out_buffer_file[0]);

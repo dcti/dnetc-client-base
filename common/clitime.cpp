@@ -2,17 +2,17 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
-// This file contains functions for obtaining/formatting/manipulating 
+// This file contains functions for obtaining/formatting/manipulating
 // the time. 'time' is always stored/passed/returned in timeval format.
 
-/* Portability notes: 
+/* Portability notes:
    CliTimer() requires porting so that it returns the time
    as gettimeofday() would, ie seconds since 1.1.70 GMT in tv_sec,
    and remaining fraction in mincroseconds in tv_usec;
 
    Module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
-*/   
+*/
 
 #include "clitime.h" //which #includes client.h
 
@@ -52,7 +52,7 @@ struct timeval *CliClock( struct timeval *tv )
     return tv;
   }
   return (&stv);
-}  
+}
 
 // ---------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ struct timeval *CliTimer( struct timeval *tv )
 #elif (CLIENT_OS == OS_NETWARE)
   //NIOS port note: CLIB funcs have equivs in netware.cpp to avoid clib dependance
   #define PCLOCKS_PER_SEC (1193180) //often defined as UCLOCKS_PER_SEC
-  static unsigned int timebase=0; 
+  static unsigned int timebase=0;
   unsigned int picsnow = 0; //(GetSuperHighResolutionTimer()&0xFFFF);
   unsigned int secs, hsecs, ticks, ticksnow = CliGetCurrentTicks(); //GetSystemTime()
 
@@ -83,7 +83,7 @@ struct timeval *CliTimer( struct timeval *tv )
   CliConvertSecondsToTicks( secs, 0, &ticks); // ticks = (secs*18.207)
   ticksnow-=ticks;
   picsnow +=(ticksnow << 16);
-  
+
   stv.tv_sec = (time_t)(timebase + secs);
   stv.tv_usec = (picsnow*100000)/(PCLOCKS_PER_SEC/10);
   if (stv.tv_usec > 1000000)
@@ -105,7 +105,7 @@ struct timeval *CliTimer( struct timeval *tv )
   {
     static unsigned int timebase = 0;
     unsigned int secs, rate, xclock = (unsigned int)(clock());
-    
+
     if (!xclock)
     {
       if (!stv.tv_sec && !stv.tv_usec)
@@ -130,13 +130,13 @@ struct timeval *CliTimer( struct timeval *tv )
       secs = (xclock/rate);
       if (!timebase) timebase = ((unsigned int)(time(NULL))) - secs;
       stv.tv_sec = (time_t)(timebase + secs);
-      xclock -= (secs * rate); 
+      xclock -= (secs * rate);
       if ( rate <= 1000000 )
         stv.tv_usec = xclock * (1000000/rate);
       else
         stv.tv_usec = xclock / (rate/1000000);
     }
-      
+
     if (stv.tv_usec > 1000000)
     {
       stv.tv_sec += stv.tv_usec/1000000;
@@ -148,7 +148,7 @@ struct timeval *CliTimer( struct timeval *tv )
   {
     cliclock.tv_sec = stv.tv_sec;
     cliclock.tv_usec = stv.tv_usec;
-  }    
+  }
   if (tv)
   {
     tv->tv_sec = stv.tv_sec;
@@ -156,7 +156,7 @@ struct timeval *CliTimer( struct timeval *tv )
     return tv;
   }
   return (&stv);
-}  
+}
 
 // ---------------------------------------------------------------------
 
@@ -171,7 +171,7 @@ int CliTimerAdd( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 
       CliTimer( NULL );
       if (!tv1) tv1 = dest;
       if (!tv2) tv2 = dest;
-    }  
+    }
     dest->tv_sec = tv1->tv_sec + tv2->tv_sec;
     dest->tv_usec = tv1->tv_usec + tv2->tv_usec;
     if (dest->tv_usec > 1000000)
@@ -181,7 +181,7 @@ int CliTimerAdd( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 
     }
   }
   return 0;
-}  
+}
 
 // ---------------------------------------------------------------------
 
@@ -203,8 +203,8 @@ int CliTimerDiff( struct timeval *dest, struct timeval *tv1, struct timeval *tv2
         if (!tv1) tv1 = &tvtemp;
         else tv2 = &tvtemp;
       }
-      if ((((unsigned int)(tv2->tv_sec)) < ((unsigned int)(tv1->tv_sec))) || 
-         ((tv2->tv_sec == tv1->tv_sec) && 
+      if ((((unsigned int)(tv2->tv_sec)) < ((unsigned int)(tv1->tv_sec))) ||
+         ((tv2->tv_sec == tv1->tv_sec) &&
            ((unsigned int)(tv2->tv_usec)) < ((unsigned int)(tv1->tv_usec))))
       {
         tv0 = tv1; tv1 = tv2; tv2 = tv0;
@@ -221,8 +221,8 @@ int CliTimerDiff( struct timeval *dest, struct timeval *tv1, struct timeval *tv2
     }
   }
   return 0;
-}  
-  
+}
+
 // ---------------------------------------------------------------------
 
 // Get time as string. Curr time if tv is NULL. Separate buffers for each
@@ -239,7 +239,7 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
     timelast = 1;
     lasttype = 0;
   }
-  
+
   if (strtype == 0)
   {
     if (!spacestring[0])
@@ -252,7 +252,9 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
   }
   else if (strtype == 1 || strtype == -1) //new fmt = 1, old fmt = -1
   {
+#if (CLIENT_OS != OS_RISCOS)
     tzset();
+#endif
     time_t timenow = ((tv)?(tv->tv_sec):(time(NULL)));
 
     if (timenow && (timenow != timelast) && (lasttype != strtype))
@@ -260,7 +262,7 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
       struct tm *gmt;
       int utc = (( gmt = gmtime( (const time_t *) &timenow) ) != NULL);
       if (!utc) gmt = localtime( (const time_t *) &timenow);
-     
+
       if (gmt)
       {
         timelast = timenow;
@@ -269,9 +271,9 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
         {
           // old: "04/03/98 11:22:33 GMT"
           //                      2 1  2 1 2  1  2 1 2  1 2  1 3/5 = 21 or 23
-          sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d %s", 
-               gmt->tm_mon + 1, gmt->tm_mday, 
-               gmt->tm_year%100, gmt->tm_hour, 
+          sprintf( timestring, "%02d/%02d/%02d %02d:%02d:%02d %s",
+               gmt->tm_mon + 1, gmt->tm_mday,
+               gmt->tm_year%100, gmt->tm_hour,
                gmt->tm_min, gmt->tm_sec, ((utc)?("GMT"):("local")) );
         }
         else // strtype == 1 == new type of fixed length and neutral locale
@@ -279,28 +281,28 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
           static const char *monnames[]={ "Jan","Feb","Mar","Apr","May","Jun",
               "Jul","Aug","Sep","Oct","Nov","Dec"};
 
-          // new: "Apr 03 11:22:33 GMT" year = gmt->tm_year%100, 
+          // new: "Apr 03 11:22:33 GMT" year = gmt->tm_year%100,
           //                    3 1  2 1  2 1  2 1  2 1 3   = 19
           sprintf( timestring, "%s %02d %02d:%02d:%02d %s",
-             monnames[gmt->tm_mon%12], gmt->tm_mday, 
+             monnames[gmt->tm_mon%12], gmt->tm_mday,
              gmt->tm_hour, gmt->tm_min, gmt->tm_sec, ((utc)?("GMT"):("---")) );
         }
       }
-    }  
+    }
     return timestring;
   }
   else if (strtype == 2)
   {
     if (!tv) tv = CliTimer( NULL );
     sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (unsigned) (tv->tv_sec / 86400),
-      (unsigned) ((tv->tv_sec % 86400) / 3600), (unsigned) ((tv->tv_sec % 3600)/60), 
+      (unsigned) ((tv->tv_sec % 86400) / 3600), (unsigned) ((tv->tv_sec % 3600)/60),
       (unsigned) (tv->tv_sec % 60), (unsigned) ((tv->tv_usec/10000)%100) );
     //if ((tv->tv_sec / 86400)==0 ) //don't show days if not needed
     //  return hourstring+sizeof("0.");
-    return hourstring;  
+    return hourstring;
   }
   return "";
-} 
+}
 
 // ---------------------------------------------------------------------
 

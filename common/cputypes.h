@@ -45,7 +45,7 @@ struct s128 { s64 hi, lo; };
 #define CPU_JAVA_VM     8
 #define CPU_POWER       9
 #define CPU_VAX         10
-#define CPU_STRONGARM   11
+#define CPU_ARM         11
 #define CPU_88K         12
 #define CPU_KSR1        13
 #define CPU_S390        14
@@ -129,7 +129,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_X86
   #elif defined(ARM)
     #define CLIENT_OS     OS_LINUX
-    #define CLIENT_CPU    CPU_STRONGARM
+    #define CLIENT_CPU    CPU_ARM
   #elif defined(ASM_SPARC) || defined(SPARCLINUX)
     #define CLIENT_OS     OS_LINUX
     #define CLIENT_CPU    CPU_SPARC
@@ -151,7 +151,7 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_CPU    CPU_X86
   #elif defined(ARM)
     #define CLIENT_OS     OS_NETBSD
-    #define CLIENT_CPU    CPU_STRONGARM
+    #define CLIENT_CPU    CPU_ARM
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
   #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
@@ -248,7 +248,7 @@ struct s128 { s64 hi, lo; };
   #endif
 #elif defined(__riscos)
   #define CLIENT_OS     OS_RISCOS
-  #define CLIENT_CPU    CPU_STRONGARM
+  #define CLIENT_CPU    CPU_ARM
 #elif defined(_NeXT_)
   #if defined(ASM_486) || defined(ASM_P5) || defined(ASM_P6) || defined(ASM_K5) || defined(ASM_K6) || defined(ASM_6x86)
     #define CLIENT_OS     OS_NEXTSTEP
@@ -276,7 +276,7 @@ struct s128 { s64 hi, lo; };
 
 // Some compilers/platforms don't yet support bool internally.
 // When creating new rules here, please try to use compiler-specific macro tests
-// since not all compilers on a specific platform (or even a newer version of 
+// since not all compilers on a specific platform (or even a newer version of
 // your own compiler) may be missing bool.
 //
 #if defined(__VMS) || defined(__SUNPRO_CC) || defined(__DECCXX) || defined(__MVS__)
