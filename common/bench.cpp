@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.20  1999/03/10 04:24:51  silby
+// Benchmark reflects 2^33 block ceiling now.
+//
 // Revision 1.19  1999/03/01 08:19:44  gregh
 // Changed ContestWork to a union that contains crypto (RC5/DES) and OGR data.
 //
@@ -75,7 +78,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.19 1999/03/01 08:19:44 gregh Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.20 1999/03/10 04:24:51 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -93,6 +96,7 @@ return "@(#)$Id: bench.cpp,v 1.19 1999/03/01 08:19:44 gregh Exp $"; }
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
 #include "confrwv.h"   // Read/Validate/WriteConfig()
+#include <math.h>      // pow()
 
 // --------------------------------------------------------------------------
 
@@ -326,7 +330,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
                     CliGetKeyrateAsString( ratestr, rate ) );
 
   itersize += keycountshift;
-  while ((tv.tv_sec < (60*60) && itersize < 31) || (itersize < 28))
+  while ((tv.tv_sec < (60*60) && itersize < 33) || (itersize < 28))
     {
     tv.tv_sec <<= 1;
     tv.tv_usec <<= 1;
@@ -346,7 +350,7 @@ u32 Benchmark( unsigned int contestid, u32 numkeys, int cputype, int *numblocks)
              "enough for approximately %u %s.\n", 
              CliGetContestNameFromID(contestid), 
              (unsigned int)itersize, 
-             (unsigned int)((((u32)(1<<itersize))/((u32)(1<<28)))),
+             (unsigned int)pow(2,(itersize-28)),
              CliGetTimeString( &tv, 2 ),recommendedblockcount,
              ((hourstobuffer > 24)?(hourstobuffer/24):(hourstobuffer)),
              ((hourstobuffer > 24)?("days"):("hours")) );
