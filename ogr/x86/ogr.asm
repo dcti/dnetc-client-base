@@ -6,7 +6,7 @@
 ; if your compiler can generate faster code please send it to me
 ; for disassembly.
 ;
-; $Id: ogr.asm,v 1.1.2.1 2000/08/16 02:32:29 cyp Exp $
+; $Id: ogr.asm,v 1.1.2.2 2000/08/18 15:55:30 cyp Exp $
 
                global ogr_get_dispatch_table, _ogr_get_dispatch_table
                extern ogr_choose_dat
@@ -20,6 +20,7 @@
 %define offset
 %define ptr
 %define memset my_memset
+%define opt_found_one_map_size
 
 %macro calign 1
   %assign sz  0
@@ -149,7 +150,8 @@ X$1:
     ret       
     
 
-    CALIGN 32
+    CALIGN 4
+%ifdef opt_found_one_map_size
 found_one:
     gas_sub       esp,0x00000084
     gas_push      ebp
@@ -229,7 +231,67 @@ X$7:
     pop       ebp
     gas_add       esp,0x00000084
     ret       
-
+%else
+found_one:
+    gas_sub       esp,0x00000408
+    gas_push      ebp
+    gas_push      edi
+    gas_push      esi
+    gas_push      ebx
+    mov       edi,dword ptr [esp+0x41c]
+    mov       ebp,dword ptr [edi+0x8]
+    mov       esi,dword ptr [edi+0xc]
+    mov       dword ptr [esp+0x14],esi
+    gas_push      0x00000400
+    gas_push      0x00000000
+    lea       eax,[esp+0x20]
+    gas_push      eax
+    call      near ptr memset
+    mov       ebx,0x00000001
+    gas_add       esp,0x0000000c
+X$2:
+    cmp       dword ptr [esp+0x14],ebx
+    jle       X$7
+    mov       esi,dword ptr [edi+ebx*4+0x20]
+    mov       dword ptr [esp+0x10],esi
+    xor       ecx,ecx
+X$3:
+    gas_cmp       ecx,ebx
+    jge       X$6
+    mov       edx,dword ptr [esp+0x10]
+    gas_sub       edx,dword ptr [edi+ecx*4+0x20]
+    lea       eax,[edx+edx]
+    gas_cmp       eax,ebp
+    jg        X$5
+    gas_cmp       edx,0x00000040
+    jle       X$6
+    gas_cmp       byte ptr [esp+edx+0x18],0x00
+    je        X$4
+    xor       eax,eax
+    pop       ebx
+    pop       esi
+    pop       edi
+    pop       ebp
+    gas_add       esp,0x00000408
+    ret       
+X$4:
+    mov       byte ptr [esp+edx+0x18],0x01
+X$5:
+    inc       ecx
+    jmp       short X$3
+X$6:
+    inc       ebx
+    jmp       short X$2
+    nop       
+X$7:
+    mov       eax,0x00000001
+    pop       ebx
+    pop       esi
+    pop       edi
+    pop       ebp
+    gas_add   esp,0x00000408
+    ret       
+%endif
 
 ogr_init:
     call      near ptr init_load_choose

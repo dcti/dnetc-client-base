@@ -7,7 +7,7 @@
 ; if your compiler can generate faster code please send it to me
 ; for disassembly.
 ;
-; $Id: ogr-686.asm,v 1.1.2.1 2000/08/16 02:32:29 cyp Exp $
+; $Id: ogr-686.asm,v 1.1.2.2 2000/08/18 15:55:30 cyp Exp $
 
                global ogr_get_dispatch_table, _ogr_get_dispatch_table
                extern ogr_choose_dat
