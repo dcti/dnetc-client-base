@@ -23,9 +23,9 @@
 static char cputypetable[7][60]=
   {
   "Autodetect",
-  "Intel Pentium, Intel Pentium MMX, Cyrix 486/5x86/MediaGX",
-  "Intel 80386, Intel 80486",
-  "Intel Pentium Pro, Intel Pentium II",
+  "Pentium, Pentium MMX, & Cyrix 486/5x86/MediaGX",
+  "Intel 80386 & 80486",
+  "Pentium Pro & Pentium II",
   "AMD 486, Cyrix 6x86/6x86MX/M2",
   "AMD K5",
   "AMD K6",
@@ -1031,19 +1031,23 @@ void Client::clearscreen( void )
 // Clears the screen. (Platform specific ifdefs go inside of it.)
 {
 #if (CLIENT_OS == OS_WIN32)
+
   HANDLE hStdout;
   CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
   DWORD nLength;
   COORD topleft = {0,0};
+  DWORD temp;
 
   hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
   if (hStdout == INVALID_HANDLE_VALUE) return;
   if (! GetConsoleScreenBufferInfo(hStdout, &csbiInfo)) return;
   nLength = csbiInfo.dwSize.X * csbiInfo.dwSize.Y;
-
-  FillConsoleOutputCharacter(hStdout, ' ', nLength, topleft, NULL);
-  FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, nLength, topleft, NULL);
   SetConsoleCursorPosition(hStdout, topleft);
+
+  FillConsoleOutputCharacter(hStdout, (TCHAR) ' ', nLength, topleft, &temp);
+  FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, nLength, topleft, &temp);
+  SetConsoleCursorPosition(hStdout, topleft);
+
 #elif (CLIENT_OS == OS_OS2)
   BYTE space[] = " ";
   VioScrollUp(0, 0, -1, -1, -1, space, 0);
@@ -1229,6 +1233,7 @@ void Client::ValidateConfig( void )
   if (preferred_blocksize > 31) preferred_blocksize = 31;
   if ( minutes < 0 ) minutes=0;
   if ( blockcount < 0 ) blockcount=0;
+
 
   // Check for blank filenames, fix if so
   if (isstringblank(ini_in_buffer_file[0]))
@@ -1423,6 +1428,7 @@ void Client::ValidateConfig( void )
 #endif
 
 
+
   CheckForcedKeyport();
 
   strcpy(mailmessage.destid,smtpdest);
@@ -1431,6 +1437,7 @@ void Client::ValidateConfig( void )
   strcpy(mailmessage.rc5id,id);
   mailmessage.messagelen=messagelen;
   mailmessage.port=smtpport;
+
 
 #if (CLIENT_OS == OS_BEOS)
   if (numcpu == -1)
