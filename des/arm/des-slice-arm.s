@@ -8,7 +8,7 @@
 
         AREA    fastdesarea, CODE
 
-        EXPORT  des_unit_func_strongarm
+        EXPORT  des_unit_func__FP11RC5UnitWorkUl
 
         GBLL    patch
 patch   SETL    {FALSE}
@@ -18,7 +18,7 @@ startofcode     ; &2c000
 
         DCD     &b7e15163
 
-        B       des_unit_func_strongarm
+        B       des_unit_func__FP11RC5UnitWorkUl
 
 __rt_udiv       B       startofcode - &2c000 + &1c440
 __rt_sdiv       B       startofcode - &2c000 + &1c3e0
@@ -1341,7 +1341,7 @@ L000384
 L000388
         DCD      0xf0f0f0f0
 
-des_unit_func_strongarm
+des_unit_func__FP11RC5UnitWorkUl
 |L000000.J2|
         MOV      r12,r13
         STMDB    r13!,{r0,r1,r4-r9,r11,r12,lr,pc}

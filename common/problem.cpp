@@ -34,7 +34,6 @@
   extern "C" int rc5_unit_func( RC5UnitWork *work );
 #elif (CLIENT_CPU == CPU_ARM)
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
-  extern "C"  u32 des_unit_func_strongarm( RC5UnitWork * rc5unitwork, u32 timeslice  );
 #elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
   extern "C" int gettimeofday(struct timeval *tp, struct timezone *tzp);
 #else
@@ -413,7 +412,7 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
-    kiter = des_unit_func_strongarm ( &rc5unitwork, nbits );
+    kiter = des_unit_func ( &rc5unitwork, nbits );
     contestwork.keysdone.lo += kiter;
     if (kiter < timeslice)
     {
