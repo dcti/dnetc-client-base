@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.45  1999/01/06 22:14:47  dicamillo
+// Support PPC prototype machines.
+//
 // Revision 1.44  1999/01/06 06:04:02  cramer
 // cleaned up some of the solaris/sunos updates
 //
@@ -335,6 +338,7 @@ extern "C" {
   void YieldToMain(char force_events);
   u32 GetTimesliceToUse(u32 contestid);
   void tick_sleep(unsigned long tickcount);
+  extern Boolean Mac_PPC_prototype;
   extern Boolean haveMP;
   extern short MP_active;
   extern "C" unsigned long mp_sleep(unsigned long seconds);
