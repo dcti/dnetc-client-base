@@ -1,5 +1,10 @@
 //
 // $Log: deseval-meggs2.cpp,v $
+// Revision 1.5  1998/11/16 16:13:43  remi
+// This core shouldn't be used in a multithread client.
+// Removed the Rocke Verser copyright comment, since we don't use
+// his sboxes anymore.
+//
 // Revision 1.4  1998/07/08 23:42:10  remi
 // Added support for CliIdentifyModules().
 //
@@ -14,7 +19,11 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs2_cpp(void) {
-return "@(#)$Id: deseval-meggs2.cpp,v 1.4 1998/07/08 23:42:10 remi Exp $"; }
+return "@(#)$Id: deseval-meggs2.cpp,v 1.5 1998/11/16 16:13:43 remi Exp $"; }
+#endif
+
+#ifdef (MULTITHREAD)
+  #error "This core is *NOT* multithread-safe !"
 #endif
 
 #include <stdio.h>
@@ -25,9 +34,6 @@ return "@(#)$Id: deseval-meggs2.cpp,v 1.4 1998/07/08 23:42:10 remi Exp $"; }
 /* All rights reserved. A non-transferrable, royalty free license to this code   */
 /* is granted to distributed.net for use exclusively in the DES Challenge II,    */
 /* but ownership remains with the author.                                        */
-/*                                                                               */
-/* S-Box design Copyright (C) 1997 by Rcoke Verser.                              */
-/* See include file for details.                                                 */
 
 #include "kwan-sboxes.h"
 #define WORD_TYPE unsigned long
