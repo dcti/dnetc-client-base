@@ -12,7 +12,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.1 1999/05/11 04:19:51 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.2 1999/12/02 13:41:23 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -23,9 +23,7 @@ return "@(#)$Id: netinit.cpp,v 1.26.2.1 1999/05/11 04:19:51 cyp Exp $"; }
 #include "triggers.h" //for break checks
 #include "lurk.h"
 
-#if (CLIENT_OS == OS_MACOS)
-extern Boolean myNetInit(void);
-#elif (CLIENT_OS == OS_AMIGAOS)
+#if (CLIENT_OS == OS_AMIGAOS)
 static struct Library *SocketBase;
 #endif
 
@@ -62,28 +60,6 @@ static int __netInitAndDeinit( int doWhat )
       success = 0; //always fail
     else // (doWhat < 0)   //deinitialize request
       success = 1; //always succeed - should never get called
-  }
-  #define DOWHAT_WAS_HANDLED
-  #endif
-
-  //----------------------------
-
-  #if (CLIENT_OS == OS_MACOS)
-  if (success)
-  {
-    if ( doWhat == 0 )     //query online mode
-      return 1;                 // for now, always online
-    else if (doWhat > 0)   //init request
-    {
-      success = myNetInit();
-      if (success)
-        net_init_level++;
-    }
-    else                   //de-init request
-    {
-      success = 1;
-      net_init_level--;
-    }
   }
   #define DOWHAT_WAS_HANDLED
   #endif
