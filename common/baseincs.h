@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.4 1999/07/10 14:00:46 ivo Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.5 1999/11/02 17:11:43 ivo Exp $"
 
 #include "cputypes.h"
 
@@ -164,6 +164,8 @@ extern "C" {
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
   #include <fcntl.h>
   #include <unistd.h>
+  #include <poll.h>
+  #include <thread.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
 #elif (CLIENT_OS == OS_AIX)

@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.6 1999/10/11 19:46:57 cyp Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.7 1999/11/02 17:11:43 ivo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -34,13 +34,16 @@ static int __GetTimeOfDay( struct timeval *tv )
   if (tv)
   {
     #if (CLIENT_OS==OS_SCO) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_VMS) || \
-        (CLIENT_OS==OS_SOLARIS) || (CLIENT_OS == OS_NETWARE)
+        (CLIENT_OS == OS_NETWARE)
     {     
       struct timeb tb;
       ftime(&tb);
       tv->tv_sec = tb.time;
       tv->tv_usec = tb.millitm*1000;
     }
+    #elif (CLIENT_OS==OS_SOLARIS)
+        //struct timezone tz;
+      return gettimeofday(tv, 0);
     #elif (CLIENT_OS == OS_WIN32)
     {
       unsigned __int64 now, epoch;
