@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.2 2000/10/21 00:29:45 cyp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.3 2000/10/23 02:04:21 cyp Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -99,11 +99,11 @@ typedef struct
   u32  resolve_addrlist[32]; //list of resolved (proxy) addresses
   int  resolve_addrcount;    //number of addresses in there. <0 if uninitialized
 
-  char *svc_hostname;  // name of the final dest (server_name or rrdns_name)
+  const char *svc_hostname; // name of the final dest (server_name or rrdns_name)
   int  svc_hostport;   // the port of the final destination
   u32  svc_hostaddr;   // resolved if direct connection or socks.
 
-  char *conn_hostname; // hostname we connect()ing to (fwall or server)
+  const char *conn_hostname; // hostname we connect()ing to (fwall or server)
   int  conn_hostport;  // port we are connect()ing to
   u32  conn_hostaddr;  // the address we are connect()ing to
 
@@ -261,18 +261,6 @@ static int __init_connection(NETSTATE *netstate)
   int rc = 0;
   char socksreq[600];  // SOCKS5: sizeof(SOCKS5)+large username/pw (255 max each)
                        // SOCKS4: sizeof(SOCKS4)+passwd
-
-  // check that the packet structures have been correctly packed
-  size_t dummy;
-  if (((dummy = offsetof(SOCKS4, USERID[0])) != 8) ||
-     ((dummy = offsetof(SOCKS5METHODREQ, Methods[0])) != 2) ||
-     ((dummy = offsetof(SOCKS5METHODREPLY, end)) != 2) ||
-     ((dummy = offsetof(SOCKS5USERPWREPLY, end)) != 2) ||
-     ((dummy = offsetof(SOCKS5, end)) != 10))
-  {
-    LogScreen("Net::Socks Incorrectly packed structures.\n");
-    return -1;
-  }
 
   TRACE_OUT((+1,"__init_connection()\n"));
 
@@ -621,17 +609,6 @@ static int __open_connection(void *cookie)
   netstate->netbuffer.used = 0;
   netstate->mode = netstate->startmode;
 
-  if ((netstate->startmode & (MODE_SOCKS4 | MODE_SOCKS5))!=0)
-  {
-    if (netstate->fwall_hostname[0] == 0 || netstate->fwall_hostport == 0)
-    {
-      Log("Net::Invalid %s proxy hostname or port.\n"
-          "Connect cancelled.\n",
-          ((netstate->startmode & MODE_HTTP) ? ("HTTP") : ("SOCKS")));
-      return -1;
-    }
-  }
-
   TRACE_OUT((+1,"__open_connection()\n"));
 
   whichtry = 0, maxtries = 0; /* initially */
@@ -772,8 +749,8 @@ static int __open_connection(void *cookie)
       {
         if (netstate->verbose_level > 0 && !CheckExitRequestTrigger())
         {
-          LogScreen( "\r%sonnect to host %s:%u failed.\n%s\n",
-             ((netstate->reconnected)?("Rec"):("C")),
+          LogScreen( "%sonnect to host %s:%u failed.\n%s\n",
+             ((netstate->reconnected)?("Rec"):("\rC")),
              ((netstate->conn_hostaddr)?(net_ntoa(netstate->conn_hostaddr)):(netstate->conn_hostname)),
              (unsigned int)(netstate->conn_hostport), net_strerror(rc, netstate->sock) );
         }
@@ -1654,63 +1631,127 @@ void *netconn_open( const char * _servname, int _servport,
                     const char *_fwallhost, int _fwallport, 
                     const char *_fwalluid )
 { 
-  NETSTATE *netstate = (NETSTATE *)malloc(sizeof(NETSTATE));
-  if (!netstate)
-  {
-    LogScreen("Net::open error: insufficient memory\n");
-    return (void *)0;
-  }
-  memset(netstate, 0, sizeof(NETSTATE));
+  NETSTATE *netstate = ((NETSTATE *)0);
+  int rc = 0;
 
   TRACE_OUT((+1,"netconn_open()\n"));
 
-  netstate->magic = NETSTATE_MAGIC;
-  netstate->reconnected = 0;
-  netstate->shown_connection = 0;
-  netstate->sock = INVALID_SOCKET;
-  netstate->connection_closed = 1;
-  netstate->mode = 0;
-  netstate->startmode = 0;
-  netstate->puthttpdone = 0;
+  if (rc == 0)
+  {
+    size_t dummy; /* shaddup compiler about 'if' always being false */
+    if (((dummy = offsetof(SOCKS4, USERID[0])) != 8) ||
+        ((dummy = offsetof(SOCKS5METHODREQ, Methods[0])) != 2) ||
+        ((dummy = offsetof(SOCKS5METHODREPLY, end)) != 2) ||
+        ((dummy = offsetof(SOCKS5USERPWREPLY, end)) != 2) ||
+        ((dummy = offsetof(SOCKS5, end)) != 10))
+    {
+      LogScreen("Net::Socks Incorrectly packed structures.\n");
+      rc = -1;
+    }
+  }
 
   /* -------------------------------------------------- */
 
-  netstate->fwall_hostport = netstate->svc_hostport = netstate->conn_hostport = 0;
-  netstate->fwall_hostaddr = netstate->svc_hostaddr = netstate->conn_hostaddr = 0;
-  netstate->fwall_hostname[0] = netstate->fwall_userpass[0] = '\0';
-  netstate->resolve_addrcount = -1; /* uninitialized */
+  if (rc == 0)
+  {
+    netstate = (NETSTATE *)malloc(sizeof(NETSTATE));
+    if (!netstate)
+    {
+      LogScreen("Net::open error: insufficient memory\n");
+      rc = -1;
+    }
+    else
+    {
+      memset((void *)netstate, 0, sizeof(NETSTATE)); 
+      rc = 0;
+    }
+  }
 
   /* -------------------------------------------------- */
 
-  /* Set and validate the connection timeout value. */
-  /* argument is in seconds, netstate->iotimeout is in millisecs */
-  if (_iotimeout < 0)
-    _iotimeout = -1;      /* blocking mode */
-  else if (_iotimeout < 5)
-    _iotimeout = 5;       /* 5 seconds minimum. */
-  else if (_iotimeout > 300)
-    _iotimeout = 300;     /* 5 minutes maximum. */
-  netstate->iotimeout = -1;
-  if (_iotimeout > 0)     /* secs->millisecs */
-    netstate->iotimeout = _iotimeout * 1000;
+  if (rc == 0)
+  {
+    netstate->magic = NETSTATE_MAGIC;
+    netstate->reconnected = 0;
+    netstate->shown_connection = 0;
+    netstate->sock = INVALID_SOCKET;
+    netstate->connection_closed = 1;
+    netstate->mode = 0;
+    netstate->startmode = 0;
+    netstate->puthttpdone = 0;
+
+    netstate->svc_hostport = netstate->conn_hostport = 0;
+    netstate->svc_hostaddr = netstate->conn_hostaddr = 0;
+    netstate->svc_hostname = netstate->conn_hostname = (const char *)0;
+    netstate->resolve_addrcount = -1; /* uninitialized */
+
+    netstate->verbose_level = 1; /* currently one one verbose level */
+    /* later use 'reconnected' and 'shown_connection' for less verbosity */
+  }
 
   /* -------------------------------------------------- */
 
-  // Adjust the verbosity level depending on the compilation mode.
-  netstate->verbose_level = 1; //currently one one verbose level
+  if (rc == 0)
+  {
+    /* Set and validate the connection timeout value. */
+    /* argument is in seconds, netstate->iotimeout is in millisecs */
+    if (_iotimeout < 0)
+      _iotimeout = -1;      /* blocking mode */
+    else if (_iotimeout < 5)
+      _iotimeout = 5;       /* 5 seconds minimum. */
+    else if (_iotimeout > 300)
+      _iotimeout = 300;     /* 5 minutes maximum. */
+    netstate->iotimeout = -1;
+    if (_iotimeout > 0)     /* secs->millisecs */
+      netstate->iotimeout = _iotimeout * 1000;
+  }
 
   /* -------------------------------------------------- */
 
   /* take care of netstate->startmode (encoding) and firewall host:port settings */
   /* this must be done before the service host:port is handled (below) */
+  if (rc == 0)
   {
-    int need_fwallname = 0; 
+    int need_fwallname = 0; /* zap the name later if need_fwallname is zero */
+    int have_fwallname = 0; /* do we have one? */
+
+    netstate->fwall_hostport = 0;
+    netstate->fwall_hostaddr = 0;
+    netstate->fwall_hostname[0] = '\0';
+    netstate->fwall_userpass[0] = '\0';
+
     if (_fwallhost)
     {
-      while (*_fwallhost && isspace(*_fwallhost))
+      unsigned int pos = 0;
+      while (*_fwallhost == ';' || *_fwallhost == ',' || isspace(*_fwallhost))
         _fwallhost++;
-      if (!*_fwallhost)
-        _fwallhost = (const char *)0;  
+      while (*_fwallhost && pos < (sizeof(netstate->fwall_hostname)-1))
+      {
+        if (*_fwallhost == ':')
+          break;
+        if (*_fwallhost == ';' || *_fwallhost == ',' || isspace(*_fwallhost))
+          break;
+        netstate->fwall_hostname[pos++] = (char)(*_fwallhost++);
+      }
+      netstate->fwall_hostname[pos] = '\0';
+      if (*_fwallhost == ':') /* embedded port number */
+      {
+        int foundport = 0;
+        _fwallhost++;
+        while (isdigit(*_fwallhost))
+        {
+          foundport = (foundport * 10)+(*_fwallhost - '0');
+          if (foundport > 0xffff)
+            break;
+          _fwallhost++;
+        }
+        if (!*_fwallhost || *_fwallhost == ';' || *_fwallhost == ',' ||
+           isspace(*_fwallhost))
+        {
+          _fwallport = foundport;
+        }
+      }
+      have_fwallname = (netstate->fwall_hostname[0] != '\0');
     }
     if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/)
     {
@@ -1721,48 +1762,49 @@ void *netconn_open( const char * _servname, int _servport,
     {
       netstate->startmode |= MODE_HTTP;
       netstate->mode = netstate->startmode;
-      if (_fwallhost)
+      if (have_fwallname)
       {
         netstate->fwall_hostport = _fwallport;
         if (netstate->fwall_hostport == 0)
           netstate->fwall_hostport = 8080;
-        if (_fwalluid)
-          strncpy( netstate->fwall_userpass, _fwalluid, 
-                   sizeof(netstate->fwall_userpass));
         need_fwallname = 1;
       }
     }
     else if (_enctype == 4 /*socks4*/ || _enctype == 5 /*socks5*/)
     {
-      if (_fwallhost)
+      if (have_fwallname)
       {
         netstate->startmode |= ((_enctype == 4)?(MODE_SOCKS4):(MODE_SOCKS5));
         netstate->mode = netstate->startmode;
         netstate->fwall_hostport = _fwallport;
         if (netstate->fwall_hostport == 0)
           netstate->fwall_hostport = 1080;
-        if (_fwalluid)
-          strncpy(netstate->fwall_userpass, _fwalluid, 
-                 sizeof(netstate->fwall_userpass));
         need_fwallname = 1;
       }
-    }
-    if (need_fwallname && _fwallhost)
-    {
-      unsigned int len = 0;
-      while (*_fwallhost && len < (sizeof(netstate->fwall_hostname)-1) && 
-             !isspace(*_fwallhost))
+      else
       {
-        netstate->fwall_hostname[len++] = (char)tolower(*_fwallhost++);
-      }  
-      netstate->fwall_hostname[len] = '\0';
+        LogScreen("Net::error: proxy hostname required for SOCKS%d support.\n"
+                  "Connect cancelled.\n", _enctype );
+        rc = -1;
+      }
     }
-  }
+    if (!need_fwallname) /* don't need proxification for this mode */
+    {
+      netstate->fwall_hostname[0] = '\0'; /*so clear it to not confuse open()*/
+    }
+    else if (_fwalluid) /* yes we need the name, and have a user:pass too */
+    {
+      strncpy( netstate->fwall_userpass, _fwalluid, 
+               sizeof(netstate->fwall_userpass));
+      netstate->fwall_userpass[sizeof(netstate->fwall_userpass)-1] = '\0';
+    }
+  } /* rc == 0 */
 
   /* -------------------------------------------------- */
 
   /* deal with _servname, _servport and _fallback hostname and port */
   /* this must be the last thing done, since port numbers depends on netstate->startmode */
+  if (rc == 0)
   {
     static const struct  // this structure defines which proxies are
     {                    // 'responsible' for which time zone. The timezones
@@ -2001,11 +2043,20 @@ void *netconn_open( const char * _servname, int _servport,
     netstate->servername_selector = 0;
     netstate->svc_hostname = netstate->servername_ptrs[0];
     netstate->svc_hostport = netstate->servername_ports[0];
+  } /* rc == 0 */
+
+  /* -------------------------------------------------- */
+
+  if (rc == 0)
+  {
+    rc = __open_connection(netstate);
   }
 
-  if (__open_connection(netstate) != 0)
+  /* -------------------------------------------------- */
+
+  if (rc != 0 && netstate)
   {
-    netconn_close(netstate);
+    netconn_close(netstate); /* frees (netstate) too */
     netstate = (NETSTATE *)0;
   }
 
