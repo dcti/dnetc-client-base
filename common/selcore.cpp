@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.80 2000/11/17 00:58:15 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.81 2000/11/21 00:09:18 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -206,7 +206,8 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         #endif
       }
     }
-    #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+    #elif ((CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)) && \
+          (CLIENT_OS != OS_AMIGAOS)
     {
       long det = GetProcessorType(1);
       if (det < 0) 
@@ -1434,7 +1435,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
   #if defined(HAVE_OGR_CORES)
   if (contestid == OGR)
   {
-    #if (CLIENT_CPU == CPU_POWERPC)
+    #if (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AMIGAOS)
       //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       //extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
       unit_func.ogr = ogr_get_dispatch_table(); //default
