@@ -7,8 +7,11 @@
 %define Q	  0x9E3779B9
 %define S_not(N)  (P+Q*(N))
 
-
+%ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _DATA FLAT USE32 align=16 CLASS=DATA]
+%else
+[SECTION .data]
+%endif
 
 incr		dd	2,3
 S_not_3		dd	S_not(3),S_not(3)
