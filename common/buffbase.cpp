@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.44 2000/11/04 16:26:04 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.45 2000/11/04 18:45:54 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -800,7 +800,7 @@ long BufferFetchFile( Client *client, int break_pending,
 long BufferFlushFile( Client *client, int break_pending,
                       const char *loadermap_flags )
 {
-  long totaltrans_pkts = 0, totaltrans_su = 0;
+  long totaltrans_pkts = 0;
   unsigned int contest;
   int failed = 0;
 
