@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.270 2002/09/25 00:56:12 andreasb Exp $
+# @(#)$Id: configure,v 1.271 2002/09/25 04:15:43 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -85,7 +85,7 @@ TARGET_GENMAN=1        # non-blank generate a man page, or not (blank)
 #
 TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
 TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
-TARGET_ARCTYPE="tgz"  # or "zip", "zipflat", "lha" or "tgzdir"
+TARGET_ARCTYPE="tgzdir"  # or "zip", "zipflat", "lha" or "tgzdir"
 
 # -----------------------------------------------------------------------
 
