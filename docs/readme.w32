@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.8 2000/06/10 18:29:42 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.9 2000/11/12 21:14:25 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -212,6 +212,18 @@
        "have a valid shell" check fails. The solution is to
        check 'interact with desktop' in the scheduler config and 
        install the service with "-quiet -install".
+
+    Q: I run the client from the startup menu of windows (it fires up 
+       alone every time i log into windows). I want it to be minimized 
+       when it starts... How do i do that?
+    A: The way you would for any application:
+       - highlight the name in the menu
+       - right-click. A menu will pop up menu.
+         -> select "Properties" (last option on the menu that appears)
+            -> change to the "Shortcut" tab in the "Properties" dialog
+               -> in the "Run:" dropdown menu (second from the bottom), 
+                  change "Normal Window" to "Minimized"
+            -> click "OK"
      
     Q: I use LITESTEP (or other alternative shell) and get a warning 
        when I try to install the client as a service. Whats the deal?
