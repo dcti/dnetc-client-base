@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.40 2000/11/01 19:58:19 cyp Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.41 2000/11/02 11:21:29 mfeiri Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h" /* Crypto core stuff (including RESULT_* enum members) */
@@ -49,9 +49,16 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
   #endif
   // OGR membuffer should be aligned to a 8-byte boundary
   // (essential for non-x86 CPUs)
-  #if CORE_MEM_ALIGNMENT < 3
-     #undef CORE_MEM_ALIGNMENT
-     #define CORE_MEM_ALIGNMENT 3
+  #if __VEC__ /* We might use AltiVec */
+     #if CORE_MEM_ALIGNMENT < 4
+       #undef CORE_MEM_ALIGNMENT
+       #define CORE_MEM_ALIGNMENT 4
+     #endif
+  #else
+     #if CORE_MEM_ALIGNMENT < 3
+       #undef CORE_MEM_ALIGNMENT
+       #define CORE_MEM_ALIGNMENT 3
+     #endif
   #endif
 #endif
 
