@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.155 2000/05/12 23:38:13 trevorh Exp $
+# @(#)$Id: configure,v 1.222.2.156 2000/06/06 12:26:23 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -226,7 +226,7 @@ TARGET_GENMAN=1        # non-blank generate a man page, or not (blank)
 #
 TARGET_TARBALL=""     # 'binnameNNN-' is auto prepended, ".tar.gz" is appended
 TARGET_TARBALL_COMMENT="" # special comments for tarball.readme (if needed)
-TARGET_ARCTYPE="tgz"  # or "zip" or "tgzdir"
+TARGET_ARCTYPE="tgz"  # or "zip", "lha" or "tgzdir"
 
 #
 # GCC: warn as much as we can for maximum portability
@@ -1853,6 +1853,59 @@ case "$1" in
         TARGET_BINNAME_SUFFIX=".exe"
         ;;
 
+###### AmigaOS (m68k, PPC)
+    *m68k-amigaos)              # [oliver] <oliver@futaura.co.uk>
+	TARGET_AS="platforms/amiga/tools/genam_wrapper"
+	TARGET_CC="g++ -V 2.95.2"
+	TARGET_CCFLAGS="-m68000 $OPTS_GCC295 -fpermissive -O6 -I./ -noixemul -DHAVE_OGR_CORES"
+	TARGET_LDFLAGS="-noixemul"
+	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
+                        platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
+                        ogr/crc32.cpp ogr/choosedat.cpp"
+	TARGET_ADDASMS="rc5/68k/rc5-000_010-jg.s rc5/68k/rc5-020_030-jg.s \
+                        rc5/68k/rc5-040-jg.s rc5/68k/rc5-060-jg.s"
+        TARGET_ADDOBJS="output/ogr000.o output/ogr020.o output/ogr030.o \
+                        output/ogr040.o output/ogr060.o /gg/lib/libnix/swapstack.o"
+        TARGET_TARBALL="amigaos-68k"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_BINNAME_SUFFIX="_68k"
+        TARGET_OS="AMIGAOS_68K"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="lha"
+	;;
+
+    *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
+	TARGET_AS="ppc-amigaos-gas -m603"
+	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
+	TARGET_CCFLAGS="$OPTS_GCC295_PPC -mcpu=603e -I./ -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
+                        platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
+                        $RC5PPC_SRCS $OGR_ANSI_SRCS"
+        TARGET_TARBALL="amigaos-ppc-wos"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_STRIP="platforms/amiga/tools/strip_wos"
+        TARGET_BINNAME_SUFFIX="_ppc"
+        TARGET_OS="AMIGAOS_PPC"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="lha"
+	;;
+
+    *ppc-amigaos-pup)           # [oliver] <oliver@futaura.co.uk>
+	TARGET_AS="ppc-amigaos-gas -m603"
+	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
+	TARGET_CCFLAGS="-pup -D__POWERUP__ $OPTS_GCC295_PPC -mcpu=603e -I./ -DHAVE_OGR_CORES"
+	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
+                        platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
+                        $RC5PPC_SRCS $OGR_ANSI_SRCS"
+        TARGET_TARBALL="amigaos-ppc-pup"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_STRIP=""
+        TARGET_BINNAME_SUFFIX="_ppc"
+        TARGET_OS="AMIGAOS_PPC"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="lha"
+	;;
+
 
 ###### Unknown
     *list)
@@ -2115,6 +2168,9 @@ if [ -n "$TARGET_TARBALL" ]; then
     echo "	cp ${TARGET_BINNAME} \${DOCFILES} $FULLTARNAME" >> Makefile
     echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
     echo "	rm -rf $FULLTARNAME" >> Makefile
+  elif [ "$TARGET_ARCTYPE" = "lha" ]; then
+    echo "	rm -f $FULLTARNAME.lha" >> Makefile
+    echo "	lha a $FULLTARNAME.lha ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
   else
     echo "Warning: Unknown TARGET_ARCTYPE ${TARGET_ARCTYPE}"
   fi
@@ -2241,6 +2297,21 @@ if [ "$TARGET_OS" = "DIGITAL_UNIX" ]; then
   done
 fi
 
+if [ "$TARGET_OS" = "AMIGAOS_68K" ]; then
+  echo "Generating Makefile AmigaOS 68k multi-core OGR dependency targets..."
+  TARGETSRC="ogr/ogr.cpp"
+  TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC}`
+  OGR68K="000 020 030 040 060"
+  for targetext in ${OGR68K}; do
+    echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+    echo "	sed -e s/ogr_get_dispatch_table/ogr_get_dispatch_table_${targetext}/ \\" >> Makefile
+    echo "	-e s/ogr_cpp/ogr${targetext}_cpp/ <ogr/ogr.cpp >output/ogr68k.cpp" >> Makefile
+    echo "	\$(CC) \$(CCFLAGS) -m68${targetext} -c -o output/ogr${targetext}.o output/ogr68k.cpp" >> Makefile
+    echo "	rm -f output/ogr68k.cpp" >> Makefile
+    echo "" >> Makefile
+  done
+fi
+
 
 
 #
@@ -2265,6 +2336,17 @@ if [ -n "$OPTS_NOOPT" ]; then
 /confmenu.cpp -o/ { print "\t${CC} -c ${CCFLAGS} ${OPTS_NOOPT} common/confmenu.cpp -o output/confmenu.o"; next }
 /rc5_unit_func_lintilla.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_lintilla.cpp -o output/rc5_unit_func_lintilla.o"; next }
 /rc5_unit_func_allitnil.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} ${OPTS_NOOPT} rc5/ppc/rc5_unit_func_allitnil.cpp -o output/rc5_unit_func_allitnil.o"; next }
+{ print $0 }' Makefile.tmp > Makefile
+  rm Makefile.tmp
+fi
+
+if [ "$TARGET_OS" = "AMIGAOS_PPC" ]; then
+  echo "Removing optimization flags in Makefile for amigaos-ppc compilation..."
+  mv Makefile Makefile.tmp
+  awk '
+/confrwv.cpp -o/ { print "\t${CC} -c ${CCFLAGS} -O common/confrwv.cpp -o output/confrwv.o"; next }
+/problem.cpp -o/ { print "\t${CC} -c ${CCFLAGS} -O0 common/problem.cpp -o output/problem.o"; next }
+/rc5_unit_func_allitnil.cpp -o/ { print "\t\${CC} -c \${CCFLAGS} -O0 rc5/ppc/rc5_unit_func_allitnil.cpp -o output/rc5_unit_func_allitnil.o"; next }
 { print $0 }' Makefile.tmp > Makefile
   rm Makefile.tmp
 fi
