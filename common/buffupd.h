@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __BUFFUPD_H__
-#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.5.2.3 2000/09/20 18:25:18 cyp Exp $"
+#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.5.2.4 2001/01/29 05:03:53 cyp Exp $"
 
 // pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
 // if interactive, prints "Input buffer full. No fetch required" etc.
@@ -23,5 +23,14 @@
 int BufferUpdate( Client *client, int updatereq_flags, int interactive );
 
 int BufferCheckIfUpdateNeeded(Client *client, int contestid, int upd_flags);
+
+/* these next 3 (and the following BufferNetUpdate() proto)
+** are internal to BufferUpdate()<->Buffer[Net|File]Update()
+*/
+#define BUFFERUPDATE_STATE_NEWS      (BUFFERUPDATE_LASTBIT<<1)
+#define BUFFERUPDATE_STATE_TRANSERR  (BUFFERUPDATE_LASTBIT<<2)
+#define BUFFERUPDATE_STATE_MSGPOSTED (BUFFERUPDATE_LASTBIT<<3)
+int BufferNetUpdate(Client *client,int updatereq_flags, int break_pending, 
+                    int interactive, char *loaderflags_map);
 
 #endif /* __BUFFUPD_H__ */

@@ -8,13 +8,12 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.10 2001/01/13 17:09:55 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.11 2001/01/29 05:03:52 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes
-#include "network.h"  //ntohl(), htonl()
 #include "util.h"     //trace
 #include "clievent.h" //event stuff
 #include "clicdata.h" //GetContestNameFromID()
@@ -206,6 +205,17 @@ int UnlockBuffer( const char *filename )
 
 /* --------------------------------------------------------------------- */
 
+int BufferNetUpdate(Client *client,int updatereq_flags, int break_pending, 
+                    int interactive, char *loaderflags_map)
+{
+  client = client; updatereq_flags = updatereq_flags; 
+  break_pending = break_pending; interactive = interactive; 
+  loaderflags_map = loaderflags_map;
+  return 0; /* nothing done */
+}		    
+
+/* --------------------------------------------------------------------- */
+
 int BufferPutFileRecord( const char *filename, const WorkRecord * data,
                          unsigned long *countP )
 {
@@ -348,191 +358,3 @@ int BufferCountFileRecords( const char *filename, unsigned int contest,
 }
 
 /* --------------------------------------------------------------------- */
-
-int BufferUpdate( Client *client, int req_flags, int interactive )
-{
-  int dofetch, doflush, didfetch, didflush, dontfetch, dontflush, didnews;
-  unsigned int i; char loaderflags_map[CONTEST_COUNT];
-  const char *ffmsg = "--fetch and --flush services are not available.\n";
-  int check_flags, updatefailflags, updatemodeflags, net_state_shown = 0;
-  int fill_even_if_not_totally_empty = (client->connectoften || interactive);
-  int break_pending = CheckExitRequestTriggerNoIO();
-
-  #define BUFFERUPDATE_MODE_FILE 0x01
-  #define BUFFERUPDATE_MODE_NET  0x02
-
-  /* -------------------------------------- */
-
-  updatefailflags = updatemodeflags = 0;
-  if (!client->noupdatefromfile && client->remote_update_dir[0] != '\0')
-  {
-    updatemodeflags |= BUFFERUPDATE_MODE_FILE;
-  }
-  if (interactive) /* ignore offlinemode and 'runbuffers' if interactive */
-  {
-    /* but... use networking only if remote buffers has been disabled */
-    if ((updatemodeflags & BUFFERUPDATE_MODE_FILE) == 0)
-      updatemodeflags |= BUFFERUPDATE_MODE_NET;
-  }
-  else if (client->blockcount < 0) /* "runbuffers" */
-  {
-    /* dnetc -help says:
-       -n <count>   packets to complete. -1 forces exit when buffer is empty.
-       --
-       Its probfill's job to 'force exit if empty', but its our job
-       to ensure that they aren't refilled.
-       In the event that we want to still allow a flush to occur, change
-       'req_flags = 0' to 'req_flags &= ~BUFFERUPDATE_FETCH'
-    */
-    req_flags = 0; // &= ~BUFFERUPDATE_FETCH;
-  }
-  else if (!client->offlinemode) /* not interactive, not networking disabled */
-  {                            
-    int connect_permitted = 1;
-    #ifdef LURK
-    if ((dialup.IsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
-    {                 /* started ok, and either CONNECT_LURK or _LURKONLY */
-      fill_even_if_not_totally_empty = 1;
-      if (dialup.IsWatcherPassive()) //started ok, lurkmode is CONNECT_LURKONLY
-      {
-        //connect is permitted only if we are already connected
-        connect_permitted = (dialup.IsConnected());
-      }
-    }
-    #endif
-    if (connect_permitted)
-      updatemodeflags |= BUFFERUPDATE_MODE_NET;
-  }
-  if (updatemodeflags == 0)
-  {
-    if (interactive)
-      LogScreen( "%sThis client has been configured to run without\n"
-                 "updating its buffers.\n",ffmsg);
-    return -1;
-  }
-
-  /* -------------------------------------- */
-
-  for (i = 0; i < CONTEST_COUNT; i++)
-  {
-    unsigned int cont_i = (unsigned int)(client->loadorder_map[i]);
-    if (cont_i >= CONTEST_COUNT) /* disabled */
-    {
-      /* retrieve the original contest number from the load order */
-      cont_i &= 0x7f;
-      if (cont_i < CONTEST_COUNT)
-        loaderflags_map[cont_i] = PROBLDR_DISCARD;  /* thus discardable */
-    }
-    else /* cont_i < CONTEST_COUNT */
-    {
-      loaderflags_map[cont_i] = 0;  
-    }
-  }    
-
-  /* -------------------------------------- */
-
-  dontfetch = dontflush = 1;
-  if ((req_flags & BUFFERUPDATE_FETCH) != 0)
-    dontfetch = 0;
-  if ((req_flags & BUFFERUPDATE_FLUSH) != 0)
-    dontflush = 0;
-
-  /* -------------------------------------- */
-
-  dofetch = doflush = 0;
-  if (!dontfetch || !dontflush)
-  {
-    check_flags = 0;
-    if (!dontfetch)
-      check_flags |= BUFFERUPDATE_FETCH;
-    if (!dontflush)
-      check_flags |= BUFFERUPDATE_FLUSH;  
-    if (fill_even_if_not_totally_empty)
-      check_flags |= BUFFUPDCHECK_TOPOFF;
-    check_flags = BufferCheckIfUpdateNeeded(client, -1, check_flags);
-    if ((check_flags & BUFFERUPDATE_FETCH) != 0)
-      dofetch = 1;
-    if ((check_flags & BUFFERUPDATE_FLUSH) != 0)
-      doflush = 1;
-  }    
-
-  /* -------------------------------------- */
-
-  updatefailflags = didfetch = didflush = didnews = 0;
-  if ((doflush || dofetch))
-  {
-    if ((updatemodeflags & BUFFERUPDATE_MODE_NET)!=0)
-    {
-      /* XXX */
-    }
-
-    if ((updatemodeflags & BUFFERUPDATE_MODE_FILE)!=0)
-    {
-      int transerror = 0;
-      if (transerror == 0 && !dontfetch)
-      {
-        long transferred = BufferFetchFile( client, break_pending, 
-                                            &loaderflags_map[0] );
-        if (transferred < 0)
-        {
-          transerror = 1;
-          if (transferred < -1)
-            didfetch = 1;
-        }
-        else if (transferred > 0)
-          didfetch = 1;
-      }
-      if (transerror == 0 && !dontflush)
-      {
-        long transferred = BufferFlushFile( client, break_pending,
-                                            &loaderflags_map[0] );
-        if (transferred < 0)
-        {
-          transerror = 1;
-          if (transferred < -1)
-            didflush = 1;
-        }
-        else if (transferred > 0)
-          didflush = 1;
-      }
-      if (transerror != 0)
-        updatefailflags |= BUFFERUPDATE_MODE_FILE;
-    }
-  }
-
-  /* -------------------------------------- */
-
-  req_flags = 0;
-  if (didflush)
-    req_flags |= BUFFERUPDATE_FLUSH;
-  if (didfetch)
-    req_flags |= BUFFERUPDATE_FETCH;
-  if (didfetch || didflush || didnews)
-  {
-    struct timeval tv;
-    if (CliClock(&tv) == 0)
-    {
-      if (!tv.tv_sec) tv.tv_sec++;
-      client->last_buffupd_time = tv.tv_sec;
-    }  
-  }
-
-  /* -------------------------------------- */
-
-  if (updatefailflags == updatemodeflags && !didfetch && !didflush)
-  {                             /* all methods failed completely */
-    return -1;
-  }
-  if (interactive && (break_pending || !CheckExitRequestTrigger()))
-  {
-    ffmsg = "%sput buffers are %sNo %s required.\n";
-    if (!dontfetch && !didfetch)
-      LogScreen(ffmsg, "In", "full (or projects are closed).\n", "fetch");
-    if (!dontflush && !doflush && !didflush)
-      LogScreen(ffmsg, "Out", "empty. ", "flush");
-  }    
-  return (req_flags);
-}
-
-/* --------------------------------------------------------------------- */
-
