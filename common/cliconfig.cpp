@@ -94,7 +94,7 @@ struct optionstruct
 optionstruct options[OPTION_COUNT]=
 {
 //0
-{ "id", "Email to report as", "rc5@distributed.net", "(64 characters max)",1,1,1,NULL},
+{ "id", "Your E-mail address", "rc5@distributed.net", "(64 characters max)",1,1,1,NULL},
 //1
 { "threshold", "RC5 Blocks to Buffer", "10", "(max 1000)",1,2,2,NULL},
 //2
@@ -123,7 +123,7 @@ optionstruct options[OPTION_COUNT]=
      "\n  mode 0) (recomended) Very nice, should not interfere with any other process\n"
      "  mode 1) Nice, runs with slightly higher priority than idle processes\n"
      "          Same as mode 0 in OS/2 and Win32\n"
-     "  mode 2) Normal, runs with same priority as normal user processes\n",4,2,2,NULL},
+     "  mode 2) Normal, runs with same priority as normal user processes\n",4,2,1,NULL},
 //9
 { "logname", "File to log to", "", "(128 characters max, blank = no log)\n",2,1,1,NULL},
 //10
@@ -181,7 +181,7 @@ optionstruct options[OPTION_COUNT]=
 #else
   { "numcpu", "Number of CPUs in this machine", "1", "\n"
 #endif
-,4,2,12,NULL},
+,4,2,2,NULL},
 //23
 { "checkpointfile", "RC5 Checkpoint information filename","none","\n(Non-shared file required.  "
 #if (CLIENT_OS == OS_RISCOS)
@@ -189,7 +189,7 @@ optionstruct options[OPTION_COUNT]=
 #else
   "ckpoint.rc5"
 #endif
-  " recommended.  'none' to disable)\n",4,1,4,NULL},
+  " recommended.  'none' to disable)\n",4,1,3,NULL},
 //24
 { "checkpointfile2", "DES Checkpoint information filename","none","\n(Non-shared file required.  "
 #if (CLIENT_OS == OS_RISCOS)
@@ -197,39 +197,39 @@ optionstruct options[OPTION_COUNT]=
 #else
   "ckpoint.des"
 #endif
-  " recommended.  'none' to disable)\n",4,1,5,NULL},
+  " recommended.  'none' to disable)\n",4,1,4,NULL},
 //25
 { "randomprefix", "High order byte of random blocks","100","Do not change this",0,2,0,NULL},
 //26
-{ "preferredblocksize", "Preferred Block Size (2^28 through 2^31) ","30","28 -- 31",4,2,6,NULL},
+{ "preferredblocksize", "Preferred Block Size (2^28 through 2^31) ","30","28 -- 31",4,2,5,NULL},
 //27
-{ "preferredcontest", "Preferred Contest","DES","- DES strongly recommended",4,2,7,
+{ "preferredcontest", "Preferred Contest","DES","- DES strongly recommended",4,2,6,
   NULL,&contesttable[0][0],1,2},
 //28
-{ "quiet", "Disable all screen output? (quiet mode)","no","",4,3,8,NULL},
+{ "quiet", "Disable all screen output? (quiet mode)","no","",4,3,7,NULL},
 //29
-{ "noexitfilecheck", "Disable exit file checking?","no","",4,3,9,NULL},
+{ "noexitfilecheck", "Disable exit file checking?","no","",4,3,8,NULL},
 //30
-{ "percentoff", "Disable block percent completion indicators?","no","",4,3,10,NULL},
+{ "percentoff", "Disable block percent completion indicators?","no","",4,3,9,NULL},
 //31
-{ "frequent", "Attempt keyserver connections frequently?","no","",3,3,7,NULL},
+{ "frequent", "Attempt keyserver connections frequently?","no","",3,3,6,NULL},
 //32
 { "nodisk", "Buffer blocks in ram only? (no disk I/O)","no",
     "\nNote: This option will cause all buffered, unflushable blocks to be lost\n"
-    "during client shutdown!",4,3,11,NULL},
+    "during client shutdown!",4,3,10,NULL},
 //33
 { "nofallback", "Disable fallback to US Round-Robin?","no",
   "\nIf your specified proxy is down, the client normally falls back\n"
   "to the US Round robin (us.v27.distributed.net) - this option causes\n"
   "the client to NEVER attempt a fallback if the local proxy is down.",
-  3,3,8,NULL},
+  3,3,7,NULL},
 //34
 { "cktime", "Interval between saving of checkpoints (minutes):","5",
-  "",4,2,0,NULL},
+  "",4,2,11,NULL},
 //35
-{ "nettimeout", "Network Timeout (seconds)", "60"," ",3,2,0,NULL},
+{ "nettimeout", "Network Timeout (seconds)", "60"," ",3,2,8,NULL},
 //36
-{ "exitfilechecktime", "Exit file check time (seconds)","30","",4,2,0,NULL},
+{ "exitfilechecktime", "Exit file check time (seconds)","30","",4,2,12,NULL},
 //37
 { "runbuffers", "Offline operation mode","Normal Operation",
   "\nNormal operation: The client will connect to a keyserver as needed,\n"
@@ -238,7 +238,7 @@ optionstruct options[OPTION_COUNT]=
   "        generate random blocks if the block buffers empty.)\n"
   "Finish Buffers and exit: The client will never connect\n"
   "        to a keyserver, and when the block buffers empty, it will\n"
-  "        terminate.\n",3,2,0,NULL,&offlinemodetable[0][0],0,2},
+  "        terminate.\n",3,2,9,NULL,&offlinemodetable[0][0],0,2},
 //38
 { "lurk", "Modem detection options","Normal mode",
   "\nNormal mode: the client will send/receive blocks only when it\n"
@@ -254,11 +254,11 @@ optionstruct options[OPTION_COUNT]=
   "        connected. HOWEVER, if the client runs out of blocks,\n"
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n",
-  3,2,0,NULL,&lurkmodetable[0][0],0,2},
-{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",4,1,0,NULL},
-{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",4,1,0,NULL},
-{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",4,1,0,NULL},
-{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",4,1,0,NULL}
+  3,2,10,NULL,&lurkmodetable[0][0],0,2},
+{ "in",  "RC5 In-Buffer Path/Name", "[Current Path]\\buff-in.rc5","",4,1,13,NULL},
+{ "out", "RC5 Out-Buffer Path/Name", "[Current Path]\\buff-out.rc5","",4,1,14,NULL},
+{ "in2", "DES In-Buffer Path/Name", "[Current Path]\\buff-in.des","",4,1,15,NULL},
+{ "out2","DES Out-Buffer Path/Name","[Current Path]\\buff-out.des","",4,1,16,NULL}
 };
 
 #define CONF_ID 0
@@ -310,8 +310,9 @@ optionstruct options[OPTION_COUNT]=
 s32 Client::ConfigureGeneral( s32 currentmenu )
 {
   char parm[128],parm2[128];
-  s32 choice;
+  s32 choice=1;
   s32 temp;
+  s32 temp2;
   s32 contestidtemp;//since it's 0/1 based now, we need a temp for
                     //screen I/O
   char str[3];
@@ -382,8 +383,10 @@ printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",CLIENT_BU
 printf("%s\n",menutable[currentmenu-1]);
 printf("------------------------------------------------------------\n\n");
 
-    for ( choice = 0; choice < OPTION_COUNT; choice++ )
+for ( temp2=1; choice != -1; temp2++ )
+//    for ( choice = 0; choice < OPTION_COUNT; choice++ )
     {
+      choice=findmenuoption(currentmenu,temp2);
       if (((choice >= 0 && choice < 1+CONF_KEYPROXY) ||
            (choice == CONF_KEYPROXY) ||
            (choice == CONF_KEYPORT) ||
@@ -429,7 +432,7 @@ printf("------------------------------------------------------------\n\n");
           )
           {
           printf("%d)  %s ==> ",
-                  (int)(choice + 1), options[choice].description);
+                  options[choice].menuposition, options[choice].description);
 
           if (options[choice].type==1)
              {
@@ -460,7 +463,8 @@ printf("------------------------------------------------------------\n\n");
       choice = atoi(parm);
 
       if (choice == 0) return 1;
-      else choice--;
+
+      choice=findmenuoption(currentmenu,choice);
 
       if (((choice >= 0 && choice < 1+CONF_KEYPROXY) ||
            (choice == CONF_KEYPROXY) ||
@@ -923,6 +927,26 @@ s32 Client::yesno(char *str)
   if (strcmpi(str, "no")==0) returnvalue=0;
   fflush( stdin );
   return returnvalue;
+}
+
+//----------------------------------------------------------------------------
+
+s32 Client::findmenuoption( s32 menu, s32 option)
+    // Returns the id of the option that matches the menu and option
+    // requested. Will return -1 if not found.
+{
+s32 returnvalue=-1;
+s32 temp;
+
+for (temp=0; temp < OPTION_COUNT; temp++)
+  {
+  if ((options[temp].optionscreen==menu) &&
+      (options[temp].menuposition==option)) 
+
+     returnvalue=temp;
+  };
+
+return returnvalue;
 }
 
 //----------------------------------------------------------------------------
