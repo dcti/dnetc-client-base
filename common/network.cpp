@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.33 2000/05/06 20:17:09 mfeiri Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.34 2000/05/19 10:42:13 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -1520,19 +1520,22 @@ int Network::Put( const char * data, int length )
 
 int Network::GetHostName( char *buffer, unsigned int len )
 {
-  if (!buffer || !len)
-    return -1;
-  buffer[0] = 0;
-  if (len < 2)
-    return -1;
-  buffer[len-1] = 0;
-  strncpy( buffer, "1.0.0.127.in-addr.arpa", len );
-  if (buffer[len-1] != 0)
-    buffer[0] = 0;
-  #if ( defined(_TIUSER_) || (defined(AF_INET) && defined(SOCK_STREAM)) )
-  if (NetCheckIsOK())
-    return gethostname(buffer, len);
-  #endif
+  if (buffer && len)
+  {
+    #if ( defined(_TIUSER_) || (defined(AF_INET) && defined(SOCK_STREAM)) )
+    if (NetCheckIsOK())
+    {
+      if (gethostname(buffer, len) == 0)
+      {
+        /* BSD man page for gethostname(3) sez: "The returned name is 
+           null-terminated, unless insufficient space is provided."
+        */
+        buffer[len-1] = '\0';
+        return 0;
+      }
+    }
+    #endif
+  }
   return -1;
 }
 

@@ -7,7 +7,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.32.2.7 2000/04/15 14:18:32 cyp Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.32.2.8 2000/05/19 10:42:13 cyp Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
@@ -479,7 +479,9 @@ static int smtp_send_message_header( Network * net,
   if (errcode == 0) //send the subject
   {
     len = strlen( strcpy( buffer, "\r\nSubject: distributed.net client log (" ) );
-    if ((net->GetHostName( buffer+len, sizeof(buffer)>>1 ))==0) 
+    if ((net->GetHostName( buffer+len, sizeof(buffer)>>1 ))!=0) 
+      buffer[len] = '\0';
+    else
     {
       if ((!isdigit(buffer[len])) && ((p=strchr(buffer+len,'.'))!=NULL)) 
         *p = 0;
