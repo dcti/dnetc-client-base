@@ -14,7 +14,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.6 1999/06/01 03:31:46 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.7 1999/06/01 05:12:00 cyp Exp $"; }
 
 //#define TRACE
 
@@ -127,15 +127,18 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             struct dirent *dp;
             pid_t ourpid = getpid();
 	    char realbinname[64];
-            size_t len; FILE *file = fopen("/proc/curproc/status","r"); 
+            size_t len; FILE *file = fopen("/proc/curproc/cmdline","r"); 
 	    if (file)
 	    {
+	      /* useless for OSs that do argv[0]="rc5des" in client.cpp */
               len = fread( buffer, 1, sizeof(buffer), file );
               fclose( file );
-              if (len!=0 && memcmp(buffer,"Name:",5)!=0) 
-              { /* useless for OSs that do argv[0]="rc5des" in client.cpp */
+              if (len!=0) 
+              { 
 		char *p, *q=&buffer[0];
-                buffer[len-1] = '\0';
+		if (len == sizeof(buffer))
+		  len--;
+                buffer[len] = '\0';
                 while (*q && isspace(*q))
                   q++;
 		p = q;
@@ -156,7 +159,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
               pid_t thatpid = (pid_t)atoi(dp->d_name);
               if (thatpid == 0 /* .,..,curproc,etc */ || thatpid == ourpid) 
                 continue;
-              sprintf( buffer, "/proc/%s/status", dp->d_name );
+              sprintf( buffer, "/proc/%s/cmdline", dp->d_name );
               if (( file = fopen( buffer, "r" ) ) == ((FILE *)0))
                 continue; /* already died */
               len = fread( buffer, 1, sizeof(buffer), file );
@@ -164,9 +167,11 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
               if (len != 0)
               {
                 char *q, *procname = &buffer[0];
-                buffer[len-1] = '\0';
+		if (len == sizeof(buffer))
+		  len--;
+                buffer[len] = '\0';
                 //printf("%s: %60s\n", dp->d_name, buffer );
-                if (memcmp(buffer,"Name:",5)==0) /* linux */
+                if (memcmp(buffer,"Name:",5)==0) /* linux status*/
                   procname+=5;
                 while (*procname && isspace(*procname))
                   procname++;
@@ -199,12 +204,12 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             closedir(dirp);
           }  
           #endif
-          #if 1
-          const char *pscmd = "ps -ax -o pid -o command"; 
+          #if (CLIENT_OS != OS_LINUX) /* already done above */
+          const char *pscmd = "ps -ax -o pid -o command 2>/dev/null"; 
           //sprintf(buffer,"ps auxwww|grep \"%s\"|awk '{print$2}'", binname);
           //"ps auxwww|grep \"%s\" |tr -s \' \'|cut -d\' \' -f2|tr \'\\n\' \' \'"
           #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-          pscmd = "/usr/bin/ps -ef -o pid -o comm"; /*bsd'ish is /usr/ucb/ps*/
+          pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*bsd'ish is /usr/ucb/ps*/
           #endif
           FILE *file = popen( pscmd, "r" );
           if (file == NULL)
