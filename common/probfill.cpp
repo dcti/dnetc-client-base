@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.cpp,v $
+// Revision 1.19  1998/12/16 05:50:54  cyp
+// Removed connectoften support. Client::Run() does a better job.
+//
 // Revision 1.18  1998/12/14 23:45:24  remi
 // Now we don't need to switch to RC5 when more than 2 threads are
 // available during DES contests.
@@ -78,7 +81,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.18 1998/12/14 23:45:24 remi Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.19 1998/12/16 05:50:54 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -702,14 +705,6 @@ unsigned int Client::LoadSaveProblems(unsigned int load_problem_count,int mode)
 
   for ( cont_i = 0; cont_i < CONTEST_COUNT; cont_i++) //once for each contest
     {
-    if (bufupd_pending == 0 && connectoften)
-      {
-      long block_count = GetBufferCount( cont_i, 0, NULL );
-      if (block_count >= 0 && block_count < ((long)(inthreshold[cont_i])))
-        bufupd_pending = BUFFERUPDATE_FETCH;
-      else if ((GetBufferCount( cont_i, 1, NULL ) > 0))
-        bufupd_pending = BUFFERUPDATE_FLUSH;
-      }    
     if (loaded_problems_count[cont_i] || saved_problems_count[cont_i])
       {
       const char *cont_name = CliGetContestNameFromID(cont_i);
