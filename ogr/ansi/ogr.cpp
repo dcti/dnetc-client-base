@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.29 2004/06/16 18:11:01 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.30 2004/07/13 22:22:59 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -51,7 +51,12 @@
     #define OGROPT_CYCLE_CACHE_ALIGN 1
   #endif
 #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
-  #if defined(__MWERKS__)
+  #if defined(HAVE_KOGE_PPC_CORES)
+    /* ASM-optimized OGR cores. Only set relevant options for ogr_create() */
+    #define OGROPT_ALTERNATE_CYCLE                1 /* PPC optimized    */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
+    #define OGROPT_NON_STATIC_FOUND_ONE           1
+  #elif defined(__MWERKS__)
     #define OGROPT_BITOFLIST_DIRECT_BIT           0 /* 'no' irrelevant  */
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
@@ -138,7 +143,7 @@
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         1
   #define OGROPT_ALTERNATE_CYCLE                0
   #define OGROPT_COMBINE_COPY_LIST_SET_BIT_COPY_DIST_COMP 1
-  #define OGR_NON_STATIC_FOUND_ONE
+  #define OGROPT_NON_STATIC_FOUND_ONE
 #elif defined(ASM_SPARC)
   #define OGROPT_BITOFLIST_DIRECT_BIT           1  /* default */
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0  /* default */
@@ -381,19 +386,29 @@ static const int OGR[] = {
    #define OGR_NO_FUNCTION_INLINE(x) x
 #endif
 
-
 #ifndef __MRC__
 static int init_load_choose(void);
-#if defined(OGR_NON_STATIC_FOUND_ONE)
-OGR_NO_FUNCTION_INLINE(int found_one(const struct State *oState));
-#else
-OGR_NO_FUNCTION_INLINE(static int found_one(const struct State *oState));
+#if  (OGROPT_ALTERNATE_CYCLE != 2) || !defined(HAVE_KOGE_PPC_CORES)
+  // We only need one instance when using both KOGE cores
+  #if defined(OGROPT_NON_STATIC_FOUND_ONE)
+  OGR_NO_FUNCTION_INLINE(int found_one(const struct State *oState));
+  #else
+  OGR_NO_FUNCTION_INLINE(static int found_one(const struct State *oState));
+  #endif
 #endif
 static int ogr_init(void);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
 static int ogr_cleanup(void);
+
+#if (defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)) \
+    && defined(HAVE_KOGE_PPC_CORES)
+int cycle_ppc_scalar(void *state, int *pnodes, const unsigned char *choose, const int *OGR);
+#if defined(__VEC__) || defined(__ALTIVEC__)
+int cycle_ppc_hybrid(void *state, int *pnodes, const unsigned char *choose, const int *OGR);
+#endif
+#endif  // HAVE_KOGE_PPC_CORES
 
 #if defined(HAVE_OGR_CORES)
 static int ogr_create(void *input, int inputlen, void *state, int statelen, int minpos);
@@ -1225,7 +1240,7 @@ static int init_load_choose(void)
 /*  found_one() - print out golomb rulers  */
 /*-----------------------------------------*/
 #if (OGROPT_ALTERNATE_CYCLE == 0)
-#if defined(OGR_NON_STATIC_FOUND_ONE)
+#if defined(OGROPT_NON_STATIC_FOUND_ONE)
 int found_one(const struct State *oState)
 #else
 static int found_one(const struct State *oState)
@@ -1277,8 +1292,8 @@ static int found_one(const struct State *oState)
   }
   return 1;
 }
-#else
-#if defined(OGR_NON_STATIC_FOUND_ONE)
+#elif (OGROPT_ALTERNATE_CYCLE == 1) || !defined(HAVE_KOGE_PPC_CORES)
+#if defined(OGROPT_NON_STATIC_FOUND_ONE)
 int found_one(const struct State *oState)
 #else
 static int found_one(const struct State *oState)
@@ -1435,13 +1450,10 @@ static int found_one(const struct State *oState)
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlzw %0,%0" : "=r" (i) : "0" (i)); return ++i; }
-    #define PPC_CNTLZW(b,p) __asm__ volatile ("cntlzw %0,%1" : "=r"(b) : "r" (p))
   #elif defined(__MWERKS__) || defined(__MRC__)
     #define LOOKUP_FIRSTBLANK(x)  (__cntlzw(~((unsigned int)(x)))+1)
-    #define PPC_CNTLZW(b,p)       (b = __cntlzw((unsigned int)(p)))
   #elif defined(__xlC__)
     #define LOOKUP_FIRSTBLANK(x)  (__cntlz4(~((unsigned int)(x)))+1)
-    #define PPC_CNTLZW(b,p)       (b = __cntlz4((unsigned int)(p)))
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
@@ -1449,10 +1461,8 @@ static int found_one(const struct State *oState)
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { i = ~i; __asm__ ("cntlz %0,%0" : "=r" (i) : "0" (i)); return ++i; }
-    #define PPC_CNTLZW(b,p) __asm__ volatile ("cntlzw %0,%1" : "=r"(b) : "r" (p))
   #elif defined(__xlC__)
     #define LOOKUP_FIRSTBLANK(x)  (__cntlz4(~((unsigned int)(x)))+1)
-    #define PPC_CNTLZW(b,p)       (b = __cntlz4((unsigned int)(p)))
   #else
     #error "Please check this (define OGR_TEST_FIRSTBLANK to test)"
   #endif
@@ -1460,14 +1470,14 @@ static int found_one(const struct State *oState)
   #if defined(__GNUC__)
     static __inline__ int LOOKUP_FIRSTBLANK(register unsigned int i)
     { 
-      register unsigned long j = ~((unsigned long)i) << 32;
+      register unsigned long j = ~((unsigned long)i << 32);
       __asm__ ("ctlz %0,%0" : "=r"(j) : "0" (j));
-      return (int)(j & 0x1f)+1;
+      return (int)(j)+1;
     }
   #else
     static inline int LOOKUP_FIRSTBLANK(register unsigned int i)
     {
-      __int64 r = asm("ctlz %a0, %v0;", ~((unsigned long)i) << 32);
+      __int64 r = asm("ctlz %a0, %v0;", ~((unsigned long)i << 32));
       return (int)(r)+1;
     } 
   #endif
@@ -1903,7 +1913,30 @@ static void dump_ruler(struct State *oState, int depth)
 
 /* ------------------------------------------------------------------ */
 
-#if (OGROPT_ALTERNATE_CYCLE == 2) || (OGROPT_ALTERNATE_CYCLE == 1)
+#if (defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)) \
+    && defined(HAVE_KOGE_PPC_CORES)
+#if !define(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+  #error KOGE cores are NOT time constrained
+#endif
+#if (OGROPT_ALTERNATE_CYCLE == 2) && (defined(__VEC__) || defined(__ALTIVEC__))
+static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
+{
+  with_time_constraints = with_time_constraints;
+  return cycle_ppc_hybrid(state, pnodes, &choose(0,0), OGR);
+}
+#elif (OGROPT_ALTERNATE_CYCLE == 1)
+static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
+{
+  with_time_constraints = with_time_constraints;
+  return cycle_ppc_scalar(state, pnodes, &choose(0,0), OGR);
+}
+#else /* (OGROPT_ALTERNATE_CYCLE == 0) */
+  #error unsupported setting
+#endif
+
+#else /* !HAVE_KOGE_PPC_CORES */
+
+#if (OGROPT_ALTERNATE_CYCLE == 1) || (OGROPT_ALTERNATE_CYCLE == 2)
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
   struct State *oState = (struct State *)state;
@@ -1921,11 +1954,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   OGR_CYCLE_CACHE_ALIGN;
 
   for (;;) {
-    #if (OGROPT_ALTERNATE_CYCLE == 1)
-      U c0neg = ~comp0;
-    #endif
     int firstbit;
-
     limit = choose(dist0 >> ttmDISTBITS, remainingDepth);
 
     if (with_time_constraints) { /* if (...) is optimized away if unused */
@@ -1959,18 +1988,14 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
     /* Find the next available mark location for this level */
 
   stay:
-    PPC_CNTLZW(firstbit, c0neg);
-    ++firstbit;
-    if (c0neg > 1) {
+    if (comp0 < 0xfffffffe) {
+      firstbit = LOOKUP_FIRSTBLANK(comp0);
       if ((cnt2 += firstbit) > limit)   goto up; /* no spaces left */
       COMP_LEFT_LIST_RIGHT(lev, firstbit);
     }
-    else { /* firstbit > 32 */
+    else { /* firstbit >= 32 */
       if ((cnt2 += 32) > limit)  goto up; /* no spaces left */
-      if (c0neg == 0) {
-        #if (OGROPT_ALTERNATE_CYCLE == 1)
-          c0neg = ~comp1;
-        #endif
+      if (comp0 == ~0u) {
         COMP_LEFT_LIST_RIGHT_32(lev);
         goto stay;
       }
@@ -1982,9 +2007,6 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
     if (remainingDepth == 0) {
       oState->Levels[oState->maxdepthm1].cnt2 = cnt2;
       retval = found_one(oState);
-      #if (OGROPT_ALTERNATE_CYCLE == 1)
-        c0neg = ~comp0;
-      #endif
       if (retval != CORE_S_CONTINUE) {
         break;
       }
@@ -2003,9 +2025,6 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
     depth--;
     remainingDepth++;
     POP_LEVEL(lev);
-    #if (OGROPT_ALTERNATE_CYCLE == 1)
-      c0neg = ~comp0;
-    #endif
 
     if (depth <= oState->startdepth) {
       retval = CORE_S_OK;
@@ -2149,6 +2168,7 @@ up:
   return retval;
 }
 #endif  /* OGROPT_ALTERNATE_CYCLE */
+#endif  /* !HAVE_KOGE_PPC_CORES */
 
 static int ogr_getresult(void *state, void *result, int resultlen)
 {
