@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.62 2000/06/19 16:38:42 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.63 2000/06/30 19:17:02 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -513,7 +513,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         static status_t be_exit_value;
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-        MPTerminateTask((thrparams->threadID),nil);//while (thrparams->threadID) MPYield();
+        while (thrparams->threadID) MPYield();//MPTerminateTask((thrparams->threadID),nil);
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_FREEBSD)
