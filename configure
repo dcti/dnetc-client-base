@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.162 2000/06/17 06:35:33 bernd Exp $
+# @(#)$Id: configure,v 1.222.2.163 2000/06/21 00:13:51 mfeiri Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1085,7 +1085,7 @@ case "$1" in
     *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
 	TARGET_CC="cc"
 	TARGET_CCFLAGS="$OPTS_GCC295_PPC -DHAVE_OGR_CORES -DMULTITHREAD -D__unix__ -faltivec -DLURK" # -DXMLSERVE
-	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_PPC_SRCS $RC5ALTIVEC_SRCS common/lurk.cpp" #
+	TARGET_ADDSRCS="$RC5PPC_APPLE_SRCS $OGR_ANSI_SRCS $RC5ALTIVEC_SRCS common/lurk.cpp" #
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	TARGET_TARBALL="macosx-ppc"
 	;;
