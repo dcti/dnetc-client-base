@@ -7,67 +7,88 @@
 
 // --------------------------------------------------------------------------
 
-#define OPTION_COUNT    27
+#define OPTION_COUNT    38
 
-char * options[OPTION_COUNT][4] = //name, desc, default, additional comments
+char *menutable[4]=
+  {
+  "General Options",
+  "Logging Options",
+  "Communication Options",
+  "Miscellaneous Options"
+  };
+
+struct optionstruct
+  {
+  char *name;//name of the option in the .ini file
+  char *description;//description of the option
+  char *defaultsetting;//default setting
+  char *comments;//additional comments
+  s32 optionscreen;//screen to appear on
+  s32 type;//type: 0=other, 1=string, 2=integer, 3=boolean (yes/no)
+  s32 menuposition;//number on that menu to appear as
+  void *thevariable;//pointer to the variable
+  };
+
+optionstruct options[OPTION_COUNT]=
 {
 //0
-  { "id", "Email to report as", "rc5@distributed.net", "(64 characters max)"},
+{ "id", "Email to report as", "rc5@distributed.net", "(64 characters max)",1,1,1,NULL}, 
 //1
-  { "threshold", "RC5 Blocks to Buffer [in:out]", "10", "Input (max 1000)?"},
+{ "threshold", "RC5 Blocks to Buffer", "10", "(max 1000)",1,2,2,NULL},
 //2
-  { "threshold2", "DES Blocks to Buffer [in:out]", "10", "Input (max 1000)?"},
+{ "threshold", "RC5 block flush threshold", "10",
+    "\nSet this equal to RC5 Blocks to Buffer except in rare cases.",1,2,3,NULL},
 //3
-  { "count", "Blocks to complete in run", "0", "(0 = no limit)"},
+{ "threshold2", "DES Blocks to Buffer", "10", "(max 1000)",1,2,4,NULL},
 //4
-  { "hours", "Hours to complete in a run", "0.0", "(0 = no limit)"},
+{ "threshold2", "DES block flush threshold", "10",
+    "\nSet this equal to DES Blocks to Buffer except in rare cases.",1,2,5,NULL},
 //5
-  { "timeslice", "Keys per timeslice - for Macs, Win16, RISC OS, etc",
+{ "count", "Blocks to complete in run", "0", "(0 = no limit)",1,2,6,NULL},
+//6
+{ "hours", "Hours to complete in a run", "0.0", "(0 = no limit)",1,1,7,NULL},
+//7
+{ "timeslice", "Keys per timeslice - for Macs, Win16, RISC OS, etc",
 #if (CLIENT_OS == OS_WIN16)
     "200",
 #else
     "65536",
 #endif
     "(0 = default timeslicing)\n"
-    "DO NOT TOUCH this unless you know what you're doing!!!"},
-//6
-  { "niceness", "Level of niceness to run at", "0",
-    "\n  mode 0) (recomended) Very nice, should not interfere with any other process\n"
-    "  mode 1) Nice, runs with slightly higher priority than idle processes\n"
-    "          Same as mode 0 in OS/2 and Win32\n"
-    "  mode 2) Normal, runs with same priority as normal user processes\n"},
-//7
-  { "logname", "File to log to", "", "(128 characters max, blank = no log)\n"},
+    "DO NOT TOUCH this unless you know what you're doing!!!",4,2,1,NULL},
 //8
-  { "firemode", "Network communication mode", "1",
-    "\n  mode 1) I can communicate freely to the Internet on all ports.\n"
-    "  mode 2) I can communicate freely on telnet ports\n"
-    "  mode 3) I can communicate freely on telnet ports, but need uuencoding\n"
-    "  mode 4) I have a local HTTP proxy that I can go through\n"
-    "  mode 5) Let me specify custom network settings (expert mode)\n"},
+{ "niceness", "Level of niceness to run at", "0",
+     "\n  mode 0) (recomended) Very nice, should not interfere with any other process\n"
+     "  mode 1) Nice, runs with slightly higher priority than idle processes\n"
+     "          Same as mode 0 in OS/2 and Win32\n"
+     "  mode 2) Normal, runs with same priority as normal user processes\n",4,2,2},
 //9
-  { "keyproxy", "Preferred KeyServer Proxy\n    ",
-    "us.v27.distributed.net", "(DNS or IP address)\n" },
+{ "logname", "File to log to", "", "(128 characters max, blank = no log)\n",2,1,1},
 //10
-  { "keyport", "Preferred KeyServer Port", "2064", "(TCP/IP port on preferred proxy)"},
+{ "uuehttpmode", "Firewall Communications mode (UUE/HTTP/SOCKS)", "0",
+       "\n  mode 0) No special encoding\n"
+       "  mode 1) UUE encoding (telnet proxies)\n"
+       "  mode 2) HTTP encoding\n"
+       "  mode 3) HTTP+UUE encoding\n"
+       "  mode 4) SOCKS4 proxy\n"
+       "  mode 5) SOCKS5 proxy\n",3,2,1},
 //11
-  { "httpproxy", "Local HTTP/SOCKS proxy address\n    ",
-    "wwwproxy.corporate.com", "(DNS or IP address)\n" },
+{ "keyproxy", "Preferred KeyServer Proxy", "us.v27.distributed.net",
+   "\nThis specifies the DNS or IP address of the keyserver your client will\n"
+   "communicate with. Unless you have a special configuration, use the setting\n"
+   "automatically set by the client.",3,1,2},
 //12
-  { "httpport", "Local HTTP/SOCKS proxy port", "80", "(TCP/IP port on http proxy)"},
+{ "keyport", "Preferred KeyServer Port", "2064", "(TCP/IP port on preferred proxy)",3,2,3},
 //13
-  { "uuehttpmode", "UUE/HTTP/SOCKS mode", "0",
-      "\n  mode 0) No special encoding\n"
-      "  mode 1) UUE encoding (telnet proxies)\n"
-      "  mode 2) HTTP encoding\n"
-      "  mode 3) HTTP+UUE encoding\n"
-      "  mode 4) SOCKS4 proxy\n"
-      "  mode 5) SOCKS5 proxy\n" },
+{ "httpproxy", "Local HTTP/SOCKS proxy address",
+       "wwwproxy.corporate.com", "(DNS or IP address)\n",3,1,4},
 //14
-  { "httpid", "HTTP/SOCKS proxy userid/password", "", "(Enter userid (. to reset it to empty) )"},
-#if (CLIENT_CPU == CPU_X86)
+{ "httpport", "Local HTTP/SOCKS proxy port", "80", "(TCP/IP port on http proxy)",3,2,5},
 //15
-  { "cputype", "Optimize performance for CPU type", "-1",
+{ "httpid", "HTTP/SOCKS proxy userid/password", "", "(Enter userid (. to reset it to empty) )",3,1,6},
+#if (CLIENT_CPU == CPU_X86)
+//16
+{ "cputype", "Optimize performance for CPU type", "-1",
       "\n   mode -1) Autodetect\n"
       "   mode 0) Intel Pentium, Intel Pentium MMX, Cyrix 486/5x86/MediaGX\n"
       "   mode 1) Intel 80386, Intel 80486\n"
@@ -75,97 +96,133 @@ char * options[OPTION_COUNT][4] = //name, desc, default, additional comments
       "   mode 3) AMD 486, Cyrix 6x86/6x86MX/M2\n"
       "   mode 4) AMD K5\n"
       "   mode 5) AMD K6\n"
-    },
 #elif (CLIENT_CPU == CPU_STRONGARM)
   { "cputype", "Optimise performance for CPU type", "-1",
       "\n   mode -1) Autodetect\n"
       "   mode 0) ARM\n"
-      "   mode 1) StrongARM\n"},
+      "   mode 1) StrongARM\n"
 
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
-// 15
-  { "cputype", "Optimize performance for CPU type", "-1",
+//16
+{ "cputype", "Optimize performance for CPU type", "-1",
       "\n   mode -1) Autodetect\n"
       "   mode 0) PowerPC 601\n"
-      "   mode 1) PowerPC 603/604/750\n"},
+      "   mode 1) PowerPC 603/604/750\n"
 #else
-//15
-  { "cputype", "CPU type...not applicable in this client", "-1", "(default -1)"},
-#endif
 //16
-  { "messagelen", "Message Mailing (bytes)", "0", "(0=no messages mailed.  10000 recommended.  125000 max.)\n"},
+{ "cputype", "CPU type...not applicable in this client", "-1", "(default -1)"
+#endif
+,1,2,8},
 //17
-  { "smtpsrvr", "SMTP Server", "your.smtp.server", "(128 characters max)"},
+{ "messagelen", "Message Mailing (bytes)", "0", "(0=no messages mailed.  10000 recommended.  125000 max.)\n",2,2,2},
 //18
-  { "smtpport", "SMTP Port", "25", "(SMTP port on mail server -- default 25)"},
+{ "smtpsrvr", "SMTP Server", "your.smtp.server", "(128 characters max)",2,1,3},
 //19
-  { "smtpfrom", "Mail ID that logs will be mailed from", "RC5notify", "\n(Some servers require this to be a real address)\n"},
+{ "smtpport", "SMTP Port", "25", "(SMTP port on mail server -- default 25)",2,2,4},
 //20
-  { "smtpdest", "Mail ID that logs will be sent to\n    ", "you@your.site", "\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n"},
+{ "smtpfrom", "Mail ID that logs will be mailed from", "RC5notify", "\n(Some servers require this to be a real address)\n",2,1,5},
 //21
-#if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_OS2))
-  { "numcpu", "Number of CPUs in this machine", "-1 (autodetect)", "\n"},
-#else
-  { "numcpu", "Number of CPUs in this machine", "1", "\n"},
-#endif
+{ "smtpdest", "Mail ID that logs will be sent to", "you@your.site", "\n(Full name and site eg: you@your.site.  Comma delimited list permitted)\n",2,1,6},
 //22
-  { "checkpointfile", "RC5 Checkpoint information filename","none","\n(Non-shared file required.  "
-#if (CLIENT_OS == OS_RISCOS)
-    "ckpoint/rc5"
+#if ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_BEOS))
+  { "numcpu", "Number of CPUs in this machine", "-1 (autodetect)", "\n"
 #else
-    "ckpoint.rc5"
+  { "numcpu", "Number of CPUs in this machine", "1", "\n"
 #endif
-    " recommended.  'none' to disable)\n"},
+,4,2,12},
 //23
-  { "checkpointfile2", "DES Checkpoint information filename","none","\n(Non-shared file required.  "
-#if (CLIENT_OS == OS_RISCOS)
-    "ckpoint/des"
-#else
-    "ckpoint.des"
-#endif
-    " recommended.  'none' to disable)\n"},
+{ "checkpointfile", "RC5 Checkpoint information filename","none","\n(Non-shared file required.  ckpoint.rc5 recommended.  'none' to disable)\n",4,1,4},
 //24
-  { "randomprefix", "High order byte of random blocks","100","Do not change this"},
+{ "checkpointfile2", "DES Checkpoint information filename","none","\n(Non-shared file required.  ckpoint.des recommended.  'none' to disable)\n",4,1,5},
 //25
-  { "preferredblocksize", "Preferred Block Size (2^28 through 2^31) ","30","28 -- 31"},
+{ "randomprefix", "High order byte of random blocks","100","Do not change this",0,2},
 //26
-  { "preferredcontest", "Preferred Contest (1=RC5, 2=DES) ","2","2 recommended"}
+{ "preferredblocksize", "Preferred Block Size (2^28 through 2^31) ","30","28 -- 31",4,2,6},
+//27
+{ "preferredcontest", "Preferred Contest (1=RC5, 2=DES) ","2","2 recommended",4,2,7},
+//28
+{ "quiet", "Disable all screen output? (quiet mode)","no","",4,3,8,NULL},
+//29
+{ "noexitfilecheck", "Disable exit file checking?","no","",4,3,9},
+//30
+{ "percentoff", "Disable block percent completion indicators?","no","",4,3,10},
+//31
+{ "frequent", "Attempt keyserver connections frequently?","no","",3,3,7},
+//32
+{ "nodisk", "Buffer blocks in ram only? (no disk I/O)","no",
+    "\nNote: This option will cause all buffered, unflushable blocks to be lost\n"
+    "during client shutdown!",4,3,11},
+//33
+{ "nofallback", "Disable fallback to US Round-Robin?","no",
+  "\nIf your specified proxy is down, the client normally falls back\n"
+  "to the US Round robin (us.v27.distributed.net) - this option causes\n"
+  "the client to NEVER attempt a fallback if the local proxy is down.",
+  3,3,8},
+//34
+{ "cktime", "Interval between saving of checkpoints (minutes):","5",
+  "",4,2,0},
+//35
+{ "nettimeout", "Network Timeout (seconds)", "30"," ",3,2,0},
+//36
+{ "exitfilechecktime", "Exit file check time (seconds)","30","",4,2,0},
+//37
+{ "runbuffers", "Offline operation mode","0",
+  "\nmode 0) Normal operation. The client will connect to a keyserver as needed,\n"
+  "        and use random blocks if a keyserver connection cannot be made.\n"
+  "mode 1) Offline mode (client never connects to a keyserver, and will\n"
+  "        generate random blocks if the block buffers empty.)\n"
+  "mode 2) Finish Buffers and exit mode. The client will never connect\n"
+  "        to a keyserver, and when the block buffers empty, it will\n"
+  "        terminate.\n",3,2,0}
 };
 
 #define CONF_ID 0
-#define CONF_THRESHOLD 1
-#define CONF_THRESHOLD2 2
-#define CONF_COUNT 3
-#define CONF_HOURS 4
-#define CONF_TIMESLICE 5
-#define CONF_NICENESS 6
-#define CONF_LOGNAME 7
-#define CONF_FIREMODE 8
-#define CONF_KEYPROXY 9
-#define CONF_KEYPORT 10
-#define CONF_HTTPPROXY 11
-#define CONF_HTTPPORT 12
-#define CONF_UUEHTTPMODE 13
-#define CONF_HTTPID 14
-#define CONF_CPUTYPE 15
-#define CONF_MESSAGELEN 16
-#define CONF_SMTPSRVR 17
-#define CONF_SMTPPORT 18
-#define CONF_SMTPFROM 19
-#define CONF_SMTPDEST 20
-#define CONF_NUMCPU 21
-#define CONF_CHECKPOINT 22
-#define CONF_CHECKPOINT2 23
-#define CONF_RANDOMPREFIX 24
-#define CONF_PREFERREDBLOCKSIZE 25
-#define CONF_PREFERREDCONTEST 26
-
+#define CONF_THRESHOLDI 1
+#define CONF_THRESHOLDO 2
+#define CONF_THRESHOLDI2 3
+#define CONF_THRESHOLDO2 4
+#define CONF_COUNT 5
+#define CONF_HOURS 6
+#define CONF_TIMESLICE 7
+#define CONF_NICENESS 8
+#define CONF_LOGNAME 9
+#define CONF_UUEHTTPMODE 10
+#define CONF_KEYPROXY 11
+#define CONF_KEYPORT 12
+#define CONF_HTTPPROXY 13
+#define CONF_HTTPPORT 14
+#define CONF_HTTPID 15
+#define CONF_CPUTYPE 16
+#define CONF_MESSAGELEN 17
+#define CONF_SMTPSRVR 18
+#define CONF_SMTPPORT 19
+#define CONF_SMTPFROM 20
+#define CONF_SMTPDEST 21
+#define CONF_NUMCPU 22
+#define CONF_CHECKPOINT 23
+#define CONF_CHECKPOINT2 24
+#define CONF_RANDOMPREFIX 25
+#define CONF_PREFERREDBLOCKSIZE 26
+#define CONF_PREFERREDCONTEST 27
+#define CONF_QUIETMODE 28
+#define CONF_NOEXITFILECHECK 29
+#define CONF_PERCENTOFF 30
+#define CONF_FREQUENT 31
+#define CONF_NODISK 32
+#define CONF_NOFALLBACK 33
+#define CONF_CKTIME 34
+#define CONF_NETTIMEOUT 35
+#define CONF_EXITFILECHECKTIME 36
+#define CONF_OFFLINEMODE 37
 // --------------------------------------------------------------------------
 
-s32 Client::Configure( void )
+s32 Client::ConfigureGeneral( s32 currentmenu )
 {
   char parm[128],parm2[128];
   s32 choice;
+  s32 contestidtemp;//since it's 0/1 based now, we need a temp for
+                    //screen I/O
+  char str[3];
   char *p;
 #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
   SYSTEM_INFO systeminfo;
@@ -173,56 +230,121 @@ s32 Client::Configure( void )
   system_info the_info;
 #endif
 
+contestidtemp=preferred_contest_id+1;
+
+options[CONF_ID].thevariable=&id;
+options[CONF_THRESHOLDI].thevariable=&inthreshold[0];
+options[CONF_THRESHOLDO].thevariable=&outthreshold[0];
+options[CONF_THRESHOLDI2].thevariable=&inthreshold[1];
+options[CONF_THRESHOLDO2].thevariable=&outthreshold[1];
+options[CONF_COUNT].thevariable=&blockcount;
+options[CONF_HOURS].thevariable=&hours;
+options[CONF_TIMESLICE].thevariable=&timeslice;
+options[CONF_NICENESS].thevariable=&niceness;
+options[CONF_LOGNAME].thevariable=&logname;
+options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
+options[CONF_KEYPROXY].thevariable=&keyproxy;
+options[CONF_KEYPORT].thevariable=&keyport;
+options[CONF_HTTPPROXY].thevariable=&httpproxy;
+options[CONF_HTTPPORT].thevariable=&httpport;
+options[CONF_HTTPID].thevariable=&httpid;
+options[CONF_CPUTYPE].thevariable=&cputype;
+options[CONF_MESSAGELEN].thevariable=&messagelen;
+options[CONF_SMTPSRVR].thevariable=&smtpsrvr;
+options[CONF_SMTPPORT].thevariable=&smtpport;
+options[CONF_SMTPFROM].thevariable=&smtpfrom;
+options[CONF_SMTPDEST].thevariable=&smtpdest;
+options[CONF_NUMCPU].thevariable=&numcpu;
+options[CONF_CHECKPOINT].thevariable=&checkpoint_file[0];
+options[CONF_CHECKPOINT2].thevariable=&checkpoint_file[1];
+options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
+options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
+options[CONF_PREFERREDCONTEST].thevariable=&contestidtemp;
+options[CONF_QUIETMODE].thevariable=&quietmode;
+options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
+options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
+options[CONF_FREQUENT].thevariable=&connectoften;
+options[CONF_NODISK].thevariable=&nodiskbuffers;
+options[CONF_NOFALLBACK].thevariable=&nofallback;
+options[CONF_CKTIME].thevariable=&checkpoint_min;
+options[CONF_NETTIMEOUT].thevariable=&nettimeout;
+options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
+options[CONF_OFFLINEMODE].thevariable=&offlinemode;
+
   while ( 1 )
   {
-    // display menu
-    printf("\nCLIENT CONFIG MENU\n"
-           "------------------\n");
-    char threshold[2][64];
-    sprintf(threshold[0], "%d:%d", (int) inthreshold[0], (int) outthreshold[0]);
-    sprintf(threshold[1], "%d:%d", (int) inthreshold[1], (int) outthreshold[1]);
+contestidtemp=preferred_contest_id+1;
 
-    IniStringList list( id, &threshold[0], &threshold[1], blockcount, hours, timeslice, niceness,
-                        logname, firemode, keyproxy, keyport,
-                        httpproxy, httpport, uuehttpmode, httpid, cputype,
-                        messagelen,smtpsrvr,smtpport,smtpfrom,smtpdest,numcpu,
-                        checkpoint_file[0], checkpoint_file[1], randomprefix,
-                        preferred_blocksize, (s32) (preferred_contest_id + 1));
+    // display menu
+
+clearscreen();
+printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",CLIENT_BUILD,CLIENT_BUILD_FRAC);
+printf("%s\n",menutable[currentmenu-1]);
+printf("------------------------------------------------------------\n\n");
+
     for ( choice = 0; choice < OPTION_COUNT; choice++ )
     {
-      if ((choice >= 0 && choice < 1+CONF_FIREMODE) ||
-          (choice == CONF_KEYPROXY && firemode >= 4) ||
-          (choice == CONF_KEYPORT && firemode >= 5 && !CheckForcedKeyport()) ||
-          ((choice == CONF_HTTPPROXY || choice == CONF_HTTPPORT || choice == CONF_HTTPID) &&
-              (uuehttpmode > 1)) ||
-          (choice == CONF_UUEHTTPMODE && firemode >= 5)
+      if (((choice >= 0 && choice < 1+CONF_KEYPROXY) ||
+           (choice == CONF_KEYPROXY) ||
+           (choice == CONF_KEYPORT) ||
+           ((choice == CONF_HTTPPROXY || choice == CONF_HTTPPORT || choice == CONF_HTTPID) &&
+               (uuehttpmode > 1)) ||
+           (choice == CONF_UUEHTTPMODE)
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_STRONGARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
-          || (choice == CONF_CPUTYPE)
+           || (choice == CONF_CPUTYPE)
 #endif
-          || (choice == CONF_MESSAGELEN)
-          || ((choice == CONF_SMTPSRVR) && (messagelen != 0))
-          || ((choice == CONF_SMTPPORT) && (messagelen != 0))
-          || ((choice == CONF_SMTPDEST) && (messagelen != 0))
-          || ((choice == CONF_SMTPFROM) && (messagelen != 0))
+           || (choice == CONF_MESSAGELEN)
+           || ((choice == CONF_SMTPSRVR) && (messagelen != 0))
+           || ((choice == CONF_SMTPPORT) && (messagelen != 0))
+           || ((choice == CONF_SMTPDEST) && (messagelen != 0))
+           || ((choice == CONF_SMTPFROM) && (messagelen != 0))
 #if defined(MULTITHREAD)
-          || (choice == CONF_NUMCPU)
+           || (choice == CONF_NUMCPU)
 #endif
-          || (choice == CONF_CHECKPOINT)
-          || (choice == CONF_CHECKPOINT2)
-          || (choice == CONF_PREFERREDBLOCKSIZE)
-          || (choice == CONF_PREFERREDCONTEST)
+           || (choice == CONF_CHECKPOINT)
+           || (choice == CONF_CHECKPOINT2)
+           || (choice == CONF_PREFERREDBLOCKSIZE)
+           || (choice == CONF_PREFERREDCONTEST)
+           || (choice == CONF_QUIETMODE)
+           || (choice == CONF_NOEXITFILECHECK)
+           || (choice == CONF_PERCENTOFF)
+           || (choice == CONF_FREQUENT)
+           || (choice == CONF_NODISK)
+           || (choice == CONF_NOFALLBACK)
+           || (choice == CONF_CKTIME)
+           || (choice == CONF_NETTIMEOUT)
+           || (choice == CONF_EXITFILECHECKTIME)
+           || (choice == CONF_OFFLINEMODE)
+           )
+           && (options[choice].optionscreen==currentmenu)
           )
-        printf("%d)  %s [default:%s] ==> %s\n",
-          (int)(choice + 1), options[choice][1],
-          options[choice][2], list[choice].c_str());
+
+          if (options[choice].type==1)
+             {
+             if (options[choice].thevariable != NULL)
+               printf("%d)  %s ==> %s\n",
+                      choice + 1, options[choice].description,
+                      (char *)options[choice].thevariable);
+             }
+          else if (options[choice].type==2)
+             printf("%d)  %s ==> %i\n",
+                    choice + 1, options[choice].description,
+                    *(s32 *)options[choice].thevariable);
+          else if (options[choice].type==3)
+             {
+             sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
+             printf("%d)  %s ==> %s\n",
+                    choice + 1, options[choice].description,
+                    str);
+             };
     }
-    printf("0)  Quit and Save\n");
+    printf("\n0)  Return to main menu\n");
 
 
     // get choice from user
     while(1)
     {
-      printf("Choice --> ");
+      printf("\nChoice --> ");
       fflush( stdout );
       fgets(parm, 128, stdin);
       choice = atoi(parm);
@@ -230,27 +352,39 @@ s32 Client::Configure( void )
       if (choice == 0) return 1;
       else choice--;
 
-      if ((choice >= 0 && choice < 1+CONF_FIREMODE) ||
-          (choice == CONF_KEYPROXY && firemode >= 4) ||
-          (choice == CONF_KEYPORT && firemode >= 5 && !CheckForcedKeyport()) ||
-          ((choice == CONF_HTTPPROXY || choice == CONF_HTTPPORT || choice == CONF_HTTPID) &&
-              (uuehttpmode > 1)) ||
-          (choice == CONF_UUEHTTPMODE && firemode >= 5)
+      if (((choice >= 0 && choice < 1+CONF_KEYPROXY) ||
+           (choice == CONF_KEYPROXY) ||
+           (choice == CONF_KEYPORT) ||
+           ((choice == CONF_HTTPPROXY || choice == CONF_HTTPPORT || choice == CONF_HTTPID) &&
+               (uuehttpmode > 1)) ||
+           (choice == CONF_UUEHTTPMODE)
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_STRONGARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
-          || (choice == CONF_CPUTYPE)
+           || (choice == CONF_CPUTYPE)
 #endif
-          || (choice == CONF_MESSAGELEN)
-          || ((choice == CONF_SMTPSRVR) && (messagelen != 0))
-          || ((choice == CONF_SMTPPORT) && (messagelen != 0))
-          || ((choice == CONF_SMTPDEST) && (messagelen != 0))
-          || ((choice == CONF_SMTPFROM) && (messagelen != 0))
+           || (choice == CONF_MESSAGELEN)
+           || ((choice == CONF_SMTPSRVR) && (messagelen != 0))
+           || ((choice == CONF_SMTPPORT) && (messagelen != 0))
+           || ((choice == CONF_SMTPDEST) && (messagelen != 0))
+           || ((choice == CONF_SMTPFROM) && (messagelen != 0))
 #if defined(MULTITHREAD)
-          || (choice == CONF_NUMCPU)
+           || (choice == CONF_NUMCPU)
 #endif
-          || (choice == CONF_CHECKPOINT)
-          || (choice == CONF_CHECKPOINT2)
-          || (choice == CONF_PREFERREDBLOCKSIZE)
-          || (choice == CONF_PREFERREDCONTEST)
+           || (choice == CONF_CHECKPOINT)
+           || (choice == CONF_CHECKPOINT2)
+           || (choice == CONF_PREFERREDBLOCKSIZE)
+           || (choice == CONF_PREFERREDCONTEST)
+           || (choice == CONF_QUIETMODE)
+           || (choice == CONF_NOEXITFILECHECK)
+           || (choice == CONF_PERCENTOFF)
+           || (choice == CONF_FREQUENT)
+           || (choice == CONF_NODISK)
+           || (choice == CONF_NOFALLBACK)
+           || (choice == CONF_CKTIME)
+           || (choice == CONF_NETTIMEOUT)
+           || (choice == CONF_EXITFILECHECKTIME)
+           || (choice == CONF_OFFLINEMODE)
+           )
+           && (options[choice].optionscreen==currentmenu)
           )
         break;
     }
@@ -258,8 +392,21 @@ s32 Client::Configure( void )
 
 
     // prompt for new value
-    printf("%s %s [%s] --> ", options[choice][1],
-                              options[choice][3], list[choice].c_str());
+    if (options[choice].type==1)
+      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+              options[choice].description, options[choice].comments, 
+              options[choice].defaultsetting, (char *)options[choice].thevariable);
+    else if (options[choice].type==2)
+      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %i\nNew Setting --> ",
+              options[choice].description, options[choice].comments, 
+              options[choice].defaultsetting, *(s32 *)options[choice].thevariable);
+    else if (options[choice].type==3)
+      {
+      sprintf(str, "%s", *(s32 *)options[choice].thevariable?"yes":"no");
+      printf("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+              options[choice].description, options[choice].comments, 
+              options[choice].defaultsetting, str);
+      };
     fflush( stdout );
     fgets(parm, sizeof(parm), stdin);
     for ( p = parm; *p; p++ )
@@ -277,43 +424,29 @@ s32 Client::Configure( void )
         case CONF_ID:
           strncpy( id, parm, sizeof(id) - 1 );
           break;
-        case CONF_THRESHOLD:
+        case CONF_THRESHOLDI:
           inthreshold[0]=atoi(parm);
-          printf("Output (max 1000)?--> ");
-          fflush( stdout );
-          fgets(parm2, sizeof(parm2), stdin);
-          for ( p = parm2; *p; p++ )
-          {
-            if ( !isprint(*p) )
-             {
-              *p = 0;
-              break;
-            }
-          }
-          outthreshold[0]=atoi(parm2);
           if ( inthreshold[0] < 1   ) inthreshold[0] = 1;
           if ( inthreshold[0] > 1000 ) inthreshold[0] = 1000;
+          break;
+        case CONF_THRESHOLDO:
+          outthreshold[0]=atoi(parm);
           if ( outthreshold[0] < 1   ) outthreshold[0] = 1;
           if ( outthreshold[0] > 1000 ) outthreshold[0] = 1000;
+          if ( outthreshold[0] > inthreshold[0] )
+             outthreshold[0]=inthreshold[0];
           break;
-        case CONF_THRESHOLD2:
+        case CONF_THRESHOLDI2:
           inthreshold[1]=atoi(parm);
-          printf("Output (max 1000)?--> ");
-          fflush( stdout );
-          fgets(parm2, sizeof(parm2), stdin);
-          for ( p = parm2; *p; p++ )
-          {
-            if ( !isprint(*p) )
-             {
-              *p = 0;
-              break;
-            }
-          }
-          outthreshold[1]=atoi(parm2);
           if ( inthreshold[1] < 1   ) inthreshold[1] = 1;
           if ( inthreshold[1] > 1000 ) inthreshold[1] = 1000;
+          break;
+        case CONF_THRESHOLDO2:
+          outthreshold[1]=atoi(parm);
           if ( outthreshold[1] < 1   ) outthreshold[1] = 1;
           if ( outthreshold[1] > 1000 ) outthreshold[1] = 1000;
+          if ( outthreshold[1] > inthreshold[1] )
+             outthreshold[1]=inthreshold[1];
           break;
         case CONF_COUNT:
           blockcount = atoi(parm);
@@ -338,23 +471,13 @@ s32 Client::Configure( void )
         case CONF_LOGNAME:
           strncpy( logname, parm, sizeof(logname) - 1 );
           break;
-        case CONF_FIREMODE:
-          firemode = atoi(parm);
-          if ( firemode < 1 || firemode > 5 )
-            firemode = 1;
-          switch (firemode) {
-            case 1: strcpy( keyproxy, "us.v27.distributed.net" ); keyport = 2064; uuehttpmode = 0; break;
-            case 2: strcpy( keyproxy, "us23.v27.distributed.net" ); keyport = 23; uuehttpmode = 0; break;
-            case 3: strcpy( keyproxy, "us23.v27.distributed.net" ); keyport = 23; uuehttpmode = 1; break;
-            case 4: uuehttpmode = 3; break;
-          }
-          break;
         case CONF_KEYPROXY:
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
           CheckForcedKeyport();
           break;
         case CONF_KEYPORT:
-          keyport = atoi(parm); break;
+          keyport = atoi(parm); CheckForcedKeyport();
+          break;
         case CONF_HTTPPROXY:
           strncpy( httpproxy, parm, sizeof(httpproxy) - 1); break;
         case CONF_HTTPPORT:
@@ -386,6 +509,27 @@ s32 Client::Configure( void )
           uuehttpmode = atoi(parm);
           if ( uuehttpmode < 0 || uuehttpmode > 5 )
             uuehttpmode = 0;
+          switch (uuehttpmode)
+            {
+            case 0:strcpy( keyproxy, "us.v27.distributed.net");//normal communications
+                   keyport=2064;
+                   break;
+            case 1:strcpy( keyproxy, "us23.v27.distributed.net");//UUE mode (telnet)
+                   keyport=23;
+                   break;
+            case 2:strcpy( keyproxy, "us80.v27.distributed.net");//HTTP mode
+                   keyport=80;
+                   break;
+            case 3:strcpy( keyproxy, "us80.v27.distributed.net");//HTTP+UUE mode
+                   keyport=80;
+                   break;
+            case 4:strcpy( keyproxy, "us.v27.distributed.net");//SOCKS4
+                   keyport=2064;
+                   break;
+            case 5:strcpy( keyproxy, "us.v27.distributed.net");//SOCKS5
+                   keyport=2064;
+                   break;
+            };
           break;
 #if (CLIENT_CPU == CPU_X86)
         case CONF_CPUTYPE:
@@ -510,6 +654,50 @@ s32 Client::Configure( void )
           if ((preferred_contest_id < 0) || (preferred_contest_id > 1))
              preferred_contest_id = 1;
           break;
+        case CONF_QUIETMODE: 
+          choice=yesno(parm);
+          if (choice >= 0) *(s32 *)options[CONF_QUIETMODE].thevariable=choice;
+          break;
+        case CONF_NOEXITFILECHECK:
+          choice=yesno(parm);
+          if (choice >= 0) *(s32 *)options[CONF_NOEXITFILECHECK].thevariable=choice;
+          break;
+        case CONF_PERCENTOFF:
+          choice=yesno(parm);
+          if (choice >= 0) *(s32 *)options[CONF_PERCENTOFF].thevariable=choice;
+          break;
+        case CONF_FREQUENT:
+          choice=yesno(parm);
+          if (choice >= 0) *(s32 *)options[CONF_FREQUENT].thevariable=choice;
+          break;
+        case CONF_NODISK:
+          choice=yesno(parm);
+          if (choice >= 0) *(s32 *)options[CONF_NODISK].thevariable=choice;
+          break;
+        case CONF_NOFALLBACK:
+          choice=yesno(parm);
+          if (choice >= 0) *(s32 *)options[CONF_NOFALLBACK].thevariable=choice;
+          break;
+        case CONF_CKTIME:
+          choice=atoi(parm);
+          choice=max(2,choice);
+          *(s32 *)options[CONF_CKTIME].thevariable=choice;
+          break;
+        case CONF_NETTIMEOUT:
+          choice=atoi(parm);
+          choice=min(300,max(30,choice));
+          *(s32 *)options[CONF_NETTIMEOUT].thevariable=choice;
+          break;
+        case CONF_EXITFILECHECKTIME:
+          choice=atoi(parm);
+          choice=max(choice,1);
+          *(s32 *)options[CONF_EXITFILECHECKTIME].thevariable=choice;
+          break;
+        case CONF_OFFLINEMODE:
+          choice=atoi(parm);
+          if (choice < 0) choice=0;
+          if (choice > 2) choice=2;
+          *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
         default:
           break;
       }
@@ -519,12 +707,45 @@ s32 Client::Configure( void )
 
 //----------------------------------------------------------------------------
 
-s32 Client::ConfigureGeneral( int currentmenu )
+s32 Client::Configure( void )
+//A return of 1 indicates to save the changed configuration
+//A return of -1 indicates to NOT save the changed configuration
 {
 
-// Will be filled in soon, be worried :)
+  s32 choice;
+  char parm[128];
+  s32 returnvalue=0;
 
-return 0;
+while (returnvalue == 0)
+   {
+   clearscreen();
+   printf("Distributed.Net RC5/DES Client build v2.70%i.%i config menu\n",CLIENT_BUILD,CLIENT_BUILD_FRAC);
+   printf("------------------------------------------------------------\n\n");
+   printf("1) %s\n",menutable[0]);
+   printf("2) %s\n",menutable[1]);
+   printf("3) %s\n",menutable[2]);
+   printf("4) %s\n\n",menutable[3]);
+   printf("9) Discard settings and exit\n");
+   printf("0) Save settings and exit\n\n");
+   printf("Choice --> ");
+
+   fflush( stdout );
+   fgets(parm, 128, stdin);
+   choice = atoi(parm);
+
+   switch (choice)
+      {
+      case 1: ConfigureGeneral(1);break;
+      case 2: ConfigureGeneral(2);break;
+      case 3: ConfigureGeneral(3);break;
+      case 4: ConfigureGeneral(4);break;
+      case 0: returnvalue=1;break; //Breaks and tells it to save
+      case 9: returnvalue=-1;break; //Breaks and tells it NOT to save
+      };
+
+   }
+
+return returnvalue;
 }
 
 //----------------------------------------------------------------------------
@@ -545,7 +766,7 @@ return returnvalue;
 
 //----------------------------------------------------------------------------
 
-void clearscreen( void )
+void Client::clearscreen( void )
 // Clears the screen. (Platform specific ifdefs go inside of it.)
 
 {
@@ -564,6 +785,9 @@ void clearscreen( void )
   FillConsoleOutputCharacter(hStdout, ' ', nLength, topleft, NULL);
   FillConsoleOutputAttribute(hStdout, csbiInfo.wAttributes, nLength, topleft, NULL);
   SetConsoleCursorPosition(hStdout, topleft);
+#elif (CLIENT_OS == OS_OS2)
+  BYTE space[] = " ";
+  VioScrollUp(0, 0, -1, -1, -1, space, 0);
 #endif
 
 }
@@ -582,10 +806,10 @@ s32 Client::ReadConfig(void)
     LogScreen( "Error reading ini file - Using defaults\n" );
   }
 
-#define INIGETKEY(key) (ini.getkey(OPTION_SECTION, options[key][0], options[key][2])[0])
+#define INIGETKEY(key) (ini.getkey(OPTION_SECTION, options[key].name, options[key].defaultsetting)[0])
 
   INIGETKEY(CONF_ID).copyto(id, sizeof(id));
-  INIGETKEY(CONF_THRESHOLD).copyto(buffer, sizeof(buffer));
+  INIGETKEY(CONF_THRESHOLDI).copyto(buffer, sizeof(buffer));
   p = strchr( buffer, ':' );
   if (p == NULL) {
     outthreshold[0]=inthreshold[0]=atoi(buffer);
@@ -594,7 +818,7 @@ s32 Client::ReadConfig(void)
     *p=0;
     inthreshold[0]=atoi(buffer);
   }
-  INIGETKEY(CONF_THRESHOLD2).copyto(buffer, sizeof(buffer));
+  INIGETKEY(CONF_THRESHOLDI2).copyto(buffer, sizeof(buffer));
   p = strchr( buffer, ':' );
   if (p == NULL) {
     outthreshold[1]=inthreshold[1]=atoi(buffer);
@@ -609,7 +833,6 @@ s32 Client::ReadConfig(void)
   timeslice = INIGETKEY(CONF_TIMESLICE);
   niceness = INIGETKEY(CONF_NICENESS);
   INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(logname));
-  firemode = INIGETKEY(CONF_FIREMODE);
   INIGETKEY(CONF_KEYPROXY).copyto(keyproxy, sizeof(keyproxy));
   keyport = INIGETKEY(CONF_KEYPORT);
   INIGETKEY(CONF_HTTPPROXY).copyto(httpproxy, sizeof(httpproxy));
@@ -710,7 +933,6 @@ void Client::ValidateConfig( void )
   if ( blockcount < 0 ) blockcount = 0;
   if ( timeslice < 1 ) timeslice = 0x10000;
   if ( niceness < 0 || niceness > 2 ) niceness = 0;
-  if ( firemode < 1 || firemode > 5 ) firemode = 1;
   if ( uuehttpmode < 0 || uuehttpmode > 5 ) uuehttpmode = 0;
 #if (CLIENT_CPU == CPU_X86)
   if ( cputype < -1 || cputype > 5) cputype = -1;
@@ -729,25 +951,6 @@ void Client::ValidateConfig( void )
 
   if (strlen(checkpoint_file[0])==0) strcpy(checkpoint_file[0],"none");
   if (strlen(checkpoint_file[1])==0) strcpy(checkpoint_file[1],"none");
-
-  switch ( firemode )
-  {
-    case 1:
-      strcpy( keyproxy, "us.v27.distributed.net" );
-      uuehttpmode = 0;
-      break;
-    case 2:
-      strcpy( keyproxy, "us23.v27.distributed.net" );
-      uuehttpmode = 0;
-      break;
-    case 3:
-      strcpy( keyproxy, "us23.v27.distributed.net" );
-      uuehttpmode = 1;
-      break;
-    case 4:
-      uuehttpmode = 3;
-      break;
-  }
 
   CheckForcedKeyport();
 
@@ -893,13 +1096,13 @@ s32 Client::WriteConfig(void)
 
   ini.ReadIniFile(inifilename);
 
-#define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, options[key][0], IniString(value))
+#define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, options[key].name, IniString(value))
 
   INISETKEY( CONF_ID, id );
   sprintf(buffer,"%d:%d",(int)inthreshold[0],(int)outthreshold[0]);
-  INISETKEY( CONF_THRESHOLD, buffer );
+  INISETKEY( CONF_THRESHOLDI, buffer );
   sprintf(buffer,"%d:%d",(int)inthreshold[1],(int)outthreshold[1]);
-  INISETKEY( CONF_THRESHOLD2, buffer );
+  INISETKEY( CONF_THRESHOLDI2, buffer );
   INISETKEY( CONF_COUNT, blockcount );
   sprintf(hours,"%u.%02u", (unsigned)(minutes/60), 
     (unsigned)(minutes%60)); //1.000000 hours looks silly
@@ -907,7 +1110,6 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_TIMESLICE, timeslice );
   INISETKEY( CONF_NICENESS, niceness );
   INISETKEY( CONF_LOGNAME, logname );
-  INISETKEY( CONF_FIREMODE, firemode );
   INISETKEY( CONF_KEYPROXY, keyproxy );
   INISETKEY( CONF_KEYPORT, keyport );
   INISETKEY( CONF_HTTPPROXY, httpproxy );
@@ -928,8 +1130,45 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_CHECKPOINT, checkpoint_file[0] );
   INISETKEY( CONF_CHECKPOINT2, checkpoint_file[1] );
   INISETKEY( CONF_RANDOMPREFIX, randomprefix );
-  INISETKEY( CONF_PREFERREDCONTEST, (s32)(preferred_contest_id + 1) );
   INISETKEY( CONF_PREFERREDBLOCKSIZE, preferred_blocksize );
+  INISETKEY( CONF_PREFERREDCONTEST, (s32)(preferred_contest_id + 1) );
+  INISETKEY( CONF_QUIETMODE, quietmode );
+  INISETKEY( CONF_NOEXITFILECHECK, noexitfilecheck );
+  INISETKEY( CONF_PERCENTOFF, percentprintingoff );
+  INISETKEY( CONF_FREQUENT, connectoften );
+  INISETKEY( CONF_NODISK, nodiskbuffers );
+  INISETKEY( CONF_NOFALLBACK, nofallback );
+  INISETKEY( CONF_CKTIME, checkpoint_min );
+  INISETKEY( CONF_NETTIMEOUT, nettimeout );
+  INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
+
+  if (offlinemode == 0)
+    {
+    IniRecord *tempptr;
+    tempptr = ini.findfirst(OPTION_SECTION, "runbuffers");
+    if (tempptr) tempptr->values.Erase();
+    tempptr=NULL;
+    tempptr = ini.findfirst(OPTION_SECTION, "runoffline");
+    if (tempptr) tempptr->values.Erase();
+    }
+  else if (offlinemode == 1)
+    {
+    IniRecord *tempptr;
+    s32 tempvalue;
+    tempptr = ini.findfirst(OPTION_SECTION, "runbuffers");
+    if (tempptr) tempptr->values.Erase();
+    tempvalue=1;
+    ini.setrecord(OPTION_SECTION, "runoffline", IniString(tempvalue));
+    }
+  else if (offlinemode == 2)
+    {
+    IniRecord *tempptr;
+    s32 tempvalue;
+    tempptr = ini.findfirst(OPTION_SECTION, "runoffline");
+    if (tempptr) tempptr->values.Erase();
+    tempvalue=1;
+    ini.setrecord(OPTION_SECTION, "runbuffers", IniString(tempvalue));
+    };
 
 #undef INISETKEY
 
@@ -940,7 +1179,7 @@ s32 Client::WriteConfig(void)
   ini.setrecord(OPTION_SECTION, "lurk",  IniString(lurk));
 #endif
 
-#define INIFIND(key) ini.findfirst(OPTION_SECTION, options[key][0])
+#define INIFIND(key) ini.findfirst(OPTION_SECTION, options[key].name)
 
   if (uuehttpmode <= 1)
   {
@@ -951,24 +1190,6 @@ s32 Client::WriteConfig(void)
     ptr = INIFIND( CONF_HTTPPORT );
     if (ptr) ptr->values.Erase();
     ptr = INIFIND( CONF_HTTPID );
-    if (ptr) ptr->values.Erase();
-  }
-
-  if (firemode < 4)
-  {
-    // wipe keyproxy and keyport
-    IniRecord *ptr;
-    ptr = INIFIND( CONF_KEYPROXY );
-    if (ptr) ptr->values.Erase();
-    ptr = INIFIND( CONF_KEYPORT );
-    if (ptr) ptr->values.Erase();
-  }
-
-  if (firemode < 5)
-  {
-    // wipe uuehttpmode
-    IniRecord *ptr;
-    ptr = INIFIND( CONF_UUEHTTPMODE );
     if (ptr) ptr->values.Erase();
   }
 
@@ -1982,7 +2203,6 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting uue/http mode to %s\n",argv[i+1]);
         uuehttpmode = (s32) atoi( argv[i+1] );
-        firemode = 5;
         inimissing=0; // Don't complain if the inifile is missing
         argv[i][0] = argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2019,7 +2239,6 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
       {
         LogScreenf("Setting keyserver to %s\n",argv[i+1]);
         strcpy( keyproxy, argv[i+1] );
-        firemode=5;
         inimissing=0; // Don't complain if the inifile is missing
         argv[i][0] = argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2028,7 +2247,6 @@ void Client::ParseCommandlineOptions(int argc, char *argv[], s32 &inimissing)
       {
         LogScreenf("Setting keyserver port to %s\n",argv[i+1]);
         keyport = (s32) atoi(argv[i+1]);
-        firemode=5;
         inimissing=0; // Don't complain if the inifile is missing
         argv[i][0] = argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
