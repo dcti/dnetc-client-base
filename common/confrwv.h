@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.h,v $
+// Revision 1.3  1998/12/28 03:32:47  silby
+// WIN32GUI internalread/writeconfig procedures are back.
+//
 // Revision 1.2  1998/12/25 02:32:11  silby
 // ini writing functions are now not part of client object.
 // This allows the win32 (and other) guis to have
@@ -27,5 +30,10 @@ int ReadConfig(Client *client);
 void ValidateConfig(Client *client);
 int WriteConfig(Client *client, int writefull /* defaults to 0*/);
 void RefreshRandomPrefix( Client *client );
+
+#if defined(WIN32GUI)
+void InternalReadConfig( IniSection &ini );
+void InternalWriteConfig( IniSection &ini );
+#endif
 
 #endif // __CONFRWV_H__

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.15  1998/12/28 03:32:47  silby
+// WIN32GUI internalread/writeconfig procedures are back.
+//
 // Revision 1.14  1998/12/28 03:03:40  silby
 // Fixed problem with filenames having whitespace stripped from them.
 //
@@ -83,7 +86,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.14 1998/12/28 03:03:40 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.15 1998/12/28 03:32:47 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -319,9 +322,9 @@ int ReadConfig(Client *client)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     client->usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
   #endif
 
-// $$  #if defined(NEEDVIRTUALMETHODS)
-//    InternalReadConfig(ini);
-//  #endif
+  #if defined(WIN32GUI)
+  InternalReadConfig(ini);
+  #endif
 
   ValidateConfig(client);
 
@@ -430,10 +433,6 @@ void ValidateConfig(Client *client) //DO NOT PRINT TO SCREEN HERE!
     client->checkpoint_file[0][0]=0;
 
   //validate numcpu is now in SelectCore(); //1998/06/21 cyrus
-
-// $$ #if defined(NEEDVIRTUALMETHODS)
-//  InternalValidateConfig();
-//#endif
 
   InitRandom2( client->id );
 }
@@ -666,9 +665,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       }
     } /* if (writefull != 0) */
   
-// $$  #if defined(NEEDVIRTUALMETHODS)
-//    InternalWriteConfig(ini);
-//  #endif
+  #if defined(WIN32GUI)
+  InternalWriteConfig(ini);
+  #endif
   
   IniRecord *tempptr;
   if ((tempptr = ini.findfirst(OPTION_SECTION, "runhidden"))!=NULL)
