@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.65  1998/07/07 07:27:44  jlawson
+# added -static to link options for alpha-gcc
+#
 # Revision 1.64  1998/07/05 13:08:50  cyruspatel
 # Created new pathwork.cpp which contains functions for determining/setting
 # the "work directory" and pathifying a filename that has no dirspec.
@@ -583,6 +586,7 @@ case "$1" in
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lncurses"
 	;;
 
@@ -591,6 +595,7 @@ case "$1" in
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LDFLAGS="-static"
 	TARGET_LIBS="-lncurses -lpthread"
 	;;
 
