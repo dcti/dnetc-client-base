@@ -5,16 +5,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: triggers.h,v $
+// Revision 1.4  1998/11/02 04:43:41  cyp
+// win16 no longer polls for ^C. Created [Raise|Clear]PauseRequestTrigger().
+//
 // Revision 1.3  1998/10/04 17:52:50  silby
-// Made CliSetupSignals public because win32 needs to call it when console is initted.
+// Made CliSetupSignals public because win32 needs to call 
+// it when console is initted.
 //
 // Revision 1.2  1998/09/17 15:11:31  cyp
 // Implemented -HUP handling. (See main() for implementation details)
 //
 // Revision 1.1  1998/08/10 20:12:16  cyruspatel
 // Created
-//
-//
 
 #ifndef __TRIGGERS_H__
 #define __TRIGGERS_H__
@@ -35,6 +37,9 @@ extern int RaiseExitRequestTrigger(void);
 //set the restart AND exit triggers
 extern int RaiseRestartRequestTrigger(void); 
 
+//set the pause request trigger
+extern int RaisePauseRequestTrigger(void);
+
 //refresh/get the exit trigger state
 //preferred method for main thread 
 extern int CheckExitRequestTrigger(void); 
@@ -42,6 +47,9 @@ extern int CheckExitRequestTrigger(void);
 //refresh/get the pause trigger state
 //preferred method for main thread 
 extern int CheckPauseRequestTrigger(void); 
+
+//clear the pause request trigger
+extern int ClearPauseRequestTrigger(void);
 
 //refresh/get the restart trigger state
 //implemented as do { main() } while CheckRestartRequestTrigger

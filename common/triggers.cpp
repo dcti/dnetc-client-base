@@ -16,6 +16,9 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.8  1998/11/02 04:43:42  cyp
+// win16 no longer polls for ^C. Created [Raise|Clear]PauseRequestTrigger().
+//
 // Revision 1.7  1998/10/04 17:52:49  silby
 // Made CliSetupSignals public because win32 needs to call it when console is initted.
 //
@@ -39,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.7 1998/10/04 17:52:49 silby Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.8 1998/11/02 04:43:42 cyp Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -48,11 +51,8 @@ return "@(#)$Id: triggers.cpp,v 1.7 1998/10/04 17:52:49 silby Exp $"; }
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "pathwork.h"  // GetFullPathForFilename()
 #include "clitime.h"   // CliGetTimeString(NULL,1)
-#include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
+#include "logstuff.h"  // LogScreen()
 #include "triggers.h"  // for xxx_CHECKTIME defines
-#ifdef DONT_USE_PATHWORK
-#define GetFullPathForFilename(x) (x)
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -96,6 +96,27 @@ int RaiseRestartRequestTrigger(void)
   trigstatics.exittrig.trigger = TRIGSETBY_INTERNAL;
   trigstatics.huptrig.trigger = TRIGSETBY_INTERNAL;
   return (oldstate);
+}  
+
+int RaisePauseRequestTrigger(void) 
+{ 
+  if (!trigstatics.isinit)
+    InitializeTriggers( NULL, NULL );
+  int oldstate = trigstatics.pausetrig.trigger;
+  trigstatics.pausetrig.trigger = TRIGSETBY_INTERNAL;
+  return (oldstate);
+}  
+
+int ClearPauseRequestTrigger(void)
+{
+  if (!trigstatics.isinit)
+    InitializeTriggers( NULL, NULL );
+  else if ( trigstatics.pausetrig.flagfile && 
+    access( GetFullPathForFilename( trigstatics.pausetrig.flagfile ),0)==0)
+    unlink( GetFullPathForFilename( trigstatics.pausetrig.flagfile ) );
+  int oldstate = trigstatics.pausetrig.trigger;
+  trigstatics.pausetrig.trigger = 0;
+  return oldstate;
 }  
 
 int CheckExitRequestTriggerNoIO(void) 
@@ -163,7 +184,7 @@ int CheckExitRequestTrigger(void)
       InternalPollForFlagFiles( &trigstatics.exittrig, 0 );
     if ( trigstatics.exittrig.trigger )
       {
-      LogScreen("\n[%s] *Break*%s\n", CliGetTimeString(NULL,1),
+      LogScreen("*Break*%s\n", 
        (trigstatics.exittrig.trigger == TRIGSETBY_EXTERNAL)?
          (" (found exit flag file)"): 
          ((trigstatics.huptrig.trigger)?(" Restarting..."):
@@ -183,22 +204,19 @@ int CheckPauseRequestTrigger(void)
     InitializeTriggers( NULL, NULL );
   if ( CheckExitRequestTrigger() )   //only check if not exiting
     return 0;
-  int oldstate = trigstatics.pausetrig.trigger;
-  if ( !trigstatics.pausetrig.incheck )
+  if ( !trigstatics.pausetrig.incheck && 
+       trigstatics.pausetrig.trigger != TRIGSETBY_INTERNAL )
     {
     ++trigstatics.pausetrig.incheck;
     InternalPollForFlagFiles( &trigstatics.pausetrig, 1 );
     --trigstatics.pausetrig.incheck;
     }
-  if (oldstate != trigstatics.pausetrig.trigger)
-    Log( "\n[%s] %s\n", CliGetTimeString(NULL,1),
-       ((oldstate)?("Running again after pause..."):("Paused...")) );
   return( trigstatics.pausetrig.trigger );
 }   
 
 // -----------------------------------------------------------------------
 
-int DeinitializeTriggers(void)  //whats there to do?
+int DeinitializeTriggers(void)
 {
   trigstatics.isinit=0;
   int huptrig = trigstatics.huptrig.trigger;
@@ -332,12 +350,14 @@ void CliSignalHandler( int )
 #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
 void CliPollDrivenBreakCheck( void )
 {
+  #if 0
   if (kbhit())
     {
     int key = getch();
     if ( key == 3 ) RaiseExitRequestTrigger();
     else if (!key ) getch();
     }
+  #endif
   return;  
 }      
 #define CLISIGHANDLER_IS_SPECIAL
