@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.26  1999/02/09 23:57:26  cyp
+// The CONNECT_IFACEMASK default is now internal to lurk.
+//
 // Revision 1.25  1999/02/09 23:06:40  remi
 // CONF_IFACEMASK default is now set by calling dialup.GetDefaultIFaceMask().
 //
@@ -106,7 +109,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.25 1999/02/09 23:06:40 remi Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.26 1999/02/09 23:57:26 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -327,7 +330,6 @@ int Client::Configure( void )
     {
     conf_options[CONF_CONNIFACEMASK].optionscreen=CONF_MENU_NET;
     conf_options[CONF_CONNIFACEMASK].thevariable=&dialup.connifacemask;
-    conf_options[CONF_CONNIFACEMASK].defaultsetting=dialup.GetDefaultIFaceMask();
     }
   if ((dupcap & CONNECT_DOD)!=0)
     {
