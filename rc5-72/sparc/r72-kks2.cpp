@@ -8,10 +8,20 @@
 **
 ** In order to ease the tests, this core is designed to replace the
 ** ANSI 2-pipe core.
+** version 0.2 (03/29/2003) : Rescheduled instructions for better dispatching
 **
 ** Inspired in part by the RC5-64 sparc core by Lawrence Butcher
 ** (lbutcher@eng.sun.com), Remi Guyomarch (rguyom@mail.dotcom.fr), et. al.
 **
+** Sparc's architecture :
+**	- 2 independant integer units.
+**	- 1 load/store unit.
+**	- Can dispatch 3 instructions per clock.
+**
+** Bottlenecks :
+**	- 2 shifts cannot be dispatched in the same cycle.
+**	- A shift must be the first instruction to dispatch
+**	  from an integer instruction pair.
 */
 
 #include "ccoreio.h"
@@ -36,7 +46,7 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
 
 	#define ASM_ADD(res, op1, op2)		\
 		__asm__ volatile ("add %0,%1,%2" : "=r" (res) : "r" (op1), "r" (op2));
-	#define ASM_COMP(res, op)	\
+	#define ASM_SUB(res, dummy, op)	\
 		__asm__ volatile ("subfic %0,%1,32" : "=r" (res) : "r" (op));
 	#define ASM_OR(res, op1, op2)		\
 		__asm__ volatile ("or %0,%1,%2" : "=r" (res) : "r" (op1), "r" (op2));
@@ -51,12 +61,12 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
 	#define ASM_SR29(res, op)		\
 		__asm__ volatile ("srwi %0,%1,29" : "=r" (res) : "r" (op));
 
-#elsif (0 == 1)
-/* ASM Macros, requires gcc to compile */
+#elif defined (__GNUC__)
+
 	#define ASM_ADD(res, op1, op2)		\
 		__asm__ volatile ("add %1, %2, %0" : "=r" (res) : "r" (op1), "r" (op2));
-	#define ASM_COMP(res, wsize, op)	\
-		__asm__ volatile ("sub %1, %2, %0" : "=r" (res) : "rc" (wsize), "rc" (op));
+	#define ASM_SUB(res, wsize, op)	\
+		__asm__ volatile ("sub %1, %2, %0" : "=r" (res) : "rc" (wzise), "rc" (op));
 	#define ASM_OR(res, op1, op2)		\
 		__asm__ volatile ("or %1, %2, %0" : "=r" (res) : "r" (op1), "r" (op2));
 	#define ASM_XOR(res, op1, op2)	\
@@ -71,23 +81,15 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
 		__asm__ volatile ("srl %1, 29, %0" : "=r" (res) : "r" (op));
 
 #else
-/* C macros, compiles faster with sun compiler than asm macros */
-        #define ASM_ADD(res, op1, op2)          \
-		res = op1 + op2;
-        #define ASM_COMP(res, wsize, op)        \
-		res = wsize - op;
-        #define ASM_OR(res, op1, op2)           \
-		res = op1 | op2;
-        #define ASM_XOR(res, op1, op2)  \
-		res = op1 ^ op2;
-        #define ASM_SL(res, op, dist)           \
-		res = op << dist;
-        #define ASM_SR(res, op, dist)           \
-		res = op >> dist;
-        #define ASM_SL3(res, op)                \
-		res = op << 3;
-        #define ASM_SR29(res, op)               \
-		res = op >> 29;
+
+	#define ASM_ADD(res, op1, op2)		(res) = (op1) + (op2);
+	#define ASM_SUB(res, wsize, op)		(res) = (wsize) - (op);
+	#define ASM_OR(res, op1, op2)		(res) = (op1) | (op2);
+	#define ASM_XOR(res, op1, op2)		(res) = (op1) ^ (op2);
+	#define ASM_SL(res, op, dist)		(res) = (op) << (dist);
+	#define ASM_SR(res, op, dist)		(res) = (op) >> (dist);
+	#define ASM_SL3(res, op)			(res) <<= 3u;
+	#define ASM_SR29(res, op)			(res) >>= 29u;
 
 #endif
 
@@ -95,210 +97,276 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
 /*
 ** MIX_1 macro :
 ** PIPE A						PIPE B
-** Ta = Aa + Ba					Tb = Ab + Bb
-** Sk += Q
+** Ta = SaA + Ba				Tb = SbA + Bb
+** Sa[store] = SaA				Sb[store] = SbA
+** SKa = Sa[load]				SKb = SKa
 ** La += Ta						Lb += Tb
 ** Ba = La = ROTL(La, Ta)		Bb = Lb = ROTL(Lb, Tb)
-** Sa = Sk + Aa					Sb = Sk + Aa
+** Sa = SKa + SaA				Sb = SKb + SbA
 ** Sa += Ba						Sb += Bb
-** Aa = Sa = ROTL3(Sa)			Ab = Sb = ROTL3(Sb)
-** Sa[index] = Aa				Sb[index] = Ab
+** SaA = Sa = ROTL3(Sa)			SbA = Sb = ROTL3(Sb)
 */
 
-#define MIX_1(index, Aa, Ab, La, Lb, Ba, Bb)	\
-		ASM_ADD(Tmp, Aa, Ba)		\
-		ASM_ADD(Sk, Sk, q)		\
-		ASM_ADD(TRes, La, Tmp)		\
-		ASM_COMP(RShft, word_size, Tmp)	\
-		ASM_SL(La, TRes, Tmp)		\
-		ASM_SR(TRes, TRes, RShft)	\
-		ASM_ADD(Tmp, Ab, Bb)		\
-		ASM_OR(La, La, TRes)		\
-		ASM_ADD(TRes, Lb, Tmp)		\
-		ASM_COMP(RShft, word_size, Tmp)	\
-		ASM_SL(Lb, TRes, Tmp)		\
-		ASM_SR(TRes, TRes, RShft)	\
-		ASM_ADD(Aa, Aa, Sk)		\
-		ASM_ADD(Ab, Ab, Sk)		\
-		ASM_OR(Lb, Lb, TRes)		\
-		ASM_ADD(Aa, Aa, La)		\
-		ASM_ADD(Ab, Ab, Lb)		\
-		ASM_SL3(TRes, Aa)		\
-		ASM_SL3(Tmp, Ab)		\
-		ASM_SR29(Aa, Aa)		\
-		ASM_SR29(Ab, Ab)		\
-		ASM_OR(Aa, Aa, TRes)		\
-		ASM_OR(Ab, Ab, Tmp)		\
-		Sa[index] = Aa;			\
-		Sb[index] = Ab
+#define MIX_1(load, store, La, Lb, Ba, Bb)	\
+	/*	ASM_ADD(Ta, SaA, Ba)	*/		\
+	ASM_OR(SbA, SbA, TSb)				\
+		ASM_ADD(TSa, La, Ta)			\
+		Sa[store] = SaA;				\
+										\
+		ASM_ADD(Tb, SbA, Bb)			\
+		ASM_SUB(SCa, word_size, Ta)		\
+		Sb[store] = SbA;				\
+										\
+		ASM_SL(La, TSa, Ta)				\
+		ASM_ADD(TSb, Lb, Tb)			\
+		SKa = Sa[load];					\
+										\
+		ASM_SR(TSa, TSa, SCa)			\
+		ASM_SUB(SCb, word_size, Tb)		\
+										\
+		ASM_SL(Lb, TSb, Tb)				\
+		ASM_OR(La, La, TSa)				\
+										\
+		ASM_SR(TSb, TSb, SCb)			\
+		ASM_ADD(SaA, SaA, SKa)			\
+										\
+		ASM_OR(Lb, Lb, TSb)				\
+		ASM_ADD(SaA, SaA, La)			\
+										\
+		ASM_SL3(TSa, SaA)				\
+		ASM_ADD(SbA, SbA, SKa)			\
+										\
+		ASM_SR29(SaA, SaA)				\
+		ASM_ADD(SbA, SbA, Lb)			\
+										\
+		ASM_SL3(TSb, SbA)				\
+		ASM_OR(SaA, SaA, TSa)			\
+										\
+		ASM_SR29(SbA, SbA)				\
+	/*	ASM_OR(SbA, SbA, TSb)	*/		\
+		ASM_ADD(Ta, SaA, La)
 
 
 /*
 ** MIX_2 macro :
 ** PIPE A						PIPE B
-** Sk = Sa[index]				q = Sb[index]
-** Ta = Aa + Ba					Tb = Ab + Bb
+** Ta = SaA + Ba				Tb = SbA + Bb
+** Sa[store] = SaA				Sb[store] = SbA
+** SKa = Sa[load]				SKb = Sb[load]
 ** La += Ta						Lb += Tb
 ** Ba = La = ROTL(La, Ta)		Bb = Lb = ROTL(Lb, Tb)
-** Sa = Sk + Aa					Sb = q + Aa
+** Sa = SKa + SaA				Sb = SKb + SbA
 ** Sa += Ba						Sb += Bb
-** Aa = Sa = ROTL3(Sa)			Ab = Sb = ROTL3(Sb)
-** Sa[index] = Aa				Sb[index] = Ab
+** SaA = Sa = ROTL3(Sa)			SbA = Sb = ROTL3(Sb)
 */
 
-#define MIX_2(index, Aa, Ab, La, Lb, Ba, Bb)	\
-		Sk = Sa[index];			\
-		ASM_ADD(Tmp, Aa, Ba)		\
-		q = Sb[index];			\
-		ASM_ADD(TRes, La, Tmp)		\
-		ASM_COMP(RShft, word_size, Tmp)	\
-		ASM_SL(La, TRes, Tmp)		\
-		ASM_SR(TRes, TRes, RShft)	\
-		ASM_ADD(Tmp, Ab, Bb)		\
-		ASM_OR(La, La, TRes)		\
-		ASM_ADD(TRes, Lb, Tmp)		\
-		ASM_COMP(RShft, word_size, Tmp)	\
-		ASM_SL(Lb, TRes, Tmp)		\
-		ASM_SR(TRes, TRes, RShft)	\
-		ASM_ADD(Aa, Aa, Sk)		\
-		ASM_ADD(Ab, Ab, q)		\
-		ASM_OR(Lb, Lb, TRes)		\
-		ASM_ADD(Aa, Aa, La)		\
-		ASM_ADD(Ab, Ab, Lb)		\
-		ASM_SL3(TRes, Aa)		\
-		ASM_SL3(Tmp, Ab)		\
-		ASM_SR29(Aa, Aa)		\
-		ASM_SR29(Ab, Ab)		\
-		ASM_OR(Aa, Aa, TRes)		\
-		ASM_OR(Ab, Ab, Tmp)		\
-		Sa[index] = Aa;			\
-		Sb[index] = Ab
+#define MIX_2(load, store, La, Lb, Ba, Bb)	\
+	/*	ASM_ADD(Ta, SaA, Ba)	*/		\
+	ASM_OR(SbA, SbA, TSb)				\
+		ASM_ADD(TSa, La, Ta)			\
+		Sa[store] = SaA;				\
+										\
+		ASM_ADD(Tb, SbA, Bb)			\
+		ASM_SUB(SCa, word_size, Ta)		\
+		Sb[store] = SbA;				\
+										\
+		ASM_SL(La, TSa, Ta)				\
+		ASM_ADD(TSb, Lb, Tb)			\
+		SKa = Sa[load];					\
+										\
+		ASM_SR(TSa, TSa, SCa)			\
+		ASM_SUB(SCb, word_size, Tb)		\
+		SKb = Sb[load];					\
+										\
+		ASM_SL(Lb, TSb, Tb)				\
+		ASM_OR(La, La, TSa)				\
+										\
+		ASM_SR(TSb, TSb, SCb)			\
+		ASM_ADD(SaA, SaA, SKa)			\
+										\
+		ASM_OR(Lb, Lb, TSb)				\
+		ASM_ADD(SaA, SaA, La)			\
+										\
+		ASM_SL3(TSa, SaA)				\
+		ASM_ADD(SbA, SbA, SKb)			\
+										\
+		ASM_SR29(SaA, SaA)				\
+		ASM_ADD(SbA, SbA, Lb)			\
+										\
+		ASM_SL3(TSb, SbA)				\
+		ASM_OR(SaA, SaA, TSa)			\
+										\
+		ASM_SR29(SbA, SbA)				\
+	/*	ASM_OR(SbA, SbA, TSb)	*/		\
+		ASM_ADD(Ta, SaA, La)
 
 
 /*
 ** ROUND_1 macro :
 ** PIPE A						PIPE B
-** Sk = Sa[index]				q = Sb[index]
-** Ta = Aa + Ba					Tb = Ab + Bb
+** SKa = Sa[load]				SKb = Sb[load]
+** Ta = SaA + Ba				Tb = SbA + Bb
 ** La += Ta						Lb += Tb
 ** Ba = La = ROTL(La, Ta)		Bb = Lb = ROTL(Lb, Tb)
-** Sa = Sk + Aa					Sb = q + Aa
+** Sa = SKa + SaA				Sb = SKb + SbA
 ** Sa += Ba						Sb += Bb
-** Aa = Sa = ROTL3(Sa)			Ab = Sb = ROTL3(Sb)
+** SaA = Sa = ROTL3(Sa)			SbA = Sb = ROTL3(Sb)
 ** RaA ^= RaB					RbA ^= RbB
 ** RaA = ROTL(RaA, RaB)			RbA = ROTL(RbA, RbB)
-** RaA += Aa					RbA += Ab
+** RaA += SaA					RbA += SbA
 */
 
-#define ROUND_1(index, Aa, Ab, La, Lb, Ba, Bb)	\
-		Sk = Sa[index];			\
-		ASM_ADD(Tmp, Aa, Ba)		\
-		q = Sb[index];			\
-		ASM_ADD(TRes, La, Tmp)		\
-		ASM_COMP(RShft, word_size, Tmp)	\
-		ASM_SL(La, TRes, Tmp)		\
-		ASM_SR(TRes, TRes, RShft)	\
-		ASM_ADD(Tmp, Ab, Bb)		\
-		ASM_OR(La, La, TRes)		\
-		ASM_ADD(TRes, Lb, Tmp)		\
-		ASM_COMP(RShft, word_size, Tmp)	\
-		ASM_SL(Lb, TRes, Tmp)		\
-		ASM_SR(TRes, TRes, RShft)	\
-		ASM_ADD(Aa, Aa, Sk)		\
-		ASM_ADD(Ab, Ab, q)		\
-		ASM_OR(Lb, Lb, TRes)		\
-		ASM_ADD(Aa, Aa, La)		\
-		ASM_ADD(Ab, Ab, Lb)		\
-		ASM_SL3(TRes, Aa)		\
-		ASM_SL3(Tmp, Ab)		\
-		ASM_SR29(Aa, Aa)		\
-		ASM_SR29(Ab, Ab)		\
-		ASM_OR(Aa, Aa, TRes)		\
-		ASM_OR(Ab, Ab, Tmp)		\
-		ASM_XOR(RaA, RaA, RaB)		\
-		ASM_XOR(RbA, RbA, RbB)		\
-		ASM_COMP(RShft, word_size, RaB)	\
-		ASM_SL(TRes, RaA, RaB)		\
-		ASM_SR(RaA, RaA, RShft)		\
-		ASM_COMP(RShft, word_size, RbB)	\
-		ASM_SL(Tmp, RbA, RbB)		\
-		ASM_SR(RbA, RbA, RShft)		\
-		ASM_OR(RaA, RaA, TRes)		\
-		ASM_OR(RbA, RbA, Tmp)		\
-		ASM_ADD(RaA, RaA, Aa)		\
-		ASM_ADD(RbA, RbA, Ab)
+#define ROUND_1(load, La, Lb, Ba, Bb)	\
+		ASM_ADD(Ta, SaA, Ba)			\
+		ASM_ADD(Tb, SbA, Bb)			\
+		SKa = Sa[load];					\
+										\
+		ASM_ADD(TSa, La, Ta)			\
+		ASM_SUB(SCa, word_size, Ta)		\
+		SKb = Sb[load];					\
+										\
+		ASM_SL(La, TSa, Ta)				\
+		ASM_ADD(TSb, Lb, Tb)			\
+										\
+		ASM_SR(TSa, TSa, SCa)			\
+		ASM_SUB(SCb, word_size, Tb)		\
+										\
+		ASM_SL(Lb, TSb, Tb)				\
+		ASM_OR(La, La, TSa)				\
+										\
+		ASM_SR(TSb, TSb, SCb)			\
+		ASM_ADD(SaA, SaA, SKa)			\
+										\
+		ASM_OR(Lb, Lb, TSb)				\
+		ASM_ADD(SaA, SaA, La)			\
+										\
+		ASM_SL3(TSa, SaA)				\
+		ASM_ADD(SbA, SbA, SKb)			\
+										\
+		ASM_SR29(SaA, SaA)				\
+		ASM_ADD(SbA, SbA, Lb)			\
+										\
+		ASM_SL3(TSb, SbA)				\
+		ASM_XOR(RaA, RaA, RaB)			\
+										\
+		ASM_SR29(SbA, SbA)				\
+		ASM_XOR(RbA, RbA, RbB)			\
+										\
+		ASM_SL(Ta, RaA, RaB)			\
+		ASM_SUB(SCa, word_size, RaB)	\
+										\
+		ASM_SL(Tb, RbA, RbB)			\
+		ASM_SUB(SCb, word_size, RbB)	\
+										\
+		ASM_SR(RaA, RaA, SCa)			\
+		ASM_OR(SaA, SaA, TSa)			\
+										\
+		ASM_SR(RbA, RbA, SCb)			\
+		ASM_OR(SbA, SbA, TSb)			\
+										\
+		ASM_OR(RaA, RaA, Ta)			\
+		ASM_OR(RbA, RbA, Tb)			\
+										\
+		ASM_ADD(RaA, RaA, SaA)			\
+		ASM_ADD(RbA, RbA, SbA)
 
 
 /*
 ** ROUND_2 macro :
 ** PIPE A						PIPE B
-** Sk = Sa[index]				q = Sb[index]
-** Ta = Aa + Ba					Tb = Ab + Bb
+** SKa = Sa[load]				SKb = Sb[load]
+** Ta = SaA + Ba				Tb = SbA + Bb
 ** La += Ta						Lb += Tb
 ** Ba = La = ROTL(La, Ta)		Bb = Lb = ROTL(Lb, Tb)
-** Sa = Sk + Aa					Sb = q + Aa
+** Sa = SKa + SaA				Sb = SKb + SbA
 ** Sa += Ba						Sb += Bb
-** Aa = Sa = ROTL3(Sa)			Ab = Sb = ROTL3(Sb)
+** SaA = Sa = ROTL3(Sa)			SbA = Sb = ROTL3(Sb)
 ** RaB ^= RaA					RbB ^= RbA
 ** RaB = ROTL(RaB, RaA)			RbB = ROTL(RbB, RbA)
-** RaB += Aa					RbB += Ab
+** RaB += SaA					RbB += SbA
 */
 
-#define ROUND_2(index, Aa, Ab, La, Lb, Ba, Bb)	\
-		Sk = Sa[index];			\
-		ASM_ADD(Tmp, Aa, Ba)		\
-		q = Sb[index];			\
-		ASM_ADD(TRes, La, Tmp)		\
-		ASM_COMP(RShft, word_size, Tmp)	\
-		ASM_SL(La, TRes, Tmp)		\
-		ASM_SR(TRes, TRes, RShft)	\
-		ASM_ADD(Tmp, Ab, Bb)		\
-		ASM_OR(La, La, TRes)		\
-		ASM_ADD(TRes, Lb, Tmp)		\
-		ASM_COMP(RShft, word_size, Tmp)	\
-		ASM_SL(Lb, TRes, Tmp)		\
-		ASM_SR(TRes, TRes, RShft)	\
-		ASM_ADD(Aa, Aa, Sk)		\
-		ASM_ADD(Ab, Ab, q)		\
-		ASM_OR(Lb, Lb, TRes)		\
-		ASM_ADD(Aa, Aa, La)		\
-		ASM_ADD(Ab, Ab, Lb)		\
-		ASM_SL3(TRes, Aa)		\
-		ASM_SL3(Tmp, Ab)		\
-		ASM_SR29(Aa, Aa)		\
-		ASM_SR29(Ab, Ab)		\
-		ASM_OR(Aa, Aa, TRes)		\
-		ASM_OR(Ab, Ab, Tmp)		\
-		ASM_XOR(RaB, RaB, RaA)		\
-		ASM_XOR(RbB, RbB, RbA)		\
-		ASM_COMP(RShft, word_size, RaA)	\
-		ASM_SL(TRes, RaB, RaA)		\
-		ASM_SR(RaB, RaB, RShft)		\
-		ASM_COMP(RShft, word_size, RbA)	\
-		ASM_SL(Tmp, RbB, RbA)		\
-		ASM_SR(RbB, RbB, RShft)		\
-		ASM_OR(RaB, RaB, TRes)		\
-		ASM_OR(RbB, RbB, Tmp)		\
-		ASM_ADD(RaB, RaB, Aa)		\
-		ASM_ADD(RbB, RbB, Ab)
+#define ROUND_2(load, La, Lb, Ba, Bb)	\
+		ASM_ADD(Ta, SaA, Ba)			\
+		ASM_ADD(Tb, SbA, Bb)			\
+		SKa = Sa[load];					\
+										\
+		ASM_ADD(TSa, La, Ta)			\
+		ASM_SUB(SCa, word_size, Ta)		\
+		SKb = Sb[load];					\
+										\
+		ASM_SL(La, TSa, Ta)				\
+		ASM_ADD(TSb, Lb, Tb)			\
+										\
+		ASM_SR(TSa, TSa, SCa)			\
+		ASM_SUB(SCb, word_size, Tb)		\
+										\
+		ASM_SL(Lb, TSb, Tb)				\
+		ASM_OR(La, La, TSa)				\
+										\
+		ASM_SR(TSb, TSb, SCb)			\
+		ASM_ADD(SaA, SaA, SKa)			\
+										\
+		ASM_OR(Lb, Lb, TSb)				\
+		ASM_ADD(SaA, SaA, La)			\
+										\
+		ASM_SL3(TSa, SaA)				\
+		ASM_ADD(SbA, SbA, SKb)			\
+										\
+		ASM_SR29(SaA, SaA)				\
+		ASM_ADD(SbA, SbA, Lb)			\
+										\
+		ASM_SL3(TSb, SbA)				\
+		ASM_XOR(RaB, RaB, RaA)			\
+										\
+		ASM_SR29(SbA, SbA)				\
+		ASM_XOR(RbB, RbB, RbA)			\
+										\
+		ASM_SL(Ta, RaB, RaA)			\
+		ASM_SUB(SCa, word_size, RaA)	\
+										\
+		ASM_SL(Tb, RbB, RbA)			\
+		ASM_SUB(SCb, word_size, RbA)	\
+										\
+		ASM_SR(RaB, RaB, SCa)			\
+		ASM_OR(SaA, SaA, TSa)			\
+										\
+		ASM_SR(RbB, RbB, SCb)			\
+		ASM_OR(SbA, SbA, TSb)			\
+										\
+		ASM_OR(RaB, RaB, Ta)			\
+		ASM_OR(RbB, RbB, Tb)			\
+										\
+		ASM_ADD(RaB, RaB, SaA)			\
+		ASM_ADD(RbB, RbB, SbA)
 
 
-s32 CDECL rc5_72_unit_func_KKS_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+
+#define key rc5_72unitwork->L0
+
+s32 CDECL rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-	u32 Sa[26], Sb[26];
-	register u32 Sk, q, S2;
+	u32 Sa[52], Sb[52];
 	u32 kiter;
-	const u32 cached_s0 = ROTL3(P);
-	u32 cached_s1, cached_s2, cached_l0, cached_l1;
-	register u32 La0, La1, La2;
-	register u32 Lb0, Lb1, Lb2;
-	register u32 SaA, SbA, TRes, Tmp, RShft;
+	u32 SKa, SKb, cached_s0, cached_s1, cached_s2; 
+	u32 cached_l0, cached_l1;
+	register u32 La0, La1, La2, Ta, TSa, SCa;
+	register u32 Lb0, Lb1, Lb2, Tb, TSb, SCb;
+	register u32 SaA, SbA;
 	register u32 RaA, RaB, RbA, RbB;
-	u32 word_size = 32;
 
 	#ifdef __POWERPC__
 	u32 LShft;				/* PowerPC kludge */
+	#else
+	u32 word_size = 32;
 	#endif
+
+	/*
+	** Initialize the expanded key table.
+	*/
+	
+	for (kiter = 1; kiter < 26; kiter++)
+		Sa[kiter] = Sb[kiter] = P + kiter * Q;
 
 	kiter = *iterations / 2;
 
@@ -307,115 +375,193 @@ s32 CDECL rc5_72_unit_func_KKS_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteration
 	** Also initialize S[0], S[1] and S[2].
 	*/
 
-	q = Q;
-	Sk = P + Q;
-	cached_l0 = ROTL(rc5_72unitwork->L0.lo + cached_s0, cached_s0);
-	cached_s1 = ROTL3(Sk + cached_s0 + cached_l0);
+	cached_s0 = ROTL3(P);
+	cached_l0 = ROTL(key.lo + cached_s0, cached_s0);
+	cached_s1 = ROTL3(Sa[1] + cached_s0 + cached_l0);
 	
-	Tmp = cached_s1 + cached_l0;
-	Sk += q;		/* == P + 2Q */
-	S2 = Sk;
-	cached_l1 = ROTL(rc5_72unitwork->L0.mid + Tmp, Tmp);
-	cached_s2 = ROTL3(Sk + cached_s1 + cached_l1);
+	Ta = cached_s1 + cached_l0;
+	cached_l1 = ROTL(key.mid + Ta, Ta);
+	cached_s2 = ROTL3(Sa[2] + cached_s1 + cached_l1);
 
 	do {
-		Sa[0] = Sb[0] = cached_s0;
-		Sa[1] = Sb[1] = cached_s1;
-		Sa[2] = Sb[2] = cached_s2;
+		Sa[26] = Sb[26] = cached_s0;
+		Sa[27] = Sb[27] = cached_s1;
 		SaA = SbA = cached_s2;
 		La0 = Lb0 = cached_l0;
 		La1 = Lb1 = cached_l1;
-		La2 = rc5_72unitwork->L0.hi;
+		La2 = key.hi;
 		Lb2 = La2 + 1;
-		Sk = S2;
-		q = Q;
 
-		MIX_1( 3, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_1( 4, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_1( 5, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_1( 6, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_1( 7, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_1( 8, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_1( 9, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_1(10, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_1(11, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_1(12, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_1(13, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_1(14, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_1(15, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_1(16, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_1(17, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_1(18, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_1(19, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_1(20, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_1(21, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_1(22, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_1(23, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_1(24, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_1(25, SaA, SbA, La0, Lb0, La2, Lb2);
+		ASM_ADD(Ta, SaA, La1);
+		TSb = 0;					/* Makes the ASM_OR(SbA, SbA, TSb) operation */
+									/* a no-op in the first MIX_1 expansion		 */
 
-		MIX_2( 0, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2( 1, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_2( 2, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2( 3, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2( 4, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_2( 5, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2( 6, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2( 7, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_2( 8, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2( 9, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2(10, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_2(11, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2(12, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2(13, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_2(14, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2(15, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2(16, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_2(17, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2(18, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2(19, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_2(20, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2(21, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2(22, SaA, SbA, La2, Lb2, La1, Lb1);
-		MIX_2(23, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2(24, SaA, SbA, La1, Lb1, La0, Lb0);
-		MIX_2(25, SaA, SbA, La2, Lb2, La1, Lb1);
+		MIX_1( 3, 28, La2, Lb2, La1, Lb1);
+		MIX_1( 4, 29, La0, Lb0, La2, Lb2);
+		MIX_1( 5, 30, La1, Lb1, La0, Lb0);
+		MIX_1( 6, 31, La2, Lb2, La1, Lb1);
+		MIX_1( 7, 32, La0, Lb0, La2, Lb2);
+		MIX_1( 8, 33, La1, Lb1, La0, Lb0);
+		MIX_1( 9, 34, La2, Lb2, La1, Lb1);
+		MIX_1(10, 35, La0, Lb0, La2, Lb2);
+		MIX_1(11, 36, La1, Lb1, La0, Lb0);
+		MIX_1(12, 37, La2, Lb2, La1, Lb1);
+		MIX_1(13, 38, La0, Lb0, La2, Lb2);
+		MIX_1(14, 39, La1, Lb1, La0, Lb0);
+		MIX_1(15, 40, La2, Lb2, La1, Lb1);
+		MIX_1(16, 41, La0, Lb0, La2, Lb2);
+		MIX_1(17, 42, La1, Lb1, La0, Lb0);
+		MIX_1(18, 43, La2, Lb2, La1, Lb1);
+		MIX_1(19, 44, La0, Lb0, La2, Lb2);
+		MIX_1(20, 45, La1, Lb1, La0, Lb0);
+		MIX_1(21, 46, La2, Lb2, La1, Lb1);
+		MIX_1(22, 47, La0, Lb0, La2, Lb2);
+		MIX_1(23, 48, La1, Lb1, La0, Lb0);
+		MIX_1(24, 49, La2, Lb2, La1, Lb1);
+		MIX_1(25, 50, La0, Lb0, La2, Lb2);
 
-		MIX_2( 0, SaA, SbA, La0, Lb0, La2, Lb2);
-		MIX_2( 1, SaA, SbA, La1, Lb1, La0, Lb0);
+		MIX_2(26, 51, La1, Lb1, La0, Lb0);
+		MIX_2(27, 26, La2, Lb2, La1, Lb1);
+		MIX_2(28, 27, La0, Lb0, La2, Lb2);
+		MIX_2(29, 28, La1, Lb1, La0, Lb0);
+		MIX_2(30, 29, La2, Lb2, La1, Lb1);
+		MIX_2(31, 30, La0, Lb0, La2, Lb2);
+		MIX_2(32, 31, La1, Lb1, La0, Lb0);
+		MIX_2(33, 32, La2, Lb2, La1, Lb1);
+		MIX_2(34, 33, La0, Lb0, La2, Lb2);
+		MIX_2(35, 34, La1, Lb1, La0, Lb0);
+		MIX_2(36, 35, La2, Lb2, La1, Lb1);
+		MIX_2(37, 36, La0, Lb0, La2, Lb2);
+		MIX_2(38, 37, La1, Lb1, La0, Lb0);
+		MIX_2(39, 38, La2, Lb2, La1, Lb1);
+		MIX_2(40, 39, La0, Lb0, La2, Lb2);
+		MIX_2(41, 40, La1, Lb1, La0, Lb0);
+		MIX_2(42, 41, La2, Lb2, La1, Lb1);
+		MIX_2(43, 42, La0, Lb0, La2, Lb2);
+		MIX_2(44, 43, La1, Lb1, La0, Lb0);
+		MIX_2(45, 44, La2, Lb2, La1, Lb1);
+		MIX_2(46, 45, La0, Lb0, La2, Lb2);
+		MIX_2(47, 46, La1, Lb1, La0, Lb0);
+		MIX_2(48, 47, La2, Lb2, La1, Lb1);
+		MIX_2(49, 48, La0, Lb0, La2, Lb2);
+		MIX_2(50, 49, La1, Lb1, La0, Lb0);
+		MIX_2(51, 50, La2, Lb2, La1, Lb1);
 
-		RaA = Sa[0] + rc5_72unitwork->plain.lo;
-		RbA = Sb[0] + rc5_72unitwork->plain.lo;
-		RaB = Sa[1] + rc5_72unitwork->plain.hi;
-		RbB = Sb[1] + rc5_72unitwork->plain.hi;
+		/*
+		** MIX_2( 0, La0, Lb0, La2, Lb2);
+		** MIX_2( 1, La1, Lb1, La0, Lb0);
+		*/
 
-		ROUND_1( 2, SaA, SbA, La2, Lb2, La1, Lb1);
-		ROUND_2( 3, SaA, SbA, La0, Lb0, La2, Lb2);
-		ROUND_1( 4, SaA, SbA, La1, Lb1, La0, Lb0);
-		ROUND_2( 5, SaA, SbA, La2, Lb2, La1, Lb1);
-		ROUND_1( 6, SaA, SbA, La0, Lb0, La2, Lb2);
-		ROUND_2( 7, SaA, SbA, La1, Lb1, La0, Lb0);
-		ROUND_1( 8, SaA, SbA, La2, Lb2, La1, Lb1);
-		ROUND_2( 9, SaA, SbA, La0, Lb0, La2, Lb2);
-		ROUND_1(10, SaA, SbA, La1, Lb1, La0, Lb0);
-		ROUND_2(11, SaA, SbA, La2, Lb2, La1, Lb1);
-		ROUND_1(12, SaA, SbA, La0, Lb0, La2, Lb2);
-		ROUND_2(13, SaA, SbA, La1, Lb1, La0, Lb0);
-		ROUND_1(14, SaA, SbA, La2, Lb2, La1, Lb1);
-		ROUND_2(15, SaA, SbA, La0, Lb0, La2, Lb2);
-		ROUND_1(16, SaA, SbA, La1, Lb1, La0, Lb0);
-		ROUND_2(17, SaA, SbA, La2, Lb2, La1, Lb1);
-		ROUND_1(18, SaA, SbA, La0, Lb0, La2, Lb2);
-		ROUND_2(19, SaA, SbA, La1, Lb1, La0, Lb0);
-		ROUND_1(20, SaA, SbA, La2, Lb2, La1, Lb1);
-		ROUND_2(21, SaA, SbA, La0, Lb0, La2, Lb2);
-		ROUND_1(22, SaA, SbA, La1, Lb1, La0, Lb0);
-		ROUND_2(23, SaA, SbA, La2, Lb2, La1, Lb1);
-		ROUND_1(24, SaA, SbA, La0, Lb0, La2, Lb2);
+		ASM_OR(SbA, SbA, TSb);				/* Stage #52 */
+		ASM_ADD(TSa, La0, Ta);
+		Sa[51] = SaA;
 
-		Tmp = rc5_72unitwork->cypher.lo;
-		if (RaA == Tmp || RbA == Tmp) {
-			ROUND_2(25, SaA, SbA, La1, Lb1, La0, Lb0);
+		ASM_ADD(Tb, SbA, Lb2);
+		ASM_SUB(SCa, word_size, Ta);
+		Sb[51] = SbA;
+
+		ASM_SL(La0, TSa, Ta);
+		ASM_ADD(TSb, Lb0, Tb);
+		SKa = Sa[26];
+
+		ASM_SR(TSa, TSa, SCa);
+		ASM_SUB(SCb, word_size, Tb);
+		SKb = Sb[26];
+
+		ASM_SL(Lb0, TSb, Tb);
+		ASM_OR(La0, La0, TSa);
+
+		ASM_SR(TSb, TSb, SCb);
+		ASM_ADD(SaA, SaA, SKa);
+
+		ASM_OR(Lb0, Lb0, TSb);
+		ASM_ADD(SaA, SaA, La0);
+
+		ASM_SL3(TSa, SaA);
+		ASM_ADD(SbA, SbA, SKb);
+
+		ASM_SR29(SaA, SaA);
+		ASM_ADD(SbA, SbA, Lb0);
+
+		ASM_SL3(TSb, SbA);
+		ASM_OR(SaA, SaA, TSa);
+
+		ASM_SR29(SbA, SbA);
+		ASM_ADD(Ta, SaA, La0);
+		
+
+		ASM_OR(SbA, SbA, TSb);				/* Stage #53 */
+		ASM_ADD(TSa, La1, Ta);
+		RaA = rc5_72unitwork->plain.lo;
+
+		ASM_ADD(Tb, SbA, Lb0);
+		ASM_SUB(SCa, word_size, Ta);
+		RbA = rc5_72unitwork->plain.lo;
+
+		ASM_SL(La1, TSa, Ta);
+		ASM_ADD(TSb, Lb1, Tb);
+		SKa = Sa[27];
+
+		ASM_SR(TSa, TSa, SCa);
+		ASM_SUB(SCb, word_size, Tb);
+		SKb = Sb[27];
+
+		ASM_SL(Lb1, TSb, Tb);
+		ASM_OR(La1, La1, TSa);
+		RaB = rc5_72unitwork->plain.hi;
+
+		RaA += SaA;
+		RbA += SbA;
+		RbB = rc5_72unitwork->plain.hi;
+
+		ASM_SR(TSb, TSb, SCb);
+		ASM_ADD(SaA, SaA, SKa);
+
+		ASM_OR(Lb1, Lb1, TSb);
+		ASM_ADD(SaA, SaA, La1);
+
+		ASM_SL3(TSa, SaA);
+		ASM_ADD(SbA, SbA, SKb);
+
+		ASM_SR29(SaA, SaA);
+		ASM_ADD(SbA, SbA, Lb1);
+
+		ASM_SL3(TSb, SbA);
+		ASM_OR(SaA, SaA, TSa);
+
+		ASM_SR29(SbA, SbA);
+		RaB += SaA;
+
+		ASM_OR(SbA, SbA, TSb);
+		RbB += SbA;
+
+		ROUND_1(28, La2, Lb2, La1, Lb1);
+		ROUND_2(29, La0, Lb0, La2, Lb2);
+		ROUND_1(30, La1, Lb1, La0, Lb0);
+		ROUND_2(31, La2, Lb2, La1, Lb1);
+		ROUND_1(32, La0, Lb0, La2, Lb2);
+		ROUND_2(33, La1, Lb1, La0, Lb0);
+		ROUND_1(34, La2, Lb2, La1, Lb1);
+		ROUND_2(35, La0, Lb0, La2, Lb2);
+		ROUND_1(36, La1, Lb1, La0, Lb0);
+		ROUND_2(37, La2, Lb2, La1, Lb1);
+		ROUND_1(38, La0, Lb0, La2, Lb2);
+		ROUND_2(39, La1, Lb1, La0, Lb0);
+		ROUND_1(40, La2, Lb2, La1, Lb1);
+		ROUND_2(41, La0, Lb0, La2, Lb2);
+		ROUND_1(42, La1, Lb1, La0, Lb0);
+		ROUND_2(43, La2, Lb2, La1, Lb1);
+		ROUND_1(44, La0, Lb0, La2, Lb2);
+		ROUND_2(45, La1, Lb1, La0, Lb0);
+		ROUND_1(46, La2, Lb2, La1, Lb1);
+		ROUND_2(47, La0, Lb0, La2, Lb2);
+		ROUND_1(48, La1, Lb1, La0, Lb0);
+		ROUND_2(49, La2, Lb2, La1, Lb1);
+		ROUND_1(50, La0, Lb0, La2, Lb2);
+
+		Ta = rc5_72unitwork->cypher.lo;
+		if (RaA == Ta || RbA == Ta) {
+			ROUND_2(51, La1, Lb1, La0, Lb0);
 		}
 
 		if (RaA == rc5_72unitwork->cypher.lo) {
@@ -442,7 +588,6 @@ s32 CDECL rc5_72_unit_func_KKS_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteration
 			}
 		}
 
-		#define key rc5_72unitwork->L0
 		key.hi = (key.hi + 0x02) & 0x000000FF;
 		if (!key.hi) {
 			key.mid = key.mid + 0x01000000;
@@ -464,17 +609,16 @@ s32 CDECL rc5_72_unit_func_KKS_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteration
 								}
 							}
 							/* key.lo changed */
-							Sk = P + Q;
 							cached_l0 = ROTL(key.lo + cached_s0, cached_s0);
-							cached_s1 = ROTL3(Sk + cached_s0 + cached_l0);
+							cached_s1 = ROTL3(Sa[1] + cached_s0 + cached_l0);
 						}
 					}
 				}
 			}
 			/* key.mid changed */
-			Tmp = cached_s1 + cached_l0;
-			cached_l1 = ROTL(key.mid + Tmp, Tmp);
-			cached_s2 = ROTL3(S2 + cached_s1 + cached_l1);
+			Ta = cached_s1 + cached_l0;
+			cached_l1 = ROTL(key.mid + Ta, Ta);
+			cached_s2 = ROTL3(Sa[2] + cached_s1 + cached_l1);
 		}
 	} while (--kiter);
 
