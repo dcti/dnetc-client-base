@@ -8,6 +8,9 @@
 // ----------------------------------------------------------------------
 //
 // $Log: iniread.cpp,v $
+// Revision 1.24  1999/03/03 01:32:48  jlawson
+// ReadIniFile and WriteIniFile now return < 0 on error, for consistency.
+//
 // Revision 1.23  1999/02/14 04:42:46  cyp
 // strip leading and trailing quotes when reading.
 //
@@ -95,7 +98,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.23 1999/02/14 04:42:46 cyp Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.24 1999/03/03 01:32:48 jlawson Exp $"; }
 #endif
 
 #define COMPILING_INIREAD
@@ -290,13 +293,13 @@ IniRecord *IniSection::findnext()
   return NULL;
 }
 /////////////////////////////////////////////////////////////////////////////
-// returns 0 on error
+// returns -1 on error
 int IniFile::ReadIniFile(const char *Filename, const char *Section)
 {
   // open up the file
   if (Filename) lastfilename = Filename;
   FILE *inf = fopen(lastfilename.c_str(), "r");
-  if (inf == NULL) return 0;             // open failed
+  if (inf == NULL) return -1;             // open failed
 
   // start reading the file
   IniSection *section = 0;
@@ -463,19 +466,19 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
     }
   }
   fclose(inf);
-  return 1;
+  return 0;
 }
 /////////////////////////////////////////////////////////////////////////////
-// returns 0 on error
+// returns -1 on error
 int IniFile::WriteIniFile(const char *Filename)
 {
   if (Filename) lastfilename = Filename;
   FILE *outf = fopen(lastfilename.c_str(), "w");
   if (outf == NULL) 
-    return 0;
+    return -1;
   fwrite(outf);
   fclose(outf);
-  return 1;
+  return 0;
 }
 /////////////////////////////////////////////////////////////////////////////
 
@@ -500,7 +503,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
   buffer[0] = 0;
   if (buffsize == 1)
     return 0;
-  if ( inifile.ReadIniFile( filename ) )
+  if ( inifile.ReadIniFile( filename ) >= 0 )
     {
     if ((inisect = inifile.findsection( sect )) != NULL)
       {
