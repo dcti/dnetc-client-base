@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck-conflict.cpp,v $
+// Revision 1.23  1998/08/10 20:15:04  cyruspatel
+// Setting cpunum to zero on multi-threading platforms now forces the client
+// to run in non-mt mode.
+//
 // Revision 1.22  1998/08/05 18:41:12  cyruspatel
 // Converted more printf()s to LogScreen()s, changed some Log()/LogScreen()s
 // to LogRaw()/LogScreenRaw()s, ensured that DeinitializeLogging() is called,
@@ -45,16 +49,7 @@
 // GetProcessorType() & 0x200 != 0 if we should use the MMX RC5 core.
 //
 // Revision 1.11  1998/07/07 21:55:37  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.10  1998/07/06 09:17:23  jlawson
 // eliminated unused value assignment warning.
@@ -85,7 +80,7 @@
 // Fixed another cosmetic bug.
 //
 // Revision 1.3  1998/06/22 03:40:23  cyruspatel
-// Fixed a numcputemp/cpu_count variable mixup. (thanks Silby)
+// Fixed a numcputemp/cpu_count variable mixup. 
 //
 // Revision 1.1  1998/06/21 17:12:02  cyruspatel
 // Created from code spun off from cliconfig.cpp
@@ -94,7 +89,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.22 1998/08/05 18:41:12 cyruspatel Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.23 1998/08/10 20:15:04 cyruspatel Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -185,6 +180,8 @@ void Client::ValidateProcessorCount( void )
   //
   // Simply put, if it ain't MULTITHREAD, there's ain't gonna be a thread,
   // no matter what the user puts on the command line or in the ini file.
+  //
+  // On MULTITHREAD systems, numcpu with zero implies "force_non-mt"
   //--------------------
 
   numcputemp = numcpu;
@@ -192,8 +189,8 @@ void Client::ValidateProcessorCount( void )
   numcputemp = 1;      //check this
   #endif
 
-  if (numcputemp < 1)
-    {
+  if (numcputemp < 0)                //numcputemp == 0 implies force non-mt
+    {                                //numcputemp < 0  implies autodetect
     static int cpu_count = -2;
     if (cpu_count == -2)
       {
@@ -212,9 +209,9 @@ void Client::ValidateProcessorCount( void )
         }
       }
     numcputemp = cpu_count;
+    if (numcputemp < 0) //zero is legal for multithread (implies force non-mt)
+      numcputemp = 1;
     }
-  if (numcputemp < 1)
-    numcputemp = 1;
   if (numcputemp > MAXCPUS)
     numcputemp = MAXCPUS;
   #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && \
