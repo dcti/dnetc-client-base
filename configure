@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.190 2000/10/07 17:53:37 cyp Exp $
+# @(#)$Id: configure,v 1.222.2.191 2000/10/16 13:37:30 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -111,6 +111,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   if [ "$1" = "amigaos" ]; then 
     COMMON_SRCS="platforms/amiga/amVersion.c \
                  platforms/amiga/amSupport.c \
+                 platforms/amiga/amMemory.c \
                  platforms/amiga/amTime.c \
                  platforms/amiga/amNetwork.c \
                  platforms/amiga/amConsole.c \
@@ -1904,7 +1905,7 @@ case "$1" in
         generate_gcc_opts "ppc603e" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -O6 -mmultiple -mstring \
                         -D__AMIGADATE__=\`platforms/amiga/tools/amigadate\` \
-                        -mstrict-align -I./ -DDYN_TIMESLICE"
+                        -I./ -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-pup"
         TARGET_TARBALL="amigaos-ppc-pup"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
