@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.6 1999/07/01 17:18:49 chrisb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.7 1999/07/10 14:45:17 ivo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -98,6 +98,12 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (sysctl( &mib[0], 2, &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
 
+    }
+    #elif (CLIENT_OS == OS_HPUX)
+    {
+      struct pst_dynamic psd;
+      if (pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) !=-1)
+      cpucount = (int)psd.psd_proc_cnt;
     }
     #elif (CLIENT_OS == OS_BEOS)
     {
