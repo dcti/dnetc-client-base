@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.12 2000/11/25 19:43:18 patrick Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.13 2000/11/26 15:18:44 cyp Exp $"; }
 
 #define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -1058,10 +1058,19 @@ static int __bsd_quick_disco_look(SOCKET fd, int fdr_is_ready)
   }
   if (rc > 0)
   {
-    char ch;
-    TRACE_POLL((+1,"ql: recv(...,MSG_PEEK)\n"));
-    rc = recv(fd, &ch, 1, MSG_PEEK);
-    TRACE_POLL((-1,"ql: recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
+    char ch = 0;
+    #if (CLIENT_OS == OS_MACOS) /* broken gusi */
+      ch = 1; /* msg_peek removes 1 byte from the queue */
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    if (winGetVersion() < 400) /* broken 16bit winsock.dll */
+      ch = 1; /* msg_peek removes 1 byte from the queue */
+    #endif
+    if (ch == 0)
+    {  
+      TRACE_POLL((+1,"ql: recv(...,MSG_PEEK)\n"));
+      rc = recv(fd, &ch, 1, MSG_PEEK);
+      TRACE_POLL((-1,"ql: recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
+    }
     if (rc == 0) /* 0 means graceful shutdown */
       rc = ps_T_ORDREL;
     else if (rc < 0) /* means reset */
