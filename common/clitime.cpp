@@ -21,7 +21,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.18 2000/03/04 08:20:39 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.19 2000/03/09 10:29:03 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -223,11 +223,56 @@ static int __GetMinutesWest(void)
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
   minwest = TZInfo.Bias; /* sdk doc is wrong. .Bias is always !dst */
-#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_AMIGA) || \
-  ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
-  #error How does this OS natively deal with timezone? ANSI or Posix rule? (use native calls where possible)
+#elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_AMIGA) || (CLIENT_OS == OS_VMS)
+  #error How does this OS natively deal with timezone?
+#elif (CLIENT_OS == OS_FREEBSD)
+  static int saved_tz = -12345;
+  time_t timenow;
+  struct tm * tmP;
+  struct tm loctime, utctime;
+  int haveutctime, haveloctime, tzdiff;
+
+  if (saved_tz == -12345)
+  {
+    timenow = time(NULL);
+    tmP = localtime( (const time_t *) &timenow);
+    haveloctime = (tmP != NULL);
+    if (haveloctime != 0)
+      memcpy( &loctime, tmP, sizeof( struct tm ));
+    tmP = gmtime( (const time_t *) &timenow);
+    haveutctime = (tmP != NULL);
+    if (haveutctime != 0)
+      memcpy( &utctime, tmP, sizeof( struct tm ));
+    if (!haveutctime && !haveloctime)
+      return 0;
+    if (haveloctime && !haveutctime)
+      memcpy( &utctime, &loctime, sizeof( struct tm ));
+    else if (haveutctime && !haveloctime)
+      memcpy( &loctime, &utctime, sizeof( struct tm ));
+    
+    tzdiff =  ((loctime.tm_min  - utctime.tm_min) )
+      +((loctime.tm_hour - utctime.tm_hour)*60 );
+    /* last two are when the time is on a year boundary */
+    if      (loctime.tm_yday == utctime.tm_yday) { ;/* no change */ }
+    else if (loctime.tm_yday == utctime.tm_yday + 1) { tzdiff += 1440; }
+    else if (loctime.tm_yday == utctime.tm_yday - 1) { tzdiff -= 1440; }
+    else if (loctime.tm_yday <  utctime.tm_yday) { tzdiff += 1440; }
+    else { tzdiff -= 1440; }
+    
+    if (utctime.tm_isdst > 0)
+      tzdiff -= 60;
+    if (tzdiff < -(12*60))
+      tzdiff = -(12*60);
+    else if (tzdiff > +(12*60))
+      tzdiff = +(12*60);
+    if (haveutctime && haveloctime)
+      saved_tz = tzdiff;
+  }    
+  minwest = saved_tz;
+  
 #else
   /* POSIX rules :) */
+  /* FreeBSD does not provide timezone information with gettimeofday */
   struct timezone tz; struct timeval tv;
   if ( gettimeofday(&tv, &tz) )
     return 0;
