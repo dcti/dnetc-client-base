@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.71 2000/05/01 08:19:18 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.72 2000/05/06 22:00:32 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -470,7 +470,7 @@ static int ClientMain( int argc, char *argv[] )
             dialup.Start(client->offlinemode, &(client->lurk_conf));
             #endif
             TRACE_OUT((0,"initializeconsole\n"));
-            if (InitializeConsole(client->quietmode,domodes) == 0)
+          if (InitializeConsole(&(client->quietmode),domodes) == 0)
             {
               //some plats need to wait for user input before closing the screen
               int con_waitforuser = 0; //only used if doing modes (and !-config)
@@ -513,6 +513,7 @@ static int ClientMain( int argc, char *argv[] )
                 TRACE_OUT((+1,"modereqrun\n"));
                 ModeReqRun( client );
                 TRACE_OUT((-1,"modereqrun\n"));
+                restart = CheckRestartRequestTrigger();
               }
               else if (!utilCheckIfBetaExpired(1)) /* prints message */
               {
@@ -565,6 +566,7 @@ int main( void )
   argv[1] = (char *)0;
   macosInitialize();
   ClientMain(1,argv);
+  macosDeInitialize();
   return 0;
 }
 #elif (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
