@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18 1999/04/08 16:33:09 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.1 1999/09/18 18:09:20 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -32,7 +32,7 @@ static struct contestInfo
 } conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0}, {0,0} },
                   { "DES", 1,  2, 0, 0, {0,0}, {0,0} },
                   { "OGR", 2,  1, 0, 0, {0,0}, {0,0} },
-		  { "CSC", 3,  2, 0, 0, {0,0}, {0,0} },
+                  { "CSC", 3,  1, 0, 0, {0,0}, {0,0} },
                   {  NULL,-1,  0, 0, 0, {0,0}, {0,0} }  };
 
 /* ----------------------------------------------------------------------- */
