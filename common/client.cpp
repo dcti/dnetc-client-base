@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.185  1999/01/26 17:27:58  michmarc
+// Updated banner messages for new DES slicing routines
+//
 // Revision 1.184  1999/01/17 15:59:25  cyp
 // Do an InitRandom2() before any work starts.
 //
@@ -170,7 +173,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.184 1999/01/17 15:59:25 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.185 1999/01/26 17:27:58 michmarc Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -320,6 +323,9 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       #if (CLIENT_CPU == CPU_POWERPC)
       LogScreenRaw( "PowerPC assembly by Dan Oetting\n");
       #endif
+      #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
+      LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
+      #endif
 
       #if (CLIENT_CPU == CPU_ARM)
       LogScreenRaw( "ARM assembly by Steve Lee\n");
@@ -328,9 +334,11 @@ void PrintBanner(const char *dnet_id,int level,int restarted)
       #endif
       #endif
 
-
       #if defined(KWAN) && defined(MEGGS)
       LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n" 
+                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
+      #elif defined(KWAN) && defined(DWORZ)
+      LogScreenRaw( "DES bitslice driver Copyright 1999, Christoph Dworzak\n"
                     "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
       #elif defined(KWAN) 
       LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
