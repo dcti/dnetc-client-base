@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.70 2000/10/28 15:43:24 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.71 2000/10/28 17:30:04 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -273,9 +273,15 @@ void Go_mt( void * parm )
     }
   }
 #elif (CLIENT_OS == OS_NETWARE)
+  unsigned long last_restart_ticks = 0;
+  #define THREAD_RESTART_INTERVAL_TICKS ((((5*60)*10)*180)/10) /* 5 minutes */
   if (thrparams->realthread)
   {
     int numcpus = GetNumberOfRegisteredProcessors();
+    thrparams->threadID = GetThreadID(); /* in case we got here first */
+    last_restart_ticks = GetCurrentTime(); /* in ticks */
+    if (last_restart_ticks == 0)
+      last_restart_ticks = 1;
     if (numcpus > 1)
     {
       int targetcpu = threadnum % numcpus;
@@ -500,6 +506,35 @@ void Go_mt( void * parm )
       RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
       break;
     }
+    #if (CLIENT_OS == OS_NETWARE) && defined(THREAD_RESTART_INTERVAL_TICKS)
+    if (last_restart_ticks != 0) /* implies thrparams->realthread */
+    {
+      /* restart the cruncher every 5 minutes, otherwise what happens is
+         that the kernel sees the cruncher taking lots of cpu time, figures
+         it needs more, and begins rescheduling it more and more often.
+         Restarting the thread effectively resets the kernel counters for
+         the cruncher.
+      */ 
+      unsigned long ticksnow = GetCurrentTime();
+      if (ticksnow > (last_restart_ticks+THREAD_RESTART_INTERVAL_TICKS) )
+      {
+        int oldthrid = thrparams->threadID;
+        thrparams->threadID = BeginThread( Go_mt, (void *)0,
+                                 8192, (void *)thrparams );
+        last_restart_ticks = ticksnow;
+        if (thrparams->threadID == -1)
+          thrparams->threadID = oldthrid;
+        else
+        { 
+          char threadname[64];
+          sprintf(threadname, "%s crunch #%02x", utilGetAppName(),
+                                               thrparams->threadnum + 1 );
+          RenameThread( thrparams->threadID, threadname );
+          return; /* poof, finished here, new thread takes over */
+        }
+      }
+    }
+    #endif
   }
 
   if (thrparams->realthread)
@@ -1532,7 +1567,8 @@ int ClientRun( Client *client )
     // If not quitting, then write checkpoints
     //----------------------------------------
 
-    if (!TimeToQuit && !checkpointsDisabled && !isPaused)
+    if (!TimeToQuit && !checkpointsDisabled && !isPaused
+        && !CheckExitRequestTriggerNoIO())
     {
       /* Checkpoints are done when CHECKPOINT_FREQ_SECSDIFF secs
        * has elapsed since the last checkpoint OR timeNextCheckpoint is zero 
@@ -1553,7 +1589,9 @@ int ClientRun( Client *client )
     #define TIME_AFTER_START_TO_UPDATE 10800 // Three hours
     #define UPDATE_INTERVAL 600 // Ten minutes
 
-    if (!TimeToQuit && client->scheduledupdatetime != 0)
+    if (!TimeToQuit
+       && client->scheduledupdatetime != 0
+       && !CheckExitRequestTriggerNoIO())
     {
       time_t timeNow = CliTimer(NULL)->tv_sec;
       if (
@@ -1618,22 +1656,26 @@ int ClientRun( Client *client )
     //if-update-needed part below because dialup.IsConnected()
     //provides user feedback
     local_connectoften = 0;
-    #if defined(LURK)
-    if ((dialup.IsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
-    {                                  /* is lurk or lurkonly enabled? */
-      client->connectoften = 0; /* turn off old setting */
-      if (dialup.IsConnected()) 
-        local_connectoften = 3; /* both fetch and flush */
-    }         
-    else
-    #endif
+    if (!CheckExitRequestTriggerNoIO())
     {
-      if (!client->offlinemode)
+      #if defined(LURK)
+      if ((dialup.IsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
+      {                                  /* is lurk or lurkonly enabled? */
+        client->connectoften = 0; /* turn off old setting */
+        if (dialup.IsConnected()) 
+          local_connectoften = 3; /* both fetch and flush */
+      }         
+      else
+      #endif
       {
-        local_connectoften = client->connectoften;
-        /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
+        if (!client->offlinemode ||
+           (!client->noupdatefromfile && client->remote_update_dir[0]))
+        {
+          local_connectoften = client->connectoften;
+          /* 0=none, &1=in-buf, &2=out-buf, &4=sticky-flag (handled elsewhere) */ 
+        }
       }
-    }  
+    }
     TRACE_OUT((0,"local_connectoften=0x%x,timeRun=%u,timeNextConnect=%u\n",
                local_connectoften, (unsigned)timeRun, (unsigned)timeNextConnect));
                
