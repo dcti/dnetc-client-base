@@ -6,6 +6,9 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.21  1998/07/19 20:06:11  cyruspatel
+## Makefile now also gens the upload readme, eg rc5des-416-dos-x86-cli.readme
+##
 ## Revision 1.20  1998/07/19 17:52:10  cyruspatel
 ## Automated tasm support. make will now also gen a zip if configured for it.
 ##
@@ -90,7 +93,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.20 1998/07/19 17:52:10 cyruspatel Exp $
+## $Id: makefile.wat,v 1.21 1998/07/19 20:06:11 cyruspatel Exp $
 
 %VERMINOR = 416       # for zip - fixit if not the same as version.h
 %VERMAJOR = 7100      # for NetWare copyright: v2.$(%VERMAJOR).$(%VERMINOR)
@@ -148,11 +151,12 @@ LNKbasename = rc5des       # for 'rc564'.err 'rc564'.lnk 'rc5des'.err etc
 %WLINKOPS = map            #one word wlink OP-tions. no spaces but '=' is ok
 %OBJDIROP = /fo=$$^@       #Puts the .err/.objs in the right directories
 %ERRDIROP = /fr=$$[:       #...redefine for older versions of Watcom
-%dependall= #makefile.wat   # remake everything if this changes
+%dependall= makefile.wat common/version.h  # remake everything if these change
 
-%ZIPFILE  =                # eg $(LNKbasename)-$(%VERMINOR)-dos-x86-cli
+%ZIPFILE  = # eg $(LNKbasename)-$(%VERMINOR)-dos-x86-cli or blank for auto
 %DOCFILES =                #list of files in ./docs to include in the zip
-%ZIPPER   = zip.exe
+%PORTER   =                # your name and email address
+%ZIPPER   = zip.exe        # a zip file won't be made if not defined
 %ZIPOPTS  = -u -9 -o -i -v 
                            
 #.silent
@@ -178,13 +182,28 @@ clean :
   @if not exist .\$(LNKbasename)*.* @%quit
   @for %i in (.\$(LNKbasename)*.*) do @erase %i
 
-zip :
+internal_zip :
   @if $(%ZIPPER).==.  @echo Error(E02): ZIPPER is not defined
   @if $(%ZIPPER).==.  @%abort
-  @if $(%ZIPFILE).==. @echo Error(E02): ZIPFILE is not defined
-  @if $(%ZIPFILE).==. @%abort
+  @if $(%ZIPFILE).==. @set ZIPFILE=$(LNKbasename)-$(%VERMINOR)-$(OSNAME)-x86-cli
+  @if exist $(%ZIPFILE).readme @erase $(%ZIPFILE).readme 
   @if exist $(%ZIPFILE).zip @erase $(%ZIPFILE).zip
-  $(%ZIPPER) $(%ZIPOPTS) $(%ZIPFILE).zip $(%BINNAME) $(%DOCFILES)
+  @%write con: 
+  @echo Generating $(%ZIPFILE).zip...
+  @$(%ZIPPER) $(%ZIPOPTS) $(%ZIPFILE).zip $(%BINNAME) $(%DOCFILES) >nul:
+  @if $(%PORTER).==. @set PORTER=($$(%PORTER) is still undefined)
+  @echo Generating $(%ZIPFILE).readme... 
+  @%append $(%ZIPFILE).readme
+  @%append $(%ZIPFILE).readme Two files uploaded:
+  @%append $(%ZIPFILE).readme     $(%ZIPFILE).zip 
+  @%append $(%ZIPFILE).readme     $(%ZIPFILE).readme (this file) 
+  @%append $(%ZIPFILE).readme
+  @%append $(%ZIPFILE).readme $(%PORTER)
+  @%append $(%ZIPFILE).readme
+
+zip :
+  @if $(%ZIPPER).==.  @echo ZIPPER is not defined. zipfile will not be made.
+  @if not $(%ZIPPER).==. @%make internal_zip
 
 #-----------------------------------------------------------------------
 
@@ -413,15 +432,27 @@ output\dod.obj : platforms\os2cli\dod.cpp $(%dependall) .autodepend
 platform: .symbolic
   @set CFLAGS    = $(%CFLAGS) /zq             ## compile quietly
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
-  
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
-  
   @set isused=0
   @if not exist $(%BINNAME) @set isused=1
   @for %i in ($(%LINKOBJS)) do @%make %i
   @if $(%isused).==0. @%write con: All targets are up to date
   @if $(%isused).==0. @%quit
+  @%make dolink
+  @%make postlink
+  @%make zip
 
+postlink:
+  @if $(%OSNAME).==netware. @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(LNKbasename).nlm /b:$(LNKbasename).map 
+  #@if $(%OSNAME).==netware. @\develop\sdkcd13\nwsdk\tools\nlmpackx $(LNKbasename).nlm $(LNKbasename).nlx
+  #@if $(%OSNAME).==netware. @del $(LNKbasename).nlm
+  #@if $(%OSNAME).==netware. @ren $(LNKbasename).nlx $(LNKbasename).nlm
+  @if $(%OSNAME).==dos. @\develop\pmodew\pmwlite.exe /C4 /S\develop\pmodew\pmodew.exe $(%BINNAME)
+  @if $(%OSNAME).==dos. @\develop\pmodew\pmwsetup.exe /b0 $(%BINNAME) >nul:
+  @if $(%OSNAME).==w16. @copy $(LNKbasename).exe @erase $(LNKbasename).rex >nul:
+  @if $(%OSNAME).==w16. @wbind rc5des -n
+
+dolink : .symbolic
   @if exist  $(%BINNAME) @del $(%BINNAME)
   @if exist  $(LNKbasename).lnk @del $(LNKbasename).lnk
   @%append   $(LNKbasename).lnk Name $(%BINNAME)
@@ -450,9 +481,11 @@ platform: .symbolic
   @if exist $(%BINNAME) @del $(LNKbasename).err
   @if exist $(LNKbasename).err @type $(LNKbasename).err
 
+
 #---------------------- platform specific settings come here ----------
 
 dos: .symbolic                                       # DOS/DOS4GW
+     @set OSNAME    = dos
      @set AFLAGS    = /5s /fp3 /bt=dos /mf # no such thing as /bt=dos4g
      @set TASM      = \develop\tasm32\tasm32.exe
      @set LIBPATH   = $(%watcom)\lib386 $(%watcom)\lib386\dos 
@@ -467,18 +500,17 @@ dos: .symbolic                                       # DOS/DOS4GW
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
-     @set ZIPPER    = pkzip
+     @set ZIPPER    = c:\util\pkzip
      @set ZIPOPTS   = -exo
+     @set PORTER    = Cyrus 'cyp' Patel (cyp@fb14.uni-mainz.de)
      @set DOCFILES  = docs\rc5des.txt docs\readme.txt
      @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-dos-x86-cli
      @set BINNAME   = $(LNKbasename).com
      #@%make declare_for_mmx
      @%make platform
-     @\develop\pmodew\pmwlite.exe /C4 /S\develop\pmodew\pmodew.exe $(%BINNAME)
-     @\develop\pmodew\pmwsetup.exe /b0 $(%BINNAME) >nul:
-     @%make zip
 
 w16: .symbolic                                       # Windows/16
+     @set OSNAME    = win16
      @set AFLAGS    = /5s /fp3 /bt=dos /mf # no such thing as /bt=dos4g
      @set TASM      = \develop\tasm32\tasm32.exe
      @set LFLAGS    = sys win386 
@@ -490,14 +522,16 @@ w16: .symbolic                                       # Windows/16
      @set MODULES   =
      @set IMPORTS   =
      @set VERSION   =
+     @set ZIPPER    = c:\util\pkzip
+     @set ZIPOPTS   = -exo
+     @set PORTER    = Cyrus 'cyp' Patel (cyp@fb14.uni-mainz.de)
      @set DOCFILES  = docs\rc5des.txt docs\readme.txt
      @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-win16-x86-cli
-     @set BINNAME   = $(LNKbasename).rex
+     @set BINNAME   = $(LNKbasename).exe
      @%make platform
-     @wbind rc5des -n
-     @%make zip
 
 os2: .symbolic                                       # OS/2
+     @set OSNAME    = os2
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set TASM      = tasm32.exe
      @set LFLAGS    = sys os2v2
@@ -507,6 +541,7 @@ os2: .symbolic                                       # OS/2
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
      @set MODULES   =
      @set IMPORTS   =
+     @set PORTER    = Oscar 'ZiggyB' Chang (oscar@divideby0.com)
      @set DOCFILES  = docs\rc5des.txt docs\readme.txt
      @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-os2-x86-cli
      @set BINNAME   = $(LNKbasename).exe
@@ -517,9 +552,9 @@ os2: .symbolic                                       # OS/2
      @%make declare_for_multithread
      @%make declare_for_mmx
      @%make platform
-     @%make zip
 
 w32: .symbolic                               # win32
+     @set OSNAME    = win32
      @set AFLAGS    = /5s /fp5 /bt=DOS4GW /mf
      @set TASM      = tasm32.exe
      @set LFLAGS    = sys nt
@@ -529,26 +564,25 @@ w32: .symbolic                               # win32
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
+     @set PORTER    = #your name here
      @set DOCFILES  = docs\rc5des.txt docs\readme.txt
      @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-win32-x86-cli
      @set BINNAME   = $(LNKbasename).exe
      @%make declare_for_multithread
      @%make declare_for_mmx
      @%make platform
-     @%make zip
 
-netware: .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
+netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
+     @set OSNAME    = netware
      @set STACKSIZE = 32K #16384
      @set AFLAGS    = /5s /fp3 /bt=netware /ms
      @set TASM      = \develop\tasm32\tasm32.exe
      @set WLINKOPS  = xdcdata=platforms/netware/rc5des.xdc multiload nod map osdomain
-     @set LFLAGS    = op scr 'none' op osname='NetWare NLM' 
-                      # symtrace systemConsoleScreen #sys netware
+     @set LFLAGS    = op scr 'none' op osname='NetWare NLM' #symtrace systemConsoleScreen #sys netware
      @set OPT_SIZE  = /os /s  
      @set OPT_SPEED = /oneatx /oh /oi+  
-     @set CFLAGS    = /zp1 /zm /6s /fp3 /ei /ms /d__NETWARE__ /i$(inc_386) 
-                      #/fpc /bt=netware /i$(%watcom)\novh #/bm
-     @set LIBFILES =  nwwatemu,plib3s #plibmt3s,clib3s,math387s,emu387
+     @set CFLAGS    = /zp1 /zm /6s /fp3 /ei /ms /d__NETWARE__ /i$(inc_386) #/fpc /bt=netware /i$(%watcom)\novh #/bm
+     @set LIBFILES  = nwwatemu,plib3s #plibmt3s,clib3s,math387s,emu387
      @set MODULES   = clib a3112 # tcpip netdb
      @set LINKOBJS  = $(%LINKOBJS) output\netware.obj output\hbyname.obj 
      @set EXTOBJS   = $(%EXTOBJS) platform\netware\watavoid\i8s.obj
@@ -558,8 +592,8 @@ netware: .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
                       ScheduleSleepAESProcessEvent CancelSleepAESProcessEvent &
                       RingTheBell GetFileServerMajorVersionNumber Alloc &
                       @$(%watcom)\novi\clib.imp # @$(%watcom)\novi\mathlib.imp
-     @set LIBPATH   = platform\netware\watavoid $(%watcom)\lib386 &
-                      $(%watcom)\lib386\netware
+     @set LIBPATH   = platform\netware\watavoid $(%watcom)\lib386 $(%watcom)\lib386\netware
+     @set PORTER    = Cyrus 'cyp' Patel (cyp@fb14.uni-mainz.de)
      @set ZIPFILE   = $(LNKbasename)-$(%VERMINOR)-netware-x86-cli
      @set ZIPPER    = c:\util\pkzip
      @set ZIPOPTS   = -exo
@@ -569,13 +603,8 @@ netware: .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM! (May 24 '98)
      @set FILEVER   = 0.0   # don't tag with version #
      @set FORMAT    = Novell NLM 'RC5DES Client for NetWare' #'RC5DES v2.$(%VERMAJOR).$(%VERMINOR) Client for NetWare'
 
+     @set %dependall=
      @%make declare_for_multithread
-     #@%make declare_for_mmx
+     #@%make declare_for_mmx 
      @%make platform
-
-     @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(LNKbasename).nlm /b:$(LNKbasename).map 
-     #@\develop\sdkcd13\nwsdk\tools\nlmpackx $(LNKbasename).nlm $(LNKbasename).nlx
-     #@del $(LNKbasename).nlm
-     #@ren $(LNKbasename).nlx $(LNKbasename).nlm
-     @%make zip
 
