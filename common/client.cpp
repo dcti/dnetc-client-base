@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.229 1999/12/02 05:14:58 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.230 1999/12/03 00:02:36 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -345,9 +345,9 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
-  extern int client_boot( int (*)(int argc, char *argv[] );
+  extern int client_boot();
   /* init toolbox etc, synthesise command line and callback */
-  return client_boot(ClientMain); 
+  return client_boot();
 }
 #elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
 int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpszCmdLine, int nCmdShow)
