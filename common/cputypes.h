@@ -6,7 +6,7 @@
 // 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.1 1999/05/10 23:48:46 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.2 1999/05/11 01:41:31 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -315,13 +315,12 @@
   #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */
-  #define __unix__ 
+  #define __unix__ /* it ain't that special! */
   #endif
   #define CLIENT_OS_NAME   "BeOS"
   #define CLIENT_OS     OS_BEOS
   #if defined(__POWERPC__) || defined(__PPC__)
     #define CLIENT_CPU    CPU_POWERPC
-  #endif
   #elif defined(__INTEL__)
     #define CLIENT_CPU CPU_X86
   #endif
