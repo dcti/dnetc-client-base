@@ -1,9 +1,18 @@
 /*
   INI file reading/processing class for C++
 
+
   $Log: iniread.cpp,v $
-  Revision 1.14  1999/01/26 20:17:34  cyp
-  new ini stuff from proxy
+  Revision 1.15  1999/01/27 00:55:26  jlawson
+  committed iniread from proxy again.  now uses INIREAD_SINGLEVALUE and
+  new INIREAD_WIN32_LIKE for client compiles.  the win32-like interface
+  functions all end with B, rather than A, since the global-namespace
+  is already used by the A versions in msvc.
+
+  Revision 1.11  1999/01/26 06:56:44  jlawson
+  added changes to allow SINGLEINIVALUE to be defined, which allows
+  iniread to parse an ini file, but without splitting each ini key
+  by commas into an IniStringList.
 
   Revision 1.10  1999/01/22 09:26:38  jlawson
   quoted values that have their closing quote in the middle with
@@ -32,8 +41,17 @@
   added new iniread code
 
   Revision 1.10  1998/07/07 21:55:41  cyruspatel
-  client.h has been split into client.h and baseincs.h 
-  
+  Serious house cleaning - client.h has been split into client.h (Client
+  class, FileEntry struct etc - but nothing that depends on anything) and
+  baseincs.h (inclusion of generic, also platform-specific, header files).
+  The catchall '#include "client.h"' has been removed where appropriate and
+  replaced with correct dependancies. cvs Ids have been encapsulated in
+  functions which are later called from cliident.cpp. Corrected other
+  compile-time warnings where I caught them. Removed obsolete timer and
+  display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
+  Made MailMessage in the client class a static object (in client.cpp) in
+  anticipation of global log functions.
+
   Revision 1.9  1998/06/29 08:44:11  jlawson
   More OS_WIN32S/OS_WIN16 differences and long constants added.
 
@@ -54,357 +72,13 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.14 1999/01/26 20:17:34 cyp Exp $"; }
+static const char *id="@(#)$Id: iniread.cpp,v 1.15 1999/01/27 00:55:26 jlawson Exp $";
+return id; }
 #endif
 
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
+#define COMPILING_INIREAD
+#include "iniread.h"
 
-#define IniNULL IniString()
-
-#if defined(__TURBOC__)
-#pragma warn -inl
-#endif
-
-/////////////////////////////////////////////////////////////////////////////
-class IniString
-{
-  char *buffer;
-public:
-  // constructors and destructors
-  inline IniString() : buffer(NULL) {};
-  inline IniString(const IniString &that) : buffer(NULL) {*this = that;}
-  inline IniString(const void *value) : buffer(NULL) {*this = (char *)value;}
-  inline IniString(const char *value) : buffer(NULL) {*this = value;}
-  inline IniString(char value) : buffer(NULL) {*this = value;}
-  inline IniString(long value) : buffer(NULL) {*this = value;}
-  inline IniString(int value) : buffer(NULL) {*this = (long) value;}
-  inline ~IniString() {if (buffer) delete buffer;}
-
-  // assignment
-  IniString &operator= (const char *value);
-  IniString &operator= (const IniString &that);
-  IniString &operator= (char value);
-  IniString &operator= (long value);
-  IniString &operator= (int value);
-    
-  // output conversions
-  inline const char *c_str(void) const
-    { return (buffer ? buffer : ""); }
-  inline operator const char *(void) const
-    { return (buffer ? buffer : ""); }
-  inline operator int (void) const
-    { return (int) atol(c_str()); }
-  inline operator long (void) const
-    { return (long) atol(c_str()); }
-  inline void copyto(char *target, int maxlen) const
-    {
-      strncpy(target, c_str(), maxlen);
-      target[maxlen - 1] = 0;
-    }
-
-
-  // conditional tests
-  inline int is_null(void) const
-    { return (!buffer || !buffer[0]); }
-  inline friend int operator== (const IniString &s1, const char *s2)
-    { 
-    const char *p = s1.c_str(); if (p==s2)  return 1; if (!p || !s2) return 0; 
-    while (tolower(*p)==tolower(*s2)) {p++; s2++;}
-    return (!*p && !*s2);
-    }
-  inline friend int operator== (const IniString &s1, const IniString &s2)
-    { return (s1 == (s2.c_str())); }
-  inline friend int operator!= (const IniString &s1, const IniString &s2)
-    { return !(s1 == s2); }
-
-  inline int need_quotes(void) const
-    {return (buffer && (strchr(buffer, ' ') || strchr(buffer, ',')) &&
-          *buffer != '"' && strlen(buffer) > 1 &&
-          buffer[strlen(buffer) - 1] != '"' );}
-
-  // appending and prepending
-  friend IniString operator+ (const IniString &s1, const IniString &s2);  
-  inline IniString &operator+= (const IniString &s2)
-    {*this = *this + s2; return *this;}
-  inline IniString &append (const IniString &s2)
-    {return(*this += s2);}
-  IniString &append (char ch);
-  inline IniString &prepend (const IniString &s2)
-    {return(*this = s2 + *this);}
-
-  // length
-  inline int length(void) const
-    {return strlen(c_str());}
-  inline char operator[] (int index)
-    {return c_str()[index];}
-
-  // substring extraction
-  IniString left(int newlength) const;
-  IniString right(int newlength) const;
-  IniString mid(int offset, int newlength = -1) const;
-  int instr(int offset, const IniString &match) const;
-  inline int instr(const IniString &match) const
-    { return instr(0, match); }
-
-  // other manipulations
-  IniString ucase(void) const;
-  IniString lcase(void) const;
-  inline void clear(void)
-    { if (buffer) buffer[0] = 0; }
-};
-/////////////////////////////////////////////////////////////////////////////
-template <class T> class IniList
-{
-  T **pointers;
-  int count;
-  int maxcount;
-protected:
-  void EnsureSpace(int additional = 1)
-    {
-      if (count + additional > maxcount)
-        {
-          T **oldptr = pointers;
-          maxcount = count + additional + 10;
-          pointers = new T* [maxcount];
-          memmove(pointers, oldptr, sizeof(T*) * count);
-          delete [] oldptr;
-        }
-    }
-public:
-  IniList() : count(0), maxcount(10)
-    {
-      pointers = new T*[maxcount];
-    };
-  IniList(const IniList &other) : 
-    count(other.count), maxcount(other.maxcount)
-    {
-      pointers = new T*[maxcount];
-      for (int i = 0; i < count; i++)
-        pointers[i] = new T(*other.pointers[i]);
-    }
-  ~IniList()
-    {
-      for (int i = 0; i < count; i++)
-        delete pointers[i];
-      delete [] pointers;
-    }
-  T* AddNew(const T &that)
-    {
-      EnsureSpace(1);
-      return pointers[count++] = new T(that);  
-    }
-  T* AddNew()
-    {
-      EnsureSpace(1);
-      return pointers[count++] = (T*) (new T);
-    }
-  T* AddFrom(T *that)
-    {
-      EnsureSpace(1);
-      return pointers[count++] = that;
-    }
-  inline T &operator[] (int index)
-    {
-      return *pointers[index];
-    }
-  inline int GetCount() const
-    {
-      return count;
-    }
-  inline IniList<T> &operator= (const IniList &other)
-    {
-      for (int i = 0; i < count; i++)
-        delete pointers[i];
-      delete [] pointers;
-      
-      count = other.count;
-      maxcount = other.maxcount;
-      pointers = new T*[maxcount];
-      for (int j = 0; j < count; j++)
-        pointers[j] = new T(*other.pointers[j]);
-
-      return *this;
-    }
-  void Flush()
-    {
-      for (int i = 0; i < count; i++)
-        delete pointers[i];
-      count = 0;
-    }
-  void Detach(T *that)
-    {
-      for (int i = 0; i < count; i++)
-        if (pointers[i] == that)
-          {
-            delete pointers[i];
-            memmove(&pointers[i], &pointers[i+1], (count - i - 1) * sizeof(T*));
-            count--;
-            break;
-          }
-    }
-};
-/////////////////////////////////////////////////////////////////////////////
-class IniStringList : public IniList<IniString>
-{
-public:
-  // default constructor
-  IniStringList() {};
-
-  // string constructors
-  inline IniStringList(const char *s1) { AddFrom(new IniString(s1)); }
-  inline IniStringList(const IniString &v1) { AddNew(v1); }
-  inline IniStringList(const IniString &v1, const IniString &v2) { AddNew(v1); AddNew(v2); }
-
-  // integer constructors
-  inline IniStringList(long v1) { AddFrom(new IniString(v1)); }
-  inline IniStringList(int v1) { AddFrom(new IniString(v1)); }
-
-  // file writing
-  void fwrite(FILE *out);
-};
-/////////////////////////////////////////////////////////////////////////////
-class IniRecord
-{
-public:
-  int flags;              // user-defined data
-  IniString key;
-  IniStringList values;
-
-  // constructors
-  inline IniRecord() : flags(0) {};
-  inline IniRecord(const char *Key, const IniStringList &Values) :
-    flags(0), key(Key), values(Values) {};
-  inline IniRecord(const char *Key, const char *Value) :
-    flags(0), key(Key), values(Value) {};
-  inline IniRecord(const char *Key, long v1) :
-    flags(0), key(Key), values(v1) {};
-  inline IniRecord(const char *Key, int v1) :
-    flags(0), key(Key), values(v1) {};
-
-  // file writing
-  void fwrite(FILE *out);
-};
-/////////////////////////////////////////////////////////////////////////////
-class IniSection
-{
-  IniList<IniRecord> records;
-
-  // search iteration
-  IniString lastsearch;
-  int lastindex;
-public:
-  IniString section;
-
-  // constructor
-  inline IniSection() {};
-  inline IniSection(const char *Section) : section(Section) {};
-
-  // record addition
-  inline void addrecord(const char *Key, const IniStringList &Values)
-    { records.AddFrom(new IniRecord(Key, Values)); }
-  inline void addrecord(const char *Key, const char *Value)
-    { records.AddFrom(new IniRecord(Key, Value)); }
-  inline void addrecord(const char *Key, long Value)
-    { records.AddFrom(new IniRecord(Key, Value)); }
-  inline void addrecord(const char *Key, int Value)
-    { records.AddFrom(new IniRecord(Key, Value)); }
-
-  // record modification
-  inline void setkey(const char *Key, const IniStringList &Values)
-    { IniRecord *that = findfirst(Key);if (that) that->values = Values;
-      else addrecord(Key, Values); }
-  inline void setkey(const char *Key, const char *v1)
-    { IniRecord *that = findfirst(Key);if (that) { that->values.Flush(); 
-      that->values.AddFrom(new IniString(v1)); } else addrecord(Key, v1); }
-  inline void setkey(const char *Key, long v1)
-    { char tmp[sizeof(long)*3]; sprintf(tmp,"%ld",v1); setkey( Key, tmp ); }
-  inline void setkey(const char *Key, int v1) { setkey(Key, (long) v1); }
-
-  // record retrieval
-  inline const IniStringList &getkey(const char *Key, const IniStringList &DefValue)
-    { IniRecord *that = findfirst(Key);
-      return (that ? that->values : DefValue);}
-  inline long getkey(const char *Key, long DefValue)
-    { IniRecord *that = findfirst(Key); return (that && 
-      that->values.GetCount() > 0 ? (long) that->values[0] : DefValue ); }
-  inline int getkey(const char *Key, int DefValue)
-    { return (int) getkey(Key, (long) DefValue); }
-  inline IniString getkey(const char *Key, const char *DefValue = 0)
-    { IniRecord *that = findfirst(Key); return IniString( (that && 
-      that->values.GetCount() > 0) ? that->values[0].c_str() : DefValue ); }
-
-  // efficient alternate record retrieval (similar to Win32 api)
-  inline int GetProfileInt(const char *Key, int DefValue)
-    { return (int) getkey(Key, (long) DefValue); }
-  inline void GetProfileStringA(const char *Key, const char *DefValue, char *buffer, int buffsize)
-    { IniRecord *that = findfirst(Key);
-      if (that && that->values.GetCount() > 0) that->values[0].copyto(buffer, buffsize);
-      else { strncpy(buffer, DefValue, buffsize); buffer[buffsize - 1] = 0; } }
-  inline const char *GetProfileStringA(const char *Key, const char *DefValue = NULL)
-    { IniRecord *that = findfirst(Key);
-      if (that && that->values.GetCount() > 0) return that->values[0].c_str();
-      else return DefValue; }
-
-  // record searching
-  inline IniRecord *findfirst() { lastindex = 0; lastsearch.clear(); return findnext(); }
-  inline IniRecord *findfirst(const char *Key) { lastindex = 0; lastsearch = Key; return findnext(); }
-  inline IniRecord *findfirst(const IniString &Key) { lastindex = 0; lastsearch = Key; return findnext(); }
-  IniRecord *findnext();
-
-  // record deletion
-  inline void deleterecord(IniRecord *record) { this->records.Detach(record); }
-  inline void deleterecord(const char *Key)
-    { IniRecord *record = findfirst(Key); if (record) this->records.Detach(record); }
-
-  // file writing
-  void fwrite(FILE *out);
-};
-/////////////////////////////////////////////////////////////////////////////
-class IniFile
-{
-  IniList<IniSection> sections;
-  IniString lastfilename;
-public:
-  IniFile() {};
-  IniFile(const char *Filename) : lastfilename(Filename) {};
-
-  // clearing
-  void clear()
-    { sections.Flush(); }
-
-  // reading and writing
-  int ReadIniFile(const char *Filename = NULL, const char *Section = 0);
-  int WriteIniFile(const char *Filename = NULL);
-  void fwrite(FILE *out);
-
-  // alternate record retrieval (similar to Win32 api).
-  // (it is much more efficient to use findsection and call those methods)
-  inline int GetProfileInt(const char *Section, const char *Key, int DefValue)
-    { IniSection *section = findsection(Section);
-      if (section) return section->GetProfileInt(Key, DefValue);
-      else return DefValue; }
-  inline void GetProfileStringA(const char *Section, const char *Key, const char *DefValue, char *buffer, int buffsize)
-    { IniSection *section = findsection(Section);
-      if (section) section->GetProfileStringA(Key, DefValue, buffer, buffsize);
-      else { strncpy(buffer, DefValue, buffsize); buffer[buffsize - 1] = 0; } }
-  inline const char *GetProfileStringA(const char *Section, const char *Key, const char *DefValue = NULL)
-    { IniSection *section = findsection(Section);
-      if (section) return section->GetProfileStringA(Key, DefValue);
-      else return DefValue; }
-
-  // section matching
-  IniSection *findsection(const char *Section);
-  inline IniSection *addsection(const char *Section)
-    { IniSection *that = findsection(Section);
-     return (that ? that : sections.AddFrom(new IniSection(Section))); }
-};
-/////////////////////////////////////////////////////////////////////////////
-
-
-/* ------------------------------------------------------------------- */
 
 /////////////////////////////////////////////////////////////////////////////
 IniString &IniString::operator= (const char *value)
@@ -427,21 +101,19 @@ IniString &IniString::operator= (const IniString &that)
     return *this;
 }
 /////////////////////////////////////////////////////////////////////////////
-IniString &IniString::operator= (long value)
+IniString &IniString::operator= (s32 value)
 {
-  char temp[(sizeof(long)+1)*3];
-  sprintf(temp,"%ld",((long)(value)));
+  char temp[30];
+#if defined(HAVE_SNPRINTF)
+  snprintf(temp, sizeof(temp), "%ld", (long) value);
+#elif (CLIENT_OS == OS_WIN32)
+  ltoa((long) value, temp, 10);
+#else
+  sprintf(temp, "%ld", (long) value);
+#endif
   (*this) = temp;
   return *this;
-}  
-/////////////////////////////////////////////////////////////////////////////
-IniString &IniString::operator= (int value)
-{
-  char temp[(sizeof(long)+1)*3];
-  sprintf(temp,"%ld",((long)(value)));
-  (*this) = temp;
-  return *this;
-}  
+}
 /////////////////////////////////////////////////////////////////////////////
 IniString &IniString::operator= (char value)
 {
@@ -451,6 +123,20 @@ IniString &IniString::operator= (char value)
   buffer[1] = 0;
   return *this;
 }
+/////////////////////////////////////////////////////////////////////////////
+#ifdef NO_STRCASECMP
+int strcasecmp(const char *s1, const char *s2)
+{
+  while (*s1 && *s2) {
+    if (toupper(*s1) != toupper(*s2)) {
+      return (*s1 < *s2) ? -1 : 1;
+    }
+    s1++;
+    s2++;
+  }
+  return *s2 ? -1 : (*s1 ? 1 : 0);
+}
+#endif
 /////////////////////////////////////////////////////////////////////////////
 IniString operator+ (const IniString &s1, const IniString &s2)
 {
@@ -500,8 +186,7 @@ IniString IniString::mid(int offset, int newlength) const
   IniString output;
   int thislen = length();
   if (offset > thislen || offset < 0) return output;
-  if (newlength < 0 || offset + newlength > thislen) 
-    newlength = thislen - offset;
+  if (newlength < 0 || offset + newlength > thislen) newlength = thislen - offset;
   output.buffer = new char[newlength + 1];
   strncpy(output.buffer, c_str() + offset, newlength);
   output.buffer[newlength] = 0;
@@ -520,19 +205,39 @@ int IniString::instr(int offset, const IniString &match) const
 IniString IniString::ucase(void) const
 {
   IniString output = *this;
-  for (char *p = (char*) c_str(); *p; p++) 
-    *p = (char) toupper(*p);
+#ifdef __TURBOC__
+  strupr((char*)output.c_str());
+#else
+  for (char *p = (char*) c_str(); *p; p++) *p = (char) toupper(*p);
+#endif
   return output;
 }
 /////////////////////////////////////////////////////////////////////////////
 IniString IniString::lcase(void) const
 {
   IniString output = *this;
-  for (char *p = (char*) c_str(); *p; p++) 
-    *p = (char) tolower(*p);
+#ifdef __TURBOC__
+  strlwr((char*)output.c_str());
+#else
+  for (char *p = (char*) c_str(); *p; p++) *p = (char) tolower(*p);
+#endif
   return output;
 }
 /////////////////////////////////////////////////////////////////////////////
+bool IniSection::GetProfileBool(const char *Key, bool DefValue)
+{
+  const char *value = GetProfileStringA(Key);
+  if (value)
+  {
+    static const char *falses[] = {"0", "false", "no", "off", "f", "n", NULL};
+    for (int i = 0; falses[i]; i++)
+      if (strcmpi(value, falses[i]) == 0) return false;
+    return true;
+  }
+  return DefValue;
+}
+/////////////////////////////////////////////////////////////////////////////
+#ifndef INIREAD_SINGLEVALUE
 void IniStringList::fwrite(FILE *out)
 {
   for (int i = 0; i < GetCount(); i++)
@@ -545,16 +250,24 @@ void IniStringList::fwrite(FILE *out)
       fprintf(out, "%s", (*this)[i].c_str());
   }
 }
+#endif
 /////////////////////////////////////////////////////////////////////////////
 void IniRecord::fwrite(FILE *out)
 {
   if (key.is_null())
   {
     // this is a comment
+#ifdef INIREAD_SINGLEVALUE
+    fprintf(out, ";%s\n", values.c_str());
+#else    
     fprintf(out, ";%s\n", values[0].c_str());
+#endif
   }
   else
   {
+#ifdef INIREAD_SINGLEVALUE
+    fprintf(out, "%s=%s\n", key.c_str(), values.c_str());
+#else
     if (key.need_quotes())
       fprintf(out, "\"%s\"=", key.c_str());
     else
@@ -562,6 +275,7 @@ void IniRecord::fwrite(FILE *out)
 
     values.fwrite(out);
     fprintf(out, "\n");
+#endif
   }
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -599,7 +313,7 @@ IniRecord *IniSection::findnext()
 }
 /////////////////////////////////////////////////////////////////////////////
 // returns false on error
-int IniFile::ReadIniFile(const char *Filename, const char *Section)
+bool IniFile::ReadIniFile(const char *Filename, const char *Section)
 {
   // open up the file
   if (Filename) lastfilename = Filename;
@@ -612,8 +326,7 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
   {
     // eat leading whitespace
     int peekch = fgetc(inf);
-    while (peekch != EOF && isspace(peekch)) 
-      peekch = fgetc(inf);
+    while (peekch != EOF && isspace(peekch)) peekch = fgetc(inf);
 
     if (peekch == '[')
     {
@@ -645,7 +358,11 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
       {
         if (isprint(peekch)) comment.append((char)peekch);
       }
+#ifdef INIREAD_SINGLEVALUE
+      if (section) section->addrecord(NULL, comment);
+#else
       if (section) section->addrecord(NULL, IniStringList(comment));
+#endif
     }
     else if (!section)
     {
@@ -683,18 +400,37 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
       // separate out all of the values
       if (peekch == '=')
       {
+#ifdef INIREAD_SINGLEVALUE
+        IniString args;
+
+        // absorb leading white space
+        while ((peekch = fgetc(inf)) != EOF &&
+            peekch != '\n' && isspace(peekch)) {};
+
+        // copy argument
+        while (peekch != EOF && peekch != '\n')
+        {
+// some mid-line comment handling might be good to add in.
+          if (isprint(peekch)) args.append((char)peekch);
+          peekch = fgetc(inf);
+        }
+
+        // strip trailing whitespace
+        char *p = strchr((char*)args.c_str(), 0) - 1;
+        while (isspace(*p) && p >= args.c_str()) *p-- = 0;
+#else
         IniStringList args;
 
         // strip out one argument
-        while (peekch != EOF)
+        while (true)
         {
           IniString value;
 
           // absorb leading white space
           while ((peekch = fgetc(inf)) != EOF &&
               peekch != '\n' && isspace(peekch)) {};
-          if (peekch == EOF || peekch == '\n') 
-            break;
+          if (peekch == EOF || peekch == '\n') break;
+        
 
           if (peekch == '"')
           {
@@ -737,7 +473,7 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
           // break if this was the end of the line
           if (peekch == '\n' || peekch == EOF) break;
         }
-
+#endif
         // store this key/value pair
         section->addrecord(key, args);
       }
@@ -749,26 +485,26 @@ int IniFile::ReadIniFile(const char *Filename, const char *Section)
     }
   }
   fclose(inf);
-  return 1; //true
+  return true;
 }
 /////////////////////////////////////////////////////////////////////////////
 // returns false on error
-int IniFile::WriteIniFile(const char *Filename)
+bool IniFile::WriteIniFile(const char *Filename)
 {
   if (Filename) lastfilename = Filename;
   FILE *outf = fopen(lastfilename.c_str(), "w");
-  if (outf == NULL) return 1;
+  if (outf == NULL) return true;
   fwrite(outf);
   fclose(outf);
-  return 1;
+  return true;
 }
 /////////////////////////////////////////////////////////////////////////////
-
-unsigned long GetPrivateProfileStringA( const char *sect, const char *key, 
+#ifdef INIREAD_WIN32_LIKE
+unsigned long GetPrivateProfileStringB( const char *sect, const char *key, 
                       const char *defval, char *buffer, 
                       unsigned long buffsize, const char *filename )
 {
-  int foundentry;
+  bool foundentry = false;
   IniFile inifile;
   IniSection *inisect;
   IniRecord *inirec;
@@ -781,96 +517,109 @@ unsigned long GetPrivateProfileStringA( const char *sect, const char *key,
     return 0;                      //ie return section if key is NULL
   if (defval == NULL)
     defval = "";
-  buffer[0]=0;
+  buffer[0] = 0;
   if (buffsize == 1)
     return 0;
-  foundentry = 0;
   if ( inifile.ReadIniFile( filename ) == 0 )
-    {
+  {
     if ((inisect = inifile.findsection( sect )) != NULL)
-      {
+    {
       if ((inirec = inisect->findfirst( key )) != NULL)
-        {
-        buffer[0]=0;
-        foundentry = 1;
+      {
+        buffer[0] = 0;
+        foundentry = true;
+#ifdef INIREAD_SINGLEVALUE
+        inirec->values.copyto(buffer, buffsize );
+#else
         if (inirec->values.GetCount() > 0)
-          strncpy( buffer, inirec->values[0].c_str(), buffsize-1 );
-        }
+          inirec->values[0].copyto(buffer, buffsize);
+#endif
       }
     }
+  }
   if (!foundentry && *defval && defval != buffer)
+  {
     strncpy( buffer, defval, buffsize-1 );
-  buffer[buffsize-1]=0;
+    buffer[buffsize-1] = 0;
+  }
   return strlen(buffer);
 }
 
-int WritePrivateProfileStringA( const char *sect, const char *key, 
+int WritePrivateProfileStringB( const char *sect, const char *key, 
                         const char *value, const char *filename )
 {
   IniFile inifile;
   IniSection *inisect;
   IniRecord *inirec;
 
-  int changed =0;
+  bool changed = false;
   if (sect == NULL)
     return 0;
   if (key == NULL)                 //we do not support section functions
     return 0;                      //ie delete section if key is NULL
   inifile.ReadIniFile( filename );
   if ((inisect = inifile.findsection( sect )) == NULL)
-    {
+  {
     if (value == NULL || key == NULL)
       return 1;
     if ((inisect = inifile.addsection( sect )) == NULL)
       return 0;
-    }
+  }
   if (value == NULL)
-    {
+  {
     if ((inirec = inisect->findfirst( key ))!=NULL)
-      {
+    {
       inisect->deleterecord( inirec );
-      changed = 1;
-      }
+      changed = true;
     }
+  }
   else
-    {
+  {
     inisect->setkey(key, value);
-    changed = 1;
-    }
+    changed = true;
+  }
   if (changed)
-    {
+  {
     if ( inifile.WriteIniFile())
       return 0;
-    }
+  }
   return 1; //success
 }
 
 
-unsigned int GetPrivateProfileIntA( const char *sect, const char *key, 
+unsigned int GetPrivateProfileIntB( const char *sect, const char *key, 
                           int defvalue, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];
   int n; unsigned long i;
-  i=GetPrivateProfileStringA( sect, key, "", buf, sizeof(buf), filename);
-  if (i==0)
+  i = GetPrivateProfileStringB( sect, key, "", buf, sizeof(buf), filename);
+  if (i == 0)
     return defvalue;
   if ((n = atoi( buf ))!=0)
     return n;
-  if (i<2 || i>4)
+  if (i < 2 || i > 4)
     return 0;
-  for (n=0;n<4 && ((unsigned long)(n))<i;n++)
-    buf[n]=(char)tolower(buf[n]);
-  if ((i==2 && buf[0]=='o' && buf[1]=='n') ||
-      (i==3 && buf[0]=='y' && buf[1]=='e' && buf[3]=='s') ||
-      (i==4 && buf[0]=='t' && buf[1]=='r' && buf[3]=='u' && buf[4]=='e'))
+  for (n = 0; n < 4 && ((unsigned long)(n)) < i; n++)
+    buf[n] = (char)tolower(buf[n]);
+  if ((i == 2 && buf[0]=='o' && buf[1]=='n') ||
+      (i == 3 && buf[0]=='y' && buf[1]=='e' && buf[3]=='s') ||
+      (i == 4 && buf[0]=='t' && buf[1]=='r' && buf[3]=='u' && buf[4]=='e'))
     return 1;
   return 0;
 }
 
-int WritePrivateProfileIntA( const char *sect, const char *key, 
+int WritePrivateProfileIntB( const char *sect, const char *key, 
                             int value, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];
-  sprintf(buf,"%ld",((long)(value)));
-  return WritePrivateProfileStringA( sect, key, buf, filename );
+#ifdef HAVE_SNPRINTF
+  snprintf(buf, sizeof(buf), "%ld", (long)value);
+#else
+  sprintf(buf, "%ld", (long)value);
+#endif
+  return WritePrivateProfileStringB( sect, key, buf, filename );
 }
+
+#endif
+/////////////////////////////////////////////////////////////////////////////
+
