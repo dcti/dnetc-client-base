@@ -9,6 +9,10 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.42  1998/12/04 17:15:51  cyp
+// OS/2 change: priority is only set for crunchers. Main thread always runs
+// at normal priority.
+//
 // Revision 1.41  1998/12/04 17:09:30  silby
 // Fixed my last change
 //
@@ -55,7 +59,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.41 1998/12/04 17:09:30 silby Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.42 1998/12/04 17:15:51 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -79,18 +83,9 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
         return -1;
       }
   #elif (CLIENT_OS == OS_OS2)
-    int prio_scope, prio_level;
     if ( set_for_thread )
-      prio_scope = PRTYS_THREAD;
-    else 
-      prio_scope = 2;
-
-    if (prio == 9)
-      DosSetPriority( prio_scope, PRTYC_REGULAR, 0, 0);
-    else
       {
-      prio_level = (32 * prio)/10;
-      DosSetPriority( prio_scope, PRTYC_IDLETIME, prio_level, 0);
+      DosSetPriority( PRTYS_THREAD, PRTYC_IDLETIME, ((32 * prio)/10), 0);
       }
   #elif (CLIENT_OS == OS_WIN32)
     {
@@ -245,47 +240,11 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
             schedctl( NDPRI, 0, (NDPLOMIN - NDPNORMMIN)/prio);
         }
       }
-  #elif (CLIENT_OS == OS_FREEBSD)
-    int PRI_OTHER_MAX = 10;
-    int PRI_OTHER_MIN = 20;
-    if ( set_for_thread )
-      {
-      #if defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
-        #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
-          //nothing - priority is set when created
-        #else
-          //SCHED_OTHER policy
-          int newprio;
-          if ( prio == 9 )
-            newprio = PRI_OTHER_MAX;
-          else
-            newprio = (PRI_OTHER_MIN + PRI_OTHER_MAX + 1) / 10;
-          if (pthread_setprio(pthread_self(), newprio ) < 0)
-            return -1;
-        #endif
-      #endif
-      }
-    else 
-      {
-      static int oldnice = -1;
-      int newnice = ((22*(9-prio))+5)/10;  /* scale from 0-9 to 20-0 */
-      if (oldnice != -1)
-        {
-        errno = 0;
-        nice( -oldnice );   // note: assumes nice() handles the 
-        if ( errno )        // (-20 to 20) range and not 0-40 
-          return -1;
-        }
-      if ( newnice != 0 )
-        {
-        errno = 0;
-        nice( newnice );
-        if ( errno )
-          return -1;
-        }
-      oldnice = newnice;
-      }
   #else
+    #if (CLIENT_OS == OS_FREEBSD)
+    #define PRI_OTHER_MAX=10;
+    #define PRI_OTHER_MIN=20;
+    #endif
     if ( set_for_thread )
       {
       #if defined(_POSIX_THREADS_SUPPORTED) //defined in cputypes.h
