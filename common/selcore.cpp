@@ -3,14 +3,20 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: selcore.cpp,v $
+// Revision 1.21  1998/11/28 17:44:38  remi
+// Integration of the 386/486 self modifying core.
+// Wrapped $Log comments.
+//
 // Revision 1.20  1998/11/02 04:40:07  cyp
 // Removed redundant ::numcputemp. ::numcpu does it all.
 //
 // Revision 1.19  1998/10/29 08:39:39  silby
-// Fixed the condition where core already specified would cause mmx des detection to be skipped and always enabled.
+// Fixed the condition where core already specified would cause mmx
+// des detection to be skipped and always enabled.
 //
 // Revision 1.18  1998/10/29 08:19:31  silby
-// cputype was not properly being & 0xff'd from detectedtype, messing up x86 mmx processor detection for rc5 cores.
+// cputype was not properly being & 0xff'd from detectedtype, messing
+// up x86 mmx processor detection for rc5 cores.
 //
 // Revision 1.17  1998/10/11 00:43:23  cyp
 // Implemented 'quietly' in SelectCore() and ValidateProcessorCount()
@@ -83,7 +89,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.20 1998/11/02 04:40:07 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.21 1998/11/28 17:44:38 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -292,7 +298,18 @@ int Client::SelectCore(int quietly)
 
   if (cputype == 1) // Intel 386/486
     {
-    rc5_unit_func = rc5_unit_func_486;
+    #if defined(SMC) && defined(MULTITHREAD)
+      if (numcpu < 2) {
+	rc5_unit_func =  rc5_unit_func_486_smc;
+	selmsg_rc5 = "80386 & 80486 self modifying";
+      } else
+	rc5_unit_func =  rc5_unit_func_486;
+    #elif defined(SMC) // && !defined(MULTITHREAD)
+      rc5_unit_func = rc5_unit_func_486_smc;
+      selmsg_rc5 = "80386 & 80486 self modifying";
+    #else
+      rc5_unit_func = rc5_unit_func_486;
+    #endif
     des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
     des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
     }
