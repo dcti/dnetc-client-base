@@ -2,57 +2,12 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: rc5-p6-rg.cpp,v $
-// Revision 1.16  1999/07/13 23:16:07  remi
-// 0.45% speedup patch by Mario Weilguni <mweilguni@sime.com>
-//
-// Revision 1.15.2.1  1999/07/13 23:12:00  remi
-// 0.45% speedup patch by Mario Weilguni <mweilguni@sime.com>
-//
-// Revision 1.15  1999/04/06 13:30:34  cyp
-// removed #ifndef _32BIT_ guard
-//
-// Revision 1.14  1998/12/21 01:21:39  remi
-// Recommitted to get the right modification time.
-//
-// Revision 1.13  1998/12/21 16:37:28  remi
-// - supressed work_key2_ebp as it's the same as S2(25). Thanks Silby!
-// - put extern "C" in front of the *.cpp cores.
-//
-// Revision 1.12  1998/12/14 23:18:52  remi
-// Upgraded (sic) to the *last* version...
-//
-// Revision 1.9  1998/11/28 18:02:06  remi
-// Fixed BALIGN4 macro for *BSD.
-//
-// Revision 1.8  1998/11/20 23:45:10  remi
-// Added FreeBSD support in the BALIGN macro.
-//
-// Revision 1.7  1998/08/20 00:25:23  silby
-// Took out PIPELINE_COUNT checks inside .cpp x86 cores - they were
-// causing build problems with new PIPELINE_COUNT architecture on x86.
-//
-// Revision 1.6  1998/07/08 22:59:39  remi
-// Lots of $Id stuff.
-//
-// Revision 1.5  1998/07/08 18:47:49  remi
-// $Id fun ...
-//
-// Revision 1.4  1998/06/14 10:03:59  skand
-// define and use a preprocessor macro to hide the .balign directive for
-// ancient assemblers
-//
-// Revision 1.3  1998/06/14 08:27:22  friedbait
-// 'Id' tags added in order to support 'ident' command to display a bill of
-// material of the binary executable
-//
-// Revision 1.2  1998/06/14 08:13:40  friedbait
-// 'Log' keywords added to maintain automatic change history
-//
-//
 // Pentium Pro optimized version
 //
-// 980226 :
+// 1999/07/13 :  
+//      - 0.45% speedup patch by Mario Weilguni <mweilguni@sime.com>
+//
+// 1998/02/26 :
 //	- Corrected bug in the key incrementation algorithm that caused the
 //	  client to core-dump at the end of some blocks.
 //	  As a side-effect, this fix re-enable support for blocks of up to 2^64 keys
@@ -64,11 +19,11 @@
 //		subl $0x00010000, %%reg   to   addl $0xFFFF0001, %%reg
 //		addl $0x00000001, %%reg
 //
-// 980104 :
+// 1998/01/04 :
 //	- precalculate some things for ROUND1 & ROUND2
 
 const char *rc5_p6_rg_cpp (void) {
-return "@(#)$Id: rc5-p6-rg.cpp,v 1.16 1999/07/13 23:16:07 remi Exp $"; }
+return "@(#)$Id: rc5-p6-rg.cpp,v 1.17 1999/07/20 04:26:37 cyp Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
