@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.182  1999/02/03 18:20:12  cyp
+# Removed ./common/dctistrg.[cpp|h]
+#
 # Revision 1.181  1999/01/31 13:57:57  snake
 #
 # target bsdi4 with ELF and MMX support adapted, no mt yet
@@ -825,7 +828,6 @@ COMMON_SRCS="common/client.cpp \
 	     common/netinit.cpp \
 	     common/cmdline.cpp \
 	     common/selftest.cpp \
-	     common/dctistrg.cpp \
 	     common/bench.cpp \
 	     common/probman.cpp \
 	     common/clirun.cpp \
