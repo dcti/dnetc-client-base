@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.3.2.6 2005/03/08 05:47:26 snikkel Exp $
+; $Id: x86ident.asm,v 1.3.2.7 2005/03/08 18:05:42 snikkel Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -246,12 +246,30 @@ _neTM:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
                 mov     cx, ax          ; get family/model/stepping bits
                 and     cx,0f00h        ; mask only family
                 cmp     cx,0f00h        ; less than K8?
-                jnz     _end            ; neither brand nor cache bits needed
-                or      dl,dl           ; have brand bits?
-                jz      _end            ; continue if not
+                jnz     near _end       ; neither brand nor cache bits needed
+                or      dl,dl           ; have 8bit brand?
+                jz      _twb            ; check for 12bit brand
                 shr     dl,1
                 and     dl,0f0h         ; 'Brand' msn->brand msn
                 or      ah,dl           ; 0/fam/mod/step -> brand/fam/mod/step
+                jmp     _end
+
+_twb:           push    eax             ; save family/model/stepping
+                mov     eax,80000000h   ; see if extended cpuid is supported
+                cpuid
+                pop     ebx             ; clear stack
+                cmp     eax,80000000h
+                jl      near _end       ; exit if not supported
+                push    ebx             ; save family/model/stepping
+                mov     eax,80000001h   ; extended cpuid
+                cpuid
+                pop     eax             ; restore family/model/stepping
+                and     ebx,00000fffh   ; mask brand bits
+                or      ebx,ebx         ; have 12bit brand?
+                jz      _end            ; exit if not
+                shl     bh,4            ; get msn
+                and     bh,0f0h         ; mask msn
+                or      ah,bh           ; 0/fam/mod/step -> brand/fam/mod/step
                 jmp     _end
 
                 ;On a PII and above we take extra steps to differentiate
