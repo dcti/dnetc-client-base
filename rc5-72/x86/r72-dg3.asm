@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.1 2002/10/23 22:44:22 acidblood Exp $
+; $Id: r72-dg3.asm,v 1.2 2002/10/24 01:16:57 acidblood Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -114,7 +114,6 @@ defwork save_ebp
     %endif
 %endmacro
 
-; register allocation for the key setup blocks
 %define A1         eax
 %define A2         ebx
 %define A3         edx
@@ -366,8 +365,22 @@ key_setup_3:
         KEYSETUP_BLOCK S,22,2
         KEYSETUP_BLOCK S,23,0
         KEYSETUP_BLOCK S,24,1
-        KEYSETUP_BLOCK S,25,2
 
+        add     A1, S1(25)
+        add     A2, S2(25)
+        add     A3, S3(25)
+
+        add     A1, B1
+        add     A2, B2
+        add     A3, B3
+
+        rol     A1, 3
+        rol     A2, 3
+        rol     A3, 3
+
+        mov     S1(25), A1
+        mov     S2(25), A2
+        mov     S3(25), A3
 
 ;    A1 = rc5_72unitwork->plain.lo + S1[0];
 ;    A2 = rc5_72unitwork->plain.lo + S2[0];
@@ -405,20 +418,6 @@ encryption:
         ENCRYPTION_BLOCK 11
         ENCRYPTION_BLOCK 12
 
-
-;    if (A1 == rc5_72unitwork->cypher.lo)
-;    {
-;      ++rc5_72unitwork->check.count;
-;      rc5_72unitwork->check.hi  = rc5_72unitwork->L0.hi;
-;      rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
-;      rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
-;      if (B1 == rc5_72unitwork->cypher.hi)
-;      {
-;        *iterations -= (kiter + 1)*2;
-;        return RESULT_FOUND;
-;      }
-;    }
-
 test_key_1:
         cmp     A1, [work_C_0]
         mov     eax, [RC5_72UnitWork]
@@ -449,19 +448,6 @@ test_key_1:
         mov     eax, RESULT_FOUND
 
         jmp     finished
-
-;    if (A2 == rc5_72unitwork->cypher.lo)
-;    {
-;      ++rc5_72unitwork->check.count;
-;      rc5_72unitwork->check.hi  = rc5_72unitwork->L0.hi + 0x01;
-;      rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
-;      rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
-;      if (B2 == rc5_72unitwork->cypher.hi)
-;      {
-;        *iterations -= (kiter + 1)*2 - 1;
-;        return RESULT_FOUND;
-;      }
-;    }
 
 k7align 16
 test_key_2:
@@ -497,6 +483,7 @@ test_key_2:
 k7align 16
 test_key_3:
         cmp     A3, [work_C_0]
+        mov     edx, [RC5_72UnitWork_L0hi]
 
         jne     short inc_key
 
@@ -529,11 +516,10 @@ test_key_3:
 
 k7align 16
 inc_key:
-        mov     edx, [RC5_72UnitWork_L0hi]
+        cmp     dl, 0xFB
         mov     ecx, [RC5_72UnitWork_L0mid]
         mov     ebx, [RC5_72UnitWork_L0lo]
 
-        cmp     dl, 0xFB
         jae     complex_incr
 
         add     dl, 3
@@ -625,6 +611,7 @@ complex_incr:
         jnz     key_setup_1
 
         mov     eax, RESULT_NOTHING
+
 
 finished:
         mov     ebx, [save_ebx]
