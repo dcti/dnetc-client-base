@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.33.2.1 2004/08/08 19:24:29 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.33.2.2 2004/08/11 00:41:09 snikkel Exp $
  */
 #include <string.h>   /* memset */
 
@@ -27,18 +27,7 @@
   #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - default is 0 ('no')  */
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0-2 - default is 0 ('no')  */
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - default is 0         */
-
-#elif defined(ASM_SPARC)
-  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
-  #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
-  #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
-  #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
-  #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
-  #define OGROPT_ALTERNATE_CYCLE                0 /* 0-2 - 'no'  (default) */
-  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - 'std' (default) */
-
 #endif
-
 
 /* -- various optimization option defaults ------------------------------- */
 
