@@ -3,14 +3,17 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.2  1998/09/28 13:29:28  cyp
+// Removed checkifbetaexpired() declaration conflict.
+//
 // Revision 1.1  1998/09/28 03:39:58  cyp
 // Spun off from client.cpp
 //
 //
 //
 #if (!defined(lint) && defined(__showids__))
-const char *client_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.1 1998/09/28 03:39:58 cyp Exp $"; }
+const char *clirun_cpp(void) {
+return "@(#)$Id: clirun.cpp,v 1.2 1998/09/28 13:29:28 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -56,15 +59,17 @@ static int DoesFileExist( const char *filename )
 #if defined(BETA)
 static int checkifbetaexpired(void)
 {
+#if defined(BETA_EXPIRATION_TIME) && (BETA_EXPIRATION_TIME != 0)
+
   timeval currenttime;
   timeval expirationtime;
 
-  expirationtime.tv_sec = EXPIRATIONTIME;
+  expirationtime.tv_sec = BETA_EXPIRATION_TIME;
   expirationtime.tv_usec= 0;
 
   CliTimer(&currenttime);
   if (currenttime.tv_sec > expirationtime.tv_sec ||
-      currenttime.tv_sec < expirationtime.tv_sec-1814400)
+      currenttime.tv_sec < (BETA_EXPIRATION_TIME - 1814400))
     {
     Log("[%s] This beta release expired on %s. Please\n"
         " %s  download a newer beta, or run a standard-release client.\n", 
@@ -72,6 +77,7 @@ static int checkifbetaexpired(void)
         CliGetTimeString(NULL,0) );
     return 1;
     }
+#endif
   return 0;
 }
 #endif
@@ -846,18 +852,6 @@ int Client::Run( void )
     }
 
   // --------------------------------------
-  // BETA check
-  // --------------------------------------
-
-  #if defined(BETA)
-  if (checkifbetaexpired() != 0) //will already have printed a message
-    {
-    TimeToQuit = 1;
-    exitcode = -1;
-    }
-  #endif
-
-  // --------------------------------------
   // Recover blocks from checkpoint files before anything else
   // --------------------------------------
 
@@ -874,6 +868,18 @@ int Client::Run( void )
              ((cont_i=0)?("RC5"):("DES")) );
       }
     }
+
+  // --------------------------------------
+  // BETA check
+  // --------------------------------------
+
+  #if defined(BETA)
+  if (!TimeToQuit && checkifbetaexpired()!=0) //prints a message
+    {
+    TimeToQuit = 1;
+    exitcode = -1;
+    }
+  #endif
 
   // --------------------------------------
   // Determine the number of problems to work with. Number is used everywhere.
@@ -1223,6 +1229,13 @@ int Client::Run( void )
     // Check for user break
     //----------------------------------------
 
+    #if defined(BETA)
+    if (!TimeToQuit && !CheckExitRequestTrigger() && checkifbetaexpired()!=0) 
+      {
+      TimeToQuit = 1;
+      exitcode = -1;
+      }
+    #endif
     if (!TimeToQuit && CheckExitRequestTrigger())
       {
       Log( "\n[%s] Received %s request...\n", Time(),
@@ -1234,14 +1247,6 @@ int Client::Run( void )
     //------------------------------------
     //update the status bar, check all problems for change, do reloading etc
     //------------------------------------
-
-    #if defined(BETA)
-    if (!TimeToQuit && !CheckExitRequestTrigger())
-      {
-      if (checkifbetaexpired() > 0) 
-        RaiseExitRequestTrigger();
-      }
-    #endif
 
     if (!TimeToQuit && !CheckPauseRequestTrigger())
       {
