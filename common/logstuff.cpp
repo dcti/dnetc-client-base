@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.42 2000/11/22 18:20:29 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.43 2000/12/01 13:56:17 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -283,7 +283,7 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
        CLIENT_OS == OS_OS2 || CLIENT_OS == OS_WIN16 || \
        CLIENT_OS == OS_WIN32)
     #define ftruncate( fd, sz )  chsize( fd, sz )
-  #elif (CLIENT_OS == OS_VMS || CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_VMS)
     #define ftruncate( fd, sz ) //nada, not supported
     #define FTRUNCATE_NOT_SUPPORTED
   #endif
@@ -374,7 +374,12 @@ static void InternalLogFile( const char *msgbuffer, unsigned int msglen, int /*f
         char *swapbuffer = (char *)malloc( maxswapsize );
         if (swapbuffer)
         {
+          #if (CLIENT_OS == OS_AMIGAOS)
+          // buggy fopen doesn't understand "r+b" (b ignored on AmigaOS anyway)
+          file = __fopenlog( logname, "r+" );
+          #else
           file = __fopenlog( logname, "r+b" );
+          #endif
           if ( file )
           {
             unsigned long next_top = filelen - /* keep last 90% */
@@ -1077,22 +1082,10 @@ void LogScreenPercent( unsigned int load_problem_count )
 
   if (buffer[0] && disp_format != DISPFORMAT_PERC)
   {
-    #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
-    // temporary fix - updating the progress every 5 seconds is not a good idea
-    // since it causes a number of context-switches to the 68K, which in turn
-    // slows the 68K client down quite dramatically if both clients are running
-    // in parallel.  So, we only do it once per minute, minus the time display.
-    if (!logstatics.lastwasperc || (logstatics.perc_callcount % 12) == 0)
-    {
-      LogScreenRaw( "\r%s", buffer, NULL );
-    #else
-    {
-      LogScreen( "\r%s", buffer, NULL );
-    #endif
-      logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
-      logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
-      /* simple, eh? :) */
-    }
+    LogScreen( "\r%s", buffer, NULL );
+    logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
+    logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
+    /* simple, eh? :) */
   }
   else
   {
