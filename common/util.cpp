@@ -5,7 +5,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.11.2.49 2001/03/26 17:51:41 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.11.2.50 2001/05/19 18:45:01 andreasb Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -1172,6 +1172,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
       #endif /* spawn ps */
       thatpid = thatpid; /* shaddup compiler */
+      p=p;
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #endif /* #if (defined(__unix__)) */
