@@ -8,7 +8,7 @@ This client requires:
    Should also work with iw225 with the emulation library. Untested.
    Please don't ask where to get the emul library as I have no clue at all.
 
-This client is probably only or interest to people with a 68040 or better,
+This client is probably only of interest to people with a 68040 or better,
 though every last CPU cycle that can be given to the RC5 effort is welcome.
 
 AmiTCP users should look for the socket.library->bsdsocket.library mapper.
