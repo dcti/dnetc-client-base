@@ -8,13 +8,23 @@
 # Written by Malcolm Howell <coreblimey@rottingscorpion.com>
 # 4th Jan 2003
 #
-# $Id: r72-ppc-mh-2.gas.s,v 1.1.2.1 2003/01/07 15:28:38 oliver Exp $
+# $Id: r72-ppc-mh-2.gas.s,v 1.1.2.2 2003/04/05 12:40:45 oliver Exp $
+#
+# $Log: r72-ppc-mh-2.gas.s,v $
+# Revision 1.1.2.2  2003/04/05 12:40:45  oliver
+# removed @l and @h constant references and replaced with hardcoded
+# values, in order to support AIX (GAS only allows @l, @h and @ha to be
+# applied to constants when using ELF output format)
+#
+#
 
 gcc2_compiled.:
 
 .section    .text
 
-.global     rc5_72_unit_func_ppc_mh_2  # Exported
+.globl     rc5_72_unit_func_ppc_mh_2	# elf
+.globl     .rc5_72_unit_func_ppc_mh_2	# coff
+.globl     _rc5_72_unit_func_ppc_mh_2	# a.out
 
 # Register aliases
 
@@ -146,11 +156,23 @@ gcc2_compiled.:
 # Constants
 .set    P,0xb7e15163
 .set    Q,0x9e3779b9
+.set	Q_hi,0x9e37
+.set	Q_lo,0x79b9
 .set    P0QR3,0xbf0a8b1d    # P<<3
+.set    P0QR3_hi,0xbf0a
+.set    P0QR3_lo,0x8b1d
 .set    PR3Q,0x15235639     # P0QR3 + P + Q
+.set    PR3Q_hi,0x1523
+.set    PR3Q_lo,0x5639
 .set    P2Q,0xf45044d5      # P+2Q
+.set    P2Q_hi,0xf450
+.set    P2Q_lo,0x44d5
 .set    P3Q,0x9287be8e      # P+3Q
+.set    P3Q_hi,0x9287
+.set    P3Q_lo,0xbe8e
 .set    P4Q,0x30bf3847      # P+4Q
+.set    P4Q_hi,0x30bf
+.set    P4Q_lo,0x3847
 
 .set    RESULT_NOTHING,1
 .set    RESULT_FOUND,2
@@ -170,7 +192,9 @@ gcc2_compiled.:
 
 # Args: r3=RC5_72UnitWork *, r4=u32 * iteration_count
 
-rc5_72_unit_func_ppc_mh_2:
+rc5_72_unit_func_ppc_mh_2:	# elf
+.rc5_72_unit_func_ppc_mh_2:	# coff
+_rc5_72_unit_func_ppc_mh_2:	# a.out
     stwu    r1,-var_size(r1)
     stmw    r13,save_regs(r1)
     lwz     r7,0(r4)            # Get initial key count
@@ -191,7 +215,7 @@ rc5_72_unit_func_ppc_mh_2:
     stmw    r21,UW_copy(r1)
 
     # Some constants are expected in registers on entry
-    lis     r23,P4Q@h
+    lis     r23,P4Q_hi
     lwz     r20,L0_hi(r1)
 
     b       l0chg
@@ -206,8 +230,8 @@ mainloop:
     # r23 contains P4Q@h
 
     lwz     r28,L1P2QR(r1)      # Get L1P2QR into scratch reg r28
-    lis     rQ,Q@h
-    ori     PnQ,r23,P4Q@l       # P4Q@h is preloaded into r23
+    lis     rQ,Q_hi
+    ori     PnQ,r23,P4Q_lo      # P4Q@h is preloaded into r23
     addi    L2b,r20,1
 
     lwz     r21,P32QR(r1)
@@ -221,7 +245,7 @@ mainloop:
 
     lwz     r30,L0X(r1)
     rotlwi  Ab,Ab,3
-    ori     rQ,rQ,Q@l
+    ori     rQ,rQ,Q_lo
     add     S03a,L2a,r21
     rotlwi  S03a,S03a,3
     add     scr,L2b,Ab
@@ -595,9 +619,9 @@ mainloop:
 
     rotlwi  Aa,Aa,3             # Find S25a
     add     Ab,Ab,L1b
-    lis     r7,P0QR3@h
+    lis     r7,P0QR3_hi
     stw     Aa,mS25a(r1)
-    ori     r7,r7,P0QR3@l       # Both S[00] values are P0QR3
+    ori     r7,r7,P0QR3_lo      # Both S[00] values are P0QR3
     add     scr,Aa,L0a
 
     add     Ab,Ab,r7
@@ -1367,7 +1391,7 @@ mainloop:
     rotlwi  Ab,Ab,3
     add     eAa,eAa,S16a
     lwz     r20,L0_hi(r1)       # Load some useful data in advance
-    lis     r23,P4Q@h           # Load half of PnQ, ready for next mainloop
+    lis     r23,P4Q_hi          # Load half of PnQ, ready for next mainloop
     rotlw   L2a,L2a,scr
     add     S17a,S17a,S16a      # Begin iteration 17 on a
     rotlw   eAb,eAb,eBb
@@ -1674,8 +1698,8 @@ l0chg:
     # Calculate L0-constants
     lwz     r30,L0_lo(r1)   # r30=L0.lo=L0
 
-    lis     r31,P0QR3@h     # r31=P0QR3
-    ori     r31,r31,P0QR3@l
+    lis     r31,P0QR3_hi    # r31=P0QR3
+    ori     r31,r31,P0QR3_lo
 
     add     r30,r30,r31
 
@@ -1683,8 +1707,8 @@ l0chg:
 
     stw     r30,L0X(r1)
 
-    lis     r28,PR3Q@h
-    ori     r28,r28,PR3Q@l
+    lis     r28,PR3Q_hi
+    ori     r28,r28,PR3Q_lo
     add     r28,r28,r30
     rotlwi  r28,r28,3       # r28=AX
 
@@ -1693,8 +1717,8 @@ l0chg:
     add     r29,r30,r28     # r29=L0XAX
     stw     r29,L0XAX(r1)
 
-    lis     r27,P2Q@h
-    ori     r27,r27,P2Q@l
+    lis     r27,P2Q_hi
+    ori     r27,r27,P2Q_lo
     add     r27,r28,r27     # r27=AXP2Q
 
     stw     r27,AXP2Q(r1)
@@ -1704,9 +1728,9 @@ l1chg:
     #     Calculate L1-constants
 
     lwz     r31,L0XAX(r1)
-    lis     r26,P3Q@h
+    lis     r26,P3Q_hi
     lwz     r30,L0_mid(r1)  # r30=L0_mid=L1
-    ori     r26,r26,P3Q@l
+    ori     r26,r26,P3Q_lo
     add     r30,r30,r31
     lwz     r29,AXP2Q(r1)
     rotlw   r30,r30,r31     # r30=L1X
