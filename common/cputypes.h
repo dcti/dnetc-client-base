@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.16 2003/10/15 03:06:53 jr_brady Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.17 2003/11/07 03:41:11 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -187,6 +187,8 @@
     #define CLIENT_CPU     CPU_PPC
   #elif defined(__sparc__) || defined(__sparc_v9__) || defined(ASM_SPARC)
     #define CLIENT_CPU     CPU_SPARC
+  #elif defined(__amd64__) || defined(ASM_AMD64)
+    #define CLIENT_CPU     CPU_X86_64
   #endif
 #elif defined(__NetBSD__)
   #ifndef __unix__ /* should already be defined */
