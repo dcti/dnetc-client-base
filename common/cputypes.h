@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.11 1999/12/11 04:16:39 vetere Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.12 1999/12/12 15:34:04 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -328,7 +328,7 @@
   #ifndef __unix__ /* 4.4bsd compatible or not? */
   #define __unix__ /* it ain't that special! */
   #endif
-  #define CLIENT_OS_NAME   "BeOS"
+  #define CLIENT_OS_NAME   "Be OS"
   #define CLIENT_OS     OS_BEOS
   #if defined(__POWERPC__) || defined(__PPC__)
     #define CLIENT_CPU    CPU_POWERPC
@@ -638,13 +638,7 @@ extern "C" {
 #endif  
 
 typedef unsigned char u8;
-typedef struct fake_u64 { u32 hi, lo; } u64;
-
-/*
-typedef signed char s8;
-typedef struct fake_u64 { s32 hi, lo; } s64;
-struct u128 { u64 hi, lo; };
-struct s128 { s64 hi, lo; };
-*/
-
+struct fake_u64 { u32 hi, lo; }; /* DO NOT TYPEDEF THIS TO A u64 again! */
+                                 /* One too many bugs have been caused by */
+                                 /* passing u64's as an argument. */
 #endif /* __CPUTYPES_H__ */

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.37 1999/12/11 00:46:49 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.38 1999/12/12 15:34:04 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -757,7 +757,7 @@ Problem::~Problem()
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_unit_func().
 
-static void  __SwitchRC5Format(u64 *_key)                               
+static void  __SwitchRC5Format(struct fake_u64 *_key)                               
 {                                                                       
     register u32 tempkeylo = _key->hi; /* note: we switch the order */  
     register u32 tempkeyhi = _key->lo;                                  
@@ -782,7 +782,7 @@ static void  __SwitchRC5Format(u64 *_key)
 //
 // Output: the key incremented
 
-static void __IncrementKey(u64 *key, u32 iters, int contest)        
+static void __IncrementKey(struct fake_u64 *key, u32 iters, int contest)        
 {                                                                   
   switch (contest)                                                  
   {                                                                 
@@ -905,24 +905,19 @@ int Problem::LoadState( ContestWork * work, unsigned int contestid,
       contestwork.crypto.iterations.lo = ( work->crypto.iterations.lo );
 
       //determine starting key number. accounts for carryover & highend of keysdone
-      u64 key;
-      key.hi = contestwork.crypto.key.hi + contestwork.crypto.keysdone.hi + 
+      rc5unitwork.L0.hi = contestwork.crypto.key.hi + contestwork.crypto.keysdone.hi + 
          ((((contestwork.crypto.key.lo & 0xffff) + (contestwork.crypto.keysdone.lo & 0xffff)) + 
            ((contestwork.crypto.key.lo >> 16) + (contestwork.crypto.keysdone.lo >> 16))) >> 16);
-      key.lo = contestwork.crypto.key.lo + contestwork.crypto.keysdone.lo;
+      rc5unitwork.L0.lo = contestwork.crypto.key.lo + contestwork.crypto.keysdone.lo;
+      if (contest == RC5)
+        __SwitchRC5Format (&(rc5unitwork.L0));
+      refL0 = rc5unitwork.L0;
 
       // set up the unitwork structure
       rc5unitwork.plain.hi = contestwork.crypto.plain.hi ^ contestwork.crypto.iv.hi;
       rc5unitwork.plain.lo = contestwork.crypto.plain.lo ^ contestwork.crypto.iv.lo;
       rc5unitwork.cypher.hi = contestwork.crypto.cypher.hi;
       rc5unitwork.cypher.lo = contestwork.crypto.cypher.lo;
-
-      rc5unitwork.L0.lo = key.lo;
-      rc5unitwork.L0.hi = key.hi;
-      if (contest == RC5)
-        __SwitchRC5Format (&(rc5unitwork.L0));
-
-      refL0 = rc5unitwork.L0;
 
       if (contestwork.crypto.keysdone.lo!=0 || contestwork.crypto.keysdone.hi!=0 )
       {

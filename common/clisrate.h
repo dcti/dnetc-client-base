@@ -10,9 +10,9 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLISRATE_H__
-#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.20.2.1 1999/11/23 22:48:27 cyp Exp $"
+#define __CLISRATE_H__ "@(#)$Id: clisrate.h,v 1.20.2.2 1999/12/12 15:34:04 cyp Exp $"
 
-//#include "cputypes.h" // u64
+//#include "cputypes.h" // struct fake_u64
 //#include "problem.h"  // Problem class
 
 #ifndef _U32LimitDouble_
@@ -27,7 +27,7 @@ const char *CliGetKeyrateAsString( char *buffer, double rate );
 
 /* return iter/keysdone/whatever as string.                       */
 /* set contestID = -1 to have the ID ignored                      */
-const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestID );
+const char *CliGetU64AsString( struct fake_u64 *u, int /*inNetOrder*/, int contestID );
 
 /* combines CliGetKeyrateForProblem() and CliGetKeyrateAsString() */
 const char *CliGetKeyrateStringForProblem( Problem *prob );

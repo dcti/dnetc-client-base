@@ -8,9 +8,9 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.45.2.4 1999/12/11 00:46:49 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.45.2.5 1999/12/12 15:34:03 cyp Exp $"; }
 
-#include "cputypes.h"  // u64
+#include "cputypes.h"  // struct fake_u64
 #include "problem.h"   // Problem class
 #include "client.h"    // Fileentry struct
 #include "baseincs.h"  // timeval, sprintf et al
@@ -192,33 +192,33 @@ const char *CliGetSummaryStringForContest( int contestid )
 
 // return iter/keysdone/whatever as string. 
 // set contestID = -1 to have the ID ignored
-const char *CliGetU64AsString( u64 *u, int /*inNetOrder*/, int contestid )
+const char *CliGetU64AsString( struct fake_u64 *u, int /*inNetOrder*/, int contestid )
 {
   static char str[32];
   unsigned int i;
-  u64 norm;
+  u32 norm_hi,norm_lo;
   double d;
 
-  norm.hi = u->hi;
-  norm.lo = u->lo;
+  norm_hi = u->hi;
+  norm_lo = u->lo;
 
-  d = U64TODOUBLE(norm.hi, norm.lo);
+  d = U64TODOUBLE(norm_hi, norm_lo);
   if (CliGetContestInfoBaseData( contestid, NULL, &i )==0 && i>1) //clicdata
     d = d * ((double)(i));
 
   i = 0;
-  norm.hi = (unsigned int)(d / 1000000000.0);
-  norm.lo = (unsigned int)(d - (((double)(norm.hi))*1000000000.0));
+  norm_hi = (unsigned int)(d / 1000000000.0);
+  norm_lo = (unsigned int)(d - (((double)(norm_hi))*1000000000.0));
   d = d / 1000000000.0;
   if (d > 0)
   {
     i = (unsigned int)(d / 1000000000.0);
-    norm.hi = (unsigned int)(d - (((double)(i))*1000000000.0));
+    norm_hi = (unsigned int)(d - (((double)(i))*1000000000.0));
   }
 
-  if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm.hi, (unsigned) norm.lo );
-  else if (norm.hi) sprintf( str, "%u%09u", (unsigned) norm.hi, (unsigned) norm.lo );
-  else              sprintf( str, "%u", (unsigned) norm.lo );
+  if (i)            sprintf( str, "%u%09u%09u", (unsigned) i, (unsigned) norm_hi, (unsigned) norm_lo );
+  else if (norm_hi) sprintf( str, "%u%09u", (unsigned) norm_hi, (unsigned) norm_lo );
+  else              sprintf( str, "%u", (unsigned) norm_lo );
 
   return str;
 }
