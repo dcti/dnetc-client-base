@@ -5,6 +5,13 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.69  1998/07/09 07:23:32  cramer
+# Added -fno-inline-functions (on by default) to OPTS_GCC and OPTS_EGCS.
+# This is required to get the MMX des assembly code to build.  (multiple
+# labels)
+#
+# Changed gcc to egcs for the x86-linux egcs builds (never assume gcc is egcs.)
+#
 # Revision 1.68  1998/07/09 04:26:17  nordquist
 # Fixes for OPTS_XLC_PPC* (AIX 4.x with xlC compiler) and OPTS_CC_HPUX
 # (HP-UX with CC compiler).
@@ -251,11 +258,13 @@ fi
 OPTS_GCC='-fcaller-saves -fcse-follow-jumps -fcse-skip-blocks \
     -fexpensive-optimizations -fomit-frame-pointer \
     -frerun-cse-after-loop -fstrength-reduce -fthread-jumps \
-    -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms'
+    -funroll-loops -Wall -Icommon -Irc5 -Ides -Iplatforms \
+    -fno-inline-functions'
 
 OPTS_XLC3='-O3 -qansialias -qlibansi'
 
-OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides -Irc5 -Iplatforms'
+OPTS_EGCS='-O2 -fno-exceptions -fomit-frame-pointer -Wall -Icommon -Ides \
+    -Irc5 -Iplatforms -fno-inline-functions'
 
 #
 # Common platform compiler options
@@ -683,8 +692,8 @@ case "$1" in
 
 ###### Intel X86 Linux platforms
     *x86-linux-egcs)    # uses EGCS options
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
@@ -693,8 +702,8 @@ case "$1" in
 	;;
 
     *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs -g"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DPIPELINE_COUNT=2 -D__showids__"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
 	TARGET_ADDASMS="des/bdeslow.S des/bbdeslow.S platforms/x86ident.S des/p1bdespro.S des/p2bdespro.S"
@@ -703,8 +712,8 @@ case "$1" in
 	;;
 
     *x86-linux-desultra-egcs-debug)    # to debug UltraSparc DES code integration
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc -g"
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs -g"
 	# -Wno-unused to avoid tons of warnings on some ultra files
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 -Wno-unused -D__showids__ -DPIPELINE_COUNT=2 $OPTS_DES_ULTRA_C"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESULTRA_SRCS_C"
@@ -741,8 +750,8 @@ case "$1" in
 	;;
 
     *x86-linux-mt-egcs)
-	TARGET_AS="gcc -c"
-	TARGET_CC="gcc"
+	TARGET_AS="egcs -c"
+	TARGET_CC="egcs"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -static -D__showids__ -DPIPELINE_COUNT=2 -DMULTITHREAD"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS $DESMMX_SRCS"
