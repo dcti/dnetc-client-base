@@ -3,8 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.58  1998/12/25 03:08:57  cyp
+// x86 Bryd is runnable on upto 4 threads (threads 3 and 4 use the two
+// non-optimal cores, ie pro cores on a p5 machine and vice versa).
+// Made some non-core related stuff u64 clean.
+//
 // Revision 1.57  1998/12/22 15:58:24  jcmichot
-// *** empty log message ***
+// QNX changes.
 //
 // Revision 1.56  1998/12/19 04:30:23  chrisb
 // fixed a broken comment which was giving errors
@@ -14,7 +19,7 @@
 //
 // Revision 1.54  1998/12/14 12:48:59  cyp
 // This is the final revision of problem.cpp/problem.h before the class goes
-// to 'u64-clean'. Please check/declare all core prototypes.
+// 'u64 clean'. Please check/declare all core prototypes.
 //
 // Revision 1.53  1998/12/14 09:38:59  snake
 // Re-integrated non-nasm x86 cores, cause nasm doesn't support all x86 cores.
@@ -157,7 +162,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.57 1998/12/22 15:58:24 jcmichot Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.58 1998/12/25 03:08:57 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -269,6 +274,8 @@ Problem::Problem(long _threadindex /* defaults to -1L */)
   threadindex_is_valid = (_threadindex!=-1L);
   threadindex = ((threadindex_is_valid)?((unsigned int)_threadindex):(0));
 
+//LogScreen("Problem created. threadindex=%u\n",threadindex);
+
   initialized = 0;
   finished = 0;
   started = 0;
@@ -370,31 +377,65 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   if (contest == 1)
     {
-    #if defined(MMX_BITSLICER)
-    #if defined(MMX_RC5)
+    #if defined(MMX_BITSLICER) 
+    #if defined(MMX_RC5)  /* someone added this. why? - cyp */
     if ((detectedtype & 0x100) != 0)
+      {
       unit_func = des_unit_func_mmx;
+      }
     else
     #endif
     #endif
       {
+      //
+      // p1* and p2* are effectively the same core (as called from
+      // des-x86.cpp) if client was not compiled for mt - cyp
+      //
       if (cputype == 2 || cputype == 3 || cputype == 5)
-        unit_func = p1des_unit_func_p5;
-      else
         unit_func = p1des_unit_func_pro;
-      #if defined(CLIENT_SUPPORTS_SMP)
+      else
+        unit_func = p1des_unit_func_p5;
+      #if defined(CLIENT_SUPPORTS_SMP) 
       if (threadindex == 1)
         {
-        if (cputype == 2 || cputype == 3 || cputype == 5)
+        if (unit_func == p1des_unit_func_p5)
           unit_func = p2des_unit_func_p5;
-        else
-          unit_func = p1des_unit_func_pro;
+        else 
+          unit_func = p2des_unit_func_pro;
         }
-      else if (threadindex > 1)
+      else if (threadindex == 2)  
+        {
+        if (unit_func == p1des_unit_func_p5) // use the other unused cores.
+          unit_func = p1des_unit_func_pro;   // non-optimal but ...
+        else                                 // ... still better than slice
+          unit_func = p1des_unit_func_p5;
+        }
+      else if (threadindex == 3)
+        {
+        if (unit_func == p1des_unit_func_p5) // use the other unused cores.
+          unit_func = p2des_unit_func_pro;   // non-optimal but ...
+        else                                 // ... still better than slice
+          unit_func = p2des_unit_func_p5;
+        }
+      else /* fall back to slice if running with > 4 processors */
         {
         unit_func = des_unit_func_slice;
         }
       #endif
+#if 0      
+if (unit_func == p1des_unit_func_p5)
+  LogScreen("Using bryd 51. (0/2) threadindex=%u\n",threadindex);
+else if (unit_func == p2des_unit_func_p5)
+  LogScreen("Using bryd 52. (1/3) threadindex=%u\n",threadindex);
+else if (unit_func == p1des_unit_func_pro)
+  LogScreen("Using bryd 61. (2/0) threadindex=%u\n",threadindex);
+else if (unit_func == p2des_unit_func_pro)
+  LogScreen("Using bryd 62. (3/1) threadindex=%u\n",threadindex);
+else
+  LogScreen("Using slice. threadindex=%u\n",threadindex);
+LogScreen("Press any key to continue..." );  
+ConInKey(-1);
+#endif
       }
     }
   else //if (contest == 0) 
@@ -448,10 +489,19 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   contestwork.iterations.hi = ntohl( work->iterations.hi );
   contestwork.iterations.lo = ntohl( work->iterations.lo );
 
+  #if 0
   // determine the starting key number
   // (note: doesn't account for carryover to hi or high end of keysdone)
   u64 key;
   key.hi = contestwork.key.hi;
+  key.lo = contestwork.key.lo + contestwork.keysdone.lo;
+  #endif
+
+  //determine starting key number. accounts for carryover & highend of keysdone
+  u64 key;
+  key.hi = contestwork.key.hi + contestwork.keysdone.hi + 
+     ((((contestwork.key.lo & 0xffff) + (contestwork.keysdone.lo & 0xffff)) + 
+       ((contestwork.key.lo >> 16) + (contestwork.keysdone.lo >> 16))) >> 16);
   key.lo = contestwork.key.lo + contestwork.keysdone.lo;
 
   // set up the unitwork structure
@@ -488,15 +538,22 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   //---------------------------------------------------------------
   
-  tslice = (( pipeline_count + 1 ) & ( ~1L ));
-  if ( _timeslice > tslice )
-    tslice = ((_timeslice + (tslice - 1)) & ~(tslice - 1));
+  tslice = _timeslice;
+  AlignTimeslice(); /* requires a loaded ContestWork */
 
   //--------------------------------------------------------------- 
 
+  #if 0
   startpercent = (u32) ( (double) 100000.0 *
      ( (double) (contestwork.keysdone.lo) /
        (double) (contestwork.iterations.lo) ) );
+  #endif
+  
+  startpercent = (u32)( ((double)(100000.0)) *
+        (((((double)(contestwork.keysdone.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.keysdone.lo))) /
+        ((((double)(contestwork.iterations.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.iterations.lo)))) );
   percent=0;
   restart = ( contestwork.keysdone.lo!=0 || contestwork.keysdone.hi!=0 );
 
@@ -584,7 +641,52 @@ s32 Problem::RetrieveState( ContestWork * work , s32 setflags )
   return( contest );
 }
 
-/* ------------------------------------------------------------------- */
+/* ------------------------------------------------------------- */
+
+u32 Problem::AlignTimeslice(void) // align the timeslice to an even 
+{                        // multiple of pipeline_count and 2 
+  u32 alignfact = pipeline_count + (pipeline_count & 1);
+  u32 timeslice = ((tslice + (alignfact - 1)) & ~(alignfact - 1));
+
+  // don't allow a too large of a timeslice be used
+  // (technically not necessary, but may save some wasted time)
+  if (contestwork.keysdone.hi == contestwork.iterations.hi)
+    {
+    u32 todo = contestwork.iterations.lo-contestwork.keysdone.lo;
+    if (todo < timeslice)
+      {
+      timeslice = todo;
+      timeslice = ((timeslice + (alignfact - 1)) & ~(alignfact - 1));
+      }
+    }
+
+  #if 0 /* ---- old code ------ */
+  //if (timeslice <= pipeline_count)
+  //  timeslice = pipeline_count;
+  //else
+  // timeslice=((timeslice+(pipeline_count-1)) & ~(pipeline_count-1));
+  //
+  // old code - doesn't account for high end or carry over
+  //
+  //if ( ( contestwork.keysdone.lo + timeslice ) > contestwork.iterations.lo)
+  //   timeslice = (( contestwork.iterations.lo - contestwork.keysdone.lo +
+  //           pipeline_count - 1 ) / pipeline_count+1);
+  //timeslice *= pipeline_count; //was implied
+  #endif    
+
+#if 0
+LogScreen("AlignTimeslice(): effective timeslice: %lu (0x%lx),\n"
+          "suggested timeslice: %lu (0x%lx)\n"
+          "pipeline_count = %lu, timeslice%%pipeline_count = %lu\n", 
+          (unsigned long)timeslice, (unsigned long)timeslice,
+          (unsigned long)tslice, (unsigned long)tslice,
+          pipeline_count, timeslice%pipeline_count );
+#endif
+
+  return timeslice;
+}
+
+/* ------------------------------------------------------------- */
 
 s32 Problem::Run( u32 /*unused*/ )
 {
@@ -619,20 +721,10 @@ s32 Problem::Run( u32 /*unused*/ )
 #endif    
     }
 
-  // don't allow a too large of a timeslice be used
-  // (technically not necessary, but may save some wasted time)
-  // note: doesn't account for high end or carry over
-  if ( ( contestwork.keysdone.lo + tslice ) > contestwork.iterations.lo )
-    timeslice = ( contestwork.iterations.lo - contestwork.keysdone.lo +
-                pipeline_count - 1 ) / pipeline_count + 1;
-  else
-    timeslice = tslice / pipeline_count; //from the problem object
+  // align the timeslice to an even multiple of pipeline_count and 2
+  // after checking for an excessive timeslice (>(iter-keysdone)) 
+  timeslice = (AlignTimeslice() / pipeline_count);
   
-  if (timeslice <= tslice)
-    timeslice = tslice;
-  else
-    timeslice = (( timeslice + (tslice - 1)) & ~(tslice - 1));
-
 #if (CLIENT_CPU == CPU_POWERPC)
   {
   unsigned long kiter = 0;
@@ -711,16 +803,30 @@ s32 Problem::Run( u32 /*unused*/ )
     {
     // protect the innocent
     timeslice *= pipeline_count;
-    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
 
-    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
-    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+    u32 min_bits = 8;  /* bryd and kwan cores only need a min of 256 */
+    u32 max_bits = 24; /* these are the defaults if !MEGGS && !DES_ULTRA */
+
+    #if defined(MMX_BITSLICER)
+    if (unit_func == des_unit_func_mmx)
+      {
+      min_bits = MIN_DES_BITS;/* meggs driver has equal MIN and MAX */
+      max_bits = min_bits;
+      }
+    #endif
+    
+    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+//LogScreen("x86: nbits %lu, min %lu, max %lu\n", nbits, min_bits, max_bits );
+
+    if (nbits < min_bits) nbits = min_bits;
+    else if (nbits > max_bits) nbits = max_bits;
     timeslice = (1ul << nbits) / pipeline_count;
 
     kiter = (*unit_func)( &rc5unitwork, nbits );
     }
 
   contestwork.keysdone.lo += kiter;
+
   if ( kiter < timeslice * pipeline_count )
     {
     // found it?

@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.33  1998/12/25 03:08:57  cyp
+// x86 Bryd is runnable on upto 4 threads (threads 3 and 4 use the two
+// non-optimal cores, ie pro cores on a p5 machine and vice versa).
+// Made some non-core related stuff u64 clean.
+//
 // Revision 1.32  1998/12/14 12:48:59  cyp
 // This is the final revision of problem.cpp/problem.h before the class goes
 // to 'u64-clean'. Please check/declare all core prototypes.
@@ -218,10 +223,22 @@ public:
     // returns: contest=0 (RC5), contest=1 (DES), or -1 = invalid data (state not loaded).
     // Note: data (except result) is all in Network Byte order ( Big Endian )
 
+  #if 0
   u32 CalcPercent() { return (u32) ( (double) 100.0 *
+    /* Return the % completed in the current block, to nearest 1%. */
                       ( ((double) rc5result.keysdone.lo) /
                       ((double) rc5result.iterations.lo) ) ); }
-    // Return the % completed in the current block, to nearest 1%.
+  #endif
+  u32 CalcPercent() { return (u32)( ((double)(100.0)) *
+    /* Return the % completed in the current block, to nearest 1%. */
+        (((((double)(contestwork.keysdone.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.keysdone.lo))) /
+        ((((double)(contestwork.iterations.hi))*((double)(4294967296.0)))+
+                                 ((double)(contestwork.iterations.lo)))) ); }
+
+  u32 AlignTimeslice(void);
+     // return a modified ::tslice value that [has been adjusted if 
+     // >(iter-keysdone) and] is an even multiple of pipeline_count and 2 
 
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
   u32 GetKeysDone() { return(rc5result.keysdone.lo); }
