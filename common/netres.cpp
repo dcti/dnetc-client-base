@@ -6,7 +6,7 @@
  *
 */
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.25.2.6 2000/03/03 08:38:38 jlawson Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.25.2.7 2000/03/03 08:53:22 jlawson Exp $"; }
 
 //#define TEST  //standalone test
 //#define RESDEBUG //to show what network::resolve() is resolving
@@ -218,6 +218,115 @@ static struct proxylist *GetApplicableProxyList(int port, int tzdiff) /*host ord
 
 //-----------------------------------------------------------------------
 
+// Linux especially has problems with proper name resolution handling
+// because of the existence of C Libraries based on libc5, glibc2.0,
+// and glibc2.1; all of which present binary compatibility issues
+// typically resulting in only name resolutions failing.  This small
+// shim attempts to explicitly dynamically load the library containing
+// the resolver and directly call it, bypassing the statically linked
+// version of gethostbyname() bound to our executable.
+
+#if (CLIENT_OS == OS_LINUX)
+#include <dlfcn.h>
+static struct hostent *__ExtraLowlevelGethostbyname( const char *hostname )
+{
+  static struct { const char *lib; *sym; } libsyms = {
+         { "/usr/lib/libresolv.so", "res_gethostbyname" },
+         { "/usr/lib/libc.so",      "gethostbyname"     }    };
+  struct hostent *hp = (struct hostent *)0;
+  int libsym;
+
+  for (libsym=0; !hp && libsym<(sizeof(libsyms)/sizeof(libsyms[0])); libsym++)
+  {
+    void *plib = dlopen( libsyms[libsym].lib, RTLD_LAZY);
+    if (!plib) 
+    {
+      //printf("failed to load '%s'\n", libsyms[libsym].lib);
+    }
+    else 
+    {
+      void *funcptr = dlsym(plib, libsyms[libsym].sym );
+      if (!funcptr) 
+      {
+        //printf("failed to get pointer to '%s'\n", libsyms[libsym].sym);
+      }
+      else
+      {
+        struct hostent *(*pgethostbyname)(const char *name) =
+              (struct hostent*(*)(const char *)) funcptr;
+        hp = pgethostbyname(hostname);
+        if (!hp)
+        {
+          //printf("no results\n");
+        }
+        else
+        {
+          static char hostbuf[1024], aliasbuf[1024];
+          static char addrbuf[32*sizeof(ulong)];
+          static char *aliaslist[2]; 
+          static char *addrlist[32];
+          static struct hostent hent;
+  
+          hostbuf[0] = 0;
+          aliaslist[0]= (char *)0;
+          addrlist[0] = (char *)0;
+  
+          hent.h_addrtype = hp->h_addrtype;
+          hent.h_length = hp->h_length;
+          hent.h_name = &(hostbuf[0]);
+          hent.h_aliases = &(aliaslist[0]);
+          hent.h_addr_list = &(addrlist[0]);
+  
+          if (hp->h_addr_list)
+          {
+            unsigned int addrpos = 0;
+            while ( hp->h_addr_list[addrpos] 
+              && ( ((addrpos+1)*hp->h_length) < sizeof(addrbuf))
+              && ( (addrpos+1) < (sizeof(addrlist)/sizeof(addrlist[0])) ))
+            {
+              char *p = hp->h_addr_list[addrpos];
+              char *q = &addrbuf[addrpos*hp->h_length];
+              memcpy(q, p, hp->h_length );
+              addrlist[addrpos++] = q;
+            }  
+            addrlist[addrpos] = (char *)0;
+          }
+          if (hp->h_name)
+          {
+            strncpy( hostbuf, hp->h_name, sizeof(hostbuf) );
+            hostbuf[sizeof(hostbuf)-1] = '\0';
+          }
+          if (hp->h_aliases)
+          {
+            if (hp->h_aliases[0])
+            {
+              strncpy( aliasbuf, hp->h_aliases[0], sizeof(aliasbuf));
+              aliasbuf[sizeof(aliasbuf)-1] = '\0';
+              aliaslist[0] = &aliasbuf[0];
+              aliaslist[1] = (char *)0;
+            }  
+          }
+          hp = &hent;
+        }
+        //free symbol?
+      }
+      dlclose(plib);
+    }
+  }
+  if (hp != NULL)
+    return hp;
+  else
+    return gethostbyname(hostname);
+}
+
+// remap calls to our replacement shim.
+#undef gethostbyname
+#define gethostbyname(xx) __ExtraLowlevelGethostbyname(xx)
+
+#endif
+
+//-----------------------------------------------------------------------
+
 // Returns -1 if the resolve fails, or 0 on success.
 
 static int __LowLevelGethostbyname(const char *hostname,
@@ -230,7 +339,7 @@ static int __LowLevelGethostbyname(const char *hostname,
   // copy pointer to "lookup" to work around gethostbyname()
   // not prototyped to take const arg on some platforms.
   *((const char **)&lookup) = hostname;
-  
+
   if ((hp = gethostbyname(lookup) ) != NULL)
   {
     unsigned int addrpos;
