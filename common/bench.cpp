@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.35 1999/11/23 15:41:35 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.36 1999/11/27 06:22:35 sampo Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -126,7 +126,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   if (GetFileServerMajorVersionNumber() < 5)
   tslice = GetTimesliceBaseline(); //in cpucheck.cpp
   #elif (CLIENT_OS == OS_MACOS)
-  tslice = GetTimesliceToUse(contestid);
+  /* tslice = GetTimesliceToUse(contest_i);  Mindmorph */
   #endif
   totalruntime.tv_sec = 0;
   totalruntime.tv_usec = 0;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.56 1999/11/26 13:08:51 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.57 1999/11/27 06:24:15 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -240,8 +240,8 @@ int SelfTest( unsigned int contest )
       u32 tslice = 0x1000;
       #if (CLIENT_OS == OS_NETWARE)
       tslice = GetTimesliceBaseline();
-      #elif (CLIENT_OS == OS_MACOS)
-      tslice = GetTimesliceToUse(contestid);
+      /*#elif (CLIENT_OS == OS_MACOS)  Mindmorph */
+      /*tslice = GetTimesliceToUse(contestid);  Mindmorph */
       #endif
 
       if (contest == RC5)

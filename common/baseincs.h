@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.71 1999/11/08 02:02:33 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.72 1999/11/27 06:21:22 sampo Exp $"
 
 #include "cputypes.h"
 
@@ -19,13 +19,13 @@ extern "C" {
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#if (CLIENT_OS == OS_MACOS)
-#include <sys_types.h> /* in platforms/macos */
-#include <sys_stat.h>  /* in platforms/macos */
-#else
+/*#if (CLIENT_OS == OS_MACOS) Mindmorph */
+/*#include <sys_types.h> Mindmorph */ /* in platforms/macos */
+/*#include <sys_stat.h> Mindmorph */  /* in platforms/macos */
+/*#else Mindmorph */
 #include <sys/types.h>
 #include <sys/stat.h>
-#endif
+/*#endif Mindmorph */
 #include <errno.h>
 #include <limits.h>
 #if defined(__unix__)
@@ -201,29 +201,33 @@ extern "C" {
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #elif (CLIENT_OS == OS_MACOS)
-  #include <sys_time.h>
-  #include <stat.mac.h>
-  #include <machine_endian.h>
-  #include <unistd.h>
-  #define _UTIME
-  #include <unix.mac.h>
+  #include <sys/time.h> /* Mindmorph */
+  #include <unistd.h> /* Mindmorph */
+  #define	_STAT /*Mindmorph */
+  #include "my.unix.mac.h" /* Mindmorph */
+  #include <console.h> /* Mindmorph */
+  #include <Gestalt.h> /* Mindmorph */
+  /*#include <sys/time.h>  Mindmorph */
+  /*#include <stat.mac.h>  Mindmorph */
+  /*#include <machine_endian.h>  Mindmorph */
+  /*#define _UTIME  Mindmorph */
+  /*#include <unix.mac.h>  Mindmorph */
   #include "mac_extras.h"
-  #include <console.h>
-  #include <Multiprocessing.h>
-  void macConOut(char *msg);
-  void YieldToMain(char force_events);
-  u32 GetTimesliceToUse(u32 contestid);
-  void tick_sleep(unsigned long tickcount);
-  extern Boolean Mac_PPC_prototype;
-  extern Boolean haveMP;
-  extern short MP_active;
-  extern "C" unsigned long mp_sleep(unsigned long seconds);
-  extern MPCriticalRegionID MP_count_region;
-  extern char useMP(void);
-  extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];
-  #if defined(MAC_GUI)
-    #include "gui_incs.h"
-  #endif
+  /*#include <Multiprocessing.h>  Mindmorph */
+  /*void macConOut(char *msg);  Mindmorph */
+  /*void YieldToMain(char force_events);  Mindmorph */
+  /*u32 GetTimesliceToUse(u32 contestid);  Mindmorph */
+  /*void tick_sleep(unsigned long tickcount);  Mindmorph */
+  /*extern Boolean Mac_PPC_prototype;  Mindmorph */
+  /*extern Boolean haveMP;  Mindmorph */
+  /*extern short MP_active;  Mindmorph */
+  /*extern "C" unsigned long mp_sleep(unsigned long seconds);  Mindmorph */
+  /*extern MPCriticalRegionID MP_count_region;  Mindmorph */
+  /*extern char useMP(void);  Mindmorph */
+  /*extern volatile s32 ThreadIsDone[2*MAC_MAXCPUS];  Mindmorph */
+  /*#if defined(MAC_GUI)  Mindmorph */
+  /*  #include "gui_incs.h"  Mindmorph */
+  /*#endif  Mindmorph */
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
 #endif

@@ -10,7 +10,7 @@
 */ 
 
 #ifndef __CMPIDEFS_H__
-#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.22 1999/04/05 18:15:20 cyp Exp $"
+#define __CMPIDEFS_H__ "@(#)$Id: cmpidefs.h,v 1.23 1999/11/27 06:23:14 sampo Exp $"
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16)
   #if defined(__TURBOC__)
@@ -73,10 +73,11 @@
     extern "C" int strncasecmp(char *s1, char *s2, size_t); // Keep g++ happy.
   #endif
 #elif (CLIENT_OS == OS_MACOS)
-  #include <stat.mac.h>
-  #include "mac_extras.h"
+  /*#include <stat.mac.h>  Mindmorph */
+  /*#include "mac_extras.h" Mindmorph */
   #define strcmpi(x,y)  stricmp(x,y)
   #define strncmpi(x,y,n)  strnicmp(x,y,n)
+  /* not sure if this will work but i dont have no stricmp - Mindmorph */
 #else
   #if defined(__MVS__)
     #include <strings.h>

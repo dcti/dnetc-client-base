@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.70 1999/11/08 02:02:43 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.71 1999/11/27 06:23:52 sampo Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -97,6 +97,7 @@ extern "C" {
   #define close(sock) socket_close(sock)
   #define ioctl(sock, request, arg) socket_ioctl(sock, request, arg)
   extern Boolean myNetInit(void);
+  #include <machine/endian.h>
 #elif (CLIENT_OS == OS_OS2)
   #define BSD_SELECT
   #include <sys/types.h>

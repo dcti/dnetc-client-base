@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.68 1999/11/23 16:01:51 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.69 1999/11/27 06:23:44 sampo Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -308,10 +308,10 @@
   #endif
 #elif defined(macintosh)
   #define CLIENT_OS_NAME   "MacOS"
-  #if GENERATINGPOWERPC
+  #if __POWERPC__
     #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_POWERPC
-  #elif GENERATING68K
+  #elif __MC68K__
     #define CLIENT_OS     OS_MACOS
     #define CLIENT_CPU    CPU_68K
   #endif
@@ -409,10 +409,10 @@
   #include <OS.h>
   typedef thread_id THREADID;
   #define OS_SUPPORTS_SMP
-#elif (CLIENT_OS == OS_MACOS)
-  #include <Multiprocessing.h>
-  typedef MPTaskID THREADID;
-  #define OS_SUPPORTS_SMP
+/*#elif (CLIENT_OS == OS_MACOS) Mindmorph */
+/*  #include <Multiprocessing.h> Mindmorph */
+/*  typedef MPTaskID THREADID; Mindmorph */
+/*  #define OS_SUPPORTS_SMP Mindmorph */
 #elif (CLIENT_OS == OS_FREEBSD)
   typedef int /*pid_t*/ THREADID;
   #define OS_SUPPORTS_SMP

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.59 1999/11/23 22:42:42 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.60 1999/11/27 06:23:21 sampo Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -320,6 +320,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       }
       #elif (CLIENT_OS == OS_MACOS)
       // Mac code never does console input
+       ch = getchar(); /* sometimes we do console input ;-) - Mindmorph */
       #else
       {
         setvbuf(stdin, (char *)NULL, _IONBF, 0);

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.91 1999/11/26 13:08:49 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.92 1999/11/27 06:23:34 sampo Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -65,8 +65,8 @@ unsigned int GetNumberOfSupportedProcessors( void )
 #if (CLIENT_OS == OS_RISCOS)
   return ( 2 ); /* not just some arbitrary number */
 #elif (CLIENT_OS == OS_MACOS)
-  if (haveMP)
-    return( MAC_MAXCPUS );
+/*  if (haveMP)  Mindmorph */
+/*    return( MAC_MAXCPUS );  Mindmorph */
   return(1);
 #else
   return ( 128 ); /* just some arbitrary number */
@@ -204,8 +204,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     #elif (CLIENT_OS == OS_MACOS)
     {
       cpucount = 1;
-      if (haveMP)
-        cpucount = MPProcessors();
+      /*if (haveMP)  Mindmorph */
+      /*  cpucount = MPProcessors();  Mindmorph */
     }
     #elif ( (CLIENT_OS == OS_DEC_UNIX) && defined(OS_SUPPORTS_SMP))
     {
@@ -501,9 +501,9 @@ static long __GetRawProcessorID(const char **cpuname)
     // value for G3 upgrade cards in a 601 machine.
     long result;
     detectedtype = -1;
-    if (Mac_PPC_prototype) 
-      detectedtype = 1L;  // old developer machines - 601
-    else if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
+    /*if (Mac_PPC_prototype)   Mindmoprh */
+    /*  detectedtype = 1L;  // old developer machines - 601  Mindmoprh */
+    /*else  Mindmoprh */ if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       detectedtype = result - 0x100L;
   }
   #elif (CLIENT_OS == OS_LINUX)
