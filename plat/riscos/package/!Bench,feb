@@ -1,0 +1,4 @@
+Set Dnetc$Dir <Obey$Dir>
+IfThere <Dnetc$Dir>.exitrc5/now Then Delete <Dnetc$Dir>.exitrc5/now
+Echo <22><25>
+Run <Dnetc$Dir>.Dnetc -bench
