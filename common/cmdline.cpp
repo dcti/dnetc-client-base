@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.24 1999/10/07 18:36:07 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.25 1999/10/10 23:18:57 cyp Exp $"; }
 
 //#define TRACE
 
@@ -53,16 +53,16 @@ static int __arg2cname(const char *arg,int def_on_fail)
       for (i=0;i<CONTEST_COUNT;i++)
       {
         arg = CliGetContestNameFromID(i);
-	if (arg)
-	{
-	  if (strcmp(arg,buf)==0)
-	    return (int)i;
-	}
+        if (arg)
+        {
+          if (strcmp(arg,buf)==0)
+            return (int)i;
+        }
       }
     }
   }
   return def_on_fail;
-}  	  
+}         
 
 /* -------------------------------------- */
 
@@ -103,6 +103,12 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         ; //nothing
       else if (*thisarg == 0)
         ; //nothing
+      else if ( strcmp( thisarg, "-genman" ) == 0)
+      {
+        extern void GenerateManPage( void );
+        GenerateManPage();
+        terminate_app = 1;
+      }
       else if ( strcmp( thisarg, "-hide" ) == 0 ||   
                 strcmp( thisarg, "-quiet" ) == 0 )
         loop0_quiet = 1; //used for stuff in this loop
@@ -480,6 +486,30 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         not_supported = 1;
         #endif
       }
+      else if (strcmp(thisarg,"-svcstart") == 0)
+      {
+        #if (CLIENT_OS == OS_WIN32)
+        terminate_app = 1;
+        if (!loop0_quiet)
+        {
+          int isinst = win32CliIsServiceInstalled();/*<0=err,0=no,>0=yes */
+          if (isinst < 0)
+            ConOutErr("Service manager error. Service could not be started.\n");
+          else if (isint == 0)
+            ConOutErr("Cannot start a service that is not -installed.\n");
+          else
+            terminate_app = 0;
+        }
+        if (!terminate_app) /* no error */
+        {
+          char *xargv[2]; xargv[0] = argv[0]; xargv[1]=NULL;
+          win32CliStartService( 1, &xargv[0] ); /* *installed* client */  
+          terminate_app = 1;
+        }
+        #else
+        not_supported = 1;
+        #endif
+      }
       else if (!strcmp(thisarg,"-uninstall") || !strcmp(thisarg, "-deinstall"))
       {
         #if (CLIENT_OS == OS_OS2)
@@ -592,32 +622,14 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         ; //nothing
       else if (*thisarg == 0)
         ; //nothing
-      else if ( strcmp( thisarg, "-b2" ) == 0 ||
-                strcmp( thisarg, "-bin2") == 0 ||
-                strcmp( thisarg, "-bout2") == 0 )
-      {
-        if (!argvalue)
-          missing_value = 1;
-        else
-        {
-          skip_next = 1;
-          #if 0
-          if (run_level != 0 && logging_is_initialized)
-          {
-            /* we _could_ handle this, but its high time to stop the habit */
-            LogScreenRaw("The %s option is obsolete. "
-                         "Please use '-b[in|out] DES %d' instead.\n",
-                          thisarg, atoi(argvalue) );
-          }
-          #endif
-        }
-      }
       else if ( strcmp( thisarg, "-c" ) == 0 || 
-                strcmp( thisarg, "-cputype" ) == 0 ||
                 strcmp( thisarg, "-blsize" ) == 0 ||
                 strcmp( thisarg, "-b" ) == 0 ||
                 strcmp( thisarg, "-bin" ) == 0 || 
-                strcmp( thisarg, "-bout" ) == 0)
+                strcmp( thisarg, "-bout" ) == 0 ||
+                strcmp( thisarg, "-b2" ) == 0 ||
+                strcmp( thisarg, "-bin2")==0 ||
+                strcmp( thisarg, "-bout2") == 0 )
       {
         if (!argvalue)
           missing_value = 1;
@@ -630,11 +642,11 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
 
           if (strcmp(thisarg,"-blsize")==0)
             isblsize = 1;
-          else if (strcmp( thisarg, "-bin" ) == 0)
+          else if (strcmp(thisarg,"-bin")==0 || strcmp( thisarg, "-bin2")==0)
             isthresh = 1;
-          else if (strcmp( thisarg, "-bout" ) == 0)
+          else if (strcmp(thisarg,"-bout")==0 || strcmp(thisarg,"-bout2")==0)
             isthresh = 2;
-          else if (strcmp( thisarg, "-b" ) == 0)
+          else if (strcmp( thisarg, "-b" )==0 || strcmp( thisarg, "-b2" )==0)
             isthresh = 1+2;
 
           skip_next = 1;
@@ -648,7 +660,12 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           else
           {
             contest = RC5;
-            contest_defaulted = 1;
+            if (strcmp( thisarg, "-bin2")==0 ||
+                strcmp( thisarg, "-bout2")==0 ||
+                strcmp( thisarg, "-b2")==0)
+              contest = DES;
+            //else if (isblsize)       //-blsize without contest means both
+            //  contest_defaulted = 1; //RC5 and DES
           }
           
           n = -123;
@@ -692,40 +709,34 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
             else /* coretype */
             {
               coretypes[contest] = n;
-              if (contest_defaulted)
-                coretypes[DES] = coretypes[contest];
             }
           }
           else if (logging_is_initialized)
           {
             if (isblsize)
             {
-              LogScreenRaw("Setting %s preferred workunits-per-packet to %d workunits\n", 
+              LogScreenRaw("%s preferred packet size set to 2^%d\n", 
                   CliGetContestNameFromID(contest),
                   preferred_blocksize[contest] );
               if (contest_defaulted)
-                LogScreenRaw("Setting DES preferred workunits-per-packet to %d workunits\n", 
+                LogScreenRaw("DES preferred packet size set to 2^%d\n", 
                   CliGetContestNameFromID(contest),
                   preferred_blocksize[DES] );
             }
             else if (isthresh)
             {
-              LogScreenRaw("Setting %s %s to %d work-units\n", 
-                  CliGetContestNameFromID(contest),
-                  ((isthresh == 1)?("fetch threshold"):
-                  ((isthresh == 2)?("flush threshold"):
-                  ("thresholds"))),
-                  (int)((isthresh == 2)?(outthreshold[contest]):
-                  (inthreshold[contest])) );
+              if ((isthresh & 1)!=0)
+                LogScreenRaw("%s fetch threshold set to %d packets\n", 
+                  CliGetContestNameFromID(contest), inthreshold[contest] );
+              if ((isthresh & 2)!=0)
+                LogScreenRaw("%s flush threshold set to %d packets\n", 
+                  CliGetContestNameFromID(contest), outthreshold[contest] );
             }
             else /* coretype */
             {
-              LogScreenRaw("Setting %s core type to %d\n", 
+              LogScreenRaw("Default core for %s set to #%d\n",
                   CliGetContestNameFromID(contest),
                   coretypes[contest] );
-              if (contest_defaulted)
-                LogScreenRaw("Setting DES core type to %d\n", 
-                  coretypes[DES]);
             }
           }  
         }
