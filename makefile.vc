@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.79 2002/10/06 19:26:50 andreasb Exp $
+# $Id: makefile.vc,v 1.80 2002/10/13 08:06:54 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -13,7 +13,7 @@ DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
 PLATSRCPATH = plat/win
-#EXECOMPRESSOR = upxw.exe -9 -qq --compress-resources=0
+EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
 
 #HAVE_RC5_64_CORES=1
 HAVE_RC5_72_CORES=1
@@ -88,7 +88,7 @@ OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
 # --------------------------------------------
 
-all: $(BASENAME)
+all: $(BASENAME).exe
 
 # --------------------------------------------
 
@@ -368,16 +368,18 @@ $(RES_FILE):    $(RC_FILE)
 
 # --------------------------------------------
 
-$(BASENAME): $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
+$(BASENAME).scr $(BASENAME).com $(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
 # the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,4.00 /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
         link $(OPTS_LINK) /SUBSYSTEM:CONSOLE,3.10 /OUT:$(BASENAME).com /NODEFAULTLIB $(OPTS_LIBS) $(CUI_OBJS)
-        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
 !ifdef EXECOMPRESSOR
         $(EXECOMPRESSOR) $(BASENAME).scr
         $(EXECOMPRESSOR) $(BASENAME).com
         $(EXECOMPRESSOR) $(BASENAME).exe
 !endif
+
+# --------------------------------------------
 
 clean:
         -del $(OUTPUTPATH:/=\)\*.o?? $(RES_FILE:/=\)
@@ -388,4 +390,9 @@ superclean: clean
 rebuild: clean all
 
 # --------------------------------------------
+
+makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr docs/readme.1st docs/readme.w32 docs/dnetc.txt docs/CHANGES.txt
+	zip dnetcXXX-win32-x86.zip $**
+
+
 
