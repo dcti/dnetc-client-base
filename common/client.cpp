@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.34 1999/12/12 12:18:35 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.35 1999/12/15 17:14:50 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -299,12 +299,13 @@ static int ClientMain( int argc, char *argv[] )
                                     (client->quietmode==0)); //show overrides
             TRACE_OUT((-1,"parsecmdline(1)\n"));
             InitRandom2( client->id );
-            #ifdef LURK
-            dialup.Start(client->offlinemode, &(client->lurk_conf));
-            #endif
             TRACE_OUT((+1,"initcoretable\n"));
             InitializeCoreTable( &(client->coretypes[0]) );
             TRACE_OUT((-1,"initcoretable\n"));
+            #ifdef LURK
+            dialup.Start(((domodes)?(0):(client->offlinemode)), 
+                         &(client->lurk_conf));
+            #endif
 
             if (domodes)
             {
@@ -324,11 +325,11 @@ static int ClientMain( int argc, char *argv[] )
               restart = CheckRestartRequestTrigger();
             }
 
-            TRACE_OUT((0,"deinit coretable\n"));
-            DeinitializeCoreTable();
             #ifdef LURK
             dialup.Stop();
             #endif
+            TRACE_OUT((0,"deinit coretable\n"));
+            DeinitializeCoreTable();
             TRACE_OUT((0,"deinitialize logging\n"));
             DeinitializeLogging();
             TRACE_OUT((0,"deinitialize console\n"));
