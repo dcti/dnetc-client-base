@@ -48,6 +48,7 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/autobuff.obj   \
 	$(OUTPUTPATH)/iniread.obj    \
 	$(OUTPUTPATH)/network.obj    \
+	$(OUTPUTPATH)/netinit.obj    \
 	$(OUTPUTPATH)/scram.obj      \
 	$(OUTPUTPATH)/mail.obj       \
 	$(OUTPUTPATH)/cliconfig.obj  \

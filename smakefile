@@ -36,6 +36,7 @@ common/client.o_ppc\
 common/autobuff.o_ppc\
 common/iniread.o_ppc\
 common/network.o_ppc\
+common/netinit.o_ppc\
 common/scram.o_ppc\
 common/buffwork.o_ppc\
 common/mail.o_ppc\
@@ -77,6 +78,7 @@ common/client.o_68k\
 common/autobuff.o_68k\
 common/iniread.o_68k\
 common/network.o_68k\
+common/netinit.o_68k\
 common/scram.o_68k\
 common/buffwork.o_68k\
 common/mail.o_68k\
@@ -173,6 +175,7 @@ common/client.o_ppc	:	common/client.cpp
 common/autobuff.o_ppc	:	common/autobuff.cpp
 common/iniread.o_ppc	:	common/iniread.cpp
 common/network.o_ppc	:	common/network.cpp
+common/netinit.o_ppc	:	common/netinit.cpp
 common/scram.o_ppc	:	common/scram.cpp
 common/buffwork.o_ppc	:	common/buffwork.cpp
 common/mail.o_ppc	:	common/mail.cpp
@@ -217,6 +220,7 @@ common/client.o_68k	:	common/client.cpp
 common/autobuff.o_68k	:	common/autobuff.cpp
 common/iniread.o_68k	:	common/iniread.cpp
 common/network.o_68k	:	common/network.cpp
+common/netinit.o_68k	:	common/netinit.cpp
 common/scram.o_68k	:	common/scram.cpp
 common/buffwork.o_68k	:	common/buffwork.cpp
 common/mail.o_68k	:	common/mail.cpp

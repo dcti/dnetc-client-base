@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.91  1998/08/25 00:56:39  cyp
+# netinit.cpp is now standalone (was previously #included from network.cpp)
+#
 # Revision 1.90  1998/08/22 08:16:39  silby
 # changed opts_egcs from -f-no-handle-exceptions to -f-no-exceptions to make egcs happy.
 #
@@ -90,14 +93,11 @@
 #
 # Revision 1.68  1998/07/09 04:26:17  nordquist
 # Fixes for OPTS_XLC_PPC* (AIX 4.x with xlC compiler) and OPTS_CC_HPUX
-# (HP-UX with CC compiler).
-#
-# Brent J. Nordquist <bjn@visi.com>
+# (HP-UX with CC compiler). Brent J. Nordquist <bjn@visi.com>
 #
 # Revision 1.67  1998/07/08 23:34:37  remi
-# Added the MMX bitslicer to all x86 targets.
-# Cleared an obvious error in DESULTRA_SRCS_C (who has an editor which can't
-# deal with >250 chars lines ?)
+# Added the MMX bitslicer to all x86 targets. Cleared an obvious error in
+# DESULTRA_SRCS_C (who has an editor which can't deal with >250 chars lines ?)
 #
 # Revision 1.66  1998/07/07 21:54:52  cyruspatel
 # client.h has been split into client.h and baseincs.h
@@ -434,7 +434,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
     common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
     common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
-    common/triggers.cpp common/selcore.cpp"
+    common/triggers.cpp common/selcore.cpp common/netinit.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
