@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.8 1999/11/29 22:47:36 cyp Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.22.2.9 1999/12/04 23:30:42 mfeiri Exp $"
 
 #include "cputypes.h"
 
@@ -75,6 +75,9 @@
   //#undef usleep
   //extern "C" void usleep(unsigned int usecs);
   //extern "C" unsigned int sleep(unsigned int secs);
+  void usleep(unsigned int usecs);
+  #define sleep(x) my_sleep(x)
+  unsigned int my_sleep(unsigned int seconds);
 #elif (CLIENT_OS == OS_DEC_UNIX)
   #include <unistd.h>
   #include <sys/types.h>
