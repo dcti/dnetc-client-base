@@ -10,13 +10,8 @@
 // For GUIs and such
 //#define NOMAIN
 
-<<<<<<< client.h
-//#define NEW_STATS_AND_LOGMSG_STUFF   //if you want a 'better looking' screen
-//#define NEW_LOGSCREEN_PERCENT_SINGLE //if the percbar is to stay < 80 chars
-=======
-//#define NEW_STATS_AND_LOGMSG_STUFF   //if you want a 'better looking' screen
+#define NEW_STATS_AND_LOGMSG_STUFF   //if you want a 'better looking' screen
 #define NEW_LOGSCREEN_PERCENT_SINGLE //if the percbar is to stay < 80 chars
->>>>>>> 1.11
 //#define PERCBAR_ON_ONE_LINE //prints percs for all (max 16) threads on one line
                      //platform must support "\r" to return to start of line
 
