@@ -1,5 +1,5 @@
 
-$Id: TODO.txt,v 1.8.2.1 1999/12/08 02:49:11 cyp Exp $
+$Id: TODO.txt,v 1.8.2.2 2000/01/04 06:39:55 cyp Exp $
 
 This file contains a list of mini-projects. Submissions as well as 
 volunteers :) are welcome. 
@@ -42,9 +42,6 @@ Perhaps someone else has what you don't. :)
    if's by using SNMP or ... Use ioctl() to do the same (for your port).
    Linux/OS/2/Win32/FreeBSD/OpenBSD are already implemented   Priority: Low
 							   
--- Modify client to use an ini file format with more varied sections
-   to classify the option categories better.          Priority: in-progress
-
 -- Split network.cpp into netio primitives and high-level/wrapper handling
    functions. Something along the lines of whats used in the proxy would
    be nice, but without the bloat please.             Priority: in-progress
