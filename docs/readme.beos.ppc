@@ -1,0 +1,47 @@
+RC5DES v2.7024.409 Client  6/16/98
+
+This program is a port of the Unix version, and is run as in Unix, using the Terminal application.  Documentation on how to use the rc5des command is available at http://rc5.distributed.net/FAQ/rc5v2-help.html/.  Also, see the included file rc5des.txt.
+
+This version supports both the RC5 and DES contests.  Currently there is no DES contest, and RC5 keys will always be processed.  The client will automatically switch to a DES contest when one begins.
+
+This version supports multiple CPUs, and also sets thread priorities using the "niceness" configuration setting.  The niceness settings of 0, 1, and 2 correspond to thread priorities of 5, 7, and 10.
+
+Future plans for the BeOS version include making it into a standalone program and providing a full user interface.
+
+Credits:
+The RC5DES client is a project of distributed.net, Copyright © distributed.net, 1997, 1998.
+RC5 assembly core by Dan Oetting.
+DES search routines Copyright Matthew Kwan.  Additional DES code by Andrew Meggs.
+This port by Peter DiCamillo at Brown University, Peter_DiCamillo@brown.edu.
+
+Update history:
+
+v2.7024.409 6/16/98
+Updated for 409 build.
+
+v2.7019.402 4/19/98
+Updated for 402 build.
+
+v2.7010.393 2/1/98
+ Much faster (70%) new DES core from Rocke Verser and Andrew Meggs.
+
+v2.7009.391 1/28/98
+ Updated for significantly faster DES code from Andrew Meggs.
+
+v2.7006.388 1/21/98
+ Updated to include Remi's faster DES code.
+
+v2.7004.386 1/18/98
+  Update to latest base code which support both the RC5 and DES contests.
+
+v2.6403.320 12/23/97
+  Use v2.6403.320 (12/16/97) base code.
+  Fixed a bug which prevented automatic configuration for the number of CPUs present.
+  
+v2.6403.298  12/16/97
+   Use v2.6403.295  (12/10/97) base code.
+   Use Dan's new, faster crunching code.
+   Support multithreading and thread priorities.
+
+v2.6402  12/9/97
+   Fixed bugs related to closing network connections.
