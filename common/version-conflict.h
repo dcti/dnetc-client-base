@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.12  1998/09/19 08:50:22  silby
+// Added in beta test client timeouts.  Enabled/controlled from version.h by defining BETA, and setting the expiration time.
+//
 // Revision 1.11  1998/08/20 02:40:41  silby
 // Kicked version to 2.7100.418-BETA1, ensured that clients report the string ver (which has beta1 in it) in the startup.
 //
@@ -54,8 +57,16 @@
 #define CLIENT_BUILD        00
 #define CLIENT_BUILD_FRAC   418
 
-#define CLIENT_VERSIONSTRING    "v2.7100.418-BETA1"
-#define CLIENT_VERSIONSTRING2   "2.7100.418-BETA1"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7100.418-BETA2"
+#define CLIENT_VERSIONSTRING2   "2.7100.418-BETA2"        // no leading "v"
+
+#define BETA
+
+#if defined(BETA)
+  s32 checkifbetaexpired(void);
+#define EXPIRATIONTIME 907394806
+#endif
+
 
 #endif // _VERSION_H
 

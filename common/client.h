@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.79  1998/09/19 08:50:20  silby
+// Added in beta test client timeouts.  Enabled/controlled from version.h by defining BETA, and setting the expiration time.
+//
 // Revision 1.78  1998/08/28 22:31:09  cyp
 // Added prototype for Client::Main().
 //
@@ -567,6 +570,7 @@ public:
 
   s32 UnlockBuffer( const char *filename );
     // unlock buffer 'filename'
+
 
 };
 

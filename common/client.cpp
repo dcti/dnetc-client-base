@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.136  1998/09/19 08:50:15  silby
+// Added in beta test client timeouts.  Enabled/controlled from version.h by defining BETA, and setting the expiration time.
+//
 // Revision 1.135  1998/08/28 22:28:12  cyp
 // Restructured main() so that it is now restartable. Command line is
 // reusable (is no longer overwritten).
@@ -143,7 +146,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.135 1998/08/28 22:28:12 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.136 1998/09/19 08:50:15 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -1144,6 +1147,9 @@ if(dialup.lurkmode) // check to make sure lurk mode is enabled
       // Did any threads finish a block???
       if ((problem[(int) cpu_i]).finished == 1)
       {
+      #if defined(BETA)
+      if (checkifbetaexpired() > 0) RaiseExitRequestTrigger();
+      #endif
         (problem[(int) cpu_i]).GetResult( &rc5result );
 
         //-----------------
@@ -1759,6 +1765,9 @@ int Client::Main( int argc, const char *argv[] )
           {
           ValidateConfig();
           PrintBanner(1);
+          #if defined(BETA)
+          if (checkifbetaexpired() == 0)
+          #endif
           retcode = (int)Run();
           RunShutdown();
           }
@@ -2195,6 +2204,39 @@ void Client::SetNiceness(void)
     // else                  /* nothing */;
   #endif
 }
+
+#if defined(BETA)
+s32 checkifbetaexpired(void)
+{
+timeval currenttime;
+timeval expirationtime;
+
+expirationtime.tv_sec=EXPIRATIONTIME;
+
+Log("Checking to see if this beta has gone stale:\n");
+CliTimer(&currenttime);
+Log("Current Date/Time: %s\n",CliGetTimeString(&currenttime,1));
+Log("Expiration Date/Time: %s\n",CliGetTimeString(&expirationtime,1));
+if (currenttime.tv_sec > expirationtime.tv_sec)
+  {
+  Log("This beta is old, and may no longer be run.\n"
+      "Please download a newer beta, or run a standard release client.\n");
+  return 1;
+  }
+else if (currenttime.tv_sec < expirationtime.tv_sec-1814400)
+  {
+  Log("Somehow, your date is set BEFORE this beta was released.\n"
+      "Please, don't try to fool the date checking system.\n");
+  return 1;
+  }
+else // Finally, it's actually within range.
+  {
+  Log("Date check passed, please continue testing this client.\n\n");
+  };
+return 0;
+}
+
+#endif
 
 // --------------------------------------------------------------------------
 
