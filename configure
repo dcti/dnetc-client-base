@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.72 1999/12/12 06:46:04 jlawson Exp $
+# @(#)$Id: configure,v 1.222.2.73 1999/12/12 11:08:35 remi Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -178,7 +178,7 @@ CSC_ASM_SRCS="csc/x86/convcsc.asm \
 		csc/x86/csc-6b-i.asm \
 		csc/x86/csc-6b.asm \
 		csc/x86/csc-comm.asm \
-                csc/x86/csc-mmx.asm"
+                csc/x86/mmx/csc-mmx.asm"
 
 #
 # Define characters to delete to form a safe name
