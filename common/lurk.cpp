@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.1 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.2 2003/02/25 15:26:32 snake Exp $"; }
 
 //#define TRACE
 
@@ -1513,7 +1513,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
          } /* if (sa->sa_family == AF_INET) */
          // calculate the length of this entry and jump to the next
          int ifrsize = IFNAMSIZ + sa_len;
-         ifr = (struct ifreq *)((caddr_t)ifr + ifrsize);
+         ifr = (struct ifreq *)(ifr + ifrsize);
          n -= ifrsize;
        } /* for (n = 0, ... ) */
        #else
