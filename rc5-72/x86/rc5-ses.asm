@@ -34,6 +34,7 @@
 %define workunitplain(x)	[edi+((x)*4)]		;0=hi, 1=low
 %define workunitcypher(x)	[edi+8+((x)*4)]		;0=hi, 1=low
 %define workunitL0(x)		[edi+16+((x)*4)]	;0=hi, 1=mid, 2=low
+%define workunitL0Byte(x,y)	[edi+16+(((x)*4)+y)]
 %define workunitcount		[edi+28]		;16bit, not 32bit
 %define workunitcheck(x)	[edi+32+((x)*4)]	;0=hi, 1=mid, 2=low
 
@@ -73,8 +74,7 @@
 ;B = L[j] = ROTL(L[j]+(A+B),(A+B));
 %macro ROTLLoop 2
 	mov edx, L(%2)
-	mov ecx, S(%1)
-	add eax, ecx
+	add eax, S(%1)
 	add eax, ebx
 	rol eax, 3
 	mov S(%1), eax
@@ -95,12 +95,10 @@
 	add eax, dword S(2 * %1)
 
 	;B = ROTL(B^A,A)+S[2*i+1];
-	mov ebx, dword S((2 * %1) + 1)
-	xor ecx, eax
-	xchg ecx, eax
-	rol eax, cl
-	add ebx, eax
-	xchg eax, ecx
+	mov ecx, eax
+	xor ebx, ecx
+	rol ebx, cl
+	add ebx,  dword S((2 * %1) + 1)
 %endmacro
 
 
@@ -142,7 +140,7 @@ timesliceloop:
 	;B = L[i] = ROTL(rc5_72workunit->L0(j)+(A+B),(A+B));
 	mov ebx, workunitL0(2)
 	mov eax, 0xBF0A8B1D	;rol SVal(0), 3
-	mov S(0), eax
+
 	add ebx, eax
 	rol ebx, 0x1D
 	mov L(0), ebx
@@ -233,97 +231,48 @@ continuechecks:
 
 	;key.hi = (key.hi + 0x01) & 0x000000FF;
 	;if (!key.hi)
-	mov eax, workunitL0(0)
-	mov ebx, 0xFF
-	inc al
-	and eax, ebx
-	mov workunitL0(0), eax
-	test eax, eax
+	inc byte workunitL0Byte(0,0)
 	jnz near timesliceloop
 
 	;key.mid = key.mid + 0x01000000;
 	;if (!(key.mid & 0xFF000000u))
-	mov eax, workunitL0(1)
-	ror ebx, 8
-	mov ecx, 0x01000000
-	lea eax, [eax+ecx]
-	test ebx, eax
-	jnz finishcheckmid
+	inc byte workunitL0Byte(1,3)
+	jnz near timesliceloop
 
 	;key.mid = (key.mid + 0x00010000) & 0x00FFFFFF;
 	;if (!(key.mid & 0x00FF0000))
-	mov edx, ebx		;edx = 0xFF000000
-	not edx			;edx = 0x00FFFFFF
-	shr ebx, 8
-	shr ecx, 8
-	lea eax, [eax+ecx]
-	and eax, edx
-	test eax, ebx
-	jnz finishcheckmid
+	inc byte workunitL0Byte(1,2)
+	jnz near timesliceloop
 
 	;key.mid = (key.mid + 0x00000100) & 0x0000FFFF;
 	;if (!(key.mid & 0x0000FF00))
-	shr ebx, 8
-	shr ecx, 8
-	shr edx, 8
-	lea eax, [eax+ecx]
-	and eax, edx
-	test eax, ebx
-	jnz finishcheckmid
+	inc byte workunitL0Byte(1,1)
+	jnz near timesliceloop
 
 	;key.mid = (key.mid + 0x00000001) & 0x000000FF;
 	;if (!(key.mid & 0x000000FF))
-	inc al
-	xor ah, ah
-	test eax, eax
-	jnz finishcheckmid
-
-	mov workunitL0(1), eax
+	inc byte workunitL0Byte(1,0)
+	jnz near timesliceloop
 
 	;key.lo = key.lo + 0x01000000;
 	;if (!(key.lo & 0xFF000000u))
-	mov eax, workunitL0(2)
-	shl ebx, 16
-	shl ecx, 16
-	lea eax, [eax+ecx]
-	test eax, ebx
-	jnz finishchecklo
+	inc byte workunitL0Byte(2,3)
+	jnz near timesliceloop
 
 	;key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
 	;if (!(key.lo & 0x00FF0000))
-	mov edx, ebx		;edx = 0xFF000000
-	not edx			;edx = 0x00FFFFFF
-	shr ebx, 8
-	shr ecx, 8
-	lea eax, [eax+ecx]
-	and eax, edx
-	test eax, ebx
-	jnz finishchecklo
+	inc byte workunitL0Byte(2,2)
+	jnz near timesliceloop
 
 	;key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
 	;if (!(key.lo & 0x0000FF00))
-	shr ebx, 8
-	shr ecx, 8
-	shr edx, 8
-	lea eax, [eax+ecx]
-	and eax, edx
-	test eax, ebx
-	jnz finishchecklo
+	inc byte workunitL0Byte(2,1)
+	jnz near timesliceloop
 
 	;key.lo = (key.lo + 0x00000001) & 0x000000FF;
-	inc al
-	xor ah, ah
-	mov workunitL0(2), eax
+	inc byte workunitL0Byte(2,0)
 	jmp timesliceloop
 
-finishcheckmid:
-	;copy the resulting value into the mid work unit
-	mov workunitL0(1), eax
-	jmp timesliceloop
-
-finishchecklo:
-	mov workunitL0(2), eax
-	jmp timesliceloop
 
 endloop:
 	;restore ebx and edi
