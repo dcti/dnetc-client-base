@@ -21,13 +21,17 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.33 2003/07/06 01:38:46 bdragon Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.34 2003/07/21 01:01:18 mfeiri Exp $
 ==========================================================================
 
 2.9000
 ------
 
 2.9006-485  new: decunix: cpu temperature detection
+            new: macosx: use AppleCPUthermo to read CPU temperature (#3315)
+            imp: macosx: use latest gcc 3.3 to compile client and OGR cores
+            new: macosx: properly recongize the PowerPC 970 (G5) (#3310)
+            new: ppc: new rc5-72 core for PowerPC 970 (G5) by Didier Levet
 
 2.9005-484  new: x86: detect Athlon with Barton core (#3227)
             new: x86: detect Celeron with Tualatin core / brand id 1 (#3246)
