@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.59  1998/12/26 21:19:28  cyp
+// Fixed condition where x86/mt/non-mmx would default to slice.
+//
 // Revision 1.58  1998/12/25 03:08:57  cyp
 // x86 Bryd is runnable on upto 4 threads (threads 3 and 4 use the two
 // non-optimal cores, ie pro cores on a p5 machine and vice versa).
@@ -162,7 +165,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.58 1998/12/25 03:08:57 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.59 1998/12/26 21:19:28 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -417,8 +420,8 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
         else                                 // ... still better than slice
           unit_func = p2des_unit_func_p5;
         }
-      else /* fall back to slice if running with > 4 processors */
-        {
+      else if (threadindex > 4)              // fall back to slice if 
+        {                                    // running with > 4 processors
         unit_func = des_unit_func_slice;
         }
       #endif
