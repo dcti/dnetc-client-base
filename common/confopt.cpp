@@ -4,7 +4,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.34.2.24 2000/02/13 06:40:10 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.34.2.25 2000/03/20 12:50:09 andreasb Exp $"; }
+
+// no, we don't rotate by default
+//#define ROTATE_BETWEEN_PROJECTS
 
 /* ----------------------------------------------------------------------- */
 
@@ -278,6 +281,7 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "A value of -1 for the 'fetch setting' indicates that a time threshold\n"
   "should be used instead. If that too is unspecified, then the client will\n"
   "use defaults. A value of -1 for the 'flush setting' is advisable and\n"
+#ifdef ROTATE_BETWEEN_PROJECTS
   "indicates that a) flush and fetch values are equal, b) the client is to\n"
   "switch/rotate between all active and enabled projects (only if all are -1)\n"
   /* Actually that last sentence is slightly off the mark - if any flush
@@ -285,6 +289,9 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
      end up going back to the beginning of the loadorder (highest priority
      project) since new work will then be available for that project.
   */
+#else
+  "indicates that flush and fetch values are equal.\n"
+#endif
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,0xffff,NULL,NULL},
 //23
 { CFGTXT("Fetch time threshold (in hours)"), "0 (disabled)",
@@ -296,6 +303,10 @@ struct optionstruct conf_options[] = //CONF_OPTION_COUNT=
   "For fixed (static) connections, you should set this to a low value, like\n"
   "three to six hours.  For dialup connections, set this based on how often\n"
   "you connect to the network.\n"
+#if 0
+FIXME the following needs documentation - is there enough space on screen ? [andreasb]
+  "You can specify a fetch work threshold, too. This will be used as the minimum number of workunits to buffer.\n" 
+#endif
 #ifdef HAVE_OGR_CORES
   "\nCurrently not implemented for OGR because the amount of work in an\n"
   "unprocessed packet cannot be predicted.\n\n"

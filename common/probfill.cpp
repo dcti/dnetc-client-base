@@ -8,8 +8,11 @@
 //#define STRESS_RANDOMGEN
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
+// no, we don't rotate by default
+//#define ROTATE_BETWEEN_PROJECTS
+
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.28 2000/03/18 12:14:53 jlawson Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.29 2000/03/20 12:50:09 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -145,12 +148,20 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         if (cont_i != OGR)
         {
           double rate = CliGetKeyrateForProblemNoSave( thisprob );
-                  if (rate > 0.0)
+          if (rate > 0.0)
             CliSetContestWorkUnitSpeed(cont_i, (int)((1<<28)/rate + 0.5));
         }
 
         {
           unsigned int thresh = ClientGetOutThreshold( client, cont_i, 0 );
+          #ifdef ROTATE_BETWEEN_PROJECTS
+            // thresh <= 0 means ignore output buffer threshold and rotate 
+            //             between projects before fetching new work
+          #else
+            // thresh <= 0 means use inbuffer threshold
+            if (thresh <= 0)
+              thresh = ClientGetInThreshold( client, cont_i, 0 );
+          #endif
           if (thresh > 0) /* zero means ignore output buffer threshold */
           {
             unsigned long count;
@@ -776,7 +787,15 @@ unsigned int LoadSaveProblems(Client *pass_client,
           if (inout != 0)                              /* out-buffer */
           {
             unsigned int thresh = ClientGetOutThreshold(client, cont_i, 0);
-            /* a zero outbuffer threshold means 'don't check it' */
+            #ifdef ROTATE_BETWEEN_PROJECTS
+              // thresh <= 0 means ignore output buffer threshold and rotate 
+              //             between projects before fetching new work
+              /* a zero outbuffer threshold means 'don't check it' */
+            #else
+              // thresh <= 0 means use inbuffer threshold
+              if (thresh <= 0)
+                thresh = ClientGetInThreshold( client, cont_i, 0 );
+            #endif
             if (thresh > 0 && norm_count > thresh)
             {
 //Log("5. bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
