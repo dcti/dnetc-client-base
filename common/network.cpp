@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.86  1999/03/18 18:46:57  cyp
+// No, documentation is/was correct: proxies understand all encoding methods on
+// all ports they listen on. As the descrip for keyport in the conf menu also
+// makes clear, if the user leaves the port at 0, it defaults to 2064. Period.
+//
 // Revision 1.85  1999/03/18 17:01:18  silby
 // Sorry, telnet and http are ports 23 and 80, not port 2064.
 // Change from 1.83 reinstated. Perhaps the documentation
@@ -191,7 +196,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.85 1999/03/18 17:01:18 silby Exp $"; }
+return "@(#)$Id: network.cpp,v 1.86 1999/03/18 18:46:57 cyp Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -576,11 +581,13 @@ int Network::Open( void )               // returns -1 on error, 0 on success
         }
       if (svc_hostport == 0)
         {
+	#if 0 //proxies speak http and uue on all/any port
         if ((startmode & MODE_HTTP) != 0)
           svc_hostport = 80;
         else if ((startmode & MODE_UUE) != 0)
           svc_hostport = 23;
         else
+	#endif
           svc_hostport = DEFAULT_PORT;
         }
 
