@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.154 2002/09/23 21:19:03 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.155 2002/09/24 00:11:38 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -248,7 +248,11 @@ Problem *ProblemAlloc(void)
   if (thisprob && !err)
   {
 // TODO: acidblood/trashover
+#ifdef HAVE_OLD_CRYPTO
     p = (char *)&(thisprob->iprobs[PICKPROB_CORE].priv_data.rc5unitwork);
+#else
+    p = (char *)&(thisprob->iprobs[PICKPROB_CORE].priv_data.rc5_72unitwork);
+#endif
     if ((((unsigned long)p) & (sizeof(void *)-1)) != 0)
     {
       /* Ensure that the core data is going to be aligned */
@@ -521,7 +525,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 
 /* ------------------------------------------------------------------- */
 
-static int last_rc5_72_prefix = -1, last_rc5_prefix;
+static int last_rc5_prefix = -1;
 
 static int __gen_random_work(unsigned int contestid, ContestWork * work)
 {
@@ -555,12 +559,9 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
     break;
   #endif
   case RC5_72:
-    u32 randomprefix = last_rc5_72_prefix;
-    if (last_rc5_72_prefix == -1) /* no random prefix determined yet */
-      last_rc5_72_prefix = randomprefix = 100+(rnd % (0xff-100));
     work->bigcrypto.key.lo  = 0;
-    work->bigcrypto.key.mid = rnd;
-    work->bigcrypto.key.hi  = last_rc5_72_prefix;
+    work->bigcrypto.key.mid = (rnd >> 4) & ((u32)work->bigcrypto.randomsubspace << 28);
+    work->bigcrypto.key.hi  = work->bigcrypto.randomsubspace >> 4;
     //constants are in rsadata.h
     work->bigcrypto.iv.lo     = ( RC572_IVLO );
     work->bigcrypto.iv.hi     = ( RC572_IVHI );
@@ -672,7 +673,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   {
     return -2; // abort - LoadState may loop forever
   }
-  if (contestid == RC5 && (MINIMUM_ITERATIONS % selinfo.pipeline_count) != 0)
+  if ((contestid == RC5 || contestid == RC5_72) && (MINIMUM_ITERATIONS % selinfo.pipeline_count) != 0)
   {
     LogScreen("(MINIMUM_ITERATIONS %% thisprob->pub_data.pipeline_count) != 0)\n");
     return -2; // abort - LoadState may loop forever
@@ -815,7 +816,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
             {
               thisprob->priv_data.contestwork.bigcrypto.keysdone.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.hi = 0;
               thisprob->priv_data.contestwork.bigcrypto.check.count = 0;
-              thisprob->priv_data.contestwork.bigcrypto.check.hi = thisprob->priv_data.contestwork.bigcrypto.check.mid = 0;
+              thisprob->priv_data.contestwork.bigcrypto.check.hi = thisprob->priv_data.contestwork.bigcrypto.check.mid =
               thisprob->priv_data.contestwork.bigcrypto.check.lo = 0;
               thisprob->pub_data.was_reset = 1;
             }
@@ -971,7 +972,8 @@ int ProblemRetrieveState( void *__thisprob,
     {
       switch (thisprob->pub_data.contest) 
       {
-// TODO?: acidblood/trashover
+// TODO: acidblood/trashover
+// OK!
         case RC5_72:
         case RC5:
         case DES:
@@ -1141,11 +1143,13 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   __IncrementKey(&thisprob->priv_data.refL0.hi, &thisprob->priv_data.refL0.mid, &thisprob->priv_data.refL0.lo, *keyscheckedP, thisprob->pub_data.contest);
 
   // Compare ref to core key incrementation
-  if (((thisprob->priv_data.refL0.hi != thisprob->priv_data.rc5unitwork.L0.hi) || (thisprob->priv_data.refL0.lo != thisprob->priv_data.rc5unitwork.L0.lo))
+  if (((thisprob->priv_data.refL0.hi  != thisprob->priv_data.rc5unitwork.L0.hi)  ||
+       (thisprob->priv_data.refL0.mid != thisprob->priv_data.rc5unitwork.L0.mid) ||
+       (thisprob->priv_data.refL0.lo  != thisprob->priv_data.rc5unitwork.L0.lo))
       && (*resultcode != RESULT_FOUND) )
   {
-    if (thisprob->priv_data.contestwork.crypto.iterations.hi == 0 &&
-        thisprob->priv_data.contestwork.crypto.iterations.lo == 0x20000) /* test case */
+    if (thisprob->priv_data.contestwork.bigcrypto.iterations.hi == 0 &&
+        thisprob->priv_data.contestwork.bigcrypto.iterations.lo == 0x20000) /* test case */
     {
       Log("RC5 incrementation mismatch:\n"
           "Debug Information: %02x:%08x:%08x - %02x:%08x:%08x\n",
@@ -1159,7 +1163,11 @@ static int Run_RC5(InternalProblem *thisprob, /* already validated */
   // Checks passed, increment keys done count.
   thisprob->priv_data.contestwork.bigcrypto.keysdone.lo += *keyscheckedP;
   if (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo < *keyscheckedP)
-    thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
+  {
+    thisprob->priv_data.contestwork.bigcrypto.keysdone.mid++;
+    if (thisprob->priv_data.contestwork.bigcrypto.keysdone.mid == 0)
+      thisprob->priv_data.contestwork.bigcrypto.keysdone.hi++;
+  }
 
   // Update data returned to caller
   if (*resultcode == RESULT_FOUND)  //(*keyscheckedP < keystocheck)
@@ -1646,8 +1654,9 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
     iterations      = core_prob->pub_data.tslice;
     switch (core_prob->pub_data.contest)
     {
-// TODO?: acidblood/trashover
+// TODO: acidblood/trashover
       case RC5_72:
+// OK!
       case RC5: retcode = Run_RC5( core_prob, &iterations, &last_resultcode );
                 break;
       case DES: retcode = Run_DES( core_prob, &iterations, &last_resultcode );
@@ -2258,11 +2267,6 @@ int WorkGetSWUCount( const ContestWork *work,
         {   
           last_rc5_prefix = ((work->crypto.key.hi >> 24) & 0xFF);
         }
-        if (contestid == RC5_72 && rescode != RESULT_WORKING &&
-            ((tcounthi != 0) || (tcounthi == 0 && tcountlo != 0x00100000UL)))
-        {
-          last_rc5_72_prefix = work->bigcrypto.key.hi;
-        }
       }
       break;
 #ifdef HAVE_OGR_CORES
@@ -2493,7 +2497,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             case RC5_72:
             { 
               unsigned int units, twoxx;
-              rate2wuspeed = 1UL<<28; // FIXME: 2^32 doesn't fit here
+              rate2wuspeed = 0; // FIXME: 2^32 doesn't fit here
   
               ccounthi = thisprob->pub_data.startkeys.hi;
               ccountlo = thisprob->pub_data.startkeys.lo;

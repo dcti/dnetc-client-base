@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.82 2002/09/23 12:01:32 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.83 2002/09/24 00:11:38 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -816,6 +816,10 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       detected_type = -1;
   }
 
+  // While no core benchmark data is available, run microbenchs for every target
+  if (contestid == RC5-72)
+    selcorestatics.corenum[RC5_72] = -1;
+  
   // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch and cpu here")
   #if (CLIENT_CPU == CPU_ALPHA)
   if (contestid == RC5 || contestid == DES) /* old style */
@@ -1019,34 +1023,6 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         }
       }
     }     
-    if (contestid == RC5_72)
-    {
-      selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
-      if (selcorestatics.corenum[RC5_72] < 0)
-      {
-        if (detected_type >= 0)
-        {
-          int cindex = -1; 
-          switch (detected_type & 0xff)
-          {
-            case 0x00: cindex = 1; break; // P5 == RG/BRF class 5
-            case 0x01: cindex = 1; break; // 386/486
-            case 0x02: cindex = 0; break; // PII/PIII   == RG class 6
-            case 0x03: cindex = 1; break; // Cx6x86/MII == RG re-pair II
-            case 0x04: cindex = 1; break; // K5         == RG RISC-rotate I
-            case 0x05: cindex = 1; break; // K6-1/2/3   == RG RISC-rotate II
-            case 0x06: cindex = 1; break; // cx486
-            case 0x07: cindex = 0; break; // Celeron    == RG class 6
-            case 0x08: cindex = 0; break; // PPro       == RG class 6
-            case 0x09: cindex = 0; break; // AMD>=K7/Cx>MII == RG/HB re-pair II
-            case 0x0A: cindex = 1; break; // Centaur C6 == RG/HB re-pair II (#2082)
-            case 0x0B: cindex = 0; break; // P4         == ak/P4 
-            default:   cindex =-1; break; // no default
-          }
-          selcorestatics.corenum[RC5] = cindex;
-        }
-      }
-    }     
     else if (contestid == DES)
     {  
       selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
@@ -1213,7 +1189,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   }
   #endif
 
-  if (selcorestatics.corenum[contestid] < 0)
+  if ((selcorestatics.corenum[contestid] < 0) && (contestid != RC5_72))
     selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
 
   if (selcorestatics.corenum[contestid] < 0) /* ok, bench it then */
@@ -1492,6 +1468,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 /* ------------------------------------------------------------- */
 
 // PROJECT_NOT_HANDLED("add your core function prototype(s) here")
+
 // Since we only have ANSI C++ RC5-72 cores for now, there's no need for
 // CLIENT_CPU checking.
 
@@ -1828,9 +1805,6 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #endif
   } /* if (contestid == RC5) */
-  if (contestid == RC5_72)
-  {
-  }
   
   /* ================================================================== */
   
@@ -2054,6 +2028,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     {
       unit_func.rc5 = rc5_72_unit_func_ansi_2;
       pipeline_count = 2;
+    }
   }
 
   /* ================================================================== */
