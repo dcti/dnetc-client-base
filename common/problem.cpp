@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.21 1999/11/11 02:20:25 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.22 1999/11/16 19:23:10 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -479,7 +479,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       {
         problem->x86_unit_func = rc5_unit_func_k6;
         #if defined(MMX_RC5_AMD)
-        if ((detectedtype & 0x100) != 0)
+        if (detectedtype >= 0 && (detectedtype & 0x100) != 0)
         { 
           problem->x86_unit_func = rc5_unit_func_k6_mmx;
           problem->pipeline_count = 4;
@@ -490,7 +490,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       {
         problem->x86_unit_func = rc5_unit_func_p5;
         #if defined(MMX_RC5)
-        if ((detectedtype & 0x100) != 0)
+        if (detectedtype >= 0 && (detectedtype & 0x100) != 0)
         { 
           problem->x86_unit_func = rc5_unit_func_p5_mmx;
           problem->pipeline_count = 4; // RC5 MMX core is 4 pipelines
@@ -540,11 +540,11 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         static long detectedtype = -1;
         if (detectedtype == -1)
           detectedtype = GetProcessorType(1 /* quietly */);
-        if ((detectedtype & 0x100) != 0) 
+        if (detectedtype >= 0 && (detectedtype & 0x100) != 0) 
           slicit = (u32 (*)(RC5UnitWork *,u32))des_unit_func_mmx;
       }
       #endif  
-                        if (slicit && coresel > 1) /* not standard bryd and not ppro bryd */
+      if (slicit && coresel > 1) /* not standard bryd and not ppro bryd */
       {                /* coresel=2 is valid only if we have a slice core */
         coresel = 2;
         problem->x86_unit_func = slicit;
