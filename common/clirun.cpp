@@ -8,7 +8,7 @@
 //#define TRACE
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.52 2000/05/04 21:47:10 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.53 2000/05/06 21:56:02 mfeiri Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -95,9 +95,9 @@ struct thread_param_block
 
 static void __thread_sleep__(int secs)
 {
-  #if (CLIENT_OS == OS_MACOS)
-    // need this because ordinary sleep is not MP safe
-    macosYield(secs);
+  #if (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
+    #pragma unused (secs)
+    MPYield();
   #else
     NonPolledSleep(secs);
   #endif
@@ -139,7 +139,9 @@ static void __thread_yield__(void)
     NonPolledUSleep( 0 ); /* yield */
     #endif
   #elif (CLIENT_OS == OS_MACOS)
-    macosYield(0);
+    #if (CLIENT_CPU == CPU_POWERPC)
+    MPYield(); /* 68k or non-MP code never gets here */
+    #endif
   #elif (CLIENT_OS == OS_MACOSX)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_BEOS)
@@ -344,7 +346,7 @@ void Go_mt( void * parm )
         {
           #if (CLIENT_OS==OS_MACOS)
           if (!thrparams->realthread)
-            macosTickSleep(0); /* only non-realthreads are non-preemptive */
+            macosSmartYield(); /* only non-realthreads are non-preemptive */
           #else
             __thread_yield__();
           #endif
@@ -474,7 +476,7 @@ static int __StopThread( struct thread_param_block *thrparams )
         static status_t be_exit_value;
         wait_for_thread(thrparams->threadID, &be_exit_value);
         #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-        while (thrparams->threadID) MPYield();//MPTerminateTask((thrparams->threadID),nil);
+        MPTerminateTask((thrparams->threadID),nil);//while (thrparams->threadID) MPYield();
         #elif (CLIENT_OS == OS_NETWARE)
         while (thrparams->threadID) delay(100);
         #elif (CLIENT_OS == OS_FREEBSD)
@@ -828,6 +830,27 @@ static int __gsc_flag_allthreads(struct thread_param_block *thrparam,
   return 0;
 }                                 
  
+static void __adjust_timeslice_usec(struct thread_param_block *thrparam,
+                                   unsigned int priority)
+{
+   while (thrparam)
+   {
+      for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
+      {
+         #if (CLIENT_OS == OS_MACOS)
+         if (!thrparam->realthread) // realthreads are preemptive for MacOS
+         {
+           default_dyn_timeslice_table[tsinitd].usec = 100000*(priority+1);
+         }
+         #elif (CLIENT_OS == OS_NETWARE) 
+         default_dyn_timeslice_table[tsinitd].usec = 512 * (priority+1);
+         #endif
+         //printf("usec:%d \n",thrparam->dyn_timeslice_table[tsinitd].usec);
+      }
+      thrparam = thrparam->next;
+   }
+}
+ 
 static int __CheckClearIfRefillNeeded(struct thread_param_block *thrparam,
                                       int doclear)
 {
@@ -1080,9 +1103,13 @@ int ClientRun( Client *client )
             default_dyn_timeslice_table[tsinitd].usec = 1000000;
             default_dyn_timeslice_table[tsinitd].optimal = 131072;
           }
-          #elif (CLIENT_OS == OS_MACOS) /* just default numbers - Mindmorph */
-            default_dyn_timeslice_table[tsinitd].optimal = 2048;      
-            default_dyn_timeslice_table[tsinitd].usec = 10000*(client->priority+1);
+          #elif (CLIENT_OS == OS_MACOS)
+            #if (CLIENT_CPU == CPU_POWERPC)
+            default_dyn_timeslice_table[tsinitd].optimal = 1024;
+            #else // eg. (CLIENT_CPU == CPU_68K)
+            default_dyn_timeslice_table[tsinitd].optimal = 256;
+            #endif     
+            default_dyn_timeslice_table[tsinitd].usec = 100000*(client->priority+1);
           #elif (CLIENT_OS == OS_NETWARE) 
           /* The switchcount<->runtime ratio is inversely proportionate. 
              By definition, 1000ms == 1.0 switchcounts/sec. In real life it
@@ -1210,6 +1237,10 @@ int ClientRun( Client *client )
 
     if (!dontSleep)
     {             
+      if (is_non_preemptive_os) // under a non-preemptive OS we adjust
+         // aggressiveness by defining how long to stay in a cruncher
+         __adjust_timeslice_usec(thread_data_table,client->priority);
+      else
       SetGlobalPriority( client->priority );
       if (isPaused)
         NonPolledSleep(3); //sleep(3);
