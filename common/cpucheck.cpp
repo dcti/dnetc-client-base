@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.43 2000/06/05 22:13:21 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.44 2000/06/13 00:30:07 mfeiri Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -447,6 +447,14 @@ static long __GetRawProcessorID(const char **cpuname)
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       detectedtype = result - 0x100L; // PVR!!
     isaltivec = macosAltiVec();
+  }
+  #elif (CLIENT_OS == OS_MACOSX)
+  if (detectedtype == -2L)
+  {
+    // as long as we dont have cputype detection I set the default to a G3
+    detectedtype = 8;
+    // but I leave AltiVec enabled so users can select this core manually
+    isaltivec = true;
   }
   #elif (CLIENT_OS == OS_WIN32)
   if (detectedtype == -2L)
