@@ -1,0 +1,87 @@
+                                                    
+ RC5-DES CLI Client for RISC OS v3.10 or later.
+ Released by Chris "chrisb" Berry <chrisb@acorn.co.uk>
+                                                          
+ Welcome to the new RC5-DES (Project Bovine/Project Monarch) Client.
+
+    1.0  Getting started
+    2.0  RISC OS specific notes
+    3.0  Help! 
+   
+ 1.0  Getting started ------------------------------------------------
+ 
+    Just unpack the client in a directory of your choice and fire it up
+    in a task window with [path]rc5des
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done, the 
+    configuration file will be saved in the same directory as the 
+    client. Then, simply restart the client. From that point on it will 
+    use the saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help'.
+
+    If you prefer to have the client start automatically when the computer
+    is powered up, run the client with the -install switch. To remove the
+    client from the startup folder, run the client with -uninstall.
+
+    A "Complete Step-by-Step Guide to Running Your First Client" is 
+    available at http://distributed.net/FAQ/
+
+ 2.0  Notes: ---------------------------------------------------------
+
+    The client for RISC OS requires the Acorn Internet module, or a 
+    compatible TCP/IP stack (eg FreeNet). 
+
+    The client can be run in a task window at boot time by adding 
+      TaskWindow "Run {path to client}.rc5des" -wimpslot 352K
+           -name "RC5DES client"
+    to your desktop boot file. Changing the quoted command to
+    "Run {path to client}.rc5des { > null: }" will make the client
+    invisible. Stop it by killing it via the task manager or by
+    creating a file "exitrc5/now" in the client's directory.
+ 
+    You may alternatively wish to install the RISC OS GUI client.
+
+    For help with the RISC OS client, you can either ask through
+    "standard" support channels (listed below), or visit the ant.org
+    RC5 team homepage (http://www.ant.org/rc5/) for more RISC OS-
+    specific information. (Or e-mail rc5@ant.org)
+
+ 3.0  Help: ----------------------------------------------------------
+
+    An immediate source of help is the IRC channel on EFnet. The 
+    #distibuted channel is open 24 hours a day, 7 days a week.
+
+    If you need further assistance with client use or operation, refer to 
+    the the list of "Frequently asked Questions" (FAQs) available online 
+    at http://www.distributed.net/FAQ/ Documents cover every aspect of 
+    running a client including "The Complete Step by Step Guide to 
+    Running Your First Client", "How To Join A Team", and the popular 
+    "Statistics Server FAQ".
+
+    If you prefer, you may also post a message to the mailing list at 
+    <rc5@lists.distributed.net> (To subscribe to the mailing list, send 
+    a message to <majordomo@lists.distributed.net> with "subscribe rc5" 
+    as the message text).
+
+    A public database of known problems and incompatibilities is available
+    at http://www.distributed.net/cgi/buglist.cgi
+
+    More user support is available from <rc5help@distributed.net> as well
+    as from our regional support representatives listed at 
+    http://www.distributed.net/regional/index.html
+    
+    If you believe you have found a bug in the client or would like to
+    make a suggestion, please send a message to the coders at 
+    <coders@lists.distributed.net>. Don't forget to specify which platform 
+    you are running the client on. 
+    
+    If you believe you have found a bug specific to this port, or would
+    like to make a suggestion specific to this port, send a message to the 
+    port maintainer as listed on http://www.distributed.net/credits.html
+    Don't fret if you don't get a response right away.
+    
