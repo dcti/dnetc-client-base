@@ -15,6 +15,8 @@
 
 //#define DEBUG
 
+#if (CLIENT_CPU != CPU_ARM)
+
 const u8 odd_parity[256]={
   1,  1,  2,  2,  4,  4,  7,  7,  8,  8, 11, 11, 13, 13, 14, 14,
  16, 16, 19, 19, 21, 21, 22, 22, 25, 25, 26, 26, 28, 28, 31, 31,
@@ -294,3 +296,5 @@ void convert_key_from_inc_to_des (u32 *deshi, u32 *deslo)
 
 // ------------------------------------------------------------------
 
+
+#endif // CLIENT_CPU != CPU_ARM
