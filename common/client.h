@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.131 1999/04/17 14:02:50 cyp Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.132 1999/04/19 06:13:46 cyp Exp $"
 
 
 enum {
@@ -49,8 +49,8 @@ class Client
 public:
   /* non-user-configurable */
   int  nonewblocks;
-  int  randomprefix;
   int  randomchanged;
+  int  randomprefix;
   int  rc564closed;
   int  stopiniio;
   u32  scheduledupdatetime;
@@ -59,36 +59,40 @@ public:
 
   /* -- general -- */
   char id[64];
-  char loadorder_map[CONTEST_COUNT];
   int  quietmode;
   s32  blockcount;
   s32  minutes;
   s32  percentprintingoff;
   s32  noexitfilecheck;
   char pausefile[128];
+  char loadorder_map[CONTEST_COUNT];
 
   /* -- buffers -- */
-  char checkpoint_file[128];
   s32  nodiskbuffers;
   char in_buffer_basename[128];
   char out_buffer_basename[128];
+  char checkpoint_file[128];
+  s32  offlinemode;
+    s32  nettimeout;
+    s32  nofallback;
+    int  autofindkeyserver;
+    char keyproxy[64];
+    s32  keyport;
+    char httpproxy[64];
+    s32  httpport;
+    s32  uuehttpmode;
+    char httpid[128];
+  s32  noupdatefromfile;
+    char remote_update_dir[128];
+  s32  connectoften;
+  s32  preferred_blocksize;
   volatile s32 inthreshold[CONTEST_COUNT];
   volatile s32 outthreshold[CONTEST_COUNT];
-  s32  connectoften;
-  s32  noupdatefromfile;
-  char remote_update_dir[128];
-  s32  offlinemode;
-  
-  s32  preferred_blocksize;
-  s32  nettimeout;
-  s32  nofallback;
-  int  autofindkeyserver;
-  char keyproxy[64];
-  s32  keyport;
-  char httpproxy[64];
-  s32  httpport;
-  s32  uuehttpmode;
-  char httpid[128];
+
+  /* -- perf -- */
+  s32  numcpu;
+  s32  cputype;
+  s32  priority;
 
   /* -- log -- */
   char logname[128];
@@ -97,13 +101,6 @@ public:
   s32  smtpport;
   char smtpfrom[128];
   char smtpdest[128];
-
-  /* -- perf -- */
-  s32  numcpu;
-  s32  cputype;
-  s32  priority;
-
-  /* -- misc -- */
 
   /* --------------------------------------------------------------- */
 
