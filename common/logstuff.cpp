@@ -4,6 +4,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: logstuff.cpp,v $
+// Revision 1.4  1998/08/20 19:25:04  cyruspatel
+// Restored spooling via static buffer until Autobuffer growth can be
+// limited.
+//
 // Revision 1.3  1998/08/15 18:11:29  cyruspatel
 // Adjusted for mail.cpp changes.
 //
@@ -22,7 +26,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.3 1998/08/15 18:11:29 cyruspatel Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.4 1998/08/20 19:25:04 cyruspatel Exp $"; }
 #endif
 
 //-------------------------------------------------------------------------
@@ -643,8 +647,9 @@ void Client::LogScreenPercentMulti(u32 cpu, u32, u32, bool)
 
 void Client::DeinitializeLogging(void)
 {
-  if (logstatics.mailmessage) //deleting the object will force a send 
+  if (logstatics.mailmessage) 
     {
+    logstatics.mailmessage->Deinitialize(); //forces a send
     delete logstatics.mailmessage;
     logstatics.mailmessage = NULL;
     logstatics.loggingTo &= ~LOGTO_MAIL;    
@@ -678,12 +683,8 @@ void Client::InitializeLogging(void)
   if (logstatics.mailmessage)
     {
     logstatics.loggingTo |= LOGTO_MAIL;
-    strcpy(logstatics.mailmessage->rc5id,id);
-    strcpy(logstatics.mailmessage->destid,smtpdest);
-    strcpy(logstatics.mailmessage->fromid,smtpfrom);
-    strcpy(logstatics.mailmessage->smtphost,smtpsrvr);
-    logstatics.mailmessage->smtpport = smtpport;
-    logstatics.mailmessage->sendthreshold = messagelen;
+    logstatics.mailmessage->Initialize( messagelen, smtpsrvr, smtpport,
+                                        smtpfrom, smtpdest, id );
     }
 
   if ( logname[0] && strcmpi( logname, "none" )!= 0)

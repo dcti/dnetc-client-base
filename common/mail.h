@@ -5,8 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: mail.h,v $
-// Revision 1.10  1998/08/15 21:31:05  jlawson
-// new mail code using autobuffer
+// Revision 1.11  1998/08/20 19:24:58  cyruspatel
+// Restored spooling via static buffer until Autobuffer growth can be
+// limited.
 //
 // Revision 1.8  1998/08/10 20:29:36  cyruspatel
 // Call to gethostname() is now a call to Network::GetHostName(). Updated
@@ -21,47 +22,74 @@
 //
 // 
 
+//#define MAILTEST
+
 #ifndef __MAIL_H__
 #define __MAIL_H__
 
-#include "cputypes.h"
-#include "autobuff.h"
+#if (defined(MAILSPOOL_IS_AUTOBUFFER))
+  #include "autobuff.h"
+#elif defined(MAILSPOOL_IS_MEMFILE)
+  #include "memfile.h"
+#else //if (defined(MAILSPOOL_IS_STATICBUFFER))
+  #include <limits.h>
+  #define MAILBUFFSIZE 150000L
+  #if (UINT_MAX < MAILBUFFSIZE)
+    #undef MAILBUFFSIZE
+    #define MAILBUFFSIZE 32000
+  #endif
+#endif  
 
-class MailMessage
+struct mailmessage
 {
-public:
-  u32 sendthreshold;   //send threshold
-  
-  AutoBuffer spoolbuff;
+  unsigned long sendthreshold; 
+  unsigned long maxspoolsize;
+    
+  #if (defined(MAILSPOOL_IS_AUTOBUFFER))
+    AutoBuffer *spoolbuff;
+  #elif defined(MAILSPOOL_IS_MEMFILE)
+    MEMFILE *spoolbuff;
+  #else //if (defined(MAILSPOOL_IS_STATICBUFFER))
+    char spoolbuff[MAILBUFFSIZE];
+  #endif
+    
   char fromid[256];
   char destid[256];
   char rc5id[256];
   char smtphost[256];
-  s16 smtpport;
+  unsigned int smtpport;
+};    
 
-  int append(const char *txt);
-  int send(void);
+extern int smtp_initialize_message( struct mailmessage *msg, 
+         unsigned long sendthresh, const char *smtphost, unsigned int smtpport,
+         const char *fromid, const char *destid, const char *rc5id );
+extern int smtp_deinitialize_message( struct mailmessage *msg );
+extern int smtp_append_message( struct mailmessage *msg, const char *txt );
+extern int smtp_send_message( struct mailmessage *msg );
+extern unsigned long smtp_countspooled( struct mailmessage *msg );
 
-  u32 clear(void)
-    { spoolbuff.Clear(); return 0; } 
-  u32 countspooled(void)
-    { return spoolbuff.GetLength(); }
-  int checktosend(int force)
-    {
-      return ((force || (countspooled() > ((sendthreshold/10)*9)) ) ?
-          (send()):(0) );
-    }
-  MailMessage(void)
-    {
-      fromid[0]=destid[0]=rc5id[0]=smtphost[0]=0;
-      sendthreshold=0;
-      smtpport=0;
-    }
-  ~MailMessage(void)
-    {
-      send();
-    }
+class MailMessage
+{
+public:
+  struct mailmessage msg;
+
+  int Initialize( unsigned long _sendthresh, const char *_smtphost, 
+      unsigned int _smtpport, const char *_fromid, const char *_destid, 
+      const char *_rc5id )    { return smtp_initialize_message( &msg, 
+                                _sendthresh, _smtphost, _smtpport,
+                                _fromid,  _destid, _rc5id );               }
+  int Deinitialize(void)      { return smtp_deinitialize_message( &msg );  }
+
+  int append(const char *txt) { return smtp_append_message( &msg, txt );   }
+  int send(void)              { return smtp_send_message( &msg );          }
+
+  unsigned long countspooled(void) { return smtp_countspooled( &msg );     }
+
+  int checktosend(int force)  { return ((force || (countspooled()>
+                                ((msg.sendthreshold/10)*9)))?(send()):(0));}
+
+  MailMessage(void)           { memset( (void *)(&msg), 0, sizeof(msg) );  }
+  ~MailMessage(void)          { send(); Deinitialize();                    }
 };
 
 #endif //__MAIL_H__
-
