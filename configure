@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.145 2000/03/20 20:16:15 jbaker Exp $
+# @(#)$Id: configure,v 1.222.2.146 2000/03/23 20:43:24 jbaker Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -769,6 +769,37 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
+  ### QNX MIPS targets
+
+    *mipsle-nto2)
+        TARGET_AS="qcc -Vgcc_ntomipsle -c -DNO_BALIGN"
+        TARGET_CC="qcc -Vgcc_ntomipsle"
+        TARGET_STRIP="/usr/gcc/bin/ntomipsle-strip"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+                        -fno-exceptions -fno-rtti \
+                        -DHAVEOGR_CORES -DASM_MIPS\
+                        -DMULTITHREAD"
+        TARGET_LIBS="-lsocket"
+        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $OGR_ANSI_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="nto2-mipsle"
+        TARGET_GENMAN=
+        ;;
+
+    *mipsbe-nto2)
+        TARGET_AS="qcc -Vgcc_ntomipsbe -c -DNO_BALIGN"
+        TARGET_CC="qcc -Vgcc_ntomipsbe"
+        TARGET_STRIP="/usr/gcc/bin/ntomipsbe-strip"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+                        -fno-exceptions -fno-rtti \
+                        -DHAVEOGR_CORES -DASM_MIPS\
+                        -DMULTITHREAD"
+        TARGET_LIBS="-lsocket"
+        TARGET_ADDSRCS="rc5/mips/mips-crunch.cpp $MEGGS_SLICE_SRCS2 $OGR_ANSI_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="nto2-mipsbe"
+        TARGET_GENMAN=
+        ;;
 
 ###### HPUX
 
@@ -1110,6 +1141,55 @@ case "$1" in
 	TARGET_TARBALL="aix-all-aix4.1"
         ;;
 
+  ### QNX PPC targets
+    *ppc-nto2)
+	TARGET_AS="qcc -Vgcc_ntoppcbe -c -DNO_BALIGN"
+	TARGET_CC="qcc -Vgcc_ntoppcbe"
+	TARGET_STRIP="/usr/gcc/bin/ntoppc-strip"
+	TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+	                -fno-exceptions -fno-rtti \
+	                -DHAVEOGR_CORES -DASM_PPC\
+	                -DMULTITHREAD"
+	TARGET_LIBS="-lsocket"
+	TARGET_ADDSRCS="$RC5PPC_SRCS $OGR_ANSI_SRCS"
+	TARGET_DOCFILES="docs/readme._ix"
+	TARGET_TARBALL="nto2-ppcbe"
+	TARGET_GENMAN=
+	;;
+
+###### SH4 platforms
+
+  ### SH4 QNX targets
+
+    *sh4le-nto2)
+        TARGET_AS="qcc -Vgcc_ntoshle -c -DNO_BALIGN"
+        TARGET_CC="qcc -Vgcc_ntoshle"
+        TARGET_STRIP="/usr/gcc/bin/ntoshle-strip"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+                        -fno-exceptions -fno-rtti \
+                        -DHAVEOGR_CORES -DASM_SH4\
+                        -DMULTITHREAD"
+        TARGET_LIBS="-lsocket"
+        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="nto2-sh4le"
+        TARGET_GENMAN=
+        ;;
+
+    *sh4be-nto2)
+        TARGET_AS="qcc -Vgcc_ntoshbe -c -DNO_BALIGN"
+        TARGET_CC="qcc -Vgcc_ntoshbe"
+        TARGET_STRIP="/usr/gcc/bin/ntoshbe-strip"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+                        -fno-exceptions -fno-rtti \
+                        -DHAVEOGR_CORES -DASM_SH4\
+                        -DMULTITHREAD"
+        TARGET_LIBS="-lsocket"
+        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="nto2-sh4be"
+        TARGET_GENMAN=
+        ;;
 
 ###### Intel X86 Linux platforms
 
@@ -1344,29 +1424,34 @@ case "$1" in
 	TARGET_AS="g++ -c -DNO_BALIGN"
         TARGET_CCFLAGS="$OPTS_GCC272_X86 -DMMX_RC5 \
 			-DHAVE_OGR_CORES"
-  	#TARGET_NASM="/home/jbaker/nasm.qnx4"
-	TARGET_NASM="nasm"
+  	TARGET_NASM="/home/jbaker/nasm.qnx4"
+	#TARGET_NASM="nasm"
 	TARGET_LIBS="-lsocket"
         TARGET_ADDSRCS="$OGR_ANSI_SRCS"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_DOCFILES="docs/readme._ix"
 	TARGET_TARBALL="qnx4-x86"
-    ;;
+        ;;
     *x86-nto2)
-	TARGET_AS="g++ -c -DNO_BALIGN"
-	#TARGET_NASM="//55/home/jbaker/nasm.nto2"
-	TARGET_NASM="nasm"
-	TARGET_NASM_FMT="elf"
-	TARGET_CCFLAGS="$OPTS_GCC295_X86 -DMMX_RC5 -DHAVE_OGR_CORES \
-			-DMULTITHREAD"
+    	TARGET_AS="qcc -Vgcc_ntox86 -c -DNO_BALIGN"
+	TARGET_CC="qcc -Vgcc_ntox86"
+	TARGET_STRIP="/usr/gcc/bin/ntox86-strip"
+	TARGET_NASM="//55/home/jbaker/nasm.qnx4"
+	#TARGET_NASM="nasm"
+	TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+			-fno-exceptions -fno-rtti \
+			-DMMX_RC5 -DHAVEOGR_CORES \
+			-DMULTITHREAD -DASM_X86"
 	TARGET_LIBS="-lsocket"
 	TARGET_ADDSRCS="$OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
 	TARGET_ADDNASMS="$NASM_RC5X86_SRCS"
-        TARGET_DOCFILES="docs/readme._ix"
-	TARGET_TARBALL="nto2-x86-elf"
+	TARGET_DOCFILES="docs/readme._ix"
+	TARGET_TARBALL="nto2-x86"
+	TARGET_GENMAN=
 	;;
+
 ####### Intel X86 SCO5
 
     *x86-sco5)
@@ -1532,6 +1617,21 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
 	;;
 
+    *arm-nto2)
+        TARGET_AS="qcc -Vgcc_ntoarmle -c -DNO_BALIGN"
+        TARGET_CC="qcc -Vgcc_ntoarmle"
+        TARGET_STRIP="/usr/gcc/bin/ntoarmle-strip"
+        TARGET_CCFLAGS="-lang-c++ -fomit-frame-pointer -fno-inline-functions \
+                        -fno-exceptions -fno-rtti \
+                        -DHAVEOGR_CORES -DASM_ARM\
+                        -DMULTITHREAD"
+        TARGET_LIBS="-lsocket"
+        TARGET_ADDSRCS="$OGR_ANSI_SRCS"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="nto2-arm"
+        TARGET_GENMAN=
+        ;;
+ 
 ###### NetBSD/vax
     *vax-netbsd-gcc)
         TARGET_CC="g++"
@@ -1738,6 +1838,27 @@ if [ $1 = riscos ]; then
   #tum-te-tum
   gcc common/testplat.cpp -o testplat
 else
+  if [ $1 = x86-nto2 ]; then
+    gcc common/testplat.cpp -o testplat
+  else
+  if [ $1 = ppc-nto2 ]; then
+    gcc common/testplat.cpp -o testplat
+  else
+  if [ $1 = mipsle-nto2 ]; then
+    gcc common/testplat.cpp -o testplat
+  else
+  if [ $1 = mipsbe-nto2 ]; then
+    gcc common/testplat.cpp -o testplat
+  else
+  if [ $1 = sh4le-nto2 ]; then
+    gcc common/testplat.cpp -o testplat
+  else
+  if [ $1 = sh4be-nto2 ]; then
+    gcc common/testplat.cpp -o testplat
+  else
+  if [ $1 = arm-nto2 ]; then
+    gcc common/testplat.cpp -o testplat
+  else
     echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   sh -c "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
   if [ $? -ne 0 ]; then
@@ -1752,6 +1873,13 @@ else
   else
      ${TARGET_STRIP} testplat
   fi
+  fi
+  fi
+  fi
+  fi
+  fi
+  fi
+  fi
 fi
 
 
@@ -1762,10 +1890,52 @@ if [ $1 = riscos ]; then
   CLIENTCPU=11
   CLIENTOS=34
   INTSIZES=442
-else
-  CLIENTCPU=`./testplat cpu`
-  CLIENTOS=`./testplat os`
-# INTSIZES=`./testplat intsizes`
+else 
+  if [ $1 = x86-nto2 ]; then
+    CLIENTCPU=1
+    CLIENTOS=22
+    INTSIZES=442
+  else
+    if [ $1 = ppc-nto2 ]; then
+      CLIENTCPU=2
+      CLIENTOS=22
+      INTSIZES=442
+    else
+      if [ $1 = mipsle-nto2 ]; then
+        CLIENTCPU=3
+        CLIENTOS=22
+        INTSIZES=442
+      else
+        if [ $1 = mipsbe-nto2 ]; then
+          CLIENTCPU=3
+          CLIENTOS=22
+          INTSIZES=442
+        else
+          if [ $1 = sh4le-nto2 ]; then
+            CLIENTCPU=8
+            CLIENTOS=22
+            INTSIZES=442
+          else
+            if [ $1 = sh4be-nto2 ]; then
+              CLIENTCPU=8
+              CLIENTOS=22
+              INTSIZES=442
+            else
+              if [ $1 = arm-nto2 ]; then
+                CLIENTCPU=11
+                CLIENTOS=22
+                INTSIZES=442
+              else
+                CLIENTCPU=`./testplat cpu`
+                CLIENTOS=`./testplat os`
+                #INTSIZES=`./testplat intsizes`
+              fi
+            fi
+          fi
+        fi
+      fi
+    fi
+  fi
 fi
 CLIENTOSNAME=`grep "#define OS_.*\<$CLIENTOS\>" common/cputypes.h | head -1 | cut -d' ' -f2`
 CLIENTCPUNAME=`grep "#define CPU_.*\<$CLIENTCPU\>" common/cputypes.h | head -1 | cut -d' ' -f2`
