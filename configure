@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.31  1998/06/13 10:34:56  remi
+# Added handy x86-linux-egcs-debug target.
+# Removed unused x86-linux-mt-slice-meggs-gcc target.
+#
 # Revision 1.30  1998/06/13 01:01:17  timc
 # SparcBSD changes from Ralf Gebhart <gebhart@snake.de>
 #
@@ -453,6 +457,15 @@ case "$1" in
 	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
 	;;
 
+    *x86-linux-egcs-debug)    # debug version of x86-linux-egcs
+	TARGET_AS="as"
+	TARGET_CC="gcc -g"
+	TARGET_CCFLAGS="$OPTS_EGCS_X86 -DPIPELINE_COUNT=2"
+	TARGET_ADDSRCS="$RC5X86_SRCS $DESX86_SRCS"
+	TARGET_ADDASMS="des/bdeslow.s des/bbdeslow.s platforms/x86ident.s"
+	TARGET_STRIP="touch"
+	;;
+
     *x86-linux-old)   # uses standard GCC options plus '-pipe'
 	TARGET_AS="as"
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DPIPELINE_COUNT=2"
@@ -494,15 +507,6 @@ case "$1" in
 	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DKWAN"
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$RC5X86_SRCS $KWAN_SLICE_SRCS4"
-	TARGET_ADDASMS="platforms/x86ident.s"
-	TARGET_LIBS="-lpthread"
-	;;
-
-    *x86-linux-mt-slice-meggs-gcc)     # using slice not bryddes
-	TARGET_AS="as"
-	TARGET_CCFLAGS="-pipe $OPTS_GCC_X86 -static -DBIT_32 -DPIPELINE_COUNT=2 -DMULTITHREAD -DMEGGS -DKWAN"
-	TARGET_LDFLAGS="-static"
-	TARGET_ADDSRCS="$RC5X86_SRCS $MEGGS_SLICE_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.s"
 	TARGET_LIBS="-lpthread"
 	;;
