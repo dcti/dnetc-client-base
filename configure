@@ -5,6 +5,11 @@
 # Any other distribution or use of this source violates copyright.
 
 # $Log: configure,v $
+# Revision 1.113.2.8  1998/11/16 16:36:34  remi
+# Synced with :
+#  Revision 1.127  1998/11/16 16:21:48  remi
+#  sparc-linux-mt-egcs now use deseval-meggs2-2.cpp instead of deseval-meggs3.cpp.
+#
 # Revision 1.113.2.7  1998/11/15 17:30:41  remi
 # A bunch of -D__showids__
 #
@@ -345,7 +350,7 @@ case "$1" in
     *sparc-linux-egcs)
 	RC5CORECOPY="rc5/rc5ansi2-rg.cpp"
 	TARGET_CCFLAGS="$OPTS_EGCS_NONULTRA_SPARC -fno-inline-functions -DPIPELINE_COUNT=2 -DKWAN -DMEGGS -DBIT_32"
-	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_ADDSRCS="des/deseval-meggs2-2.cpp des/des-slice-meggs.cpp"
 	;;
 
     *sparc-cc)
