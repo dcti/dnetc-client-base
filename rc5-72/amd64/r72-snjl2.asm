@@ -8,7 +8,7 @@
 ;
 ; Based off the r72-ss2.asm core, by Ianos Gnatiuc <ssianky@hotmail.com>
 ; (r72-ss2 was based on r72-dg2 and r72ansi2 cores)
-; $Id: r72-snjl2.asm,v 1.1.2.1 2003/11/04 00:00:54 jlawson Exp $
+; $Id: r72-snjl2.asm,v 1.1.2.2 2003/11/04 02:49:11 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -22,6 +22,7 @@ BITS 64
 %define RESULT_FOUND    2
 %define PIPES           2
 
+;; magic constants for the RC5 algorithm
 %define P         0xB7E15163
 %define Q         0x9E3779B9
 %define S_not(N)  (P+Q*(N))
@@ -29,34 +30,45 @@ BITS 64
 
 ;------------------------------------------------
 
-%define S1(N)       [rsp +  0 + (N)*4] ; 104
-%define work_iter    rsp +   0 + 104    ;   4  +104
-%define work_L0hi    rsp +   4 + 104    ;   4
-%define work_L0mid   rsp +   8 + 104    ;   4
-%define work_L0lo    rsp +  12 + 104    ;   4
-%define save_rbx	rsp + 16 + 104	;8
-%define save_rbp	rsp + 24 + 104	;8
-%define save_r12	rsp + 32 + 104	;8
-%define save_r13	rsp + 40 + 104	;8
-%define save_r14	rsp + 48 + 104	;8
-%define save_r15	rsp + 56 + 104	;8	64
+%assign work_size 0
 
-%define work_Clo     rbp -  32          ;   4
-%define work_Chi     rbp -  28          ;   4
-%define work_Plo     rbp -  24          ;   4
-%define work_Phi     rbp -  20          ;   4
-%define S1_ROL3      rbp -  16          ;   4
-%define S2_ROL3      rbp -  12          ;   4
-;%define L0_ROL       rbp -   8          ;   4
-;%define L1_ROL       rbp -   4          ;   4
-%define S2(N)       [rbp +   0 + (N)*4] ; 104  (+104+64+32)
-%define S2_L1        rbp + 104          ;   4
+%macro defidef 2
+    %define %1 rsp+%2
+%endmacro
 
-%define work_size 300
+%macro defwork 1-2 1
+    defidef %1,work_size
+    %assign work_size work_size+4*(%2)
+%endmacro
 
-%define RC5_72UnitWork  rsp + work_size + 4
-%define iterations      rsp + work_size + 8
+;; local storage variables
+defwork S1_baseaddr,26
+%define S1(N)       [S1_baseaddr + (N)*4] 
+defwork work_iter,1
+defwork work_L0hi,1
+defwork work_L0mid,1
+defwork work_L0lo,1
+defwork save_rbx,2
+defwork save_rbp,2
+defwork save_r12,2
+defwork save_r13,2
+defwork save_r14,2
+defwork save_r15,2
+defwork work_Clo,1
+defwork work_Chi,1
+defwork work_Plo,1
+defwork work_Phi,1
+defwork S1_ROL3,1
+defwork S2_ROL3,1
+;defwork L0_ROL,1
+;defwork L1_ROL,1
+defwork S2_baseaddr,26
+%define S2(N)       [S2_baseaddr + (N)*4]
+defwork S2_L1,1
+defwork RC5_72UnitWork,2	; 1st argument (64-bit pointer), passed in rdi
+defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
 
+;; offsets within the parameter structure (rax contains base address).
 %define RC5_72UnitWork_plainhi  rax +  0
 %define RC5_72UnitWork_plainlo  rax +  4
 %define RC5_72UnitWork_cipherhi rax +  8
@@ -69,6 +81,7 @@ BITS 64
 %define RC5_72UnitWork_CMCmid   rax + 36
 %define RC5_72UnitWork_CMClo    rax + 40
 
+;; 32-bit values saved in the extended general-purpose registers.
 %define L1_0    r8d 
 %define L1_1    r9d
 %define L1_2    r10d   
@@ -180,7 +193,7 @@ _rc5_72_unit_func_snjl2:
 
     sub  rsp, work_size
     mov  [RC5_72UnitWork],rdi ; 1st argument is passed in rdi
-    mov  [iterations],rsi ; 2nd argument is passwd in rsi
+    mov  [iterations],rsi ; 2nd argument is passed in rsi
 
     mov  rax, rdi	; rax points to RC5_72UnitWork
 
@@ -191,16 +204,13 @@ _rc5_72_unit_func_snjl2:
     mov  [save_r13], r13
     mov  [save_r14], r14
     mov  [save_r15], r15   
-    lea  rbp, [rsp+104+64+32]
 
-    mov  eax, [RC5_72UnitWork]
-    mov  ecx, [iterations]
+    mov  ecx, [rsi]      	; iterations
 
     mov  ebx, [RC5_72UnitWork_plainhi]
     mov  edx, [RC5_72UnitWork_plainlo]
     mov  esi, [RC5_72UnitWork_cipherhi]
     mov  edi, [RC5_72UnitWork_cipherlo]
-    mov  ecx, [ecx]
 
     mov  [work_Phi],  ebx
     mov  [work_Plo],  edx
@@ -473,7 +483,7 @@ TEST_KEY_1_SS_2:
     cmp  eax, [work_Clo]
     jne  short TEST_KEY_2_SS_2
 
-    mov  eax, [RC5_72UnitWork]
+    mov  rax, [RC5_72UnitWork]
 
     mov  ecx, [work_L0mid]
     inc  dword [RC5_72UnitWork_CMCcount]
@@ -488,10 +498,10 @@ TEST_KEY_1_SS_2:
     cmp  esi, [work_Chi]
     jne  short TEST_KEY_2_SS_2
 
-    mov  ecx, [iterations]
+    mov  rcx, [iterations]
     mov  ebx, [work_iter]
     mov  esi, RESULT_FOUND
-    sub  [ecx], ebx
+    sub  [rcx], ebx
 
     jmp  LOOP_EXIT_SS_2
 
@@ -502,7 +512,7 @@ TEST_KEY_2_SS_2:
     cmp  ebx, [work_Clo]
     jne  INC_KEY_HI_SS_2
 
-    mov  eax, [RC5_72UnitWork]
+    mov  rax, [RC5_72UnitWork]
     inc  dword [RC5_72UnitWork_CMCcount]
 
     inc  edx
@@ -519,10 +529,10 @@ TEST_KEY_2_SS_2:
     jne  short INC_KEY_HI_SS_2
 
     mov  ebx, [work_iter]
-    mov  ecx, [iterations]
+    mov  rcx, [iterations]
     dec  ebx
     mov  esi, RESULT_FOUND
-    sub  [ecx], ebx
+    sub  [rcx], ebx
 
     jmp  short LOOP_EXIT_SS_2
 
@@ -565,7 +575,7 @@ INC_KEY_LO_SS_2:
 
 LOOP_EXIT_SS_2:
 
-    mov  eax, [RC5_72UnitWork]
+    mov  rax, [RC5_72UnitWork]
 
     mov  ebx, [work_L0mid]
     mov  ecx, [work_L0lo]
@@ -578,10 +588,6 @@ LOOP_EXIT_SS_2:
     mov  [RC5_72UnitWork_L0lo],  ecx
 
     mov  eax, esi
-;    mov  edi, [save_edi]
-;    mov  esi, [save_esi]
-;    mov  ebx, [save_ebx]
-;    mov  ebp, [save_ebp]
 
 ;; rbp, rbx, and r12 thru r15 must be restored
     mov  rbp, [save_rbp]
