@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.41  1998/06/14 11:22:37  ziggyb
+// Fixed the OS/2 headers and added an os2defs.h and adjusted for the
+// seperate sleep defines header.
+//
 // Revision 1.40  1998/06/14 08:12:36  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -79,12 +83,11 @@ extern "C" {
   #include <sys/prctl.h>
   #include <sys/schedctl.h>
 #elif (CLIENT_OS == OS_OS2)
-  // Note: Look in network.h for os2.h defines
-  #include <dos.h>
   #include <sys/timeb.h>
   #include <conio.h>
   #include <share.h>
   #include <direct.h>
+  #include "platforms/os2cli/os2defs.h"
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
   #endif
