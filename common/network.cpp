@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.108 1999/12/03 21:52:14 dakidd Exp $"; }
+return "@(#)$Id: network.cpp,v 1.109 1999/12/04 13:07:48 cyp Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -25,14 +25,8 @@ return "@(#)$Id: network.cpp,v 1.108 1999/12/03 21:52:14 dakidd Exp $"; }
 #include "netres.h"    // NetResolve()
 #include "network.h"   // thats us
 
-#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_MACOS)
+#if (CLIENT_OS == OS_DOS)
 #define ERRNO_IS_UNUSABLE_FOR_CONN_ERRMSG
-#endif
-
-#if ((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_AIX)
-#define SOCKLEN_T socklen_t
-#else
-#define SOCKLEN_T int
 #endif
 
 extern int NetCheckIsOK(void); // used before doing i/o
@@ -1478,10 +1472,6 @@ int Network::LowLevelCloseSocket(void)
      int retcode = (int)soclose( sock );
      #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
      int retcode = (int)closesocket( sock );
-/* <Dakidd> - This #elif not needed under GUSI
-     #elif (CLIENT_OS == OS_MACOS)
-     int retcode = (int)socket_close( sock );
-   </Dakidd> */
      #elif (CLIENT_OS == OS_AMIGAOS)
      int retcode = (int)CloseSocket( sock );
      #elif (CLIENT_OS == OS_BEOS)
@@ -1654,29 +1644,6 @@ int Network::LowLevelConnectSocket( u32 that_address, int that_port )
     }
   }
   return rc;
-/* <Dakidd> This #elif not needed when using GUSI. Can behave just like we're a real
-   BSD-sockets equipped machine 
-#elif (CLIENT_OS == OS_MACOS)
-  // The Mac OS client simulates just the most essential socket calls, as a
-  // convenience in interfacing to a non-socket network library. "Select" is
-  // not available, but the timeout for a connection can be specified.
-
-  // set up the address structure
-  struct sockaddr_in sin;
-  memset((void *) &sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(((u16)that_port));
-  sin.sin_addr.s_addr = that_address;
-
-  // set timeout for connect
-  if (iotimeout > 0)
-  {
-    // timeout for this call must be >0 to not have default used
-    socket_set_conn_timeout(sock, iotimeout);
-  }
-
-  return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
-*/
 #elif defined(AF_INET) //BSD sox
 
   // set up the address structure
@@ -1851,30 +1818,6 @@ int Network::LowLevelPut(const char *ccdata,int length)
         }
       }
     }
-/* <Dakidd> Not needed for MacOS if we use GUSI...
-   #elif (CLIENT_OS == OS_MACOS)
-    // Note: MacOS client does not use XTI, and the socket emulation
-    // code doesn't support select.
-    int noiocount = 0;
-    written = -2;
-    while (written == -2)
-    {
-      written = socket_write(sock, data, (unsigned long)towrite);
-      if (written == 0)       // transport provider accepted nothing 
-      {                   // should never happen unless 'towrite' was 0
-        if ((++noiocount) < 3)
-        {
-          written = -2;   // retry 
-          usleep(500000); // 0.5 secs
-        }
-      }
-      else if (written == -1)
-      {
-        if (!valid_socket(sock)) return(0);
-      }
-    }
-    </Dakidd> 
-*/
     #elif defined(AF_INET) && defined(SOCK_STREAM)      //BSD 4.3 sockets
     if (firsttime)
     {
@@ -2037,22 +1980,6 @@ int Network::LowLevelGet(char *data,int length)
       else /* else T_DATA (Normal data received), and T_GODATA and family */
         bytesread = -1;
     }
-/* <Dakidd> Not needed under GUSI.
-    #elif (CLIENT_OS == OS_MACOS)
-    // Note: MacOS client does not use XTI, and the socket emulation
-    // code doesn't support select.
-    {
-      bytesread = socket_read( sock, data, toread);
-      if (bytesread == -1)
-      {
-        if ( !valid_socket(sock) )
-          bytesread = 0; // set as socket closed
-      }
-      else if (bytesread == 0) // should never happen?
-        bytesread = -1; // set as none waiting 
-    }
-    </Dakidd>
-*/
     #elif (defined(AF_INET) && defined(SOCK_STREAM))        //BSD 4.3
     {
       fd_set rs;
@@ -2143,51 +2070,22 @@ int Network::LowLevelSetSocketOption( int cond_type, int parm )
     int which;
     for (which = 0; which < 2; which++ )
     {
+      #if ((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_AIX)
+        //nothing, socklen_t is defined
+        typedef char * OPTVAL_T ;
+      #elif (CLIENT_OS == OS_MACOS)
+        typedef unsigned int socklen_t ;
+        typedef void * OPTVAL_T ;
+      #else
+        typedef int socklen_t ;
+        typedef char * OPTVAL_T ;
+      #endif
       int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
       int sz = 0;
-      SOCKLEN_T szint = (SOCKLEN_T)sizeof(int);
-/* <Dakidd> 
-   The short version:
-   This is the only place in network.cpp where Mac is "special", and it only exists
-   because I don't want to dick around with re-writing part of (and with my luck, probably 
-   breaking) the GUSI ("Grand Unified Socket Interface") package.
-   
-   The longer version, for Cyp and other "Don't touch common code!" folks:
-   Under GUSI, getsockopt() is prototyped as
-   int getsockopt(int socket, int level, int optname, void *optval, unsigned int *optlen);
-   
-   while we expect
-   int getsockopt(int socket, int level, int optname, char *optval, SOCKLEN_T *optlen);
+      socklen_t szint = (socklen_t)sizeof(int);
       
-   That being the case, CodeWarrior pukes at compile time with a "call doesn't match prototype"
-   error on both of these calls. Rather than fight with it, I'm just going to cast the arguments
-   to match what's expected.
-   
-   In all other respects, the GUSI package that I'm using for the Mac client's networking is 
-   as close to a perfect port of BSD 4.3 sockets as I know how to measure, so I think that I can
-   be forgiven for this small transgression.
-   
-   Yes, I've emailed to ask Matthias Neeracher why it's *SO* close, but broken this way. No, I 
-   don't have an answer yet. If he decides to fix it, then this conditional block won't be needed.
-   Until then, I don't see another way around it short of putting together a custom version of
-   the GUSI package. More power to you if you wanna mess around that way...
-   
-   Yes, I considered defining a wrapper macro for it, but every angle I try to come at it from, 
-   I run into a loop. 
-   #define getsockopt(A,B,C,D,E) getsockopt(A,B,C,(void *)D,(unsigned int *)E)
-   goes "circular" in a mighty big hurry.
-   
-   Mea culpa, mea culpa, mea maxima culpa... Anybody got any sackcloth and ashes handy? 
-   Seems I'm fresh out.
-   
-   </Dakidd>
-*/
-#if (CLIENT_OS == OS_MACOS)
-        if (getsockopt(sock, SOL_SOCKET, type, (void *)&sz, (unsigned int *)&szint)<0)
-#else
-	      if (getsockopt(sock, SOL_SOCKET, type, (char *)&sz, &szint)<0)
-#endif
-        ;
+      if (getsockopt(sock, SOL_SOCKET, type, (OPTVAL_T)&sz, &szint)<0)
+        ; /* nothing. call failed */
       else if (sz < parm)
       {
         sz = parm;
