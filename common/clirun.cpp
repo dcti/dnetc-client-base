@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.33  1998/11/10 14:04:08  chrisb
+// changed a < to <= so reports ('a'-'z') when there are  26 threads
+//
 // Revision 1.32  1998/11/10 10:44:06  silby
 // Excess yield_pump removed for win32 now that priorities are correct.
 //
@@ -128,7 +131,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.32 1998/11/10 10:44:06 silby Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.33 1998/11/10 14:04:08 chrisb Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1104,7 +1107,7 @@ int Client::Run( void )
     else
       {
       srange[0]=0;
-      if (load_problem_count > 1 && load_problem_count < 26 /* a-z */)
+      if (load_problem_count > 1 && load_problem_count <= 26 /* a-z */)
         sprintf( srange, " ('a'%s'%c')", 
           ((load_problem_count==2)?(" and "):("-")), 
           'a'+(load_problem_count-1) );
