@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.10 2004/06/27 22:07:17 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.11 2004/06/27 22:16:02 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -107,7 +107,7 @@ OPTS_LINK = $(OPTS_LINK) /warn:1
 
 # --------------------------------------------
 
-all: $(BASENAME).exe
+all: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr
 
 # --------------------------------------------
 
@@ -191,7 +191,6 @@ PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/strcmpi.obj
 !endif
 
 
-
 OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) 
 
 # --------------------------------------------
@@ -202,6 +201,11 @@ SCR_OBJS =                           \
         $(OUTPUTPATH)/w32exe.obj     \
         $(OUTPUTPATH)/w32ini.obj     \
         $(OUTPUTPATH)/w32util.obj
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+SCR_OBJS = $(SCR_OBJS) $(OUTPUTPATH)/strcmpi.obj
+!endif
+
 
 CUI_OBJS =                           \
         $(OUTPUTPATH)/w32cuis.obj
