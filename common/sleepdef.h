@@ -21,6 +21,11 @@
 */
 //
 // $Log: sleepdef.h,v $
+// Revision 1.14  1998/10/06 15:19:16  blast
+// Changed the sleep() functions used in AmigaOS is the minumum sleep
+// we need in the client is 55ms or something like that and the AmigaOS
+// Delay() function is 1 clock tick (16/20ms)
+//
 // Revision 1.13  1998/09/28 02:05:38  cyp
 // Modified for use with pollsys. Fixed (?) IRIX's lack of usleep() to use
 // sginap().
@@ -134,7 +139,14 @@
   #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
-  #include <unistd.h>
+  #ifdef sleep
+  #undef sleep
+  #endif
+  #ifdef sleep
+  #undef usleep
+  #endif
+  #define sleep(n) Delay(n*TICKS_PER_SECOND);
+  #define usleep(n) Delay(n*TICKS_PER_SECOND/1000000);
   }
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C" {
