@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.54  1998/06/29 08:43:59  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+//
 // Revision 1.53  1998/06/29 07:51:54  ziggyb
 // OS/2 lurk and DOD header additions. (platforms\os2cli\dod.h)
 //
@@ -442,7 +445,7 @@ protected:
 #endif
   
 
-#if (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
   virtual void SurrenderCPU( void ) {};
     // pause for other tasks
 #endif

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.63  1998/06/29 08:43:53  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+//
 // Revision 1.62  1998/06/29 07:57:30  ziggyb
 // Redid the lurk detection for OS/2. Also gave the text output functions
 // a priority boost so the display isn't so sluggish.
@@ -74,7 +77,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.62 1998/06/29 07:57:30 ziggyb Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.63 1998/06/29 08:43:53 jlawson Exp $";
 #endif
 
 #include "client.h"
@@ -420,9 +423,7 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
       return( -1 );
     }
     LogScreenf( "[%s] Network::Open Error %d - sleeping for 3 seconds\n", Time(), retry );
-#if (CLIENT_OS != OS_WIN16)
     sleep( 3 );
-#endif
 
 #if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C )
@@ -790,9 +791,7 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
     }
 
     LogScreenf( "\n[%s] Network::Open Error - Sleeping for 3 seconds\n", Time() );
-#if (CLIENT_OS != OS_WIN16)
     sleep( 3 );
-#endif
 #if (CLIENT_OS == OS_AMIGAOS)
     if ( SetSignal(0L,0L) & SIGBREAKF_CTRL_C)
       SignalTriggered = UserBreakTriggered = 1;
@@ -1362,7 +1361,7 @@ s32 Client::SelfTest( u8 contest )
     (problem[0]).LoadState( &contestwork , (u32) (contest-1) );
     while ( ( run = (problem[0]).Run( 0x4000 , 0 ) ) == 0 )
     {
-      #if (CLIENT_OS == OS_WIN16)
+      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       SurrenderCPU();
       #elif (CLIENT_OS == OS_NETWARE)
       CliThreadSwitchLowPriority();
@@ -2136,7 +2135,7 @@ PreferredIsDone1:
     }
     else if (pausefilefound) //threads have their own sleep section
     {
-      #if (CLIENT_OS == OS_WIN16)
+      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         SurrenderCPU();
       #elif (CLIENT_OS != OS_DOS)
         sleep(1);
@@ -2156,7 +2155,7 @@ PreferredIsDone1:
       #else
       {
         (problem[0]).Run( timeslice / PIPELINE_COUNT , 0 );
-#if (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
         SurrenderCPU();
 #endif
       }

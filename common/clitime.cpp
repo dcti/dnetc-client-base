@@ -6,6 +6,9 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 //
 // $Log: clitime.cpp,v $
+// Revision 1.15  1998/06/29 08:44:06  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+//
 // Revision 1.14  1998/06/29 06:57:55  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -22,16 +25,14 @@
 //
 
 
-/* Portability notes:
+/*
+   Portability notes:
    CliTimer() requires porting so that it returns the time
    as gettimeofday() would, ie seconds since 1.1.70 GMT in tv_sec,
    and remaining fraction in mincroseconds in tv_usec;
-
-   Module history:
-   01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 
-static const char *id="@(#)$Id: clitime.cpp,v 1.14 1998/06/29 06:57:55 jlawson Exp $";
+static const char *id="@(#)$Id: clitime.cpp,v 1.15 1998/06/29 08:44:06 jlawson Exp $";
 
 #include "clitime.h" //which #includes client.h
 
@@ -55,7 +56,7 @@ struct timeval *CliClock( struct timeval *tv )
     CliTimer( &stv );
     if (stv.tv_usec < cliclock.tv_usec )
     {
-      stv.tv_usec+=1000000;
+      stv.tv_usec += 1000000L;
       stv.tv_sec--;
     }
     stv.tv_usec -= cliclock.tv_usec;
@@ -101,11 +102,11 @@ struct timeval *CliTimer( struct timeval *tv )
   picsnow +=(ticksnow << 16);
 
   stv.tv_sec = (time_t)(timebase + secs);
-  stv.tv_usec = (picsnow*100000)/(PCLOCKS_PER_SEC/10);
-  if (stv.tv_usec > 1000000)
+  stv.tv_usec = (picsnow*100000L)/(PCLOCKS_PER_SEC/10);
+  if (stv.tv_usec > 1000000L)
   {
-    stv.tv_sec += (stv.tv_usec/1000000);
-    stv.tv_usec = (stv.tv_usec%1000000);
+    stv.tv_sec += (stv.tv_usec/1000000L);
+    stv.tv_usec = (stv.tv_usec%1000000L);
   }
 #elif (CLIENT_OS == OS_AMIGAOS)
   int dofallback = timer((unsigned int *)&stv );
@@ -131,8 +132,8 @@ struct timeval *CliTimer( struct timeval *tv )
       }
       else if ((long) stv.tv_sec == (long) (secs = ((unsigned int)(time(NULL)))))
       {
-        usleep(100000);
-        stv.tv_usec += 100000;
+        usleep(100000L);
+        stv.tv_usec += 100000L;
       }
       else
       {
@@ -147,16 +148,16 @@ struct timeval *CliTimer( struct timeval *tv )
       if (!timebase) timebase = ((unsigned int)(time(NULL))) - secs;
       stv.tv_sec = (time_t)(timebase + secs);
       xclock -= (secs * rate);
-      if ( rate <= 1000000 )
-        stv.tv_usec = xclock * (1000000/rate);
+      if ( rate <= 1000000L )
+        stv.tv_usec = xclock * (1000000L/rate);
       else
-        stv.tv_usec = xclock / (rate/1000000);
+        stv.tv_usec = xclock / (rate/1000000L);
     }
 
-    if (stv.tv_usec > 1000000)
+    if (stv.tv_usec > 1000000L)
     {
-      stv.tv_sec += stv.tv_usec/1000000;
-      stv.tv_usec %= 1000000;
+      stv.tv_sec += stv.tv_usec/1000000L;
+      stv.tv_usec %= 1000000L;
     }
   }
 #endif
@@ -190,10 +191,10 @@ int CliTimerAdd( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 
     }
     dest->tv_sec = tv1->tv_sec + tv2->tv_sec;
     dest->tv_usec = tv1->tv_usec + tv2->tv_usec;
-    if (dest->tv_usec > 1000000)
+    if (dest->tv_usec > 1000000L)
     {
-      dest->tv_sec += dest->tv_usec / 1000000;
-      dest->tv_usec %= 1000000;
+      dest->tv_sec += dest->tv_usec / 1000000L;
+      dest->tv_usec %= 1000000L;
     }
   }
   return 0;
@@ -229,7 +230,7 @@ int CliTimerDiff( struct timeval *dest, struct timeval *tv1, struct timeval *tv2
       tvdiff.tv_usec = tv2->tv_usec;
       if (((unsigned int)(tvdiff.tv_usec)) < ((unsigned int)(tv1->tv_usec)))
       {
-        tvdiff.tv_usec += 1000000;
+        tvdiff.tv_usec += 1000000L;
         tvdiff.tv_sec--;
       }
       dest->tv_sec  = tvdiff.tv_sec - tv1->tv_sec;
@@ -310,10 +311,10 @@ const char *CliGetTimeString( struct timeval *tv, int strtype )
   else if (strtype == 2)
   {
     if (!tv) tv = CliTimer( NULL );
-    sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (unsigned) (tv->tv_sec / 86400),
-      (unsigned) ((tv->tv_sec % 86400) / 3600), (unsigned) ((tv->tv_sec % 3600)/60),
-      (unsigned) (tv->tv_sec % 60), (unsigned) ((tv->tv_usec/10000)%100) );
-    //if ((tv->tv_sec / 86400)==0 ) //don't show days if not needed
+    sprintf( hourstring, "%u.%02u:%02u:%02u.%02u", (unsigned) (tv->tv_sec / 86400L),
+      (unsigned) ((tv->tv_sec % 86400L) / 3600L), (unsigned) ((tv->tv_sec % 3600L)/60),
+      (unsigned) (tv->tv_sec % 60), (unsigned) ((tv->tv_usec/10000L)%100) );
+    //if ((tv->tv_sec / 86400L)==0 ) //don't show days if not needed
     //  return hourstring+sizeof("0.");
     return hourstring;
   }

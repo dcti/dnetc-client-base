@@ -3,6 +3,9 @@
 
 
   $Log: iniread.cpp,v $
+  Revision 1.9  1998/06/29 08:44:11  jlawson
+  More OS_WIN32S/OS_WIN16 differences and long constants added.
+
   Revision 1.8  1998/06/29 06:58:02  jlawson
   added new platform OS_WIN32S to make code handling easier.
 
@@ -18,7 +21,9 @@
 
 */
 
-static const char *id="@(#)$Id: iniread.cpp,v 1.8 1998/06/29 06:58:02 jlawson Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: iniread.cpp,v 1.9 1998/06/29 08:44:11 jlawson Exp $";
+#endif
 
 #include "iniread.h"
 

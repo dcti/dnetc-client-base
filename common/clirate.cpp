@@ -6,6 +6,9 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 //
 // $Log: clirate.cpp,v $
+// Revision 1.13  1998/06/29 08:44:02  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+//
 // Revision 1.12  1998/06/29 06:57:45  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -56,7 +59,7 @@
 
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clirate.cpp,v 1.12 1998/06/29 06:57:45 jlawson Exp $";
+static const char *id="@(#)$Id: clirate.cpp,v 1.13 1998/06/29 08:44:02 jlawson Exp $";
 #endif
 
 #include "clirate.h" //includes client.h, clicdata.h, clitime.h
@@ -76,7 +79,7 @@ double CliGetKeyrateForContest( int contestid )
 
   return ((double)(totaliter))/
       (((double)(totaltime.tv_sec))+
-     (((double)(totaltime.tv_usec))/((double)(1000000))));
+     (((double)(totaltime.tv_usec))/((double)(1000000L))));
 }
 
 // ---------------------------------------------------------------------------
@@ -112,7 +115,7 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if (count>1) //iteration-to-keycount-multiplication-factor
     keys = (keys)*((double)(count));
   if (prob->startpercent) //slight misnomer. factor is *100000 not *100
-    keys = (keys)*(((double)(100000-(prob->startpercent)))/((double)(100000)));
+    keys = (keys)*(((double)(100000L-(prob->startpercent)))/((double)(100000L)));
   if (keys==((double)(0))) //no keys done? should never happen.
     return ((double)(0));
 
@@ -147,7 +150,7 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   }
 
   return ((double)(keys))/
-       (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000))));
+       (((double)(tv.tv_sec))+(((double)(tv.tv_usec))/((double)(1000000L))));
 }
 
 // return keyrate for a single problem. Problem must be finished.
@@ -158,3 +161,4 @@ double CliGetKeyrateForProblemNoSave( Problem *prob )
 {  return __CliGetKeyrateForProblem( prob, 0 ); }
 
 // ---------------------------------------------------------------------------
+

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.119  1998/06/29 08:43:48  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+//
 // Revision 1.118  1998/06/29 07:48:54  ziggyb
 // For OS/2 I added a priority boost to the exit, so it doesn't lag anymore
 // when printing the *Break* and it quits much faster now.
@@ -139,7 +142,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.118 1998/06/29 07:48:54 ziggyb Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.119 1998/06/29 08:43:48 jlawson Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -1298,7 +1301,7 @@ void Client::ValidateConfig( void )
   if ( randomprefix <0  ) randomprefix=100;
   if ( randomprefix >255) randomprefix=100;
   if (smtpport < 0) smtpport=25;
-  if (smtpport > 65535) smtpport=25;
+  if (smtpport > 65535L) smtpport=25;
   if (( preferred_contest_id < 0 ) || ( preferred_contest_id > 1 )) preferred_contest_id = 1;
   if (preferred_blocksize < 28) preferred_blocksize = 28;
   if (preferred_blocksize > 31) preferred_blocksize = 31;
@@ -1960,7 +1963,7 @@ s32 Client::RunStartup(void)
 
 s32 Client::SelectCore(void)
 {
-static int previouscputype=0xBEEFD00D;// An unknown proc type, I hope
+static int previouscputype=0xBEEFD00DL;// An unknown proc type, I hope
 
 if (previouscputype == cputype) return 0;// We already autodetected.
 

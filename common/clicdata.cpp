@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clicdata.cpp,v $
+// Revision 1.10  1998/06/29 08:43:45  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+//
 // Revision 1.9  1998/06/29 06:57:28  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -31,7 +34,7 @@
 // ease maintenance.
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clicdata.cpp,v 1.9 1998/06/29 06:57:28 jlawson Exp $";
+static const char *id="@(#)$Id: clicdata.cpp,v 1.10 1998/06/29 08:43:45 jlawson Exp $";
 #endif
 
 #include "clicdata.h" //includes client.h for timeval and NULL definitions
@@ -166,10 +169,10 @@ int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
   if (addtime)
   {
     conInfo->TimeDone.tv_sec += addtime->tv_sec;
-    if ((conInfo->TimeDone.tv_usec += addtime->tv_usec)>1000000)
+    if ((conInfo->TimeDone.tv_usec += addtime->tv_usec) > 1000000L)
     {
-      conInfo->TimeDone.tv_sec += (conInfo->TimeDone.tv_usec/1000000);
-      conInfo->TimeDone.tv_usec %= 1000000;
+      conInfo->TimeDone.tv_sec += (conInfo->TimeDone.tv_usec / 1000000L);
+      conInfo->TimeDone.tv_usec %= 1000000L;
     }
   }
   return 0;
@@ -180,7 +183,7 @@ int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestid)
 {
-  return (__internalCliGetContestInfoVectorForID(contestid)!=NULL);
+  return (__internalCliGetContestInfoVectorForID(contestid) != NULL);
 }
 
 // ---------------------------------------------------------------------------

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: convdes.cpp,v $
+// Revision 1.9  1998/06/29 08:44:09  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+//
 // Revision 1.8  1998/06/29 04:22:21  jlawson
 // Updates for 16-bit Win16 support
 //
@@ -18,7 +21,9 @@
 //
 //
 
-static const char *id="@(#)$Id: convdes.cpp,v 1.8 1998/06/29 04:22:21 jlawson Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: convdes.cpp,v 1.9 1998/06/29 08:44:09 jlawson Exp $";
+#endif
 
 // DES convertion routines
 

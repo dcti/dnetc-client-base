@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.19  1998/06/29 08:44:04  jlawson
+// More OS_WIN32S/OS_WIN16 differences and long constants added.
+//
 // Revision 1.18  1998/06/29 06:57:51  jlawson
 // added new platform OS_WIN32S to make code handling easier.
 //
@@ -77,7 +80,7 @@
 
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clisrate.cpp,v 1.18 1998/06/29 06:57:51 jlawson Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.19 1998/06/29 08:44:04 jlawson Exp $";
 #endif
 
 #include "clisrate.h" //includes client.h, clitime.h, clirate.h, clicdata.h
@@ -132,7 +135,9 @@ const char *CliGetSummaryStringForContest( int contestid )
   else
   {
     name = "???";
-    blocks = ttime.tv_sec = ttime.tv_usec = 0;
+    blocks = 0;
+    ttime.tv_sec = 0;
+    ttime.tv_usec = 0;
     keyrateP = "---.-- ";
   }
 
@@ -190,7 +195,8 @@ const char *CliGetMessageForFileentryLoaded( FileEntry *fileentry )
 {
   static char str[84];
   const char *name;
-  unsigned int size=1, count=32, iter = ntohl(fileentry->iterations.lo);
+  unsigned int size=1, count=32;
+  u32 iter = ntohl(fileentry->iterations.lo);
   unsigned int startpercent = (unsigned int) ( (double) 10000.0 *
            ( (double) (ntohl(fileentry->keysdone.lo)) / (double)(iter) ) );
 
