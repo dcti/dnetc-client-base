@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.82 2000/12/04 23:43:49 snake Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.83 2000/12/25 16:51:10 snake Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -899,7 +899,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     extern "C" u32 rc5_unit_func_ultrasparc_crunch( RC5UnitWork * , u32 );
   #else
     // rc5/ansi/2-rg.cpp
-    extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 iterations );
+    extern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 iterations );
   #endif
 #elif (CLIENT_CPU == CPU_68K)
   #if (CLIENT_OS == OS_AMIGAOS)
@@ -1133,9 +1133,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       }
       #else
       {
-        // rc5/ansi/2-rg.cpp
-        //xtern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *, u32 iterations );
-        unit_func.rc5 = rc5_ansi_2_rg_unit_func;
+        // rc5/ansi/rc5ansi_2-rg.cpp
+        //xtern "C" u32 rc5_unit_func_ansi_2_rg( RC5UnitWork *, u32 );
+        unit_func.rc5 = rc5_unit_func_ansi_2_rg;
         pipeline_count = 2;
         coresel = 0;
       }
