@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.24 2003/01/14 12:50:17 kamy Exp $
+# @(#)$Id: configure,v 1.288.2.25 2003/01/15 02:43:40 chandleg Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1694,6 +1694,16 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC -DMIPSpro"
         TARGET_LDFLAGS="" #-lpthread"
         TARGET_TARBALL="hpux1020-hppa11"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "hpux" "hppa"
+        ;;
+
+    *hpux-hppa-nonmt-gcc) 
+        TARGET_CC="g++"
+        generate_gcc_opts "hppa" "hpux"
+        TARGET_CCFLAGS="$OPTS_GCC -DMIPSpro -DSINGLE_CRUNCHER_ONLYA"
+        TARGET_LDFLAGS="" #-lpthread"
+        TARGET_TARBALL="hpux1020-hppa11-nonmt"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "hpux" "hppa"
         ;;
