@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.78 2001/02/03 22:04:42 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.79 2001/02/15 23:38:57 oliver Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8012.467
+2.8013.467  new: 68k: new, faster RC5 cores (previously only available in
+                 the AmigaOS client)
 
 2.8012.466  new: x86: most unix-ish clients now support the RC5/SMC core.
             imp: some: even faster OGR core.
