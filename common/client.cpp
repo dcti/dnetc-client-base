@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.106  1998/07/19 14:42:12  cyruspatel
+// NetWare SMP adjustments
+//
 // Revision 1.105  1998/07/16 19:19:36  remi
 // Added -cpuinfo option (you forget this one cyp! :-)
 //
@@ -71,7 +74,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.105 1998/07/16 19:19:36 remi Exp $.
+// Tweaked $Id: client.cpp,v 1.106 1998/07/19 14:42:12 cyruspatel Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -247,7 +250,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.105 1998/07/16 19:19:36 remi Exp $"; }
+return "@(#)$Id: client.cpp,v 1.106 1998/07/19 14:42:12 cyruspatel Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -589,7 +592,7 @@ if (force == 0) // check to see if fetch should be done
   {
     if (offlinemode
       #if (CLIENT_OS == OS_NETWARE)
-          || !CliIsNetworkAvailable(0)
+          || !nwCliIsNetworkAvailable(0)
       #endif
     ) return( -1 );
 
@@ -982,7 +985,7 @@ if (force == 0) // Check if flush should be done
   {
     if (offlinemode
     #if (CLIENT_OS == OS_NETWARE)
-          || !CliIsNetworkAvailable(0)
+          || !nwCliIsNetworkAvailable(0)
     #endif
      ) return( -1 );
 
@@ -1363,7 +1366,7 @@ if (force == 0) // We need to check if we're allowed to connect
   {
     if (offlinemode
       #if (CLIENT_OS == OS_NETWARE)
-        || !CliIsNetworkAvailable(0)
+        || !nwCliIsNetworkAvailable(0)
       #endif
     )
     return( -1 );
@@ -1517,7 +1520,7 @@ u32 Client::Benchmark( u8 contest, u32 numk )
         }
       }
     #if (CLIENT_OS == OS_NETWARE)   //yield
-      CliThreadSwitchLowPriority();
+      nwCliThreadSwitchLowPriority();
     #endif
 
     #if (CLIENT_OS == OS_AMIGAOS)
@@ -1609,7 +1612,7 @@ s32 Client::SelfTest( u8 contest )
       #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
       SurrenderCPU();
       #elif (CLIENT_OS == OS_NETWARE)
-      CliThreadSwitchLowPriority();
+      nwCliThreadSwitchLowPriority();
       #endif
 
       (problem[0]).GetResult( &rc5result );
@@ -1742,15 +1745,7 @@ void Go_mt( void * parm )
   }
 #elif (CLIENT_OS == OS_NETWARE)
   {
-  //sets the thread name to "RC5DES Crunch #nn"
-  //sets thread context to NO_CONTEXT
-  CliSetThreadName( GetThreadID(), tempi2+1 );
-  //sets callback context to nothing, so that a spun off polling process
-  //isn't being forced to switch context the-trillion-or-so times per sec.
-  CliClearThreadContextSpecifier( GetThreadID() );
-  //put the thread under MP control, controller decides when/whether to move it
-  if (tempi2 != 0) //don't go SMP for first thread
-    CliMigrateThreadToSMP();
+  nwCliInitializeThread( tempi2+1 ); //in netware.cpp
   }
 #elif (CLIENT_OS == OS_OS2)
 #elif (CLIENT_OS == OS_BEOS)
@@ -1779,7 +1774,7 @@ void Go_mt( void * parm )
 #if (CLIENT_OS == OS_NETWARE)
               //sets up and uses a polling procedure that runs as
               //an OS callback when the system enters an idle loop.
-          run = CliRunProblemAsCallback( &(problem[tempi]),
+          run = nwCliRunProblemAsCallback( &(problem[tempi]),
                          timeslice / PIPELINE_COUNT, tempi2, niceness );
 #else
           run = (problem[tempi]).Run( timeslice / PIPELINE_COUNT , tempi2 );
@@ -1911,17 +1906,16 @@ s32 Client::Run( void )
   // Determine the number of problems to work with. Number is used everywhere.
   // --------------------------------------
 
+  int load_problem_count = 1;
   #ifdef MULTITHREAD
-    int load_problem_count = 2*numcputemp;
+    load_problem_count = 2*numcputemp;
     #if (CLIENT_OS == OS_NETWARE)
     {
-      if (numcputemp == 1)         //NetWare client prefers non-MT if only
-        load_problem_count = 1;    //one thread/processor is to used
+      if (numcputemp == 1) //NetWare client prefers non-MT if only one 
+        load_problem_count = 1; //thread/processor is to used
     }
     #endif
-#else
-    int load_problem_count = 1;
-#endif
+  #endif
 
   // --------------------------------------
   // Set up initial state of each problem[]...
@@ -2352,7 +2346,7 @@ PreferredIsDone1:
       {
         //sets up and uses a polling procedure that runs as
         //an OS callback when the system enters an idle loop.
-        CliRunProblemAsCallback( &(problem[0]),
+        nwCliRunProblemAsCallback( &(problem[0]),
                                 timeslice/PIPELINE_COUNT, 0 , niceness );
       }
       #else
@@ -2806,7 +2800,7 @@ PreferredIsDone1:
 #elif (CLIENT_OS == OS_BEOS)
         wait_for_thread(threadid[cpu_i], &be_exit_value);
 #elif (CLIENT_OS == OS_NETWARE)
-        CliWaitForThreadExit( threadid[cpu_i] );
+        nwCliWaitForThreadExit( threadid[cpu_i] ); //in netware.cpp
 #else
         pthread_join(threadid[cpu_i], NULL);
 #endif
@@ -3150,7 +3144,7 @@ int main( int argc, char *argv[] )
 #if (CLIENT_OS == OS_NETWARE) // create stdout/screen, set cwd etc.
   // and save pointer to client so functions in netware.cpp can get at the
   // filenames and niceness level
-  if ( CliInitClient( argc, argv, &client )  ) return -1;
+  if ( nwCliInitClient( argc, argv, &client )  ) return -1;
 #endif
 
 
@@ -3285,11 +3279,6 @@ int main( int argc, char *argv[] )
     else if ( strcmp(argv[i], "-ident" ) == 0)
       {
         CliIdentifyModules();
-        retcode = 0;
-      }
-    else if ( strcmp(argv[i], "-cpuinfo" ) == 0)
-      {
-        DisplayProcessorInformation();
         retcode = 0;
       }
     else if ( strcmp( argv[i], "-test" ) == 0 )
@@ -3543,7 +3532,7 @@ int main( int argc, char *argv[] )
   } //if (retcode == OK_TO_RUN)
 
 #if (CLIENT_OS == OS_NETWARE)
-  CliExitClient(); // destroys AES process, screen, polling procedure
+  nwCliExitClient(); // destroys AES process, screen, polling procedure
 #endif
 
 #if (CLIENT_OS == OS_AMIGAOS)
