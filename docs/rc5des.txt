@@ -1613,6 +1613,9 @@ Operating System: Unix
 Connection method: HTTP proxy
 Download Site: http://squid.nlanr.net
 
+Name: AltaVista 97 proxy
+Connection method: HTTP proxy
+
 13.  Flushing and fetching buffers via e-mail
 ---------------------------------------------
 
