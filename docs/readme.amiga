@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.7.2.7 2001/03/19 19:19:44 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.7.2.8 2002/04/11 12:05:04 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -14,17 +14,23 @@
     3.0  AmigaOS client specific notes
          3.1 Ensuring stack size is large enough
          3.2 Setting the time zone
-         3.3 Myzar - GUI front-end for the client
-         3.4 Packets and work units?
-    4.0  Credits & thank yous
+         3.3 Packets and work units?
+         3.4 Dial-up detection caveats
+    4.0  GUI for AmigaOS clients
+         4.1 GUI usage and options
+         4.2 ARexx commands 
+         4.3 Myzar - MUI front-end for the client
+    5.0  Credits & thank yous
 
  1.0  System requirements --------------------------------------------
 
      - AmigaOS 2.04 or greater (3.0 if you're running the PPC client)
      - A TCP stack compatible with AmiTCP 3.0 or newer.
-       There are several, such as Miami, for example.
+       There are several, such as Miami, Genesis, TermiteTCP for example.
        Also AS225R2 with a special emulation library, look on the Amiga 
        effort homepage/misc section for the archive link (address below).
+     - ClassAct or ReAction GUI classes are required in order to use the
+       built-in GUI (will use shell output if not present).
 
     There are three versions of the client: a 68k version (with cores
     optimized for each CPU) and two PPC versions (WarpOS and PowerUp).
@@ -47,7 +53,10 @@
 
  2.0  Getting started ------------------------------------------------
 
-    Just copy the client into a directory of your choice and fire it up.
+    To install the client, drag the client's drawer to a location of your
+    choice and fire it up.  If you would like the client to be started
+    automatically each time your boot, click the "Add to WBStartup" icon
+    or run the client from a shell using the '-install' option.
 
     If you have never run the client before, it will initiate the
     menu-driven configuration. Save and quit when done, the 
@@ -56,9 +65,9 @@
     use the saved configuration.
     
     The configuration options are fairly self-explanatory and can be run
-    at any time by starting the client with the '-config' option.
-    A list of command line options is available by starting the client 
-    with '-help'.
+    at any time by starting the client with the '-config' option or
+    selecting 'Configure' in the GUI's menus.  A list of command line
+    options is available by starting the client with '-help'.
 
     A detailed guide to the various configuration options is available
     online at http://www.distributed.net/FAQ/
@@ -85,8 +94,8 @@
     bytes, otherwise the client will exit telling you to increase the
     stack size (instead of running with the potential for crashes to
     happen).  Stack size can be increased by calling the stack command
-    before running the client or change it via the respective Myzar
-    config option.
+    before running the client or by adjusting the stack value in the
+    client's icon.
 
   3.2  Setting the time zone -----------------------------------------
 
@@ -102,22 +111,7 @@
     in the UK, you would set the timezone to GMT when not in dst, and
     to 1 hour from GMT (a zone to the right) when in dst.
 
-  3.3  Myzar - GUI front-end for the client --------------------------
-
-    Myzar is a GUI front-end for the Amiga port of client. It is not a
-    simple interface to start/stop the shell-based client, but a complex
-    and full-featured front-end. No more ugly-looking shells floating
-    around your WB, filled with unreadable data, and no more fiddling with
-    CLI parameters. And, more importantly, it makes using and running the
-    client so much easier.
-
-    If you're going to use this client, then I really do recommend that
-    you install Myzar too: http://www.crosswinds.net/~myzar/ . Note that
-    the new clients aren't fully compatible with older versions of Myzar.
-    You'll need Myzar 2.1 or higher for full functionality with the
-    v2.80xx clients.
-
-  3.4  Packets and work units?
+  3.3  Packets and work units?
 
     If you are upgrading from the old 2.710x clients, you may not be
     familiar with the new terminology that has replaced "blocks".  The
@@ -125,7 +119,86 @@
     their meanings can be found at
     http://www.distributed.net/faq/cache/138.html
 
- 4.0  Credits & thank yous--------------------------------------------
+  3.4  Dial-up detection caveats
+
+    If you choose to enable the dial-up detection feature of the client,
+    please be aware that you will not be able to exit your TCP/IP stack
+    software until the "Detected IP-link drop" message has been shown by
+    the client (which happens within 5 seconds of going offline).  If
+    you try to exit before that, the client will still be using
+    bsdsocket.library, and your TCP/IP software will most likely complain.
+
+    Also note that if you want to make use of the "automatic go online"
+    feature (dials your ISP automatically when the client runs out of
+    work), you will need to be using Miami, MiamiDx or Genesis.  This
+    feature is not supported for other TCP/IP stack software.
+
+ 4.0  GUI for AmigaOS clients-----------------------------------------
+
+    The clients now have their own simple built-in GUI (ClassAct/ReAction),
+    which is enabled when running the client from Workbench (e.g. by
+    double-clicking it's icon).  If starting the client from the Shell,
+    the client will run in console mode, as before.  In GUI mode, the
+    console output will be shown in the GUI, and the client(s) may be
+    controlled by the menus.  If running both 68k and PPC clients, the
+    clients will automatically share the same window.
+
+  4.1  GUI usage and options -----------------------------------------
+
+    Use the tooltypes in the client's icon to configure the following
+    options:
+
+    ICONIFY
+
+      Specify this tooltype to cause the client to not open a window on
+      startup, and show an icon on the Workbench instead (which may be
+      clicked to open the window).
+
+    FONTNAME (e.g. FONTNAME=topaz.font)
+
+      Specify the name of the font that you'd like to use for the GUI's
+      representation of the console output.  Defaults to the current
+      screen font if not specified.
+
+    FONTSIZE (e.g. FONTSIZE=8)
+
+      Specify the size of font that you'd like to use for the GUI's
+      representation of the console output.  Defaults to 8 if not
+      specified, and FONTNAME is specified.
+
+    WINWIDTH (e.g. WINWIDTH=535)
+
+      Width of the window.  Defaults to 535 if not specified.
+
+    WINHEIGHT (e.g. WINHEIGHT=160)
+
+      Height of the window.  Defaults to 160 if not specified.
+
+  4.2  ARexx commands
+
+    It is possible to control the clients with ARexx, via the DNETC.1
+    port.  The following commands are available (will affect both
+    clients if you are running both 68K and PPC clients):
+
+    QUIT    - Shutdown the client(s) and exit
+    HIDE    - Iconify/hide the GUI
+    SHOW    - Uniconify/show the GUII
+    PAUSE   - Pause the client(s)
+    UNPAUSE - Unpause the client(s)
+    UPDATE  - Flush the client(s) buffers and fetch new packets
+    FETCH   - Fetch new packets for the client(s)
+    FLUSH   - Flush the client(s) buffers
+    RESTART - Restart the clients(s)
+
+  4.3  Myzar - alternative front-end for the client ------------------
+
+    Myzar is a front-end for the client, and uses MUI.  Myzar preceded
+    the built-in GUI, and if you prefer to use Myzar then it will still
+    work fine with the new GUI enabled clients.  Myzar can be downloaded
+    from http://www.crosswinds.net/~myzar/ . Note that the console output
+    of the current clients isn't fully compatible with Myzar.
+
+ 5.0  Credits & thank yous--------------------------------------------
  
     -- Thanks to everybody involved in the development of the Amiga client
        and the beta testing process, who have helped make it what it is,
