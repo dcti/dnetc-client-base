@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.77 2002/04/12 23:56:38 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.78 2002/07/18 23:22:42 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -617,6 +617,19 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     WorkRecord wrdata;
     int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
     long bufcount;
+    int may_do_random_rc5_blocks, cont_i;
+
+    may_do_random_rc5_blocks = 0;
+    for (cont_i = 0; cont_i < CONTEST_COUNT; ++cont_i)
+    {
+      if (client->loadorder_map[cont_i] == RC5) {
+        /* RC5 must be enabled to do randoms */
+        may_do_random_rc5_blocks = 1;
+        break;
+      }
+    }
+    if (client->rc564closed)
+      may_do_random_rc5_blocks = 0;
 
     retry_due_to_failed_loadstate = 0;
     bufcount = __loadapacket( client, &wrdata, 1, prob_i, 
@@ -637,11 +650,11 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
                                     update_on_current_contest_exhaust_flag );
       }
     }
-  
+
     *load_needed = 0;
     if (bufcount >= 0) /* load from file suceeded */
       *load_needed = 0;
-    else if (client->rc564closed || client->blockcount < 0)
+    else if (!may_do_random_rc5_blocks || client->blockcount < 0)
       *load_needed = NOLOAD_NORANDOM; /* -1 */
     else if (client->nonewblocks)
       *load_needed = NOLOAD_NONEWBLOCKS;
