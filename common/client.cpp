@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.3 1999/06/01 02:51:46 cyp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.4 1999/06/01 05:07:23 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -514,8 +514,8 @@ int main( int argc, char *argv[] )
       if ((q = (char *)getenv(q)) != ((char *)0))
       {
         int padchar = 0; /* non-linux/qnx/aix may need ' ' here */
-        memset(argv[0],padchar,strlen(len));
-        memcpy(argv[0],defname,strlen(defname)-1);
+        memset(argv[0],padchar,strlen(argv[0]));
+        memcpy(argv[0],defname,strlen(defname));
         argv[0] = q;
         needchange = 0;
       }
