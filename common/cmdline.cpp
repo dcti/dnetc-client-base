@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.46 2000/03/02 12:59:12 snake Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.47 2000/03/11 01:10:29 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -628,7 +628,7 @@ int ParseCommandline( Client *client,
     }
   }
 
-  TRACE_OUT((-1,"ParseCommandline(P2,%s)\n",inifilename));
+  TRACE_OUT((-1,"ParseCommandline(P2,%s)\n", client->inifilename));
 
   //-----------------------------------
   // In the next loop we parse the other options
