@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.7 2003/01/19 22:49:49 snake Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.8 2003/01/22 01:01:27 mfeiri Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -193,7 +193,11 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "RC5-72 68K assembly by Malcolm Howell and John Girvin\n");
       #endif
       #if (CLIENT_CPU == CPU_POWERPC)
+      #if (CLIENT_OS == OS_MACOSX)
+      LogScreenRaw( "RC5-72 PowerPC and AltiVec assembly by Didier Levet\n");
+      #elif defined(__GCC__) || defined(__GNUC__)
       LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell\n");
+      #endif
       #endif
 #endif
 #if defined(HAVE_DES_CORES)
