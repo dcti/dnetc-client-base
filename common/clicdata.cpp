@@ -10,6 +10,9 @@
 //
 //
 // $Log: clicdata.cpp,v $
+// Revision 1.12  1998/10/04 11:35:23  remi
+// Id tags fun.
+//
 // Revision 1.11  1998/07/07 21:55:07  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -48,8 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clicdata_cpp(void) {
-static const char *id="@(#)$Id: clicdata.cpp,v 1.11 1998/07/07 21:55:07 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: clicdata.cpp,v 1.12 1998/10/04 11:35:23 remi Exp $"; }
 #endif
 
 #include "baseincs.h" //for timeval

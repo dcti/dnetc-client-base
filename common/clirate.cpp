@@ -6,6 +6,9 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 //
 // $Log: clirate.cpp,v $
+// Revision 1.15  1998/10/04 11:35:25  remi
+// Id tags fun.
+//
 // Revision 1.14  1998/07/07 21:55:22  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -72,8 +75,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clirate_cpp(void) {
-static const char *id="@(#)$Id: clirate.cpp,v 1.14 1998/07/07 21:55:22 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: clirate.cpp,v 1.15 1998/10/04 11:35:25 remi Exp $"; }
 #endif
 
 #include "cputypes.h" //for u64 define

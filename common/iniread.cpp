@@ -3,6 +3,9 @@
 
 
   $Log: iniread.cpp,v $
+  Revision 1.12  1998/10/04 11:35:39  remi
+  Id tags fun.
+
   Revision 1.11  1998/07/13 03:30:02  cyruspatel
   Added 'const's or 'register's where the compiler was complaining about
   ambiguities. ("declaration/type or an expression")
@@ -39,8 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-static const char *id="@(#)$Id: iniread.cpp,v 1.11 1998/07/13 03:30:02 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: iniread.cpp,v 1.12 1998/10/04 11:35:39 remi Exp $"; }
 #endif
 
 #include "iniread.h"

@@ -22,6 +22,9 @@
 // --------------------------------------------------------------------
 //
 // $Log: pathwork.cpp,v $
+// Revision 1.10  1998/10/04 11:35:49  remi
+// Id tags fun.
+//
 // Revision 1.9  1998/08/05 16:49:32  cberry
 // commented out #define DEBUG that KB had put in for some reason.
 //
@@ -48,8 +51,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *pathwork_cpp(void) {
-static const char *id="@(#)$Id: pathwork.cpp,v 1.9 1998/08/05 16:49:32 cberry Exp $";
-return id; }
+return "@(#)$Id: pathwork.cpp,v 1.10 1998/10/04 11:35:49 remi Exp $"; }
 #endif
 
 #include <stdio.h>

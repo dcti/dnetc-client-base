@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.32  1998/10/04 11:35:28  remi
+// Id tags fun.
+//
 // Revision 1.31  1998/08/07 19:57:33  cyruspatel
 // By popular demand: GetMessageForProblemCompleted() displays the normalized
 // keycount (x*2^28) instead of the numeric value.
@@ -29,7 +32,8 @@
 // double not an unsigned int (caused a compiler warning)
 //
 // Revision 1.25  1998/07/11 01:53:19  silby
-// Change in logging statements - all have full timestamps now so they look correct in the win32gui.
+// Change in logging statements - all have full timestamps now so they
+// look correct in the win32gui.
 //
 // Revision 1.24  1998/07/10 20:56:59  cyruspatel
 // The summary line creation code now generates the keyrate as a factor of
@@ -57,7 +61,8 @@
 // anticipation of global log functions.
 //
 // Revision 1.20  1998/07/05 21:49:30  silby
-// Modified logging so that manual wrapping is not done on win32gui, as it looks terrible in a non-fixed spaced font.
+// Modified logging so that manual wrapping is not done on win32gui,
+// as it looks terrible in a non-fixed spaced font.
 //
 // Revision 1.19  1998/06/29 08:44:04  jlawson
 // More OS_WIN32S/OS_WIN16 differences and long constants added.
@@ -133,8 +138,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.31 1998/08/07 19:57:33 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: clisrate.cpp,v 1.32 1998/10/04 11:35:28 remi Exp $"; }
 #endif
 
 #include "cputypes.h"  // for u64

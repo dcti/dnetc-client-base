@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: convdes.cpp,v $
+// Revision 1.11  1998/10/04 11:35:32  remi
+// Id tags fun.
+//
 // Revision 1.10  1998/07/07 21:55:33  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -35,8 +38,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *convdes_cpp(void) {
-static const char *id="@(#)$Id: convdes.cpp,v 1.10 1998/07/07 21:55:33 cyruspatel Exp $";
-return id; }
+return "@(#)$Id: convdes.cpp,v 1.11 1998/10/04 11:35:32 remi Exp $"; }
 #endif
 
 // DES convertion routines

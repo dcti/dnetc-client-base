@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: threadcd.cpp,v $
+// Revision 1.14  1998/10/04 11:35:54  remi
+// Id tags fun.
+//
 // Revision 1.13  1998/07/14 00:45:29  cyruspatel
 // Added a second define to differenciate between OS_SUPPORTS_THREADING and
 // when special steps must be taken to support it, such as linking special
@@ -54,8 +57,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *threadcd_cpp(void) { 
-static const char *id="@(#)$Id: threadcd.cpp,v 1.13 1998/07/14 00:45:29 cyruspatel Exp $";
-return id; } 
+return "@(#)$Id: threadcd.cpp,v 1.14 1998/10/04 11:35:54 remi Exp $"; } 
 #endif
 
 #include <stdio.h>      //NULL

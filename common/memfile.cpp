@@ -1,5 +1,5 @@
 /*
-** memfile.c created 1998/08/16 Cyrus Patel <cyp@fb14.uni-mainz.de>
+** memfile.cpp created 1998/08/16 Cyrus Patel <cyp@fb14.uni-mainz.de>
 **
 ** This code is POSIXly correct. Please keep it that way.
 */
@@ -13,6 +13,9 @@
 */
 /*
 ** $Log: memfile.cpp,v $
+** Revision 1.3  1998/10/04 11:35:44  remi
+** Id tags fun.
+**
 ** Revision 1.2  1998/10/03 05:34:28  sampo
 ** comment out <malloc.h> for MacOS builds.
 **
@@ -32,9 +35,9 @@
 
 /* ====================================================================== */
 
-#if !defined(lint)
-const char *memfile_c(void) {
-return "@(#)$Id: memfile.cpp,v 1.2 1998/10/03 05:34:28 sampo Exp $"; }
+#if (!defined(lint) && defined(__showids__))
+const char *memfile_cpp(void) {
+return "@(#)$Id: memfile.cpp,v 1.3 1998/10/04 11:35:44 remi Exp $"; }
 #endif
 
 /* #define TEST */

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.6  1998/10/04 11:35:46  remi
+// Id tags fun.
+//
 // Revision 1.5  1998/08/15 21:34:00  jlawson
 // corrected loss of precision warning
 //
@@ -25,8 +28,10 @@
 // Created.
 //
 
+#if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.5 1998/08/15 21:34:00 jlawson Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.6 1998/10/04 11:35:46 remi Exp $"; }
+#endif
 
 //---------------------------------------------------------------------
 //#define TEST  //standalone test

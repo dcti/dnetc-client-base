@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.42  1998/10/04 11:35:35  remi
+// Id tags fun.
+//
 // Revision 1.41  1998/10/03 22:57:56  remi
 // Added a line for the "-nommx" option.
 //
@@ -132,8 +135,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.41 1998/10/03 22:57:56 remi Exp $";
-return id; }
+return "@(#)$Id: disphelp.cpp,v 1.42 1998/10/04 11:35:35 remi Exp $"; }
 #endif
 
 #include "cputypes.h"
