@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.70 2002/09/24 00:40:18 acidblood Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.71 2002/09/24 01:46:53 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -291,7 +291,7 @@ long SelfTest( unsigned int contest )
       ContestWork contestwork;
       Problem *thisprob;
 
-      expectedsolution_lo = expectedsolution_hi = 0; /* shaddup compiler */
+      expectedsolution_lo = expectedsolution_mid = expectedsolution_hi = 0; /* shaddup compiler */
 #if defined(HAVE_RC564_CORES)
       if (contest == RC5)
       {
@@ -671,8 +671,6 @@ long SelfTest( unsigned int contest )
         }
         ProblemFree(thisprob);
       } /* if ProblemAlloc() */
-
-      expectedsolution_mid = expectedsolution_mid;
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
     if (userbreak)

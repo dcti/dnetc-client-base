@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.86 2002/09/24 01:11:09 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.87 2002/09/24 01:46:52 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -359,6 +359,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
   }  
   #elif (CLIENT_CPU == CPU_X86)
   {
+#ifdef HAVE_OLD_CRYPTO
     long det = GetProcessorType(1);
     int have_mmx = (det >= 0 && (det & 0x100)!=0);
     int have_3486 = (det >= 0 && (det & 0xff)==1);
@@ -371,7 +372,6 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     #if defined(SMC)
     have_smc = (x86_smc_initialized > 0);
     #endif
-#ifdef HAVE_OLD_CRYPTO
     if (contestid == RC5)
     {
       if (!have_nasm && cindex == 6)    /* "RG/HB re-pair II" */ 

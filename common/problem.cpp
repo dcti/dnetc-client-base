@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.156 2002/09/24 01:11:09 acidblood Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.157 2002/09/24 01:46:52 acidblood Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -370,6 +370,8 @@ static inline void __copy_internal_problem( InternalProblem *dest,
 // Note that DES has a similiar but far more complex system, but everything
 // is handled by des_pub_data.unit_func().
 
+#ifdef HAVE_OLD_CRYPTO
+
 static void  __SwitchRC5Format(u32 *hi, u32 *lo)
 {
     register u32 tempkeylo = *hi; /* note: we switch the order */
@@ -386,6 +388,8 @@ static void  __SwitchRC5Format(u32 *hi, u32 *lo)
       ((tempkeyhi <<  8) & 0x00FF0000L) |
       ((tempkeyhi << 24) & 0xFF000000L);
 }
+
+#endif
 
 // Here's the same mangling for RC5-72:
 //            key.hi key.mid  key.lo
@@ -429,12 +433,14 @@ static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int c
       if (*keylo < iters) *keymid = *keymid + 1;
       if (*keymid == 0) *keyhi = *keyhi + 1;
       __SwitchRC5_72Format(keyhi,keymid,keylo);
+#ifdef HAVE_OLD_CRYPTO
     case RC5:
       __SwitchRC5Format(keyhi,keylo);
       *keylo = *keylo + iters;
       if (*keylo < iters) *keyhi = *keyhi + 1;
       __SwitchRC5Format (keyhi,keylo);
       break;
+#endif
     case DES:
     case CSC:
       *keylo = *keylo + iters;
@@ -525,7 +531,9 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 
 /* ------------------------------------------------------------------- */
 
+#ifdef HAVE_OLD_CRYPTO
 static int last_rc5_prefix = -1;
+#endif
 
 static int __gen_random_work(unsigned int contestid, ContestWork * work)
 {
@@ -544,7 +552,6 @@ static int __gen_random_work(unsigned int contestid, ContestWork * work)
       last_rc5_prefix = randomprefix = 100+(rnd % (0xff-100));
     work->crypto.key.lo   = (rnd & 0xF0000000L);
     work->crypto.key.hi   = (rnd & 0x00FFFFFFL) + (last_rc5_prefix<<24);
-// TODO: acidblood/trashover
     //constants are in rsadata.h
     work->crypto.iv.lo     = ( RC564_IVLO );     //( 0xD5D5CE79L );
     work->crypto.iv.hi     = ( RC564_IVHI );     //( 0xFCEA7550L );
