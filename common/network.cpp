@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.40  1998/09/04 10:35:09  chrisb
+// RISCOSism for the #include <errno.h>
+//
 // Revision 1.39  1998/09/03 16:01:32  cyp
 // Added TLI support. Any other SYSV (-type) takers?
 //
@@ -101,7 +104,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.39 1998/09/03 16:01:32 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.40 1998/09/04 10:35:09 chrisb Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -113,7 +116,16 @@ return "@(#)$Id: network.cpp,v 1.39 1998/09/03 16:01:32 cyp Exp $"; }
 #include "logstuff.h"  // LogScreen()
 #include "clitime.h"   // CliGetTimeString(NULL,1);
 #include <stddef.h>    // for offsetof
+#if (CLIENT_OS == OS_RISCOS)
+extern "C"
+{
 #include <errno.h>     // for errno and EINTR
+};
+#else
+#include <errno.h>     // for errno and EINTR
+#endif
+
+
 #include "network.h"   // thats us
 extern int NetCheckIsOK(void); // used before doing i/o
 #define Time() (CliGetTimeString(NULL,1))
