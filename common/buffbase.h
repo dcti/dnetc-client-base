@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.7 2000/11/03 16:47:46 cyp Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.8 2001/01/13 17:09:55 cyp Exp $"
 
 /* ..Put() returns <0 on ioerr, else 0 on success */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
@@ -62,6 +62,9 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
 int BufferGetRecordInfo( const WorkRecord * data, 
                          unsigned int *contest,
                          unsigned int *swucount );
+
+int BufferInitialize(Client *client);
+int BufferDeinitialize(Client *client);
 
 #endif /* __BUFFBASE_H__ */
 

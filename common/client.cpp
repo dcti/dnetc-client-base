@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.97 2001/01/03 23:00:29 teichp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.98 2001/01/13 17:09:55 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -23,6 +23,7 @@ return "@(#)$Id: client.cpp,v 1.206.2.97 2001/01/03 23:00:29 teichp Exp $"; }
 #include "cmdline.h"   // ParseCommandLine() and load config
 #include "clitime.h"   // [De]InitializeTimers(),CliTimer()
 #include "netbase.h"   // net_[de]initialize()
+#include "buffbase.h"  // [De]InitializeBuffers()
 #include "triggers.h"  // [De]InitializeTriggers(),RestartRequestTrigger()
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
@@ -319,47 +320,52 @@ static int ClientMain( int argc, char *argv[] )
                                  client->smtpdest,
                                  client->id );
               TRACE_OUT((-1,"initializelogging\n"));
-              if ((domodes & MODEREQ_CONFIG)==0)
-              {
-                PrintBanner(client->id,0,restarted,0);
 
-                TRACE_OUT((+1,"parsecmdline(1)\n"));
-                if (!client->quietmode)
-                {                 //show overrides
-                  ParseCommandline( client, 1, argc, (const char **)argv,
-                                    &retcode, restarted );
+              if (BufferInitialize(client) == 0)
+              {
+                InitRandom2( client->id );
+
+                TRACE_OUT((+1,"initcoretable\n"));
+                if (InitializeCoreTable( &(client->coretypes[0]) ) == 0)
+                {
+                  if ((domodes & MODEREQ_CONFIG)==0)
+                  {
+                    PrintBanner(client->id,0,restarted,0);
+       
+                    TRACE_OUT((+1,"parsecmdline(1)\n"));
+                    if (!client->quietmode)
+                    {                 //show overrides
+                      ParseCommandline( client, 1, argc, (const char **)argv,
+                                        &retcode, restarted );
+                    }
+                    TRACE_OUT((-1,"parsecmdline(1)\n"));
+                  }
+                  if (domodes)
+                  {
+                    con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
+                    if ((domodes & MODEREQ_CONFIG)==0)
+                    { /* avoid printing/logging banners for nothing */
+                      PrintBanner(client->id,1,restarted,((domodes & MODEREQ_CMDLINE_HELP)!=0));
+                    }
+                    TRACE_OUT((+1,"modereqrun\n"));
+                    ModeReqRun( client );
+                    TRACE_OUT((-1,"modereqrun\n"));
+                    restart = 0; /* *never* restart when doing modes */
+                  }
+                  else if (!utilCheckIfBetaExpired(1)) /* prints message */
+                  {
+                    con_waitforuser = 0;
+                    PrintBanner(client->id,2,restarted,0);
+                    TRACE_OUT((+1,"client.run\n"));
+                    retcode = ClientRun(client);
+                    TRACE_OUT((-1,"client.run\n"));
+                    restart = CheckRestartRequestTrigger();
+                  }
+                  TRACE_OUT((0,"deinit coretable\n"));
+                  DeinitializeCoreTable();
                 }
-                TRACE_OUT((-1,"parsecmdline(1)\n"));
+                BufferDeinitialize(client);
               }
-              InitRandom2( client->id );
-              TRACE_OUT((+1,"initcoretable\n"));
-              InitializeCoreTable( &(client->coretypes[0]) );
-              TRACE_OUT((-1,"initcoretable\n"));
-
-              if (domodes)
-              {
-                con_waitforuser = ((domodes & ~MODEREQ_CONFIG)!=0);
-                if ((domodes & MODEREQ_CONFIG)==0)
-                { /* avoid printing/logging banners for nothing */
-                  PrintBanner(client->id,1,restarted,((domodes & MODEREQ_CMDLINE_HELP)!=0));
-                }
-                TRACE_OUT((+1,"modereqrun\n"));
-                ModeReqRun( client );
-                TRACE_OUT((-1,"modereqrun\n"));
-                restart = 0; /* *never* restart when doing modes */
-              }
-              else if (!utilCheckIfBetaExpired(1)) /* prints message */
-              {
-                con_waitforuser = 0;
-                PrintBanner(client->id,2,restarted,0);
-                TRACE_OUT((+1,"client.run\n"));
-                retcode = ClientRun(client);
-                TRACE_OUT((-1,"client.run\n"));
-                restart = CheckRestartRequestTrigger();
-              }
-
-              TRACE_OUT((0,"deinit coretable\n"));
-              DeinitializeCoreTable();
 
               TRACE_OUT((0,"deinitialize logging\n"));
               DeinitializeLogging();

@@ -8,7 +8,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.9 2000/11/03 16:47:46 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.10 2001/01/13 17:09:55 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -29,6 +29,29 @@ return "@(#)$Id: buffpub.cpp,v 1.1.2.9 2000/11/03 16:47:46 cyp Exp $"; }
 #include "version.h"  //needed by FILEENTRY_x macros
 #include "probfill.h" //FILEENTRY_x macros
 #include "buffbase.h" //the functions we're intending to export.
+
+/* --------------------------------------------------------------------- */
+
+int BufferDeinitialize(Client *client)
+{
+  /* in theory this is where we should purge mem buffers and
+  ** shutdown checkpointing but because clients need to be able to 
+  ** abort by calling probfill.cpp's LoadSaveProblems(NULL,0,0) 
+  ** [ie, save with abortive action], putting it here is not much use.
+  */
+  client = client;
+  return 0;
+}
+
+int BufferInitialize(Client *client)
+{
+  /* in theory this is where we should restore from checkpoint
+  ** but so that users can use the checkpoint as a swap buffer,
+  ** we do it from ClientRun() instead.
+  */
+  client = client;
+  return 0;
+}
 
 /* --------------------------------------------------------------------- */
 
@@ -512,3 +535,4 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
 }
 
 /* --------------------------------------------------------------------- */
+

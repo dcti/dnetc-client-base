@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.48 2000/12/14 19:37:39 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.49 2001/01/13 17:09:55 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -1078,3 +1078,4 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   TRACE_OUT((-1,"BufferCheckIfUpdateNeeded() => 0x%x\n", buffupd_flags ));
   return buffupd_flags;
 }  
+
