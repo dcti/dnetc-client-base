@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.21 2000/01/08 23:23:24 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.62.2.22 2000/01/28 03:50:10 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -132,20 +132,22 @@
   #endif
   #define CLIENT_OS_NAME "Linux"
   #define CLIENT_OS     OS_LINUX
-  #if defined(__alpha__) || defined(ASM_ALPHA)
+  #if defined(ASM_ALPHA) || defined(__alpha__)
     #define CLIENT_CPU    CPU_ALPHA
-  #elif defined(__i386__) || defined(ASM_X86)
+  #elif defined(ASM_X86) || defined(__i386__)
     #define CLIENT_CPU    CPU_X86
   #elif defined(__S390__)  
     #define CLIENT_CPU    CPU_S390
   #elif defined(ARM)
     #define CLIENT_CPU    CPU_ARM
-  #elif defined(__sparc__) || defined(ASM_SPARC)
+  #elif defined(ASM_SPARC) || defined(__sparc__)
     #define CLIENT_CPU    CPU_SPARC
   #elif defined(ASM_PPC)
     #define CLIENT_CPU    CPU_POWERPC
   #elif defined(ASM_68K)
     #define CLIENT_CPU    CPU_68K
+  #elif defined(ASM_MIPS) || defined(__mips)
+    #define CLIENT_CPU    CPU_MIPS
   #endif
 #elif defined(__FreeBSD__)
   #ifndef __unix__ /* should already be defined */
@@ -380,6 +382,7 @@
   /* ignoreunknowncpuos is used by the client's testplat.cpp utility. */
   #if !defined(IGNOREUNKNOWNCPUOS)
     #error "Unknown CPU/OS detected in cputypes.h"
+    #error "fix common/cputypes.h and/or compiler command line -Defines"
   #endif
 #endif
 
