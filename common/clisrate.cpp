@@ -6,6 +6,9 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.20  1998/07/05 21:49:30  silby
+// Modified logging so that manual wrapping is not done on win32gui, as it looks terrible in a non-fixed spaced font.
+//
 // Revision 1.19  1998/06/29 08:44:04  jlawson
 // More OS_WIN32S/OS_WIN16 differences and long constants added.
 //
@@ -80,7 +83,7 @@
 
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: clisrate.cpp,v 1.19 1998/06/29 08:44:04 jlawson Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.20 1998/07/05 21:49:30 silby Exp $";
 #endif
 
 #include "clisrate.h" //includes client.h, clitime.h, clirate.h, clicdata.h
@@ -280,6 +283,11 @@ const char *CliGetMessageForProblemCompletedNoSave( Problem *prob )
 const char *CliReformatMessage( const char *header, const char *message )
 {
   static char strspace[160];
+
+#if ((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
+  sprintf(strspace,"\r[%s] %s %s\n", CliGetTimeString(NULL,1),header,message);
+  return (const char *)(strspace);
+#else
   unsigned int prelen, linelen, doquote = (header!=NULL);
   char buffer[84], *bptr, *sptr;
   const char *mptr = message;
@@ -382,6 +390,7 @@ const char *CliReformatMessage( const char *header, const char *message )
     }
   }
   return (const char *)(strspace);
+#endif
 }
 
 // ---------------------------------------------------------------------------

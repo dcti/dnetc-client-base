@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.78  1998/07/05 21:49:15  silby
+// Modified logging so that manual wrapping is not done on win32gui, as it looks terrible in a non-fixed spaced font.
+//
 // Revision 1.77  1998/07/05 15:53:58  cyruspatel
 // Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
 // substituted unlink() with EraseCheckpointFile() in client.cpp; modified
@@ -134,7 +137,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.77 1998/07/05 15:53:58 cyruspatel Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.78 1998/07/05 21:49:15 silby Exp $";
 #endif
 
 #include "client.h"
@@ -1923,7 +1926,7 @@ PreferredIsDone1:
 #else                
                 in_buffer_file[tmpc]));
 #endif                
-              Log( " %s  %d %s block%s %s in file %s\n", CliGetTimeString(NULL,0),
+              Log( "[%s] %d %s block%s %s in file %s\n", CliGetTimeString(NULL,1),
                 out,
                 CliGetContestNameFromID(tmpc),
                 out == 1 ? "" : "s",
