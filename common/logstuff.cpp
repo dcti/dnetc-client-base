@@ -11,7 +11,7 @@
  * ------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.15 2000/02/09 22:54:12 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.16 2000/02/10 17:27:53 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -647,7 +647,11 @@ void LogFlush( int forceflush )
   if (( logstatics.loggingTo & LOGTO_MAIL ) != 0)
   {
     if ( logstatics.mailmessage )
+    {
+      logstatics.loggingTo &= ~LOGTO_MAIL;
       logstatics.mailmessage->checktosend(forceflush);
+      logstatics.loggingTo |= LOGTO_MAIL;
+    }
   }
   return;
 }
@@ -823,10 +827,13 @@ void LogScreenPercent( unsigned int load_problem_count )
 
 void DeinitializeLogging(void)
 {
-  if (logstatics.mailmessage) 
+  if (logstatics.mailmessage && (logstatics.loggingTo & LOGTO_MAIL)!=0) 
   {
-    logstatics.mailmessage->Deinitialize(); //forces a send
-    delete logstatics.mailmessage;
+    MailMessage *mmsg = logstatics.mailmessage;
+    logstatics.mailmessage = NULL;
+    logstatics.loggingTo &= ~LOGTO_MAIL;
+    mmsg->Deinitialize(); //forces a send
+    delete mmsg;
   }
   if ( logstatics.logstream )
   {
