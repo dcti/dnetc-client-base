@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.12  1998/12/25 05:30:28  silby
+// Temporary commenting out of InternalRead/Write/Validate
+//
 // Revision 1.11  1998/12/25 02:32:11  silby
 // ini writing functions are now not part of client object.
 // This allows the win32 (and other) guis to have
@@ -72,7 +75,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.11 1998/12/25 02:32:11 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.12 1998/12/25 05:30:28 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -301,9 +304,9 @@ int ReadConfig(Client *client)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
     client->usemmx=ini.getkey(OPTION_SECTION, "usemmx", "1")[0];
   #endif
 
-  #if defined(NEEDVIRTUALMETHODS)
-    InternalReadConfig(ini);
-  #endif
+// $$  #if defined(NEEDVIRTUALMETHODS)
+//    InternalReadConfig(ini);
+//  #endif
 
   ValidateConfig(client);
 
@@ -415,9 +418,9 @@ void ValidateConfig(Client *client) //DO NOT PRINT TO SCREEN HERE!
 
   //validate numcpu is now in SelectCore(); //1998/06/21 cyrus
 
-#if defined(NEEDVIRTUALMETHODS)
-  InternalValidateConfig();
-#endif
+// $$ #if defined(NEEDVIRTUALMETHODS)
+//  InternalValidateConfig();
+//#endif
 
   InitRandom2( client->id );
 }
@@ -650,9 +653,9 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
       }
     } /* if (writefull != 0) */
   
-  #if defined(NEEDVIRTUALMETHODS)
-    InternalWriteConfig(ini);
-  #endif
+// $$  #if defined(NEEDVIRTUALMETHODS)
+//    InternalWriteConfig(ini);
+//  #endif
   
   IniRecord *tempptr;
   if ((tempptr = ini.findfirst(OPTION_SECTION, "runhidden"))!=NULL)
