@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.31 2003/03/26 15:18:02 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.32 2003/03/26 16:43:14 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -452,12 +452,18 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #if (CLIENT_CPU == CPU_X86)
     { /* RC5-72 */
+      #if !defined(HAVE_NO_NASM)
       "SES 1-pipe",
       "SES 2-pipe",
       "DG 2-pipe",
       "DG 3-pipe",
       "DG 3-pipe alt",
       "SS 2-pipe",
+      #else /* no nasm -> only ansi cores */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
+      #endif
       NULL
     },
   #elif (CLIENT_CPU == CPU_ARM)
@@ -630,8 +636,10 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
     }
     else if (contestid == RC5_72)
     {
+      #if !defined(HAVE_NO_NASM)
       if (have_3486 && cindex >= 2)     /* dg-* cores use the bswap instr that's not available on 386 */
         cindex = 0;                     /* "SES 1-pipe" */
+      #endif
     }
     else if (contestid == DES)
     {
@@ -1392,6 +1400,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
     {
       if (detected_type >= 0)
       {
+        #if !defined(HAVE_NO_NASM)
         switch (detected_type & 0xff) // FIXME remove &0xff
         {
           case 0x00: cindex = 5; break; // P5             == SS 2-pipe
@@ -1408,12 +1417,23 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
           case 0x0B: cindex = 3; break; // Pentium 4      == DG 3-pipe
           default:   cindex =-1; break; // no default
         }
-        #if defined(HAVE_NO_NASM)
-          #error FIXME !!! downgrade preselection to ansi cores
-        if (cindex == 8)   /* ("SS 2-pipe") */
-          cindex = 1;      /* ("ANSI 2-pipe") */
-        if (cindex == 6)   /* ("DG 3-pipe") */
-          cindex = 0;      /* ("ANSI 4-pipe") */
+        #else
+        switch (detected_type & 0xff) // FIXME remove &0xff
+        {
+          case 0x00: cindex = 2; break; // P5             == ANSI 1-pipe
+          case 0x01: cindex = 2; break; // 386/486        == ANSI 1-pipe
+          case 0x02: cindex = 1; break; // PII/PIII       == ANSI 2-pipe
+          case 0x03: cindex = 2; break; // Cx6x86         == ANSI 1-pipe
+          case 0x04: cindex = 2; break; // K5             == ANSI 1-pipe
+          case 0x05: cindex = 1; break; // K6             == ANSI 2-pipe
+          case 0x06: cindex = 2; break; // Cx486          == ANSI 1-pipe
+          case 0x07: cindex =-1; break; // orig Celeron   == unused?
+          case 0x08: cindex =-1; break; // PPro           == ?
+          case 0x09: cindex = 0; break; // K7             == ANSI 4-pipe
+          case 0x0A: cindex =-1; break; // Centaur C6     == ?
+          case 0x0B: cindex = 0; break; // Pentium 4      == ANSO 4-pipe
+          default:   cindex =-1; break; // no default
+        }
         #endif
       }
     }
