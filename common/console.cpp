@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.13 1999/11/29 22:47:29 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.14 1999/12/02 08:50:17 mfeiri Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -735,7 +735,7 @@ int ConClear(void)
       return 0;
     #elif (CLIENT_OS == OS_DOS)
       return dosCliConClear();
-    #elif (CLIENT_OS == OS_NETWARE)
+    #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)
       clrscr();
       return 0;
     #elif (CLIENT_OS == OS_RISCOS)
