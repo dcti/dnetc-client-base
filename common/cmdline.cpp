@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.41 2000/01/22 00:56:33 ctate Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.42 2000/02/14 04:30:28 petermack Exp $"; }
 
 //#define TRACE
 
@@ -149,7 +149,7 @@ int ParseCommandline( Client *client,
           }
           terminate_app = 1;
         }
-        #elif defined(__unix__)
+        #elif defined(__unix__) && (CLIENT_OS != OS_NEXTSTEP)
         {
           char buffer[1024];
           int sig = SIGHUP; char *dowhat_descrip = "-HUP'ed";
@@ -1569,7 +1569,7 @@ int ParseCommandline( Client *client,
     ModeReqSet( MODEREQ_CONFIG );
   }
   /* BeOS gcc defines __unix__ for some strange reason... */
-  #if defined(__unix__) && (CLIENT_OS != OS_BEOS)
+  #if defined(__unix__) && (CLIENT_OS != OS_BEOS) && (CLIENT_OS != OS_NEXTSTEP)
   else if (!terminate_app && run_level==0 && (ModeReqIsSet(-1)==0) && 
            client->quietmode)
   {
