@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.129.2.4 2003/01/04 10:38:59 pfeffi Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.129.2.5 2003/01/07 19:36:22 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -400,8 +400,23 @@ void Go_mt( void * parm )
     amigaThreadInit();
     #if (CLIENT_CPU == CPU_POWERPC)
     /* Only necessary when using 68k for time measurement */
-    thrparams->dyn_timeslice_table[0].usec = 8000000;  // RC5 // FIXME THIS INDEXING IS DANGEROUS !!!
-    thrparams->dyn_timeslice_table[2].usec = 4000000;  // OGR // FIXME THIS INDEXING IS DANGEROUS !!!
+    for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
+    {
+      switch(thrparams->dyn_timeslice_table[tsinitd].contest)
+      {
+        #if defined(HAVE_RC5_64_CORES)
+        case RC5:
+          thrparams->dyn_timeslice_table[tsinitd].usec = 8000000;
+          break;
+        #endif
+        case RC5_72:
+          thrparams->dyn_timeslice_table[tsinitd].usec = 8000000;
+          break;
+        case OGR:
+          thrparams->dyn_timeslice_table[tsinitd].usec = 4000000;
+          break;
+      }
+    }
     #endif
   }
 #endif
