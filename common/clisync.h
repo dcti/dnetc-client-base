@@ -1,24 +1,24 @@
 /* Hey, Emacs, this a -*-C++-*- file !
- * 
+ *
  * Copyright distributed.net 2001-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * Simple, lightweight synchronization primitives, used by the client 
- * for lightweight protection of small and fast critical sections 
- * (eg mem copy operations from memory in one scope to memory in another), 
+ * Simple, lightweight synchronization primitives, used by the client
+ * for lightweight protection of small and fast critical sections
+ * (eg mem copy operations from memory in one scope to memory in another),
  * with low contention (possible accessors are the crunchers and the client's
  * main loop, the latter accessing cruncher data only every second or so).
- * 
+ *
  * Compilation begun Jan 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * The locking scheme implemented by the client may be best described as 
+ * The locking scheme implemented by the client may be best described as
  * fine-grained parallelization with many locking/unlocking actions taken.
- * Fine-grained locking results in a very short time spent while holding a 
+ * Fine-grained locking results in a very short time spent while holding a
  * lock, so there is a low probability of collision (finding a lock busy).
 */
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.11 2003/08/25 08:37:59 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.12 2003/08/29 14:10:15 mweiser Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -51,7 +51,7 @@
         unsigned long oldbit;
         unsigned long temp;
         int *m = ((int *) addr) + (nr >> 5);
- 
+
         __asm__ __volatile__(
         "1:     ldl_l %0,%4   \n\t" \
         "       and %0,%3,%2  \n\t" \
@@ -163,7 +163,7 @@
        #elif (CLIENT_OS == OS_NETWARE)
        ThreadSwitchLowPriority();
        #elif (CLIENT_OS == OS_OS2)
-       DosSleep(1);       
+       DosSleep(1);
        #elif (CLIENT_OS == OS_WIN32)
        Sleep(1);
        #else
@@ -200,8 +200,8 @@
                    "2:  stwcx. %3,0,%4 \n\t"\
                    "    isync          \n\t"
                    : "=&r"(old)
-                   : "r"(alp), 
-                     "I"(0 /* unlocked state */), 
+                   : "r"(alp),
+                     "I"(0 /* unlocked state */),
                      "r"(1 /* locked state */),
                      "r"(&dummy)
                      : "memory");
@@ -244,7 +244,7 @@
     int dummy;
     register int *dummyp = &dummy, old, locked = 1;
     volatile int register *alp = &(__alp->spl);
-    asm 
+    asm
     {
       @1:     lwarx   old,0,alp
               cmpwi   old,0 //FASTLOCK_INITIALIZER_UNLOCKED
@@ -270,10 +270,10 @@
       #warning "Busy spin because using MPTaskIsPreemptive() would break MP 1.x support"
       /* the only way we could get here is if we are
       ** running on an MP system and the lock is being
-      ** held on another cpu, so we could actually 
-      ** busy spin until the lock was released. But 
+      ** held on another cpu, so we could actually
+      ** busy spin until the lock was released. But
       ** we'll play nice...
-      
+
       if (need_mp_sleep == -1) // first time through
       {
         need_mp_sleep = 0;
@@ -303,7 +303,7 @@
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *m)
-  { 
+  {
     #if (CLIENT_OS == OS_NEXTSTEP)
     /* m->spl = 0; */
     __asm__  __volatile__ (
@@ -377,7 +377,7 @@
 #elif (CLIENT_CPU == CPU_POWER) /* AIX only */ && defined(__GNUC__)
 
   /* Using cs(3). Deprecated as of AIX 4.0
-  #define fastlock_t int 
+  #define fastlock_t int
   #define FASTLOCK_INITIALIZER_UNLOCKED 0
   #define fastlock_trylock(__flp) ((cs( __flp, 0, 1)) ? (+1) : (0))
   #define fastlock_unlock(__flp) do { *__flp = 0; break; } while (0)
@@ -394,7 +394,7 @@
     /* Atomically writes a single word variable, issuing */
     /* an export fence for multiprocessor systems */
     _clear_lock ( &(v->lock), 0);
-  } 
+  }
   static __inline__ int fastlock_trylock(fastlock_t *v)
   {
     /* Conditionally updates a single word variable atomically, */
@@ -431,8 +431,8 @@
     __asm__ __volatile("    slr   %0,%0\n" \
                        "    basr  %1,0\n"  \
                        "0:  cs    %0,%1,0(%2)"
-		       : "=&d" (result), "=&d" (reg)
-		       : "a" (&lp->lock) : "cc", "memory" );	
+                       : "=&d" (result), "=&d" (reg)
+                       : "a" (&lp->lock) : "cc", "memory" );
     return !result;
   }
   static __inline__ void fastlock_lock(fastlock_t *m)
@@ -463,8 +463,8 @@
     __asm__ __volatile("    slr   %0,%0\n" \
                        "    basr  %1,0\n"  \
                        "0:  cs    %0,%1,0(%2)"
-		       : "=&d" (result), "=&d" (reg)
-		       : "a" (&lp->lock) : "cc", "memory" );	
+                       : "=&d" (result), "=&d" (reg)
+                       : "a" (&lp->lock) : "cc", "memory" );
     return !result;
   }
   static __inline__ void fastlock_lock(fastlock_t *m)
@@ -477,25 +477,25 @@
 
 #elif (CLIENT_CPU == CPU_IA64) && defined(__GNUC__)
 
-  /* based on 
+  /* based on
      http://lxr.linux.no/source/include/asm-ia64/spinlock.h?v=2.4.0
   */
   typedef struct { volatile unsigned int lock; } fastlock_t;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
 
   static __inline__ void fastlock_unlock(fastlock_t *v)
-  { 
+  {
     v->lock = 0;
-  }  
+  }
   static __inline__ int fastlock_trylock(fastlock_t *v)
   {
     register long result;
     /* IA64_SEMFIX is a workaround for Errata 97. (A-step through B1) */
-    #define IA64_SEMFIX  "mf;" 
+    #define IA64_SEMFIX  "mf;"
     __asm__ __volatile__ (
               "mov ar.ccv=r0\n" \
               ";;\n"            \
-              IA64_SEMFIX"cmpxchg4.acq %0=[%2],%1,ar.ccv\n" 
+              IA64_SEMFIX"cmpxchg4.acq %0=[%2],%1,ar.ccv\n"
              : "=r"(result) : "r"(1), "r"(&(v)->lock) : "ar.ccv", "memory");
     return ((result == 0) ? (+1) : (0));
   }
@@ -511,7 +511,7 @@
 
   /*
     based on
-    http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/sparc/include/lock.h?rev=1.6.2.1 
+    http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/sparc/include/lock.h?rev=1.6.2.1
     http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/sparc64/include/lock.h?rev=1.4.2.1
   */
   typedef struct { __volatile int spl; } fastlock_t;
@@ -550,8 +550,8 @@
 
   typedef struct { __volatile int spl; } fastlock_t;
   #define FASTLOCK_INITIALIZER_UNLOCKED ((fastlock_t){0})
-  /* 
-  based on  
+  /*
+  based on
   http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/vax/include/lock.h?rev=1.5.2.1
   */
   static __inline__ void fastlock_unlock(fastlock_t *__alp)
@@ -560,14 +560,14 @@
     *alp = 0;
   }
   static __inline__ int fastlock_trylock(fastlock_t *__alp)
-  { 
+  {
     __volatile int *alp = &(__alp->spl);
     int ret;
     __asm__ __volatile ("movl $0,%0;bbssi $0,%1,1f;incl %0;1:"
                 : "=&r"(ret)
                 : "m"(*alp));
     return ((ret) ? (+1) : (0));
-  }  
+  }
   static __inline__ void fastlock_lock(fastlock_t *m)
   {
     while (fastlock_trylock(m) <= 0)
@@ -599,12 +599,12 @@
     *alp = 0;
   }
   static __inline__ int fastlock_trylock(fastlock_t *__alp)
-  { 
+  {
     __volatile int *alp = &(__alp->spl);
     if (__tas( alp ) == 0)
       return +1;
     return 0;
-  }  
+  }
   static __inline__ void fastlock_lock(fastlock_t *m)
   {
     while (fastlock_trylock(m) <= 0)
@@ -624,16 +624,16 @@
     *alp = 0;
   }
   static __inline__ int fastlock_trylock(fastlock_t *__alp)
-  { 
+  {
     volatile long int *alp = &(__alp->spl);
     int result;
-    
+
     __asm__ __volatile__ (
-           "	mov	%0,#1      \n\t" \
-           "	swp	%0,%0,[%1] \n\t" \
-           "	cmp	%0,#0      \n\t" \
-           "	movne	%0,#0      \n\t" \
-           "	moveq	%0,#1      \n\t"
+           "    mov     %0,#1      \n\t" \
+           "    swp     %0,%0,[%1] \n\t" \
+           "    cmp     %0,#0      \n\t" \
+           "    movne   %0,#0      \n\t" \
+           "    moveq   %0,#1      \n\t"
            : "=&r" (result)                /* If it has already been locked */
            : "r" (alp)                     /* the 1 can stay there !        */
            : "cc", "memory");
@@ -648,8 +648,8 @@
   }
 
 #elif defined(_POSIX_THREADS_SUPPORTED)
-  /* put this at the end, so that more people notice/are affected by 
-     any potential problems in other code 
+  /* put this at the end, so that more people notice/are affected by
+     any potential problems in other code
   */
   /* heaaaavyweight, but better than nothing */
 
@@ -661,11 +661,11 @@
   #define fastlock_trylock              pthread_mutex_trylock
 
 #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
-  /* put this at the end, so that more people notice/are affected by 
-     any potential problems in other code 
+  /* put this at the end, so that more people notice/are affected by
+     any potential problems in other code
   */
   /* heaaaavyweight, but better than nothing */
-                               
+
   #include <thread.h>
   #include <synch.h>
   #define fastlock_t                    mutex_t
