@@ -5,6 +5,10 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.198  1999/03/01 09:44:40  snake
+#
+# fixed path to dworz DES asm core
+#
 # Revision 1.197  1999/03/01 07:57:30  gregh
 # Add -Iogr wherever appropriate.
 #
@@ -926,7 +930,7 @@ KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
 MEGGS_SLICE_SRCS1="des/deseval-meggs2.cpp des/des-slice-meggs.cpp"
 MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 
-DWORZ_SLICE_SRCS="des/deseval-dworz3.S des/des-slice-dworz.cpp"
+DWORZ_SLICE_SRCS="des/alpha-asm/deseval-dworz3.S des/alpha-asm/des-slice-dworz.cpp"
 
 DESX86_SRCS="des/des-x86.cpp"
 
