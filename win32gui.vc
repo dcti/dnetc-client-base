@@ -55,8 +55,9 @@ GUI_OBJS =                    \
 BASE_OBJS =                    \
 	$(OUTPUTPATH)/client.obj     \
 	$(OUTPUTPATH)/selcore.obj    \
-	$(OUTPUTPATH)/lurk.obj \
-	$(OUTPUTPATH)/logstuff.obj \
+	$(OUTPUTPATH)/lurk.obj       \
+	$(OUTPUTPATH)/w32ras.obj     \
+	$(OUTPUTPATH)/logstuff.obj   \
 	$(OUTPUTPATH)/cpucheck.obj   \
 	$(OUTPUTPATH)/selftest.obj   \
 	$(OUTPUTPATH)/disphelp.obj   \
