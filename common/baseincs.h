@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65 1999/04/15 21:53:41 trevorh Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.1 1999/05/31 11:21:39 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -161,29 +161,36 @@ extern "C" {
   #include <unistd.h>		// nice()
   #include <strings.h>		// bzero(), strcase...,
   #include <sys/select.h>	// fd_set on AIX 4.1
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
+#elif (CLIENT_OS == OS_LINUX)
   #include <sys/time.h>
   #include <unistd.h>
-  #if (((CLIENT_OS == OS_LINUX) && (__GLIBC__ >= 2)) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI))
-    #include <errno.h> // glibc2 has errno only here
-  #endif
-  #if (((CLIENT_OS == OS_LINUX) && defined(__ELF__)) || \
-    (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDI))
+  #if defined(__ELF__)
     #include <sched.h>
   #endif
-#elif (CLIENT_OS == OS_NETBSD) && (CLIENT_CPU == CPU_ARM)
+#elif (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
+  #include <unistd.h>
+  #include <sys/sysctl.h> /* sysctl()/sysctlbyname() */
+#elif (CLIENT_OS == OS_BSDI)
+  #include <sys/time.h>
+  #include <unistd.h>
+  #include <sched.h>
+  #include <sys/sysctl.h> /* sysctl()/sysctlbyname() */
+#elif (CLIENT_OS == OS_NETBSD)
+  #include <sys/time.h>
+  #include <sys/sysctl.h> /* sysctl()/sysctlbyname() */
+#elif (CLIENT_OS == OS_FREEBSD)  
+  #include <sys/time.h>
+  #include <unistd.h>
+  #include <sched.h>
+  #include <sys/sysctl.h> /* sysctl()/sysctlbyname() */
 #elif (CLIENT_OS == OS_QNX)
   #include <sys/time.h>
   #include <sys/select.h>
   #define strncmpi strncasecmp
 #elif (CLIENT_OS == OS_DYNIX)
   #include <unistd.h> // sleep(3c)
-  struct timezone
-  {
-    int  tz_minuteswest;    /* of Greenwich */
-    int  tz_dsttime;        /* type of dst correction to apply */
-  };
+  struct timezone { int tz_minuteswest, tz_dsttime; };
   extern "C" int gethostname(char *, int);
   extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #elif (CLIENT_OS == OS_MACOS)
