@@ -1,4 +1,4 @@
-CFLAGS = -O2 -g
+CFLAGS = -O2 -g -Wall
 
 all: choose test-ogr test-stubsplit
 
@@ -6,16 +6,26 @@ test-ogr: test-ogr.o ogr.o choosedat.o crc32.o
 
 test-stubsplit: test-stubsplit.o stubsplit.o
 
-ogr.o: ogr.c client2.h crc32.h stub.h
+ogr.o: ogr.cpp client2.h crc32.h stub.h
+	g++ $(CFLAGS) -c $<
 
-stubsplit.o: stubsplit.c stubsplit.h stub.h
+stubsplit.o: stubsplit.cpp stubsplit.h stub.h
+	g++ $(CFLAGS) -c $<
 
-test-stubsplit.o: test-stubsplit.c stubsplit.h stub.h
+test-stubsplit.o: test-stubsplit.cpp stubsplit.h stub.h
+	g++ $(CFLAGS) -c $<
 
-test-ogr.o: test-ogr.c client2.h stub.h
+test-ogr.o: test-ogr.cpp client2.h stub.h
+	g++ $(CFLAGS) -c $<
 
-choosedat.c: choose.dat bin2c.pl
-	perl bin2c.pl choose.dat choosedat.c choose_dat
+choosedat.o: choosedat.cpp
+	g++ $(CFLAGS) -c $<
+
+crc32.o: crc32.cpp
+	g++ $(CFLAGS) -c $<
+
+choosedat.cpp: choose.dat bin2c.pl
+	perl bin2c.pl choose.dat choosedat.cpp choose_dat
 
 choose.dat: choose.c
 	./choose
@@ -30,9 +40,9 @@ dist:
 
 clean:
 	rm -f *.o
-	rm -f choosedat.c test-ogr test-stubsplit choose ogr.zip
+	rm -f choosedat.cpp test-ogr test-stubsplit choose ogr.zip
 
 chooseclean:
 	rm -f *.o
 	rm -f choose.dat
-	rm -f choosedat.c test-ogr test-stubsplit choose ogr.zip
+	rm -f choosedat.cpp test-ogr test-stubsplit choose ogr.zip
