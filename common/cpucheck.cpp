@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.56 2004/06/08 18:39:31 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.57 2004/06/16 18:29:38 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -491,6 +491,7 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x0080, "860"                 },
       {    0x0081, "8240"                },
       {    0x4011, "405GP"               },
+      {    0x7000, "750FX"               },
       {    0x8000, "7441/7450/7451 (G4)" },
       {    0x8001, "7445/7455 (G4)"      },
       {    0x8002, "7447/7457 (G4)"      },
@@ -561,19 +562,6 @@ static long __GetRawProcessorID(const char **cpuname)
       if (result == 0x0111) /* gestaltCPUG47455 = 0x0111 */
         result = 0x08101L; /* Apples ID makes sense but we prefer pure PVR */
       detectedtype = result - 0x100L; // PVR!!
-
-      /* AltiVec software support and hardware support/exsitence */
-      if (Gestalt( gestaltSystemVersion, &result ) == noErr)
-      {   
-        if (result >= 860) /* Mac OS 8.6 and above? */
-        {
-          if ( Gestalt(gestaltPowerPCProcessorFeatures, &result) == noErr)
-          {
-            if (((1 << gestaltPowerPCHasVectorInstructions) & result)!=0)
-              isaltivec = 1;
-          }
-        }
-      }
     }
   }
   #elif (CLIENT_OS == OS_MACOSX)
@@ -605,15 +593,6 @@ static long __GetRawProcessorID(const char **cpuname)
         IOObjectRelease(objectIterator);
       }
       mach_port_deallocate(mach_task_self(), master_port);
-    }
-    
-    // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check for
-    int mib[2], hasVectorUnit; mib[0] = CTL_HW; mib[1] = HW_VECTORUNIT;
-    size_t len = sizeof(hasVectorUnit);
-    if (sysctl( mib, 2, &hasVectorUnit, &len, NULL, 0 ) == 0)
-    {
-      if (hasVectorUnit != 0)
-        isaltivec = 1;
     }
   }
   #elif (CLIENT_OS == OS_WIN32)
@@ -746,9 +725,8 @@ static long __GetRawProcessorID(const char **cpuname)
   {
     #if defined(__amigaos4__)
     /* AmigaOS 4.x */
-    ULONG cpu, vec;
+    ULONG cpu;
     IExec->GetCPUInfoTags(GCIT_Model, &cpu,
-                          GCIT_VectorUnit, &vec,
                           TAG_DONE);
     switch (cpu)
     {
@@ -768,8 +746,6 @@ static long __GetRawProcessorID(const char **cpuname)
        break;
     }
 
-    // Altivec support disabled for now!
-    //isaltivec = (vec == VECTORTYPE_ALTIVEC);
     #elif !defined(__POWERUP__)
     /* WarpOS */
     struct TagItem cputags[2] = { {GETINFO_CPU, 0}, {TAG_END,0} };
@@ -823,26 +799,8 @@ static long __GetRawProcessorID(const char **cpuname)
     /* MorphOS */
     #include <exec/resident.h>
     ULONG cpu = 0;
-    struct Resident *m_res;
     NewGetSystemAttrsA(&cpu, sizeof(cpu), SYSTEMINFOTYPE_PPC_CPUVERSION, NULL);
 
-    /* Altivec support was added in MorphOS 1.5 */
-    m_res = FindResident("MorphOS");
-    if (m_res && (m_res->rt_Flags & RTF_EXTENDED) &&
-        ((m_res->rt_Version == 1 && m_res->rt_Revision >= 5) ||
-         m_res->rt_Version > 1))
-    {
-      if ((SysBase->LibNode.lib_Version == 50 && SysBase->LibNode.lib_Revision >= 60) ||
-          SysBase->LibNode.lib_Version > 50)
-      {
-        ULONG avf = 0;
-        NewGetSystemAttrsA(&avf, sizeof(avf), SYSTEMINFOTYPE_PPC_ALTIVEC, NULL);
-        if (avf)
-        {
-          isaltivec = 1;
-        }
-      }
-    }
     switch (cpu)
     {
       case 0x0003:   // 603
@@ -2146,14 +2104,91 @@ long GetProcessorID()
 }
 #endif
 
+//Return the frequency in MHz, or 0.
+unsigned int GetProcessorFrequency()
+{
+  unsigned int freq = 0;   /* Unknown */
+
+  #if (CLIENT_OS == OS_MACOSX)
+    int mib[2] = {CTL_HW, HW_CPU_FREQ};
+    unsigned long frequency;
+    size_t len = sizeof(frequency);
+    if (sysctl(mib, 2, &frequency, &len, NULL, 0) == 0) {
+      if (frequency != 0)
+        freq = (frequency + 500000) / 1000000;
+    }
+  #endif
+
+  return freq;
+}
+
 //get a set of supported processor features
 //cores may get disabled due to missing features
 unsigned long GetProcessorFeatureFlags()
 {
   #if (CLIENT_CPU == CPU_X86)
-  return (__GetRawProcessorID(NULL, 'f')) | (x86features());
+    return (__GetRawProcessorID(NULL, 'f')) | (x86features());
+
+  #elif (CLIENT_CPU == CPU_POWERPC)
+    unsigned long ppc_features = 0;
+    #if (CLIENT_OS == OS_MACOS)
+      /* AltiVec software support and hardware support/exsitence */
+      if (Gestalt( gestaltSystemVersion, &result ) == noErr) {   
+        if (result >= 860) /* Mac OS 8.6 and above? */ {
+          if (Gestalt(gestaltPowerPCProcessorFeatures, &result) == noErr) {
+            if ( ((1 << gestaltPowerPCHasVectorInstructions) & result) != 0)
+              ppc_features |= CPU_F_ALTIVEC;
+          }
+        }
+      }
+    #elif (CLIENT_OS == OS_MACOSX)
+      // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check
+      // for
+      int mib[2] = {CTL_HW, HW_VECTORUNIT};
+      int hasVectorUnit;
+      size_t len = sizeof(hasVectorUnit);
+      if (sysctl( mib, 2, &hasVectorUnit, &len, NULL, 0 ) == 0) {
+        if (hasVectorUnit != 0)
+          ppc_features |= CPU_F_ALTIVEC;
+      }
+    #elif (CLIENT_OS == OS_LINUX)
+      // Can someone write something better ?
+      long type = __GetRawProcessorID(NULL);
+      if ( (type & (1L << 25)) != 0)
+        ppc_features |= CPU_F_ALTIVEC;
+    #elif (CLIENT_OS == OS_AMIGAOS)  // AmigaOS PPC
+      #if defined(__amigaos4__)
+        /* AmigaOS 4.x */
+        ULONG vec;
+        IExec->GetCPUInfoTags(GCIT_VectorUnit, &vec, TAG_DONE);
+
+        // Altivec support disabled for now!
+        // if (vec == VECTORTYPE_ALTIVEC)
+        //    ppc_features |= CPU_F_ALTIVEC;
+      #endif
+    #elif (CLIENT_OS == OS_MORPHOS)  // MorphOS
+      /* Altivec support was added in MorphOS 1.5 */
+      struct Resident *m_res = FindResident("MorphOS");
+      if (m_res && (m_res->rt_Flags & RTF_EXTENDED) &&
+            ((m_res->rt_Version == 1 && m_res->rt_Revision >= 5) ||
+            m_res->rt_Version > 1))
+      {
+        if ((SysBase->LibNode.lib_Version == 50 && SysBase->LibNode.lib_Revision >= 60)
+          || SysBase->LibNode.lib_Version > 50)
+      {
+        ULONG avf = 0;
+        NewGetSystemAttrsA(&avf, sizeof(avf), SYSTEMINFOTYPE_PPC_ALTIVEC, NULL);
+        if (avf)
+        {
+          ppc_features |= CPU_F_ALTIVEC;
+        }
+      }
+    }
+    #endif
+    return ppc_features;
+
   #else
-  return 0;
+    return 0;
   #endif
 }
 
