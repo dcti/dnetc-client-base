@@ -6,10 +6,13 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.27 2002/09/23 12:01:32 acidblood Exp $"; }
+return "@(#)$Id: util.cpp,v 1.28 2002/10/06 19:57:49 andreasb Exp $"; }
+
+//#define TRACE
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
+#include "projdata.h" // general project data: ids, flags, states; names, ...
 #include "client.h"   /* CONTEST_COUNT, stub definition */
 #include "logstuff.h" /* Log() */
 #include "clitime.h"  /* CliTimer(), Time()/(CliGetTimeString(NULL,1)) */
@@ -197,7 +200,11 @@ int utilScatterOptionListToArraysEx( const char *oplist,
                                    int *table1, int *table2,
                                    const int *default1, const int *default2 )
 {
+  /* current contest name regex is /[a-z][a-z0-9_-]/i */
+
   unsigned int cont_i;
+
+  TRACE_OUT((+1, "utilScatter...(%s, ...)\n", oplist));
 
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
@@ -279,6 +286,12 @@ int utilScatterOptionListToArraysEx( const char *oplist,
           if (len != 0) /* otherwise ignore it */
             precspace = 1;
         }
+        else if (kwpos == 0 && !precspace) /* contest name */
+        {
+          buffer[len] = (char)toupper(c);
+          havenondig = 1; /* don't care about (non-)digits in name */
+          len++;
+        }
         else if (isalpha(c))
         {
           if (kwpos || precspace)
@@ -300,6 +313,7 @@ int utilScatterOptionListToArraysEx( const char *oplist,
           len++;
         }
       }
+      TRACE_OUT((0, "gotone?: %s %d %d %d\n", buffer, contest, haveval1, value1));
       if (contest < CONTEST_COUNT && haveval1)
       {
         table1[contest] = value1;
@@ -312,6 +326,7 @@ int utilScatterOptionListToArraysEx( const char *oplist,
         oplist++;
     }
   }
+  TRACE_OUT((-1, "utilScatter...()\n"));
   return 0;
 }
 
@@ -326,21 +341,25 @@ int utilScatterOptionListToArrays( const char *oplist,
                                  table1, table2, &defarray[0], &defarray[0]);
 }
 
-const char *projectmap_expand( const char map[CONTEST_COUNT] )
+// project order map + project state vec ==> string
+const char *projectmap_expand( const int *map, const int *state_vec )
 {
-  static char buffer[(CONTEST_COUNT+1)*(MAX_CONTEST_NAME_LEN+3)];
-  unsigned int id;
+  static char buffer[(PROJECT_COUNT+1)*(MAX_PROJECT_NAME_LEN+3)];
+  unsigned int i;
 
   if (!map)
-    map = projectmap_build(NULL,NULL);
+    map = projectmap_build(NULL,NULL,NULL);
 
   buffer[0] = '\0';
-  for (id=0;id<CONTEST_COUNT;id++)
+  for (i = 0; i<PROJECT_COUNT; ++i)
   {
-    if (id > 0)
+    int projectid = map[i];
+    if (ProjectGetFlags(projectid) == PROJECT_UNSUPPORTED)
+      continue;
+    if (buffer[0] != '\0')
       strcat( buffer, "," );
-    strcat( buffer, CliGetContestNameFromID( map[id] & 0x7f ) );
-    if (( map[id] & 0x80 ) != 0)
+    strcat( buffer, ProjectGetName(projectid) );
+    if (state_vec && (state_vec[projectid] & PROJECTSTATE_USER_DISABLED))
       strcat( buffer,"=0" );
   }
   return buffer;
@@ -348,36 +367,54 @@ const char *projectmap_expand( const char map[CONTEST_COUNT] )
 
 // --------------------------------------------------------------------------
 
-const char *projectmap_build( char buf[CONTEST_COUNT], const char *strtomap )
+// string or default ==> project order map + project state vec
+const int* projectmap_build( int* buf, int* state, const char *strtomap )
 {
   #if (CONTEST_COUNT != 6)
     #error PROJECT_NOT_HANDLED("static default load order map expects CONTEST_COUNT == 6")
   #endif
-  // FIXME: default_map should allow obsolete projects to be omitted and ignored
-  static char default_map[CONTEST_COUNT] = { DES,CSC,OGR,RC5,RC5_72,OGR_NEXTGEN_SOMEDAY };
-// OK!
-  static char map[CONTEST_COUNT];
+  // you must add _every_ project, obsoletes may come last
+  static const int default_map[PROJECT_COUNT] = { DES,CSC,OGR,RC5,RC5_72,OGR_NEXTGEN_SOMEDAY };
+  static int default_map_checked = -1;
+  static int map[PROJECT_COUNT];
   unsigned int map_pos, i;
-  int contestid;
+  int projectid;
+  
+  if (default_map_checked == -1)
+  {
+    int i, p;
+
+    for (p = 0; p < PROJECT_COUNT; ++p)
+    {
+      for (i = 0; i < PROJECT_COUNT; ++i)
+        if (p == default_map[i])
+          break;
+      if (i >= PROJECT_COUNT)
+        Log("default_map misses project %s (%d)\n", ProjectGetName(p), p);
+    }
+    default_map_checked = 1;
+  }
 
   if (!strtomap || !*strtomap)
   {
     if (buf)
-      memcpy((void *)buf, (void *)&default_map[0], CONTEST_COUNT );
+      memcpy((void *)buf, (const void *)default_map, sizeof(default_map));
     return default_map;
   }
 
-//printf("\nreq order: %s\n", strtomap );
+  TRACE_OUT((0, "req order: %s\n", strtomap));
 
+  /* parse strtomap */
   map_pos = 0;
   do
   {
     int disabled = 0;
-    char scratch[10];
+    char scratch[2*MAX_PROJECT_NAME_LEN+2];
     while (*strtomap && !isalpha(*strtomap) && !isdigit(*strtomap))
       strtomap++;
     i = 0;
-    while (i<(sizeof(scratch)-2) && (isalpha(*strtomap) || isdigit(*strtomap)))
+    while (i<(sizeof(scratch)-2) && (isalpha(*strtomap) || isdigit(*strtomap)
+                                     || *strtomap=='-' || *strtomap=='_' ))
       scratch[i++]=(char)toupper(*strtomap++);
     while (*strtomap && isspace(*strtomap))
       strtomap++;
@@ -396,64 +433,70 @@ const char *projectmap_build( char buf[CONTEST_COUNT], const char *strtomap )
     while (*strtomap && *strtomap!= ',' && *strtomap!=';' && !isspace(*strtomap))
     {
       if (i && i<(sizeof(scratch)-1))
-        scratch[i++] = 'x'; /* make incomaptible to any contest name */
+        scratch[i++] = '#'; /* make incomaptible to any contest name */
       strtomap++;
     }
     scratch[i]='\0';
 
-    contestid = -1;
+    projectid = -1;
 
     if (i > 0)
     {
-      for (i=0;i<CONTEST_COUNT;i++)
+      for (i = 0; i < PROJECT_COUNT; i++)
       {
-        if ( strcmp( scratch, CliGetContestNameFromID(i) ) == 0 )
+        if ( strcmp( scratch, ProjectGetName(i) ) == 0 )
         {
-          contestid = (int)i;
+          projectid = (int)i;
           break;
         }
       }
     }
 
-    for (i=0; contestid != -1 && i< map_pos; i++)
+    for (i=0; projectid != -1 && i < map_pos; i++)
     {
-      if (contestid == (((int)(map[i])) & 0x7f))
-        contestid = -1;
+      if (projectid == map[i])
+        projectid = -1;
     }
 
-    if (contestid != -1)
+    if (projectid != -1)
     {
-      if (disabled)
-        contestid |= 0x80;
-      map[map_pos++]=(char)contestid;
+      if (state)
+      {
+        if (disabled)
+          state[projectid] |= PROJECTSTATE_USER_DISABLED;
+        else
+          state[projectid] &= ~PROJECTSTATE_USER_DISABLED;
+      }
+      map[map_pos++] = projectid;
     }
 
-  } while ((map_pos < CONTEST_COUNT) && *strtomap );
+  } while ((map_pos < PROJECT_COUNT) && *strtomap );
 
-  for (i=0;(map_pos < CONTEST_COUNT) && (i < CONTEST_COUNT);i++)
+  /* insert omitted projects */
+  for (i = 0; (map_pos < PROJECT_COUNT) && (i < PROJECT_COUNT); i++)
   {
     unsigned int n;
-    contestid = (int)default_map[i];
+    projectid = (int)default_map[i];
     for (n=0; n<map_pos; n++ )
     {
-      if (contestid == (((int)(map[n])) & 0x7f))
+      if (projectid == map[n])
       {
-        contestid = -1;
+        projectid = -1;
         break;
       }
     }
-    if (contestid != -1) /* found contest not in map. i==its default prio */
-    { /* now search for a contest *in* the map that has a default prio < i */
+    if (projectid != -1) /* found project not in map. i==its default prio */
+    { /* now search for a project *in* the map that has a default prio < i */
       /* that becomes the point at which we insert the missing contest */
       int inspos = -1; /* the position we insert at */
       for ( n = 0; (inspos == -1 && n < map_pos); n++ )
       {
         unsigned int thatprio;
-        contestid = (((int)map[n]) & 0x7f); /* the contest sitting at pos n */
+        projectid = map[n]; /* the contest sitting at pos n */
         /* find the default priority for the contest sitting at pos n */
-        for (thatprio = 0; thatprio < CONTEST_COUNT; thatprio++ )
+        for (thatprio = 0; thatprio < PROJECT_COUNT; thatprio++ )
         {
-          if (contestid == (int)default_map[thatprio] && thatprio > i)
+          if (projectid == default_map[thatprio] && thatprio > i)
           {                                 /* found it */
             inspos = (int)n;                /* this is the pos to insert at */
             break;
@@ -464,7 +507,7 @@ const char *projectmap_build( char buf[CONTEST_COUNT], const char *strtomap )
         map[map_pos++] = default_map[i]; /* so tack it on at the end */
       else
       {
-        for ( n = (CONTEST_COUNT-1); n>((unsigned int)inspos); n--)
+        for ( n = (PROJECT_COUNT-1); n>((unsigned int)inspos); n--)
           map[n] = map[n-1];
         map[inspos] = default_map[i];
         map_pos++;
@@ -472,10 +515,24 @@ const char *projectmap_build( char buf[CONTEST_COUNT], const char *strtomap )
     }
   }
 
-//printf("\nresult order: %s\n", projectmap_expand( &map[0] ) );
+  TRACE_OUT((0, "result order: %s\n", projectmap_expand( map, state ) ));
+
+  /* double check map */
+  {
+    int i, p;
+
+    for (p = 0; p < PROJECT_COUNT; ++p)
+    {
+      for (i = 0; i < PROJECT_COUNT; ++i)
+        if (p == map[i])
+          break;
+      if (i >= PROJECT_COUNT)
+        Log("built map misses project %s (%d)\n", ProjectGetName(p), p);
+    }
+  }
 
   if (buf)
-    memcpy((void *)buf, (void *)&map[0], CONTEST_COUNT );
+    memcpy((void *)buf, (void *)map, sizeof(map));
   return map;
 }
 
