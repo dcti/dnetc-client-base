@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.25 2000/02/14 04:25:36 petermack Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.65.2.26 2000/02/17 10:16:31 chrisb Exp $"
 
 #include "cputypes.h"
 
@@ -86,6 +86,8 @@ extern "C" {
     extern char *riscos_x86_determine_name();
     extern int riscos_find_local_directory(const char *argv0);
     extern char *riscos_localise_filename(const char *filename);
+    extern int riscos_get_filelength(int fd, unsigned long *fsizeP);
+    extern int riscos_get_file_modified(const char *filename, unsigned long *timestampP);
     extern void riscos_upcall_6(void); //yield
     extern int getch();
     #define fileno(f) ((f)->__file)

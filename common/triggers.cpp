@@ -16,7 +16,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.16.2.26 2000/02/14 16:15:58 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.16.2.27 2000/02/17 10:16:32 chrisb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -174,9 +174,13 @@ static void __CheckIniFileChangeStuff(void)
     if (now > trigstatics.nextinifilecheck)
     {
       time_t filetime = 0;
+#if (CLIENT_OS == OS_RISCOS)
+      riscos_get_file_modified(trigstatics.inifile,(unsigned long *)(&filetime));
+#else
       struct stat statblk;
       if (stat( trigstatics.inifile, &statblk ) == 0)
         filetime = statblk.st_mtime;
+#endif
       trigstatics.nextinifilecheck = now + ((time_t)5);
       if (filetime)
       {
