@@ -2612,6 +2612,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting rc5 buffer input file to %s\n",Argv[i+1]);
         strcpy(in_buffer_file[0], Argv[i+1]);
+        strcpy(ini_in_buffer_file[0], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2619,6 +2620,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting des buffer input file to %s\n",Argv[i+1]);
         strcpy(in_buffer_file[1], Argv[i+1]);
+        strcpy(ini_in_buffer_file[1], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2626,6 +2628,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting rc5 buffer output file to %s\n",Argv[i+1]);
         strcpy(out_buffer_file[0], Argv[i+1]);
+        strcpy(ini_out_buffer_file[0], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2633,6 +2636,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {                                           // Here in case its with a fetch/flush/update
         LogScreenf("Setting des buffer output file to %s\n",Argv[i+1]);
         strcpy(out_buffer_file[1], Argv[i+1]);
+        strcpy(ini_out_buffer_file[1], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2672,6 +2676,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting log file to %s\n",Argv[i+1]);
         strcpy( logname, Argv[i+1] );
+        strcpy( ini_logname, Argv[i+1] );
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
@@ -2802,6 +2807,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting rc5 checkpoint file to %s\n",Argv[i+1]);
         strcpy(checkpoint_file[0], Argv[i+1]);
+        strcpy(ini_checkpoint_file[0], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2809,6 +2815,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting des checkpoint file to %s\n",Argv[i+1]);
         strcpy(checkpoint_file[1], Argv[i+1]);
+        strcpy(ini_checkpoint_file[1], Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
@@ -2824,6 +2831,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
       {
         LogScreenf("Setting pause file to %s\n",Argv[i+1]);
         strcpy(pausefile, Argv[i+1]);
+        strcpy(ini_pausefile, Argv[i+1]);
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
