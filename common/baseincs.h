@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.7 2003/04/26 15:16:48 pfeffi Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.8 2003/04/28 07:35:55 andreasb Exp $"
 
 #include "cputypes.h"
 
@@ -192,7 +192,7 @@
   #include <poll.h>
   #include <thread.h>
   extern "C" int nice(int);
-  extern "C" int gethostname(char *, int);
+  //extern "C" int gethostname(char *, int);
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
 #elif (CLIENT_OS == OS_AIX)
   #include <unistd.h>   // nice()
