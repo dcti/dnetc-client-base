@@ -6,7 +6,7 @@
 */
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.61 2001/01/20 12:32:23 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.62 2001/01/25 00:43:35 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -455,8 +455,24 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         { /* adjust bufupd_pending if outthresh has been crossed */
           //Log("1. *bufupd_pending |= BUFFERUPDATE_FLUSH;\n");
         }       
-        if (load_problem_count <= COMBINEMSG_THRESHOLD)
-          action_msg = ((finito)?("Completed"):("Saved"));
+        #if defined(HAVE_OGR_CORES)
+        /* did we save an invalid stub? */
+        if (wrdata.contest == OGR && wrdata.resultcode == RESULT_NOTHING &&
+            (wrdata.work.ogr.nodes.hi | wrdata.work.ogr.nodes.lo) == 0)
+        {
+          unsigned int r = wrdata.work.ogr.workstub.worklength;
+          action_msg = "Skipped";
+          reason_msg = "STUB_E_ Unknown error";
+               if (r & STUB_E_MARKS)  reason_msg = "\nSTUB_E_MARKS: Stub is not supported by this client";
+          else if (r & STUB_E_GOLOMB) reason_msg = "\nSTUB_E_GOLOMB: Stub is not golomb";
+          else if (r & STUB_E_LIMIT)  reason_msg = "\nSTUB_E_LIMIT: Stub has been obsoleted by a better core";
+        } 
+        else
+        #endif
+        {
+          if (load_problem_count <= COMBINEMSG_THRESHOLD)
+            action_msg = ((finito)?("Completed"):("Saved"));
+        }
       }
 
       if (ProblemGetInfo( thisprob, 0, &contname, 
