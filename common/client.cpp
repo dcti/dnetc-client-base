@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.105  1998/07/16 19:19:36  remi
+// Added -cpuinfo option (you forget this one cyp! :-)
+//
 // Revision 1.104  1998/07/16 16:58:58  silby
 // x86 clients in MMX mode will now permit des on > 2 processors.  Bryddes is still set at two, however.
 //
@@ -68,7 +71,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.104 1998/07/16 16:58:58 silby Exp $.
+// Tweaked $Id: client.cpp,v 1.105 1998/07/16 19:19:36 remi Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -244,7 +247,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.104 1998/07/16 16:58:58 silby Exp $"; }
+return "@(#)$Id: client.cpp,v 1.105 1998/07/16 19:19:36 remi Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -3282,6 +3285,11 @@ int main( int argc, char *argv[] )
     else if ( strcmp(argv[i], "-ident" ) == 0)
       {
         CliIdentifyModules();
+        retcode = 0;
+      }
+    else if ( strcmp(argv[i], "-cpuinfo" ) == 0)
+      {
+        DisplayProcessorInformation();
         retcode = 0;
       }
     else if ( strcmp( argv[i], "-test" ) == 0 )
