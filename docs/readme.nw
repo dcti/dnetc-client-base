@@ -1,7 +1,7 @@
 
  distributed.net client for NetWare 3.11 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.nw,v 1.5.2.5 2000/12/25 04:44:27 cyp Exp $
+ Document revision $Id: readme.nw,v 1.5.2.6 2002/04/25 10:52:30 zebe Exp $
                                                           
  Welcome to the distributed.net client.
  This version is a unified client for both SMP and non-SMP machines.
@@ -107,9 +107,9 @@
     for NetWare and are not editable from the client's -config screens.
 
     [NetWare]             ; this is the name of the subsection in dnetc.ini
-    sqelch-util-indicators=0  [not available on NetWare 5.x]
+    squelch-util-indicators=0  [not available on NetWare 5.x]
     
-    - sqelch-util-indicators: (default=disabled)
+    - squelch-util-indicators: (default=disabled)
       enabling this option tells the client to *attempt* to periodically 
       reset the 'processor utilization' indicator (as seen in monitor 
       for example). This option was added when users noted that 
@@ -117,7 +117,7 @@
       when the client was active. This was traced to what appeared as 
       'high' processor utilization which caused those jobs to reschedule 
       themselves because they believed the file server to be heavily loaded. 
-      'sqelch-util-indicator' is not available on NetWare 5.x.
+      'squelch-util-indicator' is not available on NetWare 5.x.
 
       It is a common assumption that high 'processor utilization' is 
       an indication of a heavily loaded processor. This is *not* true.
@@ -126,7 +126,7 @@
       loop' on NetWare 3) as a ratio to time spent in servicing threads.
 
       Note that this is option only causes the client to *attempt* 
-      sqelching for brain-dead applications that rely on the 'utilization
+      squelching for brain-dead applications that rely on the 'utilization
       indicator' as a base for rescheduling logic. If your aim is to "hide"
       the client from your boss because you/he/she thinks a whizzing snake
       is scary, don't use the client or get another boss. :)
@@ -138,13 +138,13 @@
 
  4.0  Frequently seen problems, frequently asked questions ---------------
 
-    - Q: I get a startup message saying "Cannot find public symbol XXX"
+    - Q: I get a startup message saying "Cannot find public symbol XYZ"
          Whats up with that?
       A: *sigh*  Read the section on "Getting Started".
          Please let me know if you see this on NetWare 3.11
 
     - Q: The client consistantly fails to find a keyserver. It says
-         "Unable to resolve xxxx"
+         "Unable to resolve xyz"
       A: Either TCPIP.NLM or SYS:/ETC/RESOLV.CFG is incorrectly setup.
          - Check the TCP/IP stack by trying to ping a host on the internet.
            For example: "LOAD PING 192.233.80.4" (<-www.novell.com)
