@@ -11,7 +11,7 @@
  *
 */ 
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.19.2.1 1999/08/09 16:44:37 cyp Exp $"
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.19.2.2 1999/11/11 02:20:26 cyp Exp $"
 
 #include "baseincs.h" /* struct timeval */
 
@@ -34,6 +34,9 @@ const char *CliGetTimeString( const struct timeval *tv, int strtype );
 
 // Get the time since program start (pass NULL if storage not required)
 struct timeval *CliClock( struct timeval *tv );
+
+// Get thread/process (user) time. Returns 0=ok, -1 if error/not-supported
+int CliGetProcessTime( struct timeval *tv ); 
 
 // Add 'tv1' to 'tv2' and store in 'result'. Uses curr time if a 'tv' is NULL
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
