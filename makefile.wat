@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.32 2002/04/07 21:18:55 andreasb Exp $
+## $Id: makefile.wat,v 1.27.2.33 2002/05/05 22:49:59 andreasb Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -156,7 +156,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %LINK     =wlink
 %NASMEXE  =nasm           #point this to nasm (don't call the envvar 'NASM'!)
 %NASMFLAGS=-f obj -D__OMF__ -s
-%TASMEXE  =                #point this to tasm in your section if you have it
+%TASMEXE  =               #point this to tasm in your section if you have it
 %TFLAGS   =/ml /m9 /q /t  #if TASMEXE.==. then wasm will be executed
 %STACKSIZE=48K            #may be redefined in the platform specific section
 %AFLAGS   =/5s /fp3 /mf   #may be defined in the platform specific section
@@ -171,6 +171,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %MODULES  =               #may be defined in the platform specific section
 %IMPORTS  =               #may be defined in the platform specific section
 %BINNAME  =               #must be defined in the platform specific section
+%EXTRABIN =               #may be defined in the platform specific section
 %COPYRIGHT=               #may be defined in the platform specific section
 %FORMAT   =               #may be defined in the platform specific section
 %WLINKOPS =map            #one word wlink OP-tions. no spaces but '=' is ok
@@ -180,7 +181,10 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 !endif
 %dependall=# makefile.wat common/version.h  # remake everything if these change
 %ZIPFILE  =# blank for auto
-%DOCFILES =               #list of files in ./docs to include in the zip
+%BUILDNUM =               #autodetected
+%DOCFILES =docs\$(BASENAME).txt docs\CHANGES.txt docs\readme.1st
+                          #list of files in ./docs to include in the zip
+%READMETXT=               #this file will be copied to docs\readme.txt
 %ZIPPER   =zip.exe        # a zip file won't be made if not defined
 %ZIPOPTS  =#-u -9 -o -i -v 
  
@@ -251,19 +255,27 @@ clean :  .symbolic
   @for %i in ($(known_tgts)) do @if exist $(BASENAME)-%i-x86.zip del $(BASENAME)-%i-x86.zip
   @%quit
 
-zip : .symbolic  
-  @if $(%ZIPFILE).==. @set ZIPFILE=$(BASENAME)-$(%OSNAME)-x86
+buildnum : .symbolic
+  # HOW DO I: set BUILDNUM=`command_that_prints_buildnum` ???
+  @set BUILDNUM=000# no autodetection (yet?) :-((
+
+zip : .symbolic
+  @if $(%OSNAME).==. @echo ERROR: OSNAME not defined - use wmake target zip
+  @if $(%OSNAME).==. @%quit
+  #
+  @%make buildnum
+  @if $(%ZIPFILE).==. @set ZIPFILE=$(BASENAME)$(%BUILDNUM)-$(%OSNAME)-x86
   @set ZIPPER=#
   #
   @set zipexe=#
   @set pxxx=$(%PATH:;= )
-  @for %i in ($(%pxxx)) do @if exist %i\pkzip.exe @set zipexe=%i\pkzip.exe -exo
-  @if not $(%zipexe).==. set ZIPPER=$(%zipexe)
-  @echo gotit=$(%ZIPPER)
+  @for %i in ($(%pxxx)) do @if exist %i\pkzip.exe @set zipexe=pkzip.exe -exo
+  @if not $(%zipexe).==. @set ZIPPER=$(%zipexe)
+  #@echo gotit=$(%ZIPPER)
   @set zipexe=#
-  @for %i in ($(%pxxx)) do @if exist %i\zip.exe @set zipexe=%i\zip.exe -u -9 -o -i -v
-  @if not $(%zipexe).==. set ZIPPER=$(%zipexe)
-  @echo gotit=$(%ZIPPER)
+  @for %i in ($(%pxxx)) do @if exist %i\zip.exe @set zipexe=zip.exe -9 -o -v
+  @if not $(%zipexe).==. @set ZIPPER=$(%zipexe)
+  #@echo gotit=$(%ZIPPER)
   @set zipexe=
   @set pxxx=
   #
@@ -271,10 +283,14 @@ zip : .symbolic
   #@if $(%ZIPPER).==.  @echo Error(E02): ZIPPER is not defined
   #@if $(%ZIPPER).==.  @%quit
   #
-  @if exist $(%ZIPFILE).zip @del $(%ZIPFILE).zip >nul:
+  #build full doc list
+  @if not $(%READMETXT).==. copy $(%READMETXT) docs\readme.txt
+  @if not $(%READMETXT).==. @set DOCFILES=$(%DOCFILES) docs\readme.txt
+  @if exist $(%ZIPFILE).zip del $(%ZIPFILE).zip >nul
   @%write con 
-  @if not $(%ZIPPER).==. echo Generating $(%ZIPFILE).zip...
-  @if not $(%ZIPPER).==. $(%ZIPPER) $(%ZIPOPTS) $(%ZIPFILE).zip $(%BINNAME) $(%DOCFILES)
+  @if not $(%ZIPPER).==. @echo Generating $(%ZIPFILE).zip...
+  @if not $(%ZIPPER).==. $(%ZIPPER) $(%ZIPOPTS) $(%ZIPFILE).zip &
+	                           $(%BINNAME) $(%EXTRABIN) $(%DOCFILES)
 
 debug : .symbolic
   @set DEBUG=1
@@ -944,7 +960,7 @@ platform: .symbolic
   @for %i in ($(%LINKOBJS)) do @%make %i
   @for %i in ($(%PRELINKDEPS)) do @%make %i
   @if $(%isused).==0. @echo All objects are up to date
-  @if $(%isused).==0. @%quit
+  #@if $(%isused).==0. @%quit
   @if not $(%isused).==0. @%make dolink
 
 dolink : .symbolic
@@ -1018,11 +1034,11 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set OPT_SPEED = /oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\cdostime.obj output\cdosidle.obj &
                       output\cdoscon.obj output\cdosemu.obj output\cdosinet.obj &
-                      output\cdospmeh.obj output\cdoskeyb.obj
+                      output\cdoskeyb.obj
      @set LIBFILES  = 
      @set MODULES   =
      @set IMPORTS   =
-     @set DOCFILES  = docs\readme.dos docs\$(BASENAME).txt docs\readme.txt
+     @set READMETXT = docs\readme.dos
      @set BINNAME   = $(BASENAME).com
 
      @set got_tcpnet=0
@@ -1042,8 +1058,8 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
 #    @%make declare_for_csc
      @%make platform
      #-------------------------
-     @if not $(%PMODEW_PATH).==. @$(%PMODEW_PATH)\pmwlite.exe /C4 /S$(%PMODEW_PATH)\pmodew.exe $(%BINNAME)
-     @if not $(%PMODEW_PATH).==. @$(%PMODEW_PATH)\pmwsetup.exe /b0 /q $(%BINNAME)
+     @if not $(%PMODEW_PATH).==. @-$(%PMODEW_PATH)\pmwlite.exe /C4 /S$(%PMODEW_PATH)\pmodew.exe $(%BINNAME)
+     @if not $(%PMODEW_PATH).==. @-$(%PMODEW_PATH)\pmwsetup.exe /b0 /q $(%BINNAME)
 
 
 os2: .symbolic                                       # OS/2
@@ -1059,7 +1075,7 @@ os2: .symbolic                                       # OS/2
      @set LIBFILES  = so32dll.lib,tcp32dll.lib
      @set MODULES   =
      @set IMPORTS   =
-     @set DOCFILES  = docs\readme.os2 docs\$(BASENAME).txt docs\readme.txt
+     @set READMETXT = docs\readme.os2
      @set BINNAME   = $(BASENAME).exe
      @set STACKSIZE = 48K  # 16384        #Will slow down client if it's 32k
      @set LINKOBJS  = output\os2inst.obj output\lurk.obj $(%LINKOBJS)
@@ -1100,8 +1116,9 @@ win16: .symbolic                                       # Windows/16
      @set LIBFILES  =
      @set MODULES   =
      @set IMPORTS   =
-     @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
+     @set READMETXT = docs\readme.w16
      @set BINNAME   = $(BASENAME).exe
+     @set EXTRABIN  = $(BASENAME).scr
      @%make declare_for_rc5
      @%make declare_for_rc5smc
 ##   @%make declare_for_des
@@ -1147,8 +1164,9 @@ win32: .symbolic                               # win32
      @set LIBFILES  = user32,kernel32,advapi32,gdi32
      @set MODULES   =
      @set IMPORTS   =
-     @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
+     @set READMETXT = docs\readme.w32
      @set BINNAME   = $(BASENAME).exe
+     @set EXTRABIN  = $(BASENAME).com $(BASENAME).scr
      @%make declare_for_rc5
      @%make declare_for_rc5smc
 ##   @%make declare_for_des
@@ -1194,9 +1212,9 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
                       # @$(%watcom)\novi\mathlib.imp
      @set LIBPATH   = plat\netware\misc plat\netware\inet &
                       $(%watcom)\lib386 #$(%watcom)\lib386\netware
-     @set DOCFILES  = docs\readme.nw docs\$(BASENAME).txt docs\readme.txt
+     @set READMETXT = docs\readme.nw
      @set BINNAME   = $(BASENAME).nlm
-     @set COPYRIGHT = 'Copyright 1997-2000 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
+     @set COPYRIGHT = 'Copyright 1997-2002 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
      @%make declare_for_rc5
