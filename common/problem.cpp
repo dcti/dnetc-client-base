@@ -3,9 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.41  1998/11/14 13:56:15  cyp
+// Fixed pipeline_count for x86 clients (DES cores were running with 4
+// pipelines). Fixed unused parameter warning in LoadState(). Problem manager
+// saves its probman_index in the Problem object (needed by chrisb's x86
+// copro board code.)
+//
 // Revision 1.40  1998/11/12 22:58:31  remi
 // Reworked a bit AIX ppc & power defines, based on Patrick Hildenbrand
-// <patrick@de.ibm.com> advices.
+// <patrick@de.ibm.com> advice.
 //
 // Revision 1.39  1998/11/10 09:18:13  silby
 // Added alpha-linux target, should use axp-bmeyer core.
@@ -24,11 +30,9 @@
 // Added stuff to support 3 cores in the ARM clients.
 //
 // Revision 1.34  1998/09/23 22:05:20  blast
-// Multi-core support added for m68k.
-// Autodetection of cores added for AmigaOS. (Manual selection
-// possible of course).
-// Two new 68k cores are now added. rc5-000_030-jg.s and rc5-040_060-jg.s
-// Both made by John Girvin.
+// Multi-core support added for m68k. Autodetection of cores added for 
+// AmigaOS. (Manual selection possible of course). Two new 68k cores are 
+// now added. rc5-000_030-jg.s and rc5-040_060-jg.s Both made by John Girvin.
 //
 // Revision 1.33  1998/08/24 04:43:26  cyruspatel
 // timeslice is now rounded up to be multiple of PIPELINE_COUNT and even.
@@ -52,8 +56,7 @@
 // Completed support for logging.
 //
 // Revision 1.27  1998/07/13 12:40:33  kbracey
-// RISC OS update.
-// Added -noquiet option.
+// RISC OS update. Added -noquiet option.
 //
 // Revision 1.26  1998/07/13 03:31:52  cyruspatel
 // Added 'const's or 'register's where the compiler was complaining about
@@ -98,7 +101,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.40 1998/11/12 22:58:31 remi Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.41 1998/11/14 13:56:15 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -150,6 +153,7 @@ extern void CliSignalHandler(int);
 
 Problem::Problem()
 {
+  probman_index = -1; /* assume problem is not managed by probman */
   initialized = 0;
   finished = 0;
   started = 0;
@@ -162,17 +166,14 @@ Problem::~Problem()
 
 s32 Problem::IsInitialized()
 {
-  if (initialized) {
-    return 1;
-  } else {
-    return 0;
-  }
+  return (initialized!=0);
 }
 
-s32 Problem::LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32 _cputype )
+s32 Problem::LoadState( ContestWork * work, u32 _contest, 
+                                            u32 _timeslice, int _cputype )
 {
-  contest = contesttype;
-//LogScreen("loadstate contest: %d %d \n",contesttype,contest);
+  contest = (_cputype != 0); //use up variable
+  contest = _contest;
 
 #ifdef _CPU_32BIT_
   // copy over the state information
@@ -211,7 +212,7 @@ s32 Problem::LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32
   rc5unitwork.cypher.hi = contestwork.cypher.hi;
   rc5unitwork.cypher.lo = contestwork.cypher.lo;
 
-  if (contesttype == 0)
+  if (contest == 0)
     {
     rc5unitwork.L0.lo = ((key.hi >> 24) & 0x000000FFL) |
         ((key.hi >>  8) & 0x0000FF00L) |
@@ -244,22 +245,15 @@ s32 Problem::LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32
   pipeline_count = PIPELINE_COUNT;
   
 #if (CLIENT_CPU == CPU_X86)
-    if (rc5_unit_func == rc5_unit_func_p5_mmx)
-      // RC5 MMX core is 4 pipelines
-      pipeline_count = 4;
+  if (contest == 0 && rc5_unit_func == rc5_unit_func_p5_mmx)
+    pipeline_count = 4; // RC5 MMX core is 4 pipelines
 #elif (CLIENT_CPU == CPU_ARM)
-    if (_cputype == 0)
-    {
-	pipeline_count = 1;
-    }
-    else if (_cputype == 2)
-    {
-	pipeline_count = 2;
-    }
-    else
-    {
-	pipeline_count = 3;
-    }
+  if (_cputype == 0)
+    pipeline_count = 1;
+  else if (_cputype == 2)
+    pipeline_count = 2;
+  else
+    pipeline_count = 3;
 #endif
   
   tslice = (( pipeline_count + 1 ) & ( ~1L ));
@@ -517,21 +511,21 @@ s32 Problem::Run( u32 threadnum )
 //    printf("timeslice = %d\n",timeslice);
     if ((rc5_unit_func == rc5_unit_func_arm_2)&&( rc5unitwork.L0.hi&(1<<24)))
     {
-	rc5unitwork.L0.hi -= 1<<24;
-	if (contestwork.keysdone.lo & 1)
-	{
-	    contestwork.keysdone.lo--;
-	}
-	else
-	{
-	    LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
-	    for(;;); // probably a bit bogus, but hey.
-	}
+  rc5unitwork.L0.hi -= 1<<24;
+  if (contestwork.keysdone.lo & 1)
+  {
+      contestwork.keysdone.lo--;
+  }
+  else
+  {
+      LogScreen("Something really bad has happened - the number of keys looks wrong.\n");
+      for(;;); // probably a bit bogus, but hey.
+  }
     }
 
     /*
         Now returns number of keys processed!
-	(Since 5/8/1998, SA core 1.5, ARM core 1.6).
+  (Since 5/8/1998, SA core 1.5, ARM core 1.6).
     */
     kiter = rc5_unit_func(&rc5unitwork, timeslice);
     contestwork.keysdone.lo += kiter;

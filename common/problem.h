@@ -5,6 +5,12 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.26  1998/11/14 13:56:13  cyp
+// Fixed pipeline_count for x86 clients (DES cores were running with 4
+// pipelines). Fixed unused parameter warning in LoadState(). Problem manager
+// saves its probman_index in the Problem object (needed by chrisb's x86
+// copro board code.)
+//
 // Revision 1.25  1998/09/25 11:31:20  chrisb
 // Added stuff to support 3 cores in the ARM clients.
 //
@@ -208,6 +214,9 @@ public:
 
   u32 pipeline_count;
   u32 tslice; 
+
+  unsigned int probman_index; /* index of this problem in the problem table */
+                              /* -1 if the problem is not managed by probman*/
   
 protected:
   u32 initialized;
@@ -221,7 +230,8 @@ public:
 
   s32 IsInitialized(); 
 
-  s32 LoadState( ContestWork * work, u32 contesttype, u32 _timeslice, u32 _cputype );
+  s32 LoadState( ContestWork * work, u32 _contest, u32 _timeslice, 
+                                     int _cputype );
     // Load state into internal structures.
     // state is invalid (will generate errors) until this is called.
     // returns: -1 on error, 0 is OK
@@ -252,3 +262,4 @@ public:
 
 #endif
 
+
