@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *cliident_cpp(void) { 
-return "@(#)$Id: cliident.cpp,v 1.27.2.3 2003/01/19 22:49:49 snake Exp $"; } 
+return "@(#)$Id: cliident.cpp,v 1.27.2.4 2003/02/22 12:55:40 andreasb Exp $"; } 
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -474,7 +474,11 @@ const char *CliGetFullVersionDescriptor(void)
   sprintf( buffer, "%s v" CLIENT_VERSIONSTRING "-"
          "%c"  /* GUI == "G", CLI == "C" */
          #ifdef CLIENT_SUPPORTS_SMP
-         "T"   /* threads */
+	   #ifdef HAVE_MULTICRUNCH_VIA_FORK
+	   "F" /* fork() */
+           #else
+           "T" /* threads */
+           #endif
          #else
          "P"   /* polling */
          #endif
