@@ -7,7 +7,7 @@
 
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
-*/   
+*/
 
 #ifndef _CLICSTAT_H_
 #define _CLICSTAT_H_
@@ -18,16 +18,16 @@
 #include "clicdata.h" // for CliGetContestInfo[Base|Summary]Data()
 
 #ifndef _U32LimitDouble_
-  #define _U32LimitDouble_  ((double)(0xFFFFFFFF))
+  #define _U32LimitDouble_  ((double)(0xFFFFFFFFul))
   #define U64TODOUBLE( hi, lo ) ((double)((((double)(hi))* \
            (((double)(_U32LimitDouble_))+((double)(1))))+((double)(lo))))
 #endif
 
-// returns keyrate as string (maxlen=26) "nnnn.nn ['K'|'M'|'G'|'T']"
+// returns keyrate as string (maxlen=26) "nnnn.nn ['k'|'M'|'G'|'T']"
 // return value is a pointer to buffer.
 char *CliGetKeyrateAsString( char *buffer, double rate );
 
-// return iter/keysdone/whatever as string. set inNetOrder if 'u' 
+// return iter/keysdone/whatever as string. set inNetOrder if 'u'
 // needs ntohl()ing first, set contestID = -1 to have the ID ignored
 const char *CliGetU64AsString( u64 *u, int inNetOrder, int contestID );
 
