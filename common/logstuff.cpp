@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.34 2000/11/01 19:58:18 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.35 2000/11/02 22:31:08 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -747,10 +747,25 @@ void LogScreenPercent( unsigned int load_problem_count )
 
   if (buffer[0] && use_alt_fmt)
   {
+    #if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
+    // temporary fix - updating the progress every 5 seconds is not a good idea
+    // since it causes a number of context-switches to the 68K, which in turn
+    // slows the 68K client down quite dramatically if both clients are running
+    // in parallel.  So, we only do it once per minute, minus the time display.
+    static int cnt = 11;
+    if (cnt++ > 10)
+    {
+      LogScreenRaw( "\r%s", buffer, NULL );
+      cnt = 0;
+      logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
+      logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
+    }
+    #else
     LogScreen( "\r%s", buffer, NULL );
     logstatics.stableflag = 0; //(endperc == 0);  //cursor is not at column 0
     logstatics.lastwasperc = 1; //(endperc != 0); //percbar requires reset
     /* simple, eh? :) */
+    #endif
   }
   else
   {
