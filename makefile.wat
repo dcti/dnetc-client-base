@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.26 2001/04/12 14:59:11 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.27 2001/04/14 13:42:55 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -1040,9 +1040,10 @@ win16: .symbolic                                       # Windows/16
      @set OSNAME    = win16
      @set AFLAGS    = /5s /fp3 /bt=dos /mf
      @set TASMEXE   = tasm32.exe
+     @set NASMFLAGS = $(%NASMFLAGS) -DUSE_DPMI
      @set LFLAGS    = system win386 symtrace open #debug all op de 'SCRSAVE : distributed.net client for Windows'
      @set CWARNLEV  = $(%CWARNLEV)
-     @set CFLAGS    = /3s /zW /bt=windows /d_Windows &
+     @set CFLAGS    = /3s /zW /bt=windows /d_Windows /DUSE_DPMI &
                       /i$(%watcom)\h;$(%watcom)\h\win /iplat\win &
                       /DBITSLICER_WITH_LESS_BITS /DDYN_TIMESLICE 
                       #/d2
@@ -1062,6 +1063,7 @@ win16: .symbolic                                       # Windows/16
      @set DOCFILES  = docs\$(BASENAME).txt docs\readme.txt
      @set BINNAME   = $(BASENAME).exe
      @%make declare_for_rc5
+     @%make declare_for_rc5smc
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   #@%make declare_for_desmmx
