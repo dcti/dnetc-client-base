@@ -9,7 +9,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.79.2.27 2000/01/05 01:25:58 cyp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.79.2.28 2000/01/07 04:01:15 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -433,6 +433,23 @@ static long __GetRawProcessorID(const char **cpuname)
     detectedtype = -1;
     if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
       detectedtype = result - 0x100L; // PVR!!
+  }
+  #elif (CLIENT_OS == OS_WIN32)
+  if (detectedtype == -2L)
+  {
+    SYSTEM_INFO si;
+    si.wProcessorArchitecture = 0;
+    si.wProcessorRevision = si.wProcessorLevel = 0;
+    detectedtype = -1L;
+    GetSystemInfo( &si );
+    if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_PPC)
+    {
+      detectedtype = si.wProcessorRevision;
+      if (detectedtype == 0)
+        detectedtype = si.wProcessorLevel; 
+      if (detectedtype == 0)
+        detectedtype = -1;
+    }
   }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
@@ -1143,6 +1160,37 @@ static long __GetRawProcessorID(const char **cpuname)
     if (detectedtype <= 0)
       detectedtype = -1;
   }
+  #elif (CLIENT_OS == OS_WIN32)
+  if (detectedtype == -2L)
+  {
+    SYSTEM_INFO si;
+    si.wProcessorLevel = si.wProcessorArchitecture = 0;
+    detectedtype = -1L;
+    GetSystemInfo( &si );
+    if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ALPHA &&
+        si.wProcessorLevel != 0)
+    {
+      unsigned int ref;
+      for (ref = 0; (ref < sizeof(cpuridtable)/sizeof(cpuridtable[0])); ref++)
+      {
+        char *q = strchr(cpuridtable,'(');
+        if (q) 
+        {
+          if (si.wProcessorLevel == atoi(q+1))
+          {
+            detectedtype = cpuridtable[ref].rid;
+            break;
+          }
+        }  
+      }
+      if (detectedtype == -1)
+      {
+        sprintf( namebuf, "%u", si.wProcessorLevel );
+        detectedname = namebuf;
+        detectedtype = 0;
+      }
+    }    
+  }
   #elif (CLIENT_OS == OS_LINUX)
   if (detectedtype == -2L)
   {
@@ -1361,4 +1409,3 @@ void DisplayProcessorInformation(void)
 }
 
 /* ---------------------------------------------------------------------- */
-
