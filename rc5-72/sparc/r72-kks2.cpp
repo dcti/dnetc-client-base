@@ -31,7 +31,7 @@
 #define Q 0x9E3779B9
 
 #ifdef __cplusplus
-extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_ansi_2 ( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 
@@ -86,10 +86,10 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
 	#define ASM_SUB(res, wsize, op)		(res) = (wsize) - (op);
 	#define ASM_OR(res, op1, op2)		(res) = (op1) | (op2);
 	#define ASM_XOR(res, op1, op2)		(res) = (op1) ^ (op2);
-	#define ASM_SL(res, op, dist)		(res) = (op) << (dist);
-	#define ASM_SR(res, op, dist)		(res) = (op) >> (dist);
-	#define ASM_SL3(res, op)			(res) <<= 3u;
-	#define ASM_SR29(res, op)			(res) >>= 29u;
+	#define ASM_SL(res, op, dist)		(res) = SHL((op), (dist));
+	#define ASM_SR(res, op, dist)		(res) = SHR((op), (dist));
+	#define ASM_SL3(res, op)			(res) = (op) << 3u;
+	#define ASM_SR29(res, op)			(res) = (op) >> 29u;
 
 #endif
 
@@ -342,8 +342,6 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
 
 
 
-#define key rc5_72unitwork->L0
-
 s32 CDECL rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
 	u32 Sa[52], Sb[52];
@@ -354,6 +352,18 @@ s32 CDECL rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 	register u32 Lb0, Lb1, Lb2, Tb, TSb, SCb;
 	register u32 SaA, SbA;
 	register u32 RaA, RaB, RbA, RbB;
+
+	u32 key_lo      = rc5_72unitwork->L0.lo;
+	u32 key_mid     = rc5_72unitwork->L0.mid;
+	u32 key_hi      = rc5_72unitwork->L0.hi;
+	u32 plain_lo    = rc5_72unitwork->plain.lo;
+	u32 plain_hi    = rc5_72unitwork->plain.hi;
+	u32 cypher_lo   = rc5_72unitwork->cypher.lo;
+	u32 cypher_hi   = rc5_72unitwork->cypher.hi;
+	u32 check_count = rc5_72unitwork->check.count;
+	u32 check_lo    = rc5_72unitwork->check.lo;
+	u32 check_mid   = rc5_72unitwork->check.mid;
+	u32 check_hi    = rc5_72unitwork->check.hi;
 
 	#ifdef __POWERPC__
 	u32 LShft;				/* PowerPC kludge */
@@ -376,11 +386,11 @@ s32 CDECL rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 	*/
 
 	cached_s0 = ROTL3(P);
-	cached_l0 = ROTL(key.lo + cached_s0, cached_s0);
+	cached_l0 = ROTL(key_lo + cached_s0, cached_s0);
 	cached_s1 = ROTL3(Sa[1] + cached_s0 + cached_l0);
 	
 	Ta = cached_s1 + cached_l0;
-	cached_l1 = ROTL(key.mid + Ta, Ta);
+	cached_l1 = ROTL(key_mid + Ta, Ta);
 	cached_s2 = ROTL3(Sa[2] + cached_s1 + cached_l1);
 
 	do {
@@ -389,7 +399,7 @@ s32 CDECL rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 		SaA = SbA = cached_s2;
 		La0 = Lb0 = cached_l0;
 		La1 = Lb1 = cached_l1;
-		La2 = key.hi;
+		La2 = key_hi;
 		Lb2 = La2 + 1;
 
 		ASM_ADD(Ta, SaA, La1);
@@ -492,11 +502,11 @@ s32 CDECL rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
 		ASM_OR(SbA, SbA, TSb);				/* Stage #53 */
 		ASM_ADD(TSa, La1, Ta);
-		RaA = rc5_72unitwork->plain.lo;
+		RaA = plain_lo;
 
 		ASM_ADD(Tb, SbA, Lb0);
 		ASM_SUB(SCa, word_size, Ta);
-		RbA = rc5_72unitwork->plain.lo;
+		RbA = plain_lo;
 
 		ASM_SL(La1, TSa, Ta);
 		ASM_ADD(TSb, Lb1, Tb);
@@ -508,11 +518,11 @@ s32 CDECL rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
 		ASM_SL(Lb1, TSb, Tb);
 		ASM_OR(La1, La1, TSa);
-		RaB = rc5_72unitwork->plain.hi;
+		RaB = plain_hi;
 
 		RaA += SaA;
 		RbA += SbA;
-		RbB = rc5_72unitwork->plain.hi;
+		RbB = plain_hi;
 
 		ASM_SR(TSb, TSb, SCb);
 		ASM_ADD(SaA, SaA, SKa);
@@ -559,68 +569,93 @@ s32 CDECL rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 		ROUND_2(49, La2, Lb2, La1, Lb1);
 		ROUND_1(50, La0, Lb0, La2, Lb2);
 
-		Ta = rc5_72unitwork->cypher.lo;
-		if (RaA == Ta || RbA == Ta) {
+		if (RaA == cypher_lo || RbA == cypher_lo) {
 			ROUND_2(51, La1, Lb1, La0, Lb0);
 		}
 
-		if (RaA == rc5_72unitwork->cypher.lo) {
-			++rc5_72unitwork->check.count;
-			rc5_72unitwork->check.hi  = rc5_72unitwork->L0.hi;
-			rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
-			rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
+		if (RaA == cypher_lo) {
+			++check_count;
+			check_hi  = key_hi;
+			check_mid = key_mid;
+			check_lo  = key_lo;
 			
-			if (RaB == rc5_72unitwork->cypher.hi) {
+			if (RaB == cypher_hi) {
 				*iterations -= kiter * 2;
+
+				rc5_72unitwork->L0.lo		= key_lo;
+				rc5_72unitwork->L0.mid		= key_mid;
+				rc5_72unitwork->L0.hi		= key_hi;
+				rc5_72unitwork->check.count	= check_count;
+				rc5_72unitwork->check.lo	= check_lo;
+				rc5_72unitwork->check.mid	= check_mid;
+				rc5_72unitwork->check.hi	= check_hi;
+
 				return RESULT_FOUND;
 			}
 		}
 		
-		if (RbA == rc5_72unitwork->cypher.lo) {
-			++rc5_72unitwork->check.count;
-			rc5_72unitwork->check.hi  = rc5_72unitwork->L0.hi + 1;
-			rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
-			rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
+		if (RbA == cypher_lo) {
+			++check_count;
+			check_hi  = key_hi + 1;
+			check_mid = key_mid;
+			check_lo  = key_lo;
 
-			if (RbB == rc5_72unitwork->cypher.hi) {
+			if (RbB == cypher_hi) {
 				*iterations -= kiter * 2 - 1;
+
+				rc5_72unitwork->L0.lo		= key_lo;
+				rc5_72unitwork->L0.mid		= key_mid;
+				rc5_72unitwork->L0.hi		= key_hi;
+				rc5_72unitwork->check.count	= check_count;
+				rc5_72unitwork->check.lo	= check_lo;
+				rc5_72unitwork->check.mid	= check_mid;
+				rc5_72unitwork->check.hi	= check_hi;
+
 				return RESULT_FOUND;
 			}
 		}
 
-		key.hi = (key.hi + 0x02) & 0x000000FF;
-		if (!key.hi) {
-			key.mid = key.mid + 0x01000000;
-			if (!(key.mid & 0xFF000000u)) {
-				key.mid = (key.mid + 0x00010000) & 0x00FFFFFF;
-				if (!(key.mid & 0x00FF0000)) {
-					key.mid = (key.mid + 0x00000100) & 0x0000FFFF;
-					if (!(key.mid & 0x0000FF00)) {
-						key.mid = (key.mid + 0x00000001) & 0x000000FF;
-						if (!key.mid) {
-							key.lo = key.lo + 0x01000000;
-							if (!(key.lo & 0xFF000000u)) {
-								key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
-								if (!(key.lo & 0x00FF0000)) {
-									key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
-									if (!(key.lo & 0x0000FF00)) {
-										key.lo = (key.lo + 0x00000001) & 0x000000FF;
+		key_hi = (key_hi + 0x02) & 0x000000FF;
+		if (!key_hi) {
+			key_mid = key_mid + 0x01000000;
+			if (!(key_mid & 0xFF000000u)) {
+				key_mid = (key_mid + 0x00010000) & 0x00FFFFFF;
+				if (!(key_mid & 0x00FF0000)) {
+					key_mid = (key_mid + 0x00000100) & 0x0000FFFF;
+					if (!(key_mid & 0x0000FF00)) {
+						key_mid = (key_mid + 0x00000001) & 0x000000FF;
+						if (!key_mid) {
+							key_lo = key_lo + 0x01000000;
+							if (!(key_lo & 0xFF000000u)) {
+								key_lo = (key_lo + 0x00010000) & 0x00FFFFFF;
+								if (!(key_lo & 0x00FF0000)) {
+									key_lo = (key_lo + 0x00000100) & 0x0000FFFF;
+									if (!(key_lo & 0x0000FF00)) {
+										key_lo = (key_lo + 0x00000001) & 0x000000FF;
 									}
 								}
 							}
-							/* key.lo changed */
-							cached_l0 = ROTL(key.lo + cached_s0, cached_s0);
+							/* key_lo changed */
+							cached_l0 = ROTL(key_lo + cached_s0, cached_s0);
 							cached_s1 = ROTL3(Sa[1] + cached_s0 + cached_l0);
 						}
 					}
 				}
 			}
-			/* key.mid changed */
+			/* key_mid changed */
 			Ta = cached_s1 + cached_l0;
-			cached_l1 = ROTL(key.mid + Ta, Ta);
+			cached_l1 = ROTL(key_mid + Ta, Ta);
 			cached_s2 = ROTL3(Sa[2] + cached_s1 + cached_l1);
 		}
 	} while (--kiter);
+
+	rc5_72unitwork->L0.lo		= key_lo;
+	rc5_72unitwork->L0.mid		= key_mid;
+	rc5_72unitwork->L0.hi		= key_hi;
+	rc5_72unitwork->check.count	= check_count;
+	rc5_72unitwork->check.lo	= check_lo;
+	rc5_72unitwork->check.mid	= check_mid;
+	rc5_72unitwork->check.hi	= check_hi;
 
 	return RESULT_NOTHING;
 }
