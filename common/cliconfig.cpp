@@ -7,7 +7,7 @@
 
 // --------------------------------------------------------------------------
 
-#define OPTION_COUNT    38
+#define OPTION_COUNT    39
 
 char *menutable[4]=
   {
@@ -173,7 +173,24 @@ optionstruct options[OPTION_COUNT]=
   "        generate random blocks if the block buffers empty.)\n"
   "mode 2) Finish Buffers and exit mode. The client will never connect\n"
   "        to a keyserver, and when the block buffers empty, it will\n"
-  "        terminate.\n",3,2,0}
+  "        terminate.\n",3,2,0},
+//38
+{ "lurk", "Modem detection options","0",
+  "\nmode 0) Normal mode; the client will send/receive blocks only when it\n"
+  "        empties the in buffer, hits the flush threshold, or the user\n"
+  "        specifically requests a flush/fetch.\n"
+  "mode 1) Dial-up detection mode. This acts like mode 0, with the addition\n"
+  "        that the client will automatically send/receive blocks when a\n"
+  "        dial-up networking connection is established. Modem users\n"
+  "        will probably wish to use this option so that their client\n"
+  "        never runs out of blocks.\n"
+  "mode 2) Dial-up detection ONLY mode. Like mode 1, this will cause\n"
+  "        the client to automatically send/receieve blocks when\n"
+  "        connected. HOWEVER, if the client runs out of blocks,\n"
+  "        it will NOT trigger auto-dial, and will instead work\n"
+  "        on random blocks until a connection is detected.\n",
+  3,2,0}
+
 };
 
 #define CONF_ID 0
@@ -214,6 +231,7 @@ optionstruct options[OPTION_COUNT]=
 #define CONF_NETTIMEOUT 35
 #define CONF_EXITFILECHECKTIME 36
 #define CONF_OFFLINEMODE 37
+#define CONF_LURKMODE 38
 // --------------------------------------------------------------------------
 
 s32 Client::ConfigureGeneral( s32 currentmenu )
@@ -270,6 +288,7 @@ options[CONF_CKTIME].thevariable=&checkpoint_min;
 options[CONF_NETTIMEOUT].thevariable=&nettimeout;
 options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
 options[CONF_OFFLINEMODE].thevariable=&offlinemode;
+options[CONF_LURKMODE].thevariable=&lurk;
 
   while ( 1 )
   {
@@ -315,6 +334,9 @@ printf("------------------------------------------------------------\n\n");
            || (choice == CONF_NETTIMEOUT)
            || (choice == CONF_EXITFILECHECKTIME)
            || (choice == CONF_OFFLINEMODE)
+#if (CLIENT_OS==OS_WIN32)
+           || (choice == CONF_LURKMODE)
+#endif
            )
            && (options[choice].optionscreen==currentmenu)
           )
@@ -383,6 +405,9 @@ printf("------------------------------------------------------------\n\n");
            || (choice == CONF_NETTIMEOUT)
            || (choice == CONF_EXITFILECHECKTIME)
            || (choice == CONF_OFFLINEMODE)
+#if (CLIENT_OS==OS_WIN32)
+           || (choice == CONF_LURKMODE)
+#endif
            )
            && (options[choice].optionscreen==currentmenu)
           )
@@ -698,6 +723,21 @@ printf("------------------------------------------------------------\n\n");
           if (choice < 0) choice=0;
           if (choice > 2) choice=2;
           *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
+        case CONF_LURKMODE:
+          choice=atoi(parm);
+          if (choice < 0) choice=0;
+          if (choice > 2) choice=0;
+          if (choice==0) 
+            {
+            choice=0;lurk=0;connectoften=0;
+            }
+          else if (choice==1) lurk=1;
+          else if (choice==2)
+            {
+            lurk=2;
+            connectoften=0;
+            };
+                      
         default:
           break;
       }
@@ -1176,7 +1216,31 @@ s32 Client::WriteConfig(void)
   ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
 
 #if (CLIENT_OS == OS_WIN32)
-  ini.setrecord(OPTION_SECTION, "lurk",  IniString(lurk));
+
+  if (lurk==0)
+    {
+    IniRecord *tempptr;
+    tempptr = ini.findfirst(OPTION_SECTION, "lurk");
+    if (tempptr) tempptr->values.Erase();
+    tempptr = ini.findfirst(OPTION_SECTION, "lurkonly");
+    if (tempptr) tempptr->values.Erase();
+    }
+  else if (lurk==1)
+    {
+    IniRecord *tempptr;
+    s32 tempvalue=1;
+    tempptr = ini.findfirst(OPTION_SECTION, "lurkonly");
+    if (tempptr) tempptr->values.Erase();
+    ini.setrecord(OPTION_SECTION, "lurk",  IniString(tempvalue));
+    }
+  else if (lurk==2)
+    {
+    IniRecord *tempptr;
+    s32 tempvalue=1;
+    tempptr = ini.findfirst(OPTION_SECTION, "lurk");
+    if (tempptr) tempptr->values.Erase();
+    ini.setrecord(OPTION_SECTION, "lurkonly",  IniString(tempvalue));
+    };
 #endif
 
 #define INIFIND(key) ini.findfirst(OPTION_SECTION, options[key].name)
