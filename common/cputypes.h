@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.31  1998/11/10 09:33:03  silby
+// Added AIX POWER type so that optimizations in rotate.h would be triggered for better rc5 performance.
+//
 // Revision 1.30  1998/09/29 07:56:57  remi
 // #if defined(SPARCLINUX) is redundant.
 //
@@ -316,6 +319,11 @@ struct s128 { s64 hi, lo; };
   #if defined(_ARCH_PPC)
     #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWERPC
+  #endif
+#elif defined(_AIX)
+  #if !defined(ASM_PPC)
+    #define CLIENT_OS     OS_AIX
+    #define CLIENT_CPU    CPU_POWER
   #endif
 #elif defined(macintosh)
   #if GENERATINGPOWERPC
