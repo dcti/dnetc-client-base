@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.158 2000/06/13 01:18:53 mfeiri Exp $
+# @(#)$Id: configure,v 1.222.2.159 2000/06/14 08:56:05 oliver Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1903,7 +1903,7 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC295_PPC -mcpu=603e -mmultiple -mstring -I./ -DHAVE_OGR_CORES"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
-                        $RC5PPC_SRCS $OGR_ANSI_SRCS"
+                        $RC5PPC_SRCS $OGR_PPC_SRCS"
         TARGET_TARBALL="amigaos-ppc-wos"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
         TARGET_STRIP="platforms/amiga/tools/strip_wos"
@@ -1917,12 +1917,13 @@ case "$1" in
 	TARGET_AS="ppc-amigaos-gas -m603"
 	TARGET_CC="ppc-amigaos-g++ -V 2.95.2"
 	TARGET_CCFLAGS="-pup -D__POWERUP__ $OPTS_GCC295_PPC -mcpu=603e -mmultiple -mstring -I./ -DHAVE_OGR_CORES"
+	TARGET_LDFLAGS="-pup"
 	TARGET_ADDSRCS="platforms/amiga/amVersion.c platforms/amiga/amSupport.c \
                         platforms/amiga/amConsole.c platforms/amiga/amNetwork.c \
-                        $RC5PPC_SRCS $OGR_ANSI_SRCS"
+                        $RC5PPC_SRCS $OGR_PPC_SRCS"
         TARGET_TARBALL="amigaos-ppc-pup"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP=""
+        TARGET_STRIP="platforms/amiga/tools/strip_pup"
         TARGET_BINNAME_SUFFIX="_ppc"
         TARGET_OS="AMIGAOS_PPC"
         TARGET_GENMAN=
