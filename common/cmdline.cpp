@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.116  1999/01/21 03:01:39  silby
+// Made -uninstall and -install "modes" so that they could honor
+// -quiet (to facilitate quiet installs in login scripts, etc.)
+//
 // Revision 1.115  1999/01/13 09:56:21  cramer
 // Fixed the -kill/hup/etc signal handling.
 // Fixed the "ps" command for Solaris -- other SysV's can follow.
@@ -133,7 +137,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.115 1999/01/13 09:56:21 cramer Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.116 1999/01/21 03:01:39 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -311,30 +315,6 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           }
         #else
           not_supported = 1;
-        #endif
-        }
-      else if ( strcmp(thisarg, "-install" ) == 0)
-        {
-        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-        winInstallClient(0); /*w32pre.cpp*/
-        terminate_app = 1;
-        #elif (CLIENT_OS == OS_OS2)
-        os2CliInstallClient(0);
-        terminate_app = 1;
-        #else
-        not_supported = 1;
-        #endif
-        }
-      else if ( strcmp(thisarg, "-uninstall" ) == 0)
-        {
-        #if (CLIENT_OS == OS_OS2)
-        os2CliUninstallClient(0);
-        terminate_app = 1;
-        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
-        winUninstallClient(0); /*w32pre.cpp*/
-        terminate_app = 1;
-        #else
-        not_supported = 1;
         #endif
         }
       if (not_supported)
@@ -1109,6 +1089,8 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
           ( strcmp( thisarg, "-test"        ) == 0 ) ||
           ( strcmp( thisarg, "-config"      ) == 0 ) ||
+          ( strcmp( thisarg, "-install"     ) == 0 ) ||
+          ( strcmp( thisarg, "-uninstall"   ) == 0 ) ||
           ( strncmp( thisarg, "-benchmark", 10 ) == 0))
         {
         ; //nothing - handled in next loop
@@ -1244,6 +1226,30 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         ModeReqClear(-1); //clear all - only do -config
         inimissing = 1; //force run config
         break;
+        }
+      else if ( strcmp(thisarg, "-install" ) == 0)
+        {
+        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        winInstallClient(quietmode); /*w32pre.cpp*/
+        terminate_app = 1;
+        #elif (CLIENT_OS == OS_OS2)
+        os2CliInstallClient(0);
+        terminate_app = 1;
+        #else
+        not_supported = 1;
+        #endif
+        }
+      else if ( strcmp(thisarg, "-uninstall" ) == 0)
+        {
+        #if (CLIENT_OS == OS_OS2)
+        os2CliUninstallClient(0);
+        terminate_app = 1;
+        #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        winUninstallClient(quietmode); /*w32pre.cpp*/
+        terminate_app = 1;
+        #else
+        not_supported = 1;
+        #endif
         }
       }
     }
