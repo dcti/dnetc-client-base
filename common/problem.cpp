@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.108.2.2 2001/03/22 22:12:50 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.108.2.3 2001/03/22 22:34:25 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2062,11 +2062,12 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, u32 flags)
 {
   int rescode = -1;
   ContestWork work;
+  u32 contestid;
   InternalProblem *thisprob = __pick_probptr(__thisprob, PICKPROB_MAIN);
   
   if (thisprob)
   {  
-    rescode = ProblemRetrieveState( thisprob, &work, 0, 0, 0 );
+    rescode = ProblemRetrieveState( thisprob, &work, &contestid, 0, 0 );
   }
   if (rescode >= 0)
   {
