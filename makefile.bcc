@@ -1,7 +1,7 @@
 # makefile distributed.net client (Borland C++ for Win32).
 # For information about distributed.net, see http://www.distributed.net/
 #
-# $Id: makefile.bcc,v 1.23.2.22 2001/01/21 18:19:08 cyp Exp $
+# $Id: makefile.bcc,v 1.23.2.23 2001/02/27 00:42:23 andreasb Exp $
 #
 # As of Feb 2000, Borland C++ 5.5 compiler is free for download.
 # http://www.borland.com/bcppbuilder/freecompiler/
@@ -150,7 +150,8 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/jp-mmx.obj     \
         $(OUTPUTPATH)/rg-486.obj     \
         $(OUTPUTPATH)/rg-6x86.obj    \
-        $(OUTPUTPATH)/hb-k7.obj
+        $(OUTPUTPATH)/hb-k7.obj      \
+        $(OUTPUTPATH)/nb-p7.obj
 BCCOPTS = $(BCCOPTS)
 
 
@@ -199,7 +200,7 @@ BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES
 OGR_OBJS =
 !else
 OGR_OBJS =                        \
-        $(OUTPUTPATH)/ogr.obj     \
+        $(OUTPUTPATH)/ogr.aobj    \
         $(OUTPUTPATH)/ogr_dat.obj \
         $(OUTPUTPATH)/ogr_sup.obj
 BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
@@ -211,6 +212,10 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES
         nasmw $(NASMOPTS) -i $(CSCPATH)\x86\ $(<:/=\) -o $(@:/=\)
 
 .asm.obj:
+        nasmw $(NASMOPTS) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
+
+# use the .aobj extension to prefer an .asm file to a .cpp file with same name
+.asm.aobj:
         nasmw $(NASMOPTS) -i $(<D:/=\) $(<:/=\) -o $(@:/=\)
 
 .cpp.obj:
