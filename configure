@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.52 1999/11/22 12:48:02 chrisb Exp $
+# @(#)$Id: configure,v 1.222.2.53 1999/11/23 08:27:41 elric Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1135,11 +1135,12 @@ case "$1" in
 
     *x86-netbsd)
 	TARGET_AS="g++ -c -DNO_BALIGN"
+	TARGET_TARBALL="netbsd-i386"
 	TARGET_CCFLAGS="$OPTS_GCC_X86 $OPTS_DES_MMX -DMMX_RC5 \
 	                -DHAVE_CSC_CORES -DHAVE_DES_CORES" #-DHAVE_OGR_CORES
 	TARGET_LDFLAGS="-static"
 	TARGET_ADDSRCS="$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4 \
-	                " #$OGR_ANSI_SRCS
+	                ${CSC_ANSI_CORES} " #$OGR_ANSI_SRCS
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S platforms/x86ident.S \
 	                des/brydgnu/p1bdespro.S"
 	TARGET_NASM_FMT="aoutb"
@@ -1335,8 +1336,10 @@ case "$1" in
     *arm-netbsd)				# chrisb
 	TARGET_CC="gcc"
 	TARGET_AS="as"
-	TARGET_CCFLAGS="$OPTS_GCC_ARM -DBIT_32 -DKWAN"
-	TARGET_ADDSRCS=""
+	TARGET_TARBALL="netbsd-arm32"
+	TARGET_CCFLAGS="$OPTS_GCC_ARM -DBIT_32 -DKWAN -DHAVE_CSC_CORES \
+			-DHAVE_DES_CORES"
+	TARGET_ADDSRCS="${CSC_ANSI_SRCS}"
 	TARGET_ADDASMS="rc5/arm/rc5-arm-1-gnu.s rc5/arm/rc5-arm-2-gnu.s \
 			rc5/arm/rc5-arm-3-gnu.s \
 			des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
