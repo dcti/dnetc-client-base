@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.111  1998/07/29 05:14:40  silby
+// Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
+//
 // Revision 1.110  1998/07/26 12:45:52  cyruspatel
 // new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
 // xx.v27.distributed.net then that will be interpreted by Network::Resolve()
@@ -89,7 +92,7 @@
 //
 // Revision 1.86  1998/07/08 23:31:27  remi
 // Cleared a GCC warning.
-// Tweaked $Id: client.cpp,v 1.110 1998/07/26 12:45:52 cyruspatel Exp $.
+// Tweaked $Id: client.cpp,v 1.111 1998/07/29 05:14:40 silby Exp $.
 //
 // Revision 1.85  1998/07/08 09:28:10  jlawson
 // eliminate integer size warnings on win16
@@ -265,7 +268,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.110 1998/07/26 12:45:52 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.111 1998/07/29 05:14:40 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -482,6 +485,7 @@ Client::Client()
   exitfilechecktime=30;
 #if defined(LURK)
   lurk=0;
+  islurkstarted=0;
 #endif
 #if (CLIENT_OS==OS_WIN32) 
   win95hidden=0;
@@ -3565,6 +3569,9 @@ int main( int argc, char *argv[] )
 static rasenumconnectionsT rasenumconnections = NULL;
 static rasgetconnectstatusT rasgetconnectstatus = NULL;
 static rashangupT rashangup = NULL;
+static rasdialT rasdial = NULL;
+static rasgeterrorstringT rasgeterrorstring = NULL;
+static rasgetentrydialparamsT rasgetentrydialparams = NULL;
 #endif
 
 s32 Client::StartLurk(void)// Initializes Lurk Mode
@@ -3620,10 +3627,47 @@ s32 Client::StartLurk(void)// Initializes Lurk Mode
       LocalFree( lpMsgBuf );
       return -1;
     }
-
+    rasdial = (rasdialT) GetProcAddress(hinstance,"RasDialA");
+    if (rasdial==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
+    rasgeterrorstring = (rasgeterrorstringT) GetProcAddress(hinstance,"RasGetErrorStringA");
+    if (rasgeterrorstring==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
+    rasgetentrydialparams = (rasgetentrydialparamsT)
+      GetProcAddress(hinstance,"RasGetEntryDialParamsA");
+    if (rasgetentrydialparams==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
 
   }
 #endif
+islurkstarted=1;
 return 0;
 }
 
@@ -3633,6 +3677,9 @@ s32 Client::LurkStatus(void)// Checks status of connection
   // 0 == not currently connected
   // 1 == currently connected
 {
+if (islurkstarted != 1) StartLurk();
+if (islurkstarted != 1) return 0; // Lurk can't be started, evidently
+
 #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
 if (lurk && rasenumconnections && rasgetconnectstatus)
   {
@@ -3668,14 +3715,69 @@ s32 Client::LurkInitiateConnection(void)
   // 0 = already connected, 1 = connection started,
   // -1 = connection failed
 {
+if (islurkstarted != 1) StartLurk();
+if (islurkstarted != 1) return -1; // Lurk can't be started, evidently
 
-return 0;
+#if (CLIENT_OS == OS_WIN32)
+
+RASDIALPARAMS dialparameters;
+BOOL passwordretrieved;
+HRASCONN connectionhandle;
+DWORD returnvalue;
+char errorstring[128];
+
+dialparameters.dwSize=sizeof(RASDIALPARAMS);
+strcpy(dialparameters.szEntryName,connectionname);
+strcpy(dialparameters.szPhoneNumber,"");
+strcpy(dialparameters.szCallbackNumber,"*");
+strcpy(dialparameters.szUserName,"");
+strcpy(dialparameters.szPassword,"");
+strcpy(dialparameters.szDomain,"*");
+
+returnvalue=rasgetentrydialparams(NULL,&dialparameters,&passwordretrieved);
+
+if (returnvalue==0)
+  {
+  if (passwordretrieved != TRUE) LogScreen("Password could not be found, connection may fail.\n");
+  }
+else
+  switch(returnvalue)
+    {
+    case ERROR_CANNOT_FIND_PHONEBOOK_ENTRY:
+      LogScreenf("Phonebook entry %s could not be found, aborting dial.\n",
+                 connectionname);
+      return -1;
+    case ERROR_CANNOT_OPEN_PHONEBOOK:
+      LogScreen("The phonebook cound not be opened, aborting dial.\n");
+      return -1;
+    case ERROR_BUFFER_INVALID:
+      LogScreen("Invalid buffer passed, aborting dial.\n");
+      return -1;
+    };
+
+LogScreenf("Phonebook entry %s found, dialing.\n",connectionname);
+returnvalue=rasdial(NULL,NULL,&dialparameters,NULL,NULL,&connectionhandle);
+
+if (returnvalue != 0)
+  {  
+  rasgeterrorstring(returnvalue,errorstring,sizeof(errorstring));
+  LogScreenf("There was an error initiating a connection: %s\n",errorstring);
+  return -1;
+  };
+return 0; // If we got here, connection successful.
+
+#endif
+
+return -1; // Can't dial on a platform that's not implemented
 }
 
 s32 Client::LurkTerminateConnection(void)
   // -1 = connection did not terminate properly, 0 = connection
   // terminated
 {
+if (islurkstarted != 1) StartLurk();
+if (islurkstarted != 1) return -1; // Lurk can't be started, evidently
+
 if (LurkStatus() == 0) return 0; // We're already disconnected
 
 #if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)

@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.12  1998/07/29 05:14:31  silby
+// Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
+//
 // Revision 1.11  1998/07/29 03:21:24  silby
 // Added changes for win32 lurk (more needed functions)
 //
@@ -146,12 +149,15 @@ extern "C" {
   #include <winsock.h>      // timeval
   #if (CLIENT_OS == OS_WIN32)
     #include <ras.h>
+    #include <raserror.h>
     typedef DWORD (WINAPI *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
     typedef DWORD (WINAPI *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
     typedef DWORD (WINAPI *rashangupT)(HRASCONN); 
     typedef DWORD (WINAPI *rasdialT)(LPRASDIALEXTENSIONS, LPSTR,
                    LPRASDIALPARAMS, DWORD, LPVOID, LPHRASCONN);
     typedef DWORD (WINAPI *rasgeterrorstringT)(UINT, LPTSTR, DWORD);
+    typedef DWORD (WINAPI *rasgetentrydialparamsT)(LPSTR,
+                   LPRASDIALPARAMS, LPBOOL);
   #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>

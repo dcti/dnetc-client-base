@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.163  1998/07/29 05:14:33  silby
+// Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
+//
 // Revision 1.162  1998/07/29 01:49:44  cyruspatel
 // Fixed email address from not being editable (the option to return to the
 // main menu is '0', and 0 is also the value of CONF_ID). Autofindkeyserver
@@ -144,188 +147,10 @@
 // Revision 1.129  1998/07/05 22:03:14  silby
 // Someone forgot to #if some non-pathwork code out.
 //
-// Revision 1.128  1998/07/05 15:53:54  cyruspatel
-// Implemented EraseCheckpointFile() and TruncateBufferFile() in buffwork.cpp;
-// substituted unlink() with EraseCheckpointFile() in client.cpp; modified
-// client.h to #include buffwork.h; moved InternalGetLocalFilename() to
-// cliconfig.cpp; cleaned up some.
-//
-// Revision 1.127  1998/07/05 13:44:02  cyruspatel
-// Fixed an inadvertent wrap of one of the long single-line revision headers.
-//
-// Revision 1.126  1998/07/05 07:04:19  jlawson
-// changes for Win32s
-//
-// Revision 1.125  1998/07/04 23:24:25  jlawson
-// integer cast warnings on win16 resolved and other formatting cleanup.
-//
-// Revision 1.124  1998/07/04 21:05:23  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and
-// has been integrated into StartLurk and LurkStatus functions so they now act
-// the same.  Additionally, problems with lurkonly clients trying to connect
-// when contestdone was wrong should be fixed.
-//
-// Revision 1.123  1998/07/02 13:09:20  kbracey
-// A couple of RISC OS fixes - printf format specifiers made long.
-// Changed a "blocks" to "block%s", n==1?"":"s".
-//
-// Revision 1.122  1998/07/01 09:15:23  ziggyb
-// Cleaned up the OS/2 clearscreen a bit
-//
-// Revision 1.121  1998/07/01 03:30:35  silby
-// Added/uses CheckForcedKeyproxy to help make config make more sense.
-//
-// Revision 1.120  1998/06/30 03:10:15  silby
-// Fixed version number reporting in -config menus.
-//
-// Revision 1.119  1998/06/29 08:43:48  jlawson
-// More OS_WIN32S/OS_WIN16 differences and long constants added.
-//
-// Revision 1.118  1998/06/29 07:48:54  ziggyb
-// For OS/2 I added a priority boost to the exit, so it doesn't lag anymore
-// when printing the *Break* and it quits much faster now.
-//
-// A generic change I made was adding ValidateConfig() to the end of the
-// ParseCommandLineOptions() since some bad values (like the cpu core) was
-// getting throught.
-//
-// Revision 1.117  1998/06/29 06:57:31  jlawson
-// added new platform OS_WIN32S to make code handling easier.
-//
-// Revision 1.116  1998/06/28 23:40:18  silby
-// Changes to path handling code so that path validation+adding to filenames
-// will be more reliable (especially on win32).
-//
-// Revision 1.115  1998/06/28 19:48:08  silby
-// Changed default amd 486 core selection to pentium core and changed strings
-// to reflect that.
-//
-// Revision 1.114  1998/06/27 20:57:14  remi
-// Fixed "Setting DES buffer size to %d" to print DES buffer size, not the RC5
-// one.
-//
-// Revision 1.113  1998/06/26 02:47:04  daa
-// fix core selection on ppc -- from goldbob
-//
-// Revision 1.112  1998/06/25 04:43:29  silby
-// Changes to Internalgetfilename for win32 (+ other platforms in the future)
-// to make path handling better (now it won't miss / and : on win32)
-//
-// Revision 1.111  1998/06/25 01:55:41  silby
-// Fixed numcpu not showing up in the config, fixed timeslice's menu entry at
-// the same time.
-//
-// Revision 1.110  1998/06/24 19:37:35  cyruspatel
-// Change for PPC: Combined CliGetKeyrateForProblem + CliClearProblemSumInfo
-// logic in ::SelectCore() into a call to CliGetKeyrateForProblemNoSave().
-// The latter is just like the original CliGetKeyrateForProblem() but does
-// not affect cumulative stats.
-//
-// Revision 1.109  1998/06/24 03:50:23  silby
-// Changes needed to get the NT service to compile under MSVC made,
-// NT Service text strings modded to say "distributed.net", and message about
-// having to set the service to automatic changed to say "check", since it's
-// already done automatically.
-//
-// Revision 1.108  1998/06/24 03:29:45  silby
-// Switched the order of timeslice and cputype so most oses wouldn't have
-// the gap in the #2 menu spot in the performance menu
-//
-// Revision 1.107  1998/06/23 21:58:52  remi
-// Use only two x86 DES cores (P5 & PPro) when not multithreaded.
-//
-// Revision 1.106  1998/06/23 03:14:13  silby
-// Small fix to make sure e-mail addresses contain @something, so SMTP servers
-// are happy.
-//
-// Revision 1.105  1998/06/22 11:25:48  cyruspatel
-// Created new function in clicdata.cpp: CliClearContestSummaryData(int c)
-// Needed to flush/clear accumulated statistics for a particular contest.
-// Inserted into all ::SelectCore() sections that use a benchmark to select
-// the fastest core. Would otherwise skew the statistics for any subsequent
-// completed problem.
-//
-// Revision 1.104  1998/06/22 10:28:16  kbracey
-// Just tidying
-//
-// Revision 1.103  1998/06/22 01:04:08  silby
-// Fixed problem with x86 cpu type detection not working.
-//
-// Revision 1.102  1998/06/22 00:55:25  silby
-// Removed no longer needed variable in ValidateConfig (due to moving
-// of cpuchecking into separate file.)
-//
-// Revision 1.101  1998/06/21 17:10:21  cyruspatel
-// Fixed some NetWare smp problems. Merged duplicate numcpu validation code
-// in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
-// spun that off, together with what used to be ::x86id() or ::ArmId(), into
-// cpucheck.cpp. Adjusted and cleaned up client.h accordingly.
-//
-// Revision 1.100  1998/06/21 02:48:46  silby
-// Added sixth menu with just filesnames/paths to make misc
-// smaller, and (hopefully) reduce confusion.
-//
-// Revision 1.99  1998/06/21 01:37:56  silby
-// Furthur changes in validation of options (validations are all
-// being moved to ValidateConfig, which is now used much more liberally),
-// fixed isstringblank to say that "   " is a blank string, and fixed a
-// bug with buff-in.des being set wrong if a blank string was put into
-// buff-out.des.
-//
-// Revision 1.98  1998/06/20 22:42:56  silby
-// Improved error checking on some options (notable changes include
-// mins and maxes now on checkpoint time and exitfilechecktime)
-//
-// Revision 1.97  1998/06/20 10:04:12  cyruspatel
-// Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
-// des_slice to des_unit_func_slice()/resolves conflict with (*des_unit_func)
-// Added prototype in problem.h, cliconfig x86/SelectCore() is /DKWAN aware.
-//
-// Revision 1.96  1998/06/18 12:28:37  remi
-// Fixed switch() statement for x86 in Client::SelectCore().
-//
-// Revision 1.95  1998/06/18 11:50:13  kbracey
-// Made ARM core selection match new x86 core selection.
-//
-// Revision 1.94  1998/06/18 05:16:54  remi
-// Avoid gcc warnings.
-//
-// Revision 1.93  1998/06/18 01:14:42  cyruspatel
-// Modified ::x86id() so that (a) "Selecting Pentium..." message does not
-// wrap; (b) its a easier to maintain and (c) users can tell us _exactly_
-// what we need to add to the table to stop their cpu from being mis-ident'd.
-//
-// Revision 1.92  1998/06/17 10:39:14  kbracey
-// Capitalised RC5 and DES wherever printed.
-//
-// Revision 1.91  1998/06/16 21:52:39  silby
-// Added x86 des core selection routines.  They're set based off of how
-// the rc5 core is set.
-//
-// Revision 1.90  1998/06/15 12:03:47  kbracey
-// Lots of consts.
-//
-// Revision 1.89  1998/06/15 06:18:28  dicamillo
-// Updates for BeOS
-//
-// Revision 1.88  1998/06/14 11:20:46  ziggyb
-// Added the did_detect_message variable to the os/2 build
-//
-// Revision 1.87  1998/06/13 21:56:13  friedbait
-// 'id'variable added, such that we can use 'ident' on the resulting binary
-// in order to get a 'bill of material' on what versions the binary consists
-// of. Will have to add appropriate 'id' variables to all C/C++ modules
-// over time in order to make the 'ident' give a complete listing.
-//
-// Revision 1.86  1998/06/13 09:19:35  remi
-// Fix for Intel 386 and 486 SX/DX/DX2 detection. x86ident does *not* return
-// 0x6849 ('hI') but 0x6e49 ('nI') for these processors.
-// Added $Log.
-//
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.162 1998/07/29 01:49:44 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.163 1998/07/29 05:14:33 silby Exp $";
 return id; }
 #endif
 
@@ -358,7 +183,7 @@ return id; }
 
 // --------------------------------------------------------------------------
 
-#define OPTION_COUNT    45
+#define OPTION_COUNT    46
 #define MAXMENUENTRIES  18
 static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parameters"
 
@@ -631,11 +456,13 @@ static optionstruct options[OPTION_COUNT]=
 { "pausefile",CFGTXT("Pausefile Path/Name"),"none",CFGTXT("(blank = no pausefile)"),6,1,3,NULL},
 //44
 #ifdef MMX_BITSLICER
-{ "usemmx",CFGTXT("Use MMX instructions?"),"1",CFGTXT(""),4,3,4,NULL}
+{ "usemmx",CFGTXT("Use MMX instructions?"),"1",CFGTXT(""),4,3,4,NULL},
 #else
 { "usemmx", CFGTXT("Use MMX...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
   NULL,NULL,0,0},
 #endif
+{ "connectionname", CFGTXT("Dial-up Connection Name"),"Your Internet Connection",
+  CFGTXT(""),3,1,11,NULL}
 };
 
 // --------------------------------------------------------------------------
@@ -760,6 +587,7 @@ static int _IsHostnameDNetHost( const char * hostname )
 #define CONF_DESOUT 42
 #define CONF_PAUSEFILE 43
 #define CONF_MMX 44
+#define CONF_CONNECTNAME 45
 
 // --------------------------------------------------------------------------
 
@@ -1266,8 +1094,13 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           #endif
           break;
         #ifdef MMX_BITSLICER
-  case CONF_MMX:
+        case CONF_MMX:
           usemmx = yesno(parm);
+          break;
+        #endif
+        #ifdef LURK
+        case CONF_CONNECTNAME:
+          strncpy( connectionname, parm, sizeof(connectionname));
           break;
         #endif
         default:
@@ -1460,6 +1293,11 @@ options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
 #ifdef MMX_BITSLICER
 options[CONF_MMX].thevariable=&usemmx;
 #endif
+#ifdef LURK
+options[CONF_CONNECTNAME].thevariable=&connectionname;
+#else
+options[CONF_CONNECTNAME].optionscreen=0;
+#endif
 
 if (messagelen != 0)
   {
@@ -1645,6 +1483,7 @@ s32 Client::ReadConfig(void)
   if (tempconfig) lurk=1;
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
   if (tempconfig) {lurk=2; connectoften=0;}
+  INIGETKEY(CONF_CONNECTNAME).copyto(connectionname,sizeof(connectionname));
 #endif
 
 #ifdef DONT_USE_PATHWORK
@@ -1935,6 +1774,10 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_CKTIME, checkpoint_min );
   INISETKEY( CONF_NETTIMEOUT, nettimeout );
   INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
+
+#ifdef LURK
+  INISETKEY( CONF_CONNECTNAME, connectionname);
+#endif
 
 #ifdef DONT_USE_PATHWORK
   INISETKEY( CONF_LOGNAME, ini_logname );
@@ -2344,10 +2187,6 @@ s32 Client::RunStartup(void)
 {
 #if (CLIENT_OS==OS_WIN32)
 OSVERSIONINFO osver;
-#endif
-
-#if defined(LURK)
-if (lurk > 0) StartLurk(); //only start lurk if it needs to be started
 #endif
 
 #if ((!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32))

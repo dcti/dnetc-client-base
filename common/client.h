@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.71  1998/07/29 05:14:49  silby
+// Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
+//
 // Revision 1.70  1998/07/26 12:46:04  cyruspatel
 // new inifile option: 'autofindkeyserver', ie if keyproxy= points to a
 // xx.v27.distributed.net then that will be interpreted by Network::Resolve()
@@ -332,6 +335,9 @@ public:
 #if defined(LURK)
   s32 lurk;
   s32 oldlurkstatus;
+  s32 islurkstarted;
+  char connectionname[100];
+    // For win32, name of connection to use, perhaps useful for other lurkers.
 #endif
 
 #if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
