@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.65 2000/06/06 14:43:00 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.66 2000/06/07 23:24:23 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -133,10 +133,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       /* lintilla depends on allitnil, and since we need both even on OS's 
          that don't support the 601, we may as well "support" them visually.
          On POWER/PowerPC hybrid clients ("_AIXALL"), running on a POWER
-         CPU, core #0 becomes "RG AIXALL", and core #1 disappears.
+         CPU, core #0 becomes "RG AIXALL", and cores #1 and #2 disappear.
        */
       "allitnil",
       "lintilla",
+      "lintilla-604", /* Roberto Ragusa's core optimized for PPC 604e */
       NULL, /* this may become the G4 vector core at runtime */
       NULL
     },
@@ -214,11 +215,12 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       {                               //only one core - (ansi)
         corenames_table[RC5][0] = "RG AIXALL (Power CPU)",
         corenames_table[RC5][1] = NULL;
+        corenames_table[RC5][2] = NULL;
       }
       else if (( det & (1L<<25) ) != 0) //have altivec
       {
-        corenames_table[RC5][2] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
-        corenames_table[RC5][3] = NULL;
+        corenames_table[RC5][3] = "crunch-vec"; /* aka rc5_unit_func_vec() wrapper */
+        corenames_table[RC5][4] = NULL;
         //corenames_table[OGR][0] = "GARSP 5.13-scalar"; /* rename */
         //corenames_table[OGR][1] = "GARSP 5.13-vector"; /* aka vec_ogr_get_dispatch_table() */
         //corenames_table[OGR][2] = NULL;
@@ -586,9 +588,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       else if (( detected_type & (1L<<25) ) != 0) //OS supports altivec
         cindex = 2;                 // vector
       else if (detected_type == 1 ) //PPC 601
-        cindex = 0;                 // lintilla
+        cindex = 0;                 // allitnil
+      else if (detected_type == 4 || //PPC 604
+               detected_type == 9 || //PPC 604e
+               detected_type == 10 ) //PPC 604ev
+        cindex = 2;                 // lintilla-604
       else                          //the rest
-        cindex = 1;                 // allitnil
+        cindex = 1;                 // lintilla
       selcorestatics.corenum[RC5] = cindex;
     }
   }
@@ -906,6 +912,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
       // so we have both anyway, we may as well support both.
       extern "C" u32 rc5_unit_func_allitnil_compat( RC5UnitWork *, u32 );
       extern "C" u32 rc5_unit_func_lintilla_compat( RC5UnitWork *, u32 );
+      extern "C" u32 rc5_unit_func_lintilla_604_compat( RC5UnitWork *, u32 );
       #if (CLIENT_OS == OS_MACOS)
         extern "C" u32 rc5_unit_func_vec_compat( RC5UnitWork *, u32 );
       #else /* MacOS currently is the only one to support altivec cores */
@@ -1189,8 +1196,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           unit_func.rc5 = rc5_unit_func_allitnil_compat;
           pipeline_count = 1;
           gotcore = 1;
-        }  
-        else if (!gotcore && coresel == 2) // G4 (PPC 7400)
+        }
+        else if (!gotcore && coresel == 2) // G2 (PPC 604/604e/604ev only)
+        {
+          unit_func.rc5 = rc5_unit_func_lintilla_604_compat;
+          pipeline_count = 1;
+          gotcore = 1;
+        }
+        else if (!gotcore && coresel == 3) // G4 (PPC 7400)
         {
           unit_func.rc5 = rc5_unit_func_vec_compat;
           pipeline_count = 1;
