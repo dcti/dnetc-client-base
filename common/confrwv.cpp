@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.36  1999/01/27 16:40:34  cyp
+// changed conditional write of 'hours'. Also 'keyproxy'=="auto" (which one
+// previous config had accidentally written to the ini) wasn't being discarded.
+//
 // Revision 1.35  1999/01/27 00:58:33  jlawson
 // changed ini functions to use B versions instead of A versions.
 //
@@ -150,7 +154,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.35 1999/01/27 00:58:33 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.36 1999/01/27 16:40:34 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -217,24 +221,25 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
       client->minutes = 0;
     }
   
-  client->uuehttpmode = (s32) GetPrivateProfileIntB( sect, "uuehttpmode", client->uuehttpmode, fn );
+  client->uuehttpmode = GetPrivateProfileIntB( sect, "uuehttpmode", client->uuehttpmode, fn );
   GetPrivateProfileStringB( sect, "httpproxy", client->httpproxy, client->httpproxy, sizeof(client->httpproxy), fn );  
-  client->httpport = (s32) GetPrivateProfileIntB( sect, "httpport", client->httpport, fn );
+  client->httpport = GetPrivateProfileIntB( sect, "httpport", client->httpport, fn );
   GetPrivateProfileStringB( sect, "httpid", client->httpid, client->httpid, sizeof(client->httpid), fn );
-  client->keyport = (s32) GetPrivateProfileIntB( sect, "keyport", client->keyport, fn );
+  client->keyport = GetPrivateProfileIntB( sect, "keyport", client->keyport, fn );
   GetPrivateProfileStringB( sect, "keyproxy", client->keyproxy, client->keyproxy, sizeof(client->keyproxy), fn );
-  client->nettimeout = (s32) GetPrivateProfileIntB( sect, "nettimeout", client->nettimeout, fn );
+  if (strcmpi(client->keyproxy,"auto")==0 || strcmpi(client->keyproxy,"(auto)")==0)
+    client->keyproxy[0]=0; //one config version accidentally wrote "auto" out
+  client->nettimeout = GetPrivateProfileIntB( sect, "nettimeout", client->nettimeout, fn );
   
-  client->autofindkeyserver = ((client->keyproxy[0]==0 || 
+  client->autofindkeyserver = (client->keyproxy[0]==0 || 
     strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0 ||
-    strcmpi(client->keyproxy,"auto")==0 || strcmpi(client->keyproxy,"(auto)")==0) ||
     ( confopt_IsHostnameDNetHost(client->keyproxy) &&
     GetPrivateProfileIntB( "networking", "autofindkeyserver", 1, fn ) ));
   if (client->autofindkeyserver && client->keyport != 3064)  
     client->keyport = 0;
   
   i = GetPrivateProfileIntB( sect, "niceness", -12345, fn );
-  if (i != -12345) client->priority = ((i==2)?(8):((i==1)?(4):(0)));
+  if (i>=0 && i<=2) client->priority = ((i==2)?(8):((i==1)?(4):(0)));
   client->priority = GetPrivateProfileIntB( "processor-usage", "priority", client->priority, fn );
   client->cputype = GetPrivateProfileIntB( sect, "cputype", client->cputype, fn );
   client->numcpu = GetPrivateProfileIntB( sect, "numcpu", client->numcpu, fn );
@@ -291,7 +296,7 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 
 // --------------------------------------------------------------------------
 
-//conditional ini write functions
+//conditional (if exist || if !default) ini write functions
 
 static void __XSetProfileStr( const char *sect, const char *key, 
             const char *newval, const char *fn, const char *defval )
@@ -306,24 +311,29 @@ static void __XSetProfileStr( const char *sect, const char *key,
     dowrite = (GetPrivateProfileStringB( sect, key, "", buffer, 2, fn )!=0);
   if (dowrite)
     WritePrivateProfileStringB( sect, key, newval, fn );
+  return;
 }
 
 static void __XSetProfileInt( const char *sect, const char *key, 
-          s32 newval, const char *fn, s32 defval, bool asbool )
+          long newval, const char *fn, long defval, int asonoff )
 { 
-  char buffer[4];
+  char buffer[(sizeof(long)+1)*3];
   if (sect == NULL) 
     sect = OPTION_SECTION;
-  if (asbool)
-  {
-    defval = ((defval) ? (1) : (0));
-    newval = ((newval) ? (1) : (0));
-  }
+  if (asonoff)
+    {
+    if (defval) defval=1;
+    if (newval) newval=1;
+    }
   int dowrite = (defval != newval);
   if (!dowrite)
     dowrite = (GetPrivateProfileStringB( sect, key, "", buffer, 2, fn ) != 0);
   if (dowrite)
-    WritePrivateProfileIntB( sect, key, newval, fn );
+    {
+    sprintf(buffer,"%ld",(long)newval);
+    WritePrivateProfileStringB( sect, key, buffer, fn );
+    }
+  return;
 }
 
 // --------------------------------------------------------------------------
@@ -374,9 +384,12 @@ int WriteConfig(Client *client, int writefull /* defaults to 0*/)
     __XSetProfileStr( sect, "checkpointfile", client->checkpoint_file, fn, NULL );
     
     /* --- CONF_MENU_MISC __ */
-    
-    sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60)); 
-    __XSetProfileStr( sect, "hours", buffer, fn, "0:00" );
+
+    if (client->minutes!=0 || GetPrivateProfileStringB(sect,"hours","",buffer,2,fn))
+      {
+      sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60)); 
+      WritePrivateProfileStringB( sect, "hours", buffer, fn );
+      }
     __XSetProfileInt( sect, "count", client->blockcount, fn, 0, 0 );
     __XSetProfileStr( sect, "pausefile", client->pausefile, fn, NULL );
     __XSetProfileInt( sect, "quiet", client->quietmode, fn, 0, 1 );
