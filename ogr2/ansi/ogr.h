@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.h,v 1.1.2.6 2001/01/11 04:58:15 cyp Exp $
+ * $Id: ogr.h,v 1.1.2.7 2001/01/11 14:25:25 cyp Exp $
 */
 #ifndef __OGR_H__
 #define __OGR_H__ 
@@ -228,13 +228,3 @@ const char *ogr_stubstr_r(const struct Stub *stub,
 const char *ogr_stubstr(const struct Stub *stub);
 
 #endif /* __OGR_H__ */
-
-/* OGROPT_EXACT_NODESLIMIT is not compiler but OS dependant */
-#if (CLIENT_OS == RISC_OS) || (CLIENT_OS == OS_MACOS)
-  #define OGROPT_EXACT_NODESLIMIT 1
-#endif
-
-#ifndef OGROPT_EXACT_NODESLIMIT
-#define OGROPT_EXACT_NODESLIMIT 1 /* the default is "no" */
-#endif
-
