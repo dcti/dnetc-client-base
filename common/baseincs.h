@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.7  1998/07/15 05:47:42  ziggyb
+// added io.h for Watcom, which has some IO functions not in stdio.h
+//
 // Revision 1.6  1998/07/13 12:40:23  kbracey
 // RISC OS update.
 // Added -noquiet option.
@@ -74,6 +77,7 @@ extern "C" {
   #include <share.h>
   #include <direct.h>
   #include <fcntl.h>
+  #include <io.h>
   #include "platforms/os2cli/os2defs.h"
   #include "platforms/os2cli/dod.h"   // needs to be included after Client
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
