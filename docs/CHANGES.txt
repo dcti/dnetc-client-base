@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.39 2000/03/20 12:52:24 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.40 2000/04/05 00:40:41 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -29,6 +29,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.39 2000/03/20 12:52:24 andreasb Exp
 
 2.8008.459  new: all: new rc5 K7 core thanks to
                  Sean Stanek <vulture@iastate.edu>
+                 all: -btime <pn> <n>    command line option
             chg: macos: now supports all variants of System 7
                  Linux: now attempts to explicitly load resolv libraries for
                  dns resolution for greater glibc/libc cross compatibility.

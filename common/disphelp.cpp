@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.64.2.9 2000/02/21 00:54:54 trevorh Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.64.2.10 2000/04/05 00:40:41 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -31,7 +31,7 @@ static const char *helpbody[] =
   "-update            fetch + flush",
   "-benchmark [pn]    16-20 sec speed check [optional: only project pn]",
   "-benchmark2 [pn]   half (8-10 sec) and slightly inaccurate -benchmark",
-	"-bench [pn]        -benchmark all cores [optional: only project pn]",
+  "-bench [pn]        -benchmark all cores [optional: only project pn]",
   "-test [pn]         tests for core errors [optional: only project pn]",
   "-restart           restart all active clients (equivalent to -hup)",
   "-shutdown          gracefully shut down all active clients",
@@ -65,9 +65,10 @@ static const char *helpbody[] =
   "-outbase <fname>   output buffer basename (ie without 'extension'/suffix)",
   "-ckpoint <fname>   set the name of the checkpoint file",
   "-blsize <pn> <n>   set preferred packet size (2^n keys/packet)",
-  "-bin <pn> <n>      set fetch buffer threshold to <n> packets",
-  "-bout <pn> <n>     set flush buffer threshold to <n> packets",
-  "-b <pn> <n>        set both buffer thresholds to <n> packets",
+  "-bin <pn> <n>      set fetch buffer threshold to <n> work units",
+  "-bout <pn> <n>     set flush buffer threshold to <n> work units",
+  "-b <pn> <n>        set both buffer thresholds to <n> work units",
+  "-btime <pn> <n>    set fetch time threshold to <n> hours",
   "                   If not specified, project name <pn> defaults to RC5",
   "",
   "Network update related options:",
@@ -230,7 +231,7 @@ void GenerateManPage( void )
       if (*cp=='-')
       {
         fprintf(manp,".It Fl ");
-	cp++;
+        cp++;
         while (*cp && *cp != ' ')
         {
           if (*cp == '\"')
@@ -250,7 +251,7 @@ void GenerateManPage( void )
         while (*cp == '<' || *cp == '[')
         {
           const char closure = ((*cp == '<')?('>'):(']'));
-	  fprintf(manp, (*cp == '<')?(" Ar "):(" Op "));
+          fprintf(manp, (*cp == '<')?(" Ar "):(" Op "));
           cp++;
           while (*cp && *cp!=closure)
           {
@@ -316,8 +317,8 @@ void GenerateManPage( void )
       }
       else if (*cp) /* new section */
       {
-	if (pos)
-	  fprintf(manp,".El\n");
+        if (pos)
+          fprintf(manp,".El\n");
         fprintf(manp, ".sp 2\n");
         fprintf(manp,".Ss \"");
         while (*cp)
