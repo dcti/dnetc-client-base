@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.9  1998/12/30 19:19:28  cyp
+// Fixed broken offlinemode (not being able to change).
+//
 // Revision 1.8  1998/12/28 03:03:39  silby
 // Fixed problem with filenames having whitespace stripped from them.
 //
@@ -52,7 +55,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.8 1998/12/28 03:03:39 silby Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.9 1998/12/30 19:19:28 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -747,9 +750,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
         case CONF_OFFLINEMODE:
           if (parm[0] != 0)
             {
-            choice=atoi(parm);
-            if (choice >= conf_options[CONF_OFFLINEMODE].choicemin && 
-                choice <= conf_options[CONF_OFFLINEMODE].choicemax)
+            choice=yesno(parm);
+            if (choice >= 0) 
               *(s32 *)conf_options[CONF_OFFLINEMODE].thevariable=choice;
             }
           break;
@@ -884,4 +886,3 @@ s32 Client::Configure( void )
 }
 
 //----------------------------------------------------------------------------
-
