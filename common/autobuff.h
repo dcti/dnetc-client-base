@@ -1,18 +1,18 @@
-/* 
- * Hey, Emacs, this a -*-C++-*- file !
- *
- * Copyright distributed.net 1997-1999 - All Rights Reserved
- * For use in distributed.net projects only.
- * Any other distribution or use of this source violates copyright.
- *
- * ----------------------------------------------------------------------
- * Dynamicly growing buffering class oriented for containing
- * arbitrary binary data for network communications.
- * Created by Jeff Lawson.
- * ----------------------------------------------------------------------
-*/ 
+// Hey, Emacs, this a -*-C++-*- file !
+//
+// Copyright distributed.net 1997-1999 - All Rights Reserved
+// For use in distributed.net projects only.
+// Any other distribution or use of this source violates copyright.
+//
+// ----------------------------------------------------------------------
+// Dynamicly growing buffering class oriented for containing
+// arbitrary binary data for network communications.
+// Created by Jeff Lawson.
+// ----------------------------------------------------------------------
+// $Id: autobuff.h,v 1.12 1999/04/05 14:04:41 jlawson Exp $
+
 #ifndef __AUTOBUFF_H__
-#define __AUTOBUFF_H__ "@(#)$Id: autobuff.h,v 1.11 1999/04/05 13:28:38 cyp Exp $"
+#define __AUTOBUFF_H__
 
 #ifndef AUTOBUFFER_INCREMENT
 #define AUTOBUFFER_INCREMENT 100
