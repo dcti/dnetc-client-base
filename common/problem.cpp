@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.99 1999/04/09 13:46:48 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.100 1999/04/11 00:13:09 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -269,26 +269,37 @@ static void __IncrementKey(u64 *key, u32 iters, int contest)
 
 u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%. */
 { 
-  if (!initialized)
-    return 0;
-  if (!started)
-    return startpermille;
-  if (last_resultcode != RESULT_WORKING)
-    return 100;
-  switch (contest)
+  u32 retpermille = 0;
+  if (initialized && last_resultcode >= 0)
   {
-    case 0: //RC5
-    case 1: //DES
-    case 3: //CSC
-            return (u32)( ((double)(1000.0)) *
-            (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
+    if (!started)
+      retpermille = startpermille;
+    else if (last_resultcode != RESULT_WORKING)
+      retpermille = 1000;
+    else
+    {
+      switch (contest)
+      {
+        case 0: //RC5
+        case 1: //DES
+        case 3: //CSC
+                {
+                retpermille = (u32)( ((double)(1000.0)) *
+                (((((double)(contestwork.crypto.keysdone.hi))*((double)(4294967296.0)))+
                              ((double)(contestwork.crypto.keysdone.lo))) /
-            ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
+                ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
                              ((double)(contestwork.crypto.iterations.lo)))) ); 
-    case 2: //OGR
-            return 0;
+                break;
+                }
+        case 2: //OGR
+                retpermille = 0;
+                break;
+      }
+    }
+    if (retpermille > 1000)
+      retpermille = 1000;
   }
-  return 0;
+  return retpermille;
 }
 
 /* ------------------------------------------------------------------- */
@@ -304,13 +315,17 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
     RaiseExitRequestTrigger();
     return -1;
   }
-  initialized = 0;
-
+  last_resultcode = -1;
+  started = initialized = 0;
+  timehi = timelo = 0;
+  runtime_sec = runtime_usec = 0;
+  last_runtime_sec = last_runtime_usec = 0;
+  memset((void *)&profiling, 0, sizeof(profiling));
+  startpermille = permille = 0;
   loaderflags = 0;
   contest = _contest;
   cputype = _cputype;
   tslice = _timeslice;
-  runtime_sec = runtime_usec = 0;
     
   if (contest >= CONTEST_COUNT)
     return -1;
@@ -507,8 +522,6 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
 
   //----------------------------------------------------------------
 
-  startpermille = 0;
-  
   switch (contest) 
   {
     case 0: // RC5
@@ -556,7 +569,7 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
                            ((double)(contestwork.crypto.keysdone.lo))) /
         ((((double)(contestwork.crypto.iterations.hi))*((double)(4294967296.0)))+
                         ((double)(contestwork.crypto.iterations.lo)))) );
-      }			
+      }     
       break;
 
     case 2: // OGR
@@ -615,8 +628,6 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
   }
 #endif
 
-  permille = 0;
-  started = 0;
   last_resultcode = RESULT_WORKING;
   initialized = 1;
 
@@ -819,7 +830,7 @@ int Problem::Run_CSC(u32 *timesliceP, int *resultcode)
     #ifdef DEBUG_CSC_CORE /* can you spell "thread safe"? */
     Log("CSC incrementation mismatch:\n"
         "expected %08x:%08x, got %08x:%08x\n"
-	refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
+  refL0.lo, refL0.hi, rc5unitwork.L0.lo, rc5unitwork.L0.hi );
     #endif
     *resultcode = -1;
     return -1;
@@ -1024,10 +1035,13 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
 
   if ( last_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING or -1 */
     return ( last_resultcode );
+    
   CliTimer(&start);
   if (!started)
   {
+    timehi = start.tv_sec; timelo = start.tv_usec;
     runtime_sec = runtime_usec = 0;
+    memset((void *)&profiling, 0, sizeof(profiling));
     started=1;
 
 #ifdef STRESS_THREADS_AND_BUFFERS 
@@ -1035,7 +1049,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     contestwork.crypto.key.hi = contestwork.crypto.key.lo = 0;
     contestwork.crypto.keysdone.hi = contestwork.crypto.iterations.hi;
     contestwork.crypto.keysdone.lo = contestwork.crypto.iterations.lo;
-    runtime_usec = 1;
+    runtime_usec = 1; /* ~1Tkeys for a 2^20 packet */
     last_resultcode = RESULT_NOTHING;
     return RESULT_NOTHING;
 #endif    
@@ -1058,6 +1072,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
   */
 
   timeslice = tslice;
+  last_runtime_usec = last_runtime_sec = 0;
   core_resultcode = last_resultcode;
   retcode = -1;
 
@@ -1072,7 +1087,7 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     case 3:  retcode = Run_CSC( &timeslice, &core_resultcode );
              break;
     default: retcode = core_resultcode = last_resultcode = -1;
-	     break;
+       break;
   }
 
   
@@ -1081,17 +1096,33 @@ int Problem::Run(void) /* returns RESULT_*  or -1 */
     return -1;
   }
   
+  core_run_count++;
   CliTimer(&stop);
-  if (stop.tv_usec < start.tv_usec)
+  if ( core_resultcode != RESULT_WORKING ) /* _FOUND, _NOTHING */
   {
-    stop.tv_sec--;
-    stop.tv_usec+=1000000L;
+    runtime_sec = runtime_usec = 0;
+    start.tv_sec = timehi;
+    start.tv_usec = timelo;
   }
-  runtime_sec += stop.tv_sec - start.tv_sec;
-  if ((runtime_usec += (stop.tv_usec - start.tv_usec)) > 1000000L )
+  if (stop.tv_sec < start.tv_sec || 
+     (stop.tv_sec == start.tv_sec && stop.tv_usec <= start.tv_usec))
   {
-    runtime_sec++;
-    runtime_usec-=1000000L;
+    //AIEEE! clock is whacky (or unusably inaccurate if ==)
+  }
+  else
+  {
+    if (stop.tv_usec < start.tv_usec)
+    {
+      stop.tv_sec--;
+      stop.tv_usec+=1000000L;
+    }
+    runtime_usec += (last_runtime_usec = (stop.tv_usec - start.tv_usec));
+    runtime_sec  += (last_runtime_sec = (stop.tv_sec - start.tv_sec));
+    if (runtime_usec > 1000000L)
+    {
+      runtime_sec++;
+      runtime_usec-=1000000L;
+    }
   }
 
   tslice = timeslice;
