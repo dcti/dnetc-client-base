@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.117 2002/04/14 23:25:42 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.118 2002/04/19 22:33:05 zebe Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8018.472
+2.8018.472  fix: macosx: config menu displayed erroneous message that pause
+                         on battery was not supported.
 
 2.8017.471  (not publicly released)
             new: x86: P4 RC5 core (ak-p7)
