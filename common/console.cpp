@@ -11,6 +11,9 @@
    to functions in modules in your own platform/ area. 
 */
 // $Log: console.cpp,v $
+// Revision 1.8  1998/10/11 00:53:10  cyp
+// new win32 callouts: w32ConOut(), w32ConGetCh(), w32ConKbhit()
+//
 // Revision 1.7  1998/10/07 20:43:37  silby
 // Various quick hacks to make the win32gui operational again (will be cleaned up).
 //
@@ -35,7 +38,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.7 1998/10/07 20:43:37 silby Exp $"; }
+return "@(#)$Id: console.cpp,v 1.8 1998/10/11 00:53:10 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -109,18 +112,21 @@ int InitializeConsole(int runhidden)
 /* 
 ** ConOut() does what printf("%s",str) would do 
 */ 
-#if !((CLIENT_OS==OS_WIN32) && defined(NEEDVIRTUALMETHODS))
 int ConOut(const char *msg)
 {
   if (constatics.initlevel > 0 /*&& constatics.conisatty*/ )
     {
-    fwrite( msg, sizeof(char), strlen(msg), stdout);
-    fflush(stdout);
+    #if (CLIENT_OS == OS_WIN32)
+      w32ConOut(msg);
+    #else
+      fwrite( msg, sizeof(char), strlen(msg), stdout);
+      fflush(stdout);
+    #endif
     return 0;
     }
   return -1;
 }
-#endif
+
 /* ---------------------------------------------------- */
 
 /* 
@@ -192,12 +198,21 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
     
     do{
       #if (CLIENT_OS == OS_RISCOS)
-         {
-         ch = _swi(OS_ReadC, _RETURN(0));      
-         }
+        {
+        ch = _swi(OS_ReadC, _RETURN(0));      
+        }
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S) || \
+         (CLIENT_OS == OS_WIN32)
+        {
+        if (w32ConKbhit())
+          {
+          ch = w32ConGetch();
+          if (!ch)
+            ch = (w32ConGetch() << 8);
+          }
+        }
       #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
-         (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || \
-        (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+         (CLIENT_OS == OS_OS2)
         {
         if (kbhit())
           {
@@ -230,9 +245,9 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         FD_ZERO(&rfds);
         FD_SET( fd, &rfds );
 
-	fflush(stdout);
-	fflush(stdin);
-	errno = 0;        
+        fflush(stdout);
+        fflush(stdin);
+        errno = 0;        
         if ( select( fd+1, &rfds, NULL, NULL, NULL) && errno != EINTR )
           {
           ch = fgetc( stdin );
