@@ -2,65 +2,9 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Log: netio.cpp,v $
-// Revision 1.1.2.2  1999/04/14 00:52:08  jlawson
-// removed socket conditioning.
-//
-// Revision 1.1.2.1  1999/04/04 07:24:44  jlawson
-// new wrappers around low-level network operations.
-//
-// Revision 1.33  1999/03/21 01:56:17  cyp
-// created netio_gethostaddr(u32 *myaddr) to obtain the 'advertising address',
-// in case the user has not provided one in the .ini
-//
-// Revision 1.32  1999/03/18 21:40:19  jlawson
-// changed "error locating" to "error resolving"
-//
-// Revision 1.31  1999/03/18 18:35:35  ivo
-// Added Id-tag for ident
-//
-// Revision 1.30  1999/03/07 04:30:34  jlawson
-// CLOCKS_PER_SEC not always an integer that can be shifted.
-//
-// Revision 1.29  1999/03/03 01:30:15  jlawson
-// corrected wrong htons calls to ntohs.  formatting.
-//
-// Revision 1.28  1999/03/02 12:21:30  jlawson
-// netio_resolve will now always leave hostaddress set to 0 when the
-// resolve fails.  netio_connect now traps (!host && !addr) earlier.
-//
-// Revision 1.27  1999/02/28 03:42:49  jlawson
-// netio_describe_error uses strerror when possible.  rewrote hostname
-// cleansing in netio_resolve and removed extra typecasts.
-// implemented custom select() to bypass limits handle limits on some
-// operating systems, such as win32.
-//
-// Revision 1.26  1999/02/08 11:22:19  silby
-// Fixed logging of IP in last change.
-//
-// Revision 1.25  1999/02/08 11:09:58  silby
-// Proxy now rejects connections from source ports < 1024.
-//
-// Revision 1.24  1999/01/25 00:03:46  trevorh
-// Added support for IBM VACPP
-// Adjusted netio_close() to use soclose() for OS/2
-//
-// Revision 1.23  1999/01/10 07:47:35  cyp
-// check for a defined _SOCKETBITS_H before using socklen_t for linux
-//
-// Revision 1.22  1999/01/10 03:45:17  cyp
-// Not much use printing error messages when the name of the function that
-// caused the error is unknown. :)
-//
-// Revision 1.21  1999/01/09 23:30:14  cyp
-// platforms that don't have sys_errlist can use strerror()
-//
-//
 
-#if (!defined(lint) && defined(__showids__))
 const char *netio_cpp(void) {
-return "@(#)$Id: netio.cpp,v 1.1.2.2 1999/04/14 00:52:08 jlawson Exp $"; }
-#endif
+return "@(#)$Id: netio.cpp,v 1.1.2.3 1999/04/18 00:38:30 jlawson Exp $"; }
 
 #define __NETIO_CPP__ /* suppress redefinitions in netio.h */
 #include "netio.h"
@@ -77,6 +21,7 @@ return "@(#)$Id: netio.cpp,v 1.1.2.2 1999/04/14 00:52:08 jlawson Exp $"; }
 #include <string.h>
 #include <errno.h>
 
+// ----------------------------------------------------------------------
 
 static const char *netio_describe_error()
 {
@@ -143,73 +88,82 @@ static const char *netio_describe_error()
 #endif
 }
 
-static int netio_condition_socket(SOCKET s)
+// ----------------------------------------------------------------------
+
+// Creates a new network socket handle.
+// Returns -1 on error, 0 on success.
+
+int netio_createsocket(SOCKET &sock)
 {
-#if (CLIENT_OS == OS_WIN32)
-  unsigned long optval;
+#if defined(_TIUSER_)                                              //TLI
+  sock = t_open("/dev/tcp", O_RDWR, NULL);
+  if ( sock != -1 ) 
+    return 0;
+  sock = INVALID_SOCKET;
+  return -1;
 #else
-  int optval;
-#endif
-
-  optval = 1;
-  if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, (char*)&optval, sizeof(optval)) < 0)
-#ifdef PROXYTYPE
-    globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
-#else
-    LogScreen(
-#endif
-        "setsockopt(): %s", netio_describe_error());
-
-#if (CLIENT_OS == OS_WIN32)
-  optval = 1;
-  ioctlsocket(s, FIONBIO, &optval);
-#elif (CLIENT_OS == OS_OS2)
-  optval = 1;
-  if (ioctl(s, FIONBIO, (char *)&optval, sizeof(optval)) < 0)
+  #if (defined(AF_INET) && defined(SOCK_STREAM)) //BSD socks
+  sock = socket(AF_INET, SOCK_STREAM, 0);
+  if ( !(( (int)(sock) ) < 0 ) )
   {
-#ifdef PROXYTYPE
-    globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
-#else
-    LogScreen(
-#endif
-        "ioctl(): %s", netio_describe_error());
-    return(-1);
+    //LowLevelSetSocketOption( CONDSOCK_SETMINBUFSIZE, 2048/* at least this */);
+    //LowLevelSetSocketOption( CONDSOCK_BLOCKMODE, 1 ); /* really only needed for RISCOS */
+    return 0; //success
   }
-#else
-  #if (defined(FNDELAY))
-     int flag = FNDELAY;
-  #else
-    int flag = O_NONBLOCK;
   #endif
-  if (fcntl(s, F_SETFL, flag) < 0)
-  {
-#ifdef PROXYTYPE
-    globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
-#else
-    LogScreen(
+  sock = INVALID_SOCKET;
+  return -1;
 #endif
-        "fcntl(): %s", netio_describe_error());
-    return -1;
+}
+
+// ----------------------------------------------------------------------
+
+// Closes an opened socket handle.
+// Returns -1 on error, 0 on success.
+
+int netio_close(SOCKET &sock)
+{
+#if defined( _TIUSER_ )                                //TLI
+  if ( sock != INVALID_SOCKET )
+  {
+    t_blocking( sock ); /* turn blocking back on */
+    if ( t_getstate( sock ) != T_UNBND )
+    {
+      t_sndrel( sock );   /* initiate close */
+      t_rcvrel( sock );   /* wait for conn release by peer */
+      t_unbind( sock );   /* close our own socket */
+    }
+    int rc = t_close( sock );
+    sock = INVALID_SOCKET;
+    return rc;
+  }
+#else                                                  //BSD socks
+  if ( sock != INVALID_SOCKET )
+  {
+    netio_setsockopt( sock, CONDSOCK_BLOCKMODE, 1 );
+    #if (defined(AF_INET) && defined(SOCK_STREAM))  
+    shutdown( sock, 2 );
+    #endif
+    #if (CLIENT_OS == OS_WIN32)
+    int retcode = closesocket(sock);
+    #elif (CLIENT_OS == OS_OS2)
+    int retcode = soclose(sock);
+    #else
+    int retcode = close(sock);
+    #endif
+    sock = INVALID_SOCKET;
+    return (retcode);
   }
 #endif
-
-  return 0;
+  return -1;
 }
 
+// ----------------------------------------------------------------------
 
-int netio_close(SOCKET &s)
-{
-#if (CLIENT_OS == OS_WIN32)
-  closesocket(s);
-#elif (CLIENT_OS == OS_OS2)
-  soclose(s);
-#else
-  close(s);
-#endif
-  s = 0;
-  return 0;
-}
-
+// Performs a name-server lookup of the specified name and randomly
+// returns one of the corresponding IP Addresses (if there is more
+// than one matching address).
+// Returns -1 on error, 0 on success.
 
 int netio_resolve(const char *hosttgt, u32 &hostaddress)
 {
@@ -254,6 +208,10 @@ int netio_resolve(const char *hosttgt, u32 &hostaddress)
   return(0);
 }
 
+// ----------------------------------------------------------------------
+
+// Retrieves the hostname of the local machine.
+// Returns -1 on error, 0 on success.
 
 int netio_gethostname( char *buffer, unsigned int buflen )
 {
@@ -269,171 +227,229 @@ int netio_gethostname( char *buffer, unsigned int buflen )
   return 0;
 }      
 
+// ----------------------------------------------------------------------
+
+// Retrieves the primary IP Address of the local machine.
+// Returns -1 on error, 0 on success.
 
 int netio_gethostaddr( u32 * addr )
 {
   char buffer[512];
   u32 tmpaddr = 0;
-  if (gethostname( buffer, sizeof(buffer) ) != 0)
+  if ( netio_gethostname( buffer, sizeof(buffer) ) != 0 )
     return -1;
-  buffer[sizeof(buffer)-1]='\0';
   if ( netio_resolve( buffer, tmpaddr ) != 0)
     return -1;
   if ( addr )
     *addr = tmpaddr;
-//printf("end gethostaddr: %s\n",netio_ntoa(tmpaddr));
   return 0;
 }
 
+// ----------------------------------------------------------------------
 
-int netio_openlisten(SOCKET &s, u32 addr, u16 port)
+// Creates a socket and initializes it as a listener to accept incoming
+// TCP/IP connections on the specified interface and port number.
+// Returns -1 on error, 0 on success.
+
+#ifdef PROXYTYPE
+int netio_openlisten(SOCKET &sock, u32 addr, u16 port)
 {
-  struct sockaddr_in sin;
-  memset(&sin, 0, sizeof(sin));
-  s = socket(PF_INET, SOCK_STREAM, 0);
-  if ((int) s < 0)
+  /* allocate the new socket */
+  if (netio_createsocket(sock) < 0)
   {
 #ifdef PROXYTYPE
     globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
 #else
-    LogScreen(
+    Log(
 #endif
-               "socket(): %s", netio_describe_error());
-    s = 0;
+       "socket(): %s", netio_describe_error());
     return -1;
   }
 
 
   /* try to reuse sockets */
-  int mytrue = 1;
-  setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*)&mytrue, sizeof(int));
+  netio_setsockopt(sock, CONDSOCK_REUSEADDR, 1);
 
 
-  /*
-   * bind the socket to address and port given
-   */
+  /* bind the socket to address and port given */
+  struct sockaddr_in sin;
+  memset(&sin, 0, sizeof(sin));
   sin.sin_addr.s_addr = addr;
   sin.sin_port = htons(port);
   sin.sin_family = PF_INET;
 
-  if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+  if (bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0)
   {
 #ifdef PROXYTYPE
     globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
 #else
-    LogScreen(
+    Log(
 #endif
                    "bind(%s:%u): %s ", netio_ntoa( addr ),
                    (unsigned int)port, netio_describe_error());
-    netio_close(s);
+    netio_close(sock);
     return -1;
   }
 
-  /*
-   * set up to receive connections on this socket
-   */
-  if (listen(s, 5) < 0)
+  /* set up to receive connections on this socket */
+  if (listen(sock, 5) < 0)
   {
 #ifdef PROXYTYPE
     globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
 #else
-    LogScreen(
+    Log(
 #endif
         "listen(): %s", netio_describe_error());
-    netio_close(s);
+    netio_close(sock);
     return -1;
   }
 
   return 0;
 }
+#endif
 
+// ----------------------------------------------------------------------
 
-int netio_connect(SOCKET &s, const char *host, u16 port, u32 &addr, u32 listenaddr)
+// Creates a new socket and attempts to connect it to the specified
+// target host address and port.  If a listenaddr is specified, then
+// the outgoing connection will be created such that it originates
+// from the specified local interface.
+// Returns -1 on error, 0 on success.
+
+int netio_connect(SOCKET &sock, char *host, u16 port, u32 &addr, u32 listenaddr)
 {
-  struct sockaddr_in sin;
-
-  memset(&sin, 0, sizeof(sin));
+  // resolve the address we will connect to.
   if ((host && netio_resolve(host, addr) < 0) || !addr)
   {
 #ifdef PROXYTYPE
     globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
 #else
-    LogScreen(
+    Log(
 #endif
         "Error resolving host %s", (host ? host : "") );
-    s = 0;
+    sock = INVALID_SOCKET;
     return -1;
   }
 
-  s = socket(PF_INET, SOCK_STREAM, 0);
-  if ((int)s < 0)
+  // allocate a new socket.
+  if (netio_createsocket(sock) < 0)
   {
 #ifdef PROXYTYPE
     globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
 #else
-    LogScreen(
+    Log(
 #endif
         "socket(): %s", netio_describe_error());
-    s = 0;
     return -1;
   }
 
 
-  /*
-   * bind the socket to address and port given
-   */
+  // bind the socket to address and port given.
   if (listenaddr)
   {
+    struct sockaddr_in sin;
+    memset(&sin, 0, sizeof(sin));
     sin.sin_addr.s_addr = listenaddr;
     sin.sin_port = htons(0);
     sin.sin_family = PF_INET;
 
-    if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+    if (bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0)
     {
 #ifdef PROXYTYPE
       globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
 #else
-      LogScreen(
+      Log(
 #endif
-                   "bind(%s:%u): %s", netio_ntoa( listenaddr ),
-                   (unsigned int)port, netio_describe_error());
-      netio_close(s);
+         "bind(%s:%u): %s", netio_ntoa( listenaddr ),
+         (unsigned int)port, netio_describe_error());
+      netio_close(sock);
       return -1;
     }
   }
 
 
-  /*
-   * bind the socket to address and port given
-   */
+  // connect to the desination host.
+#if defined(_TIUSER_)                                         //OSI/XTI/TLI
+  int rc = -1;
+  if ( t_bind( sock, NULL, NULL ) != -1 )
+  {
+    struct t_call *sndcall = (struct t_call *)t_alloc(sock, T_CALL, T_ADDR);
+    if ( sndcall != NULL )
+    {
+      sndcall->addr.len  = sizeof(struct sockaddr_in);
+      sndcall->opt.len   = 0;
+      sndcall->udata.len = 0;
+      struct sockaddr_in *sin = (struct sockaddr_in *) sndcall->addr.buf;
+      sin->sin_addr.s_addr = that_address;
+      sin->sin_family = AF_INET;
+      sin->sin_port = htons( that_port );
+      rc = t_connect( sock, sndcall, NULL);
+      t_free((char *)sndcall, T_CALL);
+    }
+  }
+  return rc;
+#elif (CLIENT_OS == OS_MACOS)
+  // The Mac OS client simulates just the most essential socket calls, as a
+  // convenience in interfacing to a non-socket network library. "Select" is
+  // not available, but the timeout for a connection can be specified.
+
+  // set up the address structure
+  struct sockaddr_in sin;
+  memset((void *) &sin, 0, sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_port = htons( that_port );
+  sin.sin_addr.s_addr = that_address;
+
+  // set timeout for connect
+  // timeout for this call must be >0 to not have default used
+  //socket_set_conn_timeout(sock, iotimeout);
+
+  return(connect(sock, (struct sockaddr *)&sin, sizeof(sin)));
+    
+#elif defined(AF_INET) //BSD sox
+
+  struct sockaddr_in sin;
+  memset(&sin, 0, sizeof(sin));
   sin.sin_addr.s_addr = addr;
   sin.sin_port = htons(port);
   sin.sin_family = PF_INET;
 
-  if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0)
+  if (connect(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0)
   {
 #if (CLIENT_OS == OS_WIN32)
-    errno = WSAGetLastError();
+    int myerrno = WSAGetLastError();
 #elif (CLIENT_OS == OS_OS2)
-    errno = sock_errno();
-#endif
-    if (errno != EINPROGRESS)
+    int myerrno = sock_errno();
+#else
+    int myerrno = errno;
+#endif    
+    if (myerrno != EINPROGRESS)
     {
 #ifdef PROXYTYPE
       globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
 #else
-      LogScreen(
+      Log(
 #endif
-                "connect(): %s", netio_describe_error());
-      netio_close(s);
+          "connect(): %s", netio_describe_error());
+      netio_close(sock);
       return -1;
     }
   }
-
   return 0;
+#else //no socket support
+  return -1;
+#endif
 }
 
+// ----------------------------------------------------------------------
 
+// Waits for a new incoming connection to be detected on the specified
+// listener socket and returns a new socket handle that corresponds
+// with the newly connected client.  The IP Address of the newly
+// connected client is also made available.
+// Returns -1 on error, 0 on success.
+
+#ifdef PROXYTYPE
 int netio_accept(SOCKET s, SOCKET &snew, u32 &hostaddress)
 {
   struct sockaddr_in Sin;
@@ -459,11 +475,7 @@ int netio_accept(SOCKET s, SOCKET &snew, u32 &hostaddress)
 
   if (ntohs(Sin.sin_port) < 1024)
   {
-#ifdef PROXYTYPE
     globalLogger->LogInfo(LOG_GENERAL | LOG_ERRSEVERE,
-#else
-    LogScreen(
-#endif
         "Rejected connection from %s:%i",
         netio_ntoa(Sin.sin_addr.s_addr), ntohs(Sin.sin_port));
     netio_close(snew);
@@ -472,17 +484,27 @@ int netio_accept(SOCKET s, SOCKET &snew, u32 &hostaddress)
   hostaddress = Sin.sin_addr.s_addr;
   return 0;
 }
+#endif
 
+// ----------------------------------------------------------------------
+
+// Translates a numeric IP Address into a printable ASCII text-string.
+// Returns -1 on error, 0 on success.
 
 const char *netio_ntoa(u32 hostaddr)
 {
+#if 1
+  // it's apparently better to reinvent the wheel.
   static char buff[18];
   char *p = (char *)(&hostaddr);
   sprintf( buff, "%d.%d.%d.%d", (p[0]&255),(p[1]&255),(p[2]&255),(p[3]&255) );
   return buff;
-  //return inet_ntoa(*(in_addr*)&hostaddr);
+#else
+  return inet_ntoa(*(in_addr*)&hostaddr);  
+#endif
 }
 
+// ----------------------------------------------------------------------
 
 int netio_recv(SOCKET s, void *data, int len)
 {
@@ -493,16 +515,18 @@ int netio_recv(SOCKET s, void *data, int len)
 #endif
 }
 
+// ----------------------------------------------------------------------
 
-int netio_send(SOCKET s, const void *data, int len)
+int netio_send(SOCKET s, void *data, int len)
 {
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_NETWARE)
-  return send(s, (const char*)data, len, 0);
+  return send(s, (char*)data, len, 0);
 #else
-  return write(s, (const char*)data, len);
+  return write(s, (char*)data, len);
 #endif
 }
 
+// ----------------------------------------------------------------------
 
 #if defined(XFD_SETSIZE)
 #include "sleepdef.h"
@@ -783,6 +807,8 @@ int xfd_select( int width, xfd_set *or, xfd_set *ow, xfd_set *ox, struct timeval
 #define fd_set xfd_set 
 #endif
 
+// ----------------------------------------------------------------------
+
 int netio_select( int width, fd_set *r, fd_set *w, fd_set *x, struct timeval *tvp )
 {
   // there are two possible points of failure for portable select():
@@ -790,4 +816,110 @@ int netio_select( int width, fd_set *r, fd_set *w, fd_set *x, struct timeval *tv
   // 2. some implementations trash the fd_sets on error
 
   return select( width, r, w, x, tvp );
-}  
+}
+
+// ----------------------------------------------------------------------
+
+int netio_setsockopt( SOCKET sock, int cond_type, int parm )
+{  
+  if ( sock == INVALID_SOCKET )
+    return -1;
+
+  if ( cond_type == CONDSOCK_KEEPALIVE )
+  {       
+    #if defined(SOL_SOCKET) && defined(SO_KEEPALIVE)
+    int on = ((parm == 0/* off */)?(0):(1));
+    if (!setsockopt(sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&on, sizeof(on)))
+      return 0;
+    #endif
+    return -1;
+  }
+  else if ( cond_type == CONDSOCK_SETMINBUFSIZE )
+  {
+    #if (defined(SOL_SOCKET) && defined(SO_RCVBUF) && defined(SO_SNDBUF))
+    int which;
+    for (which = 0; which < 2; which++ )
+    {
+      int type = ((which == 0)?(SO_RCVBUF):(SO_SNDBUF));
+      int sz = 0, szint = (int)sizeof(int);
+      if (getsockopt(sock, SOL_SOCKET, type, (char *)&sz, &szint)<0)
+        ;
+      else if (sz < parm)
+      {
+        sz = parm;
+        setsockopt(sock, SOL_SOCKET, type, (char *)&sz, szint);
+      }
+    }
+    return 0;
+    #endif
+  }
+  else if ( cond_type == CONDSOCK_BLOCKMODE )
+  {
+    #if defined(_TIUSER_)                                    //TLI
+      if ( parm != 0 ) /* blocking on */
+        return ( t_blocking( sock ) );
+      else
+        return ( t_nonblocking( sock ) );
+    #elif (!defined(FIONBIO) && !(defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK))))
+      return -1;
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+      unsigned long flagon = ((parm == 0/* off */)?(1):(0));
+      return ioctlsocket(sock, FIONBIO, &flagon);
+    #elif ((CLIENT_OS == OS_VMS) && defined(__VMS_UCX__))
+      // nonblocking sockets not directly supported by UCX
+      // - DIGITAL's work around requires system privileges to use
+      return -1;
+    #elif ((CLIENT_OS == OS_VMS) && defined(MULTINET))
+      unsigned long flagon = ((parm == 0 /* off */)?(1):(0));
+      return socket_ioctl(sock, FIONBIO, &flagon);
+    #elif (CLIENT_OS == OS_RISCOS)
+      int flagon = ((parm == 0 /* off */) ? (1): (0));
+      if (ioctl(sock, FIONBIO, &flagon) && !flagon) // allow blocking socket calls 
+      { flagon = 1; ioctl(sock, FIOSLEEPTW, &flagon); } //to preemptively multitask
+    #elif (CLIENT_OS == OS_OS2)
+      int flagon = ((parm == 0 /* off */) ? (1): (0));
+      return ioctl(sock, FIONBIO, (char *) &flagon, sizeof(flagon));
+    #elif (CLIENT_OS == OS_AMIGAOS)
+      char flagon = ((parm == 0 /* off */) ? (1): (0));
+      return IoctlSocket(sock, FIONBIO, &flagon);
+    #elif (CLIENT_OS == OS_DOS)
+      return ((parm == 0 /* off */)?(0):(-1)); //always non-blocking
+    #elif (CLIENT_OS == OS_MACOS)
+      char flagon = ((parm == 0 /* off */) ? (1): (0));
+      return ioctl(sock, FIONBIO, &flagon);    
+    #elif (defined(F_SETFL) && (defined(FNDELAY) || defined(O_NONBLOCK)))
+    {
+      int flag, res, arg;
+      #if (defined(FNDELAY))
+        flag = FNDELAY;
+      #else
+        flag = O_NONBLOCK;
+      #endif
+      arg = ((parm == 0 /* off */) ? (flag): (0) );
+
+      if (( res = fcntl(sock, F_GETFL, flag ) ) == -1)
+        return -1;
+      if ((arg && res) || (!arg && !res))
+        return 0;
+      if ((res = fcntl(sock, F_SETFL, arg )) == -1)
+        return -1;
+      if (( res = fcntl(sock, F_GETFL, flag ) ) == -1)
+        return -1;
+      if ((arg && res) || (!arg && !res))
+        return 0;
+    }
+    #endif
+  }
+  else if ( cond_type == CONDSOCK_REUSEADDR )
+  {
+    int mytrue = (parm != 0 ? 1 : 0);
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char*)&mytrue, sizeof(int));
+  }
+
+  parm = parm; /* shaddup compiler */
+  return -1;
+}
+
+// ----------------------------------------------------------------------
+
+
