@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.105 2001/03/06 03:17:23 sampo Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.106 2001/03/07 00:20:23 sampo Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -574,7 +574,7 @@ static inline int __InternalLoadState( InternalProblem *thisprob,
   thisprob->pub_data.runtime_sec = thisprob->pub_data.runtime_usec = 0;
   thisprob->pub_data.last_runtime_sec = thisprob->pub_data.last_runtime_usec = 0;
   thisprob->pub_data.last_runtime_is_invalid = 1;
-  memset((void *)&thisprob->pub_data.live_rate[0], 0, sizeof(thisprob->pub_data.live_rate));
+  memset((void *)&thisprob->pub_data.live_rate, 0, sizeof(thisprob->pub_data.live_rate));
   memset((void *)&thisprob->pub_data.profiling, 0, sizeof(thisprob->pub_data.profiling));
   thisprob->pub_data.startpermille = 0;
   thisprob->pub_data.startkeys.lo = 0;
@@ -1580,7 +1580,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
           #elif (CLIENT_CPU == CPU_POWERPC)
           case 0x01:  // PPC 601
           #endif
-                    should_not_do = +1;
+                    should_not_do = 1;
                     break;
           default:  should_not_do = 0;
                     break;

@@ -13,7 +13,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.37.2.50 2001/03/06 03:17:22 sampo Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.37.2.51 2001/03/07 00:20:19 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -723,7 +723,6 @@ const char *LogGetCurrentLogFilename(char *buffer, unsigned int buflen)
 /* from here (the matching public is LogGetContestLiveRate()), and has */
 /* special handling when used from LogScreenPercent() */
 static int __ContestGetLiveRate(unsigned int contest_i,
-                                int called_from_logscreenpercent,
                                 int *some_doneP,
                                 u32 *rateloP,
                                 u32 *walltime_hiP, u32 *walltime_loP,
@@ -739,7 +738,7 @@ static int __ContestGetLiveRate(unsigned int contest_i,
       if (CliGetMonotonicClock(&tv) == 0)
       {            
         int numdone = 0;
-        int prob_i, tab_sel = ((called_from_logscreenpercent)?(0):(1));
+        int prob_i;
         u32 oldest_sec = 0, oldest_usec = 0;
         u32 tccount_hi = 0, tccount_lo = 0;
         u32 tctime_hi = 0,  tctime_lo = 0;
@@ -769,23 +768,23 @@ static int __ContestGetLiveRate(unsigned int contest_i,
                 u32 last_utimehi = 0, last_utimelo = 0; 
                 c_sec = selprob->pub_data.runtime_sec;
                 c_usec = selprob->pub_data.runtime_usec;
-                if (selprob->pub_data.live_rate[tab_sel].init)
+                if (selprob->pub_data.live_rate.init)
                 {
-                  last_ccounthi= selprob->pub_data.live_rate[tab_sel].ccounthi; 
-                  last_ccountlo= selprob->pub_data.live_rate[tab_sel].ccountlo; 
-                  last_ctimehi = selprob->pub_data.live_rate[tab_sel].ctimehi; 
-                  last_ctimelo = selprob->pub_data.live_rate[tab_sel].ctimelo; 
-                  last_utimehi = selprob->pub_data.live_rate[tab_sel].utimehi;   
-                  last_utimelo = selprob->pub_data.live_rate[tab_sel].utimelo;   
+                  last_ccounthi= selprob->pub_data.live_rate.ccounthi; 
+                  last_ccountlo= selprob->pub_data.live_rate.ccountlo; 
+                  last_ctimehi = selprob->pub_data.live_rate.ctimehi; 
+                  last_ctimelo = selprob->pub_data.live_rate.ctimelo; 
+                  last_utimehi = selprob->pub_data.live_rate.utimehi;   
+                  last_utimelo = selprob->pub_data.live_rate.utimelo;   
                   gotit = 1;
                 }
-                selprob->pub_data.live_rate[tab_sel].ccounthi = ccounthi; 
-                selprob->pub_data.live_rate[tab_sel].ccountlo = ccountlo; 
-                selprob->pub_data.live_rate[tab_sel].ctimehi = c_sec; 
-                selprob->pub_data.live_rate[tab_sel].ctimelo = c_usec; 
-                selprob->pub_data.live_rate[tab_sel].utimehi = tv.tv_sec;   
-                selprob->pub_data.live_rate[tab_sel].utimelo = tv.tv_usec;   
-                selprob->pub_data.live_rate[tab_sel].init = 1;
+                selprob->pub_data.live_rate.ccounthi = ccounthi; 
+                selprob->pub_data.live_rate.ccountlo = ccountlo; 
+                selprob->pub_data.live_rate.ctimehi = c_sec; 
+                selprob->pub_data.live_rate.ctimelo = c_usec; 
+                selprob->pub_data.live_rate.utimehi = tv.tv_sec;   
+                selprob->pub_data.live_rate.utimelo = tv.tv_usec;   
+                selprob->pub_data.live_rate.init = 1;
                 if (gotit)
                 {
                   u32 temp = ccountlo;
@@ -871,9 +870,9 @@ int LogGetContestLiveRate(unsigned int contest_i, u32 *rateloP,
                           u32 *walltime_hiP, u32 *walltime_loP,
                           u32 *coretime_hiP, u32 *coretime_loP)
 {
-  return __ContestGetLiveRate(contest_i, 0, 0, rateloP, 
-                              walltime_hiP, walltime_loP, 
-                              coretime_hiP, coretime_loP );
+  return __ContestGetLiveRate( contest_i, 0, rateloP, 
+                               walltime_hiP, walltime_loP, 
+                               coretime_hiP, coretime_loP );
 }
 
 // ---------------------------------------------------------------------------
@@ -947,7 +946,7 @@ void LogScreenPercent( unsigned int load_problem_count )
         i++;
       }
     }
-    if (__ContestGetLiveRate(cont_i, 1, /* <= YES, called from LogScreen... */
+    if (__ContestGetLiveRate(cont_i,
                              &some_done, &ratelo, 
                              &wtimehi, &wtimelo, &ctimehi, &ctimelo) < 1)
     {
@@ -960,7 +959,7 @@ void LogScreenPercent( unsigned int load_problem_count )
     else
     {
       i = sprintf(buffer,"\r%s: rate: ", CliGetContestNameFromID(cont_i));
-      ProblemComputeRate( cont_i, 0, 0, ratelo, 0, 0,
+      ProblemComputeRate( cont_i, 0, 0, 0, ratelo, 0,
                           &buffer[i], sizeof(buffer)-i );
       strcat(buffer, "/sec");
 #if 0

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.5 2001/03/06 03:17:23 sampo Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.11.2.6 2001/03/07 00:20:22 sampo Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file
@@ -48,8 +48,7 @@ void LogScreenPercent( unsigned int load_problem_count );
 //or "" if logfile hasn't been accessed yet.
 const char *LogGetCurrentLogFilename(char *buffer, unsigned int len);
 
-int LogGetContestLiveRate(unsigned int contest_i,
-                          u32 *ratehiP, u32 *rateloP,
+int LogGetContestLiveRate(unsigned int contest_i, u32 *rateloP,
                           u32 *walltime_hiP, u32 *walltime_loP,
                           u32 *coretime_hiP, u32 *coretime_loP);
 

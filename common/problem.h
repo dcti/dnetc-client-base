@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.51 2001/03/06 04:35:43 sampo Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.61.2.52 2001/03/07 00:20:26 sampo Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -131,7 +131,7 @@ struct problem_publics
     u32 ctimehi,  ctimelo;
     u32 utimehi,  utimelo;
     int init;
-  } live_rate[2];                /* -- payload for ContestGetLiveRate    */
+  } live_rate;                   /* -- payload for ContestGetLiveRate    */
 
   u32 startpermille;             /* -,                                   */
   struct {u32 hi,lo;} startkeys;
