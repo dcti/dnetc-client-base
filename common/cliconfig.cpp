@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.108  1998/06/24 03:29:45  silby
+// Switched the order of timeslice and cputype so most oses wouldn't have the gap in the #2 menu spot in the performance menu
+//
 // Revision 1.107  1998/06/23 21:58:52  remi
 // Use only two x86 DES cores (P5 & PPro) when not multithreaded.
 //
@@ -97,7 +100,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.107 1998/06/23 21:58:52 remi Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.108 1998/06/24 03:29:45 silby Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -236,7 +239,7 @@ static optionstruct options[OPTION_COUNT]=
     "65536",
 #endif
     CFGTXT("\nThe lower the value, the less impact the client will have on your system, but\n"
-    "the slower it will go. Values from 200 to 65536 are good."),4,2,4,NULL},
+    "the slower it will go. Values from 200 to 65536 are good."),4,3,4,NULL},
 //8
 { "niceness", CFGTXT("Level of niceness to run at"), "0",
   CFGTXT("\n\nExtremely Nice will not slow down other running programs.\n"
@@ -267,14 +270,14 @@ static optionstruct options[OPTION_COUNT]=
 #if (CLIENT_CPU == CPU_X86)
 //16
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,5},
+      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,5},
 #elif (CLIENT_CPU == CPU_ARM)
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,3},
+      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,3},
 #elif (CLIENT_CPU == CPU_POWERPC && (CLIENT_OS == OS_LINUX || CLIENT_OS == OS_AIX))
 //16
 { "cputype", CFGTXT("Optimize performance for CPU type"), "-1",
-      CFGTXT("\n"),4,2,3,NULL,CFGTXT(&cputypetable[1][0]),-1,1},
+      CFGTXT("\n"),4,2,2,NULL,CFGTXT(&cputypetable[1][0]),-1,1},
 #else
 //16
 { "cputype", CFGTXT("CPU type...not applicable in this client"), "-1", CFGTXT("(default -1)"),0,2,0,
