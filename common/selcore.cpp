@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.39 2003/03/31 03:02:38 mfeiri Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.40 2003/03/31 20:40:42 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1547,11 +1547,11 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case  4: cindex =-1; break; // SPARCstation IPX == ?
         case  5: cindex =-1; break; // SPARCstation 1   == ?
         case  6: cindex =-1; break; // SPARCstation 1+  == ?
-        case  7: cindex = 2; break; // SPARCstation 2   == ANSI 1-pipe? 
+        case  7: cindex =-1; break; // SPARCstation 2   == ? 
         case  8: cindex =-1; break; // microSPARC       == ?
         case  9: cindex = 3; break; // microSPARC II    == KKS 2-pipe
         case 10: cindex =-1; break; // TurboSPARC       == ?
-        case 11: cindex = 2; break; // SuperSPARC       == ANSI 1-pipe
+        case 11: cindex =-1; break; // SuperSPARC       == ?
         case 12: cindex = 3; break; // SuperSPARC SC    == KKS 2-pipe
         case 13: cindex =-1; break; // hyperSPARC       == ?
         case 14: cindex =-1; break; // hyperSPARC       == ?
@@ -1559,7 +1559,7 @@ int __selcoreGetPreselectedCoreForProject(unsigned int projectid)
         case 16: cindex = 3; break; // UltraSPARC-II    == KKS 2-pipe
         case 17: cindex = 3; break; // UltraSPARC-IIi   == KKS 2-pipe
         case 18: cindex = 3; break; // UltraSPARC-IIe   == KKS 2-pipe
-        case 19: cindex = 0; break; // UltraSPARC-III   == ANSI 4-pipe
+        case 19: cindex = 3; break; // UltraSPARC-III   == KKS 2-pipe
         default: cindex =-1; break; // no default 
       }
     }
