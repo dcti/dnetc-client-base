@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: netres.cpp,v $
+// Revision 1.8  1998/12/08 05:54:26  dicamillo
+// For MacOS, delete call to tzset; add ".s_addr" to access result from
+// inet_addr.
+//
 // Revision 1.7  1998/10/26 02:55:08  cyp
 // win16 changes
 //
@@ -33,7 +37,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *netres_cpp(void) {
-return "@(#)$Id: netres.cpp,v 1.7 1998/10/26 02:55:08 cyp Exp $"; }
+return "@(#)$Id: netres.cpp,v 1.8 1998/12/08 05:54:26 dicamillo Exp $"; }
 #endif
 
 //---------------------------------------------------------------------
@@ -137,7 +141,9 @@ static int calc_tzmins(void)
   if (saved_tz != -123)
     return saved_tz;
 
-  tzset();
+  #if (CLIENT_OS != OS_MACOS)
+    tzset();
+  #endif
   timenow = time(NULL);
   tmP = localtime( (const time_t *) &timenow);
   if ((haveloctime = (tmP != NULL))!=0)
@@ -245,7 +251,11 @@ s32 Network::Resolve(const char * , u32 & )
 // returns -1 on error, 0 on success
 s32 Network::Resolve(const char *host, u32 &hostaddress )
 {
+#if (CLIENT_OS == OS_MACOS)
+  if ((hostaddress = inet_addr((char*)host).s_addr) == 0xFFFFFFFFL)
+#else
   if ((hostaddress = inet_addr((char*)host)) == 0xFFFFFFFFL)
+#endif
     {
     struct hostent *hp;
     if ((hp = gethostbyname((char*)host)) == NULL) return -1;
@@ -279,7 +289,11 @@ s32 Network::Resolve(const char *host, u32 &hostaddress )
     resauto = 1;
     resport = 0; // ie default port
     }
+#if (CLIENT_OS == OS_MACOS)
+  else if ( *host && ((hostaddress = inet_addr((char*)host).s_addr) != 0xFFFFFFFFL))
+#else
   else if ( *host && ((hostaddress = inet_addr((char*)host)) != 0xFFFFFFFFL))
+#endif
     return 0;
 
   #ifdef RESDEBUG
