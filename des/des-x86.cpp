@@ -3,12 +3,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
+// Revision 1.4  1998/06/14 08:27:04  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.3  1998/06/14 08:13:19  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 //
 
 // encapsulate the BrydDES library
+
+static char *id="@(#)$Id: des-x86.cpp,v 1.4 1998/06/14 08:27:04 friedbait Exp $";
 
 #include <stdio.h>
 #include <string.h>

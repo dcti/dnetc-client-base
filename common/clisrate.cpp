@@ -6,6 +6,10 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.15  1998/06/14 08:26:43  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.14  1998/06/14 08:12:41  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -23,6 +27,8 @@
                  exactly 3 characters to spare, and >9 blocks (or
                  >9 days, or >999Kk/s) will cause line to wrap.
 */
+
+static char *id="@(#)$Id: clisrate.cpp,v 1.15 1998/06/14 08:26:43 friedbait Exp $";
 
 #include "clisrate.h" //includes client.h, clitime.h, clirate.h, clicdata.h
 

@@ -3,11 +3,17 @@
  * generation of S0[]
  *
  * $Log: rc5-ultra-crunch.cpp,v $
+ * Revision 1.5  1998/06/14 08:27:23  friedbait
+ * 'Id' tags added in order to support 'ident' command to display a bill of
+ * material of the binary executable
+ *
  * Revision 1.4  1998/06/14 08:13:41  friedbait
  * 'Log' keywords added to maintain automatic change history
  *
  *
  */
+
+static char *id="@(#)$Id: rc5-ultra-crunch.cpp,v 1.5 1998/06/14 08:27:23 friedbait Exp $";
 
 #include <stdio.h>
 

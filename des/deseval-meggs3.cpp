@@ -1,9 +1,15 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.3  1998/06/14 08:27:07  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.2  1998/06/14 08:13:21  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 //
+
+static char *id="@(#)$Id: deseval-meggs3.cpp,v 1.3 1998/06/14 08:27:07 friedbait Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -6,6 +6,10 @@
 // problem and for obtaining the total/average keyrate for an entire contest.
 //
 // $Log: clirate.cpp,v $
+// Revision 1.9  1998/06/14 08:26:41  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.8  1998/06/14 08:12:38  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -20,6 +24,8 @@
                  with the same key but different contest ids
                  are recognized as unique problems.
 */
+
+static char *id="@(#)$Id: clirate.cpp,v 1.9 1998/06/14 08:26:41 friedbait Exp $";
 
 #include "clirate.h" //includes client.h, clicdata.h, clitime.h
 

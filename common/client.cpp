@@ -3,12 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.47  1998/06/14 08:26:38  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.46  1998/06/14 08:12:33  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 //
 
-
+static char *id="@(#)$Id: client.cpp,v 1.47 1998/06/14 08:26:38 friedbait Exp $";
 
 #include "client.h"
 

@@ -3,12 +3,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.17  1998/06/14 08:26:54  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.16  1998/06/14 08:13:04  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 // Revision 1.15  1998/06/14 00:06:07  remi
 // Added $Log.
 //
+
+static char *id="@(#)$Id: problem.cpp,v 1.17 1998/06/14 08:26:54 friedbait Exp $";
 
 #define NEW_STATS_AND_LOGMSG_STUFF
 

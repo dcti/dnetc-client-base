@@ -3,10 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: autobuff.cpp,v $
+// Revision 1.4  1998/06/14 08:26:34  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.3  1998/06/14 08:12:23  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 //
+
+static char *id="@(#)$Id: autobuff.cpp,v 1.4 1998/06/14 08:26:34 friedbait Exp $";
 
 #include "autobuff.h"
 

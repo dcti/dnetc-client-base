@@ -3,6 +3,10 @@
 
   
   $Log: iniread.cpp,v $
+  Revision 1.6  1998/06/14 08:26:49  friedbait
+  'Id' tags added in order to support 'ident' command to display a bill of
+  material of the binary executable
+
   Revision 1.5  1998/06/14 08:12:53  friedbait
   'Log' keywords added to maintain automatic change history
 
@@ -25,6 +29,8 @@
   changes in 2.0: (May 25, 1997)
     complete rewrite to not depend on the Borland string class.
 */
+
+static char *id="@(#)$Id: iniread.cpp,v 1.6 1998/06/14 08:26:49 friedbait Exp $";
 
 #include "iniread.h"
 

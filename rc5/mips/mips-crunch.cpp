@@ -6,6 +6,10 @@
  * Marco.Walther@mch.sni.de
  *
  * $Log: mips-crunch.cpp,v $
+ * Revision 1.5  1998/06/14 08:27:13  friedbait
+ * 'Id' tags added in order to support 'ident' command to display a bill of
+ * material of the binary executable
+ *
  * Revision 1.4  1998/06/14 08:13:30  friedbait
  * 'Log' keywords added to maintain automatic change history
  *
@@ -16,6 +20,8 @@
  * non-arrayed S1/S2 tables, direct use of last value, run-time
  * generation of S0[]
  */
+
+static char *id="@(#)$Id: mips-crunch.cpp,v 1.5 1998/06/14 08:27:13 friedbait Exp $";
 
 #include <stdio.h>
 

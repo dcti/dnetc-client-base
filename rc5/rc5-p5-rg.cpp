@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-p5-rg.cpp,v $
+// Revision 1.3  1998/06/14 08:27:21  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.2  1998/06/14 08:13:38  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -29,6 +33,9 @@
 
 
 // This file is included from rc5.cpp so we can use __inline__.
+
+static char *id="@(#)$Id: rc5-p5-rg.cpp,v 1.3 1998/06/14 08:27:21 friedbait Exp $";
+
 #include "problem.h"
 
 #if (PIPELINE_COUNT != 2)

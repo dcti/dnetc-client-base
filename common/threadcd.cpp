@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: threadcd.cpp,v $
+// Revision 1.5  1998/06/14 08:26:57  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.4  1998/06/14 08:13:12  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -15,6 +19,8 @@
 
 // This module encapsulates functions for the creation and destruction of
 // a single thread - used by client.cpp and piproxy.cpp
+
+static char *id="@(#)$Id: threadcd.cpp,v 1.5 1998/06/14 08:26:57 friedbait Exp $";
 
 #include "threadcd.h"   //includes implementation and porting notes.
 #include "sleepdef.h"   //sleep() and usleep()

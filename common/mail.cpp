@@ -4,6 +4,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.10  1998/06/14 08:26:51  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.9  1998/06/14 08:12:56  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -21,6 +25,8 @@
 #if defined(FIFO_ON_BUFF_OVERFLOW) && !defined(GEN_HEADER_AT_SEND)
 #define GEN_HEADER_AT_SEND    // FIFO buffer requires generating headers at
 #endif                        // send time rather than at msg creation time.
+
+static char *id="@(#)$Id: mail.cpp,v 1.10 1998/06/14 08:26:51 friedbait Exp $";
 
 #include "network.h"
 #include "client.h"

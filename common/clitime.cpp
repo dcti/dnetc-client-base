@@ -6,6 +6,10 @@
 // the time. 'time' is always stored/passed/returned in timeval format.
 //
 // $Log: clitime.cpp,v $
+// Revision 1.12  1998/06/14 08:26:44  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.11  1998/06/14 08:12:45  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -20,6 +24,8 @@
    Module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
+
+static char *id="@(#)$Id: clitime.cpp,v 1.12 1998/06/14 08:26:44 friedbait Exp $";
 
 #include "clitime.h" //which #includes client.h
 

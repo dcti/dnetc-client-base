@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-p6-rg.cpp,v $
+// Revision 1.3  1998/06/14 08:27:22  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.2  1998/06/14 08:13:40  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -23,6 +27,8 @@
 //
 // 980104 :
 //	- precalculate some things for ROUND1 & ROUND2
+
+static char *id="@(#)$Id: rc5-p6-rg.cpp,v 1.3 1998/06/14 08:27:22 friedbait Exp $";
 
 #define CORE_INCREMENTS_KEY
 

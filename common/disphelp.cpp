@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.16  1998/06/14 08:26:47  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.15  1998/06/14 08:12:51  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -13,6 +17,8 @@
 //
 // call DisplayHelp() from main with the 'unrecognized option' argv[x]
 // or NULL or "-help" or "help" (or whatever)
+
+static char *id="@(#)$Id: disphelp.cpp,v 1.16 1998/06/14 08:26:47 friedbait Exp $";
 
 #include "client.h"
 

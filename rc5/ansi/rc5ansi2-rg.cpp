@@ -6,6 +6,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5ansi2-rg.cpp,v $
+// Revision 1.5  1998/06/14 08:27:34  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.4  1998/06/14 08:13:51  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -39,6 +43,7 @@
 // in order :
 //	- all others
 
+static char *id="@(#)$Id: rc5ansi2-rg.cpp,v 1.5 1998/06/14 08:27:34 friedbait Exp $";
 
 #include "problem.h"
 #include "rotate.h"

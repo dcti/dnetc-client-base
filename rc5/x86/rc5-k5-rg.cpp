@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k5-rg.cpp,v $
+// Revision 1.3  1998/06/14 08:27:18  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.2  1998/06/14 08:13:36  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -50,6 +54,8 @@
 // PR133 = 100   / 66           v2=287-300 rg=220   / 341-374 ?
 // PR120 =  90   / 60			   rg=193 ? / 307-336 ?
 // PR??? =  75   / ??    v1=120 v2=215-225 rg=165   / 256-280 ?
+
+static char *id="@(#)$Id: rc5-k5-rg.cpp,v 1.3 1998/06/14 08:27:18 friedbait Exp $";
 
 #define CORE_INCREMENTS_KEY
 

@@ -6,6 +6,10 @@
 //
 //
 // $Log: network.cpp,v $
+// Revision 1.19  1998/06/14 08:26:52  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.18  1998/06/14 08:13:00  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -14,6 +18,8 @@
 //                      Fixed NetWare stuff and added #include "sleepdef.h"
 //                      (which should now warn if macros are not the same)
 //
+
+static char *id="@(#)$Id: network.cpp,v 1.19 1998/06/14 08:26:52 friedbait Exp $";
 
 #include "network.h"
 #include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--

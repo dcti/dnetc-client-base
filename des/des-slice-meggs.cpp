@@ -3,12 +3,18 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice-meggs.cpp,v $
+// Revision 1.7  1998/06/14 08:27:02  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.6  1998/06/14 08:13:17  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 //
 
 // encapsulate the bitslice SolNET code
+
+static char *id="@(#)$Id: des-slice-meggs.cpp,v 1.7 1998/06/14 08:27:02 friedbait Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k6-rg.cpp,v $
+// Revision 1.3  1998/06/14 08:27:19  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.2  1998/06/14 08:13:37  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -14,6 +18,8 @@
 // 980307 :
 //	- Finally a K6 optimization that works ...
 //	- Based on the 486/980226 version
+
+static char *id="@(#)$Id: rc5-k6-rg.cpp,v 1.3 1998/06/14 08:27:19 friedbait Exp $";
 
 #define CORE_INCREMENTS_KEY
 

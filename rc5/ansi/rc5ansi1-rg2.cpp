@@ -7,6 +7,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5ansi1-rg2.cpp,v $
+// Revision 1.5  1998/06/14 08:27:28  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.4  1998/06/14 08:13:45  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -64,6 +68,8 @@
 // On Sparc we are short of registers.
 //
 // Rémi Guyomarch - 97/07/19
+
+static char *id="@(#)$Id: rc5ansi1-rg2.cpp,v 1.5 1998/06/14 08:27:28 friedbait Exp $";
 
 #include "problem.h"
 #include "rotate.h"

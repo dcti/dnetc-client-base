@@ -3,11 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: convdes.cpp,v $
+// Revision 1.6  1998/06/14 08:26:46  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.5  1998/06/14 08:12:48  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 //
 
+static char *id="@(#)$Id: convdes.cpp,v 1.6 1998/06/14 08:26:46 friedbait Exp $";
 
 // DES convertion routines
 

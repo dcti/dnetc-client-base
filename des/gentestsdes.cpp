@@ -1,5 +1,9 @@
 //
 // $Log: gentestsdes.cpp,v $
+// Revision 1.3  1998/06/14 08:27:09  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.2  1998/06/14 08:13:25  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -11,6 +15,8 @@ Organization:     Me ? Organized ?
 To:               Andrew Meggs <insect@antennahead.com>
 Copies to:        tcharron@interlog.com, jlawson@hmc.edu, beberg@distributed.net
 Subject:          Re: (Fwd) DES x86-core news
+
+static char *id="@(#)$Id: gentestsdes.cpp,v 1.3 1998/06/14 08:27:09 friedbait Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>

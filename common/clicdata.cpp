@@ -9,6 +9,10 @@
 // ease maintenance.
 //
 // $Log: clicdata.cpp,v $
+// Revision 1.6  1998/06/14 08:26:37  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.5  1998/06/14 08:12:30  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -18,6 +22,8 @@
 /* module history:
    01 May 1998 - created - Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
+
+static char *id="@(#)$Id: clicdata.cpp,v 1.6 1998/06/14 08:26:37 friedbait Exp $";
 
 #include "clicdata.h" //includes client.h for timeval and NULL definitions
 

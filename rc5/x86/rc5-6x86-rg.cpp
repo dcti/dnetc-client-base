@@ -4,6 +4,10 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.3  1998/06/14 08:27:17  friedbait
+// 'Id' tags added in order to support 'ident' command to display a bill of
+// material of the binary executable
+//
 // Revision 1.2  1998/06/14 08:13:34  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -74,6 +78,8 @@
 // PR166 = 133		PR233 = 188 | 200
 // PR150 = 120		PR200 = 166
 // PR133 = 110		PR166 = 150
+
+static char *id="@(#)$Id: rc5-6x86-rg.cpp,v 1.3 1998/06/14 08:27:17 friedbait Exp $";
 
 #define CORE_INCREMENTS_KEY
 
