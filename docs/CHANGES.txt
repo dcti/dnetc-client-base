@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.13 2002/09/14 23:03:36 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14 2002/11/03 15:04:00 pfeffi Exp $
 ==========================================================================
 
 2.9000
@@ -30,7 +30,8 @@ Version change log: $Id: CHANGES.txt,v 1.13 2002/09/14 23:03:36 andreasb Exp $
 2.9000.475  new: all: contest rc5-72
             chg: all: new buffer format (incompatible with previous 
                       clients and proxies)
-
+            fix: all: "pause-when-running": whitespaces between program
+                      name and "|" were not stripped correctly.
 
  
 2.8000
