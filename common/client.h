@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149.2.5 2004/06/20 18:30:56 kakace Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.149.2.6 2004/06/24 20:58:40 kakace Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -41,6 +41,7 @@ typedef struct
   char inifilename[MINCLIENTOPTSTRLEN*2];
   u32  last_buffupd_time; /* monotonic. goes with max_buffupd_[retry_]interval */
   int  last_buffupd_failed_time;
+  int  buffupd_retry_delay;
   int  net_update_status;
   int  remote_update_status;
   int project_state[PROJECT_COUNT]; /* do NOT save states received from proxy to disk! */
