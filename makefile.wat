@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.27.2.27 2001/04/14 13:42:55 cyp Exp $
+## $Id: makefile.wat,v 1.27.2.28 2001/04/16 17:58:15 cyp Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -123,6 +123,30 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 
 #-----------------------------------------------------------------------
 
+# -oa   Alias checking is relaxed. (assumes global variables are not 
+#       indirectly referenced through pointers)
+# -ob   order the blocks of code emitted such that the "expected" execution 
+#       path will be straight through.
+# -oc   *disable* conversion of 'call followed by ret' to 'jmp'
+# -od   *disable* all optimization (generate debuggable code)
+# -oe=N Certain user functions are expanded in-line. (if number of quads <=N)
+# -oh   enable repeated optimizations
+# -oi   all intrinsifyable functions are generated inline
+# -oi+  -oi but sets inline depth to max (255)
+# -ok   enables flowing of register save (from prologue) down into the 
+#       function's flow graph
+# -ol   enable loop optimization (including moving loop-invariant code out)
+# -ol+  -ol and perform loop unrolling
+# -om   generate inline code for atan,cos,fabs,log10,log,sin,sqrt,tan
+# -on   replace floating point divisions with multiplications by the reciprocal
+# -oo   continue compilation even if low on memory
+# -op   emit code to store intermediate floating-point results into memory
+# -or   enable instruction scheduling for pipelined architectures
+# -os   favour small code
+# -ot   favour fast code
+# -ou   forces the compiler to make sure that all function labels are unique
+# -ox   "/obiklmr" and "s" (no stack overflow checking) options are selected.
+
 %CCPP     =wpp386
 %CC       =wcc386
 %CCASM    =wasm
@@ -137,7 +161,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %CFLAGS   =/6s /fp3 /ei /mf #may be defined in the platform specific section
 %CWARNLEV =/wx /we /wcd=604 /wcd=594
 %OPT_SIZE =/s /os         #may be redefined in the platform specific section
-%OPT_SPEED=/oneatx /oh /oi+ #redefine in platform specific section
+%OPT_SPEED=/s /os /oa /oe=4096 /oi+ /ol+ #yes. this is really fastest.
 %LIBPATH  =               #may be defined in the platform specific section
 %DEBUG    =               #@%make debug to enable debugging
 %LIBFILES =               #may be defined in the platform specific section
@@ -645,12 +669,16 @@ output\csc-6b-i.obj : csc\x86\csc-6b-i.asm $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
+FASTEST_OGR=/3s /s /os /oa /oe=4096 /oi+ /ol+
+#it took me 5 hours to determine this.
+# #/ox /oa /oe=512 /oh /oi+ /ol+
+
 output\ogr-a.obj : ogr\x86\ogr-a.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\ogr-b.obj : ogr\x86\ogr-b.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 #output\ogr.obj : ogr\x86\ogr.asm $(%dependall) 
@@ -977,7 +1005,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set LFLAGS    = symtrace usleep  #symtrace printf symtrace whack16 
      @set FORMAT    = os2 le
      @set CWARNLEV  = $(%CWARNLEV)
-     @set CFLAGS    = /zp8 /6s /fp3 /fpc /zm /ei /mf &
+     @set CFLAGS    = /zp4 /6s /fp3 /fpc /zm /ei /mf &
                       /bt=dos /d__MSDOS__ &
                       /DDYN_TIMESLICE &
                       /DUSE_DPMI &
@@ -1012,7 +1040,7 @@ os2: .symbolic                                       # OS/2
      @set TASMEXE   = 
      @set LFLAGS    = sys os2v2
      @set CWARNLEV  = $(%CWARNLEV)
-     @set CFLAGS    = /zp8 /5s /fp5 /bm /mf /zm /bt=os2 /DOS2 /DLURK &
+     @set CFLAGS    = /zp4 /5s /fp5 /bm /mf /zm /bt=os2 /DOS2 /DLURK &
                       /iplat\os2
      @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oantrlexi 
@@ -1047,7 +1075,7 @@ win16: .symbolic                                       # Windows/16
                       /i$(%watcom)\h;$(%watcom)\h\win /iplat\win &
                       /DBITSLICER_WITH_LESS_BITS /DDYN_TIMESLICE 
                       #/d2
-                      #/zp8 /6s /fp3 /fpc /zm /ei /mf /bt=dos /d_Windows &
+                      #/zp4 /6s /fp3 /fpc /zm /ei /mf /bt=dos /d_Windows &
                       #/d_ENABLE_AUTODEPEND /d__WINDOWS_386__ &
                       #/bw (bw causes default windowing lib to be linked)
      @set OPT_SIZE  = /s /os 
@@ -1094,11 +1122,11 @@ win32: .symbolic                               # win32
      @set WLINKOPS  = alignment=64 map
      @set LFLAGS    = sys nt_win op de 'distributed.net client for Windows'
      @set CWARNLEV  = $(%CWARNLEV)
-     @set CFLAGS    = /zp8 /s /fpi87 /fp6 /6s /bm /mf /zmf /zc /bt=nt /DWIN32 /DLURK &
+     @set CFLAGS    = /3s /zp4 /s /fpi87 /fp6 /bm /mf /zmf /zc /bt=nt /DWIN32 /DLURK &
                       /iplat\win /i$(%watcom)\h;$(%watcom)\h\nt &
                       /DDYN_TIMESLICE
-     @set OPT_SPEED = /oneatx /ok /ol+ /oh /oi+ /ei # ox=obiklmr
-     @set OPT_SIZE  = /s /os #$(%OPT_SPEED) #
+     @set OPT_SPEED = $(%OPT_SPEED)
+     @set OPT_SIZE  = $(%OPT_SIZE)
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32svc.obj &
                       output\w32cons.obj output\w32sock.obj output\w32ras.obj &
                       output\w32util.obj output\w32exe.obj output\w32ini.obj &
