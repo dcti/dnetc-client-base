@@ -112,7 +112,7 @@ optionstruct options[OPTION_COUNT]=
 //6
 { "hours", "Run for this many hours, then exit", "0.00", "(0 = no limit)",5,1,2,NULL},
 //7
-{ "timeslice", "Keys per timeslice - for Macs, Win16, RISC OS, etc",
+{ "timeslice", "Keys per timeslice",
 #if (CLIENT_OS == OS_WIN16)
     "200",
 #elif (CLIENT_OS == OS_RISCOS)
@@ -120,8 +120,8 @@ optionstruct options[OPTION_COUNT]=
 #else
     "65536",
 #endif
-    "(0 = default timeslicing)\n"
-    "DO NOT TOUCH this unless you know what you're doing!!!",4,2,4,NULL},
+    "\nThe lower the value, the less impact the client will have on your system, but\n"
+    "the slower it will go. Values from 200 to 65536 are good.",4,2,4,NULL},
 //8
 { "niceness", "Level of niceness to run at", "0",
      "\n  mode 0) (recommended) Very nice, should not interfere with any other process\n"
@@ -475,8 +475,14 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           break;
         case CONF_TIMESLICE:
           timeslice = atoi(parm);
-          if (timeslice < 0x1)
-            timeslice = 0x10000;
+          if (timeslice < 1)
+#if (CLIENT_OS == OS_WIN16)
+            timeslice = 200;
+#elif (CLIENT_OS == OS_RISCOS)
+            timeslice = 2048;
+#else
+            timeslice = 65536;
+#endif
           break;
         case CONF_NICENESS:
           niceness = atoi(parm);
