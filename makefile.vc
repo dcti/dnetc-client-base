@@ -51,7 +51,6 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/des-slice-meggs.obj \
 	$(OUTPUTPATH)/triggers.obj   \
 	$(OUTPUTPATH)/selcore.obj    \
-	$(OUTPUTPATH)/guistuff.obj   \
 	$(OUTPUTPATH)/clirun.obj     \
 	$(OUTPUTPATH)/pollsys.obj    \
 	$(OUTPUTPATH)/probman.obj    \
@@ -64,7 +63,7 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj    \
 	$(OUTPUTPATH)/checkpt.obj    \
-        $(OUTPUTPATH)/clievent.obj
+	$(OUTPUTPATH)/clievent.obj
 
 PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/rg486.obj   \
@@ -81,9 +80,9 @@ PREBUILT_OBJS =                   \
 	$(OUTPUTPATH)/sboxes-mmx.obj \
 	$(OUTPUTPATH)/rc5mmx.obj \
 	$(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
-        $(OUTPUTPATH)/deseval.obj \
-        $(OUTPUTPATH)/des-slice.obj \
-        $(OUTPUTPATH)/sboxes-kwan4.obj
+	$(OUTPUTPATH)/deseval.obj \
+	$(OUTPUTPATH)/des-slice.obj \
+	$(OUTPUTPATH)/sboxes-kwan4.obj
 
 RC5_LIBS = wsock32.lib advapi32.lib user32.lib gdi32.lib
 
