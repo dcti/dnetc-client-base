@@ -18,7 +18,7 @@
 */   
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.6 2003/07/21 00:59:14 mfeiri Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.7 2003/07/29 23:57:20 bdragon Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -621,6 +621,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
 #if (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
 extern "C" int macosx_cputemp();
+#elif (CLIENT_OS == OS_DEC_UNIX)
+extern "C" int dunix_cputemp();
 #endif
 
 static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
@@ -640,43 +642,8 @@ static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
       cputemp = macosx_cputemp();
     #elif (CLIENT_OS == OS_DEC_UNIX)
-      FILE *file;
-      char buf[256];
-      char *buf2;
-      char envsup=0,found=0;
-      char searchstr[]="env_current_temp = ";
-
-      if ((file = popen("/sbin/sysconfig -q envmon", "r"))
-      != NULL) {
-        while ((fgets(buf, sizeof(buf), file) != NULL) && ((!envsup) ||
-              (cputemp==-1))) {
-          if (strstr (buf, "env_supported = 1")) {
-            //environmental system is loaded, and hardware supports it
-            envsup=found=1;
-          } else if (strstr (buf, "env_supported = 0")) {
-            //environmental system is loaded, but hardware doesn't support it
-            Log("Environmental monitoring not supported\n"
-                "on this system, disabling temperature checking.\n");
-            trigstatics.cputemp.hithresh=0;
-            found=1;
-            break;
-          }
-          if ((buf2=strstr (buf, searchstr)) != NULL) {
-            //environmental system is loaded, and we have a temperature
-            //reading, although it could be bogus, hence the support checks
-            buf2+=strlen(searchstr); /*forward pointer past the search string*/
-            if (*buf2) { /*just in case we've hit the end of the string*/
-              cputemp=atoi(buf2);
-              cputemp += 273/*.15*/; /* C -> K */
-            }
-          }
-        }
-        pclose(file);
-        if (!found) {
-          Log("Environmental monitoring subsystem not loaded,\n"
-              "disabling temperature checking.\n");
-          trigstatics.cputemp.hithresh=0;
-        }
+      if ((cputemp = dunix_cputemp()) < 0) {
+        trigstatics.cputemp.hithresh=0; // disable checking on failure
       }
     #elif 0 /* other client_os */
       cputemp = fooyaddablahblahbar();

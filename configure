@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.93 2003/07/28 06:09:47 jlawson Exp $
+# @(#)$Id: configure,v 1.288.2.94 2003/07/29 23:57:20 bdragon Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -158,6 +158,9 @@ add_sources() # $1=os, $2=arch, $3=custom
   elif [ "$1" = "macosx" ]; then
     COMMON_SRCS="plat/macosx/c_install.c \
                  plat/macosx/temperature.c \
+                 ${COMMON_SRCS}"
+  elif [ "$1" = "digital-unix" ]; then
+    COMMON_SRCS="plat/dunix/temperature.c \
                  ${COMMON_SRCS}"
   fi
 
