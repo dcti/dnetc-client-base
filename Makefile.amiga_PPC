@@ -8,7 +8,10 @@ DISASM =
 
 LFLAGS = #farcode fardata
 
-COMMON_OBJS = platforms/_tzset.o common/cliconfig.o common/clirate.o common/clisrate.o common/clitime.o common/clicdata.o common/client.o common/autobuff.o common/iniread.o common/network.o common/scram.o common/buffwork.o common/mail.o common/convdes.o
+COMMON_OBJS = platforms/_tzset.o common/cliconfig.o common/clirate.o
+common/clisrate.o common/clitime.o common/clicdata.o common/client.o
+common/autobuff.o common/iniread.o common/network.o common/scram.o
+common/buffwork.o common/mail.o common/convdes.o common/cpucheck.o
 RC5_OBJS = common/problem.o rc5/crunch_allitnil_552.ppc.o rc5/crunch_lintilla_296.ppc.o
 DES_OBJS = des/des-slice-meggs.o des/deseval-meggs3.o
 

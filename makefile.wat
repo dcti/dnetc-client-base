@@ -6,6 +6,12 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.14  1998/06/21 17:10:20  cyruspatel
+## Fixed some NetWare smp problems. Merged duplicate numcpu validation code
+## in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
+## spun that off, together with what used to be ::x86id() or ::ArmId(), into
+## cpucheck.cpp. Adjusted and cleaned up client.h accordingly.
+##
 ## Revision 1.13  1998/06/18 08:38:10  cyruspatel
 ## Fixed Log and Id mixup
 ##
@@ -64,7 +70,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.13 1998/06/18 08:38:10 cyruspatel Exp $
+## $Id: makefile.wat,v 1.14 1998/06/21 17:10:20 cyruspatel Exp $
 
 CC=wpp386
 CCASM=wasm
@@ -84,7 +90,7 @@ LINK=wlink
             output\iniread.obj output\network.obj output\problem.obj &
             output\scram.obj output\des-x86.obj output\convdes.obj &
             output\clitime.obj output\clicdata.obj output\clirate.obj &
-            output\clisrate.obj 
+            output\clisrate.obj output\cpucheck.obj
             # this list can be added to in the platform specific section
 
 
@@ -139,6 +145,10 @@ zip :
 #-----------------------------------------------------------------------
 
 output\cliconfig.obj : common\cliconfig.cpp makefile.wat .autodepend
+  *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
+  @set isused=1
+
+output\cpucheck.obj : common\cpucheck.cpp makefile.wat .autodepend
   *$(CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) $(%OBJDIROP) /i$[:
   @set isused=1
 

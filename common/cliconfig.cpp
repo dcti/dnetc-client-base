@@ -3,18 +3,30 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.101  1998/06/21 17:10:21  cyruspatel
+// Fixed some NetWare smp problems. Merged duplicate numcpu validation code
+// in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
+// spun that off, together with what used to be ::x86id() or ::ArmId(), into
+// cpucheck.cpp. Adjusted and cleaned up client.h accordingly.
+//
 // Revision 1.100  1998/06/21 02:48:46  silby
-// Added sixth menu with just filesnames/paths to make misc smaller, and (hopefully) reduce confusion.
+// Added sixth menu with just filesnames/paths to make misc 
+// smaller, and (hopefully) reduce confusion.
 //
 // Revision 1.99  1998/06/21 01:37:56  silby
-// Furthur changes in validation of options (validations are all being moved to ValidateConfig, which is now used much more liberally), fixed isstringblank to say that "   " is a blank string, and fixed a bug with buff-in.des being set wrong if a blank string was put into buff-out.des.
+// Furthur changes in validation of options (validations are all 
+// being moved to ValidateConfig, which is now used much more liberally), 
+// fixed isstringblank to say that "   " is a blank string, and fixed a 
+// bug with buff-in.des being set wrong if a blank string was put into 
+// buff-out.des.
 //
 // Revision 1.98  1998/06/20 22:42:56  silby
-// Improved error checking on some options (notable changes include mins and maxes now on checkpoint time and exitfilechecktime)
+// Improved error checking on some options (notable changes include 
+// mins and maxes now on checkpoint time and exitfilechecktime)
 //
 // Revision 1.97  1998/06/20 10:04:12  cyruspatel
 // Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
-// des_slice to des_unit_func_slice() to resolve conflict with (*des_unit_func)().
+// des_slice to des_unit_func_slice()/resolves conflict with (*des_unit_func)
 // Added prototype in problem.h, cliconfig x86/SelectCore() is /DKWAN aware.
 //
 // Revision 1.96  1998/06/18 12:28:37  remi
@@ -61,8 +73,8 @@
 
 #include "client.h"
 
-#if (!defined(lint) && !defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.100 1998/06/21 02:48:46 silby Exp $";
+#if (!defined(lint) && defined(__showids__))
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.101 1998/06/21 17:10:21 cyruspatel Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -390,11 +402,6 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
   s32 temp2;
   char str[3];
   char *p;
-#if (CLIENT_OS == OS_WIN32) && defined(MULTITHREAD)
-  SYSTEM_INFO systeminfo;
-#elif (CLIENT_OS == OS_BEOS)
-  system_info the_info;
-#endif
 
   while ( 1 )
   {
@@ -640,14 +647,9 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             options[CONF_HTTPID].optionscreen=0;
             };
           break;
-#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM)
-        case CONF_CPUTYPE:
-          cputype = atoi(parm);
-          if (cputype < -1 ||
-              cputype > options[CONF_CPUTYPE].choicemax)
-            cputype = -1;
-          break;
-#elif (CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))
+#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || \
+    ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || \
+    (CLIENT_OS == OS_AIX))))
         case CONF_CPUTYPE:
           cputype = atoi(parm);
           if (cputype < -1 ||
@@ -688,72 +690,9 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           strncpy( smtpdest, parm, sizeof(smtpdest) - 1 );
           ValidateConfig();
           break;
-#if defined(MULTITHREAD)
         case CONF_NUMCPU:
-          numcpu = atoi(parm);
-  #if (CLIENT_OS == OS_BEOS)
-          if (numcpu == -1)
-          {
-            get_system_info(&the_info);
-            numcputemp = the_info.cpu_count;
-            if (numcputemp < 1) {
-              numcputemp = 1;
-            }
-            else if (numcputemp > MAXCPUS) {
-              numcputemp = MAXCPUS;
-            }
-            if (numcputemp == the_info.cpu_count) {
-              LogScreenf("Detected %d cpu(s)\n", numcputemp);
-            }
-            else {
-              LogScreenf("Detected %d cpu(s); using %d cpu(s)\n",
-              the_info.cpu_count, numcputemp);
-            }
-          } else if (numcpu < 1) {
-            numcputemp = numcpu = 1;
-          } else if (numcpu > MAXCPUS) {
-            numcputemp = numcpu = MAXCPUS;
-          } else {
-            numcputemp = numcpu;
-          }
-  #else
-          numcputemp = numcpu;
-      #if (CLIENT_OS == OS_WIN32)
-          if (numcpu == -1) {
-            GetSystemInfo(&systeminfo);
-            numcputemp=systeminfo.dwNumberOfProcessors;
-            LogScreenf("Detected %d cpu(s)\n",numcputemp);
-          } else {
-            numcputemp=numcpu;
-          }
-      #elif (CLIENT_OS == OS_OS2)
-          if (numcpu == -1)
-          {
-            int rc = DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
-                    &numcputemp, sizeof(numcputemp));
-            // check if call is valid if not, default to one
-            if(rc!=0 || numcputemp < 1 || numcputemp > MAXCPUS)
-              numcputemp = numcpu;
-            LogScreenf("Detected %d cpu(s)\n", numcputemp);
-          }
-      #elif ((CLIENT_OS == OS_NETWARE) && (CLIENT_CPU == CPU_X86))
-          numcputemp = numcpu = CliValidateProcessorCount( numcpu );
-      #endif
-          if ( numcputemp < 1 )
-            numcputemp = 1;
-          if ( numcputemp > MAXCPUS )
-            numcputemp = MAXCPUS;
-      #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && (CLIENT_CPU != CPU_SPARC))
-          if ( numcputemp > 1 )
-          {
-            numcputemp = 1;
-            LogScreen("Core routines not yet updated for thread safe operation.  Using 1 cpu.\n");
-          }
-      #endif
-          //numcputemp=numcpu;
-  #endif
-          break;
-#endif
+          numcpu = atoi(parm); 
+          break; //validation is done in SelectCore() 1998/06/21 cyrus
         case CONF_CHECKPOINT:
           strncpy( ini_checkpoint_file[0] , parm, sizeof(ini_checkpoint_file)/2 -1 );
           ValidateConfig();
@@ -990,9 +929,7 @@ options[CONF_SMTPSRVR].thevariable=&smtpsrvr;
 options[CONF_SMTPPORT].thevariable=&smtpport;
 options[CONF_SMTPFROM].thevariable=&smtpfrom;
 options[CONF_SMTPDEST].thevariable=&smtpdest;
-#if !defined(MULTITHREAD)
 options[CONF_NUMCPU].optionscreen=0;
-#endif
 options[CONF_NUMCPU].thevariable=&numcpu;
 options[CONF_CHECKPOINT].thevariable=&ini_checkpoint_file[0];
 options[CONF_CHECKPOINT2].thevariable=&ini_checkpoint_file[1];
@@ -1002,9 +939,7 @@ options[CONF_PROCESSDES].thevariable=&preferred_contest_id;
 options[CONF_QUIETMODE].thevariable=&quietmode;
 options[CONF_NOEXITFILECHECK].thevariable=&noexitfilecheck;
 options[CONF_PERCENTOFF].thevariable=&percentprintingoff;
-#if !defined(MULTITHREAD)
 options[CONF_FREQUENT].optionscreen=0;
-#endif
 options[CONF_FREQUENT].thevariable=&connectoften;
 options[CONF_NODISK].thevariable=&nodiskbuffers;
 options[CONF_NOFALLBACK].thevariable=&nofallback;
@@ -1075,12 +1010,9 @@ int Client::isstringblank( char *string )
 {
   u32 counter, length, summation = 0;
 
-  if (string == NULL) return 1;
-
+  if (string == NULL || !*string) 
+    return 1;
   length = strlen(string);
-
-  if (length == 0) return 1;
-
   for (counter = 0; counter < length; counter++)
   {
     if (isprint(*(string+counter)) && (*(string+counter) != ' '))
@@ -1187,9 +1119,7 @@ s32 Client::ReadConfig(void)
   INIGETKEY(CONF_SMTPSRVR).copyto(smtpsrvr, sizeof(smtpsrvr));
   INIGETKEY(CONF_SMTPFROM).copyto(smtpfrom, sizeof(smtpfrom));
   INIGETKEY(CONF_SMTPDEST).copyto(smtpdest, sizeof(smtpdest));
-#if defined(MULTITHREAD)
   numcpu = INIGETKEY(CONF_NUMCPU);
-#endif
   INIGETKEY(CONF_CHECKPOINT).copyto(ini_checkpoint_file[0], sizeof(ini_checkpoint_file)/2);
   INIGETKEY(CONF_CHECKPOINT2).copyto(ini_checkpoint_file[1], sizeof(ini_checkpoint_file)/2);
   randomprefix = INIGETKEY(CONF_RANDOMPREFIX);
@@ -1330,8 +1260,52 @@ void Client::ValidateConfig( void )
   if (isstringblank(ini_checkpoint_file[1])) strcpy(ini_checkpoint_file[1],"none");
   if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
 
+#if (CLIENT_OS == OS_NETWARE)
+  {
+    strcpy(exit_flag_file,ini_exit_flag_file);
+    strcpy(in_buffer_file[0],ini_in_buffer_file[0]);
+    strcpy(out_buffer_file[0],ini_out_buffer_file[0]);
+    strcpy(in_buffer_file[1],ini_in_buffer_file[1]);
+    strcpy(out_buffer_file[1],ini_out_buffer_file[1]);
+    strcpy(pausefile,ini_pausefile);
+    strcpy(checkpoint_file[0],ini_checkpoint_file[0]);
+    strcpy(checkpoint_file[1],ini_checkpoint_file[1]);
+    strcpy(logname,ini_logname);
 
-#if (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS)
+    //    (destbuff, destsize, defaultvalue, changetoNONEifempty, source)
+
+    CliValidateSinglePath( inifilename, sizeof(inifilename),
+                             "rc5des" EXTN_SEP "ini", 0, inifilename );
+    if (!nodiskbuffers)
+    {
+      CliValidateSinglePath( in_buffer_file[0], sizeof(in_buffer_file[0]),
+                                       "buff-in" EXTN_SEP "rc5", 0, in_buffer_file[0] );
+      CliValidateSinglePath( out_buffer_file[0], sizeof(out_buffer_file[0]),
+                                       "buff-out" EXTN_SEP "rc5", 0, out_buffer_file[0] );
+      CliValidateSinglePath( in_buffer_file[1], sizeof(in_buffer_file[1]),
+                                       "buff-out" EXTN_SEP "des", 0, in_buffer_file[1] );
+      CliValidateSinglePath( out_buffer_file[1], sizeof(out_buffer_file[1]),
+                                       "buff-out" EXTN_SEP "des", 0, out_buffer_file[1] );
+    }
+    if (strcmp(exit_flag_file,"none")!=0)
+      CliValidateSinglePath( exit_flag_file, sizeof(exit_flag_file),
+                                     "exitrc5" EXTN_SEP "now", 1, exit_flag_file);
+    if (strcmp(pausefile,"none")!=0)
+      CliValidateSinglePath( pausefile, sizeof(pausefile),
+                                     "none", 1, pausefile);
+    if (strcmp(checkpoint_file[0],"none")!=0)
+      CliValidateSinglePath( checkpoint_file[0], sizeof(checkpoint_file[0]),
+                                       "ckpoint" EXTN_SEP "rc5", 1, checkpoint_file[0]);
+    if (strcmp(checkpoint_file[1],"none")!=0)
+      CliValidateSinglePath( checkpoint_file[1], sizeof(checkpoint_file[1]),
+                                       "ckpoint" EXTN_SEP "des", 1, checkpoint_file[1]);
+    if (strlen(logname)!=0)
+      CliValidateSinglePath( logname, sizeof(logname), "", 0, logname);
+  }
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_RISCOS) || \
+      (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
+      (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_VMS) || \
+      (CLIENT_OS == OS_AMIGAOS)
   // now, add path of exe to filenames if path isn't specified
 
   if (strrchr(ini_exit_flag_file, PATH_SEP_C) == NULL)
@@ -1506,7 +1480,7 @@ void Client::ValidateConfig( void )
       strcpy(logname,ini_logname);
       };
 
-#endif
+#endif //if netware else ((win32 || riscos) || nobasepath) else rest
 
 
 
@@ -1519,88 +1493,8 @@ void Client::ValidateConfig( void )
   mailmessage.messagelen=messagelen;
   mailmessage.port=smtpport;
 
+  //validate numcpu is now in SelectCore(); //1998/06/21 cyrus
 
-#if (CLIENT_OS == OS_BEOS)
-  if (numcpu == -1)
-  {
-    get_system_info(&the_info);
-    numcputemp = the_info.cpu_count;
-    if (numcputemp < 1) {
-      numcputemp = 1;
-    }
-    else if (numcputemp > MAXCPUS) {
-      numcputemp = MAXCPUS;
-    }
-    if (!did_detect_message) {
-      if (numcputemp == the_info.cpu_count)
-      {
-        LogScreenf("Detected %d cpu(s)\n", numcputemp);
-      }
-      else
-      {
-        LogScreenf("Detected %d cpu(s); using %d cpu(s)\n",
-          the_info.cpu_count, numcputemp);
-      }
-      did_detect_message = true;
-    }
-  } else if (numcpu < 1) {
-    numcputemp = numcpu = 1;
-  } else if (numcpu > MAXCPUS) {
-    numcputemp = numcpu = MAXCPUS;
-  } else {
-    numcputemp = numcpu;
-  }
-#elif ((CLIENT_OS == OS_NETWARE) && (CLIENT_CPU == CPU_X86))
-  numcputemp = numcpu = CliValidateProcessorCount( numcpu );
-#else
-  numcputemp = numcpu;
-  #if (CLIENT_OS == OS_WIN32)
-    if (numcpu == -1) {
-      GetSystemInfo(&systeminfo);
-      numcputemp=systeminfo.dwNumberOfProcessors;
-      if (!did_detect_message)
-      {
-        LogScreenf("Detected %d cpu(s)\n",numcputemp);
-        did_detect_message = true;
-      }
-    } else {
-      numcputemp=numcpu;
-    }
-  #elif (CLIENT_OS == OS_OS2)
-    if (numcpu == -1)
-    {
-      int rc = DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
-                &numcputemp, sizeof(numcputemp));
-      // check if call is valid if not, default to one
-      if(rc!=0 || numcputemp < 1 || numcputemp > MAXCPUS)
-        numcputemp = numcpu;
-      if (!did_detect_message)
-      {
-        LogScreenf("Detected %d cpu(s)\n", numcputemp);
-        did_detect_message = true;
-      }
-    }
-  #endif
-  if ( numcputemp < 1)
-     numcputemp = 1;
-  if ( numcputemp > MAXCPUS)
-     numcputemp = MAXCPUS;
-
-  #if ((CLIENT_CPU != CPU_X86) && (CLIENT_CPU != CPU_88K) && (CLIENT_CPU != CPU_SPARC) && (CLIENT_CPU != CPU_POWERPC))
-    if ( numcpu > 1 )
-    {
-      numcpu = numcputemp = 1;
-      LogScreen("Core routines not yet updated for thread safe operation.  Using 1 cpu.\n");
-    }
-  #endif
-
-  #if !defined(MULTITHREAD)
-  if ( numcpu > 1) {
-    numcpu = numcputemp = 1;
-  }
-  #endif
-  //numcputemp=numcpu;
-#endif
 #if defined(NEEDVIRTUALMETHODS)
   InternalValidateConfig();
 #elif (CLIENT_OS == OS_NETWARE)
@@ -1683,9 +1577,7 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_SMTPPORT, smtpport );
   INISETKEY( CONF_SMTPFROM, smtpfrom );
   INISETKEY( CONF_SMTPDEST, smtpdest );
-#if defined(MULTITHREAD)
   INISETKEY( CONF_NUMCPU, numcpu );
-#endif
   INISETKEY( CONF_CHECKPOINT, ini_checkpoint_file[0] );
   INISETKEY( CONF_CHECKPOINT2, ini_checkpoint_file[1] );
   INISETKEY( CONF_RANDOMPREFIX, randomprefix );
@@ -2174,6 +2066,8 @@ if (previouscputype == cputype) return 0;// We already autodetected.
 
 previouscputype=cputype;// Set this so we know next time this proc is run.
 
+  ValidateProcessorCount(); //in cpucheck.cpp
+
 #if ((CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU != CPU_POWERPC))
   if (!(SysBase->AttnFlags & AFF_68020))
   {
@@ -2249,7 +2143,8 @@ previouscputype=cputype;// Set this so we know next time this proc is run.
 #elif (CLIENT_CPU == CPU_X86)
   // benchmark all cores
   int fastcore = cputype;
-  if (fastcore == -1) fastcore = x86id(); // Will return 0 if unable to identify.
+  if (fastcore == -1) GetProcessorType();  //was x86id(); now in cpucheck.cpp
+    // Will return 0 if unable to identify.
 
 // Old "try every code" speed detect removed; it was never right, and
 // x86id gets almost all processors now anyway.
@@ -2303,7 +2198,8 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
 #elif (CLIENT_CPU == CPU_ARM)
   int fastcore = cputype;
 #if (CLIENT_OS == OS_RISCOS)
-  if (fastcore == -1) fastcore = ARMid(); // will return -1 if unable to identify
+  if (fastcore == -1)              //was ArmID(). Now in cpucheck.cpp
+    fastcore = GetProcessorType(); // will return -1 if unable to identify
 #endif
   if (fastcore == -1)
   {
@@ -3017,16 +2913,15 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-  #if defined(MULTITHREAD)
       else if ( strcmp( Argv[i], "-numcpu" ) == 0 ) // Override the number of cpus
       {
-        LogScreenf("Configuring for %s CPUs\n",Argv[i+1]);
+        //LogScreenf("Configuring for %s CPUs\n",Argv[i+1]);
+        //Message appears in SelectCore()
         numcpu = (s32) atoi(Argv[i+1]);
         inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
       }
-  #endif
       else if ( strcmp(Argv[i], "-ckpoint" ) == 0)
       {
         LogScreenf("Setting RC5 checkpoint file to %s\n",Argv[i+1]);
@@ -3098,260 +2993,24 @@ void Client::PrintBanner(const char * /*clname*/)
 #endif
   LogScreenf( "\nRC5DES v2.%d.%d client - a project of distributed.net\n"
           "Copyright distributed.net 1997-1998\n"
-#if (CLIENT_CPU == CPU_X86)
-          "DES search routines Copyright Svend Olaf Mikkelsen\n"
-#endif
-#if defined(KWAN)
+          #if defined(KWAN)
           "DES search routines Copyright Matthew Kwan\n"
-#endif
+            #if defined(MEGGS) //t'is only fair - 1998/06/21 cyrus
+            "DES bitslice driver Copyright Andrew Meggs\n"
+            #endif
+          #elif (CLIENT_CPU == CPU_X86)
+          "DES search routines Copyright Svend Olaf Mikkelsen\n"
+          #endif
           "Please visit http://www.distributed.net/ for up to date contest information.\n"
           "%s\n", CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC,
-#if (CLIENT_OS == OS_NETWARE)
-          "\n");
-#else
-  #if (CLIENT_OS == OS_RISCOS)
+          #if (CLIENT_OS == OS_RISCOS)
           guiriscos ?
           "Interactive help is available, or select 'Help contents' from the menu for\n"
-          "more detailed client information.\n" :
-  #endif
-          "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt for more\n"
-          "detailed client option information.\n");
-#endif
+          "detailed client information.\n" :
+          #endif
+          "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt for\n"
+          "client option information details.\n");
 }
-
-// --------------------------------------------------------------------------
-
-#if (CLIENT_CPU == CPU_X86)
-int Client::x86id()
-{
-  struct _cpuxref { unsigned int cpuidb, coretouse; char *cpuname; } *cpuxref = NULL;
-  char *pronoun = NULL; //"an" "a"
-  char *vendorname = NULL; //"a Cyrix", "a Centaur", "an AMD", "an Intel"
-  int coretouse = 0; // the core the client should use of the 5(6?)
-  unsigned int vendorid, cpuidb, pos;
-  u32 detectedvalue;
-
-  detectedvalue = x86ident(); //must be interpreted
-  vendorid = (detectedvalue >> 16);
-  cpuidb  = (detectedvalue & 0xffff);
-
-  if ( vendorid == 0x7943) // Cyrix CPU
-    {
-    pronoun = "a";
-    vendorname = " Cyrix";
-    cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
-    struct _cpuxref __cpuxref[]={
-      {    0x40,   0, "486"     }, // use Pentium core
-      {  0x0490,   0, "5x86"    },
-      {  0x0440,   0, "MediaGX" },
-      {  0x0520,   3, "6x86"    }, // "AMD 486, Cyrix 6x86/6x86MX/M2"
-      {  0x0540,   0, "GXm"     }, // use Pentium core here too
-      {  0x0600,   3, "6x86MX"  },
-      {  0x0000,   3, NULL      } //default core == 6x86
-      }; cpuxref = &__cpuxref[0];
-    }
-  else if ( vendorid == 0x6543) //centaur/IDT cpu
-    {
-    pronoun = "a";
-    vendorname = " Centaur/IDT";
-    cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
-    struct _cpuxref __cpuxref[]={
-      {  0x0540,   0, "C6"      }, // use Pentium core
-      {  0x0000,   0, NULL      }  // default core == Pentium
-      }; cpuxref = &__cpuxref[0];
-    }
-  else if ( vendorid == 0x7541) // AMD CPU
-    {
-    pronoun = "an";
-    vendorname = " AMD";
-    cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
-    struct _cpuxref __cpuxref[]={
-      {  0x0040,   3, "486"      },   // "AMD 486, Cyrix 6x86/6x86MX/M2",
-      {  0x0430,   3, "486DX2"   },
-      {  0x0470,   3, "486DX2WB" },
-      {  0x0480,   3, "486DX4"   },
-      {  0x0490,   3, "486DX4WB" },
-      {  0x04E0,   3, "5x86"     },
-      {  0x04F0,   3, "5x86WB"   },
-      {  0x0500,   4, "K5 PR75, PR90, or PR100" }, // use K5 core
-      {  0x0510,   4, "K5 PR120 or PR133" },
-      {  0x0520,   4, "K5 PR166" },
-      {  0x0530,   4, "K5 PR200" },
-      {  0x0560,   5, "K6"       },
-      {  0x0570,   5, "K6"       },
-      {  0x0580,   5, "K6-2"     },
-      {  0x0590,   5, "K6-3"     },
-      {  0x0000,   5, NULL       }   // for the future - default core = K6
-      }; cpuxref = &__cpuxref[0];
-    }
-  else if (vendorid == 0x6E49 || vendorid == 0x6547) // Intel CPU
-    {
-    pronoun = "an";
-    vendorname = " Intel";
-    if ((cpuidb == 0x30) || (cpuidb == 0x40))
-      vendorname = ""; //generic 386/486
-    cpuidb &= 0xfff0; //strip last 4 bits, don't need stepping info
-    struct _cpuxref __cpuxref[]={
-      {  0x0030,   1, "80386"    },   // generic 386/486 core
-      {  0x0040,   1, "80486"    },
-      {  0x0400,   1, "486DX 25 or 33" },
-      {  0x0410,   1, "486DX 50" },
-      {  0x0420,   1, "486SX" },
-      {  0x0430,   1, "486DX2" },
-      {  0x0440,   1, "486SL" },
-      {  0x0450,   1, "486SX2" },
-      {  0x0470,   1, "486DX2WB" },
-      {  0x0480,   1, "486DX4" },
-      {  0x0490,   1, "486DX4WB" },
-      {  0x0500,   0, "Pentium" }, //stepping A
-      {  0x0510,   0, "Pentium" },
-      {  0x0520,   0, "Pentium" },
-      {  0x0530,   0, "Pentium Overdrive" },
-      {  0x0540,   0, "Pentium MMX" },
-      {  0x0570,   0, "Pentium" },
-      {  0x0580,   0, "Pentium MMX" },
-      {  0x0600,   2, "Pentium Pro" },
-      {  0x0610,   2, "Pentium Pro" },
-      {  0x0630,   2, "Pentium II" },
-      {  0x0650,   2, "Pentium II" },
-      {  0x0000,   2, NULL         }  // default core = PPro/PII
-      }; cpuxref = &__cpuxref[0];
-    }
-
-  LogScreen( "Automatic processor detection " );
-  if ( cpuxref == NULL ) // fell through
-    {
-    cpuidb = (detectedvalue & 0xffff); //restore all bits
-    LogScreenf( "failed. (id: %04X:%04X)\n", vendorid, cpuidb );
-    }
-  else // we have a mfg's table
-    {
-    for (pos=0 ; ; pos++)
-      {
-      if ( (cpuxref[pos].cpuname)==NULL )
-        {
-        coretouse = (cpuxref[pos].coretouse);
-        cpuidb = (detectedvalue & 0xffff); //restore all bits
-        LogScreenf("found an recognized%s processor. (id: %04X)",
-                                                    vendorname, cpuidb );
-        break;
-        }
-      if ( cpuidb == (cpuxref[pos].cpuidb))
-        {
-        coretouse = (cpuxref[pos].coretouse);  //show the name
-        LogScreenf( "found %s%s %s.\n", pronoun,
-                                     vendorname, (cpuxref[pos].cpuname));
-        break;
-        }
-      }
-    }
-  return coretouse;
-}
-#endif
-
-// --------------------------------------------------------------------------
-
-#if (CLIENT_CPU == CPU_ARM)
-#if (CLIENT_OS == OS_RISCOS)
-#include <setjmp.h>
-
-static jmp_buf ARMident_jmpbuf;
-
-static void ARMident_catcher(int)
-{
-  longjmp(ARMident_jmpbuf, 1);
-}
-#endif
-
-int Client::ARMid()
-#if (CLIENT_OS == OS_RISCOS)
-{
-  u32 realid, detectedvalue; // value ARMident returns, must be interpreted
-  int coretouse; // the core the client should use
-
-  // ARMident() will throw SIGILL on an ARM 2 or ARM 250, because
-  // they don't have the system control coprocessor. (We ignore the
-  // ARM 1 because I'm not aware of any existing C++ compiler that
-  // targets it...)
-
-  signal(SIGILL, ARMident_catcher);
-
-  if (setjmp(ARMident_jmpbuf))
-  {
-    detectedvalue = 0x2000;
-  }
-  else
-  {
-    detectedvalue = ARMident();
-  }
-
-  signal(SIGILL, SIG_DFL);
-
-  detectedvalue = (detectedvalue >> 4) & 0xfff; // extract part number field
-
-  if ((detectedvalue & 0xf00) == 0)
-  {
-    // an old-style ID (ARM 3 or prototype ARM 600) - shift it into the new form
-    detectedvalue <<= 4;
-  }
-
-  if (detectedvalue == 0x300)
-  {
-    detectedvalue = 3;
-  }
-  else if (detectedvalue == 0x710)
-  {
-    // the ARM 7500 returns an ARM 710 ID - need to look at its
-    // integral IOMD unit to spot the difference
-    u32 detectediomd = IOMDident();
-    detectediomd &= 0xff00; // just want most significant byte
-
-    if (detectediomd == 0x5b00)
-      detectedvalue = 0x7500;
-    else if (detectediomd == 0xaa00)
-      detectedvalue = 0x7500FE;
-  }
-
-  LogScreen("Automatic processor detection ");
-
-  switch (detectedvalue)
-  {
-    case 0x200:
-      LogScreen("found an ARM 2 or ARM 250.\n");
-      coretouse=2;
-      break;
-    case 0x3:
-    case 0x600:
-    case 0x610:
-    case 0x700:
-    case 0x7500:
-    case 0x7500FE:
-      LogScreenf("found an ARM %X.\n", detectedvalue);
-      coretouse=0;
-      break;
-    case 0x710:
-      LogScreenf("found an ARM %X.\n", detectedvalue);
-      coretouse=3;
-      break;
-    case 0x810:
-      LogScreenf("found an ARM %X.\n", detectedvalue);
-      coretouse=1;
-      break;
-    case 0xA10:
-      LogScreen("found a StrongARM 110.\n");
-      coretouse=1;
-      break;
-    default:
-      LogScreenf("failed. (id: %08X)\n", realid);
-      coretouse=-1;
-      break;
-  }
-  return coretouse;
-}
-#else
-{ return -1; }
-#endif
-#endif
 
 // --------------------------------------------------------------------------
 

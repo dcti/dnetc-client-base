@@ -5,18 +5,23 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: client.h,v $
+// Revision 1.43  1998/06/21 17:10:26  cyruspatel
+// Fixed some NetWare smp problems. Merged duplicate numcpu validation code
+// in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
+// spun that off, together with what used to be ::x86id() or ::ArmId(), into
+// cpucheck.cpp. Adjusted and cleaned up client.h accordingly.
+//
 // Revision 1.42  1998/06/15 09:17:57  jlawson
 // removed include of pthread.h since threadcd.h knows when to include it
 //
 // Revision 1.41  1998/06/14 11:22:37  ziggyb
 // Fixed the OS/2 headers and added an os2defs.h and adjusted for the
-// seperate sleep defines header.
+// separate sleep defines header.
 //
 // Revision 1.40  1998/06/14 08:12:36  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
 // 
-
 
 // For WinNT Service:
 //#define WINNTSERVICE "bovrc5nt"
@@ -74,11 +79,8 @@ extern "C" {
 #include <string.h>
 #include <sys/types.h>
 
-#if (CLIENT_OS == OS_RISCOS)
-#include <sys/fcntl.h>
-#include <unistd.h>
-#else
-#include <fcntl.h>
+#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
+}
 #endif
 
 #if (CLIENT_OS == OS_IRIX)
@@ -86,11 +88,13 @@ extern "C" {
   #include <sys/types.h>
   #include <sys/prctl.h>
   #include <sys/schedctl.h>
+  #include <fcntl.h>
 #elif (CLIENT_OS == OS_OS2)
   #include <sys/timeb.h>
   #include <conio.h>
   #include <share.h>
   #include <direct.h>
+  #include <fcntl.h>
   #include "platforms/os2cli/os2defs.h"
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
@@ -98,6 +102,8 @@ extern "C" {
 #elif (CLIENT_OS == OS_RISCOS)
   extern "C"
   {
+    #include <sys/fcntl.h>
+    #include <unistd.h>
     #include <stdarg.h>
     #include <machine/endian.h>
     #include <swis.h>
@@ -111,11 +117,14 @@ extern "C" {
     #define fileno(f) ((f)->__file)
     #define isatty(f) ((f) == 0)
   }
+  extern s32 guiriscos, guirestart;
   extern bool riscos_in_taskwindow;
 #elif (CLIENT_OS == OS_VMS)
+  #include <fcntl.h>
   #include <types.h>
   #define unlink remove
 #elif (CLIENT_OS == OS_SCO)
+  #include <fcntl.h>
   #include <sys/time.h>
 #elif (CLIENT_OS == OS_WIN16)
   #include <sys/timeb.h>
@@ -124,20 +133,27 @@ extern "C" {
   #include <dos.h>
   #include <share.h>
   #include <dir.h>
+  #include <fcntl.h>
 #elif (CLIENT_OS == OS_WIN32)
   #include <sys/timeb.h>
   #include <process.h>
   #include <ras.h>
   #include <conio.h>
   #include <share.h>
+  #include <fcntl.h>
   #ifdef __TURBOC__
     #include <dir.h>
   #endif
+  typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
+  typedef DWORD (CALLBACK *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
+  extern rasenumconnectionsT rasenumconnections;
+  extern rasgetconnectstatusT rasgetconnectstatus;
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
   #include <io.h>
   #include <conio.h>
   #include <share.h>
+  #include <fcntl.h>
   #if defined(DJGPP)
     #include <dir.h>
     #define ntohl(x) ((((x)<<24) & 0xFF000000) | (((x)<<8) & 0x00FF0000) | (((x)>>8) & 0x0000FF00) | (((x)>>24) & 0x000000FF))
@@ -145,83 +161,27 @@ extern "C" {
   #else
     #include <sys/stat.h> //S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP
   #endif
+  #ifdef __WATCOMC__
+    //#define checklocks _checklocks
+  #endif   
+  // extern "C" u16 checklocks( void );
 #elif (CLIENT_OS == OS_BEOS)
 // nothing  #include <share.h>
+  #include <fcntl.h>
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h>
   #include <process.h>
-  #include <conio.h>     //ConsolePrintf()
-  //#include <nwcntask.h>  //ThreadSwitch()
-  //#include <nwconn.h>    //for login to remote server
-  //#include <nwbindry.h>  //for login to remote server OT_USER
-  #include <direct.h>    //for chdir(), getcwd()
-  #include <nwfile.h>    //ScanErasedFiles() PurgeErasedFile()
+  #include <conio.h>  
+  #include <direct.h> 
   #include <share.h>
-
-  //used in client.cpp
-  extern int  CliIsNetworkAvailable(int dummy);
-  extern int  CliSetThreadName( int threadID, int crunchernumber );
-  extern int  CliClearThreadContextSpecifier( int threadID );
-  extern int  CliGetProcessorCount( void );
-  extern int  CliMigrateThreadToSMP( void );
-  extern int  CliRunProblemAsCallback( Problem *problem, int timeslice, int cpu_i, int niceness );
-  extern int  CliWaitForThreadExit( int threadID );
-  extern int  CliInitClient( int argc, char *argv[], void *client );
-  extern int  CliValidateSinglePath( char *dest, unsigned int destsize,
-                  char *defaultval, int defaultnoneifempty, char *source );
-  extern int  CliSetScreenDestructionMode(int newmode);
-  extern int  CliKickWatchdog(void);
-  extern int  CliExitClient(void); //also used by signal handler/cliconfig.cpp
-
-  //used in cliconfig.cpp
-  extern int  CliValidateProcessorCount( int numcpu );
-  extern int  CliIsClientRunning(void);
-  extern void CliThreadSwitchLowPriority(void);
-  extern void CliThreadSwitchWithDelay(void);
-  extern int  CliGetSystemConsoleScreen(void);
-  extern unsigned int CliGetCurrentTicks(void); //also used in clitime.cpp
-  extern int  CliActivateConsoleScreen(void);
-  extern void CliConsolePrintf(char *fmt,...);
-  extern void CliForceClientShutdown(void);
-
-  //used in clitime.cpp
-  extern unsigned int CliConvertTicksToSeconds( unsigned int ticks, unsigned int *secs, unsigned int *hsecs );
-  extern unsigned int CliConvertSecondsToTicks( unsigned int secs, unsigned int hsecs, unsigned int *ticks );
-
-  //symbol redefinitions
-  int CliGetHostName(char *, unsigned int);  //used in mail.cpp
-  long my_inet_addr( char *hostname ); //(in hbyname.cpp) used in network.cpp
-  extern int sizonly_stat( const char *fn, struct stat *statblk ); //buffwork.cpp
-  extern int purged_unlink( const char *filename ); //buffwork.cpp
-
-  #ifdef gethostname // emulated function in hbyname.cpp
-  #undef gethostname
-  #endif
-  #ifdef inet_addr // emulated function in hbyname.cpp
-  #undef inet_addr
-  #endif
-  #ifdef stat // stat and fstat have problems on nw 3.x
-  #undef stat
-  #endif
-  #ifdef unlink  //purging unlink
-  #undef unlink
-  #endif
-
-  #define inet_addr(p)           my_inet_addr(p)
-  #define gethostname(b,s)       CliGetHostName(b,s)
-  #define stat( _fn, _statblk )  sizonly_stat( _fn, _statblk )
-  #define unlink( _fn )          purged_unlink( _fn )
-
+  #include <fcntl.h>
+  #include "platforms/netware/netware.h" //for stuff in netware.cpp
 #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
+  #include <fcntl.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int); // Keep g++ happy.
 #endif
 
-
-
-#if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
-}
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -237,7 +197,12 @@ extern "C" {
 
 // --------------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_NETWARE)
+#if (CLIENT_OS == OS_NETWARE)
+//#define PATH_SEP   "\\"   //left undefined so I can see 
+//#define PATH_SEP_C '\\'   //where the references are
+#define EXTN_SEP   "."
+#define EXTN_SEP_C '.'
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
 #define PATH_SEP   "\\"
 #define PATH_SEP_C '\\'
 #define EXTN_SEP   "."
@@ -438,9 +403,8 @@ protected:
   u32 old_totalBlocksDone[2];
   u32 timeStarted;
 
-#if defined(MULTITHREAD)
-  u32 connectrequested;
-#endif
+  //u32 connectrequested; //in conflict with Client::Run()'s connectrequested
+                          //used nowhere else anyway
 
 #if (CLIENT_OS == OS_WIN16)
   virtual void SurrenderCPU( void ) {};
@@ -514,18 +478,39 @@ public:
   void DoCheckpoint( int load_problem_count );
     // Make the checkpoint file represent current blocks being worked on
 
-
   void DisplayHelp( const char * unrecognized_option );
     // Displays the interactive command line help screen.
 
+  void Log( const char *format, ... );
+    // logs message to screen and file (append mode)
+    // if logname isn't set, then only to screen
+
+  void LogScreenf( const char *format, ... );
+    // logs message to screen only
+
 #if defined(NEEDVIRTUALMETHODS)
+  virtual void LogScreen ( const char *text );
+    // logs preformated message to screen only.  can be overriden.
+
+  virtual void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
+
+  virtual void LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted);
+    // progress percentage printing to screen only.
+
   virtual s32  Configure( void );
     // runs the interactive configuration setup
 #else
+  void LogScreen ( const char *text );
+    // logs preformated message to screen only.  can be overriden.
+
+  void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
+
+  void LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted);
+    // progress percentage printing to screen only.
+
   s32  Configure( void );
     // runs the interactive configuration setup
 #endif
-
 
   s32  ConfigureGeneral( s32 currentmenu );
     // part of the interactive setup
@@ -610,33 +595,6 @@ public:
     // Return value is the return from fetch*fetcherr +
     //                      value from flush*flusherr
 
-  void Log( const char *format, ... );
-    // logs message to screen and file (append mode)
-    // if logname isn't set, then only to screen
-
-  void LogScreenf( const char *format, ... );
-    // logs message to screen only
-
-#if defined(NEEDVIRTUALMETHODS)
-  virtual void LogScreen ( const char *text );
-    // logs preformated message to screen only.  can be overriden.
-#else
-  void LogScreen ( const char *text );
-    // logs preformated message to screen only.  can be overriden.
-#endif
-
-
-#if defined(NEEDVIRTUALMETHODS)
-  virtual void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
-  virtual void LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted);
-    // progress percentage printing to screen only.
-#else
-  void LogScreenPercentSingle(u32 percent, u32 lastpercent, bool restarted);
-  void LogScreenPercentMulti(u32 cpu, u32 percent, u32 lastpercent, bool restarted);
-    // progress percentage printing to screen only.
-#endif
-
-
   s32 Install();
     // installs the clients into autolaunch configuration
     // returns: non-zero on failure
@@ -649,25 +607,22 @@ public:
     // to be called before calling Run() for the first time
     // returns: non-zero on failure
 
-  s32 SelectCore(void);
+  s32 SelectCore(void); 
     // to be called before Run(), Benchmark(), or Test() to configure for cpu
     // returns: non-zero on failure
 
   s32 UnlockBuffer( const char *filename );
     // unlock buffer 'filename'
 
-#if (CLIENT_CPU == CPU_X86)
-  int x86id();
-    // Identify CPU type
-#elif (CLIENT_CPU == CPU_ARM)
-  int ARMid();
-    // Identify CPU type
-#endif
+  int GetProcessorType();  //was x86id(); and ARMid(); nullfunction otherwise
+  // Identify CPU type by hardware check - in cpucheck.cpp
+
+  void ValidateProcessorCount();
+  // validates numcpu (stores result in numcputemp) - in cpucheck.cpp
 
   s32 SetContestDoneState( Packet * packet);
     // Set the contest state appropriately based on packet information
     // Returns 1 if a change to contest state was detected
-
 };
 
 // --------------------------------------------------------------------------
@@ -678,9 +633,12 @@ public:
   #include "clisrate.h"
   #define Time() (CliGetTimeString(NULL,1))
 #else
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_NETWARE) || \
+      (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
+      ((CLIENT_OS == OS_VMS) && !defined(MULTINET))
     #ifdef __WATCOMC__
-      // disable "Warning! W481: col(1) class/enum has the same name as the function/variable 'timezone'"
+      // disable "Warning! W481: col(1) class/enum has the same name 
+      // as the function/variable 'timezone'"
       #pragma warning 481 9 ;
     #endif
     struct timezone
@@ -705,39 +663,13 @@ public:
 
 // --------------------------------------------------------------------------
 
-#if (CLIENT_CPU == CPU_X86)
-  #ifdef __WATCOMC__
-    #define x86ident _x86ident
-//    #define checklocks _checklocks
-  #endif
-  #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
-    extern "C" u32 x86ident( void ) asm ("x86ident");
-  #else
-    extern "C" u32 x86ident( void );
-  #endif
-//  extern "C" u16 checklocks( void );
-#endif
-
-
 extern Problem problem[2*MAXCPUS];
 
 extern volatile u32 SignalTriggered, UserBreakTriggered;
 extern volatile s32 pausefilefound;
 extern void CliSetupSignals( void );
 
-#if (CLIENT_OS == OS_RISCOS)
-extern s32 guiriscos, guirestart;
-#endif
-
-#if (CLIENT_OS == OS_WIN32)
-typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
-typedef DWORD (CALLBACK *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
-extern rasenumconnectionsT rasenumconnections;
-extern rasgetconnectstatusT rasgetconnectstatus;
-#endif
-
 // --------------------------------------------------------------------------
 
-
-#endif
+#endif //CLIENT_H
 

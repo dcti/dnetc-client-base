@@ -5,6 +5,12 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.47  1998/06/21 17:10:16  cyruspatel
+# Fixed some NetWare smp problems. Merged duplicate numcpu validation code
+# in ::ReadConfig()/::ValidateConfig() into ::ValidateProcessorCount() and
+# spun that off, together with what used to be ::x86id() or ::ArmId(), into
+# cpucheck.cpp. Adjusted and cleaned up client.h accordingly.
+#
 # Revision 1.46  1998/06/17 21:31:10  remi
 # Renamed p?bdespro.s to p?bdespro.S
 #
@@ -238,7 +244,8 @@ OPTS_OS390="-D_ALL_SOURCE -I./common -I./rc5 -I./des"
 #--
 # look in platforms/ultrasparc/s_paramaters.h for the meaning of all these defines
 OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION -DBIT_32 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
-OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc"
+OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline -DFULL_64_BIT_VALID -DASM -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE -DUSE_IDENTICAL_FLOAT_REGISTERS -DUSE_64_BIT_SENTINEL -DBIT_64 -DKWAN_LOOP_SLICE='unsigned long' -Iplatforms/ultrasparc
+"
 
 
 #
@@ -249,7 +256,7 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/scram.cpp common/buffwork.cpp common/mail.cpp
     common/convdes.cpp common/clicdata.cpp common/clirate.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
-    common/threadcd.cpp"
+    common/threadcd.cpp common/cpucheck.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
@@ -258,7 +265,8 @@ MEGGS_SLICE_SRCS="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
 XLC_LINTILLA_ASMS="rc5/crunch_lintilla.ppcxlc.s rc5/crunch_allitnil.ppcxlc.s"
 RC5X86_SRCS="rc5/rc5-486-rg.cpp rc5/rc5-6x86-rg.cpp rc5/rc5p5brf.cpp rc5/rc5-p6-rg.cpp rc5/rc5-k5-rg.cpp rc5/rc5-k6-rg.cpp"
 DESX86_SRCS="des/des-x86.cpp"
-DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
+DESULTRA_SRCS_C="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/simple.c platforms/ultrasparc/des_ultra_crunch.c platforms/ultrasparc/kwan_from_to.c platforms/ultrasparc/do_all.c platforms/ultrasparc/do_all_fancy.c platforms/ultrasparc
+/do_s1.c platforms/ultrasparc/do_s1_s3.c platforms/ultrasparc/do_s2.c platforms/ultrasparc/do_s3.c platforms/ultrasparc/do_s4.c platforms/ultrasparc/do_s5.c platforms/ultrasparc/do_s6.c platforms/ultrasparc/do_s7.c platforms/ultrasparc/do_s8.c"
 DESULTRA_SRCS_ASM="platforms/ultrasparc/des-slice-ultrasparc.cpp platforms/ultrasparc/des_ultra_crunch.c"
 
 
