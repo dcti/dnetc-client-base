@@ -1,6 +1,6 @@
 
- RC5-DES Client for for Win32 CLI (Win9x/WinNT) and Win9x/WinNT service.
- document revision $Id: readme.w32,v 1.3 1999/07/20 04:34:22 cyp Exp $
+ RC5-DES Client for for Win32 (Win9x/WinNT/Win32s) and Win9x/WinNT service.
+ document revision $Id: readme.w32,v 1.4 1999/08/13 10:29:24 cyp Exp $
 
  Welcome to the RC5-DES (Project Bovine/Project Monarch) client.
 
@@ -9,8 +9,10 @@
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
-    2.0  Win32 CLI specific notes
-    3.0  Win32 CLI specific FAQ
+         1.1 Using the client as a Win9x/WinNT service 
+         1.2 Using the screensaver multiplexor
+    2.0  Win32 client specific notes
+    3.0  Win32 client specific FAQ
    
  1.0  Getting started ------------------------------------------------
 
@@ -39,11 +41,75 @@
     down. Unlike normal processes, services will continue to run even when
     a user logs out.
 
+    Obviously, a service does not have access to remote file and disk 
+    resources that require a user to log in first.
+
     To install the client as a service, run the client with the -install
     switch. This will cause it to register itself with the service handler,
     which will in turn automatically start the client the next time the
     computer is powered up. To deinstall a client previously installed as
     a service, start it with the -uninstall switch.
+
+
+    1.2  The screensaver multiplexor ---------------------------------   
+
+    Beginning with v2.7112.444, the client release archive includes a
+    screensaver multiplexor. 
+
+    Note that the screen saver and the client are different executables.
+    The screen saver multiplexor (rc5des.scr) is of little use without a 
+    client (rc5des.exe).
+
+    Under normal circumstances, having a client running continuously in
+    the background is usually preferred since it continues to use
+    the idle processor cycles even when a machine is actively in use. 
+    For instance, when typing a letter, the machine is really mostly
+    idle, waiting for keystrokes, and the client can use that time.
+
+    However, in some environments, utilizing *any* cpu time while a 
+    user is actively trying to use the machine is a problem. The 
+    distributed.net screen saver multiplexor addresses that issue. 
+    When activated by the system, it will launch a client in the 
+    background and _another_ screen saver of your choice in the 
+    foreground. If a client is already found to be running when the
+    screen saver is activated by the system, it will not be started
+    a second time.
+    
+    Not only does this permit an installation where use of any cpu time 
+    is a problem, it also resolves two other issues that a 
+    client-as-a-screensaver cannot: a) it does not requires
+    storage of client buffers and/or configuration file in the windows
+    (or windows/system) directory and b) it allows a user to continue
+    to use his/her preferred screensaver.
+
+    Installation involves...
+    a) simply copying the rc5des.scr file included with the client 
+       distribution to one of the following locations: 
+       on Win95:  your \WINDOWS\ or \WINDOWS\SYSTEM\ directory
+       on WinNT:  your \WINNT\ or \WINNT\SYSTEM32\ directory
+    b) Once you have copied it, go to the Display properties in the Control
+       Panel and select the RC5 screen saver as the active screen saver.
+    c) Clicking on the "Settings..." button opens the multiplexors 
+       configuration dialog. Select the client you wish the multiplexor to
+       run in the background and select the screensaver you wish to run
+       in the foreground.
+    d) If the client had been previously configured, there is nothing else
+       you need do. Otherwise click on the "Configure" button to configure
+       the client.
+
+    Note for Windows NT 3.x: The screensaver API changed between NT 3.x
+    and NT 4.x to support the "mini-preview" mode first introduced in
+    Windows95. The multiplexor supports the new interface, but since a 4.x 
+    system will not start a 3.x screensaver "correctly", the multiplexor
+    was "branded" as a 4.0 executable. There are two ways to enable support 
+    on NT 3.x:
+    a) copy the _client_ itself to WINNT/rc5des.scr: The client is an
+       NT 3.x binary and on finding itself installed as rc5des.scr, will
+       run as the multiplexor.
+    b) get in touch with the author/port maintainer <cyp@fb14.uni-mainz.de>
+       or <cyp@distributed.net> for a little utility to "brand" the
+       multiplexor as a 3.x binary and so allow it to run on NT 3.x
+
 
  2.0  Notes: ---------------------------------------------------------
 
@@ -76,6 +142,7 @@
 
     Beginning with v2.2706.425, it is no longer mandatory to have 
     winsock.dll/wsock32.dll installed. 
+
 
  3.0  FAQ: -----------------------------------------------------------
 
@@ -117,6 +184,16 @@
 
     Q: How do I stop the service from the command line? 
     A: With 'rc5des --shutdown' or (NT only) with 'net stop rc5desnt'
+
+    Q: When installed as a service, the client cannot access the network.
+       How come?
+    A: When installed as a service, the client is (on NT, by default) not 
+       running in a user's context (there isn't a user logged in). Under 
+       Win9x (where security is virtually non-existant), the client *could* 
+       theoretically access network devices /once/ a user has logged in, 
+       but that is obviously not a good idea :). On NT, the service can be 
+       configured from the service manager to start in a context other than 
+       the default.
      
     Q: I use LITESTEP (or other alternative shell) and get a warning 
        when I try to install the client as a service. Whats the deal?
@@ -131,9 +208,15 @@
     A: Uninstall XXX :)
     
     Q: I want to run the RC5DES client as a screen saver. How do I do this?
-    A: The client currently cannot be started as a screen saver. It is
-       however a work in progress. Suggestions (and source) are welcome.
-       Send to Cyrus Patel <cyp@distributed.net> or <cyp@fb14.uni-mainz.de>
+    A: Beginning with v2.7112.444, the client release archive includes a
+       screensaver multiplexor. When activated, it will launch a client in 
+       the background and _another_ screen saver of your choice in the 
+       foreground. Simply copy rc5des.scr to your windows or windows\system 
+       directory; select it in the Display Properties applet (the "Display"
+       icon in the Control Panel); click "settings".
+       Users of NT 3.x can either a) copy the client itself (copy 
+       rc5des.exe -> winnt\rc5des.scr) or b) get in touch with the author
+       for a tiny utility to convert the NT4 screen saver into an NT3 one.
        
     Q: I want to run the RC5DES client at a higher priority than zero/idle.
        This functionality was removed in some past version, but I *really*,
@@ -142,16 +225,24 @@
     A: It never went away. Only the help text said it did. :) 
        Hovever, be *very* careful. Windows' thread scheduling/priority 
        assignment is brain dead beyond belief. Read the text in the 
-       config screen before you fiddle with the priority setting! 
+       config screen before you fiddle with the priority setting!
        
     Q: What is the 'Dialup interfaces' option I see in the config?
     A: Dial-up detection was previously available only the RAS (Remote
        Access Service) API. Beginning with 2.7110.440, the Win32 client
-       is capable of detecting 'UP' state on non-RAS devices such as ISDN
-       adapters or AOL's proprietary modem adapter which appear as network 
-       cards and not as modems, and are as such not managed by RAS. 
+       is capable of detecting 'UP' state on *non-RAS* devices such as ISDN
+       adapters that are not RAS capable or AOL's proprietary modem adapter 
+       which appears as a network cards and not as a modems.
        The 'Dialup interfaces' list then allows you to mask or mask-out
        those devices you do not want the client to 'see'. 
+       Windows has no consistant naming scheme for network adapters:
+       What appears as "PPP Adapter NdisWan'n'" on NT, appears as 
+       "'i' Ethernet Adapter" on Windows9x and the numbering sequence 
+       ('n' and 'i') isn't uniform either. To simplify this, the client
+       refers to all dialup adapters as "ppp[0-9]" and all non-dialup devices 
+       as "eth[0-9]".
+       Generally speaking, if you were happy with the way lurk worked before,
+       you probably do need the 'Dialup interfaces' option now.
 
     Q: Can I share my win32 client's buffers with non-win32 clients?
        ["sharing" is simultaneous access via file-sharing, but also manual 
@@ -160,8 +251,8 @@
        sharing buffers all have the same version number. For instance, if 
        you share buffers between 2.7110.440 and other older clients, you 
        must ensure that the client newer than 2.7109 do not request 
-       "big-packets"s from the keyservers (ensure 'preferred-packet-size' 
-       is less than 32). Read the general FAQ for specificities.
+       "big-block"s from the keyservers (ensure 'preferred-packet-size' is 
+       less than 32). Read the general FAQ for specificities.
 
     Q: How can I get the client to update itself from over the net?
     A: That is not possible since the rc5des.exe file is open when it
