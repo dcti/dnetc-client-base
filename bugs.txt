@@ -6,6 +6,17 @@ Bugs Listing
   This is a text file that lists any bugs that have been found by either
   the coders, or by users.
 
+6-03-98 - Kevin Bracey
+  New Bug: Some parts of the program (mail.cpp in particular) print stuff
+           irrespective of the quietmode setting.
+
+6-03-98 - Kevin Bracey
+  New Suggestion: Would it not be a good idea to move the number of CPUs
+                  option to menu 1, next to the CPU-type setting? It's
+                  definitely one of the main settings, and I know menu 4
+                  was the last place I looked for it when setting 7022 up
+                  on by dual-PII box for the first time.
+  
 6-01-98 - Remi Guyomarch
   New Bug: In 407+ (406?) a call to client.WriteConfig() overwrites the
            .ini file with parameters given on the command line. This
