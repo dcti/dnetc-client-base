@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.61  1998/06/27 21:32:51  jlawson
+# added -lncurses to alpha-gcc and alpha-gcc-mt builds
+#
 # Revision 1.60  1998/06/27 21:17:22  jlawson
 # Made only the first match from the grep for the platform/os identifier
 # get kept by adding head -1
@@ -550,6 +553,7 @@ case "$1" in
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
+	TARGET_LIBS="-lncurses"
 	;;
 
     *alpha-gcc-mt)
@@ -557,7 +561,7 @@ case "$1" in
 	TARGET_CC="g++"
 	TARGET_CCFLAGS="$OPTS_GCC_ALPHA -DPIPELINE_COUNT=1 -DBIT_64 -DMEGGS -DKWAN -DMULTITHREAD"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
-	TARGET_LIBS="-lpthread"
+	TARGET_LIBS="-lncurses -lpthread"
 	;;
 
     *alpha-netbsd)
