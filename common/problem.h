@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.13  1998/06/20 10:04:16  cyruspatel
+// Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
+// des_slice to des_unit_func_slice() to resolve conflict with (*des_unit_func)().
+// Added prototype in problem.h, cliconfig x86/SelectCore() is /DKWAN aware.
+//
 // Revision 1.12  1998/06/16 21:53:30  silby
 // Added support for dual x86 DES cores (p5/ppro)
 //
@@ -100,6 +105,7 @@ typedef enum
   extern "C" u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits );
   extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );

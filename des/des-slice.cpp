@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-slice.cpp,v $
+// Revision 1.4  1998/06/20 10:04:18  cyruspatel
+// Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
+// des_slice to des_unit_func_slice() to resolve conflict with (*des_unit_func)().
+// Added prototype in problem.h, cliconfig x86/SelectCore() is /DKWAN aware.
+//
 // Revision 1.3  1998/06/14 08:27:03  friedbait
 // 'Id' tags added in order to support 'ident' command to display a bill of
 // material of the binary executable
@@ -14,7 +19,7 @@
 
 // encapsulate the bitslice SolNET code
 
-static char *id="@(#)$Id: des-slice.cpp,v 1.3 1998/06/14 08:27:03 friedbait Exp $";
+static char *id="@(#)$Id: des-slice.cpp,v 1.4 1998/06/20 10:04:18 cyruspatel Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +52,7 @@ extern unsigned long deseval (const unsigned long *plain,
 
 // rc5unitwork.LO in lo:hi 24+32 incrementable format
 
-u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 nbbits )
+u32 des_unit_func_slice( RC5UnitWork * rc5unitwork, u32 nbbits )
 {
     unsigned long key[56];
     unsigned long plain[64];

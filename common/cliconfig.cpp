@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.97  1998/06/20 10:04:12  cyruspatel
+// Modified so x86 make with /DKWAN will work: Renamed des_unit_func() in
+// des_slice to des_unit_func_slice() to resolve conflict with (*des_unit_func)().
+// Added prototype in problem.h, cliconfig x86/SelectCore() is /DKWAN aware.
+//
 // Revision 1.96  1998/06/18 12:28:37  remi
 // Fixed switch() statement for x86 in Client::SelectCore().
 //
@@ -48,7 +53,7 @@
 #include "client.h"
 
 #if (!defined(lint) && !defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.96 1998/06/18 12:28:37 remi Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.97 1998/06/20 10:04:12 cyruspatel Exp $";
 #endif
 
 // --------------------------------------------------------------------------
@@ -1109,7 +1114,8 @@ void Client::clearscreen( void )
 #elif (CLIENT_OS == OS_RISCOS)
   riscos_clear_screen();
 #else
-  printf("\x1B" "[2J\r"); //ANSI cls  '\r' is in case ansi is not supported
+  printf("\x1B" "[2J" "\x1B" "[H" "\r       \r" ); 
+  //ANSI cls  '\r space \r' is in case ansi is not supported
 #endif
 }
 #endif
@@ -2233,30 +2239,46 @@ LogScreenf("Selecting %s code\n",cputypetable[fastcore+1]);
   // select the correct core engine
   switch(fastcore)
   {
+    #ifdef KWAN
+       #define DESUNITFUNC61 des_unit_func_slice
+       #define DESUNITFUNC62 des_unit_func_slice
+       #define DESUNITFUNC51 des_unit_func_slice
+       #define DESUNITFUNC52 des_unit_func_slice
+    #else
+       #define DESUNITFUNC51 p1des_unit_func_p5
+       #define DESUNITFUNC52 p2des_unit_func_p5
+       #define DESUNITFUNC61 p1des_unit_func_pro
+       #define DESUNITFUNC62 p2des_unit_func_pro
+    #endif   
+
     case 1:rc5_unit_func = rc5_unit_func_486;
-           des_unit_func = p1des_unit_func_p5;
-           des_unit_func2 = p2des_unit_func_p5;
+           des_unit_func = DESUNITFUNC51;  //p1des_unit_func_p5;
+           des_unit_func2 = DESUNITFUNC52; //p2des_unit_func_p5;
            break;
     case 2:rc5_unit_func = rc5_unit_func_p6;
-           des_unit_func = p1des_unit_func_pro;
-           des_unit_func2 = p2des_unit_func_pro;
+           des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+           des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
            break;
     case 3:rc5_unit_func = rc5_unit_func_6x86;
-           des_unit_func = p1des_unit_func_pro;
-           des_unit_func2 = p2des_unit_func_pro;
+           des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+           des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
            break;
     case 4:rc5_unit_func = rc5_unit_func_k5;
-           des_unit_func = p1des_unit_func_p5;
-           des_unit_func2 = p2des_unit_func_p5;
+           des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+           des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
            break;
     case 5:rc5_unit_func = rc5_unit_func_k6;
-           des_unit_func = p1des_unit_func_pro;
-           des_unit_func2 = p2des_unit_func_pro;
+           des_unit_func =  DESUNITFUNC61;  //p1des_unit_func_pro;
+           des_unit_func2 = DESUNITFUNC62;  //p2des_unit_func_pro;
            break;
     default:rc5_unit_func = rc5_unit_func_p5;
-            des_unit_func = p1des_unit_func_p5;
-            des_unit_func2 = p2des_unit_func_p5;
-            break;
+           des_unit_func =  DESUNITFUNC51;  //p1des_unit_func_p5;
+           des_unit_func2 = DESUNITFUNC52;  //p2des_unit_func_p5;
+           break;
+    #undef DESUNITFUNC61
+    #undef DESUNITFUNC62
+    #undef DESUNITFUNC51
+    #undef DESUNITFUNC52
   }
 #elif (CLIENT_CPU == CPU_ARM)
   int fastcore = cputype;
