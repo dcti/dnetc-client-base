@@ -637,11 +637,7 @@ public:
 #endif
 
 #ifndef NEW_STATS_AND_LOGMSG_STUFF
-<<<<<<< client.h
 #if (((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||   \
-=======
-#if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU == CPU_68K)) ||  \
->>>>>>> 1.11
      (CLIENT_OS == OS_MACOS) ||                              \
      (CLIENT_OS == OS_SCO) ||                                \
      (CLIENT_OS == OS_OS2) ||                                \
