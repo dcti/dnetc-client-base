@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.105  1998/12/01 15:04:44  cyp
+// Both -run and -runbuffers give obsolete warnings and show the current
+// state of offlinemode and blockcount.
+//
 // Revision 1.104  1998/11/28 19:48:58  cyp
 // Added win16 -install/-uninstall support.
 //
@@ -89,7 +93,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.104 1998/11/28 19:48:58 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.105 1998/12/01 15:04:44 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -149,31 +153,23 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         }
       else if ( strcmp(thisarg, "-install" ) == 0)
         {
-        #if (CLIENT_OS == OS_WIN32)
-        win32CliInstallService(0);
+        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        winInstallClient(0); /*w32pre.cpp*/
         terminate_app = 1;
         #endif
         #if (CLIENT_OS == OS_OS2)
         os2CliInstallClient(0);
         terminate_app = 1;
         #endif
-        #if (CLIENT_OS == OS_WIN16)
-        win16CliInstallClient(0);
-        terminate_app = 1;
-        #endif
         }
       else if ( strcmp(thisarg, "-uninstall" ) == 0)
         {
-        #if (CLIENT_OS == OS_WIN16)
-        win16CliUninstallClient(0);
-        terminate_app = 1;
-        #endif
         #if (CLIENT_OS == OS_OS2)
         os2CliUninstallClient(0);
         terminate_app = 1;
         #endif
-        #if (CLIENT_OS == OS_WIN32)
-        win32CliUninstallService(0);
+        #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
+        winUninstallClient(0); /*w32pre.cpp*/
         terminate_app = 1;
         #endif
         }
@@ -327,32 +323,32 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         else 
           offlinemode = ((strcmp( thisarg, "-runoffline" ) == 0)?(1):(0));
         }
-      else if ( strcmp( thisarg, "-runbuffers" ) == 0 ) 
-        {
-        if (run_level!=0)
-          {
-          if (logging_is_initialized && blockcount < 0)
-              LogScreenRaw("Setting blockcount to -1. (exit on empty buffer)\n");
-          }
-        else
-          blockcount = -1;
-        }
-      else if ( strcmp( thisarg, "-run" ) == 0 ) 
+      else if (strcmp(thisarg,"-runbuffers")==0 || strcmp(thisarg,"-run")==0) 
         {
         if (run_level!=0)
           {
           if (logging_is_initialized)
             {
-            LogScreenRaw("Warning: -run is obsolete. "
-              "Active settings: -runo%sline and -n %d.\n",
-              ((offlinemode)?("ff"):("n")), blockcount );
+            LogScreenRaw("Warning: %s is obsolete.\n"
+                         "         Active settings: -runo%sline and -n %d%s.\n",
+              thisarg, ((offlinemode)?("ff"):("n")), 
+              ((blockcount<0)?(-1):((int)blockcount)),
+              ((blockcount<0)?(" (exit on empty buffers)"):("")) );
             }
           }
         else
           {
-          offlinemode = 0;
-          if (blockcount < 0)
-            blockcount = 0;
+          if (strcmp(thisarg,"-run")==0)
+            {
+            offlinemode = 0;
+            if (blockcount < 0)
+              blockcount = 0;
+            }
+          else /* -runbuffers */
+            {
+            offlinemode = 1;
+            blockcount = -1;
+            }
           }
         }
       else if ( strcmp( thisarg, "-nodisk" ) == 0 ) 
@@ -365,7 +361,7 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         if (run_level!=0)
           {
           if (logging_is_initialized && connectoften)
-            LogScreenRaw("Setting connections to frequent\n");
+            LogScreenRaw("Buffer thresholds will be checked frequently.\n");
           }
         else
           connectoften=1;
@@ -1139,5 +1135,4 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
     *retcodeP = 0;
   return terminate_app;
 }
-
 
