@@ -32,7 +32,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.1.2.2 2004/05/23 17:07:59 kakace Exp $
+ *  $Id: temperature.cpp,v 1.1.2.3 2004/06/16 18:06:48 kakace Exp $
  */
 
 #include <string.h>
@@ -43,6 +43,7 @@
 #include <IOKit/IOKitLib.h>
 #include <CoreFoundation/CFNumber.h>
 #include "logstuff.h"
+#include "cpucheck.h"
 
 SInt32 macosx_cputemp(void);
 
@@ -187,7 +188,6 @@ static SInt32 _readIOHWSensor(void)
 
 
 SInt32 macosx_cputemp(void) {
-
     static int source = -1;                 /* No source defined */
     SInt32 temp = -1;
     
@@ -202,8 +202,16 @@ SInt32 macosx_cputemp(void) {
             return _readIOHWSensor();       /* PowerBook Alu, PowerMac G5*/
             
         default:
-            temp = _readTAU();
-            if (temp >= 0) {source = 1; break;}
+            if ((GetProcessorFeatureFlags() & CPU_F_ALTIVEC) == 0) {
+                /*
+                ** Don't read the TAU if AltiVec units are detected
+                ** (CPU = G4 or G5) since this unit is disabled and we'd
+                ** get random values.
+                */
+                temp = _readTAU();
+                if (temp >= 0) {source = 1; break;}
+            }
+
             temp = _readAppleCPUThermo();
             if (temp >= 0) {source = 2; break;}
             temp = _readIOHWSensor();
