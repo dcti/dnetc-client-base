@@ -7,11 +7,12 @@ OUTPUTPATH = output
 COMMONPATH = common
 DESPATH = des
 RC5PATH = rc5
+OGRPATH = ogr
 PLATPATH = platforms
 W32CLIPATH = platforms/win32cli
 
 OPTS_MSVC = -nologo -W3 -O1 -MT -I$(RC5PATH) -I$(DESPATH) \
-  -I$(COMMONPATH) -I$(W32CLIPATH) -D_CPU_32BIT_ \
+  -I$(COMMONPATH) -I$(W32CLIPATH) -D_CPU_32BIT_ -I$(OGRPATH) \
   -DMULTITHREAD -D__WIN32__ -GR- -GX- -GA -GF \
   -DMMX_BITSLICER -DBIT_64 -DMEGGS -DKWAN -DMMX_RC5 -DLURK
 
@@ -77,7 +78,9 @@ RC5_OBJS =                    \
 	$(OUTPUTPATH)/setprio.obj    \
 	$(OUTPUTPATH)/modereq.obj    \
 	$(OUTPUTPATH)/checkpt.obj    \
-	$(OUTPUTPATH)/clievent.obj
+	$(OUTPUTPATH)/clievent.obj   \
+	$(OUTPUTPATH)/util.obj       \
+	$(OUTPUTPATH)/base64.obj
 
 
 PREBUILT_OBJS =                   \
