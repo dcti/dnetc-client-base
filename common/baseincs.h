@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.11  1998/07/29 03:21:24  silby
+// Added changes for win32 lurk (more needed functions)
+//
 // Revision 1.10  1998/07/25 06:31:37  silby
 // Added lurk functions to initiate a connection and hangup a connection.  win32 hangup is functional.
 //
@@ -143,9 +146,12 @@ extern "C" {
   #include <winsock.h>      // timeval
   #if (CLIENT_OS == OS_WIN32)
     #include <ras.h>
-    typedef DWORD (CALLBACK *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
-    typedef DWORD (CALLBACK *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
-    typedef DWORD (CALLBACK *rashangupT)(HRASCONN); 
+    typedef DWORD (WINAPI *rasenumconnectionsT)(LPRASCONN, LPDWORD, LPDWORD);
+    typedef DWORD (WINAPI *rasgetconnectstatusT)(HRASCONN, LPRASCONNSTATUS);
+    typedef DWORD (WINAPI *rashangupT)(HRASCONN); 
+    typedef DWORD (WINAPI *rasdialT)(LPRASDIALEXTENSIONS, LPSTR,
+                   LPRASDIALPARAMS, DWORD, LPVOID, LPHRASCONN);
+    typedef DWORD (WINAPI *rasgeterrorstringT)(UINT, LPTSTR, DWORD);
   #endif
 #elif (CLIENT_OS == OS_DOS)
   #include <sys/timeb.h>
