@@ -507,6 +507,10 @@ public:
     // Checks whether user typed yes or no, used in interactive setup
     // Returns 1=yes, 0=no, -1=unknown
 
+  s32 findmenuoption( s32 menu, s32 option);
+    // Returns the id of the option that matches the menu and option
+    // requested. Will return -1 if not found.
+
   void clearscreen( void );
     // Clears the screen. (Platform specific ifdefs go inside of it.)
 
