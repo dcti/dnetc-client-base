@@ -1,0 +1,10 @@
+# $Id: pclbench.mk.in,v 1.1.2.1 2003/03/03 01:45:59 andreasb Exp $
+
+all: pclbench-all
+
+
+BASEDIR	= ../../..
+CC	= gcc
+CFLAGS	= -O2 -I$(BASEDIR)/common -Wall
+LDLIBS	= -lpcl
+
