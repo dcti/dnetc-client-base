@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.49 1999/05/30 14:38:25 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.50 1999/06/04 21:48:29 silby Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -592,7 +592,9 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     WORD ht, wdth;
     GetSizeOfScreen( &ht, &wt );
     height = ht; width = wt;
-  #elif (CLIENT_OS == OS_LINUX) /* good for any non-sco flavour? */
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
+        (CLIENT_OS == OS_SUNOS)
+    /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
     ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
@@ -601,8 +603,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       height  = winsz.ws_row;
     }
   #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-        (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) 
     struct ttysize winsz;
     winsz.ts_lines = winsz.ts_cols = winsz.ts_xxx = winsz.ts_yyy = 0;
     ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
