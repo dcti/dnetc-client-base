@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.49 2001/01/13 17:09:55 cyp Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.50 2001/01/16 17:35:29 cyp Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -625,8 +625,10 @@ static int __get_remote_filename(Client *client, int project, int use_out,
                    client->remote_update_dir ), buflen );
   buffer[buflen-1] = '\0';
 
-  len = strlen(buffer);
   strcat( strcpy( suffix, EXTN_SEP ), CliGetContestNameFromID( project ));
+  for (len = 0; suffix[len]; len++)
+    suffix[len] = (char)tolower(suffix[len]);
+  len = strlen(buffer);
   strncpy( &buffer[len], suffix, buflen-len);
   buffer[buflen-1] = '\0';
 
