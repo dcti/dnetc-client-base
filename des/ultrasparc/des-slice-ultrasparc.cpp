@@ -5,6 +5,9 @@
 // encapsulate UltraSparc bitslice code
 
 // $Log: des-slice-ultrasparc.cpp,v $
+// Revision 1.3  1999/06/04 21:45:40  silby
+// Removed check for _CPU_32BIT_
+//
 // Revision 1.2  1998/06/15 02:44:28  djones
 // First build of UltraSPARC 64-bit/VIS DES client:
 // - many configure file tweaks: split up C++, ASM and C files; make "gcc" the
@@ -25,11 +28,7 @@
 
 //#define DEBUG
 
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
-
-static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.2 1998/06/15 02:44:28 djones Exp $";
+static char *id="@(#)$Id: des-slice-ultrasparc.cpp,v 1.3 1999/06/04 21:45:40 silby Exp $";
 
 typedef unsigned long long base_slice_type;
 
