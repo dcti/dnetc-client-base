@@ -14,7 +14,10 @@
  * For more information about Mac OS X StartupItems go to http://www.opensource
  * .apple.com/projects/documentation/howto/html/SystemStarter_HOWTO.html
  *
- * $Id: c_install.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
+ * But http://developer.apple.com/techpubs/macosx/Essentials/SystemOverview/
+ * BootingLogin/Creating_Cu_artup_Items.html seems to have more recent info.
+ *
+ * $Id: c_install.c,v 1.2.4.1 2003/01/31 14:39:33 mfeiri Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,10 +125,10 @@ static int create_start_script(const char *script_name,
     "  \"${CLIENT_DIR}/${CLIENT_FNAME}\" -quiet -shutdown\n"
     "  # change directory so we get nicer ps listings.\n"
     "  wd=`pwd`\n"
-    "  chdir \"${CLIENT_DIR}\"\n"
+    "  cd \"${CLIENT_DIR}\"\n"
     "  # now launch the client (with -quiet so it fork()s into the background)\n"
     "  sudo -u ${CLIENT_RUNAS} ./${CLIENT_FNAME} -quiet ${CLIENT_OPTS}\n"
-    "  chdir \"$wd\"\n"
+    "  cd \"$wd\"\n"
     "else\n"
     "  # announce what happened.\n"
     "  ConsoleMessage \"distributed.net client disabled\"\n"
@@ -155,14 +158,9 @@ static int create_startup_params_file(const char *stparams_filename,
   "{\n"
   "  Description     = \"distributed.net client\";\n"
   "  Provides        = (\"dnetc\");\n"
-  "  Requires        = (\"Disks\", \"Resolver\");\n"
-  "  Uses            = (\"NFS\", \"Network Time\");\n"
+  "  Requires        = (\"Disks\", \"NetInfo\", \"Resolver\");\n"
+  "  Uses            = (\"Network\", \"Network Time\");\n"
   "  OrderPreference = \"None\";\n"
-  "  Messages =\n"
-  "  {\n"
-  "    start = \"Starting distributed.net client\";\n"
-  "    stop  = \"Stopping distributed.net client\";\n"
-  "  };\n"
   "}\n" );
 
   my_fchmod(fileno(file),0664); /* -rw-rw-r-- */
