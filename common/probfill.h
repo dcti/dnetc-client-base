@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: probfill.h,v $
+// Revision 1.7  1999/03/18 03:41:52  cyp
+// new function in probfill.cpp for network update code to communicate
+// changed project states to the problems themselves.
+//
 // Revision 1.6  1999/03/02 03:48:14  silby
 // Shuffled bits around to allow for larger build.
 //
@@ -34,6 +38,13 @@
 #define PROBFILL_RESIZETABLE 4
 
 // --------------------------------------------------------------------------
+
+#define PROBLDR_DISCARD      0x01
+#define PROBLDR_FORCEUNLOAD  0x02
+extern int SetProblemLoaderFlags( const char *loaderflags_map /* 1 char per contest */ );
+
+// --------------------------------------------------------------------------
+
 #if (( CLIENT_CPU         > 0x01F  /* 0-31 */  ) || \
      ((CLIENT_CONTEST-64) > 0x07   /* 64-71 */ ) || \
      ( CLIENT_BUILD       > 0x0F   /* 0-15 */   ) || \
