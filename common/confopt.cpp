@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.43 1999/11/15 02:21:29 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.44 1999/12/08 05:04:42 cyp Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
