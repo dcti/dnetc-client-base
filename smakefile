@@ -15,7 +15,7 @@ LFLAGS_PPC   = $(LFLAGS)
 
 DEBUG_68K    = $(DEBUG) #DEBUG=S
 OPTIMIZE_68K = $(OPTIMIZE)
-CFLAGS_68K   = $(DEBUG_68K) $(OPTIMIZE_68K) $(CFLAGS) define=PIPELINE_COUNT=256 CPU=68040 DATA=FAR CODE=FAR
+CFLAGS_68K   = $(DEBUG_68K) $(OPTIMIZE_68K) $(CFLAGS) define=PIPELINE_COUNT=2 CPU=68040 DATA=FAR CODE=FAR
 DISASM_68K   = $(DISASM)
 LFLAGS_68K   = $(LFLAGS)
 
@@ -49,7 +49,8 @@ common/disphelp.o_ppc\
 common/logstuff.o_ppc\
 common/triggers.o_ppc\
 common/buffupd.o_ppc\
-common/selcore.o_ppc
+common/selcore.o_ppc\
+common/guistuff.o_ppc
 
 RC5_OBJS_PPC	=\
 common/problem.o_ppc\
@@ -94,11 +95,13 @@ common/cmdline.o_68k\
 common/logstuff.o_68k\
 common/triggers.o_68k\
 common/buffupd.o_68k\
-common/selcore.o_68k
+common/selcore.o_68k\
+common/guistuff.o_68k
 
 RC5_OBJS_68K	=\
 common/problem.o_68k\
-rc5/cor_mu0.o_68k
+rc5/rc5-040_060-jg.o_68k\
+rc5/rc5-000_030-jg.o_68k
 
 #rc5/keycheck_opt.o_68k
 
@@ -194,6 +197,7 @@ common/logstuff.o_ppc	:	common/logstuff.cpp
 common/triggers.o_ppc	:	common/triggers.cpp
 common/buffupd.o_ppc	:	common/buffupd.cpp
 common/selcore.o_ppc	:	common/selcore.cpp
+common/guistuff.o_ppc	:	common/guistuff.cpp
 
 # RC5 Dependencies
 
@@ -241,12 +245,14 @@ common/logstuff.o_68k	:	common/logstuff.cpp
 common/triggers.o_68k	:	common/triggers.cpp
 common/buffupd.o_68k	:	common/buffupd.cpp
 common/selcore.o_68k	:	common/selcore.cpp
+common/guistruff.o_68k	:	common/guistuff.cpp
 
 # RC5 Dependencies
 
 rc5/keycheck_opt.o_68k	:	rc5/keycheck_opt.s
 rc5/cor_act.o_68k	:	rc5/cor_act.s
-rc5/cor_mu0.o_68k	:	rc5/cor_mu0.s
+rc5/rc5-000_030-jg.o_68k	:	rc5/rc5-000_030-jg.s
+rc5/rc5-040_060-jg.o_68k	:	rc5/rc5-040_060-jg.s
 
 # DES Dependencies
 
