@@ -5,15 +5,17 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.46  1999/01/17 13:01:25  cyp
+// CPU_UNKNOWN/OS_UNKOWN is defined only if CLIENT_CPU/CLIENT_OS is unknown.
+// _both_ were being defined if either CLIENT_CPU _or_ CLIENT_OS was unknown.
+//
 // Revision 1.45  1999/01/15 09:55:21  jlawson
 // added DES Cracker os and cpu type.
 //
 // Revision 1.44  1999/01/15 01:32:46  snake
-//
 // fixed CLIENT_OS_NAME entry for BSD/OS (it's not BSDI Unix)
 //
 // Revision 1.43  1999/01/13 01:07:14  snake
-//
 // fixed OpenBSD CLIENT_OS_NAME stuff
 //
 // Revision 1.42  1999/01/11 23:38:53  michmarc
@@ -61,22 +63,7 @@
 // <patrick@de.ibm.com> advices.
 //
 // Revision 1.31  1998/11/10 09:33:03  silby
-// Added 
-// AIX 
-// POWER 
-// type 
-// so 
-// that 
-// optimizations 
-// in 
-// rotate.h 
-// would 
-// be 
-// triggered 
-// for 
-// better 
-// rc5 
-// performance.
+// Added AIX POWER 
 //
 // Revision 1.30  1998/09/29 07:56:57  remi
 // #if defined(SPARCLINUX) is redundant.
@@ -482,10 +469,14 @@ struct s128 { s64 hi, lo; };
   #endif
 #endif
 
-#if !defined(CLIENT_OS) || !defined(CLIENT_CPU)
+#if !defined(CLIENT_OS)
   #define CLIENT_OS     OS_UNKNOWN
-  #define CLIENT_CPU    CPU_UNKNOWN
+#endif
+#if !defined(CLIENT_OS_NAME)
   #define CLIENT_OS_NAME "**Unknown OS**"
+#endif  
+#if !defined(CLIENT_CPU)
+  #define CLIENT_CPU    CPU_UNKNOWN
 #endif
 #if (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
   #if !defined(IGNOREUNKNOWNCPUOS)
