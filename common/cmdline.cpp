@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.28 1999/10/17 22:36:38 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.29 1999/10/20 16:27:37 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1493,9 +1493,15 @@ int ParseCommandline( Client *client,
         if (strcmp( thisarg, "-benchmark2"  ) == 0)
           do_mode = MODEREQ_BENCHMARK_QUICK;
         else if (strcmp( thisarg, "-bench"  ) == 0)
+	{
           do_mode = MODEREQ_BENCHMARK_ALLCORE;
+          inimissing = 0; // Don't need ini since testing all cores
+        }
         else if (strcmp( thisarg, "-test"  ) == 0)
+	{
           do_mode = MODEREQ_TEST_ALLCORE;
+          inimissing = 0; // Don't need ini since testing all cores
+        }
 
         ModeReqClear(-1); //clear all - only do benchmark/test
         ModeReqSet( do_mode );
