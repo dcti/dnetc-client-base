@@ -7,6 +7,11 @@ Bugs Listing
   the coders, or by users.
 
 06-03-98 - Jeff Lawson
+  New Suggestion: A/C power checking on the Win32 clients.  Some users
+  run their client on their battery powered laptops and would like the
+  client to only be working when they are connected to A/C.
+
+06-03-98 - Jeff Lawson
   New Suggestion: some of the files produced by the client are still
   not made "fully qualified" by the Client::InternalGetLocalFilename()
   function.  The checkpoint files are this way.  On startup, if a
