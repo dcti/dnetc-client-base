@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.22 2000/02/20 19:34:48 remi Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.23 2000/02/21 06:29:53 sampo Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -449,8 +449,8 @@ int BufferUpdate( Client *client, int updatereq_flags, int interactive )
     {
       if (!dofetch && !dontfetch)
       {
-	long count = GetBufferCount( client, contest_i, 0, NULL );
-        if (count >= 0) /* no error */
+        long count;
+        if (GetBufferCount(client, contest_i, 0, &count) >= 0) /* no error */
         {
           if (count < ClientGetInThreshold( client, contest_i ) )
           {
