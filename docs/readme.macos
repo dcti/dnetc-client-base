@@ -1,0 +1,69 @@
+
+ distributed.net client for Mac OS
+ document revision $Id: readme.macos,v 1.1.2.6 1999/11/25 01:58:08 cyp Exp $
+
+ Welcome to the distributed.net client.
+
+ This document covers information specific to the client for Mac OS.
+ Refer to other enclosed documentation or browse the online FAQ at
+ http://www.distributed.net/FAQ for non-platform-specific documentation.
+
+    1.0  Getting started
+    2.0  Client for Mac OS specific notes
+   
+ 1.0  Getting started ------------------------------------------------
+
+    Just unpack the client in a folder of your choice and fire it up.
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. You can navigate through different screens 
+    by pressing the corresponding number keys on your keyboard -- no
+    need for mouse.  Most of the settings (except for your all-important 
+    email address, in the General Settings screen) have been pre-configured, 
+    so you won't need to spend a long time there. 
+
+    The configuration options are fairly self-explanatory and can be run
+    at any time by selecting 'Configure' from the Commands menu.
+    
+    Choose "Save Settings and Exit" when you're done. The configuration 
+    file will be saved in the same folder as the client. 
+
+    To start the client working, just launch it again. If you prefer to 
+    have the client start automatically when the computer is powered up, 
+    make an alias of the client and place it in your startup items folder 
+    (in your system folder). (NB: It's important never to move the client 
+    out of it's folder, or you'll reset the configuration.)
+
+    A detailed guide to the various configuration options is available
+    online at http://www.distributed.net/FAQ/
+
+    A "Complete Step-by-Step Guide to Running Your First Client" is 
+    available at http://www.distributed.net/docs/run-client.html . 
+
+ 2.0  Notes: ---------------------------------------------------------
+
+    v2.8003.450 and higher clients have been written from the ground up, 
+    and while they may not be as 'Mac'ish as older clients were, the
+    emulation of a 'console' in a GUI window allows the client to use
+    exactly the same source code base as all the other clients on all 
+    the other platforms. 
+    - This enhances the client's stability since the chances that a bug 
+      will remain undetected for long are greatly reduced; 
+    - allows the port to grow in any and all directions that the
+      common source may go;
+    - makes it significantly easier to maintain since the dependancies 
+      on client code remaining unchanged no longer apply.
+      
+    Some 'services' that used to built into the client are now standalone
+    utilities and are available on the client addon page at
+    http://www.distributed.net/addon.html
+
+    The people responsible for the Mac port of the distributed.net client 
+    are Michael Feiri and Don Bruder. They deserve your eternal gratitude, 
+    but they will accept a nice box of Godiva chocolates. :)
+
+ 3.0  FAQ: -----------------------------------------------------------
+
+    Q: What are the changes in this version of the client?
+    A: Read CHANGES.txt as included with this distribution!
+
