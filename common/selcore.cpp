@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.60 2003/09/01 19:27:36 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.61 2003/09/12 13:19:45 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -28,10 +28,6 @@ return "@(#)$Id: selcore.cpp,v 1.112.2.60 2003/09/01 19:27:36 jlawson Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT
-#if (CLIENT_OS == OS_AIX) // needs signal handler
-  #include <sys/signal.h>
-  #include <setjmp.h>
-#endif
 
 /* ======================================================================== */
 
@@ -270,30 +266,27 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
     selcore_initlev = 0;
   }
 
-
-  #if (CLIENT_OS == OS_AIX) && (!defined(_AIXALL)) //not a PPC/POWER hybrid client?
+#if (CLIENT_OS == OS_AIX)
   if (first_time) /* we only want to do this once */
   {
     long detected_type = GetProcessorType(1);
-    if (detected_type > 0)
-    {
-      #if (CLIENT_CPU == CPU_POWER)
-      if ((detected_type & (1L<<24)) == 0 ) //not power?
-      {
-        Log("PANIC::Can't run a Power client on PowerPC architecture.\n");
+
+    if (detected_type > 0) {
+      if ((detected_type & (1L<<24)) != 0 ) {
+# if (CLIENT_CPU == CPU_POWER)
+        /* we're running on PowerPC */
+        Log("PANIC::This is a Power client running on PowerPC - please\n"
+	    "get the correct client for your platform.\n");
+# else /* CPU_POWERPC */
+        /* we're running on Power */
+        Log("PANIC::This is a PowerPC client running on Power - please\n"
+            "get the correct client for your platform.\n");
+# endif
         return -1;
       }
-      #else /* PPC */
-      if ((detected_type & (1L<<24)) != 0 ) //is power?
-      {
-        Log("WARNING::Running a PowerPC client on Power\n"
-            "architecture will result in bad performance.\n");
-      }
-      #endif
     }
   }
-  #endif
-
+#endif
 
 
   #ifdef HAVE_RC5_64_CORES
@@ -345,24 +338,10 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_AIX )
-jmp_buf context;
-
-void sig_invop( int nothing ) {
-  longjmp (context, 1);
-}
-#endif
-
 static long __bench_or_test( int which, 
                             unsigned int cont_i, unsigned int benchsecs, int in_corenum )
 {
   long rc = -1;
-  #if (CLIENT_OS == OS_AIX)            /* need a signal handler to be able */
-  struct sigaction invop, old_handler; /* to test all cores on all systems */
-  memset ((void *)&invop, 0, sizeof(invop) );
-  invop.sa_handler = sig_invop;
-  sigaction(SIGILL, &invop, &old_handler);
-  #endif
 
   if (selcore_initlev > 0                  /* core table is initialized? */
       && cont_i < CONTEST_COUNT)           /* valid contest id? */
@@ -395,33 +374,24 @@ static long __bench_or_test( int which,
         }
         selcorestatics.corenum[cont_i] = -1; /* reset to show name */
 
-        #if (CLIENT_OS == OS_AIX)
-        if (setjmp(context)) /* setjump will return true if coming from the handler */
-        {
-          LogScreen("Error: Core #%i does not work for this system.\n", coreidx);
-        }
+        if (which == 's') /* selftest */
+          rc = SelfTest( cont_i );
         else
-        #endif
+          rc = TBenchmark( cont_i, benchsecs, 0 );
+        #if (CLIENT_OS != OS_WIN32 || !defined(SMC))
+        if (rc <= 0) /* failed (<0) or not supported (0) */
+          break; /* stop */
+        #else
+        // HACK! to ignore failed benchmark for x86 rc5 smc core #7 if
+        // started from menu and another cruncher is active in background.
+        if (rc <= 0) /* failed (<0) or not supported (0) */
         {
-          if (which == 's') /* selftest */
-            rc = SelfTest( cont_i );
+          if ( which == 'b' &&  cont_i == RC5 && coreidx == 7 )
+            ; /* continue */
           else
-            rc = TBenchmark( cont_i, benchsecs, 0 );
-          #if (CLIENT_OS != OS_WIN32 || !defined(SMC))
-          if (rc <= 0) /* failed (<0) or not supported (0) */
             break; /* stop */
-          #else
-          // HACK! to ignore failed benchmark for x86 rc5 smc core #7 if
-          // started from menu and another cruncher is active in background.
-          if (rc <= 0) /* failed (<0) or not supported (0) */
-          {
-            if ( which == 'b' &&  cont_i == RC5 && coreidx == 7 )
-              ; /* continue */
-            else
-              break; /* stop */
-          }
-          #endif
         }
+        #endif
       }
     } /* for (coreidx = 0; coreidx < corecount; coreidx++) */
 
@@ -448,9 +418,6 @@ static long __bench_or_test( int which,
 
   } /* if (cont_i < CONTEST_COUNT) */
 
-  #if (CLIENT_OS == OS_AIX)
-  sigaction (SIGILL, &old_handler, NULL);       /* reset handler */
-  #endif
   return rc;
 }
 
