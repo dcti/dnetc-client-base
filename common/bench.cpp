@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.27.2.44 2000/11/01 19:58:18 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.27.2.45 2000/11/07 12:44:10 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -131,7 +131,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                                       &ratelo, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                       0, 0, 0, 0 ) == -1)
           {
-            run = -1;
+            run = -2;
             break;
           }
           newtslice = (u32)(ratelo/((u32)non_preemptive_os.yps));
@@ -173,12 +173,14 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       run = problem->Run();
       if ( run < 0 )
       {
+        run = -1;
         break;
       }   
       if ((flags & TBENCHMARK_IGNBRK)==0 && CheckExitRequestTriggerNoIO())
       {
         if (!silent)
           LogScreen("\r%s: Benchmarking ... *Break*", contname );
+        run = -3;
         break;
       }
       permille = 1000; /* assume finished */
@@ -211,7 +213,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
                                     0, 0, 0, 0,   0, 0, 0, 0, 
                                     0, 0, 0, 0 ) == -1)
         {
-          run = -1;
+          run = -4;
           break;
         }
         retvalue = (long)ratelo;
@@ -219,7 +221,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         {
           struct timeval tv; 
           tv.tv_sec = secs; tv.tv_usec = usecs;
-          Log("\rBenchmark for %s core #%d (%s)\n%s [%s/sec]",
+          LogScreen("\r");
+          Log("%s: Benchmark for core #%d (%s)\n%s [%s/sec]\n",
              contname, problem->coresel, 
              selcoreGetDisplayName(contestid, problem->coresel),
              CliGetTimeString( &tv, 2 ), ratebuf );
@@ -232,8 +235,10 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     if (!silent)
     {
       if (run < 0) /* error */
-        LogScreen("\r%s:Bench error - unable to determine rate.", contname );
-      LogScreen("\n");
+      {
+        LogScreen("\r");
+        Log("%s: Benchmark failed (error: %d). Unable to determine rate.", run, contname );
+      }
     }
     problem->RetrieveState(NULL, NULL, 1, 0); //purge the problem
 
