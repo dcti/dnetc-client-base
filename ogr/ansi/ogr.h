@@ -4,7 +4,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.16 2001/03/13 23:44:36 teichp Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.17 2002/03/23 00:12:02 andreasb Exp $"
 
 #ifndef u16
 #include "cputypes.h"
@@ -37,7 +37,7 @@
 #define CORE_E_STOPPED  (-4)
 #define CORE_E_STUB     (-5)
 
-#ifndef MIPSpro
+#if !defined(MIPSpro) && !defined(__SUNPRO_CC)
 #pragma pack(1)
 #endif
 
@@ -118,6 +118,10 @@ typedef struct {
 
 } CoreDispatchTable;
 
+#if !defined(MIPSpro) && !defined(__SUNPRO_CC)
+#pragma pack()
+#endif
+
 /* ===================================================================== */
 
 // define this to enable LOGGING code
@@ -131,6 +135,10 @@ typedef struct {
 // on workunit_t in packets.h to change, possibly breaking
 // network and buffer structure operations.
 #define STUB_MAX 10
+
+#ifndef MIPSpro
+#pragma pack(1)
+#endif
 
 struct Stub { /* size is 24 */
   u16 marks;           /* N-mark ruler to which this stub applies */
