@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clisrate_cpp(void) {
-return "@(#)$Id: clisrate.cpp,v 1.42 1999/04/09 16:57:30 cyp Exp $"; }
+return "@(#)$Id: clisrate.cpp,v 1.43 1999/04/16 07:22:35 gregh Exp $"; }
 
 #include "cputypes.h"  // u64
 #include "problem.h"   // Problem class
@@ -162,9 +162,10 @@ const char *CliGetSummaryStringForContest( int contestid )
     keyrateP = "---.-- ";
   }
 
-  sprintf(str, "%d %s packet%s %s%c- [%skeys/s]", 
+  sprintf(str, "%d %s packet%s %s%c- [%s%s/s]", 
        packets, name, ((packets==1)?(""):("s")),
-       CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP );
+       CliGetTimeString( &ttime, 2 ), ((!packets)?(0):(' ')), keyrateP,
+       contestid == 2 /* OGR */ ? "nodes" : "keys" );
   return str;
 }
 
@@ -261,11 +262,11 @@ static const char *__CliGetMessageForProblemCompleted( Problem *prob, int doSave
     case 2: // OGR
 //"Completed one OGR stub 22/1-3-5-7 (123456789 nodes)\n"
 //"%s - [%snodes/sec]\n"
-      sprintf( str, "Completed one %s stub %s (%u nodes)\n"
+      sprintf( str, "Completed one %s stub %s (%s nodes)\n"
                     "%s - [%snodes/sec]\n",  
                     name, 
                     ogr_stubstr( &work.ogr.stub ),
-                    0, // node count
+                    CliGetU64AsString(&work.ogr.nodes, 0, -1),
                     CliGetTimeString( &tv, 2 ),
                     keyrateP );
       break;

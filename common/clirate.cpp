@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.22 1999/04/09 13:31:59 cyp Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.23 1999/04/16 07:22:35 gregh Exp $"; }
 
 #include "cputypes.h" //for u64 define
 #include "problem.h"  //uses Problem::RetrieveState()
@@ -67,7 +67,17 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if (CliGetContestInfoBaseData( contestid, NULL, &count )) //clicdata.cpp
     return ((double)(0));   //clicdata.cpp says no such contest
 
-  keys = U64TODOUBLE(work.crypto.keysdone.hi,work.crypto.keysdone.lo);
+  switch (contestid) {
+    case 0: // RC5
+    case 1: // DES
+    case 3: // CSC
+      keys = U64TODOUBLE(work.crypto.keysdone.hi,work.crypto.keysdone.lo);
+      break;
+    case 2: // OGR
+      keys = U64TODOUBLE(work.ogr.nodes.hi,work.ogr.nodes.lo);
+      break;
+  }
+
   if (count>1) //iteration-to-keycount-multiplication-factor
     keys = (keys)*((double)(count));
   if (prob->startpermille) //0-1000

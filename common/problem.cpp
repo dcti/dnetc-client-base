@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.101 1999/04/15 01:24:31 michmarc Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.102 1999/04/16 07:22:35 gregh Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -292,7 +292,11 @@ u32 Problem::CalcPermille() /* % completed in the current block, to nearest 0.1%
                 break;
                 }
         case 2: //OGR
-                retpermille = 0;
+                Stub curstub;
+                ogr->getresult(ogrstate, &curstub, sizeof(curstub));
+                // This is just a quick&dirty calculation that resembles progress.
+                retpermille = curstub.stub[contestwork.ogr.stub.length]*10
+                            + curstub.stub[contestwork.ogr.stub.length+1]/10;
                 break;
       }
     }
@@ -583,6 +587,8 @@ int Problem::LoadState( ContestWork * work, unsigned int _contest,
       #else
       extern CoreDispatchTable *ogr_get_dispatch_table();
       contestwork.ogr = work->ogr;
+      contestwork.ogr.nodes.lo = 0;
+      contestwork.ogr.nodes.hi = 0;
       ogr = ogr_get_dispatch_table();
       int r = ogr->init();
       if (r != CORE_S_OK)
@@ -989,6 +995,12 @@ int Problem::Run_OGR(u32 *timesliceP, int *resultcode)
   nodes = (int)(*timesliceP);
   r = ogr->cycle(ogrstate, &nodes);
   *timesliceP = (u32)nodes;
+
+  u32 newnodeslo = contestwork.ogr.nodes.lo + nodes;
+  if (newnodeslo < contestwork.ogr.nodes.lo) {
+    contestwork.ogr.nodes.hi++;
+  }
+  contestwork.ogr.nodes.lo = newnodeslo;
 
   switch (r) 
   {

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.7 1999/04/09 14:04:02 cyp Exp $"; }
+return "@(#)$Id: util.cpp,v 1.8 1999/04/16 07:22:35 gregh Exp $"; }
 
 #include "baseincs.h" /* string.h */
 #include "client.h"   /* CONTEST_COUNT, stub definition */
@@ -24,7 +24,7 @@ const char *ogr_stubstr(const struct Stub *stub)
   static char buf[80];
   int i, len = (int)stub->length;
   
-  if (len > 5) {
+  if (len > STUB_MAX) {
     sprintf(buf, "(error:%d/%d)", (int)stub->marks, len);
     return buf;
   }
