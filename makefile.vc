@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.67 1999/11/02 22:02:52 michmarc Exp $
+# $Id: makefile.vc,v 1.68 1999/11/15 03:04:54 cyp Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -40,16 +40,41 @@ OPTS_CC_CPU = -DMMX_BITSLICER -DMEGGS -DKWAN -DMMX_RC5
 OPTS_M_PLAT = IX86
 !endif
 
-OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
-OPTS_RC   = -d_Windows -d_M_{$(OPTS_M_PLAT)}
+# a little blurb about options
+#
+# -Gs<num> == control stack probes (DevStudio docs)
+#          == disable stack checks ("cl -?")
+# -Gf == eliminates duplicate strings
+# -Gy == enable function-level linking
+# -GR- ==disable RTTI
+# -GX- ==disable synchronous exception handling
+# -GA == optimize code for windows application
+#
+# -Og == global optimizations
+# -Oi == intrinsic functions
+# -Os == favor small code
+# -Ot == favor fast code
+# -Oy == omit frame pointer
+# -Oa == assume no aliasing
+# -Ob0 == disable inline function expansion
+# -Ob1 == only "inline" or "__inline" functions will be expanded
+# -Ob2 == any suitable functions will be expanded
+#
+# -O1 == -Og     -Os -Oy -Ob1 -Gs -Gf -Gy
+# -O2 == -Og -Oi -Ot -Oy -Ob1 -Gs -Gf -Gy
+# -Ox == -Og -Oi -Ot -Oy -Ob1 -Gs
+
 OPTS_MSVC = -nologo -I$(COMMONPATH) -I$(PLATSRCPATH) \
             -I$(DESSRCPATH) -I$(OGRSRCPATH) -I$(CSCSRCPATH) \
             -DMULTITHREAD -D__WIN32__ -D_CPU_32BIT_ -DBIT_64 -DLURK \
             -DHAVE_DES_CORES -DHAVE_OGR_CORES -DHAVE_CSC_CORES \
             -W3 -MT -GR- -GX- -GA -GF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG) 
+OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
 OPTS_LINK = /nologo /incremental:no /version:3.10 \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
+OPTS_RC   = -d_Windows -d_M_{$(OPTS_M_PLAT)}
+
 
 # --------------------------------------------
 
@@ -169,6 +194,7 @@ DES_OBJS_CHIP =                              \
 
 # -------
 
+!ifdef ALPHA
 CSC_OBJS =                           \
         $(OUTPUTPATH)/convcsc.obj    \
         $(OUTPUTPATH)/csc-1k.obj     \
@@ -176,6 +202,15 @@ CSC_OBJS =                           \
         $(OUTPUTPATH)/csc-6b.obj     \
         $(OUTPUTPATH)/csc-6b-i.obj   \
         $(OUTPUTPATH)/csc-common.obj
+!else                                
+CSC_OBJS =                           \
+        $(OUTPUTPATH)/convcsc.obj    \
+        $(OUTPUTPATH)/csc-1k.obj     \
+        $(OUTPUTPATH)/csc-1k-i.obj   \
+        $(OUTPUTPATH)/csc-6b.obj     \
+        $(OUTPUTPATH)/csc-6b-i.obj   \
+        $(OUTPUTPATH)/csc-comm.obj
+!endif
 
 # -------
 
@@ -195,9 +230,15 @@ OGR_OBJS =                           \
 
 {$(DESSRCPATH)/alpha-asm}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 !else
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         tasm32 /t /m /ml /dmodelnum=2 $(**:/=\), $(@:/=\)
+
+{$(RC5SRCPATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\nasm\ $(**:/=\)
 
 {$(DESSRCPATH)/brydmasm}.asm{$(OUTPUTPATH)}.obj:
         tasm32 /t /m /ml /dmodelnum=2 /i$(DESSRCPATH:/=\)\brydmasm $(**:/=\), $(@:/=\)
@@ -208,17 +249,14 @@ OGR_OBJS =                           \
 {$(DESSRCPATH)/mmx-bitslice}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\mmx-bitslice\ $(**:/=\)
 
-{$(RC5SRCPATH)/x86/nasm}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(RC5SRCPATH:/=\)\x86\nasm\ $(**:/=\)
+{$(CSCSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
 !endif
 
 {$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(OGRSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
-
-{$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(PLATSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
@@ -239,7 +277,7 @@ $(RES_FILE):    $(RC_FILE)
 # --------------------------------------------
 
 $(BASENAME): $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS_CHIP) $(DES_OBJS_CHIP) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
-        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).scr /version:4.0 $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
         link $(OPTS_LINK) /SUBSYSTEM:CONSOLE /OUT:$(BASENAME).com $(OPTS_LIBS) $(CUI_OBJS)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS /OUT:$(BASENAME).exe $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_OBJS_CHIP) $(DES_OBJS_CHIP) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
 
@@ -252,4 +290,3 @@ superclean: clean
 rebuild: clean all
 
 # --------------------------------------------
-
