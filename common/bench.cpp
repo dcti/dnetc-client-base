@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.12  1999/01/15 08:06:25  silby
+// Now calculates recommended buffer sizes as well.
+//
 // Revision 1.11  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -46,7 +49,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.11 1999/01/01 02:45:14 cramer Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.12 1999/01/15 08:06:25 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -67,7 +70,7 @@ return "@(#)$Id: bench.cpp,v 1.11 1999/01/01 02:45:14 cramer Exp $"; }
 // --------------------------------------------------------------------------
 
 //returns preferred block size or 0 if break
-u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
+u32 Benchmark( unsigned int contest, u32 numkeys, int cputype, int *numblocks)
 {
   ContestWork contestwork;
   Problem problem;
@@ -78,9 +81,22 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
 
   unsigned int itersize;
   unsigned int keycountshift;
+  int recommendedblockcount=0;
   const char *contestname;
   unsigned int contestid;
   u32 tslice;
+
+  const int secondstobuffer[2]=
+    {
+    259200, // 3 Days for RC5
+    10800 // 3 Hours for DES
+    };
+  const char *secondstobufferdesc[2]=
+    {
+    "3 days",
+    "3 hours"
+    };
+
 
   if (numkeys == 0)
     itersize = 23;            //8388608 instead of 10000000L;
@@ -240,14 +256,20 @@ u32 Benchmark( unsigned int contest, u32 numkeys, int cputype )
     itersize++;
     }
 
+  recommendedblockcount=secondstobuffer[contest]/tv.tv_sec;
+
   LogScreen( "The preferred %s blocksize for this machine should be\n"
              "set to %d (%d*2^28 keys). At the benchmarked keyrate\n"
              "(ie, under ideal conditions) each processor would finish\n"
-             "a block of that size in approximately %s.\n", contestname, 
+             "a block of that size in approximately %s.\n"
+             "Your buffers should be set to hold %i blocks,\n"
+             "so that they will last for approximately %s.\n", contestname, 
              (unsigned int)itersize, 
              (unsigned int)((((u32)(1<<itersize))/((u32)(1<<28)))),
-             CliGetTimeString( &tv, 2 ));  
+             CliGetTimeString( &tv, 2 ),recommendedblockcount,
+             secondstobufferdesc[contest]);  
 
+  if (numblocks) *numblocks=recommendedblockcount;
   return (u32)(itersize);
 }
 
