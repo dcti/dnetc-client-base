@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.83  1999/03/09 21:58:55  silby
+// Keyport is now autodetected for uue and http modes correctly.
+//
 // Revision 1.82  1999/03/02 23:30:41  cyp
 // OSI/TLI/XTI fix: was using the wrong t_info field.
 //
@@ -179,7 +182,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.82 1999/03/02 23:30:41 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.83 1999/03/09 21:58:55 silby Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -411,10 +414,12 @@ Network::Network( const char * servname, int servport, int _nofallback,
   mode = startmode = 0;
   if (_enctype == 1 /*uue*/ || _enctype == 3 /*http+uue*/)
     {
+    if (server_port == 0) server_port = 23;
     startmode |= MODE_UUE;
     }
   if (_enctype == 2 /*http*/ || _enctype == 3 /*http+uue*/)
     {
+    if (server_port == 0) server_port = 80;
     startmode |= MODE_HTTP;
     if (_fwallhost && _fwallhost[0])
       {
