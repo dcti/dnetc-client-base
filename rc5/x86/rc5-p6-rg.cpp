@@ -23,7 +23,7 @@
 //	- precalculate some things for ROUND1 & ROUND2
 
 const char *rc5_p6_rg_cpp (void) {
-return "@(#)$Id: rc5-p6-rg.cpp,v 1.17 1999/07/20 04:26:37 cyp Exp $"; }
+return "@(#)$Id: rc5-p6-rg.cpp,v 1.18 2000/07/11 01:58:18 mfeiri Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -41,7 +41,7 @@ return "@(#)$Id: rc5-p6-rg.cpp,v 1.17 1999/07/20 04:26:37 cyp Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__)) || defined(__NeXT__)
 #define BALIGN4 ".align 2,0x90"
 #else
 #define BALIGN4 ".balign 4"
@@ -638,12 +638,14 @@ _next_inc_p6:
 
 "BALIGN4"
 _full_exit_p6:
-	movl	"work_save_ebp",%%ebp \n"
+	movl	"work_save_ebp",%%ebp
+	movl	%1, %%eax
+\n"
 
 : "=m"(work),
   "=m"(rc5unitwork)
 : "a" (rc5unitwork)
-: "%eax","%ebx","%ecx","%edx","%esi","%edi","cc");
+: "%ebx","%ecx","%edx","%esi","%edi","cc");
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }

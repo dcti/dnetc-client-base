@@ -3,6 +3,15 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k5-rg.cpp,v $
+// Revision 1.16  2000/07/11 01:58:12  mfeiri
+// sync
+//
+// Revision 1.15.2.2  2000/02/16 04:20:11  petermack
+// Nextstep doesn't understand .balign
+//
+// Revision 1.15.2.1  1999/11/02 19:17:07  remi
+// Upgraded RC5 .cpp cores to compile with gcc 2.95.x
+//
 // Revision 1.15  1999/04/06 13:30:34  cyp
 // removed #ifndef _32BIT_ guard
 //
@@ -27,7 +36,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:36  remi
-// Lots of $Id: rc5-k5-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $ stuff.
+// Lots of $Id: rc5-k5-rg.cpp,v 1.16 2000/07/11 01:58:12 mfeiri Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:46  remi
 // $Id fun ...
@@ -45,7 +54,7 @@
 //
 //
 // AMD K5 optimized version
-// Rémi Guyomarch <rguyom@mail.dotcom.fr>
+// Rimi Guyomarch <rguyom@mail.dotcom.fr>
 //
 // 980226 :
 //	- Corrected bug in the key incrementation algorithm that caused the
@@ -89,7 +98,7 @@
 // PR??? =  75   / ??    v1=120 v2=215-225 rg=165   / 256-280 ?
 
 const char *rc5_k5_rg_cpp (void) {
-return "@(#)$Id: rc5-k5-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $"; }
+return "@(#)$Id: rc5-k5-rg.cpp,v 1.16 2000/07/11 01:58:12 mfeiri Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -107,7 +116,7 @@ return "@(#)$Id: rc5-k5-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__)) || defined(__NeXT__)
 #define BALIGN4 ".align 2, 0x90"
 #else
 #define BALIGN4 ".balign 4"
@@ -710,12 +719,14 @@ _next_inc_k5:
 
 "BALIGN4"
 _full_exit_k5:
-	movl	"work_save_ebp",%%ebp \n"
+	movl	"work_save_ebp",%%ebp 
+	movl	%1, %%eax
+\n"
 
 : "=m"(work),
   "=m"(rc5unitwork)
 : "a" (rc5unitwork)
-: "%eax","%ebx","%ecx","%edx","%esi","%edi","cc");
+: "%ebx","%ecx","%edx","%esi","%edi","cc");
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }

@@ -4,6 +4,15 @@
 // torment.ntr.net K6 233 sean@ntr.net
 //
 // $Log: rc5-6x86-rg.cpp,v $
+// Revision 1.18  2000/07/11 01:58:09  mfeiri
+// sync
+//
+// Revision 1.17.2.2  2000/02/16 04:19:33  petermack
+// Nextstep doesn't understand .balign
+//
+// Revision 1.17.2.1  1999/11/02 19:17:07  remi
+// Upgraded RC5 .cpp cores to compile with gcc 2.95.x
+//
 // Revision 1.17  1999/04/06 13:30:34  cyp
 // removed #ifndef _32BIT_ guard
 //
@@ -31,7 +40,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.7  1998/07/08 22:59:34  remi
-// Lots of $Id: rc5-6x86-rg.cpp,v 1.17 1999/04/06 13:30:34 cyp Exp $ stuff.
+// Lots of $Id: rc5-6x86-rg.cpp,v 1.18 2000/07/11 01:58:09 mfeiri Exp $ stuff.
 //
 // Revision 1.6  1998/07/08 18:47:45  remi
 // $Id fun ...
@@ -119,7 +128,7 @@
 // PR133 = 110		PR166 = 150
 
 const char *rc5_6x86_rg_cpp (void) {
-return "@(#)$Id: rc5-6x86-rg.cpp,v 1.17 1999/04/06 13:30:34 cyp Exp $"; }
+return "@(#)$Id: rc5-6x86-rg.cpp,v 1.18 2000/07/11 01:58:09 mfeiri Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -137,7 +146,7 @@ return "@(#)$Id: rc5-6x86-rg.cpp,v 1.17 1999/04/06 13:30:34 cyp Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__)) || defined(__NeXT__)
 #define BALIGN4 ".align 2,0x90"
 #else
 #define BALIGN4 ".balign 4"
@@ -772,12 +781,14 @@ _next_inc_6x86:
 
 "BALIGN4"
 _full_exit_6x86:
-	movl	"work_save_ebp",%%ebp \n"
+	movl	"work_save_ebp",%%ebp
+	movl	%1, %%eax
+ \n"
 
 : "=m"(work),
   "=m"(rc5unitwork)
 : "a" (rc5unitwork)
-: "%eax","%ebx","%ecx","%edx","%esi","%edi","cc");
+: "%ebx","%ecx","%edx","%esi","%edi","cc");
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }

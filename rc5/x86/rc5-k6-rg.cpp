@@ -3,6 +3,16 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: rc5-k6-rg.cpp,v $
+// Revision 1.16  2000/07/11 01:58:15  mfeiri
+// sync
+//
+// Revision 1.15.2.2  2000/02/16 04:20:37  petermack
+// Nextstep doesn't understand .balign
+//
+// Revision 1.15.2.1  1999/11/02 19:20:50  remi
+// Updated this core to compile with gcc 2.95.x.
+// Also tweaked a bit alignment directives.
+//
 // Revision 1.15  1999/04/06 13:30:34  cyp
 // removed #ifndef _32BIT_ guard
 //
@@ -40,7 +50,7 @@
 // causing build problems with new PIPELINE_COUNT architecture on x86.
 //
 // Revision 1.6  1998/07/08 22:59:37  remi
-// Lots of $Id: rc5-k6-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $ stuff.
+// Lots of $Id: rc5-k6-rg.cpp,v 1.16 2000/07/11 01:58:15 mfeiri Exp $ stuff.
 //
 // Revision 1.5  1998/07/08 18:47:47  remi
 // $Id fun ...
@@ -59,14 +69,14 @@
 //
 //
 // K6 optimized version
-// Rémi Guyomarch - rguyom@mail.dotcom.fr
+// Rimi Guyomarch - rguyom@mail.dotcom.fr
 //
 // 980307 :
 //	- Finally a K6 optimization that works ...
 //	- Based on the 486/980226 version
 
 const char *rc5_k6_rg_cpp (void) {
-return "@(#)$Id: rc5-k6-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $"; }
+return "@(#)$Id: rc5-k6-rg.cpp,v 1.16 2000/07/11 01:58:15 mfeiri Exp $"; }
 
 #define CORE_INCREMENTS_KEY
 
@@ -84,10 +94,12 @@ return "@(#)$Id: rc5-k6-rg.cpp,v 1.15 1999/04/06 13:30:34 cyp Exp $"; }
 #define _(s)    __(s)
 #define __(s)   #s
 
-#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__))
+#if defined(__NetBSD__) || defined(__bsdi__) || (defined(__FreeBSD__) && !defined(__ELF__)) || defined(__NeXT__)
 #define BALIGN4 ".align 2, 0x90"
+#define BALIGN8 ".align 3, 0x90"
 #else
 #define BALIGN4 ".balign 4"
+#define BALIGN8 ".balign 8"
 #endif
 
 // The S0 values for key expansion round 1 are constants.
@@ -309,7 +321,7 @@ struct work_struct {
 // L0 = %ebx  eB = %edi
 // L1 = %edx  .. = %ebp
 #define ROUND_3_EVEN_AND_ODD(N,Sx) \
-"_round3_k6_"_(Sx)"_"_(N)":
+"#_round3_k6_"_(Sx)"_"_(N)":
 	addl	%%edx,    %%eax
 	addl	"Sx(N)",  %%eax
 	roll	$3,	  %%eax
@@ -399,7 +411,8 @@ extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice )
 //#define S1_S0_ROTL3 _((S_not(1) + S0_ROTL3))
 #define S1_S0_ROTL3 _(0x15235639)
 
-"_bigger_loop_k6:
+"
+_bigger_loop_k6:
 	addl	$"S0_ROTL3", %%ebx		# 1
 	roll	$"FIRST_ROTL",  %%ebx		# 3
 	movl	%%ebx, "work_pre1_r1"		# 1
@@ -646,7 +659,6 @@ __exit_1_k6: \n"
 	movl	$1, "work_add_iter"
 	jmp	_full_exit_k6
 
-"BALIGN4"
 __exit_2_k6:
 
 	movl	"work_key_hi", %%edx
@@ -679,7 +691,7 @@ _next_iter2_k6:
 	movl	%%edx, "RC5UnitWork_L0hi"(%%eax)	# (used by caller)
 	jmp	_full_exit_k6
 
-"BALIGN4"
+"/*BALIGN4*/"
 _next_inc_k6:
 	addl	$0x00010000, %%edx
 	testl	$0x00FF0000, %%edx
@@ -718,14 +730,15 @@ _next_inc_k6:
 	# Not much to do here, since we have finished the block ...
 
 
-"BALIGN4"
 _full_exit_k6:
-	movl	"work_save_ebp", %%ebp \n"
+	movl	"work_save_ebp", %%ebp 
+	movl	%1, %%eax
+\n"
 
 : "=m"(work),
   "=m"(rc5unitwork)
 : "a" (rc5unitwork)
-: "%eax","%ebx","%ecx","%edx","%esi","%edi","cc");
+: "%ebx","%ecx","%edx","%esi","%edi","cc");
 
     return (timeslice - work.iterations) * 2 + work.add_iter;
 }
