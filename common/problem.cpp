@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.31 1999/11/30 00:05:32 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.32 1999/12/06 09:59:59 myshkin Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -56,9 +56,11 @@ extern "C" void riscos_upcall_6(void);
     #define HAVE_ANSI2RG_UNIT_FUNC
     extern "C" u32 rc5_ansi_2_rg_unit_func( RC5UnitWork *rc5unitwork, u32 iterations );
   #else
-    extern "C" s32 rc5_unit_func_g1( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
-    extern "C" s32 rc5_unit_func_g2_g3( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
+    extern "C" s32 rc5_unit_func_allitnil( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
+    extern "C" s32 rc5_unit_func_lintilla( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
+    #ifndef NO_ALTIVEC
     extern "C" s32 rc5_unit_func_vec( RC5UnitWork *work, u32 *timeslice /* , void *scratch_area */);
+    #endif
   #endif
 #elif (CLIENT_CPU == CPU_POWER) //CPU_POWER must always come _after_ CPU_POWERPC
   #define HAVE_ANSI2RG_UNIT_FUNC
@@ -403,7 +405,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
           problem->pipeline_count = 1;
         #elif ((CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_BEOS) && \
            (CLIENT_OS != OS_WIN32))
-          problem->rc5_unit_func = rc5_unit_func_g1;  // G1 (PPC 601)
+          problem->rc5_unit_func = rc5_unit_func_allitnil;  // G1 (PPC 601)
           problem->pipeline_count = 1;
         #else
           coresel = 1; //fall through
@@ -414,7 +416,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
         #if defined(_AIXALL)
           problem->rc5_unit_func = rc5_ansi_2_rg_unit_func ; //POWER cpu
           problem->pipeline_count = 2;
-        #elif (CLIENT_OS == OS_MACOS)
+        #elif (CLIENT_OS == OS_MACOS && !NO_ALTIVEC)
           problem->rc5_unit_func = rc5_unit_func_vec; // G4
           problem->pipeline_count = 1;
         #else
@@ -430,7 +432,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
           problem->rc5_unit_func = rc5_ansi_2_rg_unit_func;
           problem->pipeline_count = 2;
         #else
-          problem->rc5_unit_func = rc5_unit_func_g2_g3; // G2-G3 (PPC 603-750)
+          problem->rc5_unit_func = rc5_unit_func_lintilla; // G2-G3 (PPC 603-750)
           problem->pipeline_count = 1;
         #endif
         coresel = 1;
