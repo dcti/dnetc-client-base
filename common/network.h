@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.h,v $
+// Revision 1.14  1998/06/14 10:14:36  ziggyb
+// There are ^M's everywhere, got rid of them and some OS/2 header changes
+//
 // Revision 1.13  1998/06/14 08:13:02  friedbait
 // 'Log' keywords added to maintain automatic change history
 //
@@ -99,16 +102,13 @@ extern "C" {
   #include <dos.h>
   #include <process.h>
   #include <io.h>
+
   #if defined(__WATCOMC__)
     #include <i86.h>
-    #define INCL_DOSPROCESS         /* For Disk functions */
-    #define INCL_DOSFILEMGR         /* For Dos_Delete */
-    #define INCL_ERRORS             /* DOS error values */
-    #define INCL_DOSMISC            /* DosQuerySysInfo() */
-    #define INCL_WINWORKPLACE       /* Workplace shell objects */
-    #define INCL_VIO                /* OS/2 text graphics functions */
-    #include <os2.h>
   #endif
+  // All the OS/2 specific headers are here
+  // This is nessessary since the order of the OS/2 defines are important
+  #include "platforms\os2cli\os2defs.h"
   extern "C" {
     #include <types.h>
     #include <netinet/in.h>
