@@ -5,6 +5,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.73  1999/01/23 21:34:07  patrick
+//
+// OS2-EMX coredumps in __print_packet (undefined for the moment)
+// EMX uses errno instead of sock_errno
+//
 // Revision 1.72  1999/01/21 22:01:04  cyp
 // fixed LowLevelSend() which didn't know /anything/ about non-blocking sox.
 //
@@ -214,7 +219,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.72 1999/01/21 22:01:04 cyp Exp $"; }
+return "@(#)$Id: network.cpp,v 1.73 1999/01/23 21:34:07 patrick Exp $"; }
 #endif
 
 //----------------------------------------------------------------------
@@ -1305,8 +1310,10 @@ s32 Network::Get( u32 length, char * data )
   if (need_close) 
     Close();
 
+  #if !defined (__EMX__) // coredumps on OS2
   if (verbose_level > 1) //DEBUG
     __print_packet("Get", data, bytesfilled );
+  #endif
 
   return bytesfilled;
 }
@@ -1391,8 +1398,10 @@ s32 Network::Put( u32 length, const char * data )
     puthttpdone = 1;
     }
 
+  #if !defined (__EMX__) // coredumps on OS2
   if (verbose_level > 1) //DEBUG
     __print_packet("Put", outbuf, outbuf.GetLength() );
+  #endif
 
   return (LowLevelPut(outbuf.GetLength(), outbuf) != -1 ? 0 : -1);
 }
@@ -1576,7 +1585,7 @@ int Network::LowLevelConnectSocket( u32 that_address, u16 that_port )
     #define ETIMEDOUT WSAETIMEDOUT
     if (errno == WSAEINVAL) /* ws1.1 returns WSAEINVAL instead of WSAEALREADY */
       errno = EALREADY;  
-    #elif (CLIENT_OS == OS_OS2)
+    #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
     errno = sock_errno();
     #endif
 
