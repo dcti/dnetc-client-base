@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.12  1998/06/16 21:53:30  silby
+// Added support for dual x86 DES cores (p5/ppro)
+//
 // Revision 1.11  1998/06/15 06:18:39  dicamillo
 // Updates for BeOS
 //
@@ -88,6 +91,8 @@ typedef enum
     #define rc5_unit_func_k6 _rc5_unit_func_k6
   #endif
 
+  extern u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern u32 (*des_unit_func2)( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_486( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -95,6 +100,10 @@ typedef enum
   extern "C" u32 rc5_unit_func_6x86( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k5( RC5UnitWork * rc5unitwork, u32 timeslice );
   extern "C" u32 rc5_unit_func_k6( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
+  extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
   #if (PIPELINE_COUNT != 1)
   #error "Expecting PIPELINE_COUNT=1"

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.22  1998/06/16 21:53:28  silby
+// Added support for dual x86 DES cores (p5/ppro)
+//
 // Revision 1.21  1998/06/15 12:04:05  kbracey
 // Lots of consts.
 //
@@ -26,7 +29,7 @@
 // Added $Log.
 //
 
-static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.21 1998/06/15 12:04:05 kbracey Exp $";
+static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.22 1998/06/16 21:53:28 silby Exp $";
 
 #define NEW_STATS_AND_LOGMSG_STUFF
 
@@ -44,6 +47,8 @@ static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.21 1998/06/15 12:04:
 
 #if (CLIENT_CPU == CPU_X86)
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+  u32 (*des_unit_func2)( RC5UnitWork * rc5unitwork, u32 timeslice );
 #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_WIN32)
   // NT PPC doesn't have good assembly
   #include "rc5ansi2-rg.cpp"
@@ -68,12 +73,16 @@ static const char *id_problem_cpp="@(#)$Id: problem.cpp,v 1.21 1998/06/15 12:04:
 
 #if (CLIENT_CPU == CPU_ARM)
  u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
+#elif (CLIENT_CPU == CPU_X86)
 #else
 extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
 
 #if (CLIENT_CPU == CPU_X86)
-  extern u32 Bdes_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
+//  extern u32 p1des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
+//  extern u32 p2des_unit_func_p5( RC5UnitWork * rc5unitwork, u32 timeslice );
+//  extern u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
+//  extern u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 timeslice );
 #endif
 
 #if (CLIENT_OS == OS_RISCOS)
@@ -301,11 +310,14 @@ s32 Problem::Run( u32 timeslice , u32 threadnum )
     else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
     timeslice = (1ul << nbits) / PIPELINE_COUNT;
 #ifdef MULTITHREAD
-    if (threadnum == 0) {
+    if (threadnum == 0)
+      {
       kiter = des_unit_func ( &rc5unitwork, nbits );
-    } else {
-      kiter = Bdes_unit_func ( &rc5unitwork, nbits );
-    }
+      }
+    else
+      {
+      kiter = des_unit_func2 ( &rc5unitwork, nbits );
+      }
 #else
     kiter = des_unit_func ( &rc5unitwork, nbits );
 #endif
