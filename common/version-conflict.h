@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: version-conflict.h,v $
+// Revision 1.34  1999/01/09 01:40:52  silby
+// Welcome to .427
+//
 // Revision 1.33  1999/01/06 01:20:01  cyp
 // .426  I herewith remind everyone that a/b/c style revs are on a
 // platform basis.
@@ -121,10 +124,10 @@
 
 #define CLIENT_CONTEST      71
 #define CLIENT_BUILD        03
-#define CLIENT_BUILD_FRAC   426
+#define CLIENT_BUILD_FRAC   427
 
-#define CLIENT_VERSIONSTRING    "v2.7103.426"
-#define CLIENT_VERSIONSTRING2   "2.7103.426"        // no leading "v"
+#define CLIENT_VERSIONSTRING    "v2.7103.427"
+#define CLIENT_VERSIONSTRING2   "2.7103.427"        // no leading "v"
 
 // When releasing a beta client, please set the expiration time to
 // about two weeks into the future; that should be an adequate beta
