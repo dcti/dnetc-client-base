@@ -13,7 +13,7 @@
 #warning currently only core 0 supported
 
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.102.4.2 2001/03/23 21:14:00 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.102.4.3 2001/07/08 18:25:28 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -1660,14 +1660,14 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     #if (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_AMIGAOS)
       //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
       //extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
-      unit_func.ogr = ogr_get_dispatch_table(); //default
+      unit_func.ogr2 = ogr_get_dispatch_table(); //default
       #if defined(_AIXALL)
       if (coresel == NUM_CORE_OGR-1)    // power core
-        unit_func.ogr = ogr_get_dispatch_table_power();
+        unit_func.ogr2 = ogr_get_dispatch_table_power();
       #endif
       #if defined(__VEC__)      /* compilor supports AltiVec */
       if (coresel == NUM_CORE_OGR)    // our vec_ogr core
-        unit_func.ogr = vec_ogr_get_dispatch_table();
+        unit_func.ogr2 = vec_ogr_get_dispatch_table();
       #endif
     #elif (CLIENT_CPU == CPU_68K)
       //extern CoreDispatchTable *ogr_get_dispatch_table_000(void);
@@ -1676,21 +1676,21 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       //extern CoreDispatchTable *ogr_get_dispatch_table_040(void);
       //extern CoreDispatchTable *ogr_get_dispatch_table_060(void);
       if (coresel == 4)
-        unit_func.ogr = ogr_get_dispatch_table_060();
+        unit_func.ogr2 = ogr_get_dispatch_table_060();
       else if (coresel == 3)
-        unit_func.ogr = ogr_get_dispatch_table_040();
+        unit_func.ogr2 = ogr_get_dispatch_table_040();
       else if (coresel == 2)
-        unit_func.ogr = ogr_get_dispatch_table_030();
+        unit_func.ogr2 = ogr_get_dispatch_table_030();
       else if (coresel == 1)
-        unit_func.ogr = ogr_get_dispatch_table_020();
+        unit_func.ogr2 = ogr_get_dispatch_table_020();
       else
       {
-        unit_func.ogr = ogr_get_dispatch_table_000();
+        unit_func.ogr2 = ogr_get_dispatch_table_000();
         coresel = 0;
       }
     #else
       //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-      unit_func.ogr = ogr_get_dispatch_table();
+      unit_func.ogr2 = ogr_get_dispatch_table();
       coresel = 0;
     #endif
   }

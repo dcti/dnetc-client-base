@@ -6,7 +6,7 @@
  * perhaps it will become integrated into ogr.cpp or ogr_*.cor
 */
 #ifndef __STATE_H__
-#define __STATE_H__ "@(#)$Id: state.h,v 1.1.2.1 2001/05/03 11:14:24 andreasb Exp $"
+#define __STATE_H__ "@(#)$Id: state.h,v 1.1.2.2 2001/07/08 18:25:32 andreasb Exp $"
 
 #include "ogr.h"
 
@@ -57,7 +57,7 @@ struct Level {
   U list[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
   U dist[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 1 || 2
   U comp[BITMAPS]; // unused if OGROPT_ALTERNATE_CYCLE == 2
-  int cnt1;        // unused if OGROPT_ALTERNATE_CYCLE == 1 || == 2
+  int cnt1;        // unused if OGROPT_ALTERNATE_CYCLE == 1 || == 2     TODO: this is a duplicate of previous_level->cnt2;
   int cnt2;        // always needed
   int limit;       // always needed
 };
@@ -120,7 +120,9 @@ struct State {
   int half_depth;                 /* depth of left/right segment */
   int half_depth2;                /* depth of left+middle segment */
   int startdepth;                 /* depth of the stub */
-  int stopdepth;                  /* ogr_cycle() stops if this level is reached; either startdepth or startdepth-1*/
+  int stopdepth;                  /* ogr_cycle() stops if this level is reached; either startdepth or startdepth-1 */
+  int depththdiff;                /* save stub2->diffs[depth-1] of a type 2 stub, 0 if type 1 stub */
+  int cycle;                      /* count recycles (from 1), 0 if manually generated stub => defines pseudo fifo order */
   
   /* Part 2: variables that will be changed by ogr_cycle() and read by 
              ogr_getresult(). Do not read these values while ogr_cycle() is running!
@@ -128,7 +130,7 @@ struct State {
              is safe to be saved to disk. */
   int depth;                      /* depth of last placed mark */
 //int markpos[MAXDEPTH];          /* duplicates Levels[].cnt2 */ /* was: marks */ /* current positions of the marks */
-  u32 nodeshi, nodeslo;           /* our internal nodecounter */
+  struct { u32 hi, lo; } nodes;   /* our internal nodecounter */
   
   /* Part 3: Variables that may be used ONLY by ogr_cycle() */
   #ifdef OGR_DEBUG

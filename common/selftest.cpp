@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.48.4.1 2001/04/01 19:55:12 andreasb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.48.4.2 2001/07/08 18:25:28 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -394,6 +394,7 @@ long SelfTest( unsigned int contest )
         #if defined(HAVE_OGR_CORES)
         case OGR: 
         {
+          #ifdef OGR_OLD_STUB
           int tcd;
           contestwork.ogr.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
           contestwork.ogr.workstub.stub.length = 0;
@@ -406,8 +407,12 @@ long SelfTest( unsigned int contest )
           }
           contestwork.ogr.workstub.worklength = 0;
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
+          #else
+          ogr_init_stub2_from_testcasedata(&contestwork.ogr2, 
+              (*test_cases)[testnum][1], TEST_CASE_DATA-2, &(*test_cases)[testnum][2]);
+          #endif
           break;
-        }  
+        }
         #endif
         default:
           userbreak = 1;
@@ -524,6 +529,7 @@ long SelfTest( unsigned int contest )
               #ifdef HAVE_OGR_CORES
               case OGR:
               {
+                #ifdef OGR_OLD_STUB
                 if (expectedsolution_lo & 0x80000000)  // no solution
                 {
                   expectedsolution_lo = ~expectedsolution_lo;
@@ -554,6 +560,38 @@ long SelfTest( unsigned int contest )
                                   contname, testnum + 1, resulttext,
                                   ogr_stubstr(&contestwork.ogr.workstub.stub),
                                   contestwork.ogr.nodes.lo, expectedsolution_lo );
+                #else
+                if (expectedsolution_lo & 0x80000000)  // no solution
+                {
+                  expectedsolution_lo = ~expectedsolution_lo;
+                  if (resultcode != RESULT_NOTHING ||
+                    contestwork.ogr2.nodes.lo != expectedsolution_lo)
+                  {
+                    resulttext = "FAILED";
+                    resultcode = -1;
+                  }
+                  else
+                  {
+                    resulttext = "passed";
+                    successes++;
+                  }
+                }
+                else if (resultcode != RESULT_FOUND ||
+                    contestwork.ogr2.nodes.lo != expectedsolution_lo)
+                {
+                  resulttext = "FAILED";
+                  resultcode = -1;
+                }
+                else
+                {
+                  resulttext = "passed";
+                  successes++;
+                }
+                LogScreen( "\r%s: Test %02d %s: %s %08X-%08X\n",
+                                  contname, testnum + 1, resulttext,
+                                  ogr_stubstr(&contestwork.ogr2),
+                                  contestwork.ogr2.nodes.lo, expectedsolution_lo );
+                #endif
                 break;
               }
               #endif /* HAVE_OGR_CORES */
