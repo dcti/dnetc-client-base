@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.16 2004/01/24 07:16:07 bdragon Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.17 2004/03/04 17:21:19 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -363,7 +363,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
         {
           case 0x00: cindex = 1; break; // P5           == without BSR (B)
           case 0x01: cindex = 1; break; // 386/486      == without BSR (B)
-          case 0x02: cindex = 0; break; // PII/PIII     == with BSR (A)
+          case 0x02: cindex = 0; break; // PII          == with BSR (A)
           case 0x03: cindex = 0; break; // Cx6x86       == with BSR (A)
           case 0x04: cindex = 1; break; // K5           == without BSR (B)
           #if defined(__GNUC__) || defined(__WATCOMC__) || defined(__BORLANDC__)
@@ -385,6 +385,15 @@ int selcoreGetPreselectedCoreForProject_ogr()
           #else
           #warning "FIXME: no OGR core autoselected on a P4 for your compiler"
           #endif
+          case 0x0C: cindex = 1; break; // Via C3       == without BSR (B)
+          #if defined(__GNUC__) || defined(__ICC)
+          case 0x0D: cindex = 0; break; // Pentium M    == with BSR (A)
+          #elif defined(_MSC_VER) || defined(__WATCOMC__) || defined(__BORLANDC__)
+          case 0x0D: cindex = 1; break; // Pentium M    == without BSR (B)
+          #else 
+          #warning "FIXME: no OGR core autoselected on a PM for your compiler"
+          #endif
+          case 0x0E: cindex = 0; break; // Pentium III  == with BSR (A)
           default:   cindex =-1; break; // no default
         }
       }
