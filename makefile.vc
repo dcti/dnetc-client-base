@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.56.2.18 2000/02/08 02:23:14 michmarc Exp $
+# $Id: makefile.vc,v 1.56.2.19 2000/02/20 22:59:29 jlawson Exp $
 #
 
 !ifndef PROCESSOR_ARCHITECTURE
@@ -168,7 +168,8 @@ RC5_OBJS =                           \
         $(OUTPUTPATH)/rc5-rgp6.obj   \
         $(OUTPUTPATH)/rc5mmx.obj     \
         $(OUTPUTPATH)/rg486.obj      \
-        $(OUTPUTPATH)/rg6x86.obj
+        $(OUTPUTPATH)/rg6x86.obj     \
+        $(OUTPUTPATH)/rc5-ssk7.obj
 OPTS_MSVC = $(OPTS_MSVC) -DMMX_RC5
 !endif
 

@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.53 2000/02/15 03:41:20 sampo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.54 2000/02/20 22:59:30 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -32,9 +32,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
    they are different from their predecessor(s). If only one core,
    use the obvious "MIPS optimized" or similar.
   */
-  #define LARGEST_SUBLIST 7 /* including the terminating null */
+  #define LARGEST_SUBLIST 8 /* including the terminating null */
   static const char *corenames_table[CONTEST_COUNT][LARGEST_SUBLIST]= 
   #undef LARGEST_SUBLIST
+  /* ================================================================== */
   {
   #if (CLIENT_CPU == CPU_X86)
     { /* RC5 */
@@ -47,6 +48,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "RG Cx re-pair",  /* Cyrix 486/6x86[MX]/M2, AMD K7 */
       "RG RISC-rotate I", /* K5 */
       "RG RISC-rotate II", /* K6 - may become mmx-k6-2 core at runtime */
+      "RG/SS ath",   /* K7 Athelon */
       NULL
     },
     { /* DES */
@@ -136,7 +138,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL, /* room */
       NULL
     }
-  };  
+  };
+  /* ================================================================== */
+
+
   static int fixed_up = -1;
   if (fixed_up < 0)
   {
@@ -561,11 +566,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             #if defined(SMC)    
             case 0x06: cindex = 1; break; // cx486 uses SMC if avail (bug #99)
             #else 
-            case 0x06: cindex = 3; break; // else core 3. (bug #804)
+            case 0x06: cindex = 3; break; // cx486 else core 3. (bug #804)
             #endif
-            case 0x07: cindex = 2; break; // castrated Celeron
+            case 0x07: cindex = 2; break; // Celeron
             case 0x08: cindex = 2; break; // PPro
-            case 0x09: cindex = 3; break; // AMD K7
+            case 0x09: cindex = 6; break; // AMD K7
             case 0x0A: cindex = 3; break; // Centaur C6
             //no default
           }
@@ -757,6 +762,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
   extern "C" u32 rc5_unit_func_p5_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_k6_mmx( RC5UnitWork * , u32 iterations );
   extern "C" u32 rc5_unit_func_486_smc( RC5UnitWork * , u32 iterations );
+  extern "C" u32 rc5_unit_func_k7( RC5UnitWork * , u32 iterations );
 #elif (CLIENT_CPU == CPU_ARM)
   extern "C" u32 rc5_unit_func_arm_1( RC5UnitWork * , u32 );
   extern "C" u32 rc5_unit_func_arm_2( RC5UnitWork * , u32 );
@@ -1153,6 +1159,10 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
           pipeline_count = 4;
         }
         #endif
+      }
+      else if (coresel == 6) // K7
+      {
+        unit_func.rc5 = rc5_unit_func_k7;
       }
       else // Pentium (0/6) + others
       {
