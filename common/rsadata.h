@@ -6,7 +6,7 @@
 //
 
 #ifndef __RSADATA_H__
-#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.9 1999/04/13 12:41:25 jlawson Exp $"
+#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.10 2002/09/23 12:01:32 acidblood Exp $"
 
 // RC5-56:
 // Contest identifier: RC5-32/12/7 
@@ -46,6 +46,25 @@
 #define RC564_CYPHERHI 0x4BF226DCL
 #define RC564_PLAINLO 0x20656854L
 #define RC564_PLAINHI 0x6E6B6E75L
+
+// RC5-72
+// Contest identifier: RC5-32/12/9
+// Cipher: RC5-32/12/9 (RC5 with 32-bit wordsize, 12 rounds, and
+// 9*8=72-bit key)
+// Start of contest: 28 January 1997, 9 am PST
+// State of contest: ongoing
+// IV: 41 d5 97 4c 00 7a f5 f6
+// Hexadecimal ciphertext:
+//   e7 af fc be 5f 74 ec a6 11 a2 1f a8 8a 0a a1 76
+//   dd 8e 01 d3 2b 31 a8 df 60 26 4f b0 16 ed 2c 71
+//   89 fb 01 db ac 0f af b5 21 a8 d6 5e a6 0f 54 48
+//   14 f5 06 1e 1f 21 8b 36
+#define RC572_IVLO 0x4C97D541L
+#define RC572_IVHI 0xF6F57A00L
+#define RC572_CYPHERLO 0xBEFCAFE7L
+#define RC572_CYPHERHI 0xA6EC745FL
+#define RC572_PLAINLO 0x20656854L
+#define RC572_PLAINHI 0x636B6E75L
 
 // DES-II-1:
 // Contest Identifier: DES-II-1

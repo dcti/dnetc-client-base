@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.81 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.82 2002/09/23 12:01:32 acidblood Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -45,6 +45,7 @@ return "@(#)$Id: selcore.cpp,v 1.81 2002/09/15 21:45:49 andreasb Exp $"; }
 static const char **__corenames_for_contest( unsigned int cont_i )
 {
   // PROJECT_NOT_HANDLED("sorry, you still have to enter you core's names into this ugly struct")
+// OK!
   /* 
    When selecting corenames, use names that describe how (what optimization)
    they are different from their predecessor(s). If only one core,
@@ -84,6 +85,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13-B",
       NULL
     },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    }
   #elif (CLIENT_CPU == CPU_ARM)
     { /* RC5 */
       "Series A", /* (autofor for ARM 3/6xx/7xxx) "ARM 3, 610, 700, 7500, 7500FE" */
@@ -100,6 +106,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13",
       NULL
     },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    }
   #elif (CLIENT_CPU == CPU_68K)
     { /* RC5 */
       #if defined(__GCC__) || defined(__GNUC__) || \
@@ -124,6 +135,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13 68060",
       NULL
     },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    }
   #elif (CLIENT_CPU == CPU_ALPHA) 
     { /* RC5 */
       #if (CLIENT_OS == OS_WIN32)
@@ -142,6 +158,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13-CIX",
       NULL
     },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
     { /* RC5 */
       /* lintilla depends on allitnil, and since we need both even on OS's 
@@ -165,6 +186,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13 PPC-vector", /* altivec only */
       NULL
     },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    }
   #elif (CLIENT_CPU == CPU_SPARC)
     { /* RC5 */
       #if ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_LINUX))
@@ -183,6 +209,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13",
       NULL
     },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    }
   #elif (CLIENT_OS == OS_PS2LINUX)
     { /* RC5 */
       "Generic RC5 core",
@@ -197,6 +228,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13",
       NULL
     },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    }
   #else
     { /* RC5 */
       "Generic RC5 core",
@@ -210,6 +246,11 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       "GARSP 5.13",
       NULL
     },
+    { /* RC5-72 */
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      NULL
+    }
   #endif  
     { /* CSC */
       "6 bit - inline", 
@@ -978,6 +1019,34 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         }
       }
     }     
+    if (contestid == RC5_72)
+    {
+      selcorestatics.corenum[RC5_72] = selcorestatics.user_cputype[RC5_72];
+      if (selcorestatics.corenum[RC5_72] < 0)
+      {
+        if (detected_type >= 0)
+        {
+          int cindex = -1; 
+          switch (detected_type & 0xff)
+          {
+            case 0x00: cindex = 1; break; // P5 == RG/BRF class 5
+            case 0x01: cindex = 1; break; // 386/486
+            case 0x02: cindex = 0; break; // PII/PIII   == RG class 6
+            case 0x03: cindex = 1; break; // Cx6x86/MII == RG re-pair II
+            case 0x04: cindex = 1; break; // K5         == RG RISC-rotate I
+            case 0x05: cindex = 1; break; // K6-1/2/3   == RG RISC-rotate II
+            case 0x06: cindex = 1; break; // cx486
+            case 0x07: cindex = 0; break; // Celeron    == RG class 6
+            case 0x08: cindex = 0; break; // PPro       == RG class 6
+            case 0x09: cindex = 0; break; // AMD>=K7/Cx>MII == RG/HB re-pair II
+            case 0x0A: cindex = 1; break; // Centaur C6 == RG/HB re-pair II (#2082)
+            case 0x0B: cindex = 0; break; // P4         == ak/P4 
+            default:   cindex =-1; break; // no default
+          }
+          selcorestatics.corenum[RC5] = cindex;
+        }
+      }
+    }     
     else if (contestid == DES)
     {  
       selcorestatics.corenum[DES] = selcorestatics.user_cputype[DES];
@@ -1423,6 +1492,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 /* ------------------------------------------------------------- */
 
 // PROJECT_NOT_HANDLED("add your core function prototype(s) here")
+// Since we only have ANSI C++ RC5-72 cores for now, there's no need for
+// CLIENT_CPU checking.
+
+  extern "C" u32 rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 );
+  extern "C" u32 rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 );
+
+// OK!
 
 /* ------------------------------------------------------------- */
 
@@ -1752,6 +1828,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #endif
   } /* if (contestid == RC5) */
+  if (contestid == RC5_72)
+  {
+  }
   
   /* ================================================================== */
   
@@ -1961,8 +2040,21 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 
   /* ================================================================== */
 
-  if (0)
-    PROJECT_NOT_HANDLED(contestid); // add code to select core function here
+//  if (0)
+//    PROJECT_NOT_HANDLED(contestid); // add code to select core function here
+// OK!
+  if (contestid == RC5_72)
+  {
+    if (coresel == 0)
+    {
+      unit_func.rc5 = rc5_72_unit_func_ansi_4;
+      pipeline_count = 4;
+    }
+    else /* coresel == 1 */
+    {
+      unit_func.rc5 = rc5_72_unit_func_ansi_2;
+      pipeline_count = 2;
+  }
 
   /* ================================================================== */
 

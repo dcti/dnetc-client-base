@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.264 2002/09/15 21:45:49 andreasb Exp $
+# @(#)$Id: configure,v 1.265 2002/09/23 12:01:32 acidblood Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -148,9 +148,13 @@ add_sources() # $1=os, $2=arch, $3=custom
   # only generic/ansi cores are declared here. 
   # arch specific ones are declared in each arch specific section.
   #-- RC5 -- --------------------------------------------------
-  RC5_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline
-  RC5_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline
-  RC5_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
+  #RC5_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline
+  #RC5_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline
+  #RC5_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
+  #-- RC5-72 -- -----------------------------------------------
+  RC5_72_ANSI4_SRCS="rc5-72/ansi/rc5ansi4.cpp" # 4 pipeline
+  RC5_72_ANSI2_SRCS="rc5-72/ansi/rc5ansi2.cpp" # 2 pipeline
+// OK!
   # -- DES -- (needs -DHAVE_DES_CORES) -------------------------
   KWAN_SLICE_SRCS1="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
   KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
@@ -174,31 +178,34 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi
 
     # --------------- rc5 ----------------
-    if [ "$1-$3" = "linux-" -o "$1" = "freebsd" -o "$1" = "netbsd" \
-      -o "$1" = "openbsd" -o "bsdos" ]; then # has SMC
-      # -- rc5 smc --
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DSMC"
-      #obsolete linux: TARGET_LDFLAGS="$TARGET_LDFLAGS -static -Xlinker -omagic"
-      #obsolete linux: -Xlinker -omagic implies -static
-    fi
-    if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
-      # -- non-nasm/rc5 --
-      TARGET_HDIRS="$TARGET_HDIRS ./rc5"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS \
-                      rc5/x86/rg-486.cpp     rc5/x86/rg-smc.cpp \
-                      rc5/x86/rg-k5.cpp      rc5/x86/brf-p5.cpp \
-                      rc5/x86/rg-k6.cpp      rc5/x86/rg-p6.cpp  \
-                      rc5/x86/rg-6x86.cpp"
-    else
-      # -- nasm/rc5 --
-      TARGET_ADDNASMS="$TARGET_ADDNASMS \
-                       rc5/x86/rg-486.asm    rc5/x86/brf-smc.asm \
-                       rc5/x86/rg-k5.asm     rc5/x86/brf-p5.asm \
-                       rc5/x86/rg-k6.asm     rc5/x86/rg-p6.asm \
-                       rc5/x86/rg-6x86.asm   rc5/x86/ak-p7.asm \
-                       rc5/x86/jp-mmx.asm    rc5/x86/hb-k7.asm"
-    fi                       
+    #if [ "$1-$3" = "linux-" -o "$1" = "freebsd" -o "$1" = "netbsd" \
+    #  -o "$1" = "openbsd" -o "bsdos" ]; then # has SMC
+    #  # -- rc5 smc --
+    #  TARGET_CCFLAGS="$TARGET_CCFLAGS -DSMC"
+    #  #obsolete linux: TARGET_LDFLAGS="$TARGET_LDFLAGS -static -Xlinker -omagic"
+    #  #obsolete linux: -Xlinker -omagic implies -static
+    #fi
+    #if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
+    #  # -- non-nasm/rc5 --
+    #  TARGET_HDIRS="$TARGET_HDIRS ./rc5"
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS \
+    #                  rc5/x86/rg-486.cpp     rc5/x86/rg-smc.cpp \
+    #                  rc5/x86/rg-k5.cpp      rc5/x86/brf-p5.cpp \
+    #                  rc5/x86/rg-k6.cpp      rc5/x86/rg-p6.cpp  \
+    #                  rc5/x86/rg-6x86.cpp"
+    #else
+    #  # -- nasm/rc5 --
+    #  TARGET_ADDNASMS="$TARGET_ADDNASMS \
+    #                   rc5/x86/rg-486.asm    rc5/x86/brf-smc.asm \
+    #                   rc5/x86/rg-k5.asm     rc5/x86/brf-p5.asm \
+    #                   rc5/x86/rg-k6.asm     rc5/x86/rg-p6.asm \
+    #                   rc5/x86/rg-6x86.asm   rc5/x86/ak-p7.asm \
+    #                   rc5/x86/jp-mmx.asm    rc5/x86/hb-k7.asm"
+    #fi                       
 
+    # -------------- rc5-72 --------------
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
     # --------------- des ----------------
     #TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
     #TARGET_ADDASMS="$TARGET_ADDASMS des/x86/bdeslow.S des/x86/p1bdespro.S"
@@ -255,15 +262,17 @@ add_sources() # $1=os, $2=arch, $3=custom
     #fi
   #-----------------------------------------------------------------  
   elif [ "$2" = "sparc" ]; then
-    if [ "$1" = "solaris" -o "$1" = "sunos" -o "$1" = "linux" ]; then
-      # add the rc5-ultra-crunch core
-      if [ "$3" = "cc" ]; then # use a gcc -S generated .s file for sun cc
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/ultra/rc5-ultra-crunch.s"
-      else
-        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
-      fi
-    fi
-    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    #if [ "$1" = "solaris" -o "$1" = "sunos" -o "$1" = "linux" ]; then
+    #  # add the rc5-ultra-crunch core
+    #  if [ "$3" = "cc" ]; then # use a gcc -S generated .s file for sun cc
+    #    TARGET_ADDASMS="$TARGET_ADDASMS rc5/ultra/rc5-ultra-crunch.s"
+    #  else
+    #    TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
+    #  fi
+    #fi
+    #TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
@@ -296,15 +305,20 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   elif [ "$2" = "mips" ]; then
     #-- rc5 --
-    if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
-    elif [ "$3" = "ps2" ]; then      #For PS2 Linux [jt(jt@distributed.net)]
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
-    else                             # gcc targets. mips-crunch.cpp is faster
-                                     # except for NetBSD, ansi is 2% faster
-      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
-    fi
+    #if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    #elif [ "$3" = "ps2" ]; then      #For PS2 Linux [jt(jt@distributed.net)]
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
+    #else                             # gcc targets. mips-crunch.cpp is faster
+    #                                 # except for NetBSD, ansi is 2% faster
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
+    #fi
+
+    #-- rc5-72 --
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
+
     #-- ogr --
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
@@ -313,31 +327,35 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
   #-----------------------------------------------------------------  
   elif [ "$2" = "hppa" ]; then
-    if [ "$TARGET_CC" = "CC" ]; then
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5/parisc/parisc.s"
-    else
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS $OGR_ANSI_SRCS"
+  #  if [ "$TARGET_CC" = "CC" ]; then
+  #    TARGET_ADDASMS="$TARGET_ADDASMS rc5/parisc/parisc.s"
+  #  else
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS \
+                      $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
+  #    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS $OGR_ANSI_SRCS"
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
       TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
-    fi
+  #  fi
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
   #-----------------------------------------------------------------  
   elif [ "$2" = "68k" ]; then
-    if [ "$1" = "amigaos" ]; then
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.s \
-                                      rc5/68k/rc5-020_030-jg.s \
-                                      rc5/68k/rc5-060-re-jg.s \
-                                      rc5/68k/rc5-0x0-common-jg.s"
-    else
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.gcc.s \
-                                      rc5/68k/rc5-020_030-jg.gcc.s \
-                                      rc5/68k/rc5-060-re-jg.gcc.s \
-                                      rc5/68k/rc5-0x0-common-jg.gcc.s"
-      TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5/68k"
-    fi
+  #  if [ "$1" = "amigaos" ]; then
+  #    TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.s \
+  #                                    rc5/68k/rc5-020_030-jg.s \
+  #                                    rc5/68k/rc5-060-re-jg.s \
+  #                                    rc5/68k/rc5-0x0-common-jg.s"
+  #  else
+  #    TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.gcc.s \
+  #                                    rc5/68k/rc5-020_030-jg.gcc.s \
+  #                                    rc5/68k/rc5-060-re-jg.gcc.s \
+  #                                    rc5/68k/rc5-0x0-common-jg.gcc.s"
+  #    TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5/68k"
+  #  fi
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
     TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
                                     output/ogr030.o output/ogr040.o \
@@ -347,66 +365,72 @@ add_sources() # $1=os, $2=arch, $3=custom
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $SLICE_SRCS3"
   #-----------------------------------------------------------------  
   elif [ "$2" = "alpha" ]; then
-    if [ "$1" = "digital-unix" ]; then
-      TARGET_ADDSRCS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer-osf.s"
-    else
-      TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer.s"
-    fi
-    TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
+  #  if [ "$1" = "digital-unix" ]; then
+  #    TARGET_ADDSRCS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer-osf.s"
+  #  else
+  #    TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer.s"
+  #  fi
+  #  TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
     TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
     TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
   #-----------------------------------------------------------------  
   elif [ "$2" = "ppc" -o "$2" = "power" ]; then
-    XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
-	     rc5/ppc/crunch_allitnil.ppcxlc.s"
-    RC5PPC_SRCS="rc5/ppc/crunch_lintilla.ppcgas.s \
-        rc5/ppc/crunch_lintilla_604e.ppcgas.s \
-	     rc5/ppc/crunch_allitnil.ppcgas.s \
-	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
-	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla.ppcmpw.s \
-        rc5/ppc/crunch_lintilla_604e.ppcmpw.s \
-	     rc5/ppc/crunch_allitnil.ppcmpw.s \
-	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
-	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5PPC_APPLE_SRCS="rc5/ppc/crunch_lintilla.ppcosx.s \
-        rc5/ppc/crunch_lintilla_604e.ppcosx.s \
-	     rc5/ppc/crunch_allitnil.ppcosx.s \
-	     rc5/ppc/rc5_unit_func_lintilla.cpp \
-	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
-	     rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5ALTIVEC_SRCS="rc5/ppc/crunch_vec.ppcosx.s \
-        rc5/ppc/crunch_vec_7450.ppcosx.s \
-		 rc5/ppc/rc5_unit_func_vec.cpp \
-		 rc5/ppc/rc5_unit_func_vec_7450.cpp"
+  #  XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
+  #	     rc5/ppc/crunch_allitnil.ppcxlc.s"
+  #  RC5PPC_SRCS="rc5/ppc/crunch_lintilla.ppcgas.s \
+  #      rc5/ppc/crunch_lintilla_604e.ppcgas.s \
+  #	     rc5/ppc/crunch_allitnil.ppcgas.s \
+  #	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+  #	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
+  #	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+  #  RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla.ppcmpw.s \
+  #      rc5/ppc/crunch_lintilla_604e.ppcmpw.s \
+  #	     rc5/ppc/crunch_allitnil.ppcmpw.s \
+  #	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+  #	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
+  #	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+  #  RC5PPC_APPLE_SRCS="rc5/ppc/crunch_lintilla.ppcosx.s \
+  #      rc5/ppc/crunch_lintilla_604e.ppcosx.s \
+  #	     rc5/ppc/crunch_allitnil.ppcosx.s \
+  #	     rc5/ppc/rc5_unit_func_lintilla.cpp \
+  #	     rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
+  #	     rc5/ppc/rc5_unit_func_allitnil.cpp"
+  #  RC5ALTIVEC_SRCS="rc5/ppc/crunch_vec.ppcosx.s \
+  #      rc5/ppc/crunch_vec_7450.ppcosx.s \
+  #		 rc5/ppc/rc5_unit_func_vec.cpp \
+  #		 rc5/ppc/rc5_unit_func_vec_7450.cpp"
        
-    if [ "$2" = "power" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
-      if [ "$1-$3" = "aix-aixall" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"  
-      fi  
-    elif [ "$TARGET_CC" = "mwcc" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
-    elif [ "$TARGET_CC" = "xlC" ]; then
-      if [ "X$3" = "aix32" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/ppc/crunch_allitnil.ppcgas.s \
-                                        rc5/ppc/crunch_lintilla.ppcgas.s \
-                                        rc5/ppc/crunch_lintilla_604e.ppcgas.s"
-      else # aix4
-        TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
-      fi  
-    elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_APPLE_SRCS"
-      if [ "X$3" = "X" ]; then #mach3+
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5ALTIVEC_SRCS"  
-      fi
-    else
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"  
-    fi
+  #  if [ "$2" = "power" ]; then
+  #    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+  #    if [ "$1-$3" = "aix-aixall" ]; then
+  #      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"  
+  #    fi  
+  #  elif [ "$TARGET_CC" = "mwcc" ]; then
+  #    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
+  #  elif [ "$TARGET_CC" = "xlC" ]; then
+  #    if [ "X$3" = "aix32" ]; then
+  #      TARGET_ADDASMS="$TARGET_ADDASMS rc5/ppc/crunch_allitnil.ppcgas.s \
+  #                                      rc5/ppc/crunch_lintilla.ppcgas.s \
+  #                                      rc5/ppc/crunch_lintilla_604e.ppcgas.s"
+  #    else # aix4
+  #      TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
+  #    fi  
+  #  elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
+  #    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_APPLE_SRCS"
+  #    if [ "X$3" = "X" ]; then #mach3+
+  #      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5ALTIVEC_SRCS"  
+  #    fi
+  #  else
+  #    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"  
+  #  fi
+
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
+
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DMEGGS -DKWAN -DHAVE_DES_CORES"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
     ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
@@ -422,29 +446,33 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi
   #-----------------------------------------------------------------  
   elif [ "$2" = "arm" ]; then
-    if [ "$1" = "riscos" ]; then
-      if [ "$3" = "gccsdk" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gccsdk.s rc5/arm/rc5-arm-2-gccsdk.s rc5/arm/rc5-arm-3-gccsdk.s"
-        ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
-        ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
-      else
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s"
-        ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
-        ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
-      fi
-    elif [ "$1-$3" = "linux-" ]; then  #linux-elf
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu-elf.s \
-                                      rc5/arm/rc5-arm-2-gnu-elf.s \
-                                      rc5/arm/rc5-arm-3-gnu-elf.s"
-      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -HAVE_DES_CORES -DKWAN"
-      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu-elf.s des/arm/des-slice-arm-gnu-elf.s"
-    else      
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu.s \
-                                      rc5/arm/rc5-arm-2-gnu.s \
-                                      rc5/arm/rc5-arm-3-gnu.s "
-      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -HAVE_DES_CORES -DKWAN"
-      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
-    fi
+  #  if [ "$1" = "riscos" ]; then
+  #    if [ "$3" = "gccsdk" ]; then
+  #      TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gccsdk.s rc5/arm/rc5-arm-2-gccsdk.s rc5/arm/rc5-arm-3-gccsdk.s"
+  #      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
+  #      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+  #    else
+  #      TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1.s rc5/arm/rc5-arm-2.s rc5/arm/rc5-arm-3.s"
+  #      ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s des/arm/des-slice-sa.s"
+  #      ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
+  #    fi
+  #  elif [ "$1-$3" = "linux-" ]; then  #linux-elf
+  #    TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu-elf.s \
+  #                                    rc5/arm/rc5-arm-2-gnu-elf.s \
+  #                                    rc5/arm/rc5-arm-3-gnu-elf.s"
+  #    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -HAVE_DES_CORES -DKWAN"
+  #    ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu-elf.s des/arm/des-slice-arm-gnu-elf.s"
+  #  else      
+  #    TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu.s \
+  #                                    rc5/arm/rc5-arm-2-gnu.s \
+  #                                    rc5/arm/rc5-arm-3-gnu.s "
+  #    ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -HAVE_DES_CORES -DKWAN"
+  #    ##des## TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu.s des/arm/des-slice-arm-gnu.s"
+  #  fi
+
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
+
     ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
     ##csc## TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
@@ -454,7 +482,9 @@ add_sources() # $1=os, $2=arch, $3=custom
   elif [ "$2" = "88k" -o "$2" = "sh4" \
       -o "$2" = "vax" -o "$2" = "s390" -o "$2" = "generic" ]; then
     # pure ansi targets. (2 pipeline RC5 core)
-    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+  #  TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_72_ANSI2_SRCS"
+
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
     ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
@@ -465,7 +495,9 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   elif [ "$2" = "ia64" ]; then
     # pure ansi target. (4 pipeline RC5 core)
-    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI4_SRCS"
+  #  TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI4_SRCS"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_72_ANSI4_SRCS"
+
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES -DMEGGS -DKWAN"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
     ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
@@ -476,7 +508,10 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------  
   else
     echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
-    TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+  #  TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_ANSI2_SRCS"
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                    $RC5_72_ANSI4_SRCS $RC5_72_ANSI2_SRCS"
+
     ##des## TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS -DHAVE_DES_CORES"
     ##des## TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
     ##csc## TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"

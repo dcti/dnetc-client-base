@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.26 2002/09/15 21:45:49 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.27 2002/09/23 12:01:32 acidblood Exp $"; }
 
 #include "baseincs.h" /* string.h, time.h */
 #include "version.h"  /* CLIENT_CONTEST */
@@ -19,6 +19,7 @@ return "@(#)$Id: util.cpp,v 1.26 2002/09/15 21:45:49 andreasb Exp $"; }
 #include "util.h"     /* ourselves */
 #define MAX_CONTEST_NAME_LEN 6
 // PROJECT_NOT_HANDLED("is MAX_CONTEST_NAME_LEN still ok?")
+// OK!
 
 /* ------------------------------------------------------------------- */
 
@@ -354,6 +355,7 @@ const char *projectmap_build( char buf[CONTEST_COUNT], const char *strtomap )
   #endif
   // FIXME: default_map should allow obsolete projects to be omitted and ignored
   static char default_map[CONTEST_COUNT] = { DES,CSC,OGR,RC5,RC5_72,OGR_NEXTGEN_SOMEDAY };
+// OK!
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;
   int contestid;

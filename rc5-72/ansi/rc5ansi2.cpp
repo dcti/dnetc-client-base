@@ -3,7 +3,7 @@
 #define Q 0x9E3779B9
 #define ROTL(x,y) (((x)<<(y&(0x1F))) | ((x)>>(32-(y&(0x1F)))))
 
-u32 rc5_72_ansi_2_unit_func (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
+u32 rc5_72_unit_func_ansi_2 (RC5_72UnitWork *rc5_72unitwork, u32 timeslice)
 {
   u32 i, j, k;
   u32 A1, A2, B1, B2;

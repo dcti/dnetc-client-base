@@ -8,7 +8,7 @@
 */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.86 2002/09/23 01:54:06 acidblood Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.87 2002/09/23 12:01:32 acidblood Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -24,6 +24,7 @@ enum {
   CSC, // http://www.cie-signaux.fr/security/index.htm
   OGR_NEXTGEN_SOMEDAY,
   RC5_72 // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
+// OK!
 };
 #define CONTEST_COUNT       6  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72 */
 
@@ -101,6 +102,7 @@ typedef union
     struct {u32 hi,lo;} iterations;       // iterations to do
     struct {u16 count; u32 hi,lo; u16 vlo;} check;   // keyid of last found counter-measure check.
   } bigcrypto;     /* 62 bytes */
+// OK!
   #if defined(HAVE_OGR_CORES)
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
