@@ -5,11 +5,15 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.28  1998/08/10 20:09:34  cyruspatel
+// Added a warning for the VMS porter that NO!NETWORK is now obsolete
+//
 // Revision 1.27  1998/07/16 20:18:52  nordquist
 // DYNIX port changes.
 //
 // Revision 1.26  1998/07/15 05:50:33  ziggyb
-// removed the need for a fake bool when I upgraded my version of Watcom to version 11
+// removed the need for a fake bool when I upgraded my 
+// version of Watcom to version 11
 //
 // Revision 1.25  1998/07/01 09:06:36  daa
 // add HPUX_M68
@@ -104,7 +108,7 @@ struct s128 { s64 hi, lo; };
 #define CPU_88K         12
 #define CPU_KSR1        13
 #define CPU_S390        14
-#define CPU_MASPAR	15
+#define CPU_MASPAR  15
 
 // Major OS Architectures.
 #define OS_UNKNOWN      0
@@ -278,9 +282,13 @@ struct s128 { s64 hi, lo; };
     #define CLIENT_OS     OS_VMS
     #define CLIENT_CPU    CPU_ALPHA
   #endif
+
+  #error NONETWORK define is obsolete. (see top of [high up in] network.cpp)
+
   #if !defined(__VMS_UCX__) && !defined(NONETWORK) && !defined(MULTINET)
     #define MULTINET 1
   #endif
+
 #elif defined(_HPUX)
   #if defined(ASM_HPPA)
     #define CLIENT_OS     OS_HPUX
