@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.43  1999/01/02 07:13:33  dicamillo
+// Remove sched.h for BeOS.
+//
 // Revision 1.42  1999/01/01 02:45:14  cramer
 // Part 1 of 1999 Copyright updates...
 //
@@ -277,7 +280,6 @@ extern "C" {
   #include <OS.h>
   #include <unistd.h>
   #include <fcntl.h>
-  #include <sched.h>
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h> //timeval
   #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...
