@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.43  1999/03/08 02:54:51  sampo
+// remove 'extern "C"' from PowerPC func call to fix build bustage
+//
 // Revision 1.42  1999/03/04 01:25:28  cyp
 // Added (*[rc5|des]_unit_func) function pointers for ppc and alpha+dec_unix.
 //
@@ -246,7 +249,7 @@ public:
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork );
   u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 nbits );
   #elif (CLIENT_CPU == CPU_POWERPC)
-  extern "C" int (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations );
+  int (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations );
   #endif
 
 public:
