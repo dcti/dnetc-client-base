@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.46 2001/01/20 12:32:24 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.47 2001/02/14 21:05:20 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -108,7 +108,7 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
   {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
 //{~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2}, // NOT a Golomb stub !
-  {~0x00639F72, 21,  2, 22, 32, 21,  1,  3},
+  {~0x0058E9DE, 21,  2, 22, 32,  1,  3, 10},
   {~0x007D1FD7, 22,  1,  2,  4,  5,  8, 10},
   { 0x0015ACEC, 22,  1,  8,  5, 29, 27, 36},
   {~0x001BE4B3, 22,  1,  8,  5, 29, 27, 37},
@@ -133,7 +133,7 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   {~0x0057102A, 21,  1,  2,  4,  5,  8, 10},
   { 0x000D1B52, 21,  2, 22, 32, 21,  5,  1},
 //{~0x00A8EE70, 21,  2, 22, 32, 21,  5,  2},
-  {~0x00639F72, 21,  2, 22, 32, 21,  1,  3},
+  {~0x0058E9DE, 21,  2, 22, 32,  1,  3, 10},
   {~0x007D1FD7, 22,  1,  2,  4,  5,  8, 10},
   { 0x0015ACEC, 22,  1,  8,  5, 29, 27, 36},
   {~0x001BE4B3, 22,  1,  8,  5, 29, 27, 37},
