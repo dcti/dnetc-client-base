@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.206 2000/11/20 20:22:13 teichp Exp $
+# @(#)$Id: configure,v 1.222.2.207 2000/11/21 00:46:02 teichp Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1710,7 +1710,60 @@ case "$1" in
         TARGET_BINNAME_SUFFIX=",ff8"
         TARGET_OS="RISCOS"     # cross-compilation
         add_sources "riscos" "arm"
-	      ;;
+	      ;; 
+    *arm-riscos-prepare) #create tar archive for native compilation
+        mkdir dnetc_riscos
+        mkdir dnetc_riscos/common
+        mkdir dnetc_riscos/common/c++
+        mkdir dnetc_riscos/common/h
+        mkdir dnetc_riscos/rc5
+        mkdir dnetc_riscos/rc5/arm
+        mkdir dnetc_riscos/rc5/arm/s
+        mkdir dnetc_riscos/ogr
+	mkdir dnetc_riscos/ogr/h
+        mkdir dnetc_riscos/ogr/ansi
+        mkdir dnetc_riscos/ogr/ansi/c++
+        mkdir dnetc_riscos/ogr/ansi/h
+        mkdir dnetc_riscos/platforms
+        mkdir dnetc_riscos/platforms/riscos
+        mkdir dnetc_riscos/platforms/riscos/c++
+        mkdir dnetc_riscos/platforms/riscos/h
+        mkdir dnetc_riscos/platforms/riscos/s
+        mkdir dnetc_riscos/o
+        for file in common/*.h; do
+          cp $file dnetc_riscos/common/h/`basename $file | sed -e s/[.]h//`
+        done
+        for file in common/*.cpp; do
+          cp $file dnetc_riscos/common/c++/`basename $file | sed -e s/[.]cpp//`
+        done
+        for file in rc5/arm/rc5-arm-?.s; do
+          cp $file dnetc_riscos/rc5/arm/s/`basename $file | sed -e s/[.]s//`
+        done
+        for file in ogr/*.h; do
+          cp $file dnetc_riscos/ogr/h/`basename $file | sed -e s/[.]h//`
+        done
+        for file in ogr/ansi/*.h; do
+          cp $file dnetc_riscos/ogr/ansi/h/`basename $file | sed -e s/[.]h//`
+        done
+        for file in ogr/ansi/*.cpp; do
+          cp $file dnetc_riscos/ogr/ansi/c++/`basename $file | sed -e s/[.]cpp//`
+        done
+        for file in platforms/riscos/*.cpp; do
+          cp $file dnetc_riscos/platforms/riscos/c++/`basename $file | sed -e s/[.]cpp//`
+        done
+        for file in platforms/riscos/*.s; do
+          cp $file dnetc_riscos/platforms/riscos/s/`basename $file | sed -e s/[.]s//`
+        done
+        for file in platforms/riscos/*.h; do
+          cp $file dnetc_riscos/platforms/riscos/h/`basename $file | sed -e s/[.]h//`
+        done
+        cp Makefile.riscos dnetc_riscos
+        rm -f riscos.tar.gz
+        tar cf - dnetc_riscos | gzip -rc - > riscos.tar.gz
+        rm -rf dnetc_riscos
+        echo "Now transfer the riscos.tar.gz file to your RiscOS machine and compile!"
+        exit 0
+        ;;                              
 
     *arm-linux-aout)					# chrisb
         TARGET_CC="gcc"
