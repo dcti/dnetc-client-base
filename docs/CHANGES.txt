@@ -21,12 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.62 2004/05/21 18:49:44 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.63 2004/05/22 17:06:08 kakace Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9008-491  chg: all: Disabled OGR (Phase 1) contest
+            fix: macosx: Fixed an issue caused by white spaces in file paths.
+            imp: all: Reworked the activity display in test mode (OGR-P2)
+            imp: ppc: Select GARSP 5.1x Scalar by default on PPC 74x7/G5
             imp: ppc: Faster OGR-P2 cores.
 
 2.9008-490  new: all: Enable OGR-24 and OGR-25 Phase 2 (finalization)
