@@ -5,7 +5,7 @@
  *
 */
 const char *network_cpp(void) {
-return "@(#)$Id: network.cpp,v 1.97.2.36 2000/06/13 00:19:09 mfeiri Exp $"; }
+return "@(#)$Id: network.cpp,v 1.97.2.37 2000/07/12 14:11:51 oliver Exp $"; }
 
 //----------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ extern int NetCheckIsOK(void); // used before doing i/o
 
 //----------------------------------------------------------------------
 
-#define VERBOSE_OPEN //print cause of ::Open() errors
+#define VERBOSE_OPEN //print cause of ::OpenConnection() errors
 #define UU_DEC(Ch) (char) (((Ch) - ' ') & 077)
 #define UU_ENC(Ch) (char) (((Ch) & 077) != 0 ? ((Ch) & 077) + 0x20 : '`')
 
@@ -361,7 +361,7 @@ Network::Network( const char * servname, int servport, int _nofallback,
 
 Network::~Network(void)
 {
-  Close();
+  CloseConnection();
 }
 
 //----------------------------------------------------------------------
@@ -372,13 +372,13 @@ int Network::Reset(u32 thataddress)
   reconnected = 1;
   svc_hostaddr = thataddress;
 //LogScreen("netreset: %s\n",__inet_ntoa__(svc_hostaddr));
-  return Open();
+  return OpenConnection();
 }
 
 /* ---------------------------------------------------------------------- */
 
 // returns -1 on error, 0 on success
-int Network::Open( SOCKET insock)
+int Network::OpenConnection( SOCKET insock)
 {
   sock = insock;
 
@@ -451,7 +451,7 @@ void Network::ShowConnection(void)
 // completes or times out.
 // returns -1 on error, 0 on success
 
-int Network::Open( void )
+int Network::OpenConnection( void )
 {
   int didfallback, whichtry, maxtries;
 
@@ -830,7 +830,7 @@ int Network::Open( void )
       return 0;
     }
 
-    Close();
+    CloseConnection();
     svc_hostaddr = 0;
 
   }
@@ -1113,7 +1113,7 @@ int Network::InitializeConnection(void)
 
 // Closes the connection and clears all flags and communication buffers.
 
-int Network::Close(void)
+int Network::CloseConnection(void)
 {
   LowLevelCloseSocket();
   gethttpdone = puthttpdone = 0;
@@ -1373,7 +1373,7 @@ int Network::Get( char * data, int length )
   isnonblocking = (tmp_isnonblocking!=0); //restore the old state
 
   if (need_close)
-    Close();
+    CloseConnection();
 
   // transfer back what was read in
   int bytesfilled = length;
@@ -1410,7 +1410,7 @@ int Network::Put( const char * data, int length )
   {
     if (svc_hostaddr == 0)
       return -1;
-    if (Reset(svc_hostaddr) != 0) //Open(sock)
+    if (Reset(svc_hostaddr) != 0) //OpenConnection(sock)
       return -1;
   }
 

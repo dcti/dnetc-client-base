@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.12 2000/06/13 00:18:40 mfeiri Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.13 2000/07/12 14:11:51 oliver Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -251,13 +251,13 @@ protected:
     //currently only negotiates/authenticates the SOCKSx session. 
     // returns < 0 on error, 0 on success
 
-  int  Close( void );
+  int  CloseConnection( void );
     // close the connection
 
-  int  Open( SOCKET insock);
+  int  OpenConnection( SOCKET insock);
     // reset http/uue settings and reconnect the socket
 
-  int  Open( void );
+  int  OpenConnection( void );
     // [re]open the connection using the current settings.
     // returns -1 on error, 0 on success
 

@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.26.2.8 2000/06/13 00:19:55 mfeiri Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.26.2.9 2000/07/12 14:11:51 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -276,7 +276,7 @@ Network *NetOpen( const char *servname, int servport,
   success = ( net != NULL );
 
   if (success)
-    success = ((net->Open()) == 0); //opened ok
+    success = ((net->OpenConnection()) == 0); //opened ok
 
   if (!success)
   {
