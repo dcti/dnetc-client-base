@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.47.2.8 1999/11/03 18:58:32 cyp Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.47.2.9 1999/11/07 17:49:10 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -105,8 +105,8 @@ static const u32 des_test_cases[TEST_CASE_COUNT][8] = {
 // [1] - number of marks
 // [2..7] - first differences
 static const u32 ogr_test_cases[TEST_CASE_COUNT][8] = {
-  {~0x0057102A, 21, 1, 2, 4, 5, 8, 10},
   { 0x000D1B52, 21, 2, 22, 32, 21, 5, 1},
+  {~0x0057102A, 21, 1, 2, 4, 5, 8, 10},
   {~0x00A8EE70, 21, 2, 22, 32, 21, 5, 2},
   {~0x007D1FD7, 22, 1, 2, 4, 5, 8, 10},
   { 0x0015ACEC, 22, 1, 8, 5, 29, 27, 36},
@@ -205,40 +205,19 @@ int SelfTest( unsigned int contest )
     LogScreen("test::error. invalid contest %u\n", contest );
     return -TEST_CASE_COUNT;
   }
-  if (!IsProblemLoadPermitted(-1, contest))
+  if (!IsProblemLoadPermitted(-1, contest)) /* also checks HAVE_xxx_CORES */
     return -TEST_CASE_COUNT;
-  switch (contest) {
-    case RC5:
-      #if (CLIENT_OS == OS_RISCOS)
-      if (GetNumberOfDetectedProcessors() == 2)
-        threadcount = 2;
-      #endif
-      break;
-    case DES:
-      #ifndef HAVE_DES_CORES
-      return 0;
-      #endif
-      break;
-    case OGR:
-      #ifndef HAVE_OGR_CORES
-      return 0;
-      #endif
-      break;
-    case CSC:
-      #ifndef HAVE_CSC_CORES
-      return 0;
-      #endif
-      break;
-    default:
-      return 0; /* invalid contest or no selftest support */
-  }
-  
+  #if (CLIENT_OS == OS_RISCOS)
+  if (contest == RC5 && GetNumberOfDetectedProcessors() == 2)
+    threadcount = 2;
+  #endif
 
   contname = CliGetContestNameFromID( contest );
   for ( threadpos = 0; 
         !userbreak && successes >= 0 && threadpos < threadcount;
         threadpos++ )
   {
+    char lastmsg[100];
     unsigned int testnum;
     long threadindex = -1L;
     if (threadcount > 1)
@@ -246,6 +225,7 @@ int SelfTest( unsigned int contest )
 
     ClientEventSyncPost( CLIEVENT_SELFTEST_STARTED, (long)contest );
     successes = 0;
+    lastmsg[0] = '\0';
 
     for ( testnum = 0 ; !userbreak && testnum < TEST_CASE_COUNT ; testnum++ )
     {
@@ -378,10 +358,10 @@ int SelfTest( unsigned int contest )
           contestwork.crypto.iterations.hi = ( 0 );
           break;
         case OGR:
-          contestwork.ogr.workstub.stub.marks = ( (*test_cases)[testnum][1] );
+          contestwork.ogr.workstub.stub.marks = (u16)((*test_cases)[testnum][1]);
           contestwork.ogr.workstub.stub.length = 6;
           for (int i = 0; i < 6; i++) {
-            contestwork.ogr.workstub.stub.diffs[i] = ( (*test_cases)[testnum][2+i] );
+            contestwork.ogr.workstub.stub.diffs[i] = (u16)((*test_cases)[testnum][2+i]);
           }
           contestwork.ogr.workstub.worklength = contestwork.ogr.workstub.stub.length;
           contestwork.ogr.nodes.lo = contestwork.ogr.nodes.hi = 0;
@@ -392,7 +372,6 @@ int SelfTest( unsigned int contest )
   
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (long)(problem) );
 
-      resultcode = RESULT_WORKING;
       do
       {
         #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
@@ -401,17 +380,21 @@ int SelfTest( unsigned int contest )
         nwCliThreadSwitchLowPriority();
         #endif
         if (CheckExitRequestTrigger())
-	{
-	  userbreak = 1;
+        {
+          userbreak = 1;
           break;
         }
+        if (contest == OGR) /* show /some/ activity (the time changes) */
+          LogScreen("\r%s: Test %02d working...", contname, testnum + 1 );
       } while ( problem->Run() == RESULT_WORKING );
   
+      resultcode = RESULT_WORKING;
       if (!userbreak)
       {
         resultcode = problem->RetrieveState( &contestwork, NULL, 1 );
 
-        switch (contest) {
+        switch (contest) 
+        {
           case RC5:
           case DES:
           case CSC:
@@ -442,7 +425,7 @@ int SelfTest( unsigned int contest )
               } 
               #endif
             }
-            LogScreen( "\r%s: Test %02d %s: %08X:%08X-%08X:%08X", 
+            LogScreen( "\r%s: Test %02d %s: %08X:%08X-%08X:%08X\n", 
                contname, testnum + 1, resulttext,
                contestwork.crypto.key.hi, contestwork.crypto.key.lo, 
                expectedsolution.hi, expectedsolution.lo );
@@ -469,13 +452,13 @@ int SelfTest( unsigned int contest )
                 successes++;
               }
             }
-            LogScreen( "%s: Test %02d %s: %s %08X-%08X\n", 
+            LogScreen( "\r%s: Test %02d %s: %s %08X-%08X\n", 
                contname, testnum + 1, resulttext,
                ogr_stubstr(&contestwork.ogr.workstub.stub),
-               contestwork.ogr.nodes.lo, 
-               expectedsolution.lo );
+               contestwork.ogr.nodes.lo, expectedsolution.lo );
             break;
         } /* switch */
+
       } /* if (!userbreak) */
 
       ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, (long)resultcode );
