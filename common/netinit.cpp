@@ -10,6 +10,9 @@
 */
 //
 // $Log: netinit.cpp,v $
+// Revision 1.13  1998/12/31 19:58:13  silby
+// Commented out a line of debug code.
+//
 // Revision 1.12  1998/12/31 17:55:50  cyp
 // changes to Network::Open(): (a) retry loop is inside ::Open() (was from
 // the external NetOpen()) (b) cleaned up the various hostname/addr/port
@@ -56,7 +59,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *netinit_cpp(void) {
-return "@(#)$Id: netinit.cpp,v 1.12 1998/12/31 17:55:50 cyp Exp $"; }
+return "@(#)$Id: netinit.cpp,v 1.13 1998/12/31 19:58:13 silby Exp $"; }
 #endif
 
 //--------------------------------------------------------------------------
@@ -415,7 +418,7 @@ Network *NetOpen(const char *keyserver, s32 keyserverport, int nofallback,
     
   if (success)
     {
-LogScreen("hostname:%s:%d proxyuid:'%s'\n", proxyhost, proxyport,proxyuid);
+//LogScreen("hostname:%s:%d proxyuid:'%s'\n", proxyhost, proxyport,proxyuid);
     switch (proxytype)
       {
       case 1:  // uue
