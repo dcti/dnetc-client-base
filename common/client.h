@@ -12,6 +12,11 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.85  1998/10/08 20:57:14  cyp
+// Removed Client::UnlockBuffer() [is now standalone]. Changed all buffer
+// function prototypes that took 'u8' as contest id to use 'unsigned int'
+// instead.
+//
 // Revision 1.84  1998/10/08 10:13:33  cyp
 // Removed GetProcessorType() from the client class. No need for it to be a
 // method.
@@ -395,12 +400,12 @@ protected:
     // dump an entry into in buffer
     // Returns: -1 on error, otherwise number of entries now in file.
 
-  s32  GetBufferInput( FileEntry * data, u8 contest );        // "user"
+  s32  GetBufferInput( FileEntry * data, unsigned int contest );  // "user"
     // get work from in buffer
     // Returns: -1 on error, otherwise number of blocks now in file.
 
 public:
-  s32  CountBufferInput(u8 contest);
+  s32  CountBufferInput(unsigned int contest);
     // returns number of blocks currently in input buffer
 
   s32  PutBufferOutput( const FileEntry * data );  // "user"
@@ -408,17 +413,17 @@ public:
     // Returns: -1 on error, otherwise number of entries now in file.
 
 protected:
-  s32  GetBufferOutput( FileEntry * data , u8 contest);       // hidden
+  s32  GetBufferOutput( FileEntry * data , unsigned int contest);
     // get work from output buffer
     // Returns: -1 on error, otherwise number of blocks now in file.
 
 public:
-  s32  CountBufferOutput(u8 contest);
+  s32  CountBufferOutput(unsigned int contest);
     // returns number of blocks currently in output buffer
 
   s32 InternalPutBuffer( const char *filename, const FileEntry * data );
-  s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , u8 contest);
-  s32 InternalCountBuffer( const char *filename , u8 contest);
+  s32 InternalGetBuffer( const char *filename, FileEntry * data, u32 *optype , unsigned int contest);
+  s32 InternalCountBuffer( const char *filename , unsigned int contest);
 #if defined(DONT_USE_PATHWORK)
   const char *InternalGetLocalFilename( const char *filename );
 #endif
@@ -448,7 +453,7 @@ public:
   //         >= 1 = post-readconfig (override ini options)
   //         == 2 = run "modes"
 
-  s32 CkpointToBufferInput(u8 contest);
+  s32 CkpointToBufferInput(unsigned int contest);
     // Copies info in checkpint file back to input buffer
 
   void RandomWork( FileEntry * data );
@@ -557,9 +562,6 @@ public:
   s32 SelectCore(void);
     // to be called before Run(), Benchmark(), or Test() to configure for cpu
     // returns: non-zero on failure
-
-  s32 UnlockBuffer( const char *filename );
-    // unlock buffer 'filename'
 
   unsigned int LoadSaveProblems(unsigned int load_problem_count, int retmode);
     // returns actually loaded problems 
