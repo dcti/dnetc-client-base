@@ -6,7 +6,7 @@
 */
 
 #ifndef __NETWORK_H__
-#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.5 1999/12/08 00:41:53 cyp Exp $"
+#define __NETWORK_H__ "@(#)$Id: network.h,v 1.68.2.6 2000/01/07 10:29:19 jlawson Exp $"
 
 #include "cputypes.h"
 #include "autobuff.h"
@@ -30,7 +30,7 @@ extern "C" {
 }
 #endif
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #define WIN32_LEAN_AND_MEAN
   #ifndef STRICT
     #define STRICT
