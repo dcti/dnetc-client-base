@@ -2,7 +2,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.1.2.50 2001/07/21 21:33:56 mfeiri Exp $
+ * $Id: ogr.cpp,v 1.1.2.51 2001/07/27 07:37:01 mfeiri Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -14,7 +14,7 @@
 /* #define OGR_TEST_FIRSTBLANK */ /* test firstblank logic (table or asm) */
 /* #define OGR_TEST_BITOFLIST  */ /* test bitoflist table */
 
-#ifdef (OGR_DEBUG) || (OGR_TEST_FIRSTBLANK) || (OGR_TEST_BITOFLIST)
+#if defined(OGR_DEBUG) || defined(OGR_TEST_FIRSTBLANK) || defined(OGR_TEST_BITOFLIST)
 #include <stdio.h>  /* printf for debugging */
 #endif
 
@@ -53,7 +53,7 @@
     #define OGROPT_COPY_LIST_SET_BIT_JUMPS        0 /* 'no' irrelevant  */
     #define OGROPT_FOUND_ONE_FOR_SMALL_DATA_CACHE 0 /* 'no' irrelevant  */
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* we have cntlzw   */
-    if (__MWERKS__ >= 0x2400)
+    #if (__MWERKS__ >= 0x2400)
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* MWC is better    */
     #else
     #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* MWC benefits     */
