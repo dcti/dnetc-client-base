@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.34  1999/01/26 20:19:15  cyp
+// adapted for new ini stuff.
+//
 // Revision 1.33  1999/01/21 21:49:02  cyp
 // completed toss of ValidateConfig().
 //
@@ -144,7 +147,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.33 1999/01/21 21:49:02 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.34 1999/01/26 20:19:15 cyp Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -159,194 +162,165 @@ return "@(#)$Id: confrwv.cpp,v 1.33 1999/01/21 21:49:02 cyp Exp $"; }
 #include "triggers.h"  // RaiseRestartRequestTrigger()
 #include "clicdata.h"  // CliClearContestData()
 #include "network.h"   // ntohl() / htonl()
+#include "cmpidefs.h"  // strcmpi()
 #include "confrwv.h"   // Outselves
 
 // --------------------------------------------------------------------------
 
 static const char *OPTION_SECTION="parameters"; //#define OPTION_SECTION "parameters"
 
-#define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, conf_options[key].name, IniString(value))
-#define INIGETKEY(key) (ini.getkey(OPTION_SECTION, conf_options[key].name, conf_options[key].defaultsetting)[0])
-#define INIFIND(key) ini.findfirst(OPTION_SECTION, conf_options[key].name)
-
 //----------------------------------------------------------------------------
 
 int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 {                              //DO NOT VALIDATE FROM HERE
-  IniSection ini;
-  s32 inierror, tempconfig;
   char buffer[64];
-  char *p;
-  IniRecord *tempptr;
+  const char *sect = OPTION_SECTION;
+  char *p; int i;
 
   client->randomchanged = 0;
   RefreshRandomPrefix( client, 1 /* don't trigger */ );
 
-  inierror = ini.ReadIniFile( GetFullPathForFilename( client->inifilename ) );
-  if (inierror) return -1;
+  const char *fn = GetFullPathForFilename( client->inifilename );
+  if ( access( fn, 0 )!=0 ) 
+    return -1;
 
-  if (INIFIND(CONF_ID) != NULL)
-    INIGETKEY(CONF_ID).copyto(client->id, sizeof(client->id));
-  confopt_killwhitespace(client->id);
-  if (confopt_isstringblank(client->id))
-    strcpy(client->id,"rc5@distributed.net");
+  if (!GetPrivateProfileStringA( sect, "id", "", client->id, sizeof(client->id), fn ))
+    strcpy( client->id, "rc5@distributed.net" );
 
-  if (INIFIND(CONF_THRESHOLDI) != NULL)
+  if (GetPrivateProfileStringA( sect, "threshold", "", buffer, sizeof(buffer), fn ))
     {
-    INIGETKEY(CONF_THRESHOLDI).copyto(buffer, sizeof(buffer));
     p = strchr( buffer, ':' );
-    client->inthreshold[0]=((confopt_isstringblank(buffer))?(10):(atoi(buffer)));
+    client->inthreshold[0]=atoi(buffer);
     client->outthreshold[0]=((p==NULL)?(client->inthreshold[0]):(atoi(p+1)));
+    client->inthreshold[1]=client->inthreshold[0];
+    client->outthreshold[1]=client->outthreshold[0];
     }
-  client->outthreshold[1]=client->outthreshold[0];
-  client->inthreshold[1]=client->inthreshold[0];
-  if (ini.findfirst(OPTION_SECTION, "threshold2") != NULL)
+  if (GetPrivateProfileStringA( sect, "threshold2", "", buffer, sizeof(buffer), fn ))
     {
-    (ini.getkey(OPTION_SECTION, "threshold2", "10")[0]).copyto(buffer, sizeof(buffer));
     p = strchr( buffer, ':' );
-    client->inthreshold[1]=((confopt_isstringblank(buffer))?(client->inthreshold[0]):(atoi(buffer)));
+    client->inthreshold[1]=atoi(buffer);
     client->outthreshold[1]=((p==NULL)?(client->inthreshold[1]):(atoi(p+1)));
     }
-
-  if (INIFIND(CONF_HOURS) != NULL)
+  if (GetPrivateProfileStringA( sect, "hours", "", buffer, sizeof(buffer), fn ))
     {
-    INIGETKEY(CONF_HOURS).copyto(buffer, sizeof(buffer));
-    tempconfig = atoi(buffer);
-    client->minutes = -1;
-    if (tempconfig > 0)
-      {
-      if ((p = strchr( buffer, ':' )) == NULL)
-        p = strchr( buffer, '.' );
-      if (p != NULL && strlen( p )==3 && isdigit(p[1]) && isdigit(p[2]))
-        client->minutes = (tempconfig *60) + atoi(p+1);
-      else if (p != NULL && *p == '.')
-        client->minutes = (s32)(atol( buffer )* 60.);
-      }
+    client->minutes = (atoi(buffer) * 60);
+    if ((p = strchr( buffer, ':' )) == NULL)
+      p = strchr( buffer, '.' );
     if (client->minutes < 0)
       client->minutes = 0;
-    }
-
-  client->timeslice = 0x10000;
-
-  if ((tempptr = ini.findfirst( "processor-usage", "priority"))!=NULL)
-    client->priority = (ini.getkey("processor-usage", "priority", "0")[0]);
-  else if ((tempptr = ini.findfirst( "processor usage", "BABERUTH"))!=NULL)
-    //need this because of foobared readini.cpp space handling in keywords.
-    client->priority = (ini.getkey("processor usage", "MICKEYMANTLE", "0")[0]);
-  else if ((client->priority=(ini.getkey(OPTION_SECTION,"niceness","0")[0]))!=0)
-    client->priority = ((client->priority==2)?(8):((client->priority==1)?(4):(0)));
-
-  if (INIFIND(CONF_UUEHTTPMODE) != NULL)
-    client->uuehttpmode = INIGETKEY(CONF_UUEHTTPMODE);
-  if (INIFIND(CONF_FWALLHOSTNAME) != NULL)
-    INIGETKEY(CONF_FWALLHOSTNAME).copyto(client->httpproxy, sizeof(client->httpproxy));
-  if (INIFIND(CONF_FWALLUSERNAME) != NULL)
-    INIGETKEY(CONF_FWALLUSERNAME).copyto(client->httpid, sizeof(client->httpid));
-  if (INIFIND(CONF_FWALLHOSTPORT) != NULL)
-    client->httpport = INIGETKEY(CONF_FWALLHOSTPORT);
-  if (INIFIND(CONF_KEYSERVPORT) != NULL)
-    client->keyport = INIGETKEY(CONF_KEYSERVPORT);
-
-  if (INIFIND(CONF_KEYSERVNAME) == NULL)
-    {
-    client->autofindkeyserver = 1;
-    client->keyproxy[0]=0;
-    }
-  else
-    {
-    //do an autofind only if the host is a dnet host AND autofindkeyserver is on.
-    client->autofindkeyserver = 0;
-    INIGETKEY(CONF_KEYSERVNAME).copyto(client->keyproxy, sizeof(client->keyproxy));
-    if (confopt_isstringblank(client->keyproxy) || strcmpi( client->keyproxy, "(auto)")==0 ||
-      strcmpi( client->keyproxy, "auto")==0 || strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0) 
-      { //one config version accidentally wrote "auto" to the ini
-      client->keyproxy[0]=0;
-      client->autofindkeyserver = 1; //let Network::Open get a better hostname.
-      }
-    else if (confopt_IsHostnameDNetHost(client->keyproxy))
-      {
-      tempconfig=ini.getkey("networking", "autofindkeyserver", "1")[0];
-      client->autofindkeyserver = (tempconfig)?(1):(0);
-      if (client->autofindkeyserver)
-        client->keyproxy[0]=0;
-      }
+    else if (p != NULL && strlen(p) == 3 && isdigit(p[1]) && isdigit(p[2]) && atoi(p+1)<60)
+      client->minutes += atoi(p+1);
+    else if (p != NULL) //strlen/isdigit check failed
+      client->minutes = 0;
     }
   
-  if (INIFIND(CONF_CPUTYPE) != NULL)
-    client->cputype = INIGETKEY(CONF_CPUTYPE);
-  if (INIFIND(CONF_NUMCPU) != NULL)
-    client->numcpu = INIGETKEY(CONF_NUMCPU);
-  if (INIFIND(CONF_MESSAGELEN) != NULL)
-    client->messagelen = INIGETKEY(CONF_MESSAGELEN);
-  if (INIFIND(CONF_SMTPPORT) != NULL)
-    client->smtpport = INIGETKEY(CONF_SMTPPORT);
-  if (INIFIND(CONF_SMTPSRVR) != NULL)
-    INIGETKEY(CONF_SMTPSRVR).copyto(client->smtpsrvr, sizeof(client->smtpsrvr));
-  if (INIFIND(CONF_SMTPFROM) != NULL)
-    INIGETKEY(CONF_SMTPFROM).copyto(client->smtpfrom, sizeof(client->smtpfrom));
-  if (INIFIND(CONF_SMTPDEST) != NULL)
-    INIGETKEY(CONF_SMTPDEST).copyto(client->smtpdest, sizeof(client->smtpdest));
-  if (INIFIND(CONF_PREFERREDBLOCKSIZE) != NULL)
-    client->preferred_blocksize = INIGETKEY(CONF_PREFERREDBLOCKSIZE);
-  if (INIFIND(CONF_PREFERREDBLOCKSIZE) != NULL)
-    client->blockcount = INIGETKEY(CONF_COUNT);
-  if ((tempconfig=ini.getkey(OPTION_SECTION, "runbuffers", "0")[0])!=0)
+  client->uuehttpmode = GetPrivateProfileIntA( sect, "uuehttpmode", client->uuehttpmode, fn );
+  GetPrivateProfileStringA( sect, "httpproxy", client->httpproxy, client->httpproxy, sizeof(client->httpproxy), fn );  
+  client->httpport = GetPrivateProfileIntA( sect, "httpport", client->httpport, fn );
+  GetPrivateProfileStringA( sect, "httpid", client->httpid, client->httpid, sizeof(client->httpid), fn );
+  client->keyport = GetPrivateProfileIntA( sect, "keyport", client->keyport, fn );
+  GetPrivateProfileStringA( sect, "keyproxy", client->keyproxy, client->keyproxy, sizeof(client->keyproxy), fn );
+  client->nettimeout = GetPrivateProfileIntA( sect, "nettimeout", client->nettimeout, fn );
+  
+  client->autofindkeyserver = ((client->keyproxy[0]==0 || 
+    strcmpi( client->keyproxy, "rc5proxy.distributed.net" )==0 ||
+    strcmpi(client->keyproxy,"auto")==0 || strcmpi(client->keyproxy,"(auto)")==0) ||
+    ( confopt_IsHostnameDNetHost(client->keyproxy) &&
+    GetPrivateProfileIntA( "networking", "autofindkeyserver", 1, fn ) ));
+  if (client->autofindkeyserver && client->keyport != 3064)  
+    client->keyport = 0;
+  
+  i = GetPrivateProfileIntA( sect, "niceness", -12345, fn );
+  if (i != -12345) client->priority = ((i==2)?(8):((i==1)?(4):(0)));
+  client->priority = GetPrivateProfileIntA( "processor-usage", "priority", client->priority, fn );
+  client->cputype = GetPrivateProfileIntA( sect, "cputype", client->cputype, fn );
+  client->numcpu = GetPrivateProfileIntA( sect, "numcpu", client->numcpu, fn );
+  client->preferred_blocksize = GetPrivateProfileIntA( sect, "preferredblocksize", client->preferred_blocksize, fn );
+  client->preferred_contest_id = (GetPrivateProfileIntA( sect, "processdes", 1, fn )?(1):(0));
+
+  client->messagelen = GetPrivateProfileIntA( sect, "messagelen", client->messagelen, fn );
+  client->smtpport = GetPrivateProfileIntA( sect, "smtpport", client->smtpport, fn );
+  GetPrivateProfileStringA( sect, "smtpsrvr", client->smtpsrvr, client->smtpsrvr, sizeof(client->smtpsrvr), fn );
+  GetPrivateProfileStringA( sect, "smtpfrom", client->smtpfrom, client->smtpfrom, sizeof(client->smtpfrom), fn );
+  GetPrivateProfileStringA( sect, "smtpdest", client->smtpdest, client->smtpdest, sizeof(client->smtpdest), fn );
+
+  client->blockcount = GetPrivateProfileIntA( sect, "count", client->blockcount, fn );
+  if (GetPrivateProfileIntA( sect, "runbuffers", 0, fn ))
     client->blockcount = -1;
-  if (INIFIND(CONF_OFFLINEMODE) != NULL)
-    client->offlinemode = ((tempconfig=INIGETKEY(CONF_OFFLINEMODE))!=0);
-  if (INIFIND(CONF_PERCENTOFF) != NULL)
-    client->percentprintingoff = ((tempconfig=INIGETKEY(CONF_PERCENTOFF))!=0);
-  if (INIFIND(CONF_FREQUENT) != NULL)
-    client->connectoften = ((tempconfig=INIGETKEY(CONF_FREQUENT))!=0);
-  if (INIFIND(CONF_NODISK) != NULL)
-    client->nodiskbuffers = ((tempconfig=INIGETKEY(CONF_NODISK))!=0);
-  if (INIFIND(CONF_QUIETMODE) != NULL)
-    client->quietmode = ((tempconfig=INIGETKEY(CONF_QUIETMODE))!=0);
-  if ( ini.findfirst( OPTION_SECTION, "win95hidden") != NULL ) //obsolete
-    client->quietmode |= ((tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0])!=0);
-  if ( ini.findfirst( OPTION_SECTION, "runhidden") != NULL )
-    client->quietmode |= ((tempconfig=ini.getkey(OPTION_SECTION, "runhidden", "0")[0])!=0);
-  if (ini.findfirst( OPTION_SECTION, "processdes")!=NULL)
-    client->preferred_contest_id = (((tempconfig=ini.getkey(OPTION_SECTION, "processdes", "0")[0])!=0)?(1):(0));
-  if (INIFIND(CONF_NOFALLBACK) != NULL)
-    client->nofallback = ((tempconfig=INIGETKEY(CONF_NOFALLBACK))!=0);
-  if (INIFIND(CONF_NETTIMEOUT) != NULL)
-    client->nettimeout = INIGETKEY(CONF_NETTIMEOUT);
-  if (INIFIND(CONF_NOEXITFILECHECK) != NULL)
-    client->noexitfilecheck = INIGETKEY(CONF_NOEXITFILECHECK);
+  
+  client->offlinemode = GetPrivateProfileIntA( sect, "runoffline", 0, fn );
+  client->percentprintingoff = GetPrivateProfileIntA( sect, "percentoff", 0, fn );
+  client->connectoften = GetPrivateProfileIntA( sect, "frequent", 0, fn );
+  client->nodiskbuffers = GetPrivateProfileIntA( sect, "nodisk", 0, fn );
+  client->quietmode = GetPrivateProfileIntA( sect, "quiet", 0, fn );
+  client->quietmode |= GetPrivateProfileIntA( sect, "win95hidden", 0, fn );
+  client->quietmode |= GetPrivateProfileIntA( sect, "os2hidden", 0, fn );
+  client->quietmode |= GetPrivateProfileIntA( sect, "runhidden", 0, fn );
+  client->nofallback = GetPrivateProfileIntA( sect, "nofallback", 0, fn );
+  client->noexitfilecheck = GetPrivateProfileIntA( sect, "noexitfilecheck", 0, fn );
+
   #if defined(MMX_BITSLICER) || defined(MMX_RC5)
-  if (ini.findfirst( OPTION_SECTION, "usemmx")!=NULL)
-    client->usemmx=((tempconfig=ini.getkey(OPTION_SECTION,"usemmx","1")[0])!=0);
+  client->usemmx = GetPrivateProfileIntA( sect, "usemmx", 1, fn );
   #endif
 
-  INIGETKEY(CONF_LOGNAME).copyto(client->logname, sizeof(client->logname));
-  INIGETKEY(CONF_CHECKPOINT).copyto(client->checkpoint_file, sizeof(client->checkpoint_file));
-  INIGETKEY(CONF_RC5IN).copyto(client->in_buffer_file[0],sizeof(client->in_buffer_file[0]));
-  INIGETKEY(CONF_RC5OUT).copyto(client->out_buffer_file[0],sizeof(client->out_buffer_file[0]));
-  INIGETKEY(CONF_DESIN).copyto(client->in_buffer_file[1],sizeof(client->in_buffer_file[1]));
-  INIGETKEY(CONF_DESOUT).copyto(client->out_buffer_file[1],sizeof(client->out_buffer_file[1]));
-  INIGETKEY(CONF_PAUSEFILE).copyto(client->pausefile, sizeof(client->pausefile));
+  GetPrivateProfileStringA( sect, "logname", client->logname, client->logname, sizeof(client->logname), fn );
+  GetPrivateProfileStringA( sect, "pausefile", client->pausefile, client->pausefile, sizeof(client->pausefile), fn );
+  GetPrivateProfileStringA( sect, "checkpointfile", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
+  GetPrivateProfileStringA( sect, "in", client->in_buffer_file[0], client->in_buffer_file[0], sizeof(client->in_buffer_file[0]), fn );
+  GetPrivateProfileStringA( sect, "out", client->out_buffer_file[0], client->out_buffer_file[0], sizeof(client->out_buffer_file[0]), fn );
+  GetPrivateProfileStringA( sect, "in2", client->in_buffer_file[1], client->in_buffer_file[1], sizeof(client->in_buffer_file[1]), fn );
+  GetPrivateProfileStringA( sect, "out2", client->out_buffer_file[1], client->out_buffer_file[1], sizeof(client->out_buffer_file[1]), fn );
 
   #if defined(LURK)
-  tempconfig=ini.getkey(OPTION_SECTION, "lurk", "0")[0];
-  dialup.lurkmode = (tempconfig != 0);
-  tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
-  if (tempconfig) {dialup.lurkmode=2; client->connectoften=0;}
-  tempconfig=ini.getkey(OPTION_SECTION, "dialwhenneeded", "0")[0];
+  dialup.lurkmode = 0;
+  if (GetPrivateProfileIntA( sect, "lurkonly", 0, fn )) 
+    { dialup.lurkmode = 2; client->connectoften = 1; }
+  else if (GetPrivateProfileIntA( sect, "lurk", 0, fn ))
+    dialup.lurkmode = 1;
   #if (CLIENT_OS == OS_WIN32)
-  if (tempconfig) dialup.dialwhenneeded=1;
-  INIGETKEY(CONF_CONNECTNAME).copyto(dialup.connectionname,sizeof(dialup.connectionname));
-  #endif // (CLIENT_OS ...
-  #endif // defined LURK
-
-  #if defined(WIN32GUI)
-  InternalReadConfig(ini);
+  dialup.dialwhenneeded = GetPrivateProfileIntA( sect, "dialwhenneeded", 0, fn );
+  GetPrivateProfileStringA( sect, "connectionname", dialup.connectionname, dialup.connectionname, sizeof(dialup.connectionname), fn );
   #endif
+  #endif /* LURK */
 
-  client->randomchanged = 0;
-  RefreshRandomPrefix( client, 1 /* don't trigger */ );
+  return 0;
+}
 
-  return( inierror ? -1 : 0 );
+// --------------------------------------------------------------------------
+
+//conditional ini write functions
+
+static void __XSetProfileStr( const char *sect, const char *key, 
+            const char *newval, const char *fn, const char *defval )
+{
+  char buffer[4];
+  if (sect == NULL) 
+    sect = OPTION_SECTION;
+  if (defval == NULL)
+    defval = "";
+  int dowrite = (strcmp( newval, defval )!=0);
+  if (!dowrite)
+    dowrite = (GetPrivateProfileStringA( sect, key, "", buffer, 2, fn )!=0);
+  if (dowrite)
+    WritePrivateProfileStringA( sect, key, newval, fn );
+}
+
+static void __XSetProfileInt( const char *sect, const char *key, 
+          s32 newval, const char *fn, s32 defval, int asbool )
+{ 
+  char buffer[4];
+  if (sect == NULL) 
+    sect = OPTION_SECTION;
+  if (asbool)
+    {
+    defval = ((defval)?(1):(0));
+    newval = ((newval)?(1):(0));
+    }
+  int dowrite = (defval!=newval);
+  if (!dowrite)
+    dowrite = (GetPrivateProfileStringA( sect, key, "", buffer, 2, fn )!=0);
+  if (dowrite)
+    WritePrivateProfileIntA( sect, key, newval, fn );
 }
 
 // --------------------------------------------------------------------------
@@ -356,207 +330,122 @@ int ReadConfig(Client *client) //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 
 int WriteConfig(Client *client, int writefull /* defaults to 0*/)  
 {
-  IniSection ini;
-  IniRecord *tempptr;
+  char buffer[64];
+  const char *sect = OPTION_SECTION;
+  int i;
 
   client->randomchanged = 1;
   RefreshRandomPrefix( client );
 
-  if ( ini.ReadIniFile( GetFullPathForFilename( client->inifilename ) ) )
+  const char *fn = GetFullPathForFilename( client->inifilename );
+  if ( !writefull && access( fn, 0 )!=0 )
     writefull = 1;
-    
+
+  if (0 == WritePrivateProfileStringA( sect, "id", 
+    ((strcmp( client->id,"rc5@distributed.net")==0)?(""):(client->id)), fn ))
+    return -1; //failed
+  
   if (writefull != 0)
     {
-    char buffer[64];
-
     /* --- CONF_MENU_BUFF -- */
 
-    INISETKEY( CONF_ID, client->id );
-    if (client->connectoften!=0 || INIFIND(CONF_FREQUENT)!=NULL)
-      INISETKEY( CONF_FREQUENT, client->connectoften );
-    if (INIFIND(CONF_PREFERREDBLOCKSIZE)!=NULL || client->preferred_blocksize!=
-      (atoi(conf_options[CONF_PREFERREDBLOCKSIZE].defaultsetting)))
-     INISETKEY( CONF_PREFERREDBLOCKSIZE, client->preferred_blocksize );
-    int default_threshold = atoi(conf_options[CONF_THRESHOLDI].defaultsetting);
-    if (INIFIND(CONF_THRESHOLDI)!=NULL || 
-       client->inthreshold[0]!=default_threshold || client->outthreshold[0]!=default_threshold)
-      {
-      sprintf(buffer,"%d:%d",(int)client->inthreshold[0],(int)client->outthreshold[0]);
-      INISETKEY( CONF_THRESHOLDI, buffer );
-      }
-    if (client->inthreshold[1] == client->inthreshold[0] && client->outthreshold[1] == client->outthreshold[0])
-      {
-      if ((tempptr = ini.findfirst(OPTION_SECTION, "threshold2"))!=NULL)
-        tempptr->values.Erase();
-      }
-    else if (ini.findfirst(OPTION_SECTION, "threshold2")!=NULL || 
-      client->inthreshold[1]!=default_threshold || client->outthreshold[1]!=default_threshold )
-      {
-      sprintf(buffer,"%d:%d",(int)client->inthreshold[1],(int)client->outthreshold[1]);
-      ini.setrecord(OPTION_SECTION, "threshold2", IniString(buffer));
-      }
-    if (client->nodiskbuffers!=0 || INIFIND(CONF_NODISK)!=NULL)
-      INISETKEY( CONF_NODISK, IniString((client->nodiskbuffers)?("1"):("0")) );
-    INISETKEY( CONF_RC5IN, client->in_buffer_file[0]);
-    INISETKEY( CONF_RC5OUT, client->out_buffer_file[0]);
-    INISETKEY( CONF_DESIN, client->in_buffer_file[1]);
-    INISETKEY( CONF_DESOUT, client->out_buffer_file[1]);
-    if (client->checkpoint_file[0]!=0 || INIFIND(CONF_CHECKPOINT)!=NULL)
-      INISETKEY( CONF_CHECKPOINT, client->checkpoint_file );
+    __XSetProfileStr( sect, "in", client->in_buffer_file[0], fn, NULL );
+    __XSetProfileStr( sect, "out", client->out_buffer_file[0], fn, NULL );
+    __XSetProfileStr( sect, "in2", client->in_buffer_file[1], fn, NULL );
+    __XSetProfileStr( sect, "out2", client->out_buffer_file[1], fn, NULL );
 
+    __XSetProfileInt( sect, "frequent", client->connectoften, fn, 0, 1 );
+    __XSetProfileInt( sect, "preferredblocksize", client->preferred_blocksize, fn, 31, 0 );
+    
+    sprintf(buffer,"%d:%d", (int)client->inthreshold[0], (int)client->outthreshold[0]);
+    __XSetProfileStr( sect, "threshold", buffer, fn, "10:10" );
+    if (client->inthreshold[1] == client->inthreshold[0] && client->outthreshold[1] == client->outthreshold[0])
+      WritePrivateProfileStringA( sect, "threshold2", NULL, fn );
+    else
+      {
+      sprintf(buffer,"%d:%d", (int)client->inthreshold[1], (int)client->outthreshold[1]);
+      WritePrivateProfileStringA( sect, "threshold2", buffer, fn );
+      }
+
+    __XSetProfileInt( sect, "nodisk", (client->nodiskbuffers)?(1):(0), fn, 0, 1 );
+    __XSetProfileStr( sect, "checkpointfile", client->checkpoint_file, fn, NULL );
+    
     /* --- CONF_MENU_MISC __ */
     
-    if (client->minutes!=0 || INIFIND(CONF_HOURS)!=NULL)
-      {
-      sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60)); 
-      INISETKEY( CONF_HOURS, buffer );
-      }
-    if (client->blockcount != 0 || INIFIND(CONF_COUNT)!=NULL)
-      INISETKEY( CONF_COUNT, client->blockcount );
-    if (client->pausefile[0]!=0 || INIFIND(CONF_PAUSEFILE)!=NULL)
-      INISETKEY( CONF_PAUSEFILE, client->pausefile );
-    if (client->quietmode!=0 || INIFIND(CONF_QUIETMODE)!=NULL)
-      INISETKEY( CONF_QUIETMODE, ((client->quietmode)?("1"):("0")) );
-    if (client->noexitfilecheck!=0 || INIFIND(CONF_NOEXITFILECHECK)!=NULL)
-      INISETKEY( CONF_NOEXITFILECHECK, client->noexitfilecheck );
-    if (client->percentprintingoff!=0 || INIFIND(CONF_PERCENTOFF)!=NULL)
-      INISETKEY( CONF_PERCENTOFF, client->percentprintingoff );
-
+    sprintf(buffer,"%u:%02u", (unsigned)(client->minutes/60), (unsigned)(client->minutes%60)); 
+    __XSetProfileStr( sect, "hours", buffer, fn, "0:00" );
+    __XSetProfileInt( sect, "count", client->blockcount, fn, 0, 0 );
+    __XSetProfileStr( sect, "pausefile", client->pausefile, fn, NULL );
+    __XSetProfileInt( sect, "quiet", client->quietmode, fn, 0, 1 );
+    __XSetProfileInt( sect, "noexitfilecheck", client->noexitfilecheck, fn, 0, 1 );
+    __XSetProfileInt( sect, "percentoff", client->percentprintingoff, fn, 0, 1 );
+    
     /* --- CONF_MENU_PERF -- */
 
-    if (client->cputype!=-1 || INIFIND(CONF_CPUTYPE)!=NULL)
-      INISETKEY( CONF_CPUTYPE, client->cputype );
-    if (client->numcpu!=-1 || INIFIND(CONF_NUMCPU)!=NULL)
-      INISETKEY( CONF_NUMCPU, client->numcpu );
-    if (client->priority != 0 || ini.findfirst( "processor-usage", "priority"))
-      ini.setrecord("processor-usage", "priority", IniString((s32)client->priority));
-    //spaces in a SECTIONname result in a (bad) KEYWORD just anywhere
-    if ((tempptr = ini.findfirst( "processor usage", "FOOBAR"))!=NULL)
-      tempptr->values.Erase();
+    __XSetProfileInt( sect, "cputype", client->cputype, fn, -1, 0 );
+    __XSetProfileInt( sect, "numcpu", client->numcpu, fn, -1, 0 );
+    __XSetProfileInt( "processor-usage", "priority", client->priority, fn, 0, 0);
 
     /* --- CONF_MENU_NET -- */
 
-    if (client->offlinemode != 0 || ini.findfirst(OPTION_SECTION, "runoffline")!=NULL)
-      ini.setrecord(OPTION_SECTION, "runoffline", IniString((client->offlinemode)?("1"):("0")));
-    if (client->nettimeout!=atoi(conf_options[CONF_NETTIMEOUT].defaultsetting) || INIFIND(CONF_NETTIMEOUT)!=NULL)
-      INISETKEY( CONF_NETTIMEOUT, client->nettimeout );
-    if (client->nofallback!=0 || INIFIND(CONF_NOFALLBACK)!=NULL)
-      INISETKEY( CONF_NOFALLBACK, client->nofallback );
-    if (confopt_isstringblank(client->keyproxy) || client->autofindkeyserver)
-      {
-      //delete keys so that old inis stay compatible and default.
-      if ((tempptr = ini.findfirst(OPTION_SECTION, "keyproxy"))!=NULL)
-        tempptr->values.Erase();
-      if ((tempptr = ini.findfirst(OPTION_SECTION, "keyport"))!=NULL &&
-         (client->keyport==0 || client->keyport==2064 || client->keyport==23 
-         || client->keyport==80))
-        tempptr->values.Erase();
-      else if (client->keyport!=0) 
-        INISETKEY( CONF_KEYSERVPORT, client->keyport );
-      if ((tempptr = ini.findfirst( "networking", "autofindkeyserver"))!=NULL)
-        tempptr->values.Erase();
-      }
-    else if (confopt_IsHostnameDNetHost(client->keyproxy))
-      {
-      ini.setrecord("networking", "autofindkeyserver", IniString("0"));
-      if ((tempptr = ini.findfirst(OPTION_SECTION, "keyport"))!=NULL &&
-         (client->keyport==0 || client->keyport==2064 || client->keyport==23 
-         || client->keyport==80))
-        tempptr->values.Erase();
-      else 
-        INISETKEY( CONF_KEYSERVPORT, client->keyport );
-      INISETKEY( CONF_KEYSERVNAME, client->keyproxy );
-      }
-    else
-      {
-      if ((tempptr = ini.findfirst( "networking", "autofindkeyserver"))!=NULL)
-        tempptr->values.Erase();
-      INISETKEY( CONF_KEYSERVNAME, client->keyproxy );
-      INISETKEY( CONF_KEYSERVPORT, client->keyport );
-      }
-    if (client->uuehttpmode!=0 || INIFIND(CONF_UUEHTTPMODE)!=NULL)
-      INISETKEY( CONF_UUEHTTPMODE, client->uuehttpmode );
-    if (!confopt_isstringblank(client->httpproxy) || INIFIND(CONF_FWALLHOSTNAME)!=NULL)
-      INISETKEY( CONF_FWALLHOSTNAME, client->httpproxy );
-    if (client->httpport!=0 || INIFIND(CONF_FWALLHOSTPORT)!=NULL)
-      INISETKEY( CONF_FWALLHOSTPORT, client->httpport );
-    if (!confopt_isstringblank(client->httpid) || INIFIND(CONF_FWALLUSERNAME)!=NULL)
-      INISETKEY( CONF_FWALLUSERNAME, client->httpid );
+    __XSetProfileInt( sect, "runoffline", client->offlinemode, fn, 0, 1);
+    __XSetProfileInt( sect, "nettimeout", client->nettimeout, fn, 60, 0);
+    __XSetProfileInt( sect, "nofallback", client->nofallback, fn, 1, 1);
+    
+    char *af=NULL, *host=client->keyproxy, *port = buffer;
+    if (confopt_isstringblank(host) || client->autofindkeyserver)
+      { //delete keys so that old inis stay compatible and default.
+      host = NULL; if (client->keyport != 3064) port = NULL; }
+    else if (confopt_IsHostnameDNetHost(host))
+      { af = "0"; if (client->keyport != 3064) port = NULL; }
+    if (port!=NULL) sprintf(port,"%ld",client->keyport);
+    WritePrivateProfileStringA( "networking", "autofindkeyserver", af, fn );
+    WritePrivateProfileStringA( sect, "keyport", port, fn );
+    WritePrivateProfileStringA( sect, "keyproxy", host, fn );
+    __XSetProfileInt( sect, "uuehttpmode", client->uuehttpmode, fn, 0, 0);
+    __XSetProfileInt( sect, "httpport", client->httpport, fn, 0, 0);
+    __XSetProfileStr( sect, "httpproxy", client->httpproxy, fn, NULL);
+    __XSetProfileStr( sect, "httpid", client->httpid, fn, NULL);
+
     #if defined(LURK)
-    if (dialup.lurkmode==1)
-      ini.setrecord(OPTION_SECTION, "lurk",  IniString("1"));
-    else if ((tempptr = ini.findfirst(OPTION_SECTION, "lurk"))!=NULL)
-      tempptr->values.Erase();
-    if (dialup.lurkmode==2)
-      ini.setrecord(OPTION_SECTION, "lurkonly",  IniString("1"));    
-    else if ((tempptr = ini.findfirst(OPTION_SECTION, "lurkonly"))!=NULL)
-      tempptr->values.Erase();
-    if (dialup.dialwhenneeded)
-      INISETKEY( CONF_DIALWHENNEEDED, dialup.dialwhenneeded);
-    else if ((tempptr = ini.findfirst(OPTION_SECTION, "dialwhenneeded"))!=NULL)
-      tempptr->values.Erase();
-    #if (CLIENT_OS == OS_WIN32)
-    if (strcmp(dialup.connectionname,conf_options[CONF_CONNECTNAME].defaultsetting)!=0)
-      INISETKEY( CONF_CONNECTNAME, dialup.connectionname);
-    else if ((tempptr = ini.findfirst(OPTION_SECTION, "connectionname"))!=NULL)
-      tempptr->values.Erase();
-    #endif // (CLIENT_OS
+    WritePrivateProfileStringA( sect, "lurk", (dialup.lurkmode==1)?("1"):(NULL), fn );
+    WritePrivateProfileStringA( sect, "lurkonly", (dialup.lurkmode==2)?("1"):(NULL), fn );
+    WritePrivateProfileStringA( sect, "dialwhenneeded", (dialup.dialwhenneeded)?("1"):(NULL), fn );
+    #if (CLIENT_OS==OS_WIN32)
+    __XSetProfileStr( sect, "connectionname", dialup.connectionname, fn, NULL );
+    #endif
     #endif // defined LURK
 
     /* --- CONF_MENU_LOG -- */
 
-    if (client->logname[0]!=0 || INIFIND(CONF_LOGNAME)!=NULL)
-      INISETKEY( CONF_LOGNAME, client->logname );
-    if (client->messagelen>0 || INIFIND(CONF_MESSAGELEN)!=NULL)
-      INISETKEY( CONF_MESSAGELEN, client->messagelen );
-    if (!confopt_isstringblank(client->smtpsrvr) || INIFIND(CONF_SMTPSRVR)!=NULL)
-      INISETKEY( CONF_SMTPSRVR, client->smtpsrvr );
-    if (!confopt_isstringblank(client->smtpfrom) || INIFIND(CONF_SMTPFROM)!=NULL)
-      INISETKEY( CONF_SMTPFROM, client->smtpfrom );
-    if (!confopt_isstringblank(client->smtpdest) || INIFIND(CONF_SMTPDEST)!=NULL)
-      INISETKEY( CONF_SMTPDEST, client->smtpdest );
-    if (client->smtpport != 25 || INIFIND(CONF_SMTPPORT)!=NULL)
-      INISETKEY( CONF_SMTPPORT, client->smtpport );
+    __XSetProfileStr( sect, "logname", client->logname, fn, NULL );
+    __XSetProfileInt( sect, "messagelen", client->messagelen, fn, 0, 0);
+    __XSetProfileStr( sect, "smtpsrvr", client->smtpsrvr, fn, NULL);
+    __XSetProfileStr( sect, "smtpfrom", client->smtpfrom, fn, NULL);
+    __XSetProfileStr( sect, "smtpdest", client->smtpdest, fn, NULL);
+    __XSetProfileInt( sect, "smtpport", client->smtpport, fn, 25, 0);
 
     /* no menu option */
   
-    if (client->preferred_contest_id!=1)
-      ini.setrecord(OPTION_SECTION, "processdes", IniString("0"));
-    else if (ini.findfirst( OPTION_SECTION, "processdes")!=NULL)
-      {
-      tempptr = ini.findfirst( OPTION_SECTION, "processdes");
-      tempptr->values.Erase();
-      };
+    WritePrivateProfileStringA( sect, "processdes", ((client->preferred_contest_id==1)?(NULL):("1")), fn);
       
     } /* if (writefull != 0) */
   
-  #if defined(WIN32GUI)
-  InternalWriteConfig(ini);
-  #endif
-
   /* unconditional deletion of obsolete keys */
-  if ((tempptr = ini.findfirst(OPTION_SECTION, "runhidden"))!=NULL)
-    tempptr->values.Erase();    
-  if ((tempptr = ini.findfirst(OPTION_SECTION, "os2hidden"))!=NULL)
-    tempptr->values.Erase();    
-  if ((tempptr = ini.findfirst(OPTION_SECTION, "win95hidden"))!=NULL)
-    tempptr->values.Erase();    
-  if ((tempptr=ini.findfirst(OPTION_SECTION, "checkpoint2" ))!=NULL)
-    tempptr->values.Erase();
-  if ((tempptr = ini.findfirst( OPTION_SECTION, "niceness"))!=NULL)
-    tempptr->values.Erase();
-  if ((tempptr=ini.findfirst(OPTION_SECTION, "timeslice" ))!=NULL)
-    tempptr->values.Erase();
-  if ((tempptr = ini.findfirst(OPTION_SECTION, "usemmx"))!=NULL)
-    {
-    s32 tmps32 = ini.getkey(OPTION_SECTION, "usemmx", "0")[0];
-    if ( tmps32!= 0 || (GetProcessorType(1) & 0x100) != 0)
-      tempptr->values.Erase();
-    }
-  if ((tempptr = ini.findfirst(OPTION_SECTION, "runbuffers"))!=NULL)
-    tempptr->values.Erase();   /* obsolete - uses blockcount==-1 */
+  const char *obskeys[]={"runhidden","os2hidden","win95hidden","checkpoint2",
+                         "niceness","timeslice","runbuffers"};
+  for (i=0;i<(int)(sizeof(obskeys)/sizeof(obskeys[0]));i++)
+    WritePrivateProfileStringA( sect, obskeys[i], NULL, fn );    
   
-  return ( ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) ) ? -1 : 0 );
+  /* conditional deletion of obsolete keys */
+  if (GetPrivateProfileStringA( sect, "usemmx", "", buffer, 2, fn))
+    {
+    if (((GetProcessorType(1) & 0x100) != 0) || 
+       GetPrivateProfileIntA( sect, "usemmx", 0, fn ))
+    WritePrivateProfileStringA( sect, "usemmx", NULL, fn );
+    }
+  
+  return 0;
 }
 
 // --------------------------------------------------------------------------
@@ -568,98 +457,64 @@ void RefreshRandomPrefix( Client *client, int no_trigger )
 
   if (client->stopiniio == 0 && client->nodiskbuffers == 0)
     {
-    const char *OPTION_SECTION = "parameters";
-    IniSection ini;
+    const char *fn = GetFullPathForFilename( client->inifilename );
+    const char *sect = OPTION_SECTION;
     unsigned int cont_i;
-    s32 randomprefix, flagbits;
-    s32 descontestclosed, scheduledupdatetime;
-    int inierror = (ini.ReadIniFile( 
-                       GetFullPathForFilename( client->inifilename ) ) != 0);
-    int inichanged = 0;
+    char key[32];
 
+    if ( client->randomchanged == 0 ) /* load */
+      {
+      if ( access( fn, 0 )!=0 )
+        return;
+
+      client->randomprefix = 
+         GetPrivateProfileIntA(sect, "randomprefix", client->randomprefix, fn);
+      client->descontestclosed = ntohl(
+         GetPrivateProfileIntA(sect, "descontestclosed", 
+                                         htonl(client->descontestclosed), fn));
+      client->scheduledupdatetime = ntohl(
+         GetPrivateProfileIntA(sect, "scheduledupdatetime",
+                                      htonl(client->scheduledupdatetime), fn));
+      int statechange = 0;
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+        {
+        if (cont_i==0) strcpy(key,"contestdone");
+        else sprintf(key,"contestdone%u", cont_i+1 );
+        int oldstate = ((client->contestdone[cont_i])?(1):(0));
+        int newstate = GetPrivateProfileIntA(sect, key, oldstate, fn );
+        newstate = ((newstate)?(1):(0));
+        if (oldstate != newstate)
+          {
+          statechange = 1;
+          client->contestdone[cont_i] = newstate;
+          CliClearContestInfoSummaryData( cont_i );
+          }
+        }
+      if (statechange && !no_trigger)
+        RaiseRestartRequestTrigger();
+      }
+      
     if (client->randomchanged)
       {
-      randomprefix = (s32)(client->randomprefix);
-      ini.setrecord(OPTION_SECTION, "randomprefix", IniString(randomprefix));
-
-      flagbits = 0;
-      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-        {
-        flagbits |= ((client->contestdone[cont_i])?(1<<cont_i):(0));
-
-        char buffer[32];
-        if (cont_i==0) strcpy(buffer,"contestdone");
-        else sprintf(buffer,"contestdone%u", cont_i+1 );
-        if (client->contestdone[cont_i])
-          {
-          ini.setrecord(OPTION_SECTION, buffer, 
-              IniString((client->contestdone[cont_i])?("1"):("0")));
-          }
-        else
-          {
-          IniRecord *inirec;
-          if ((inirec=ini.findfirst(OPTION_SECTION, buffer))!=NULL)
-            inirec->values.Erase();
-          }
-        }
-      ini.setrecord(OPTION_SECTION, "contestdoneflags", IniString(flagbits));
-      ini.setrecord(OPTION_SECTION, "descontestclosed",
-                    IniString((s32)htonl(client->descontestclosed)));
-      ini.setrecord(OPTION_SECTION, "scheduledupdatetime",
-                    IniString((s32)htonl(client->scheduledupdatetime)));
       client->randomchanged = 0;
-      inichanged = 1;
-      }
-    else if (!inierror)
-      {  
-      randomprefix = ini.getkey(OPTION_SECTION, "randomprefix", "0")[0];
-      if (randomprefix) client->randomprefix = randomprefix;
-      descontestclosed=ini.getkey(OPTION_SECTION,
-                                             "descontestclosed","0")[0];
-      if (descontestclosed) client->descontestclosed=ntohl(descontestclosed);
-      scheduledupdatetime=ini.getkey(OPTION_SECTION,
-                                     "scheduledupdatetime","0")[0];
-      if (scheduledupdatetime)
-        client->scheduledupdatetime=ntohl(scheduledupdatetime);
 
-      u32 oldflags=0, newflags=0;
+      if (!WritePrivateProfileIntA(sect,"randomprefix",client->randomprefix,fn))
+        return; //write fail
 
-      IniRecord *inirec;
-      if ((inirec=ini.findfirst(OPTION_SECTION, "contestdoneflags"))!=NULL)
-        newflags = ini.getkey(OPTION_SECTION, "contestdoneflags", "0")[0];
-      else
-        {
-        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-          {
-          char buffer[32];
-          if (cont_i==0) strcpy(buffer,"contestdone");
-          else sprintf(buffer,"contestdone%u", cont_i+1 );
-          flagbits = ini.getkey(OPTION_SECTION, buffer, "0")[0];
-          newflags |= ((flagbits)?(1<<cont_i):(0)); 
-          }
-        }
-      oldflags = 0;
       for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
         {
-        oldflags |= ((client->contestdone[cont_i])?(1<<cont_i):(0)); 
-        client->contestdone[cont_i]=(((newflags&(1<<cont_i))==0)?(0):(1));
+        if (cont_i==0) strcpy(key,"contestdone");
+        else sprintf(key, "contestdone%u", cont_i+1 );
+        if (client->contestdone[cont_i])
+          WritePrivateProfileIntA( sect, key, 1, fn );
+        else
+          WritePrivateProfileStringA( sect, key, NULL, fn );
         }
-      if (newflags != oldflags)
-        {
-        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
-          {
-          if ((newflags & (1<<cont_i)) != (oldflags & (1<<cont_i)))
-            CliClearContestInfoSummaryData( cont_i );
-          }
-        if (!no_trigger)
-          RaiseRestartRequestTrigger();
-        }
-      }   
-    
-    if (inichanged)
-      {
-      if (ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) ))
-        client->stopiniio = 1;
+      WritePrivateProfileStringA( sect, "contestdoneflags", NULL, fn );
+      WritePrivateProfileIntA( sect, "descontestclosed", 
+                                    htonl(client->descontestclosed), fn );
+      WritePrivateProfileIntA( sect, "scheduledupdatetime", 
+                                    htonl(client->scheduledupdatetime), fn );
       }
     }
   return;
