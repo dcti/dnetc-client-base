@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.75  1999/02/06 22:38:43  foxyloxy
+// Some core prototype updating.
+//
 // Revision 1.74  1999/02/05 14:20:10  chrisb
 // fixed one last high-word inc problem in the riscos/x86 stuff
 //
@@ -214,7 +217,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.74 1999/02/05 14:20:10 chrisb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.75 1999/02/06 22:38:43 foxyloxy Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -303,13 +306,13 @@ extern void CliSignalHandler(int);
 #elif (CLIENT_CPU == CPU_MIPS)
   #if (CLIENT_OS != OS_ULTRIX)
     #if (MIPS_CRUNCH == 1)
-    extern "C" unsigned long crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
+    extern "C" u32 crunch( register RC5UnitWork * rc5unitwork, u32 timeslice);
     extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
     #else
     extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
     extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
     #endif
-    #error Please verify these core prototypes
+//FOXYLOXY// #error Please verify these core prototypes
   #else /* OS_ULTRIX */
     extern u32 rc5_unit_func( RC5UnitWork * rc5unitwork );
     extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
