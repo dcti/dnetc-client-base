@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.24 2004/03/28 19:42:09 oliver Exp $
+ * $Id: ogr.cpp,v 1.2.4.25 2004/04/28 16:47:21 kakace Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -3203,6 +3203,14 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
   else if (minpos != 0) {
     // Unsuspected starting point
     return CORE_E_FORMAT;
+  }
+
+  if (workstub->stub.length < workstub->worklength) {
+    /* BUGFIX : Reset the flag if the stub has already been started to prevent
+    ** inaccurate node counts when the user stop then restart the client.
+    ** (the init loop performs one 'cycle' iteration for finalization stubs,
+    ** and that iteration is not taken into account in the final node count) */
+    finalization_stub = 0;
   }
 
   oState->max = OGR[oState->maxdepthm1];
