@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.22 2004/06/27 21:40:40 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.22.2.1 2004/08/08 20:23:29 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -981,9 +981,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
       ** it is ok to discard the stub (and let the network recycle it)
       */
       const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
-      const char *msg = "Unknown error";
-      if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
-      else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
+      const char *msg = "Internal error";
+      if      (r == CORE_E_MEMORY) msg = "CORE_E_MEMORY: Insufficient memory";
+      else if (r == CORE_E_STUB)   msg = "CORE_E_STUB: Invalid initial ruler";
+      else if (r == CORE_E_FORMAT) msg = "CORE_E_FORMAT: Format or range error";
       Log("%s load failure: %s\nStub discarded.\n", contname, msg );
       return -1;
     }
@@ -1024,9 +1025,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
       ** it is ok to discard the stub (and let the network recycle it)
       */
       const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
-      const char *msg = "Unknown error";
-      if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
-      else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
+      const char *msg = "Internal error";
+      if      (r == CORE_E_MEMORY) msg = "CORE_E_MEMORY: Insufficient memory";
+      else if (r == CORE_E_STUB)   msg = "CORE_E_STUB: Invalid initial ruler";
+      else if (r == CORE_E_FORMAT) msg = "CORE_E_FORMAT: Format or range error";
       Log("%s load failure: %s\nStub discarded.\n", contname, msg );
       return -1;
     }
