@@ -4,7 +4,7 @@
 !
 ! Author: Andreas Beckmann <andreasb@distributed.net>
 !
-! $Id: r72-anbe2-64.gcc.S,v 1.1.2.2 2004/08/13 16:38:01 snikkel Exp $
+! $Id: r72-anbe2-64.gcc.S,v 1.1.2.3 2004/08/13 16:57:08 snikkel Exp $
 !
 ! This 2 pipeline core is optimized for a sparc processor that is able to 
 ! dispatch two integer instructions (but only one shift, which must be the 
@@ -104,7 +104,7 @@ rc5_72_unit_func_anbe_2:
 // <- dword aligned
 #define s_save_i7		stack+0
 // <<<=== 'stack' points here
-// (default stackframe 6+1+16 words)
+// (default stackframe 6+1+16+1 words)
 // <<<=== %sp points here
 
 
