@@ -1,6 +1,6 @@
 
  distributed.net client for Win32 (Win9x/WinNT/Win32s)
- document revision $Id: readme.w32,v 1.1.2.4 1999/11/08 01:42:00 cyp Exp $
+ document revision $Id: readme.w32,v 1.1.2.5 1999/11/16 21:06:19 cyp Exp $
 
  Welcome to the distributed.net client.
 
@@ -100,15 +100,10 @@
     and NT 4.x to support the "mini-preview" mode first introduced in
     Windows95. The multiplexor supports the new interface, but since a 4.x 
     system will not start a 3.x screensaver "correctly", the multiplexor
-    was "branded" as a 4.0 executable. There are two ways to enable support 
-    on NT 3.x:
-    a) copy the _client_ itself to WINNT/*.scr: The client is an
-       NT 3.x binary and on finding itself installed as *.scr, will
-       run as the multiplexor.
-    b) get in touch with the author/port maintainer <cyp@fb14.uni-mainz.de>
-       or <cyp@distributed.net> for a little utility to "brand" the
-       multiplexor as a 3.x binary and so allow it to run on NT 3.x
-
+    was "branded" as a 4.0 executable. 
+    Beginning with 2.8001, the _client_ will watch for this condition on
+    startup, and if it finds itself in a 3.x environment, will re-brand 
+    the .scr as a 3.x executable.
 
  2.0  Notes: ---------------------------------------------------------
 
@@ -191,17 +186,25 @@
        How come?
     A: When installed as a service, the client is (on NT, by default) not 
        running in a user's context (there isn't a user logged in). Under 
-       Win9x (where security is virtually non-existant), the client *could* 
-       theoretically access network devices /once/ a user has logged in, 
-       but that is obviously not a good idea :). On NT, the service can be 
-       configured from the service manager to start in a context other than 
-       the default "Local System": Control Panel -> services -> properties 
-       on service. there's a radio button to change between local system 
-       and another account.  Thor Olson <Thor@terabase.com> adds:
+       Win9x (where security is virtually non-existant), the client 
+       *could* theoretically access network devices /once/ a user has 
+       logged in, but that is obviously not a good idea :). On NT, the 
+       service can be configured from the service manager to start in a 
+       context other than the default "Local System": Control Panel -> 
+       services -> properties on service. there's a radio button to 
+       change between local system and another account.  
+       Thor Olson <Thor@terabase.com> adds:
        If the machine is a backup domain controller, all control panel 
        choices for service userids/passwords, other than localuser, are 
        grayed out whenever the machine doesn't have a connection to the 
        primary domain controller.
+
+    Q: On NT, trying to -install as service from 'AT' fails, but
+       works fine otherwise. Whats up with that?
+    A: AT runs by default in a non-desktop context, and the client's
+       "have a valid shell" check fails. The solution is to
+       check 'interact with desktop' in the scheduler config and 
+       install the service with "-quiet -install".
      
     Q: I use LITESTEP (or other alternative shell) and get a warning 
        when I try to install the client as a service. Whats the deal?
