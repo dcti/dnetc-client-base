@@ -21,15 +21,19 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.72 2001/01/08 12:40:08 snake Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.73 2001/01/09 00:06:40 cyp Exp $
 ==========================================================================
 
 2.8000
 ------
 
-2.8012.465
-            imp: m68k-netbsd: faster OGR core
+2.8012.465  imp: m68k-netbsd: faster OGR core
             fix: bsdos-aout client is finally working again with OGR
+            fix: all: -n -1 (exit on empty buffers) works again.
+            fix: win32: restore from tray works again
+            fix: win16: text appearing as a single line fixed
+            new: win32: rate and in-buffer threshold available as 'tip' when
+                 client is minimized and the 'Core Throughput' view is active.
 
 2.8011.464  imp: many: OGR cores improved - should now be slightly faster
             new: many: AltiVec OGR cruncher by Dan Oetting and Chris Cox
