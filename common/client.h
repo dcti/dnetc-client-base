@@ -12,6 +12,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.82  1998/10/05 05:13:09  cyp
+// Fixed missing #ifdef MMX_RC5 for client.usemmx
+//
 // Revision 1.81  1998/10/03 03:52:24  cyp
 // Removed ::Install() and ::Uninstall() [os specific functions needed to be
 // called directly from ParseCommandLine()], changed ::runhidden to an 'int',
@@ -358,8 +361,8 @@ public:
 
   int runhidden;      // previously win95hidden, os2hidden, netwarehidden...
   
-#if defined(MMX_BITSLICER)
-  s32 usemmx;
+#if defined(MMX_BITSLICER) || defined(MMX_RC5)
+  int usemmx;
 #endif
 
 protected:
