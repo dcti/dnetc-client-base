@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.127  1998/07/05 13:44:02  cyruspatel
+// Fixed an inadvertent wrap of one of the long single-line revision headers.
+//
 // Revision 1.126  1998/07/05 07:04:19  jlawson
 // changes for Win32s
 //
@@ -162,9 +165,12 @@
 //
 
 #include "client.h"
+#ifndef DONT_USE_PATHWORK
+#include "pathwork.h"
+#endif
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.126 1998/07/05 07:04:19 jlawson Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.127 1998/07/05 13:44:02 cyruspatel Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -440,6 +446,70 @@ static optionstruct options[OPTION_COUNT]=
 { "pausefile",CFGTXT("Pausefile Path/Name"),"none",CFGTXT("(blank = no pausefile)"),6,1,3,NULL}
 };
 
+// --------------------------------------------------------------------------
+
+#ifndef DONT_USE_PATHWORK
+int Client::isstringblank( char *string )
+{
+  int counter, length, summation = 0;
+
+  if (string == NULL || !*string)
+    return 1;
+  length = strlen(string);
+  for (counter = 0; counter < length; counter++)
+  {
+    if (isprint(*(string+counter)) && (*(string+counter) != ' '))
+     summation ++;
+  }
+
+  if (summation == 0) return 1;
+
+  return 0;
+}
+
+void Client::killwhitespace( char *string )
+// Removes all spaces from a string
+{
+  char *whitespaceptr;
+
+  while ((whitespaceptr = strchr(string, ' ')) != NULL)
+  {
+    strcpy(whitespaceptr, whitespaceptr+1);
+  }
+}
+
+#else
+
+static int isstringblank( const char *string )
+{
+  register len = ( string ? ( strlen( string )+1 ) : 0 );
+
+  while (len)
+    {
+    len--;
+    if ( isprint( string[len] ) && !isspace( string[len] ) )
+      return 0;
+    }
+  return 1;
+}  
+
+static void killwhitespace( char *string )
+{
+  char *opos, *ipos;
+  ipos = opos = string;
+  while ( *ipos )
+    {
+    if ( !isspace( *ipos ) ) 
+      *opos++ = *ipos;
+    ipos++;
+    }
+  *opos = 0;
+  return;
+}  
+#endif
+
+// --------------------------------------------------------------------------
+
 #define CONF_ID 0
 #define CONF_THRESHOLDI 1
 #define CONF_THRESHOLDO 2
@@ -658,8 +728,13 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             niceness = 0;
           break;
         case CONF_LOGNAME:
+          #ifdef DONT_USE_PATHWORK
           strncpy( ini_logname, parm, sizeof(ini_logname) - 1 );
           if (isstringblank(ini_logname)) strcpy (ini_logname,"none");
+          #else
+          strncpy( logname, parm, sizeof(logname) - 1 );
+          if (isstringblank(logname)) strcpy (logname,"none");
+          #endif
           break;
         case CONF_KEYPROXY:
           strncpy( keyproxy, parm, sizeof(keyproxy) - 1 );
@@ -790,11 +865,19 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           numcpu = atoi(parm);
           break; //validation is done in SelectCore() 1998/06/21 cyrus
         case CONF_CHECKPOINT:
+          #ifdef DONT_USE_PATHWORK
           strncpy( ini_checkpoint_file[0] , parm, sizeof(ini_checkpoint_file)/2 -1 );
+          #else
+          strncpy( checkpoint_file[0] , parm, sizeof(checkpoint_file[1]) -1 );
+          #endif
           ValidateConfig();
           break;
         case CONF_CHECKPOINT2:
+          #ifdef DONT_USE_PATHWORK
           strncpy( ini_checkpoint_file[1] , parm, sizeof(ini_checkpoint_file)/2 -1 );
+          #else
+          strncpy( checkpoint_file[1] , parm, sizeof(checkpoint_file[1]) -1 );
+          #endif
           ValidateConfig();
           break;
         case CONF_PREFERREDBLOCKSIZE:
@@ -870,24 +953,45 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           break;
 #endif
         case CONF_RC5IN:
+          #ifdef DONT_USE_PATHWORK
           strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
+          #else
+          strncpy( in_buffer_file[0] , parm, sizeof(in_buffer_file[0]) -1 );
+          #endif
           ValidateConfig();
           break;
         case CONF_RC5OUT:
+          #ifdef DONT_USE_PATHWORK
           strncpy( ini_out_buffer_file[0] , parm, sizeof(ini_out_buffer_file)/2 -1 );
+          #else
+          strncpy( out_buffer_file[0] , parm, sizeof(out_buffer_file[0]) -1 );
+          #endif
           ValidateConfig();
           break;
         case CONF_DESIN:
+          #ifdef DONT_USE_PATHWORK
           strncpy( ini_in_buffer_file[1] , parm, sizeof(ini_in_buffer_file)/2 -1 );
+          #else
+          strncpy( in_buffer_file[1] , parm, sizeof(in_buffer_file[1]) -1 );
+          #endif
           ValidateConfig();
           break;
         case CONF_DESOUT:
+          #ifdef DONT_USE_PATHWORK
           strncpy( ini_out_buffer_file[1] , parm, sizeof(ini_out_buffer_file)/2 -1 );
+          #else
+          strncpy( out_buffer_file[1] , parm, sizeof(out_buffer_file[1]) -1 );
+          #endif
           ValidateConfig();
           break;
         case CONF_PAUSEFILE:
+          #ifdef DONT_USE_PATHWORK
           strncpy( ini_pausefile, parm, sizeof(ini_pausefile) -1 );
           if (isstringblank(ini_pausefile)) strcpy (ini_pausefile,"none");
+          #else
+          strncpy( pausefile, parm, sizeof(pausefile) -1 );
+          if (isstringblank(pausefile)) strcpy (pausefile,"none");
+          #endif
           break;
         default:
           break;
@@ -1009,7 +1113,6 @@ options[CONF_TIMESLICE].optionscreen=0;
 #endif
 options[CONF_TIMESLICE].thevariable=&timeslice;
 options[CONF_NICENESS].thevariable=&niceness;
-options[CONF_LOGNAME].thevariable=&ini_logname;
 options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
 options[CONF_KEYPROXY].thevariable=&keyproxy;
 options[CONF_KEYPORT].thevariable=&keyport;
@@ -1026,8 +1129,7 @@ options[CONF_SMTPPORT].thevariable=&smtpport;
 options[CONF_SMTPFROM].thevariable=&smtpfrom;
 options[CONF_SMTPDEST].thevariable=&smtpdest;
 options[CONF_NUMCPU].thevariable=&numcpu;
-options[CONF_CHECKPOINT].thevariable=&ini_checkpoint_file[0];
-options[CONF_CHECKPOINT2].thevariable=&ini_checkpoint_file[1];
+
 options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
 options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
 options[CONF_PROCESSDES].thevariable=&preferred_contest_id;
@@ -1048,11 +1150,26 @@ options[CONF_LURKMODE].thevariable=&lurk;
 #else
 options[CONF_LURKMODE].optionscreen=0;
 #endif
+
+#ifdef DONT_USE_PATHWORK
+options[CONF_LOGNAME].thevariable=&ini_logname;
+options[CONF_CHECKPOINT].thevariable=&ini_checkpoint_file[0];
+options[CONF_CHECKPOINT2].thevariable=&ini_checkpoint_file[1];
 options[CONF_RC5IN].thevariable=&ini_in_buffer_file[0];
 options[CONF_RC5OUT].thevariable=&ini_out_buffer_file[0];
 options[CONF_DESIN].thevariable=&ini_in_buffer_file[1];
 options[CONF_DESOUT].thevariable=&ini_out_buffer_file[1];
 options[CONF_PAUSEFILE].thevariable=&ini_pausefile;
+#else
+options[CONF_LOGNAME].thevariable=&logname;
+options[CONF_CHECKPOINT].thevariable=&checkpoint_file[0];
+options[CONF_CHECKPOINT2].thevariable=&checkpoint_file[1];
+options[CONF_RC5IN].thevariable=&in_buffer_file[0];
+options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
+options[CONF_DESIN].thevariable=&in_buffer_file[1];
+options[CONF_DESOUT].thevariable=&out_buffer_file[1];
+options[CONF_PAUSEFILE].thevariable=&pausefile;
+#endif
 
 if (messagelen != 0)
   {
@@ -1085,39 +1202,6 @@ if (uuehttpmode > 1)
 
 }
 #endif
-
-//----------------------------------------------------------------------------
-
-void Client::killwhitespace( char *string )
-// Removes all spaces from a string
-{
-  char *whitespaceptr;
-
-  while ((whitespaceptr = strchr(string, ' ')) != NULL)
-  {
-    strcpy(whitespaceptr, whitespaceptr+1);
-  }
-}
-
-//----------------------------------------------------------------------------
-
-int Client::isstringblank( char *string )
-{
-  int counter, length, summation = 0;
-
-  if (string == NULL || !*string)
-    return 1;
-  length = strlen(string);
-  for (counter = 0; counter < length; counter++)
-  {
-    if (isprint(*(string+counter)) && (*(string+counter) != ' '))
-     summation ++;
-  }
-
-  if (summation == 0) return 1;
-
-  return 0;
-}
 
 //----------------------------------------------------------------------------
 
@@ -1168,7 +1252,12 @@ s32 Client::ReadConfig(void)
   s32 inierror, tempconfig;
   char *p, buffer[64];
 
+  #ifdef DONT_USE_PATHWORK
   inierror = ini.ReadIniFile( inifilename );
+  #else
+  inierror = ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
+  #endif
+  
   if ( inierror )
   {
     LogScreen( "Error reading ini file - Using defaults\n" );
@@ -1200,7 +1289,6 @@ s32 Client::ReadConfig(void)
   minutes = (s32) (atol(hours) * 60.);
   timeslice = INIGETKEY(CONF_TIMESLICE);
   niceness = INIGETKEY(CONF_NICENESS);
-  INIGETKEY(CONF_LOGNAME).copyto(ini_logname, sizeof(ini_logname));
   INIGETKEY(CONF_KEYPROXY).copyto(keyproxy, sizeof(keyproxy));
   keyport = INIGETKEY(CONF_KEYPORT);
   INIGETKEY(CONF_HTTPPROXY).copyto(httpproxy, sizeof(httpproxy));
@@ -1216,8 +1304,7 @@ s32 Client::ReadConfig(void)
   INIGETKEY(CONF_SMTPFROM).copyto(smtpfrom, sizeof(smtpfrom));
   INIGETKEY(CONF_SMTPDEST).copyto(smtpdest, sizeof(smtpdest));
   numcpu = INIGETKEY(CONF_NUMCPU);
-  INIGETKEY(CONF_CHECKPOINT).copyto(ini_checkpoint_file[0], sizeof(ini_checkpoint_file)/2);
-  INIGETKEY(CONF_CHECKPOINT2).copyto(ini_checkpoint_file[1], sizeof(ini_checkpoint_file)/2);
+
   randomprefix = INIGETKEY(CONF_RANDOMPREFIX);
   preferred_contest_id = INIGETKEY(CONF_PROCESSDES);
   preferred_blocksize = INIGETKEY(CONF_PREFERREDBLOCKSIZE);
@@ -1229,10 +1316,6 @@ s32 Client::ReadConfig(void)
     tempconfig=ini.getkey(OPTION_SECTION, "runoffline", "0")[0];
     if (tempconfig) offlinemode=1;
   }
-  ini.getkey(OPTION_SECTION,"in",ini_in_buffer_file[0])[0].copyto(ini_in_buffer_file[0],sizeof(ini_in_buffer_file)/2);
-  ini.getkey(OPTION_SECTION,"out",ini_out_buffer_file[0])[0].copyto(ini_out_buffer_file[0],sizeof(ini_out_buffer_file)/2);
-  ini.getkey(OPTION_SECTION,"in2",ini_in_buffer_file[1])[0].copyto(ini_in_buffer_file[1],sizeof(ini_in_buffer_file)/2);
-  ini.getkey(OPTION_SECTION,"out2",ini_out_buffer_file[1])[0].copyto(ini_out_buffer_file[1],sizeof(ini_out_buffer_file)/2);
   tempconfig=ini.getkey(OPTION_SECTION, "percentoff", "0")[0];
   if (tempconfig) percentprintingoff=1;
   tempconfig=ini.getkey(OPTION_SECTION, "frequent", "0")[0];
@@ -1261,7 +1344,26 @@ s32 Client::ReadConfig(void)
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
   if (tempconfig) {lurk=2; connectoften=0;}
 #endif
+
+#ifdef DONT_USE_PATHWORK
+  INIGETKEY(CONF_LOGNAME).copyto(ini_logname, sizeof(ini_logname));
+  INIGETKEY(CONF_CHECKPOINT).copyto(ini_checkpoint_file[0], sizeof(ini_checkpoint_file)/2);
+  INIGETKEY(CONF_CHECKPOINT2).copyto(ini_checkpoint_file[1], sizeof(ini_checkpoint_file)/2);
+  ini.getkey(OPTION_SECTION,"in",ini_in_buffer_file[0])[0].copyto(ini_in_buffer_file[0],sizeof(ini_in_buffer_file)/2);
+  ini.getkey(OPTION_SECTION,"out",ini_out_buffer_file[0])[0].copyto(ini_out_buffer_file[0],sizeof(ini_out_buffer_file)/2);
+  ini.getkey(OPTION_SECTION,"in2",ini_in_buffer_file[1])[0].copyto(ini_in_buffer_file[1],sizeof(ini_in_buffer_file)/2);
+  ini.getkey(OPTION_SECTION,"out2",ini_out_buffer_file[1])[0].copyto(ini_out_buffer_file[1],sizeof(ini_out_buffer_file)/2);
   ini.getkey(OPTION_SECTION,"pausefile",ini_pausefile)[0].copyto(ini_pausefile,sizeof(ini_pausefile));
+#else
+  INIGETKEY(CONF_LOGNAME).copyto(logname, sizeof(ini_logname));
+  INIGETKEY(CONF_CHECKPOINT).copyto(checkpoint_file[0], sizeof(checkpoint_file[0]));
+  INIGETKEY(CONF_CHECKPOINT2).copyto(checkpoint_file[1], sizeof(checkpoint_file[1]));
+  ini.getkey(OPTION_SECTION,"in",in_buffer_file[0])[0].copyto(in_buffer_file[0],sizeof(in_buffer_file[0]));
+  ini.getkey(OPTION_SECTION,"out",out_buffer_file[0])[0].copyto(out_buffer_file[0],sizeof(out_buffer_file[0]));
+  ini.getkey(OPTION_SECTION,"in2",in_buffer_file[1])[0].copyto(in_buffer_file[1],sizeof(in_buffer_file[1]));
+  ini.getkey(OPTION_SECTION,"out2",out_buffer_file[1])[0].copyto(out_buffer_file[1],sizeof(out_buffer_file[1]));
+  ini.getkey(OPTION_SECTION,"pausefile",pausefile)[0].copyto(pausefile,sizeof(pausefile));
+#endif
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone", "0")[0];
   if (tempconfig) contestdone[0]=1;
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
@@ -1337,7 +1439,26 @@ void Client::ValidateConfig( void )
     else if (exitfilechecktime > 600) exitfilechecktime=600;
   nettimeout=min(300,max(30,nettimeout));
 
-  // Check for blank filenames, fix if so
+#ifndef DONT_USE_PATHWORK
+  if (isstringblank(in_buffer_file[0]))
+    strcpy(in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
+  if (isstringblank(out_buffer_file[0]))
+    strcpy(out_buffer_file[0],"buff-out" EXTN_SEP "rc5");
+  if (isstringblank(in_buffer_file[1]))
+    strcpy(in_buffer_file[1],"buff-in" EXTN_SEP "des");
+  if (isstringblank(out_buffer_file[1]))
+    strcpy(out_buffer_file[1],"buff-out" EXTN_SEP "des");
+  if (isstringblank(pausefile)) 
+    strcpy(pausefile,"none");
+  if (isstringblank(checkpoint_file[0])) 
+    strcpy(checkpoint_file[0],"none");
+  if (isstringblank(checkpoint_file[1])) 
+    strcpy(checkpoint_file[1],"none");
+  if (isstringblank(logname)) 
+    strcpy (logname,"none");
+
+
+#else //use pathwork
   if (isstringblank(ini_in_buffer_file[0]))
     strcpy(ini_in_buffer_file[0],"buff-in" EXTN_SEP "rc5");
   if (isstringblank(ini_out_buffer_file[0]))
@@ -1406,9 +1527,8 @@ void Client::ValidateConfig( void )
     strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
     strcpy(logname,InternalGetLocalFilename(ini_logname));
 
-
 #endif
-
+#endif //DONT_USE_PATHWORK
 
 
   CheckForcedKeyport();
@@ -1424,38 +1544,6 @@ void Client::ValidateConfig( void )
 
 #if defined(NEEDVIRTUALMETHODS)
   InternalValidateConfig();
-#elif (CLIENT_OS == OS_NETWARE)
-  {
-    //    (destbuff, destsize, defaultvalue, changetoNONEifempty, source)
-
-    CliValidateSinglePath( inifilename, sizeof(inifilename),
-                             "rc5des" EXTN_SEP "ini", 0, inifilename );
-    if (!nodiskbuffers)
-    {
-      CliValidateSinglePath( in_buffer_file[0], sizeof(in_buffer_file[0]),
-                                       "buff-in" EXTN_SEP "rc5", 0, in_buffer_file[0] );
-      CliValidateSinglePath( out_buffer_file[0], sizeof(out_buffer_file[0]),
-                                       "buff-out" EXTN_SEP "rc5", 0, out_buffer_file[0] );
-      CliValidateSinglePath( in_buffer_file[1], sizeof(in_buffer_file[1]),
-                                       "buff-out" EXTN_SEP "des", 0, in_buffer_file[1] );
-      CliValidateSinglePath( out_buffer_file[1], sizeof(out_buffer_file[1]),
-                                       "buff-out" EXTN_SEP "des", 0, out_buffer_file[1] );
-    }
-    if (strcmp(exit_flag_file,"none")!=0)
-      CliValidateSinglePath( exit_flag_file, sizeof(exit_flag_file),
-                                     "exitrc5" EXTN_SEP "now", 1, exit_flag_file);
-    if (strcmp(pausefile,"none")!=0)
-      CliValidateSinglePath( pausefile, sizeof(pausefile),
-                                     "none", 1, pausefile);
-    if (strcmp(checkpoint_file[0],"none")!=0)
-      CliValidateSinglePath( checkpoint_file[0], sizeof(checkpoint_file[0]),
-                                       "ckpoint" EXTN_SEP "rc5", 1, checkpoint_file[0]);
-    if (strcmp(checkpoint_file[1],"none")!=0)
-      CliValidateSinglePath( checkpoint_file[1], sizeof(checkpoint_file[1]),
-                                       "ckpoint" EXTN_SEP "des", 1, checkpoint_file[1]);
-    if (strlen(logname)!=0)
-      CliValidateSinglePath( logname, sizeof(logname), "", 0, logname);
-  }
 #endif
   InitRandom2( id );
 
@@ -1474,7 +1562,11 @@ s32 Client::WriteConfig(void)
   IniSection ini;
   char buffer[64];
 
-  ini.ReadIniFile(inifilename);
+  #ifdef DONT_USE_PATHWORK
+  ini.ReadIniFile( inifilename );
+  #else
+  ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
+  #endif
 
 #define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, options[key].name, IniString(value))
 
@@ -1489,7 +1581,6 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_HOURS, hours );
   INISETKEY( CONF_TIMESLICE, timeslice );
   INISETKEY( CONF_NICENESS, niceness );
-  INISETKEY( CONF_LOGNAME, ini_logname );
   INISETKEY( CONF_KEYPROXY, keyproxy );
   INISETKEY( CONF_KEYPORT, keyport );
   INISETKEY( CONF_HTTPPROXY, httpproxy );
@@ -1505,8 +1596,6 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_SMTPFROM, smtpfrom );
   INISETKEY( CONF_SMTPDEST, smtpdest );
   INISETKEY( CONF_NUMCPU, numcpu );
-  INISETKEY( CONF_CHECKPOINT, ini_checkpoint_file[0] );
-  INISETKEY( CONF_CHECKPOINT2, ini_checkpoint_file[1] );
   INISETKEY( CONF_RANDOMPREFIX, randomprefix );
   INISETKEY( CONF_PREFERREDBLOCKSIZE, preferred_blocksize );
   INISETKEY( CONF_PROCESSDES, (s32)(preferred_contest_id) );
@@ -1519,11 +1608,26 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_CKTIME, checkpoint_min );
   INISETKEY( CONF_NETTIMEOUT, nettimeout );
   INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
+
+#ifdef DONT_USE_PATHWORK
+  INISETKEY( CONF_LOGNAME, ini_logname );
+  INISETKEY( CONF_CHECKPOINT, ini_checkpoint_file[0] );
+  INISETKEY( CONF_CHECKPOINT2, ini_checkpoint_file[1] );
   INISETKEY( CONF_RC5IN, ini_in_buffer_file[0]);
   INISETKEY( CONF_RC5OUT, ini_out_buffer_file[0]);
   INISETKEY( CONF_DESIN, ini_in_buffer_file[1]);
   INISETKEY( CONF_DESOUT, ini_out_buffer_file[1]);
   INISETKEY( CONF_PAUSEFILE, ini_pausefile);
+#else
+  INISETKEY( CONF_LOGNAME, logname );
+  INISETKEY( CONF_CHECKPOINT, checkpoint_file[0] );
+  INISETKEY( CONF_CHECKPOINT2, checkpoint_file[1] );
+  INISETKEY( CONF_RC5IN, in_buffer_file[0]);
+  INISETKEY( CONF_RC5OUT, out_buffer_file[0]);
+  INISETKEY( CONF_DESIN, in_buffer_file[1]);
+  INISETKEY( CONF_DESOUT, out_buffer_file[1]);
+  INISETKEY( CONF_PAUSEFILE, pausefile);
+#endif
 
   if (offlinemode == 0)
     {
@@ -1606,7 +1710,11 @@ s32 Client::WriteConfig(void)
 
 #undef INIFIND
 
+  #ifdef DONT_USE_PATHWORK
   return( ini.WriteIniFile(inifilename) ? -1 : 0 );
+  #else
+  return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
+  #endif
 }
 
 // --------------------------------------------------------------------------
@@ -1617,7 +1725,11 @@ s32 Client::WriteContestandPrefixConfig(void)
 {
   IniSection ini;
 
-  ini.ReadIniFile(inifilename);
+  #ifdef DONT_USE_PATHWORK
+  ini.ReadIniFile( inifilename );
+  #else
+  ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
+  #endif
 
 #define INISETKEY(key, value) ini.setrecord(OPTION_SECTION, options[key].name, IniString(value))
 
@@ -1632,7 +1744,11 @@ s32 Client::WriteContestandPrefixConfig(void)
   InternalWriteConfig(ini);
 #endif
 
+  #ifdef DONT_USE_PATHWORK
   return( ini.WriteIniFile(inifilename) ? -1 : 0 );
+  #else
+  return( ini.WriteIniFile( GetFullPathForFilename( inifilename ) ) ? -1 : 0 );
+  #endif
 }
 
 //----------------------------------------------------------------------------

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.76  1998/07/05 13:44:07  cyruspatel
+// Fixed an inadvertent wrap of one of the long single-line revision headers.
+//
 // Revision 1.75  1998/07/05 13:08:58  cyruspatel
 // Created new pathwork.cpp which contains functions for determining/setting
 // the "work directory" and pathifying a filename that has no dirspec.
@@ -16,8 +19,7 @@
 // Fixed problem found by peterd in which message mailing would have overridden offlinemode.
 //
 // Revision 1.73  1998/07/04 21:05:30  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong 
-should be fixed.
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
 //
 // Revision 1.72  1998/07/04 10:30:10  jlawson
 // fixed printing of info of invalid block when -runbuffers consumes
@@ -126,7 +128,7 @@ should be fixed.
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.75 1998/07/05 13:08:58 cyruspatel Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.76 1998/07/05 13:44:07 cyruspatel Exp $";
 #endif
 
 #include "client.h"

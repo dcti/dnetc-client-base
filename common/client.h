@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.h,v $
+// Revision 1.60  1998/07/05 13:44:10  cyruspatel
+// Fixed an inadvertent wrap of one of the long single-line revision headers.
+//
 // Revision 1.59  1998/07/05 13:09:04  cyruspatel
 // Created new pathwork.cpp which contains functions for determining/setting
 // the "work directory" and pathifying a filename that has no dirspec.
@@ -19,9 +22,7 @@
 // to detect file changes.
 //
 // Revision 1.57  1998/07/04 21:05:34  silby
-// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong 
-
-should be fixed.
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
 //
 // Revision 1.56  1998/07/02 13:09:28  kbracey
 // A couple of RISC OS fixes - printf format specifiers made long.
@@ -247,43 +248,54 @@ extern "C" {
 
 // --------------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_NETWARE)
 #ifdef DONT_USE_PATHWORK
-//#define PATH_SEP   "\\"   //left undefined so I can see
-//#define PATH_SEP_C '\\'   //where the references are
-#endif
-#define EXTN_SEP   "."
-#define EXTN_SEP_C '.'
-#elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
-#ifdef DONE_USE_PATHWORK
-#define PATH_SEP   "\\"
-#define PATH_SEP_C '\\'
-#define ALT_PATH_SEP '/'
-#define ALT_PATH_SEP_C '/'
-#define DRIVE_SEP ':'
-#define DRIVE_SEP_C ':'
-#endif
-#define EXTN_SEP   "."
-#define EXTN_SEP_C '.'
-#elif (CLIENT_OS == OS_MACOS)
-#ifdef DONT_USE_PATHWORK
-#define PATH_SEP   ":"
-#define PATH_SEP_C ':'
-#endif
-#define EXTN_SEP   "."
-#define EXTN_SEP_C '.'
-#elif (CLIENT_OS == OS_RISCOS)
-#define PATH_SEP   "."
-#define PATH_SEP_C '.'
-#define EXTN_SEP   "/"
-#define EXTN_SEP_C '/'
+  #if (CLIENT_OS == OS_NETWARE)
+  //#define PATH_SEP   "\\"   //left undefined so I can see
+  //#define PATH_SEP_C '\\'   //where the references are
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
+  #define PATH_SEP   "\\"
+  #define PATH_SEP_C '\\'
+  #define ALT_PATH_SEP '/'
+  #define ALT_PATH_SEP_C '/'
+  #define DRIVE_SEP ':'
+  #define DRIVE_SEP_C ':'
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif (CLIENT_OS == OS_MACOS)
+  #define PATH_SEP   ":"
+  #define PATH_SEP_C ':'
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif (CLIENT_OS == OS_RISCOS)
+  #define PATH_SEP   "."
+  #define PATH_SEP_C '.'
+  #define EXTN_SEP   "/"
+  #define EXTN_SEP_C '/'
+  #else
+  #define PATH_SEP   "/"
+  #define PATH_SEP_C '/'
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #endif
 #else
-#ifdef DONT_USE_PATHWORK
-#define PATH_SEP   "/"
-#define PATH_SEP_C '/'
-endif
-#define EXTN_SEP   "."
-#define EXTN_SEP_C '.'
+  #if (CLIENT_OS == OS_NETWARE)
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif ((CLIENT_OS == OS_DOS) || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN32S) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif (CLIENT_OS == OS_MACOS)
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #elif (CLIENT_OS == OS_RISCOS)
+  #define EXTN_SEP   "/"
+  #define EXTN_SEP_C '/'
+  #else
+  #define EXTN_SEP   "."
+  #define EXTN_SEP_C '.'
+  #endif
 #endif
 
 // --------------------------------------------------------------------------
