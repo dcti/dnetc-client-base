@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.92  1998/08/28 22:32:30  cyp
+# Added support for selftest.cpp and cmdline.cpp
+#
 # Revision 1.91  1998/08/25 00:56:39  cyp
 # netinit.cpp is now standalone (was previously #included from network.cpp)
 #
@@ -434,7 +437,8 @@ COMMON_SRCS="common/cliconfig.cpp common/client.cpp common/problem.cpp
     common/clisrate.cpp common/clitime.cpp common/disphelp.cpp
     common/threadcd.cpp common/cpucheck.cpp common/pathwork.cpp
     common/cliident.cpp common/logstuff.cpp common/buffupd.cpp
-    common/triggers.cpp common/selcore.cpp common/netinit.cpp"
+    common/triggers.cpp common/selcore.cpp common/netinit.cpp
+    common/cmdline.cpp common/selftest.cpp"
 #KWAN_SLICE_SRCS="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
 #KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
 KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
