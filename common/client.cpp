@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.121  1998/08/08 00:55:25  silby
+// Changes to get win32gui working again
+//
 // Revision 1.120  1998/08/07 20:35:31  cyruspatel
 // NetWare specific change: Fixed broken IsNetworkAvailable() test
 //
@@ -308,7 +311,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.120 1998/08/07 20:35:31 cyruspatel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.121 1998/08/08 00:55:25 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -3205,6 +3208,9 @@ int main( int argc, char *argv[] )
 //parse command line "modes" - returns 0 if did nothing
 int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
 {
+#if defined(NEEDVIRTUALMETHODS)
+return 0;
+#else
   int i, retcode = -12345;  // 'magic number' 
 
   for (i = 1; ((retcode == -12345) && (i < argc)); i++)
@@ -3425,6 +3431,7 @@ int Client::RunCommandlineModes( int argc, char *argv[], int *retcodeP )
     return 0;
   *retcodeP = retcode;
   return 1;
+#endif
 }  
 
 // --------------------------------------------------------------------------
