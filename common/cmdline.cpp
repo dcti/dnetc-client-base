@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cmdline.cpp,v $
+// Revision 1.111  1998/12/26 10:01:35  silby
+// cmdline now ignores -guistart when WIN32GUI defined
+//
 // Revision 1.110  1998/12/25 02:32:11  silby
 // ini writing functions are now not part of client object.
 // This allows the win32 (and other) guis to have
@@ -115,7 +118,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.110 1998/12/25 02:32:11 silby Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.111 1998/12/26 10:01:35 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1099,6 +1102,13 @@ int Client::ParseCommandline( int run_level, int argc, const char *argv[],
         skip_next = 1;
         havemode = 1;
         }
+      #if defined(WIN32GUI)
+      else if ( strcmp(thisarg, "-guistart" ) == 0)
+        {
+        // Do nothing, gui wrapper handles this, code just
+        // Here to prevent erroring out.
+        }
+      #endif
       else if (run_level==0)
         {
         quietmode = 0;
