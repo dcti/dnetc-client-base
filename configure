@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.7 1999/06/13 23:15:45 daa Exp $
+# @(#)$Id: configure,v 1.222.2.8 1999/06/15 23:20:21 remi Exp $
 
 echo ""
 echo "RC5DES client makefile generator"
@@ -917,9 +917,8 @@ case "$1" in
 	TARGET_AS="gcc -c"
 	TARGET_CC="gcc"
 	TARGET_CCFLAGS="$OPTS_EGCS_X86 $OPTS_DES_MMX -DMMX_RC5 \
-			-D__showids__ -DSMC -DMULTITHREAD -DLURK"
-	TARGET_LDFLAGS="-static -Xlinker -omagic"
-	TARGET_ADDSRCS="rc5/x86/rc5-486-smc-rg.cpp common/lurk.cpp \
+			-D__showids__ -DMULTITHREAD -DLURK"
+	TARGET_ADDSRCS="common/lurk.cpp \
 			$DESX86_SRCS $DESMMX_SRCS $KWAN_SLICE_SRCS4"
 	TARGET_ADDASMS="des/brydgnu/bdeslow.S des/brydgnu/bbdeslow.S \
 			platforms/x86ident.S \
