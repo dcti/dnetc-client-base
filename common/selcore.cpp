@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.28 2003/03/16 03:31:16 acidblood Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.29 2003/03/16 16:58:47 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -628,6 +628,11 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
         cindex = 0;                     /* "RG Class 5" */
       if (!have_nasm && cindex == 9)    /* "jasonp P5/MMX" */
         cindex = 0;                     /* "RG Class 5" */
+    }
+    else if (contestid == RC5_72)
+    {
+      if (have_3486 && cindex >= 5)      /* dg-* cores use the bswap instr that's not available on 386 */
+        cindex = 3;                     /* "SES 1-pipe" */
     }
     else if (contestid == DES)
     {
@@ -2267,10 +2272,6 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
       case 7:
         unit_func.gen_72 = rc5_72_unit_func_dg_3a;
         pipeline_count = 3;
-        break;
-      case 8:
-        unit_func.gen_72 = rc5_72_unit_func_ss_2;
-        pipeline_count = 2;
         break;
      #endif
 
