@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cpucheck.cpp,v $
+// Revision 1.37  1998/11/01 01:12:54  sampo
+// Added MacOS 68k detection stuff
+//
 // Revision 1.36  1998/10/31 21:53:55  silby
 // Fixed a typo from previous commit.
 //
@@ -132,7 +135,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.36 1998/10/31 21:53:55 silby Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.37 1998/11/01 01:12:54 sampo Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -321,7 +324,8 @@ int GetProcessorType(int quietly)
 
 // --------------------------------------------------------------------------
 
-#if ((CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS == OS_MACOS))
+#if (CLIENT_OS == OS_MACOS)
+#if (CLIENT_CPU == CPU_POWERPC)
 int GetProcessorType(int quietly)
 {
 	long result;
@@ -346,6 +350,36 @@ int GetProcessorType(int quietly)
 	}
 	return (detectedtype);
 }
+#endif
+#if (CLIENT_CPU == CPU_68K)
+int GetProcessorType(int quietly)
+{
+	long result;
+	static int detectedtype = -1;
+	if(detectedtype == -1)
+	{
+		if(Gestalt(gestaltNativeCPUtype, &result) == noErr)
+   		{
+			if(result == 0) // Motorola 68000 detected
+				detectedtype = 0;
+			else if (result == 1)
+				detectedtype = 1; // Motorola 68010 detected
+			else if (result == 2)
+				detectedtype = 2; // Motorola 68020 detected
+			else if (result == 3)
+				detectedtype = 3; // Motorola 68030 detected
+			else if (result == 4)
+				detectedtype = 4; // Motorola 68040 detected
+		}
+	if(!quietly)
+	{
+    int x68k = detectedtype;
+    LogScreen("Automatic processor detection found a Motorola 680%d0\n",x68k);
+	}
+	}
+	return (detectedtype);
+}
+#endif
 #endif
 
 // --------------------------------------------------------------------------
