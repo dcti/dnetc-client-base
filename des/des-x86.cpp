@@ -3,9 +3,8 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: des-x86.cpp,v $
-// Revision 1.10  1998/06/17 23:33:30  cyruspatel
-// Fixed des-x86.cpp so that it would work again (now that the p?bdespro
-// changes had been backed out).
+// Revision 1.11  1998/06/18 00:18:26  silby
+// p1bdespro.asm and p2bdespro.asm aren't being removed.
 //
 // Revision 1.9  1998/06/17 22:12:51  remi
 // No need of more than two bryd_key_found and bryd_continue C routines.
@@ -33,7 +32,7 @@
 
 // encapsulate the BrydDES library
 
-static char *id="@(#)$Id: des-x86.cpp,v 1.10 1998/06/17 23:33:30 cyruspatel Exp $";
+static char *id="@(#)$Id: des-x86.cpp,v 1.11 1998/06/18 00:18:26 silby Exp $";
 
 #include <stdio.h>
 #include <string.h>
@@ -45,6 +44,7 @@ static char *id="@(#)$Id: des-x86.cpp,v 1.10 1998/06/17 23:33:30 cyruspatel Exp 
 #endif
 
 //#define DEBUG
+
 
 #if defined(__WATCOMC__) || ((CLIENT_OS == OS_SOLARIS) && (CLIENT_CPU == CPU_X86)) || ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86) && defined(__ELF__))
  #define bryd_des _bryd_des
@@ -412,7 +412,7 @@ u32 p1des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
 
   // launch bryddes
   key_is_found = false;
-  int result = bryd_des (plain, cypher, iv, key, bitmask);
+  int result = p1bryd_des (plain, cypher, iv, key, bitmask);
 
   // have we found something ?
   if (result == 0 || key_is_found)
@@ -519,7 +519,7 @@ u32 p2des_unit_func_pro( RC5UnitWork * rc5unitwork, u32 nbbits )
 
   // launch bryddes
   Bkey_is_found = false;
-  int result = bryd_des (plain, cypher, iv, key, bitmask);
+  int result = p2bryd_des (plain, cypher, iv, key, bitmask);
 
   // have we found something ?
   if (result == 0 || Bkey_is_found)
