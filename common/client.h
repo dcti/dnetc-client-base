@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.h,v $
+// Revision 1.57  1998/07/04 21:05:34  silby
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
+//
 // Revision 1.56  1998/07/02 13:09:28  kbracey
 // A couple of RISC OS fixes - printf format specifiers made long.
 // Changed a "blocks" to "block%s", n==1?"":"s".
@@ -416,15 +419,17 @@ public:
   s32 nettimeout;
   s32 noexitfilecheck;
   s32 exitfilechecktime;
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
   s32 lurk;
-#if (!defined(WINNTSERVICE))
+  s32 oldlurkstatus;
+#endif
+#if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
   s32 win95hidden;
 #endif
-#endif
+
 #if (CLIENT_OS == OS_OS2)
   s32 os2hidden;
-  s32 connectstatus;          // 0 is not connected, 1 is connected
+//  s32 connectstatus;          // 0 is not connected, 1 is connected
 #endif
   char pausefile[128];
   char ini_pausefile[128];
@@ -491,6 +496,15 @@ protected:
   s32 InternalCountBuffer( const char *filename , u8 contest);
   const char *InternalGetLocalFilename( const char *filename );
   s32 EnsureBufferConsistency( const char *filename );
+
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+s32 StartLurk(void);// Initializes Lurk Mode
+  // 0 == Successfully started lurk mode
+  // -1 == Start of lurk mode failed
+s32 LurkStatus(void);// Checks status of connection
+  // 0 == not currently connected
+  // 1 == currently connected 
+#endif
 
 #if defined(NEEDVIRTUALMETHODS)
   // methods that can be overriden to provide additional functionality

@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.124  1998/07/04 21:05:23  silby
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
+//
 // Revision 1.123  1998/07/02 13:09:20  kbracey
 // A couple of RISC OS fixes - printf format specifiers made long.
 // Changed a "blocks" to "block%s", n==1?"":"s".
@@ -155,7 +158,7 @@
 #include "client.h"
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.123 1998/07/02 13:09:20 kbracey Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.124 1998/07/04 21:05:23 silby Exp $";
 #endif
 
 #if defined(WINNTSERVICE)
@@ -843,7 +846,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (choice > 2) choice=2;
           *(s32 *)options[CONF_OFFLINEMODE].thevariable=choice;
           break;
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
         case CONF_LURKMODE:
           choice=atoi(parm);
           if (choice < 0) choice=0;
@@ -1034,7 +1037,7 @@ options[CONF_NETTIMEOUT].thevariable=&nettimeout;
 options[CONF_EXITFILECHECKTIME].thevariable=&exitfilechecktime;
 options[CONF_OFFLINEMODE].thevariable=&offlinemode;
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
 options[CONF_LURKMODE].thevariable=&lurk;
 #else
 options[CONF_LURKMODE].optionscreen=0;
@@ -1242,11 +1245,11 @@ s32 Client::ReadConfig(void)
   if (tempconfig) noexitfilecheck=1;
   tempconfig=ini.getkey(OPTION_SECTION, "exitfilechecktime", "30")[0];
   if (tempconfig) exitfilechecktime=max(tempconfig,1);
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
-#if (!defined(WINNTSERVICE))
+#if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
   tempconfig=ini.getkey(OPTION_SECTION, "win95hidden", "0")[0];
   if (tempconfig) win95hidden=1;
 #endif
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
   tempconfig=ini.getkey(OPTION_SECTION, "lurk", "0")[0];
   if (tempconfig) lurk=1;
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
@@ -1549,7 +1552,7 @@ s32 Client::WriteConfig(void)
   ini.setrecord(OPTION_SECTION, "contestdone",  IniString(contestdone[0]));
   ini.setrecord(OPTION_SECTION, "contestdone2", IniString(contestdone[1]));
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
 
   if (lurk==0)
     {
@@ -1886,46 +1889,14 @@ s32 Client::Uninstall(void)
 
 s32 Client::RunStartup(void)
 {
-#if (CLIENT_OS == OS_WIN32)
-  LPVOID lpMsgBuf;
-  OSVERSIONINFO osver;
-
-  if (lurk && (!rasenumconnections || !rasgetconnectstatus))
-  {
-    HINSTANCE hinstance;
-    hinstance=LoadLibrary("RASAPI32.dll");
-    if (hinstance == NULL)
-    {
-      LogScreen("Couldn't load rasapi32.dll\n");
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      return -1;
-    }
-    rasenumconnections = (rasenumconnectionsT) GetProcAddress(hinstance,"RasEnumConnectionsA");
-    if (rasenumconnections==NULL)
-    {
-      FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-        (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      LocalFree( lpMsgBuf );
-      return -1;
-    }
-    rasgetconnectstatus = (rasgetconnectstatusT) GetProcAddress(hinstance,"RasGetConnectStatusA");
-    if (rasgetconnectstatus==NULL)
-    {
-      FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-        (LPTSTR) &lpMsgBuf,0,NULL);
-      LogScreenf("%s\n",lpMsgBuf);
-      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
-      LocalFree( lpMsgBuf );
-      return -1;
-    }
-  }
+#if (CLIENT_OS==OS_WIN32)
+OSVERSIONINFO osver;
 #endif
+
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+if (lurk > 0) StartLurk(); //only start lurk if it needs to be started
+#endif
+
 #if ((!defined(WINNTSERVICE)) && (CLIENT_OS == OS_WIN32))
   // register ourself as a Win95 service
   if (win95hidden)
@@ -2543,7 +2514,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 &inimissing)
 #endif
 #endif
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
     else if ( strcmp( Argv[i], "-lurk" ) == 0 ) // Detect modem connections
     {
       lurk=1;

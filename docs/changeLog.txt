@@ -1,5 +1,6 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.413 98.04.04 Changed lurk code, now is more verbose and acts the same way in win32 and os2
 v2.7100.413 98.04.04 Fixed -runbuffers bug that caused invalid block info to be printed on screen after buffer exhaustion.
 v2.7100.413 98.07.04 Fixed the pause file bug in non-mt clients
 v2.7100.413 98.07.01 Fixed the -lurkonly problem when buffers ran out, and not connected, the HD would just sit and grind in OS/2 and Win32

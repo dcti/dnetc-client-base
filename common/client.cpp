@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.73  1998/07/04 21:05:30  silby
+// Changes to lurk code; win32 and os/2 code now uses the same variables, and has been integrated into StartLurk and LurkStatus functions so they now act the same.  Additionally, problems with lurkonly clients trying to connect when contestdone was wrong should be fixed.
+//
 // Revision 1.72  1998/07/04 10:30:10  jlawson
 // fixed printing of info of invalid block when -runbuffers consumes
 // all blocks from buffin
@@ -110,7 +113,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.72 1998/07/04 10:30:10 jlawson Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.73 1998/07/04 21:05:30 silby Exp $";
 #endif
 
 #include "client.h"
@@ -291,15 +294,17 @@ Client::Client()
   nettimeout=60;
   noexitfilecheck=0;
   exitfilechecktime=30;
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2)
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
   lurk=0;
-  #if !defined(WINNTSERVICE)
-    win95hidden=0;
-  #endif
+#endif
+#if ( (CLIENT_OS==OS_WIN32) && (!defined(WINNTSERVICE)) )
+  win95hidden=0;
 #endif
 #if (CLIENT_OS == OS_OS2)
 	 os2hidden=0;
-	 connectstatus=-1;      // Trigger the lurk the first time client is run
+#endif
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+         oldlurkstatus=0;      // Trigger the lurk the first time client is run
 #endif
   contestdone[0]=contestdone[1]=0;
   srand( time( NULL ) );
@@ -462,8 +467,9 @@ s32 Client::Fetch( u8 contest, Network *netin, s32 quietness )
       SignalTriggered = UserBreakTriggered = 1;
 #endif
 
-#if (CLIENT_OS == OS_OS2)
-    if(lurk && !connectstatus)   // lost tcpip connection while trying to fetch
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+//    if(lurk && !connectstatus)   // lost tcpip connection while trying to fetch
+    if(lurk && (LurkStatus() < oldlurkstatus))   // lost tcpip connection while trying to fetch
        {
        LogScreenf("TCPIP Connection Lost - Aborting fetch\n");
        return -3;                 // so stop trying and return
@@ -829,8 +835,9 @@ s32 Client::Flush( u8 contest , Network *netin, s32 quietness )
       SignalTriggered = UserBreakTriggered = 1;
     #endif
 
-#if (CLIENT_OS == OS_OS2)
-    if(lurk && !connectstatus)   // lost tcpip connection while trying to flush
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+//    if(lurk && !connectstatus)   // lost tcpip connection while trying to flush
+    if(lurk && (LurkStatus() < oldlurkstatus))   // lost tcpip connection while trying to flush
        {
        LogScreenf("TCPIP Connection Lost - Aborting flush\n");
        return -3;                 // so stop trying and return
@@ -1134,12 +1141,20 @@ s32 Client::Update (u8 contest, s32 fetcherr, s32 flusherr )
 #if (CLIENT_OS == OS_NETWARE)
         || !CliIsNetworkAvailable(0)
 #endif
-    ) {
+    ) 
+    return( -1 );
+
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+  if ( (lurk==2) && (LurkStatus() == 0) && !(fetcherr && flusherr) ) 
+    {
+    return -1;
+    };
+  // lurkonly will never connect if we're not online, unless forced by the user
+#endif
+
     mailmessage.quietmode=quietmode;
     if (!offlinemode)
        mailmessage.checktosend(0);
-    return( -1 );
-  }
 
   // Ready the net
 #if (CLIENT_OS == OS_OS2)
@@ -2066,76 +2081,45 @@ PreferredIsDone1:
     #endif
 
     //------------------------------------
-    // Lurking in OS/2
+    // Lurking
     //------------------------------------
 
-#if (CLIENT_OS == OS_OS2) && defined(MULTITHREAD)
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
     {
       if(lurk)
          {
-         s32 tmpmode;
-         DialOnDemand dod;       // just used to check online status for lurk
-
-         if(!(dod.rweonline()))
+         if (LurkStatus() == 0) // We're not connected
             {
-            tmpmode = 0;
-            if(connectstatus != tmpmode)    // No connection
-               {
-               Log("Dialup Connection Disconnected");
-               connectstatus = tmpmode;
-               if(lurk == 2)
+            if(oldlurkstatus != 0)    // Lost the connection
+              {
+               Log("\nDialup Connection Disconnected");
+               oldlurkstatus = 0;// So we know next time through this loop
+               if(lurk == 2) // Lurk-only mode
                   {
-                  Log(" - Offline Mode");
-                  offlinemode = 1;
+                  Log(" - Connections will not be initiated by the client.");
+// setting offline mode is BAD for gui clients, different workaround needed
+//                  if (offlinemode == 0) offlinemode = 1; // set us offline,
+                    // lurkonly needs a live connect - also, don't
+                    // interfere if offlinemode already ==1 or ==2
                   connectrequested = 0; // cancel any connection requests
                   }
                Log("\n");
                }
             }
-         else
+         else // We're connected!
             {
-            tmpmode = 1;
-            if(connectstatus != tmpmode)
+            connectrequested=2;// Trigger an update
+            if(oldlurkstatus != 1) // We previously weren't connected
                {
                // Only put out message the first time.
-               Log("Dialup Connection Detected\n");
-               connectstatus = tmpmode;
-               if(lurk == 2)
-                  offlinemode = 0;
+               Log("\nDialup Connection Detected\n");
+               oldlurkstatus = 1;
+// setting offlinemode is bad for gui clients.
+//               if ((lurk == 2) && (offlinemode != 2))// lurk only mode
+//                  offlinemode = 0; // cancel previous offline setting
                }
             }
          }
-    }
-#endif
-    //------------------------------------
-    //Modem detection stuff for WinNT/Win95
-    //------------------------------------
-
-#if (CLIENT_OS == OS_WIN32)
-    {
-      //detect modem connection in win95/nt...
-      if (lurk && rasenumconnections && rasgetconnectstatus)
-      {
-        RASCONN rasconn[8];
-        DWORD cb;
-        DWORD cConnections;
-        RASCONNSTATUS rasconnstatus;
-        (rasconn[0]).dwSize = sizeof(RASCONN);
-        cb = sizeof(rasconn);
-        if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
-        {
-          if (cConnections > 0)
-          {
-            rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
-            for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
-            {
-              if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
-                &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
-                  connectrequested = 2;
-            }
-          }
-        }
-      }
     }
 #endif
 
@@ -2434,13 +2418,6 @@ PreferredIsDone1:
           //---------------------
           if(exitcode == 1) TimeToQuit=1; // Time to quit
 
-#if (CLIENT_OS == OS_OS2)
-          //---------------------
-          // If lurk mode, now is the time to do an update
-          //---------------------
-          if(lurk && connectstatus)
-             connectrequested = 2;
-#endif
           //---------------------
           //now load another block for this contest
           //---------------------
@@ -3002,8 +2979,8 @@ s32 Client::SetContestDoneState( Packet * packet)
     if (contestdone[1]==1) {detect=2;contestdone[1]=0;}
   }
   if (detect==2) {
-    Log( "Received notification: %s CONTEST %s\n",(detect==2?"DES":"RC5"),
-         (contestdone[detect-1]?"IS OVER":"HAS STARTED") );
+    Log( "Received notification: %s contest %s.\n",(detect==2?"DES":"RC5"),
+         (contestdone[detect-1]?"is not currently active":"has started") );
   }
 
   if (packet->rc564contestdone == ntohl(0xBEEFF00DL)) {
@@ -3396,6 +3373,94 @@ int main( int argc, char *argv[] )
   return retcode;
 #endif // (CLIENT_OS == OS_AMIGAOS)
 }
+#endif
+
+#if ( ((CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32)) && defined(MULTITHREAD) )
+
+s32 Client::StartLurk(void)// Initializes Lurk Mode
+  // 0 == Successfully started lurk mode
+  // -1 == Start of lurk mode failed
+{
+#if (CLIENT_OS == OS_WIN32)
+  LPVOID lpMsgBuf;
+
+  if (!rasenumconnections || !rasgetconnectstatus)
+  {
+    HINSTANCE hinstance;
+    hinstance=LoadLibrary("RASAPI32.dll");
+    if (hinstance == NULL)
+    {
+      LogScreen("Couldn't load rasapi32.dll\n");
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      return -1;
+    }
+    rasenumconnections = (rasenumconnectionsT) GetProcAddress(hinstance,"RasEnumConnectionsA");
+    if (rasenumconnections==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
+    rasgetconnectstatus = (rasgetconnectstatusT) GetProcAddress(hinstance,"RasGetConnectStatusA");
+    if (rasgetconnectstatus==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreenf("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
+  }
+#endif
+
+return 0;
+}
+
+s32 Client::LurkStatus(void)// Checks status of connection
+  // 0 == not currently connected
+  // 1 == currently connected 
+{
+#if (CLIENT_OS==OS_WIN32)
+if (lurk && rasenumconnections && rasgetconnectstatus)
+  {
+  RASCONN rasconn[8];
+  DWORD cb;
+  DWORD cConnections;
+  RASCONNSTATUS rasconnstatus;
+  (rasconn[0]).dwSize = sizeof(RASCONN);
+  cb = sizeof(rasconn);
+  if (rasenumconnections(&rasconn[0], &cb, &cConnections) == 0)
+    {
+    if (cConnections > 0)
+      {
+      rasconnstatus.dwSize = sizeof(RASCONNSTATUS);
+      for (DWORD whichconn = 1; whichconn <= cConnections; whichconn++)
+        {
+        if (rasgetconnectstatus((rasconn[whichconn-1]).hrasconn,
+            &rasconnstatus) == 0 && rasconnstatus.rasconnstate == RASCS_Connected)
+            return 1;// We're connected
+        }
+      }
+    }
+  }
+#elif (CLIENT_OS==OS_OS2)
+  DialOnDemand dod;       // just used to check online status for lurk
+  return dod.rweonline();
+#endif
+return 0;// Not connected
+}
+
+
+// ---------------------------------------------------------------------------
+
 #endif
 
 // ---------------------------------------------------------------------------
