@@ -21,16 +21,26 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.6 1999/06/17 12:57:35 cyp Exp $
-==========================================================================  
-2.7111.443  new: FreeBSD: crunchers are now SMP aware (FBSD 3.0 and greater)
+Version change log: $Id: CHANGES.txt,v 1.4.2.7 1999/07/24 17:32:09 cyp Exp $
+==========================================================================
+
+2.7112.444  chg: ARM: cores have been partially rewritten.
+            fix: x86 DOS: ^C always works now. (is now trapped in a hardware
+                 interrupt (irq1) handler rather than in the 'soft' int 23h)
+            imp: win16: scheduling and idle detection has been rewritten
+            new: win16/win32: client archive includes a screen saver. When
+                 run some _other_ screen saver in the foreground and start
+                 start client in the background. It stops the client when 
+                 deactivated.
+            new: win32: client will pause itself while it sees defrag running.
+            new: FreeBSD: crunchers are now SMP aware (FBSD 3.0 and greater)
                  "active processor count detection" also works.
 2.7110.443  new: win/*nix: support -pause and -unpause (SIGTSTP and SIGCONT
                  respectively). Used like -restart/-shutdown etc.
 2.7110.442  new: win32: ioctl-driven network adapter online state detection.
                  primarily for use with non-RAS net devs (heads up! AOL users)
                  includes device masking support ala Linux/FreeBSD
-            new: unix: ps will always see the client as 'rc5des'. This is
+            new: unix: ps will now see the client as 'rc5des'. This is
                  to facilitate scripted or system-wide shutdowns/restarts.
 2.7110.441  new: all: log-to-file options/types/limits
             imp: all: made --config menus more intuitive
@@ -48,57 +58,57 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.6 1999/06/17 12:57:35 cyp Exp $
             chg: |- tracking contest open/closed states is no longer necessary
             chg: |  `- .inis no longer need to be shared with offline clients
             chg: `- buffer filenames are now generated from base names
-            new: fetch/flush from 'remote' buffers
-            new: Buffers are now FIFO (sorta)
-            new: introduced unique release number scheme
-            new: client<->proxy time synchronization added
-            new: --import option to merge buffer files
-            chg: checkpting interval is now the greater of 10min/10% change
-            chg: coalescing flush is no longer supported
-            imp: socket buffer size is increased if necessary which improves
-                 network throughput on non-unix platforms
+            new: all: fetch/flush from 'remote' buffers
+            new: all: Buffers are now FIFO (sorta)
+            new: all: introduced unique release number scheme
+            new: all: client<->proxy time synchronization added
+            new: all: --import option to merge buffer files
+            chg: all: checkpt interval is now the greater of 10min/10% change
+            chg: all: coalescing flush is no longer supported
+            imp: all: socket buffer size is increased if necessary which 
+                 improves network throughput on non-unix platforms
 2.7106.436  fix: win32gui:Percent bar in hidden mode reenabled
             fix: win32gui:Log Grapher now allows end date to be set
             fix: win32gui:Window/Logger settings now saved at shutdown
             fix: win32gui:Log File only reread when required now
-2.7106.436  fix: Randomprefix incrementation problem fixed.
+2.7106.436  fix: all: Randomprefix incrementation problem fixed.
 2.7106.435  new: Linux/FreeBSD: Added lurk functionality
                  Includes device (eth*,ppp*,sl*) masking support
 2.7105.432  fix: OS2: EMX & lurk mode changes. 
-            fix: -(un)install honors -quiet
+            fix: OS2: -(un)install honors -quiet
 2.7105.432  new: win16/32: Connection error message support added for 
-2.7105.432  new: -1 for nettimeout forces blocking network I/O
-2.7105.432  new: IDT WinChip 2 added to CPU list. 
-            new: 4% faster MMX DES core added.
-2.7103.430  chg: revert back from old "distributed.net ID" phrasing.
-            new: 50% faster DES MMX core added.
-2.7103.427  new: SMP support added for Alpha/Win32. 
-            imp: RISC OS processor detection and scheduling improved.
-2.7103.425  new: Single checkpoint used for all contests.
-2.7102.422  imp: Stripped one instruction in all x86 rc5 cores
-2.7102.422  imp: Improved menu and ini file handling of uuehttpmode,
+2.7105.432  new: all: -1 for nettimeout forces blocking network I/O
+2.7105.432  new: x86: IDT WinChip 2 added to CPU list. 
+            new: x86: 4% faster MMX DES core added.
+2.7103.430  chg: all: revert back from old "distributed.net ID" phrasing.
+            new: x86: 50% faster DES MMX core added.
+2.7103.427  new: Win32/Alpha: SMP support added for Alpha/Win32. 
+            imp: RISCOS: processor detection and scheduling improved.
+2.7103.425  new: all: Single checkpoint used for all contests.
+2.7102.422  imp: x86: Stripped one instruction in all x86 rc5 cores
+2.7102.422  imp: all: Improved menu and ini file handling of uuehttpmode,
                  keyproxy, and keyport
-2.7102.422  new: scheduledupdatetime, for coordinating project switching
+2.7102.422  new: all: scheduledupdatetime, for coordinating project switching
 2.7102.421  imp: MacOS: Many, many changes to merge MT and non-MT clients.
 2.7102.421  imp: FreeBSD, RISC OS x86 fixes.
-2.7102.421  new: "Coalescing" flush added, with notable speed increase.
+2.7102.421  new: all: "Coalescing" flush added, with notable speed increase.
             new: win32/win16/*nix: -kill/-shutdown, -hup/-restart 
-2.7102.421  fix: IRIX MT fixed. 
-            imp: Many RISC OS x86 changes. 
-            fix: MacOS Block count and processor id bug fixed.
-2.7102.421  new: Added a new self-modifying 386/486 core
-2.7102.420  fix: Fixed -hide/-quiet for unix'sh clients
-2.7102.420  fix: Bring back the cputype config screen
-2.7102.420  chg: Changed default blocksize to 31.
-2.7102.419  new: Added -hide/-quiet support for unix'ish clients
-2.7102.419  fix: Complete cmdline option cleanup.
-            new: creation of portable (encapsulated) console i/o.
+2.7102.421  fix: IRIX: MT fixed. 
+            imp: RISC OS: Many x86 coprocessor changes. 
+            fix: MacOS: Block count and processor id bug fixed.
+2.7102.421  new: x86: Added a new self-modifying 386/486 core
+2.7102.420  fix: *nix: Fixed -hide/-quiet for unix'sh clients
+2.7102.420  fix: all: Bring back the cputype config screen
+2.7102.420  chg: all: Changed default blocksize to 31.
+2.7102.419  new: *nix: Added -hide/-quiet support for unix'ish clients
+2.7102.419  fix: all: Complete cmdline option cleanup.
+            new: all: creation of portable (encapsulated) console i/o.
                  Many terminal issues fixed.
-            new: the number of threads is now unlimited
-            new: "non-threaded" clients are now threaded :)
+            new: all: the number of threads is now unlimited
+            new: all: "non-threaded" clients are now threaded :)
                  non-threaded clients use an internal round-robin
-                 mechanism but are not SMP-aware. 
-2.7100.418  fix: Randomprefix is now changed from buffer
+                 mechanism but are obviously not SMP-aware. 
+2.7100.418  fix: all: Randomprefix is now changed from buffer
                  files; offline clients will now generate
                  from the "correct" randomprefix.
 2.7100.418  fix: FreeBSD, Macos detection changes/fixes
@@ -193,18 +203,18 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.6 1999/06/17 12:57:35 cyp Exp $
 
 2.7000
 ------
-v2.7025.410 98.06.24 New ARM DES cores from Steve Lee
-v2.7025.410 98.06.23 Fixed various things in the help pager
-v2.7024.409 98.06.14 Finalized lurk modes for OS/2
-v2.7024.409 98.06.18 Users can now tell us exactly what we need to add to the
+2.7025.410 98.06.24 New ARM DES cores from Steve Lee
+2.7025.410 98.06.23 Fixed various things in the help pager
+2.7024.409 98.06.14 Finalized lurk modes for OS/2
+2.7024.409 98.06.18 Users can now tell us exactly what we need to add to the
                      CPU identification code to stop their cpu from being
                      mis-ident'd.
-v2.7024.409 98.06.17 Added a new PPro/PII/6x86/K6 *DES* core
-v2.7024.409 98.06.15 New 64-bit UltraSparc DES core - super fast !
-v2.7024.409 98.06.15 ARM version of Kwan's latest sboxes - 30% faster
-v2.7024.409 98.06.14 Fixed the OS/2 lurk mode so that it updates less
+2.7024.409 98.06.17 Added a new PPro/PII/6x86/K6 *DES* core
+2.7024.409 98.06.15 New 64-bit UltraSparc DES core - super fast !
+2.7024.409 98.06.15 ARM version of Kwan's latest sboxes - 30% faster
+2.7024.409 98.06.14 Fixed the OS/2 lurk mode so that it updates less
                      freqently.
-v2.7024.409 98.05.13 Fixed CPU identification crash under *nix with
+2.7024.409 98.05.13 Fixed CPU identification crash under *nix with
                      486 SX/DX/DX2.
 2.7024.409 98.06.08 More aesthetic fixes, SparcBSD fixes, fetch/flush  
                      quietmode added to suppress proxy message.
