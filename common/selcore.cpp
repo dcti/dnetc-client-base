@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.91 2001/01/21 18:31:03 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.92 2001/02/01 20:46:22 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -294,7 +294,7 @@ static int __apply_selcore_substitution_rules(unsigned int contestid,
       case 68020: max = 1; break;
       case 68030: max = 2; break;
       case 68040: max = 3; break;
-      default:    max = idx;
+      default:    max = cindex;
     }
     if (cindex > max)
       return max;
