@@ -3,6 +3,12 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: bench.cpp,v $
+// Revision 1.4  1998/10/09 00:42:50  blast
+// Benchmark was looking at contest 2=DES, other=RC5 and cmdline.cpp
+// was setting 0=RC5, 1=DES, made it run two rc5 benchmarks. FIXED
+//
+// Changed Calling convention for Benchmark() from u8 to unsigned int.
+//
 // Revision 1.3  1998/10/04 21:31:08  blast
 // Added #include "baseincs.h"
 //
@@ -18,7 +24,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.3 1998/10/04 21:31:08 blast Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.4 1998/10/09 00:42:50 blast Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -35,7 +41,7 @@ return "@(#)$Id: bench.cpp,v 1.3 1998/10/04 21:31:08 blast Exp $"; }
 
 // --------------------------------------------------------------------------
 
-u32 Client::Benchmark( u8 contest, u32 numk )
+u32 Client::Benchmark( unsigned int contest, u32 numk )
 {
   static int done_selcore = 0;
   
@@ -67,10 +73,10 @@ u32 Client::Benchmark( u8 contest, u32 numk )
       itersize--;
     }
 
-  if (contest == 2 && itersize < 31) //Assumes that DES is (at least)
+  if (contest == 1 && itersize < 31) //Assumes that DES is (at least)
     itersize++;                      //twice as fast as RC5.
 
-  if (contest == 2)
+  if (contest == 1)
     {
     keycountshift = 1;
     contestname = "DES";

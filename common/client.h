@@ -12,6 +12,12 @@
 // ------------------------------------------------------------------
 //
 // $Log: client.h,v $
+// Revision 1.86  1998/10/09 00:42:47  blast
+// Benchmark was looking at contest 2=DES, other=RC5 and cmdline.cpp
+// was setting 0=RC5, 1=DES, made it run two rc5 benchmarks. FIXED
+//
+// Changed Calling convention for Benchmark() from u8 to unsigned int.
+//
 // Revision 1.85  1998/10/08 20:57:14  cyp
 // Removed Client::UnlockBuffer() [is now standalone]. Changed all buffer
 // function prototypes that took 'u8' as contest id to use 'unsigned int'
@@ -499,7 +505,7 @@ public:
     // returns -1 on error, 0 otherwise
     // only writes contestdone and randomprefix .ini entries
 
-  u32  Benchmark( u8 contest, u32 numk );
+  u32  Benchmark( unsigned int contest, u32 numk );
     // returns keys/second or zero if break
 
   s32  SelfTest( u8 contest );
