@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.81  1998/07/07 02:52:57  silby
+// Another slight change to logging where date will now be shown for proper alignment in the win32gui.
+//
 // Revision 1.80  1998/07/07 02:12:14  silby
 // Removed an over-zealous #if DONT_USE_PATHWORK - was preventing .inis from following the executible's name.
 //
@@ -143,7 +146,7 @@
 //
 
 #if (!defined(lint) && defined(__showids__))
-static const char *id="@(#)$Id: client.cpp,v 1.80 1998/07/07 02:12:14 silby Exp $";
+static const char *id="@(#)$Id: client.cpp,v 1.81 1998/07/07 02:52:57 silby Exp $";
 #endif
 
 #include "client.h"
@@ -2600,7 +2603,7 @@ PreferredIsDone1:
             Log( "[%s] %s\n", CliGetTimeString(NULL,1), /* == Time() */
                               CliGetMessageForFileentryLoaded( &fileentry ) );
             Log( "[%s] %d %s block%s remain%s in file %s\n"
-                 " %s  %d %s block%s %s in file %s\n",
+                 "[%s] %d %s block%s %s in file %s\n",
                  CliGetTimeString(NULL,1), count, CliGetContestNameFromID(fileentry.contest),
                  count == 1 ? "" : "s", count == 1 ? "s" : "",
                  (nodiskbuffers ? "(memory-in)" : 
@@ -2609,7 +2612,7 @@ PreferredIsDone1:
 #else                 
                  in_buffer_file[fileentry.contest]),
 #endif                 
-                 CliGetTimeString(NULL,0), outcount, CliGetContestNameFromID(fileentry.contest),
+                 CliGetTimeString(NULL,1), outcount, CliGetContestNameFromID(fileentry.contest),
                  outcount == 1 ? "" : "s", outcount == 1 ? "is" : "are",
                  (nodiskbuffers ? "(memory-out)" : 
 #ifdef DONT_USE_PATHWORK
