@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.77 2004/06/27 22:43:02 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.78 2004/07/01 17:52:11 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -47,6 +47,8 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.77 2004/06/27 22:43:02 jlawson Exp
             fix: all: Memory buffers are now preserved on restart (#2833)
             imp: all: Increased the maximum size of memory buffers.
             new: win64: native AMD64 port
+            fix: macosx: Fixed broken logic in temperature sensor detection.
+                      Re-enable TAU reading on 7400/7410 (#3699)
 
 2.9008-491  chg: all: Disabled OGR (Phase 1) contest
             fix: all: Client didn't stop as instructed (#3672)
