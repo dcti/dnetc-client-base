@@ -2,9 +2,19 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
-// $Id: os2defs.h,v 1.2 2002/09/02 00:35:51 andreasb Exp $
+// $Id: os2defs.h,v 1.2.4.1 2002/11/10 12:15:44 pfeffi Exp $
 //
 // $Log: os2defs.h,v $
+// Revision 1.2.4.1  2002/11/10 12:15:44  pfeffi
+// OS/2:
+// a) rewritten installation;
+// b) added signal processing (kill, restart, etc);
+//     (only 'kill' is currently supported).
+//     c) added os/2 version of os2GetPIDList() - now 'pause-when-running' etc.
+//         are supported.
+//
+// code was supplied by Roman Trunov, proxyma@tula.net
+//
 // Revision 1.2  2002/09/02 00:35:51  andreasb
 // sync: merged changes from release-2-7111 branch between
 //       2000-07-11 and release-2-7111_20020901 into trunk
@@ -72,8 +82,20 @@ extern "C" {
 #include <netdb.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>     // for stat()
+#include <sys/time.h>
 #define BSD_SELECT
 #include <sys/select.h>
 }
+
+int os2CliUninstallClient(int do_the_uninstall_without_feedback);
+int os2CliInstallClient(int do_the_install_without_feedback, const char *exename);
+int os2CliSendSignal(int action, const char *exename);
+
+#define DNETC_MSG_RESTART    0x00
+#define DNETC_MSG_SHUTDOWN   0x01
+#define DNETC_MSG_PAUSE      0x02
+#define DNETC_MSG_UNPAUSE    0x03
+
+int os2GetPIDList(const char *procname, long *pidlist, int maxnumpids);
 
 #endif

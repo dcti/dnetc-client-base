@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160 2002/10/13 08:11:32 jlawson Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.1 2002/11/10 12:15:43 pfeffi Exp $"; }
 
 //#define TRACE
 
@@ -49,7 +49,6 @@ return "@(#)$Id: cmdline.cpp,v 1.160 2002/10/13 08:11:32 jlawson Exp $"; }
   extern "C" int macosx_install(const char *argv0, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
 #endif
-
 /* -------------------------------------- */
 
 static int __arg2cname(const char *arg,int def_on_fail)
@@ -618,7 +617,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             ConOutModal(scratch);
           }
         }
-        #elif (CLIENT_OS == OS_AMIGAOS)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_OS2)
         {
           int rc, cmd = DNETC_MSG_RESTART;
           const char *dowhat_descrip = "restarted";
@@ -641,7 +640,13 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             dowhat_descrip = "unpaused";
           }
 
+          #if (CLIENT_OS == OS_AMIGAOS)
           rc = amigaPutTriggerSigs(cmd); /* 0=notfound, 1=found+ok, -1=error */
+          #elif (CLIENT_OS == OS_OS2)
+          rc = os2CliSendSignal(cmd, argv[0]);
+          #else
+          #error
+          #endif
           retcode = ((rc < 0) ? 3 : 0);
           if (!loop0_quiet)
           {
@@ -677,9 +682,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         win32CliInstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
         #elif (CLIENT_OS == OS_OS2)
-        extern int os2CliInstallClient(int quiet, const char *exename);
-        os2CliInstallClient(loop0_quiet, argv[0]); /* os2inst.cpp */
-        retcode = 0;
+        retcode = os2CliInstallClient(loop0_quiet, argv[0]) ? 3 : 0; /* os2inst.cpp */
         #elif (CLIENT_OS == OS_AMIGAOS)
         retcode = 0;  
         if (0!=amigaInstall(loop0_quiet, argv[0]))
@@ -714,9 +717,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         if (misc_call)
           continue;
         #if (CLIENT_OS == OS_OS2)
-        extern int os2CliUninstallClient(int /*do it without feedback*/);
-        os2CliUninstallClient(loop0_quiet); /* os2inst.cpp */
-        retcode = 0;                  
+        retcode = os2CliUninstallClient(loop0_quiet) ? 3 : 0; /* os2inst.cpp */
         #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
         retcode = 0;
         if (linux_uninstall(utilGetAppName(), loop0_quiet)!=0)

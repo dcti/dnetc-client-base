@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75 2002/10/09 22:22:15 andreasb Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.1 2002/11/10 12:15:43 pfeffi Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -334,14 +334,19 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       }
       #elif (CLIENT_OS == OS_OS2)
       {
-        KBDKEYINFO kbdkeyinfo = {0};
-        HKBD hkbd = 0;
-        KbdPeek(&kbdkeyinfo, hkbd);
-        if ((kbdkeyinfo.fbStatus & (0xffff - KBDTRF_FINAL_CHAR_IN)) != kbdkeyinfo.fbStatus)
+        #ifdef __WATCOMC__
+        /* Cannot use KbdPeek due to strange default KBD mode. Simple getch()
+           work fine */
+        if (kbhit())
         {
-           KbdFlushBuffer(hkbd);
-           ch = kbdkeyinfo.chChar;
+          ch = getch();
+          if (!ch)
+            ch = (getch() << 8);
         }
+        #else
+          ch = getch();
+          if (!ch) ch = (getch() << 8);
+        #endif
       }
       #elif (CLIENT_OS == OS_AMIGAOS)
       {
@@ -822,11 +827,11 @@ int ConClear(void)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
       #ifndef __EMX__
-      UCHAR attrib = ' ';
+      USHORT attrib = 0x0720; /* white space on black background */
       USHORT row = 0, col = 0;
       HVIO hvio = 0;
 
-      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, (char __far16 *)&attrib, hvio);
+      VioScrollUp(0, 0, (USHORT)-1, (USHORT)-1, (USHORT)-1, (PBYTE)&attrib, hvio);
       VioSetCurPos(row, col, hvio);      /* move cursor to upper left */
       return 0;
       #else

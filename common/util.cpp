@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29 2002/10/09 22:22:15 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.1 2002/11/10 12:15:43 pfeffi Exp $"; }
 
 //#define TRACE
 
@@ -734,6 +734,11 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           break; /* while pstat_getproc() > 0 */
         }
       }
+    }
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    #elif (CLIENT_OS == OS_OS2)
+    {
+      num_found = os2GetPIDList(procname, pidlist, maxnumpids);
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)

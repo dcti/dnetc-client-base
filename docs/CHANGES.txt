@@ -21,11 +21,15 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14 2002/11/03 15:04:00 pfeffi Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.1 2002/11/10 12:15:43 pfeffi Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9000.477  fix: os2: installation complete rewritten
+            fix: os2: keyboard hangs, random colors after -config or -help in OS/2 fullscreen session
+            new: os2: "pause-when-running" enabled
+            new: os2: more command line options (-shutdown, ...)
 
 2.9000.475  new: all: contest rc5-72
             chg: all: new buffer format (incompatible with previous 

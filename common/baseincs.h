@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85 2002/10/09 22:22:14 andreasb Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.1 2002/11/10 12:15:43 pfeffi Exp $"
 
 #include "cputypes.h"
 
@@ -44,10 +44,12 @@
 #elif (CLIENT_OS == OS_OS2)
   #if defined(__WATCOMC__)
     #include "os2defs.h"
-    #include <conio.h>            /* for console functions */
     #include <direct.h>
-    #include <process.h>
+  #else
+    #include "plat/os2/os2defs.h"
   #endif
+  #include <conio.h>            /* for console functions */
+  #include <process.h>
   #define INCL_DOSPROCESS         /* For Disk functions */
   #define INCL_DOSFILEMGR         /* For Dos_Delete */
   #define INCL_ERRORS             /* DOS error values */
