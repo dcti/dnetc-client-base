@@ -65,128 +65,78 @@
 //	setting pipeline_count to something very high!!! (probably 256)
 //  
 //
-//########################################################
-*/
+   Revision 1.24  1998/11/26  17:09:32  sjf
+   1) Fixed a VERY nasty bug with the incrementing of keys (well only if
+      you were to increment the high key, get an overflow, and then have
+      to increment the low key)
+   2) Cleaned up some more comments.
+ 
+   Revision 1.23  1998/11/26  15:11:20  sjf
+   Rewrote the 2nd pipeline code so that the first 2 S values are
+   now stored in registers. (These are shared with eA_P2 and eB_P2).
+   Amazingly, it seemed to work first time, and also runs a smidgeon
+   faster.
+ 
+   NOTE: There are some further optimisations that could be done with
+   the dual pipeline version, but as I don't have access to an R10000
+   to try them out, I'm not currently that interested in doing it :)
 
-/*	
-#########################################################
-#
-#  RCS History
-#
-# $Log: mips-irix.S,v $
-# Revision 1.2  1999/11/28 18:02:19  cyp
-# sync
-#
-# Revision 1.1.2.1  1999/11/28 15:13:39  cyp
-# standardized all protos to extern "C" rc5_unit_func_mips_crunch(...)
-#
-# Revision 1.1  1998/12/01 00:19:57  foxyloxy
-# *** empty log message ***
-#
-# Revision 1.24  1998/11/26  17:09:32  sjf
-# 1) Fixed a VERY nasty bug with the incrementing of keys (well only if
-#    you were to increment the high key, get an overflow, and then have
-#    to increment the low key)
-# 2) Cleaned up some more comments.
-#
-# Revision 1.23  1998/11/26  15:11:20  sjf
-# Rewrote the 2nd pipeline code so that the first 2 S values are
-# now stored in registers. (These are shared with eA_P2 and eB_P2).
-# Amazingly, it seemed to work first time, and also runs a smidgeon
-# faster.
-#
-# NOTE: There are some further optimisations that could be done with
-# the dual pipeline version, but as I don't have access to an R10000
-# to try them out, I'm not currently that interested in doing it :)
-#
-# Revision 1.22  1998/11/26  13:28:44  sjf
-# Just a tidy up of the comments.
-#
-# Revision 1.21  1998/11/26  09:50:51  sjf
-# 1) Tidied up some comments and added some more
-# 2) Added SUPERSCALAR macro as "a command line build parameter"
-# 3) Moved some 'constant' stuff out of a loop.
-#
-# Revision 1.20  1998/11/25  16:16:41  sjf
-# Fixed some silly errors - it APPEARS to be working. i.e.
-# it passes all the self tests that the mips-crunch passed.
-# However, since mips-crunch still had a very serious bug
-# I'm still going to do some more testing :)
-#
-# Revision 1.19  1998/11/24  14:07:56  sjf
-# UNTESTED/UNASSEMBLED: In the process of changing over to the MIPS-Crunch
-# calling style.
-#
-# Revision 1.18  1998/11/17  15:47:10  sjf
-# Got both the single and dual pipelined versions running. Currently
-# the dual pipe version is 4% slower on the Mips R4400, but hopefully
-# would be faster on an R10k. There are several improvements that could
-# be made to this. The main one would be to define S0_P2 and S1_P2
-# registers and share THESE with the eA_P2 and eB_P2 registers.
-#
-# Revision 1.17  1998/11/17  15:03:24  sjf
-# I think this is a version that has both pipelines working... but it
-# needs tidying up.
-#
-# Revision 1.16  1998/11/17  11:43:51  sjf
-# Another interim build.
-#
-# Revision 1.15  1998/11/16  18:29:29  sjf
-# Another interim.
-#
-# Revision 1.14  1998/11/16  17:26:33  sjf
-# Yet another interim. Still working with single pipeline...
-#
-# Revision 1.13  1998/11/16  16:22:13  sjf
-# Yet another interim one. I'm not game to make too many changes at a go
-# because trying to get this thing working each time is a little too challenging.
-#
-# Revision 1.12  1998/11/16  16:09:45  sjf
-# Another interim version while I continue to edit.
-#
-# Revision 1.11  1998/11/16  11:17:14  sjf
-# This is an 'in transistion' source - it's in the process of
-# being changed over to support either 1 or 2 pipelines.
-#
-# Revision 1.10  1998/11/13  13:32:33  sjf
-# Just tidied some comments.
-#
-# Revision 1.9  1998/11/11  10:35:45  sjf
-# Removed an Addu per key iteration by noting that KeyHi+S1+B0 was constant
-# for all keys we want to do.  (This refers to the INITIAL keyHi)
-#
-# Revision 1.8  1998/11/11  09:54:48  sjf
-# I think I removed one lw stall at the loop test PLUS tidied
-# up the comments a bit.
-#
-# Revision 1.7  1998/11/10  10:53:36  sjf
-# Removed a few 'lw' stalls from the Round3 key generation pipeline, by
-# reusing some of the earlier 'S' registers.
-#
-# Revision 1.6  1998/11/09  16:53:18  sjf
-# 1) Saved input params on stack so that workspace register could
-#    be re-used as an S value
-# 2) Got rid of a couple of minor load stalls
-#
-# Revision 1.5  1998/11/09  15:17:23  sjf
-# Reused Sinit and Q registers as S24 and S25 so that we do fewer
-# reads and writes from the stack.
-#
-# Revision 1.4  1998/11/09  13:50:33  sjf
-# Shared S0 and eA, and S1 and eB.
-#
-# Revision 1.3  1998/11/09  13:09:14  sjf
-# Saved one add per key, and added an extra comment.
-#
-# Revision 1.2  1998/11/09  12:43:35  sjf
-# Deleted old #if 0 code
-# AND generally tidied up the file.
-#
-# Revision 1.1  1998/11/09  12:24:37  sjf
-# Initial revision
-#
-#
-#########################################################
+   Revision 1.22  1998/11/26  13:28:44  sjf
+   Just a tidy up of the comments.
+ 
+   Revision 1.21  1998/11/26  09:50:51  sjf
+   1) Tidied up some comments and added some more
+   2) Added SUPERSCALAR macro as "a command line build parameter"
+   3) Moved some 'constant' stuff out of a loop.
+ 
+   Revision 1.20  1998/11/25  16:16:41  sjf
+   Fixed some silly errors - it APPEARS to be working. i.e.
+   it passes all the self tests that the mips-crunch passed.
+   However, since mips-crunch still had a very serious bug
+   I'm still going to do some more testing :)
+
+   Revision 1.19  1998/11/24  14:07:56  sjf
+   UNTESTED/UNASSEMBLED: In the process of changing over to the MIPS-Crunch
+   calling style.
+
+   Revision 1.18  1998/11/17  15:47:10  sjf
+   Got both the single and dual pipelined versions running. Currently
+   the dual pipe version is 4% slower on the Mips R4400, but hopefully
+   would be faster on an R10k. There are several improvements that could
+   be made to this. The main one would be to define S0_P2 and S1_P2
+   registers and share THESE with the eA_P2 and eB_P2 registers.
+
+   Revision 1.17  1998/11/17  15:03:24  sjf
+   I think this is a version that has both pipelines working... but it
+   needs tidying up.
+
+   Revision 1.11  1998/11/16  11:17:14  sjf
+   This is an 'in transistion' source - it's in the process of
+   being changed over to support either 1 or 2 pipelines.
+
+   Revision 1.9  1998/11/11  10:35:45  sjf
+   Removed an Addu per key iteration by noting that KeyHi+S1+B0 was constant
+   for all keys we want to do.  (This refers to the INITIAL keyHi)
+
+   Revision 1.8  1998/11/11  09:54:48  sjf
+   I think I removed one lw stall at the loop test PLUS tidied
+   up the comments a bit.
+
+   Revision 1.7  1998/11/10  10:53:36  sjf
+   Removed a few 'lw' stalls from the Round3 key generation pipeline, by
+   reusing some of the earlier 'S' registers.
+
+   Revision 1.6  1998/11/09  16:53:18  sjf
+   1) Saved input params on stack so that workspace register could
+      be re-used as an S value
+   2) Got rid of a couple of minor load stalls
+
+   Revision 1.5  1998/11/09  15:17:23  sjf
+   Reused Sinit and Q registers as S24 and S25 so that we do fewer
+   reads and writes from the stack.
+ 
+   Revision 1.4  1998/11/09  13:50:33  sjf
+   Shared S0 and eA, and S1 and eB.
 */
 	
 	/*
