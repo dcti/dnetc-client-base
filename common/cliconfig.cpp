@@ -8,7 +8,7 @@
 // --------------------------------------------------------------------------
 
 #define OPTION_COUNT    44
-#define MAXMENUENTRIES  15
+#define MAXMENUENTRIES  18
 
 #if !defined(NOCONFIG)
 static char *menutable[5]=
@@ -274,10 +274,10 @@ static optionstruct options[OPTION_COUNT]=
   "        it will NOT trigger auto-dial, and will instead work\n"
   "        on random blocks until a connection is detected.\n"),
   3,2,10,NULL,&lurkmodetable[0][0],0,2},
-{ "in",  CFGTXT("RC5 In-Buffer Path/Name"), "[Current Path]\\buff-in.rc5",CFGTXT(""),0,1,14,NULL},
-{ "out", CFGTXT("RC5 Out-Buffer Path/Name"), "[Current Path]\\buff-out.rc5",CFGTXT(""),0,1,15,NULL},
-{ "in2", CFGTXT("DES In-Buffer Path/Name"), "[Current Path]\\buff-in.des",CFGTXT(""),0,1,16,NULL},
-{ "out2",CFGTXT("DES Out-Buffer Path/Name"),"[Current Path]\\buff-out.des",CFGTXT(""),0,1,17,NULL},
+{ "in",  CFGTXT("RC5 In-Buffer Path/Name"), "buff-in.rc5",CFGTXT(""),5,1,14,NULL},
+{ "out", CFGTXT("RC5 Out-Buffer Path/Name"), "buff-out.rc5",CFGTXT(""),5,1,15,NULL},
+{ "in2", CFGTXT("DES In-Buffer Path/Name"), "buff-in.des",CFGTXT(""),5,1,16,NULL},
+{ "out2",CFGTXT("DES Out-Buffer Path/Name"),"buff-out.des",CFGTXT(""),5,1,17,NULL},
 { "pausefile",CFGTXT("Pausefile name"),"none",CFGTXT("(blank = no pausefile)"),5,1,13,NULL}
 };
 
@@ -703,10 +703,14 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
           break;
 #endif
         case CONF_CHECKPOINT:
-          strncpy( checkpoint_file[0] , parm, sizeof(checkpoint_file)/2 -1 );
+          strncpy( ini_checkpoint_file[0] , parm, sizeof(ini_checkpoint_file)/2 -1 );
+          if (strcmpi(ini_checkpoint_file[0],"none") != 0)
+            strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
           break;
         case CONF_CHECKPOINT2:
-          strncpy( checkpoint_file[1] , parm, sizeof(checkpoint_file)/2 -1 );
+          strncpy( ini_checkpoint_file[1] , parm, sizeof(ini_checkpoint_file)/2 -1 );
+          if (strcmpi(ini_checkpoint_file[1],"none") != 0)
+            strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
           break;
         case CONF_PREFERREDBLOCKSIZE:
           preferred_blocksize = atoi(parm);
@@ -779,19 +783,25 @@ for ( temp2=1; temp2 < MAXMENUENTRIES; temp2++ )
             };
 #endif
         case CONF_RC5IN:
-          strncpy( in_buffer_file[0] , parm, sizeof(in_buffer_file)/2 -1 );
+          strncpy( ini_in_buffer_file[0] , parm, sizeof(ini_in_buffer_file)/2 -1 );
+          strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
           break;
         case CONF_RC5OUT:
-          strncpy( out_buffer_file[0] , parm, sizeof(out_buffer_file)/2 -1 );
+          strncpy( ini_out_buffer_file[0] , parm, sizeof(ini_out_buffer_file)/2 -1 );
+          strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
           break;
         case CONF_DESIN:
-          strncpy( in_buffer_file[1] , parm, sizeof(in_buffer_file)/2 -1 );
+          strncpy( ini_in_buffer_file[1] , parm, sizeof(ini_in_buffer_file)/2 -1 );
+          strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
           break;
         case CONF_DESOUT:
-          strncpy( out_buffer_file[1] , parm, sizeof(out_buffer_file)/2 -1 );
+          strncpy( ini_out_buffer_file[1] , parm, sizeof(ini_out_buffer_file)/2 -1 );
+          strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
           break;
         case CONF_PAUSEFILE:
-          strncpy( pausefile, parm, sizeof(pausefile) -1 );
+          strncpy( ini_pausefile, parm, sizeof(ini_pausefile) -1 );
+          if (strcmpi(ini_pausefile,"none") != 0)
+            strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
           break;
         default:
           break;
@@ -930,8 +940,8 @@ options[CONF_SMTPDEST].thevariable=&smtpdest;
 options[CONF_NUMCPU].optionscreen=0;
 #endif
 options[CONF_NUMCPU].thevariable=&numcpu;
-options[CONF_CHECKPOINT].thevariable=&checkpoint_file[0];
-options[CONF_CHECKPOINT2].thevariable=&checkpoint_file[1];
+options[CONF_CHECKPOINT].thevariable=&ini_checkpoint_file[0];
+options[CONF_CHECKPOINT2].thevariable=&ini_checkpoint_file[1];
 options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
 options[CONF_PREFERREDBLOCKSIZE].thevariable=&preferred_blocksize;
 options[CONF_QUIETMODE].thevariable=&quietmode;
@@ -953,11 +963,11 @@ options[CONF_LURKMODE].thevariable=&lurk;
 #else
 options[CONF_LURKMODE].optionscreen=0;
 #endif
-options[CONF_RC5IN].thevariable=&in_buffer_file[0];
-options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
-options[CONF_DESIN].thevariable=&in_buffer_file[1];
-options[CONF_DESOUT].thevariable=&out_buffer_file[1];
-options[CONF_PAUSEFILE].thevariable=&pausefile;
+options[CONF_RC5IN].thevariable=&ini_in_buffer_file[0];
+options[CONF_RC5OUT].thevariable=&ini_out_buffer_file[0];
+options[CONF_DESIN].thevariable=&ini_in_buffer_file[1];
+options[CONF_DESOUT].thevariable=&ini_out_buffer_file[1];
+options[CONF_PAUSEFILE].thevariable=&ini_pausefile;
 
 if (messagelen != 0)
   {
@@ -1098,8 +1108,8 @@ s32 Client::ReadConfig(void)
 #if defined(MULTITHREAD)
   numcpu = INIGETKEY(CONF_NUMCPU);
 #endif
-  INIGETKEY(CONF_CHECKPOINT).copyto(checkpoint_file[0], sizeof(checkpoint_file)/2);
-  INIGETKEY(CONF_CHECKPOINT2).copyto(checkpoint_file[1], sizeof(checkpoint_file)/2);
+  INIGETKEY(CONF_CHECKPOINT).copyto(ini_checkpoint_file[0], sizeof(ini_checkpoint_file)/2);
+  INIGETKEY(CONF_CHECKPOINT2).copyto(ini_checkpoint_file[1], sizeof(ini_checkpoint_file)/2);
   randomprefix = INIGETKEY(CONF_RANDOMPREFIX);
   preferred_contest_id = INIGETKEY(CONF_PREFERREDCONTEST) - 1;
   preferred_blocksize = INIGETKEY(CONF_PREFERREDBLOCKSIZE);
@@ -1111,10 +1121,10 @@ s32 Client::ReadConfig(void)
     tempconfig=ini.getkey(OPTION_SECTION, "runoffline", "0")[0];
     if (tempconfig) offlinemode=1;
   }
-  ini.getkey(OPTION_SECTION,"in",in_buffer_file[0])[0].copyto(in_buffer_file[0],sizeof(in_buffer_file)/2);
-  ini.getkey(OPTION_SECTION,"out",out_buffer_file[0])[0].copyto(out_buffer_file[0],sizeof(out_buffer_file)/2);
-  ini.getkey(OPTION_SECTION,"in2",in_buffer_file[1])[0].copyto(in_buffer_file[1],sizeof(in_buffer_file)/2);
-  ini.getkey(OPTION_SECTION,"out2",out_buffer_file[1])[0].copyto(out_buffer_file[1],sizeof(out_buffer_file)/2);
+  ini.getkey(OPTION_SECTION,"in",ini_in_buffer_file[0])[0].copyto(ini_in_buffer_file[0],sizeof(ini_in_buffer_file)/2);
+  ini.getkey(OPTION_SECTION,"out",ini_out_buffer_file[0])[0].copyto(ini_out_buffer_file[0],sizeof(ini_out_buffer_file)/2);
+  ini.getkey(OPTION_SECTION,"in2",ini_in_buffer_file[1])[0].copyto(ini_in_buffer_file[1],sizeof(ini_in_buffer_file)/2);
+  ini.getkey(OPTION_SECTION,"out2",ini_out_buffer_file[1])[0].copyto(ini_out_buffer_file[1],sizeof(ini_out_buffer_file)/2);
   tempconfig=ini.getkey(OPTION_SECTION, "percentoff", "0")[0];
   if (tempconfig) percentprintingoff=1;
   tempconfig=ini.getkey(OPTION_SECTION, "frequent", "0")[0];
@@ -1143,7 +1153,7 @@ s32 Client::ReadConfig(void)
   tempconfig=ini.getkey(OPTION_SECTION, "lurkonly", "0")[0];
   if (tempconfig) {lurk=2; connectoften=0;}
 #endif
-  ini.getkey(OPTION_SECTION,"pausefile",pausefile)[0].copyto(pausefile,sizeof(pausefile));
+  ini.getkey(OPTION_SECTION,"pausefile",ini_pausefile)[0].copyto(ini_pausefile,sizeof(ini_pausefile));
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone", "0")[0];
   if (tempconfig) contestdone[0]=1;
   tempconfig=ini.getkey(OPTION_SECTION, "contestdone2", "0")[0];
@@ -1211,8 +1221,20 @@ void Client::ValidateConfig( void )
   if ( minutes < 0 ) minutes=0;
   if ( blockcount < 0 ) blockcount=0;
 
-  if (strlen(checkpoint_file[0])==0) strcpy(checkpoint_file[0],"none");
-  if (strlen(checkpoint_file[1])==0) strcpy(checkpoint_file[1],"none");
+  strcpy(in_buffer_file[0],InternalGetLocalFilename(ini_in_buffer_file[0]));
+  strcpy(out_buffer_file[0],InternalGetLocalFilename(ini_out_buffer_file[0]));
+  strcpy(in_buffer_file[1],InternalGetLocalFilename(ini_in_buffer_file[1]));
+  strcpy(out_buffer_file[1],InternalGetLocalFilename(ini_out_buffer_file[1]));
+  
+  if (strcmpi(ini_pausefile,"none") != 0)
+    strcpy(pausefile,InternalGetLocalFilename(ini_pausefile));
+
+  if (strlen(ini_checkpoint_file[0])==0) strcpy(ini_checkpoint_file[0],"none");
+  if (strcmpi(ini_checkpoint_file[0],"none") != 0)
+    strcpy(checkpoint_file[0],InternalGetLocalFilename(ini_checkpoint_file[0]));
+  if (strlen(ini_checkpoint_file[1])==0) strcpy(ini_checkpoint_file[1],"none");
+  if (strcmpi(ini_checkpoint_file[1],"none") != 0)
+    strcpy(checkpoint_file[1],InternalGetLocalFilename(ini_checkpoint_file[1]));
 
   CheckForcedKeyport();
 
@@ -1389,8 +1411,8 @@ s32 Client::WriteConfig(void)
 #if defined(MULTITHREAD)
   INISETKEY( CONF_NUMCPU, numcpu );
 #endif
-  INISETKEY( CONF_CHECKPOINT, checkpoint_file[0] );
-  INISETKEY( CONF_CHECKPOINT2, checkpoint_file[1] );
+  INISETKEY( CONF_CHECKPOINT, ini_checkpoint_file[0] );
+  INISETKEY( CONF_CHECKPOINT2, ini_checkpoint_file[1] );
   INISETKEY( CONF_RANDOMPREFIX, randomprefix );
   INISETKEY( CONF_PREFERREDBLOCKSIZE, preferred_blocksize );
   INISETKEY( CONF_PREFERREDCONTEST, (s32)(preferred_contest_id + 1) );
@@ -1403,11 +1425,11 @@ s32 Client::WriteConfig(void)
   INISETKEY( CONF_CKTIME, checkpoint_min );
   INISETKEY( CONF_NETTIMEOUT, nettimeout );
   INISETKEY( CONF_EXITFILECHECKTIME, exitfilechecktime );
-//  INISETKEY( CONF_RC5IN, in_buffer_file[0]);
-//  INISETKEY( CONF_RC5OUT, out_buffer_file[0]);
-//  INISETKEY( CONF_DESIN, in_buffer_file[1]);
-//  INISETKEY( CONF_DESOUT, out_buffer_file[1]);
-  INISETKEY( CONF_PAUSEFILE, pausefile);
+  INISETKEY( CONF_RC5IN, ini_in_buffer_file[0]);
+  INISETKEY( CONF_RC5OUT, ini_out_buffer_file[0]);
+  INISETKEY( CONF_DESIN, ini_in_buffer_file[1]);
+  INISETKEY( CONF_DESOUT, ini_out_buffer_file[1]);
+  INISETKEY( CONF_PAUSEFILE, ini_pausefile);
 
   if (offlinemode == 0)
     {
