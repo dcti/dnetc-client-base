@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.136 1999/12/09 12:47:32 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.137 1999/12/10 20:02:52 remi Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -632,12 +632,6 @@ static int __core_picker(Problem *problem, unsigned int contestid)
   #ifdef HAVE_CSC_CORES
   if( contestid == CSC ) // CSC
   {
-    //xtern "C" s32 csc_unit_func_1k  ( RC5UnitWork *, u32 *iterations, void *membuff );
-    //xtern "C" s32 csc_unit_func_1k_i( RC5UnitWork *, u32 *iterations, void *membuff );
-    //xtern "C" s32 csc_unit_func_6b  ( RC5UnitWork *, u32 *iterations, void *membuff );
-    //xtern "C" s32 csc_unit_func_6b_i( RC5UnitWork *, u32 *iterations, void *membuff );
-
-    problem->unit_func = csc_unit_func_1k_i; /* default */
     switch( coresel ) 
     {
       case 0 : problem->unit_func = csc_unit_func_6b_i;
@@ -649,10 +643,19 @@ static int __core_picker(Problem *problem, unsigned int contestid)
                break;
       case 3 : problem->unit_func = csc_unit_func_1k;
                break;
-#if defined(MMX_CSC)
-      case 4 : problem->unit_func = csc_unit_func_6b_mmx;
-               break;
-#endif
+      #if defined(MMX_CSC)
+      case 4 : {
+        static int ismmx = -1;
+        if (ismmx == -1)
+        {
+          long det = GetProcessorType(1 /* quietly */);
+          ismmx = (det >= 0) ? (det & 0x100) : 0;
+        }
+        if (ismmx) 
+	  problem->unit_func = csc_unit_func_6b_mmx;
+	break;
+      }
+      #endif
     }
     return coresel;
   }
