@@ -2,10 +2,15 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
+// $Log: confopt.cpp,v $
+// Revision 1.3  1998/11/26 06:51:31  cyp
+// Added missing log entry.
+//
+//
 
 #if (!defined(lint) && defined(__showids__))
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.2 1998/11/26 06:47:25 cyp Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.3 1998/11/26 06:51:31 cyp Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
