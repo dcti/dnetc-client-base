@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.48 2000/06/03 12:41:14 cyp Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.49 2000/06/05 22:15:13 oliver Exp $
 ==========================================================================
 
 2.8000
@@ -43,6 +43,10 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.48 2000/06/03 12:41:14 cyp Exp $
                  low-end cpus. http://www.distributed.net/faq/cache/188.html
             fix: NetWare: all MP (migration) issues resolved.     
             fix: most: user changes to time-of-day won't affect "Summary:"
+            chg: AmigaOS: updated 68k cores and many changes made to bring
+                 the Amiga version up to date
+            chg: AmigaOS: switched from the sas/c compiler to gcc
+            new: AmigaOS: native WarpUp/WarpOS client for PowerPC
 
 2.8008.459  new: x86: new rc5 K7 core thanks to
                  Sean Stanek <vulture@iastate.edu>
