@@ -122,7 +122,6 @@ Client::Client()
   uuehttpmode = 1;
   strcpy(httpid,"");
   totalBlocksDone[0] = totalBlocksDone[1] = 0;
-  old_totalBlocksDone[0] = old_totalBlocksDone[1] = 0;
   timeStarted = 0;
   strcpy(logname, "none");
   strcpy(ini_logname, "none");
@@ -2144,7 +2143,7 @@ PreferredIsDone1:
               sprintf(keyscompleted,"%u",ntohl( rc5result.iterations.lo ) * (tmpcontest == 1 ? 2 : 1));
 
             if ( (problem[cpu_i]).timehi > 0 )
-            {
+              {
               Log( "\n[%s] Completed block %08lX:%08lX (%s keys)\n"
                  "                        %02d:%02d:%02d.%02d - [%.2f keys/sec]\n",
                 Time(), ntohl( rc5result.key.hi ) , ntohl( rc5result.key.lo ),
@@ -2155,21 +2154,71 @@ PreferredIsDone1:
                 ( ( (double) (problem[cpu_i]).timehi) + (((double)((problem[cpu_i]).timelo))/1000000.0) ) ) *
                 ( 100000.0 - (double) (problem[cpu_i]).startpercent ) / 100000.0 )
                 );
-            }
+              }
             else
-            {
+              {
               Log( "\n[%s] Completed block %08lX:%08lX (%s keys)\n"
                  "                        %02d:%02d:%02d.%02d - [--- keys/sec]\n",
                  Time(), ntohl( rc5result.key.hi ) , ntohl( rc5result.key.lo ),
                  keyscompleted,
                  (problem[cpu_i]).timehi / 3600 , ((problem[cpu_i]).timehi % 3600) / 60,
                  (problem[cpu_i]).timehi % 60, (problem[cpu_i]).timelo/10000L );
-            }
+              }
             totkeyscount[tmpcontest] += (u32) ((ntohl( rc5result.keysdone.lo ) *
               ( ( 100000.0 - (double) (problem[cpu_i]).startpercent ) / 100000.0 ) )
               / (tmpcontest == 0 ? 32768. : 16384.));
           }
           #endif //statistics are smart or not
+
+          //----------------------------------------
+          // Figure out which contest block was from, and increment totals
+          //----------------------------------------
+
+          tmpcontest = (u8) (problem[cpu_i]).RetrieveState( (ContestWork *) &fileentry , 1 ); 
+
+          totalBlocksDone[tmpcontest]++;
+
+          //----------------------------------------
+          // Print contest totals
+          //----------------------------------------
+
+          // Detect/report any changes to the total completed blocks...
+  
+     
+          #ifdef NEW_STATS_AND_LOGMSG_STUFF
+          {
+          //display summaries only of contests w/ more than one block done
+          int i=1;
+          for (s32 tmpc = 0; tmpc < 2; tmpc++)
+            {
+              if (totalBlocksDone[tmpc] > 0)
+                {
+                  Log( "%c%s%c Summary: %s\n",
+                       ((i == 1) ? ('[') : (' ')), CliGetTimeString(NULL, i),
+                       ((i == 1) ? (']') : (' ')), CliGetSummaryStringForContest(tmpc) );
+                  if ((--i) < 0) i = 0;
+                }
+            }
+          }
+          #else
+          {
+          gettimeofday( &stop, &dummy );
+          len = max(.01, ((double)stop.tv_sec - global_timehi) + ((double)stop.tv_usec - global_timelo)/1000000.0 );
+          global_timehi2 = (u32) len;
+          global_timelo2 = (u32) ( ((u32) (len*1000000.0)) % 1000000L);
+
+          Log( "[%s] Tot: %d RC5 blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n"
+               "                        Tot: %d DES blocks %02d:%02d:%02d.%02d - [%.2f keys/sec]\n",
+          Time(), totalBlocksDone[0],
+          global_timehi2 / 3600 , (global_timehi2 % 3600) / 60, global_timehi2 % 60, global_timelo2/10000L,
+           ( ( ( (double) totkeyscount[0]) /
+           ( ( (double) (global_timehi2) + (((double) global_timelo2)/1000000.0) ) / 32768.0 ) ) ),
+          totalBlocksDone[1],
+          global_timehi2 / 3600 , (global_timehi2 % 3600) / 60, global_timehi2 % 60, global_timelo2/10000L,
+          ( ( ( (double) totkeyscount[1]) /
+          ( ( (double) (global_timehi2) + (((double) global_timelo2)/1000000.0) ) / 32768.0 ) ) ) );
+          }
+          #endif
 
           //---------------------
           //put the completed problem away
@@ -2208,8 +2257,11 @@ PreferredIsDone1:
 
           // send it back...
           if ( PutBufferOutput( &fileentry ) == -1 )
+            {
             Log( "PutBuffer Error\n" );
-          totalBlocksDone[tmpcontest]++;
+            totalBlocksDone[tmpcontest]--;// Block didn't get put into a
+                                          //buffer, subtract it from the count.
+            };
 
           //---------------------
           //delete the checkpoint file, info is outdated
@@ -2220,6 +2272,7 @@ PreferredIsDone1:
             unlink(checkpoint_file[0]);
           if (strcmp(checkpoint_file[1],"none") != 0)
             unlink(checkpoint_file[1]);
+
 
           //---------------------
           // See if the request to quit after the completed block
@@ -2589,7 +2642,7 @@ PreferredIsDone1:
     //----------------------------------------
 
     // Detect/report any changes to the total completed blocks...
-    if ((old_totalBlocksDone[0] != totalBlocksDone[0]) || (old_totalBlocksDone[1] != totalBlocksDone[1]) )
+/*    if ((old_totalBlocksDone[0] != totalBlocksDone[0]) || (old_totalBlocksDone[1] != totalBlocksDone[1]) )
     {
       #ifdef NEW_STATS_AND_LOGMSG_STUFF
       {
@@ -2629,7 +2682,7 @@ PreferredIsDone1:
 #endif
       old_totalBlocksDone[0] = totalBlocksDone[0];
       old_totalBlocksDone[1] = totalBlocksDone[1];
-    }
+    }*/
 
   }  // End of MAIN LOOP
 
@@ -3150,7 +3203,7 @@ int main( int argc, char *argv[] )
 #if (CLIENT_OS == OS_RISCOS)
     if (!guirestart)
 #endif
-      client.Log("\n\nRC5DES Client v2.%d.%d started.\nUsing %s as email address.\n\n",
+      client.Log("RC5DES Client v2.%d.%d started.\nUsing %s as email address.\n\n",
              CLIENT_CONTEST*100+CLIENT_BUILD,CLIENT_BUILD_FRAC,client.id);
 //client.LogScreenf("in: %s\n",client.in_buffer_file[0]);
 //client.LogScreenf("out: %s\n",client.out_buffer_file[0]);
