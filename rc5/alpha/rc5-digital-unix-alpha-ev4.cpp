@@ -25,21 +25,14 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg2_cpp (void) {
-return "@(#)$Id: rc5-digital-unix-alpha-ev4.cpp,v 1.1 1999/01/29 04:15:36 pct Exp $"; }
+return "@(#)$Id: rc5-digital-unix-alpha-ev4.cpp,v 1.2 1999/12/08 02:07:07 cyp Exp $"; }
 #endif
 
 #include "problem.h"
 #include "rotate.h"
 
-
-#if (PIPELINE_COUNT != 2)
-#error "Expecting pipeline count of 2"
-#endif
-
-#ifndef _CPU_32BIT_
-#error "everything assumes a 32bit CPU..."
-#endif
-
+#define PIPELINE_COUNT 2 //this is a two pipeline core
+extern "C" u32 rc5_alpha_osf_ev4( RC5UnitWork * , u32 );   /* this */
 
 #define _P_RC5     0xB7E15163
 #define _Q     0x9E3779B9
@@ -101,7 +94,7 @@ Lhi2 = ROTL(Lhi2 + A2 + Llo2, A2 + Llo2);
 // Returns: 0 - nothing found, 1 - found on pipeline 1,
 //   2 - found pipeline 2, 3 - ... etc ...
 
-u32 rc5_alpha_osf_ev4( RC5UnitWork * rc5unitwork )
+static u32 rc5_unit_func( RC5UnitWork * rc5unitwork )
 {
   register u32 Llo1, Lhi1;
   register u32 Llo2, Lhi2;
@@ -236,4 +229,55 @@ u32 rc5_alpha_osf_ev4( RC5UnitWork * rc5unitwork )
   }
 }
 
+/* -----------------------------------------------------------------
 
+u32 rc5_alpha_osf_ev4( RC5UnitWork * rc5unitwork, u32 iterations )
+{                                
+  u32 kiter = 0;
+  int keycount = iterations;
+  int pipeline_count = PIPELINE_COUNT;
+  
+  //LogScreenf ("rc5unitwork = %08X:%08X (%X)\n", rc5unitwork.L0.hi, rc5unitwork.L0.lo, keycount);
+  while ( keycount-- ) // iterations ignores the number of pipelines
+  {
+    u32 result = rc5_unit_func( rc5unitwork );
+    if ( result )
+    {
+      kiter += result-1;
+      break;
+    }
+    else
+    {
+      /* note: we switch the order */  
+      register u32 tempkeylo = rc5unitwork->L0.hi; 
+      register u32 tempkeyhi = rc5unitwork->L0.lo;
+      rc5unitwork->L0.lo =
+        ((tempkeylo >> 24) & 0x000000FFL) |                               
+        ((tempkeylo >>  8) & 0x0000FF00L) |                               
+        ((tempkeylo <<  8) & 0x00FF0000L) |                               
+        ((tempkeylo << 24) & 0xFF000000L);                                
+      rc5unitwork->L0.hi = 
+        ((tempkeyhi >> 24) & 0x000000FFL) |                               
+        ((tempkeyhi >>  8) & 0x0000FF00L) |                               
+        ((tempkeyhi <<  8) & 0x00FF0000L) |                               
+        ((tempkeyhi << 24) & 0xFF000000L);                                
+      rc5unitwork->L0.lo += pipeline_count;
+      if (rc5unitwork->L0.lo < ((u32)pipeline_count))
+        rc5unitwork->L0.hi++;
+      tempkeylo = rc5unitwork->L0.hi; 
+      tempkeyhi = rc5unitwork->L0.lo;
+      rc5unitwork->L0.lo =
+        ((tempkeylo >> 24) & 0x000000FFL) |                               
+        ((tempkeylo >>  8) & 0x0000FF00L) |                               
+        ((tempkeylo <<  8) & 0x00FF0000L) |                               
+        ((tempkeylo << 24) & 0xFF000000L);                                
+      rc5unitwork->L0.hi = 
+        ((tempkeyhi >> 24) & 0x000000FFL) |                               
+        ((tempkeyhi >>  8) & 0x0000FF00L) |                               
+        ((tempkeyhi <<  8) & 0x00FF0000L) |                               
+        ((tempkeyhi << 24) & 0xFF000000L);                                
+      kiter += pipeline_count;
+    }
+  }
+  return kiter;
+}  

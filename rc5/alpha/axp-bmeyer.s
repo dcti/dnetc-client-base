@@ -1,9 +1,10 @@
 # Alpha AXP rc5 core by Bernie Meyer (bmeyer@cs.monash.edu.au)
+# @(#)$Id: axp-bmeyer.s,v 1.4 1999/12/08 02:07:06 cyp Exp $
 .align 5                                # mem_off=-1 0     0 (   0) | 
 .set noat                               # mem_off=-1 0     0 (   0) | 
-.globl rc5_unit_func_axp_bmeyer                 # mem_off=-1 0     0 (   0) | 
-.ent rc5_unit_func_axp_bmeyer                   # mem_off=-1 0     0 (   0) | 
-rc5_unit_func_axp_bmeyer:                       # mem_off=-1 0     0 (   0) | 
+.globl rc5_unit_func_axp_bmeyer_asm     # mem_off=-1 0     0 (   0) | 
+.ent rc5_unit_func_axp_bmeyer_asm       # mem_off=-1 0     0 (   0) | 
+rc5_unit_func_axp_bmeyer_asm:           # mem_off=-1 0     0 (   0) | 
 .frame $30,0,$26,0                      # mem_off=-1 0     0 (   0) | 
 lda $1,alpha_S_not                      # mem_off=99999999 0     1 (   2) | $1(0) 
 mov $16, $0                             # mem_off=-1 1     1 (   0) | $0(0) 
@@ -2807,4 +2808,4 @@ ldq $15, 448($1)                        # mem_off=448 0  1378 (   0) |
 ldq $29, 464($1)                        # mem_off=464 1  1378 (   0) | 
 ret $31,($26),1                         # mem_off=-1 2  1379 (   0) | 
 # -------- STALL ----------
-.end rc5_unit_func_axp_bmeyer                   # mem_off=-1 3     0 (   0) | 
+.end rc5_unit_func_axp_bmeyer_asm       # mem_off=-1 3     0 (   0) | 
