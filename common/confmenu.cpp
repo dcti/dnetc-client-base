@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confmenu.cpp,v $
+// Revision 1.28  1999/02/14 02:57:46  silby
+// Fixed two bugs with httpid handling.
+//
 // Revision 1.27  1999/02/10 03:46:32  cyp
 // dialup script/profile options are now disabled if dialwhenneeded is off.
 //
@@ -112,7 +115,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.27 1999/02/10 03:46:32 cyp Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.28 1999/02/14 02:57:46 silby Exp $"; }
 #endif
 
 #include "cputypes.h" // CLIENT_OS, s32
@@ -386,6 +389,7 @@ int Client::Configure( void )
     else
       {
       *p++ = 0;
+      p[strlen(p)-1] = 0;
       strcpy(userpass.password,p);
       }
     }
@@ -935,7 +939,7 @@ int Client::Configure( void )
       httpid[0] = 0;
     else if (uuehttpmode == 2 || uuehttpmode == 3)
       {
-      if (((strlen(userpass.username)+strlen(userpass.username)+4)*4/3) >
+      if (((strlen(userpass.username)+strlen(userpass.password)+4)*4/3) >
         sizeof(httpid)) /* too big. what should we do? */
         httpid[0] = 0; 
       else
