@@ -888,6 +888,9 @@ while (returnvalue == 0)
    printf(" 4) %s\n\n",menutable[3]);
    printf(" 9) Discard settings and exit\n");
    printf(" 0) Save settings and exit\n\n");
+   if (strcmpi(id,"rc5@distributed.net")==0)
+     printf("*Note: You have not yet configured your e-mail address.\n"
+            "       Please go to %s and configure it.\n",menutable[0]);
    printf("Choice --> ");
 
    fflush( stdout );
