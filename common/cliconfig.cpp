@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.190  1998/10/30 04:38:33  foxyloxy
+//
+// If we don't have an .ini file, we don't need to read it.
+//
 // Revision 1.189  1998/10/26 02:48:40  cyp
 // Many fixes
 //
@@ -252,7 +256,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.189 1998/10/26 02:48:40 cyp Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.190 1998/10/30 04:38:33 foxyloxy Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -1484,6 +1488,7 @@ s32 Client::ReadConfig(void)  //DO NOT PRINT TO SCREEN (or whatever) FROM HERE
 
   inierror = ini.ReadIniFile( GetFullPathForFilename( inifilename ) );
 
+  if (inierror) return( inierror ? -1 : 0 );
   INIGETKEY(CONF_ID).copyto(id, sizeof(id));
   INIGETKEY(CONF_THRESHOLDI).copyto(buffer, sizeof(buffer));
   p = strchr( buffer, ':' );
