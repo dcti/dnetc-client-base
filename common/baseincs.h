@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.79 2000/01/09 20:32:37 cyp Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.80 2000/01/16 22:38:23 cyp Exp $"
 
 #include "cputypes.h"
 
@@ -144,6 +144,7 @@ extern "C" {
   #include <OS.h>
   #include <unistd.h>
   #include <fcntl.h>
+  #include <sys/time.h>  // timeval
 #elif (CLIENT_OS == OS_NETWARE)
   #include <sys/time.h> //timeval
   #include <unistd.h> //isatty, chdir, getcwd, access, unlink, chsize, O_...

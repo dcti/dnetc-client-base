@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.151 2000/01/08 23:36:05 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.152 2000/01/16 22:38:24 cyp Exp $"; }
 
 //#define TRACE
 
@@ -323,6 +323,8 @@ int ParseCommandline( Client *client,
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
           #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
           pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
+          #elif (CLIENT_OS == OS_BEOS)
+          pscmd = "/bin/ps | egrep zzz 2>/dev/null";  /* get the (sleeping) main thread ID, not the team ID */
           #else
           #error fixme: select an appropriate ps syntax
           #endif
@@ -1565,7 +1567,8 @@ int ParseCommandline( Client *client,
     client->quietmode = 0;
     ModeReqSet( MODEREQ_CONFIG );
   }
-  #if defined(__unix__)
+  /* BeOS gcc defines __unix__ for some strange reason... */
+  #if defined(__unix__) && (CLIENT_OS != OS_BEOS)
   else if (!terminate_app && run_level==0 && (ModeReqIsSet(-1)==0) && 
            client->quietmode)
   {

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.70 2000/01/16 17:09:14 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.71 2000/01/16 22:38:24 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -316,7 +316,11 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         fflush(stdout);
         tcgetattr(fd,&stored); /* Get the original termios configuration */
         memcpy(&newios,&stored,sizeof(struct termios));
+        #if (CLIENT_OS == OS_BEOS)
+        newios.c_lflag &= ~(ECHO|ECHONL);  /* BeOS does not have (non-Posix?) ECHOPRT and ECHOCTL */
+        #else
         newios.c_lflag &= ~(ECHO|ECHONL|ECHOPRT|ECHOCTL); /* no echo at all */
+        #endif
         newios.c_lflag &= ~(ICANON);     /* not linemode and no translation */
         newios.c_cc[VTIME] = 0;          /* tsecs inter-char gap */
         newios.c_cc[VMIN] = 1;           /* number of chars to block for */
@@ -629,7 +633,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       height = h; width = w;
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
-        (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX)
+        (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX) || \
+        (CLIENT_OS == OS_BEOS)
     /* good for any non-sco flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
