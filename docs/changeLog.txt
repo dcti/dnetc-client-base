@@ -1,5 +1,7 @@
 Dual mode (RC5DES) clients
 --------------------------
+v2.7100.413 98.07.01 Fixed the -lurkonly problem when buffers ran out, and not connected, the HD would just sit and grind in OS/2 and Win32
+v2.7100.413 98.07.01 Put -lurk/-lurkonly on the menu for OS/2
 v2.7100.413 98.06.29 Client Version # reporting in -config fixed
 v2.7100.413 98.06.29 Extra disk access caused by lurk mode reduced greatly
 v2.7100.412 98.06.29 Put a check on the mailmessage so it won't mail when offline or lurk
