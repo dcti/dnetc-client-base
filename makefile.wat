@@ -6,6 +6,9 @@
 ##                       or anything else defined at the end of this makefile
 ##
 ## $Log: makefile.wat,v $
+## Revision 1.23.2.1  1998/11/08 12:57:40  remi
+## Updated to the file set of the public code.
+##
 ## Revision 1.23  1998/08/10 22:36:47  cyruspatel
 ## Added support for triggers.cpp and buffupd.cpp
 ##
@@ -99,7 +102,7 @@
 ## Import 5/23/98 client tree
 ## 
 
-## $Id: makefile.wat,v 1.23 1998/08/10 22:36:47 cyruspatel Exp $
+## $Id: makefile.wat,v 1.23.2.1 1998/11/08 12:57:40 remi Exp $
 
 %VERMINOR = 416       # for zip - fixit if not the same as version.h
 %VERMAJOR = 7100      # for NetWare copyright: v2.$(%VERMAJOR).$(%VERMINOR)
@@ -113,13 +116,10 @@
             output\des-x86.obj   output\convdes.obj   output\problem.obj  &
             output\rg-486.obj    output\rg-k5.obj     output\rg-k6.obj    &
             output\rc5p5brf.obj  output\rg-p6.obj     output\rg-6x86.obj  &
-            output\cliconfig.obj output\autobuff.obj  output\buffwork.obj &
-            output\mail.obj      output\client.obj    output\disphelp.obj &
-            output\iniread.obj   output\network.obj   output\scram.obj    &
+            output\cliconfig.obj output\client.obj    output\disphelp.obj &
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
-            output\clisrate.obj  output\cpucheck.obj  output\pathwork.obj &
-            output\cliident.obj  output\threadcd.obj  output\x86ident.obj &
-            output\logstuff.obj  output\triggers.obj  output\buffupd.obj
+            output\clisrate.obj  output\cpucheck.obj  output\x86ident.obj &
+            output\logstuff.obj  output\triggers.obj 
             # this list can be added to in the platform specific section
 
             # 30 std OBJ's (+3 mmx, +2 mt) - platform specific stuff extra
@@ -165,7 +165,7 @@ LNKbasename = rc5des       # for 'rc564'.err 'rc564'.lnk 'rc5des'.err etc
 %PORTER   =                # your name and email address
 %ZIPPER   = zip.exe        # a zip file won't be made if not defined
 %ZIPOPTS  = -u -9 -o -i -v 
-                           
+ 
 #.silent
 .nocheck
 
