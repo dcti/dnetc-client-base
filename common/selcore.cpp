@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.51 2000/02/07 16:07:26 ivo Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.52 2000/02/14 04:33:38 petermack Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -87,10 +87,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
     },
   #elif (CLIENT_CPU == CPU_ALPHA) 
     { /* RC5 */
-      #if (CLIENT_OS == OS_DEC_UNIX)
-      "ev3 and ev4 optimized",
-      "ev5 and ev6 optimized",
-      #elif (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32)
       "Marcelais",
       #else
       "axp bmeyer",
@@ -98,12 +95,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       NULL
     },
     { /* DES */
-      #if (CLIENT_OS == OS_DEC_UNIX)
-      "ev3/ev4 optimized",
-      "ev5/ev6 optimized",
-      #else
       "dworz/amazing",
-      #endif
       NULL
     },
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_OS == OS_POWER)
@@ -841,16 +833,13 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     #endif
   #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
-  #if (CLIENT_OS == OS_DEC_UNIX)
-    //rc5/alpha/rc5-digital-unix-alpha-ev[4|5].cpp
-    extern "C" u32 rc5_alpha_osf_ev4( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_alpha_osf_ev5( RC5UnitWork *, u32 );
-  #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
+  #if (CLIENT_OS == OS_WIN32) /* little-endian asm */
     //rc5/alpha/rc5-alpha-nt.s
     extern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
   #else
     //axp-bmeyer.cpp around axp-bmeyer.s
-    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
+//    extern "C" u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
+    u32 rc5_unit_func_axp_bmeyer( RC5UnitWork *, u32 );
   #endif
 #else
   #error "How did you get here?" 
@@ -867,13 +856,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
    extern u32 des_unit_func_slice_arm( RC5UnitWork * , u32 *iter, char *coremem );
    extern u32 des_unit_func_slice_strongarm(RC5UnitWork *, u32 *iter, char *coremem);
 #elif (CLIENT_CPU == CPU_ALPHA) 
-   #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-     extern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 *iter, char *coremem );
-     extern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 *iter, char *coremem );
-   #else
      //des/alpha/des-slice-dworz.cpp
      extern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *iter, char *);
-   #endif
 #elif (CLIENT_CPU == CPU_X86)
    extern u32 p1des_unit_func_p5( RC5UnitWork * , u32 *iter, char *coremem );
    extern u32 p1des_unit_func_pro( RC5UnitWork * , u32 *iter, char *coremem );
@@ -1183,28 +1167,7 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_ALPHA)
     {
-      #if (CLIENT_OS == OS_DEC_UNIX)
-      {
-        //rc5/alpha/rc5-digital-unix-alpha-ev[4|5].cpp
-        //xtern "C" u32 rc5_alpha_osf_ev4( RC5UnitWork *, u32 );
-        //xtern "C" u32 rc5_alpha_osf_ev5( RC5UnitWork *, u32 );
-        if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
-        {
-          pipeline_count = 2;
-          unit_func.rc5 = rc5_alpha_osf_ev5;
-        }
-        else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
-        {
-          pipeline_count = 2;
-          #if defined(DEC_UNIX_CPU_SELECT)
-          unit_func.rc5 = rc5_alpha_osf_ev4; 
-          #else
-          unit_func.rc5 = rc5_alpha_osf_ev5; 
-          #endif
-          coresel = 0;
-        }
-      }
-      #elif (CLIENT_OS == OS_WIN32) /* little-endian asm */
+      #if (CLIENT_OS == OS_WIN32) /* little-endian asm */
       {
         //rc5/alpha/rc5-alpha-nt.s
         //xtern "C" u32 rc5_unit_func_ntalpha_michmarc( RC5UnitWork *, u32 );
@@ -1250,22 +1213,9 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     }
     #elif (CLIENT_CPU == CPU_ALPHA) 
     {
-      #if (CLIENT_OS == OS_DEC_UNIX) && defined(DEC_UNIX_CPU_SELECT)
-      {
-        //xtern u32 des_alpha_osf_ev4( RC5UnitWork * , u32 *, char * );
-        //xtern u32 des_alpha_osf_ev5( RC5UnitWork * , u32 *, char * );
-        if (coresel == 1) /* EV5, EV56, PCA56, EV6 */
-          unit_func.des = des_alpha_osf_ev5;
-        else // EV3_CPU, EV4_CPU, LCA4_CPU, EV45_CPU and default
-          unit_func.des = des_alpha_osf_ev4;
-      }
-      #else
-      {
-        //des/alpha/des-slice-dworz.cpp
-        //xtern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *, char * );
-        unit_func.des = des_unit_func_slice_dworz;
-      }
-      #endif
+      //des/alpha/des-slice-dworz.cpp
+      //xtern u32 des_unit_func_slice_dworz( RC5UnitWork * , u32 *, char * );
+      unit_func.des = des_unit_func_slice_dworz;
     }
     #elif (CLIENT_CPU == CPU_X86)
     {
