@@ -11,7 +11,7 @@
  * cores.
  * And it will be used in stubmap generation.
  */
-#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.8.2.1 2001/04/01 19:05:37 andreasb Exp $"
+#define __OGR_CORE__ "@(#)$Id: ogr_ab.cor,v 1.1.2.8.2.2 2001/04/01 20:19:09 andreasb Exp $"
 
 #warning This core needs revision by other coders
 
@@ -128,7 +128,7 @@ the needed memory, but reduces the amount of nodes to be visited.
 
 const char* ogr_name()
 {
-  return "AB 0.02 $Revision: 1.1.2.8.2.1 $";
+  return "AB 0.02 $Revision: 1.1.2.8.2.2 $";
 }
 
 
@@ -494,14 +494,12 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen)
 
   oState->depth = 1;
   
-#ifdef OGROPT_NEW_CHOOSEDAT
   /* would we choose values somewhere behind the precalculated values from 
      ogr_choose_dat2 ? 
      choose(x,y) will be called from middle and right segment for the 
      remaining ruler, not including the current mark, so we can subtract 1 */
   if (oState->maxdepth - oState->half_depth - 1 > CHOOSE_MAX_DEPTH)
     oState->stub_error |= STUB_E_MARKS;  
-#endif
 
 #if (OGROPT_ALTERNATE_CYCLE == 3)
 

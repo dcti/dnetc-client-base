@@ -3,7 +3,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.2 2001/04/01 19:55:10 andreasb Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.1.2.18.2.3 2001/04/01 20:19:09 andreasb Exp $"
 
 // define this to use the new struct Stub
 //#define OGR_NEW_STUB_FORMAT
@@ -60,19 +60,12 @@
 /* ===================================================================== */
 
 /*
- * use the new ogr_choose_dat2
- * - correct precalculated values for choose(bitmap, 13)
- * - may be extended up to CHOOSE_MARKS = 16
- * - alignment on 16 byte borders
- * - header moved to variables
- * - choose(x,y) needs less instructions !
- *
  * You need to define this here in ogr.h, because files other than ogr.cpp 
  * (e.g. selftest) depend on this setting.
  */
-#define OGROPT_NEW_CHOOSEDAT
 
 /* either undef'd or 3 is implemented in common/selftest.cpp */
+//#undef OGR_ALTERNATE_TESTCASES
 #define OGR_ALTERNATE_TESTCASES 3
 
 /* ===================================================================== */
@@ -386,8 +379,6 @@ struct State {
                          /* sizeof(struct State) */
 #endif
 
-#ifdef OGROPT_NEW_CHOOSEDAT
-
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -402,8 +393,6 @@ extern "C" {
 #if defined(__cplusplus)
 }
 #endif
-
-#endif /* OGROPT_NEW_CHOOSEDAT */
 
 unsigned long ogr_nodecount(const struct Stub *);
 const char *ogr_stubstr_r(const struct Stub *stub, 

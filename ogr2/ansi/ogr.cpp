@@ -8,7 +8,7 @@
  * - it #includes all neccessary .cor (core functions/macros), 
  *   .mac (general macros), .inc (general stuff) files
  */
-#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43 2001/03/19 16:51:08 andreasb Exp $"
+#define __OGR_CPP__ "@(#)$Id: ogr.cpp,v 1.1.2.43.2.1 2001/04/01 20:19:09 andreasb Exp $"
 
 #include <stdio.h>      /* printf for debugging */
 #include <stdlib.h>     /* malloc (if using non-static choose dat) */
@@ -22,7 +22,8 @@
 
 /* --- various optimization option overrides ----------------------------- */
 //#define OGROPT_ALTERNATE_CYCLE 1
-//#define OGROPT_ALTERNATE_CYCLE 3
+//#define OGROPT_ALTERNATE_CYCLE 2
+#define OGROPT_ALTERNATE_CYCLE 3
 
 /* baseline/reference == ogr.cpp without optimization == ~old ogr.cpp */
 #if defined(NO_OGR_OPTIMIZATION) || defined(GIMME_BASELINE_OGR_CPP)
@@ -252,21 +253,13 @@
 #define OGR_CORE_INTERNAL_STRUCTURES
 #include "ogr.h"
 
-#ifndef OGROPT_NEW_CHOOSEDAT
-  // maximum number of marks supported by ogr_choose_dat
-  #define CHOOSE_MARKS       12
-  // number of bits from the beginning of dist bitmaps supported by ogr_choose_dat
-  #define CHOOSE_DIST_BITS   12
-  #define ttmDISTBITS (32-CHOOSE_DIST_BITS)
-#else /* OGROPT_NEW_CHOOSEDAT */
-  // maximum number of marks supported by ogr_choose_dat
-  #define CHOOSE_MAX_DEPTH   12
-  // alignment musn't be equal to CHOOSE_MAX_MARKS
-  #define CHOOSE_ALIGNMENT   16
-  // number of bits from the beginning of dist bitmaps supported by ogr_choose_dat
-  #define CHOOSE_DIST_BITS   12
-  #define ttmDISTBITS (32-CHOOSE_DIST_BITS)
-#endif /* OGROPT_NEW_CHOOSEDAT */
+// maximum number of marks supported by ogr_choose_dat
+#define CHOOSE_MAX_DEPTH   12
+// alignment musn't be equal to CHOOSE_MAX_MARKS
+#define CHOOSE_ALIGNMENT   16
+// number of bits from the beginning of dist bitmaps supported by ogr_choose_dat
+#define CHOOSE_DIST_BITS   12
+#define ttmDISTBITS (32-CHOOSE_DIST_BITS)
 
 
 
@@ -286,25 +279,6 @@
 extern "C" {
 #endif
 
-#ifndef OGROPT_NEW_CHOOSEDAT
-#ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
-   extern const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
-   #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
-      // strength reduce the multiply -- which is slow on MANY processors
-      #define choose(x,y) (ogr_choose_dat[((x)<<3)+((x)<<2)+(y+3)]) /*+3 skips header */
-   #else
-      #define choose(x,y) (ogr_choose_dat[CHOOSE_MARKS*(x)+(y+3)]) /*+3 skips header */
-   #endif
-#else
-   static const unsigned char *choosedat;/* set in init_load_choose() */
-   #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
-      // strength reduce the multiply -- which is slow on MANY processors
-      #define choose(x,y) (choosedat[((x)<<3)+((x)<<2)+(y)])
-   #else
-      #define choose(x,y) (choosedat[CHOOSE_MARKS*(x)+(y)])
-   #endif
-#endif
-#else /* we have OGROPT_NEW_CHOOSEDAT */
 #ifdef HAVE_STATIC_CHOOSEDAT  /* choosedat table is static, pre-generated */
 //  extern const unsigned char ogr_choose_dat2[]; /* this is in ogr_dat2.cpp */
 /* choose(bitmap, depth) */
@@ -317,7 +291,6 @@ extern "C" {
 #else
   #error OGROPT_NEW_CHOOSEDAT and not HAVE_STATIC_CHOOSEDAT ???   
 #endif
-#endif /* OGROPT_NEW_CHOOSEDAT */
 
 static const int OGR_length[] = { /* use: OGR_length[depth] */ 
 /* marks */
@@ -391,68 +364,6 @@ extern CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void);
 /* Functions common to all cores                                      */
 /* ------------------------------------------------------------------ */
 
-#ifndef OGROPT_NEW_CHOOSEDAT
-static int init_load_choose(void)
-{
-#ifndef HAVE_STATIC_CHOOSEDAT
-  #error choose_dat needs to be created/loaded here
-#endif
-  if (CHOOSE_DIST_BITS != ogr_choose_dat[2]) {
-    return CORE_E_FORMAT;
-  }
-#ifndef HAVE_STATIC_CHOOSEDAT
-  /* skip over the choose.dat header */
-  choosedat = &ogr_choose_dat[3];
-#endif
-
-#if !defined(HAVE_STATIC_CHOOSEDAT) || defined(CRC_CHOOSEDAT_ANYWAY)
-  /* CRC32 check */
-  {
-    static const unsigned chooseCRC32[24] = {
-    0x00000000,   /* 0 */
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,   /* 5 */
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,   /* 10 */
-    0x00000000,
-    0x01138a7d,
-    0x00000000,
-    0x00000000,
-    0x00000000,   /* 15 */
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,
-    0x00000000,   /* 20 */
-    0x00000000,
-    0x00000000,
-    0x00000000
-    };
-    int i, j;
-    unsigned crc32 = 0xffffffff;
-    crc32 = CRC32(crc32, ogr_choose_dat[0]);
-    crc32 = CRC32(crc32, ogr_choose_dat[1]);
-    crc32 = CRC32(crc32, ogr_choose_dat[2]); /* This varies a lot */
-    for (j = 0; j < (1 << CHOOSE_DIST_BITS); j++) {
-      for (i = 0; i < CHOOSE_MARKS; ++i) crc32 = CRC32(crc32, choose(j, i));
-    }
-    crc32 = ~crc32;
-    if (chooseCRC32[CHOOSE_DIST_BITS] != crc32) {
-      /* printf("Your choose.dat (CRC=%08x) is corrupted! Oh well, continuing anyway.\n", crc32); */
-      return CORE_E_FORMAT;
-    }
-  }
-
-#endif
-  return CORE_S_OK;
-}
-#else /* OGROPT_NEW_CHOOSEDAT */
 static int init_load_choose(void)
 {
 #ifndef HAVE_STATIC_CHOOSEDAT
@@ -467,7 +378,6 @@ static int init_load_choose(void)
 
   return CORE_S_OK;
 }
-#endif /* OGROPT_NEW_CHOOSEDAT */
 
 
 static int ogr_init(void)
