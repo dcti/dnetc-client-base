@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.79  1998/07/16 21:47:52  nordquist
+# More DYNIX port changes.
+#
 # Revision 1.78  1998/07/16 20:11:26  nordquist
 # Configuration for DYNIX.  Note that testplat needs the LDFLAGS to
 # compile properly.
@@ -952,7 +955,8 @@ case "$1" in
 	TARGET_CCFLAGS="$OPTS_GCC_DYNIX -DBIT_32 -DMEGGS -DKWAN -DPIPELINE_COUNT=2"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS"
 	TARGET_LDFLAGS="-L."
-	TARGET_LIBS="-lsocket -lnsl -lseq"
+	# Don't panic; -lXbsd is for gettimeofday()
+	TARGET_LIBS="-lsocket -linet -lnsl -lXbsd -lseq"
 	;;
 
 ###### NeXT (x86, m68k, sparc, hppa)

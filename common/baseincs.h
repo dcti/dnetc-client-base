@@ -10,6 +10,9 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.9  1998/07/16 21:47:56  nordquist
+// More DYNIX port changes.
+//
 // Revision 1.8  1998/07/16 21:23:01  nordquist
 // More DYNIX port changes.
 //
@@ -179,6 +182,7 @@ extern "C" {
     int  tz_dsttime;        /* type of dst correction to apply */
   };
   extern "C" int gethostname(char *, int);
+  extern "C" int gettimeofday(struct timeval *, struct timezone *);
 #endif
 
 // --------------------------------------------------------------------------
