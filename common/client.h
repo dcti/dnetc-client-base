@@ -533,6 +533,9 @@ public:
   void killwhitespace( char *string );
     // Removes all spaces from a string
 
+  int isblank( char *string );
+    // returns 1 if a string is blank (or null), 0 if it is not
+
   void clearscreen( void );
     // Clears the screen. (Platform specific ifdefs go inside of it.)
 
