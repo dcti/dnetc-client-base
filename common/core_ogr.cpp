@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.4 2003/09/01 22:19:19 mweiser Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.5 2003/09/01 22:27:06 mweiser Exp $"; }
 
 //#define TRACE
 
@@ -355,6 +355,9 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(OGR);
+
+  DNETC_UNUSED_PARAM(threadindex);
+
   if (coresel < 0)
     return -1;
   memset( &unit_func, 0, sizeof(unit_func));
@@ -417,7 +420,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
     #elif (CLIENT_CPU == CPU_ARM)
       if (coresel == 0)
         unit_func.ogr = ogr_get_dispatch_table_arm1();
-      else 
+      else
       {
         unit_func.ogr = ogr_get_dispatch_table_arm2();
         coresel = 1;
@@ -447,7 +450,6 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
     return coresel;
   }
 
-  threadindex = threadindex; /* possibly unused. shaddup compiler */
   return -1; /* core selection failed */
 }
 
