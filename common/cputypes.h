@@ -6,7 +6,7 @@
 */ 
 
 #ifndef _CPUTYPES_H_
-#define _CPUTYPES_H_ "@(#)$Id: cputypes.h,v 1.56 1999/04/05 18:15:20 cyp Exp $"
+#define _CPUTYPES_H_ "@(#)$Id: cputypes.h,v 1.57 1999/04/05 18:44:00 patrick Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -287,7 +287,9 @@ struct s128 { s64 hi, lo; };
   #define CLIENT_CPU      CPU_88K
 #elif defined(_AIX)
   #define CLIENT_OS_NAME   "AIX"
-  #if (defined(_ARCH_PPC) || defined(ASM_PPC))
+// AIXALL hides itself as POWER, it's more easy copy with this problem
+// in the POWER tree, because this is used on AIX only
+  #if defined(_ARCH_PPC) || defined(ASM_PPC) || defined(_AIXALL)
     #define CLIENT_OS     OS_AIX
     #define CLIENT_CPU    CPU_POWERPC
   #elif (defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(ASM_POWER))
