@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.75 2000/10/23 17:07:01 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.76 2000/10/27 17:28:08 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -644,11 +644,17 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
             case 0x01: cindex = 1; break; // 386/486 ("RG class 3/4")
             #endif
             case 0x02: cindex = 2; break; // PII/PIII ("RG class 6")
+            #if defined(MMX_RC5)
+            case 0x03: cindex = 6; break; // Cx6x86 ("RG/HB re-pair II")
+            #else
             case 0x03: cindex = 3; break; // Cx6x86 ("RG re-pair I")
+            #endif
             case 0x04: cindex = 4; break; // K5 ("RG RISC-rotate I")
             case 0x05: cindex = 5; break; // K6/K6-2/K6-3 ("RG RISC-rotate II")
             #if defined(SMC)    
             case 0x06: cindex = 1; break; // cx486 uses SMC if avail (bug #99)
+            #elif defined(MMX_RC5)
+            case 0x06: cindex = 6; break; // cx486 uses "RG/HB re-pair II" if avail
             #else 
             case 0x06: cindex = 3; break; // cx486 else core 3. (bug #804)
             #endif
