@@ -5,6 +5,9 @@
 # Any other distribution or use of this source violates copyright.
 #
 # $Log: configure,v $
+# Revision 1.196  1999/03/01 06:48:56  foxyloxy
+# Minor typo fix in mips-egcs-crunch target.
+#
 # Revision 1.195  1999/03/01 03:56:45  foxyloxy
 # Several changes to allow sparc-solaris-gcc-crunch-asmslice-mt to compile
 # again, and compile tweaks for an extra 200Kkey/sec DES.
@@ -1033,7 +1036,7 @@ case "$1" in
 
     *mips-egcs-crunch)	# faster than mips-gcc for IRIX
 	RC5CORECOPY="rc5/mips/mips-crunch.cpp"
-	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mab=n32 \
+	TARGET_CCFLAGS="$OPTS_EGCS_MIPS -mabi=n32 \
 			-DMULTITHREAD -DPIPELINE_COUNT=2 \
 			-DMIPS_CRUNCH=1 -DBIT_32 -DKWAN -DMEGGS"
 	TARGET_ADDSRCS="$MEGGS_SLICE_SRCS2"
