@@ -6,6 +6,10 @@
 // statistics obtained from clirate.cpp into strings suitable for display.
 //
 // $Log: clisrate.cpp,v $
+// Revision 1.28  1998/07/13 03:29:54  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.27  1998/07/12 11:20:11  friedbait
 // added side effect description to 'num_sep' function.
 //
@@ -118,7 +122,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clisrate_cpp(void) {
-static const char *id="@(#)$Id: clisrate.cpp,v 1.27 1998/07/12 11:20:11 friedbait Exp $";
+static const char *id="@(#)$Id: clisrate.cpp,v 1.28 1998/07/13 03:29:54 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -175,8 +179,8 @@ static char *num_sep(char *number)
     static char num_string[STR_LEN + 1];
 
     char *cp, *wp, *xp;
-    char digits;
-    register int i, j;
+    register unsigned int digits;
+    register unsigned int i, j;
 
     /*
      * just in case somebody passes a pointer to a long string which
@@ -410,7 +414,8 @@ const char *CliReformatMessage( const char *header, const char *message )
   static char strspace[160];
 
   unsigned int prelen, linelen, doquote = (header!=NULL);
-  char buffer[84], *bptr, *sptr;
+  char buffer[84];
+  char *bptr, *sptr;
   const char *mptr = message;
 
   strspace[0]=0;

@@ -3,6 +3,10 @@
 
 
   $Log: iniread.cpp,v $
+  Revision 1.11  1998/07/13 03:30:02  cyruspatel
+  Added 'const's or 'register's where the compiler was complaining about
+  ambiguities. ("declaration/type or an expression")
+
   Revision 1.10  1998/07/07 21:55:41  cyruspatel
   Serious house cleaning - client.h has been split into client.h (Client
   class, FileEntry struct etc - but nothing that depends on anything) and
@@ -35,7 +39,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *iniread_cpp(void) {
-static const char *id="@(#)$Id: iniread.cpp,v 1.10 1998/07/07 21:55:41 cyruspatel Exp $";
+static const char *id="@(#)$Id: iniread.cpp,v 1.11 1998/07/13 03:30:02 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -176,7 +180,7 @@ IniString IniString::ucase(void) const
 #ifdef __TURBOC__
   strupr((char*)output.c_str());
 #else
-  for (char *p = (char*) c_str(); *p; p++) *p = toupper(*p);
+  for (char *p = (char*) c_str(); *p; p++) *p = (char)toupper(*p);
 #endif
   return output;
 }
@@ -187,7 +191,7 @@ IniString IniString::lcase(void) const
 #ifdef __TURBOC__
   strlwr((char*)output.c_str());
 #else
-  for (char *p = (char*) c_str(); *p; p++) *p = tolower(*p);
+  for (char *p = (char*) c_str(); *p; p++) *p = (char)tolower(*p);
 #endif
   return output;
 }
@@ -364,7 +368,11 @@ void IniSection::fwrite(FILE *out)
 }
 /////////////////////////////////////////////////////////////////////////////
 // returns true on error
-bool IniSection::ReadIniFile(const char *Filename, const IniString &Section, long offset)
+#ifdef __WATCOMC__
+bool IniSection::ReadIniFile(const char *Filename, const IniString & /* Section */, long offset)
+#else
+bool IniSection::ReadIniFile(const char *Filename, const IniString & Section, long offset)
+#endif
 {
   // open up the file
   FILE *inf = fopen(Filename, "rb");

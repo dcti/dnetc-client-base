@@ -12,6 +12,10 @@
 // ---------------------------------------------------------------------
 //
 // $Log: clitime.cpp,v $
+// Revision 1.18  1998/07/13 03:29:57  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.17  1998/07/07 21:55:29  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -49,7 +53,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *clitime_cpp(void) {
-static const char *id="@(#)$Id: clitime.cpp,v 1.17 1998/07/07 21:55:29 cyruspatel Exp $";
+static const char *id="@(#)$Id: clitime.cpp,v 1.18 1998/07/13 03:29:57 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -227,7 +231,8 @@ int CliTimerAdd( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
 int CliTimerDiff( struct timeval *dest, struct timeval *tv1, struct timeval *tv2 )
 {
-  struct timeval tvdiff, tvtemp, *tv0;
+  struct timeval tvdiff, tvtemp;
+  struct timeval *tv0;
 
   if (dest)
   {

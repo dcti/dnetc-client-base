@@ -4,6 +4,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: mail.cpp,v $
+// Revision 1.15  1998/07/13 03:30:05  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.14  1998/07/08 05:19:32  jlawson
 // updates to get Borland C++ to compile under Win32.
 //
@@ -38,7 +42,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *mail_cpp(void) {
-static const char *id="@(#)$Id: mail.cpp,v 1.14 1998/07/08 05:19:32 jlawson Exp $";
+static const char *id="@(#)$Id: mail.cpp,v 1.15 1998/07/13 03:30:05 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -79,7 +83,7 @@ MailMessage::MailMessage(void)
 
 MailMessage::~MailMessage()
 {
-  // nothing to do.
+  timeoffset=0; // nothing to do. - suppress compiler warning.
 }
 
 void MailMessage::checktosend( u32 forcesend)
@@ -370,7 +374,7 @@ int MailMessage::prepare_smtp_message(Network *net)
   }
 
   // do a series of RCPT lines for each name in address line
-  strcpy( (char *) &destidcopy, (char const *) &destid );
+  strcpy( (char *)(&destidcopy[0]), (char const *)(&destid[0]) );
   for (ptr = destidcopy; *ptr; ptr += len + 1)
   {
     // if there's only one token left, then len will = startLen,

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.26  1998/07/13 03:31:52  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.25  1998/07/07 21:55:50  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -50,7 +54,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-static const char *id="@(#)$Id: problem.cpp,v 1.25 1998/07/07 21:55:50 cyruspatel Exp $";
+static const char *id="@(#)$Id: problem.cpp,v 1.26 1998/07/13 03:31:52 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -122,7 +126,7 @@ Problem::Problem()
 
 Problem::~Problem()
 {
-  // nothing to do.
+  started = 0; // nothing to do. - suppress compiler warning
 }
 
 s32 Problem::IsInitialized()

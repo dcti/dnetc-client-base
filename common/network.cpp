@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: network.cpp,v $
+// Revision 1.29  1998/07/13 03:30:07  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.28  1998/07/08 09:24:54  jlawson
 // eliminated integer size warnings on win16
 //
@@ -58,7 +62,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *network_cpp(void) {
-static const char *id="@(#)$Id: network.cpp,v 1.28 1998/07/08 09:24:54 jlawson Exp $";
+static const char *id="@(#)$Id: network.cpp,v 1.29 1998/07/13 03:30:07 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -170,8 +174,8 @@ void NetworkInitialize(void)
   // check that the packet structures have been correctly packed
   // do it here to make sure the asserts go off
   // if all is correct, the asserts should get totally optimised out :)
-  assert(offsetof(SOCKS4, USERID) == 8);
-  assert(offsetof(SOCKS5METHODREQ, Methods) == 2);
+  assert(offsetof(SOCKS4, USERID[0]) == 8);
+  assert(offsetof(SOCKS5METHODREQ, Methods[0]) == 2);
   assert(offsetof(SOCKS5METHODREPLY, end) == 2);
   assert(offsetof(SOCKS5USERPWREPLY, end) == 2);
   assert(offsetof(SOCKS5, end) == 10);
@@ -969,7 +973,8 @@ s32 Network::Put( u32 length, const char * data )
 
     while (length > 0)
     {
-      char line[80], *b = line;
+      char line[80];
+      char *b = line;
 
       int n = (int) (length > 45 ? 45 : length);
       length -= n;
@@ -1007,7 +1012,8 @@ s32 Network::Put( u32 length, const char * data )
 
   if (mode & MODE_HTTP)
   {
-    char header[500], ipbuff[64];
+    char header[500];
+    char ipbuff[64];
     if (lasthttpaddress) {
       in_addr addr;
       addr.s_addr = lasthttpaddress;

@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.151  1998/07/13 03:29:45  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.150  1998/07/11 23:49:28  cyruspatel
 // Added a check for OS2/Win/WinNT VMs to the DOS client - it spits out an
 // advisory notice (to use a native client) if it finds itself running in one
@@ -275,7 +279,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.150 1998/07/11 23:49:28 cyruspatel Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.151 1998/07/13 03:29:45 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -1249,33 +1253,33 @@ void Client::setupoptions( void )
 // Sets all the pointers/etc for optionstruct options
 {
 
-options[CONF_ID].thevariable=&id;
+options[CONF_ID].thevariable=(char *)(&id[0]);
 options[CONF_THRESHOLDI].thevariable=&inthreshold[0];
 options[CONF_THRESHOLDO].thevariable=&outthreshold[0];
 options[CONF_THRESHOLDI2].thevariable=&inthreshold[1];
 options[CONF_THRESHOLDO2].thevariable=&outthreshold[1];
 options[CONF_COUNT].thevariable=&blockcount;
-options[CONF_HOURS].thevariable=&hours;
+options[CONF_HOURS].thevariable=(char *)(&hours[0]);
 #if !((CLIENT_OS==OS_MACOS) || (CLIENT_OS==OS_RISCOS) || (CLIENT_OS==OS_WIN16))
 options[CONF_TIMESLICE].optionscreen=0;
 #endif
 options[CONF_TIMESLICE].thevariable=&timeslice;
 options[CONF_NICENESS].thevariable=&niceness;
 options[CONF_UUEHTTPMODE].thevariable=&uuehttpmode;
-options[CONF_KEYPROXY].thevariable=&keyproxy;
+options[CONF_KEYPROXY].thevariable=(char *)(&keyproxy[0]);
 options[CONF_KEYPORT].thevariable=&keyport;
-options[CONF_HTTPPROXY].thevariable=&httpproxy;
+options[CONF_HTTPPROXY].thevariable=(char *)(&httpproxy[0]);
 options[CONF_HTTPPORT].thevariable=&httpport;
-options[CONF_HTTPID].thevariable=&httpid;
+options[CONF_HTTPID].thevariable=(char *)(&httpid[0]);
 #if !((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_ARM) || ((CLIENT_CPU == CPU_POWERPC) && ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_AIX))) )
 options[CONF_CPUTYPE].optionscreen=0;
 #endif
 options[CONF_CPUTYPE].thevariable=&cputype;
 options[CONF_MESSAGELEN].thevariable=&messagelen;
-options[CONF_SMTPSRVR].thevariable=&smtpsrvr;
+options[CONF_SMTPSRVR].thevariable=(char *)(&smtpsrvr[0]);
 options[CONF_SMTPPORT].thevariable=&smtpport;
-options[CONF_SMTPFROM].thevariable=&smtpfrom;
-options[CONF_SMTPDEST].thevariable=&smtpdest;
+options[CONF_SMTPFROM].thevariable=(char *)(&smtpfrom[0]);
+options[CONF_SMTPDEST].thevariable=(char *)(&smtpdest[0]);
 options[CONF_NUMCPU].thevariable=&numcpu;
 
 options[CONF_RANDOMPREFIX].thevariable=&randomprefix;
@@ -1309,14 +1313,14 @@ options[CONF_DESIN].thevariable=&ini_in_buffer_file[1];
 options[CONF_DESOUT].thevariable=&ini_out_buffer_file[1];
 options[CONF_PAUSEFILE].thevariable=&ini_pausefile;
 #else
-options[CONF_LOGNAME].thevariable=&logname;
-options[CONF_CHECKPOINT].thevariable=&checkpoint_file[0];
-options[CONF_CHECKPOINT2].thevariable=&checkpoint_file[1];
-options[CONF_RC5IN].thevariable=&in_buffer_file[0];
-options[CONF_RC5OUT].thevariable=&out_buffer_file[0];
-options[CONF_DESIN].thevariable=&in_buffer_file[1];
-options[CONF_DESOUT].thevariable=&out_buffer_file[1];
-options[CONF_PAUSEFILE].thevariable=&pausefile;
+options[CONF_LOGNAME].thevariable=(char *)(&logname[0]);
+options[CONF_CHECKPOINT].thevariable=(char *)(&checkpoint_file[0][0]);
+options[CONF_CHECKPOINT2].thevariable=(char *)(&checkpoint_file[1][0]);
+options[CONF_RC5IN].thevariable=(char *)(&in_buffer_file[0][0]);
+options[CONF_RC5OUT].thevariable=(char *)(&out_buffer_file[0][0]);
+options[CONF_DESIN].thevariable=(char *)(&in_buffer_file[1][0]);
+options[CONF_DESOUT].thevariable=(char *)(&out_buffer_file[1][0]);
+options[CONF_PAUSEFILE].thevariable=(char *)(&pausefile[0]);
 #endif
 
 #ifdef MMX_BITSLICER
@@ -1402,7 +1406,8 @@ s32 Client::ReadConfig(void)
 {
   IniSection ini;
   s32 inierror, tempconfig;
-  char *p, buffer[64];
+  char buffer[64];
+  char *p; 
 
   #ifdef DONT_USE_PATHWORK
   inierror = ini.ReadIniFile( inifilename );

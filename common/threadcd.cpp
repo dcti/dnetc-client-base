@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: threadcd.cpp,v $
+// Revision 1.12  1998/07/13 03:31:59  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.11  1998/07/07 21:55:53  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -45,7 +49,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *threadcd_cpp(void) { 
-static const char *id="@(#)$Id: threadcd.cpp,v 1.11 1998/07/07 21:55:53 cyruspatel Exp $";
+static const char *id="@(#)$Id: threadcd.cpp,v 1.12 1998/07/13 03:31:59 cyruspatel Exp $";
 return id; } 
 #endif
 
@@ -109,7 +113,7 @@ static void __thread_shell( void *param )
     void FAR *tparam = data->param;
   #else
     struct __thread_shell_data *data = (__thread_shell_data *)param;
-    void (*tproc)(void *) = data->proc;
+    register void (*tproc)(void *) = data->proc;
     void *tparam = data->param;
   #endif
 
@@ -127,7 +131,7 @@ static void __thread_shell( void *param )
 //-----------------------------------------------------------------------
 
 // create a thread (block until running) return threadID or NULL if error
-THREADID CliCreateThread( void (*proc)(void *), void *param )
+THREADID CliCreateThread( register void (*proc)(void *), void *param )
 {
   THREADID cliThreadID;
 
@@ -138,7 +142,7 @@ THREADID CliCreateThread( void (*proc)(void *), void *param )
     {
     struct __thread_shell_data shelldata;
     void *shellparam = (void *)(&shelldata);
-    void (*shellproc)(void *) = __thread_shell;
+    register void (*shellproc)(void *) = __thread_shell;
 
     shelldata.started = 0;
     shelldata.proc = proc;

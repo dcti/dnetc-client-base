@@ -5,6 +5,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.34  1998/07/13 03:29:59  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.33  1998/07/08 05:19:30  jlawson
 // updates to get Borland C++ to compile under Win32.
 //
@@ -115,7 +119,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.33 1998/07/08 05:19:30 jlawson Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.34 1998/07/13 03:29:59 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -336,7 +340,6 @@ void Client::DisplayHelp( const char * unrecognized_option )
   static const char *helpbody[] =
   {
   "Special Options: (the client will execute the option and then exit)",
-  ""
   "-config            start the configuration menu",
   "-test              tests for client errors",
   "-flush             flush all output buffers",
@@ -359,11 +362,11 @@ void Client::DisplayHelp( const char * unrecognized_option )
   "-e <address>       the email id by which you are known to distributed.net",
   "-nice <[0-2]>      niceness",
   "-c <cputype>       cpu type (run -config for a list of valid cputype numbers)",
-  "-numcpu <n>        run simultaneously on <n> CPUs"
-                      #ifndef MULTITHREAD
-                      " (ignored on this platform)"
-                      #endif
-                      "",
+  #ifdef MULTITHREAD
+  "-numcpu <n>        run simultaneously on <n> CPUs",
+  #else
+  "-numcpu <n>        run simultaneously on <n> CPUs (ignored on this platform)",
+  #endif
   "-h <hours>         time limit in hours",
   "-n <count>         blocks to complete",
   "-until <HHMM>      quit at HHMM (eg 0700)",

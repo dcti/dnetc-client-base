@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: threadcd.h,v $
+// Revision 1.9  1998/07/13 03:32:00  cyruspatel
+// Added 'const's or 'register's where the compiler was complaining about
+// ambiguities. ("declaration/type or an expression")
+//
 // Revision 1.8  1998/06/30 06:37:39  ziggyb
 // OS/2 specific changes for threads.
 //
@@ -79,10 +83,10 @@
 //-----------------------------------------------------------------------
 
 // create a thread (blocks till running) - returns threadid or NULL if error
-THREADID CliCreateThread( void (*proc)(void *), void *param );
+extern THREADID CliCreateThread( register void (*proc)(void *), void *param );
 
 // destroy a thread (blocks till dead)
-int CliDestroyThread( THREADID cliThreadID );
+extern int CliDestroyThread( THREADID cliThreadID );
 
 //-----------------------------------------------------------------------
 
