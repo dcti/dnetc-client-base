@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.71 2000/07/03 22:41:56 oliver Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.72 2000/07/05 11:20:59 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -86,8 +86,7 @@ static const char **__corenames_for_contest( unsigned int cont_i )
       #if (CLIENT_OS == OS_AMIGAOS)
       "unrolled 68000/010", /* 68000/010 */
       "loopy 68020/030",    /* 68020/030 */
-      "unrolled 68040",     /* 68040 */
-      "unrolled 68060",     /* 68060 */
+      "unrolled 68040/060", /* 68040/060 */
       #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
       "68k asm cruncher",
       #else
@@ -529,10 +528,8 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     {
       selcorestatics.corenum[RC5] = 0;
       #if (CLIENT_OS == OS_AMIGAOS)
-      if (detected_type >= 68060)
-        selcorestatics.corenum[RC5] = 3; /* rc5-060-jg.s */
-      else if (detected_type == 68040)
-        selcorestatics.corenum[RC5] = 2; /* rc5-040-jg.s */
+      if (detected_type >= 68040)
+        selcorestatics.corenum[RC5] = 2; /* rc5-040_060-jg.s */
       else if (detected_type >= 68020)
         selcorestatics.corenum[RC5] = 1; /* rc5-020_030-jg.s */
       #endif
@@ -891,8 +888,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     // rc5/68k/rc5_68k_crunch.c around rc5/68k/rc5-0x0_0y0-jg.s
     extern "C" u32 rc5_unit_func_000_010( RC5UnitWork *, u32 );
     extern "C" u32 rc5_unit_func_020_030( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_unit_func_040( RC5UnitWork *, u32 );
-    extern "C" u32 rc5_unit_func_060( RC5UnitWork *, u32 );
+    extern "C" u32 rc5_unit_func_040_060( RC5UnitWork *, u32 );
   #elif defined(__GCC__) || defined(__GNUC__) || (CLIENT_OS == OS_MACOS)
     // rc5/68k/rc5_68k_gcc_crunch.c around rc5/68k/crunch.68k.gcc.s
     extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
@@ -1119,10 +1115,8 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
         //xtern "C" u32 rc5_unit_func_040( RC5UnitWork *, u32 );
         //xtern "C" u32 rc5_unit_func_060( RC5UnitWork *, u32 );
         pipeline_count = 2;
-        if (coresel == 3 )
-          unit_func.rc5 = rc5_unit_func_060;
-        else if (coresel == 2)
-          unit_func.rc5 = rc5_unit_func_040;
+        if (coresel == 2)
+          unit_func.rc5 = rc5_unit_func_040_060;
         else if (coresel == 1)
           unit_func.rc5 = rc5_unit_func_020_030;
         else
