@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.98.2.7 1999/07/26 16:54:24 cyp Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.98.2.8 1999/09/17 17:32:26 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 //#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -17,6 +17,7 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.7 1999/07/26 16:54:24 cyp Exp $"; }
 #include "setprio.h"   // SetThreadPriority(), SetGlobalPriority()
 #include "lurk.h"      // dialup object
 #include "buffupd.h"   // BUFFERUPDATE_* constants
+#include "cliident.h"  // CliIsDevelVersion()
 #include "clitime.h"   // CliTimer(), Time()/(CliGetTimeString(NULL,1))
 #include "logstuff.h"  // Log()/LogScreen()/LogScreenPercent()/LogFlush()
 #include "clicdata.h"  // CliGetContestNameFromID()
@@ -38,6 +39,8 @@ return "@(#)$Id: clirun.cpp,v 1.98.2.7 1999/07/26 16:54:24 cyp Exp $"; }
 
 // --------------------------------------------------------------------------
 
+//#define DYN_TIMESLICE_SHOWME 1
+
 static struct
 {
   int nonmt_ran;
@@ -50,23 +53,24 @@ static struct
 
 static int checkifbetaexpired(void)
 {
-#if defined(BETA) || defined(BETA_PERIOD)
-  timeval expirationtime;
-
-  #ifndef BETA_PERIOD
-  #define BETA_PERIOD (7L*24L*60L*60L) /* one week from build date */
-  #endif    /* where "build date" is time of newest module in ./common/ */
-  expirationtime.tv_sec = CliTimeGetBuildDate() + (time_t)BETA_PERIOD;
-  expirationtime.tv_usec= 0;
-
-  if ((CliTimer(NULL)->tv_sec) > expirationtime.tv_sec)
+  if (CliIsDevelVersion()) /* cliident.cpp */
   {
-    Log("This beta release expired on %s. Please\n"
-        "download a newer beta, or run a standard-release client.\n",
-        CliGetTimeString(&expirationtime,1) );
-    return 1;
+    timeval expirationtime;
+
+    #ifndef BETA_PERIOD
+    #define BETA_PERIOD (7L*24L*60L*60L) /* one week from build date */
+    #endif    /* where "build date" is time of newest module in ./common/ */
+    expirationtime.tv_sec = CliGetNewestModuleTime() + (time_t)BETA_PERIOD;
+    expirationtime.tv_usec= 0;
+
+    if ((CliTimer(NULL)->tv_sec) > expirationtime.tv_sec)
+    {
+      Log("This beta release expired on %s. Please\n"
+          "download a newer beta, or run a standard-release client.\n",
+          CliGetTimeString(&expirationtime,1) );
+      return 1;
+    }
   }
-#endif
   return 0;
 }
 
@@ -97,6 +101,9 @@ struct thread_param_block
   unsigned long thread_data1;
   unsigned long thread_data2;
   struct thread_param_block *next;
+  #if (CLIENT_OS == OS_NETWARE)
+  unsigned long thread_restart_time;
+  #endif
 };
 
 // ----------------------------------------------------------------------
@@ -175,9 +182,9 @@ static void __yield__(void)
   void Go_mt( void * parm )
 #endif
 {
-  struct thread_param_block *targ = (thread_param_block *)parm;
+  struct thread_param_block *thrparams = (thread_param_block *)parm;
   Problem *thisprob = NULL;
-  unsigned int threadnum = targ->threadnum;
+  unsigned int threadnum = thrparams->threadnum;
 
 #if (CLIENT_OS == OS_RISCOS)
 /*if (threadnum == 1)
@@ -187,11 +194,11 @@ static void __yield__(void)
     return;
   } */
 #elif (CLIENT_OS == OS_WIN32)
-  if (targ->realthread)
+  if (thrparams->realthread)
   {
     DWORD LAffinity, LProcessAffinity, LSystemAffinity;
     OSVERSIONINFO osver;
-    unsigned int numthreads = targ->numthreads;
+    unsigned int numthreads = thrparams->numthreads;
 
     osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
     GetVersionEx(&osver);
@@ -206,19 +213,21 @@ static void __yield__(void)
     }
   }
 #elif (CLIENT_OS == OS_NETWARE)
-  if (targ->realthread)
+  if (thrparams->realthread)
   {
-    nwCliInitializeThread( threadnum+1 ); //in netware.cpp
+    thrparams->threadID = GetThreadID(); /* in case we got here first */
+    nwCliInitializeThread( threadnum+1 );
+    /* rename thread, migrate to MP, bind to cpu... */
   }
 #elif (CLIENT_OS == OS_MACOS)
-  if (targ->realthread)
+  if (thrparams->realthread)
   {
     MPEnterCriticalRegion(MP_count_region, kDurationForever);
     MP_active++;
     MPExitCriticalRegion(MP_count_region);
   }
 #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
-  if (targ->realthread)
+  if (thrparams->realthread)
   {
     sigset_t signals_to_block;
     sigemptyset(&signals_to_block);
@@ -230,23 +239,23 @@ static void __yield__(void)
   }
 #endif
 
-  if (targ->realthread)
-    SetThreadPriority( targ->priority ); /* 0-9 */
+  if (thrparams->realthread)
+    SetThreadPriority( thrparams->priority ); /* 0-9 */
 
-  targ->is_suspended = 1;
-  targ->do_refresh = 1;
+  thrparams->is_suspended = 1;
+  thrparams->do_refresh = 1;
 
   while (!CheckExitRequestTriggerNoIO())
   {
     int didwork = 0; /* did we work? */
-    if (targ->do_refresh)
+    if (thrparams->do_refresh)
       thisprob = GetProblemPointerFromIndex(threadnum);
-    if (thisprob == NULL || targ->do_suspend || CheckPauseRequestTriggerNoIO())
+    if (thisprob == NULL || thrparams->do_suspend || CheckPauseRequestTriggerNoIO())
     {
-//printf("run: isnull? %08x, ispausereq? %d, issusp? %d\n", thisprob, CheckPauseRequestTriggerNoIO(), targ->do_suspend);
+//printf("run: isnull? %08x, ispausereq? %d, issusp? %d\n", thisprob, CheckPauseRequestTriggerNoIO(), thrparams->do_suspend);
       if (thisprob == NULL)  // this is a bad condition, and should not happen
         runstatics.refillneeded = 1;// ..., ie more threads than problems
-      if (targ->realthread)
+      if (thrparams->realthread)
       {
         #if (CLIENT_OS == OS_MACOS)
            mp_sleep(1);     // Mac needs special sleep call in MP threads
@@ -262,7 +271,7 @@ static void __yield__(void)
     else if (!thisprob->IsInitialized())
     {
       runstatics.refillneeded = 1;
-      if (targ->realthread)
+      if (thrparams->realthread)
         __yield__();
     }
     else
@@ -296,7 +305,7 @@ static void __yield__(void)
           #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
           non_preemptive_os = (winGetVersion()<400); /* (winnt is >= 2000) */
           #elif (CLIENT_OS == OS_NETWARE)            /* only if !NetWare 5 */
-          non_preemptive_os = (nwCliGetVersion()<500); 
+          non_preemptive_os = (nwCliIsPreemptiveEnv() == 0); /* or !MPK */
           #else
           non_preemptive_os = 1;
           #endif  
@@ -306,8 +315,31 @@ static void __yield__(void)
             for (tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
             {
               #if (CLIENT_OS == OS_RISCOS)
-              dyn_timeslice_table[tsinitd].msec = 30;
-              dyn_timeslice_table[tsinitd].optimal = 32768;
+              if (riscos_in_taskwindow)
+              {
+                dyn_timeslice_table[tsinitd].msec = 30;
+                dyn_timeslice_table[tsinitd].optimal = 32768;
+              }
+              else
+              {
+                dyn_timeslice_table[tsinitd].msec = 1000;
+                dyn_timeslice_table[tsinitd].optimal = 131072;
+              }
+              #elif (CLIENT_OS == OS_NETWARE) 
+              /* The switchcount<->runtime ratio is inversely proportionate. 
+              By definition, 1000ms == 1.0 switchcounts/sec. In real life it 
+              looks something like this:  (note the middle magic of "55".
+              55ms == one timer tick)
+              msecs:   880  440  220  110  55  27.5   14  6.8  3.4   1.7  
+              count: ~2.75 ~5.5  ~11  ~22 ~55  ~110 ~220 ~440 ~880 ~1760
+              For simplicity, we use 30ms (~half-a-tick) as max for prio 9
+              and 3ms as min (about the finest monotonic res we can squeeze 
+              from the timer on a 386)
+              */
+              dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
+              dyn_timeslice_table[tsinitd].msec=((thrparams->priority+1)*2);
+              if (GetFileServerMajorVersionNumber() < 4)
+                dyn_timeslice_table[tsinitd].msec += 10;
               #else /* x86 */
               dyn_timeslice_table[tsinitd].msec = 22; /* 55/2 ms */
               dyn_timeslice_table[tsinitd].optimal = GetTimesliceBaseline();
@@ -329,34 +361,42 @@ static void __yield__(void)
       #endif
 
       runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000);
-      targ->is_suspended = 0;
+      thrparams->is_suspended = 0;
       run = thisprob->Run();
-      targ->is_suspended = 1;
+      thrparams->is_suspended = 1;
       runtime_ms = (thisprob->runtime_sec*1000 + thisprob->runtime_usec/1000) - runtime_ms;
 
       didwork = (last_count != thisprob->core_run_count);
       if (run != RESULT_WORKING)
       {
         runstatics.refillneeded = 1;
-        if (!didwork && targ->realthread)
+        if (!didwork && thrparams->realthread)
           __yield__();
       }
       
       if (optimal_timeslice != 0)
       {
         if (non_preemptive_os) /* non-preemptive environment */
+        {
           __yield__();
+        }
         optimal_timeslice = thisprob->tslice; /* get the number done back */
         #if defined(DYN_TIMESLICE_SHOWME)
         {
-          static int ctr = 0;
+          static unsigned int ctr = UINT_MAX;
           static unsigned long totaltime = 0, totalts = 0;
+          if (ctr == UINT_MAX)
+          {
+            totaltime = totalts = 0;
+            ctr = 0;
+          }
           totaltime += runtime_ms;
           totalts += optimal_timeslice;
-          if ((++ctr) == 50)
+          if ((++ctr) >= 1000)
           {
-            LogScreen("avg timeslice: %ld  avg time: %ldms\n", totalts/ctr, totaltime/ctr );
-            totaltime = totalts = 0; ctr = 0;
+            LogScreen("ctr: %u avg timeslice: %lu  avg time: %lums\n", ctr, totalts/ctr, totaltime/ctr );
+            totaltime = totalts = 0;
+            ctr = 0;
           }
         }
         #endif
@@ -372,7 +412,8 @@ static void __yield__(void)
           else if (runtime_ms > (dyn_timeslice_table[contest_i].msec + msec5perc))
           {
             optimal_timeslice -= (optimal_timeslice>>2);
-            if (optimal_timeslice == 0)
+            //optimal_timeslice >>= 1;
+            if (optimal_timeslice < dyn_timeslice_table[contest_i].min)
               optimal_timeslice = dyn_timeslice_table[contest_i].min;
           }
           thisprob->tslice = optimal_timeslice; /* for the next round */
@@ -386,13 +427,35 @@ static void __yield__(void)
         }
       }
 
+      #if (CLIENT_OS == OS_NETWARE)
+      /* Try and circumvent NetWare's scheduling optimization for our
+         threads. (NetWare sees us doing lots of work, and ends up
+         rescheduling us quickly because it thinks we need it). By 
+         re-chaining to a child, we not only zero our cruncher's stats,
+         we also give MP a chance to better shuffle things about.
+      */
+      if (thrparams->realthread && didwork && !CheckExitRequestTriggerNoIO())
+      {
+        unsigned long tnow = GetCurrentTime();
+        if (tnow > thrparams->thread_restart_time)
+        {
+          int thrid;
+          thrparams->thread_restart_time = tnow + (5*60*18); /* 5min */
+          if ((thrid = nwCliRebootThread(threadnum+1, Go_mt, parm )) != -1)
+          {
+            thrparams->threadID = thrid;
+            return; /* poof! child is doing our work now */
+          }
+        }
+      }  
+      #endif
     }
     
     if (!didwork)
     {
-      targ->do_refresh = 1; /* we need to reload the problem */
+      thrparams->do_refresh = 1; /* we need to reload the problem */
     }
-    if (!targ->realthread)
+    if (!thrparams->realthread)
     {
       RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
       runstatics.nonmt_ran = didwork;
@@ -400,14 +463,14 @@ static void __yield__(void)
     }
   }
 
-  targ->threadID = 0; //the thread is dead
+  thrparams->threadID = 0; //the thread is dead
 
   #if (CLIENT_OS == OS_BEOS)
-  if (targ->realthread)
+  if (thrparams->realthread)
     exit(0);
   #endif
   #if (CLIENT_OS == OS_MACOS)
-  if (targ->realthread)
+  if (thrparams->realthread)
   {
     ThreadIsDone[threadnum] = 1;
     MPEnterCriticalRegion(MP_count_region, kDurationForever);
@@ -665,11 +728,14 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         thrparams->threadID = _beginthread( Go_mt, NULL, 8192, (void *)thrparams );
         success = ( thrparams->threadID != -1);
       #elif (CLIENT_OS == OS_NETWARE)
-        if (!nwCliIsSMPAvailable())
-          use_poll_process = 1;
-        else
-          success = ((thrparams->threadID = BeginThread( Go_mt, NULL, 8192,
-                                   (void *)thrparams )) != -1);
+      //if (!NWSMPIsAvailable())
+      //  use_poll_process = 1;
+      //else
+      {
+        thrparams->thread_restart_time = GetCurrentTime()+(30*18); /* 30secs */
+        success = ((thrparams->threadID = BeginThread( Go_mt, NULL, 8192,
+                                 (void *)thrparams )) != -1);
+      }
       #elif (CLIENT_OS == OS_BEOS)
         char thread_name[32];
         long be_priority = thrparams->priority+1;
@@ -822,7 +888,7 @@ int Client::Run( void )
   // BETA check
   // --------------------------------------
 
-  if (!TimeToQuit && checkifbetaexpired()!=0) //prints a message
+  if (!TimeToQuit && checkifbetaexpired()) //prints a message
   {
     TimeToQuit = 1;
     exitcode = -1;
@@ -842,8 +908,8 @@ int Client::Run( void )
       numcrunchers = 1;    // main thread runs at normal priority
     #endif
     #if (CLIENT_OS == OS_NETWARE)
-    if (numcrunchers == 1) // NetWare client prefers non-threading
-      numcrunchers = 0;    // if only one thread/processor is to used
+    //if (numcrunchers == 1) // NetWare client prefers non-threading
+    //  numcrunchers = 0;    // if only one thread/processor is to used
     #endif
 
     #if (CLIENT_OS == OS_MACOS)
@@ -1068,19 +1134,17 @@ int Client::Run( void )
       }
     }
     #endif
-    #if defined(BETA)
-    if (!TimeToQuit && !CheckExitRequestTrigger() && checkifbetaexpired()!=0)
-    {
-      TimeToQuit = 1;
-      exitcode = -1;
-    }
-    #endif
     if (!TimeToQuit && CheckExitRequestTrigger())
     {
       Log( "%s...\n",
          (CheckRestartRequestTrigger()?("Restarting"):("Shutting down")) );
       TimeToQuit = 1;
       exitcode = 1;
+    }
+    if (!TimeToQuit && checkifbetaexpired()) /* prints a message */
+    {
+      TimeToQuit = 1;
+      exitcode = -1;
     }
     if (!TimeToQuit)
     {
@@ -1319,4 +1383,5 @@ int Client::Run( void )
 }
 
 // ---------------------------------------------------------------------------
+
 

@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.6 1999/07/25 22:57:28 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.7 1999/09/17 17:32:27 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -271,7 +271,16 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
             ch = (w32ConGetch() << 8);
         }
       }
-      #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) || \
+      #elif (CLIENT_OS == OS_NETWARE)
+      {
+        if (nwCliKbHit())
+        {
+          ch = nwCliGetCh();
+          if (!ch)
+            ch = (nwCliGetCh()<<8);
+        }
+      }
+      #elif (CLIENT_OS == OS_DOS) || \
          ( (CLIENT_OS == OS_OS2) && !defined(__EMX__)  )
       {
         fflush(stdout);
@@ -510,15 +519,23 @@ int ConGetPos( int *col, int *row )  /* zero-based */
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     return w32ConGetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
-    short x, y;
-    GetOutputCursorPosition( &x, &y );
-    if (row) *row = (int)y; if (col) *col = (int)x;
+    unsigned short r, c;
+    if (GetPositionOfOutputCursor( &r, &c ) == 0)
+    {
+      if (row) *row = (int)r; 
+      if (col) *col = (int)c;
+    }
     return 0;
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConGetPos( col, row );
     #elif (CLIENT_OS == OS_OS2)
-    return ((VioGetCurPos( (USHORT*)&row, (USHORT*)&col,
-                 0 /*handle*/) != 0)?(-1):(0));
+    USHORT r, c;
+    if (VioGetCurPos( &r, &c, 0 /*handle*/) == 0)
+    {
+      if (row) *row = (int)r; 
+      if (col) *col = (int)c;
+      return 0;
+    }
     #else
     return ((row == NULL && col == NULL) ? (0) : (-1));
     #endif
@@ -538,8 +555,7 @@ int ConSetPos( int col, int row )  /* zero-based */
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32S)
     return w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
-    short c = col, r = row;
-    gotoxy( c, r );
+    gotoxy( ((unsigned short)col), ((unsigned short)row) );
     return 0;
     #elif (CLIENT_OS == OS_DOS)
     return dosCliConSetPos( col, row );
@@ -582,9 +598,9 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     if ( w32ConGetSize(&width,&height) < 0 )
       height = width = 0;
   #elif (CLIENT_OS == OS_NETWARE)
-    WORD ht, wdth;
-    GetSizeOfScreen( &ht, &wt );
-    height = ht; width = wt;
+    unsigned short h, w;
+    if (GetSizeOfScreen( &h, &w ) == 0)
+      height = h; width = w;
   #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_SOLARIS) || \
         (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_IRIX) || \
         (CLIENT_OS == OS_HPUX)  || (CLIENT_OS == OS_AIX)
