@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.37.2.23 2000/05/26 20:57:29 ctate Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.37.2.24 2000/05/27 11:07:39 trevorh Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h" // for timeval, time, clock, sprintf, gettimeofday etc
@@ -106,7 +106,7 @@ static int __GetTimeOfDay( struct timeval *tv )
       fsec = cas[1]; /* frac secs 0-0xfffffffful */
       /* cas[3] has sync state flags */
 
-      #if (CLIENT_CPU == CPU_X86) 
+      #if (CLIENT_CPU == CPU_X86)
       /* avoid yanking in watcom's crappy static clib for int64 mul/div */
       _asm mov eax, fsec
       _asm xor edx, edx
@@ -184,7 +184,7 @@ static int __GetMinutesWest(void)
     memcpy( &utctime, &loctime, sizeof( struct tm ));
   else if (haveutctime && !haveloctime)
     memcpy( &loctime, &utctime, sizeof( struct tm ));
-  
+
   tzdiff =  ((loctime.tm_min  - utctime.tm_min) )
           +((loctime.tm_hour - utctime.tm_hour)*60 );
   /* last two are when the time is on a year boundary */
@@ -193,7 +193,7 @@ static int __GetMinutesWest(void)
   else if (loctime.tm_yday == utctime.tm_yday - 1) { tzdiff -= 1440; }
   else if (loctime.tm_yday <  utctime.tm_yday) { tzdiff += 1440; }
   else { tzdiff -= 1440; }
-  
+
   if (utctime.tm_isdst > 0)
     tzdiff -= 60;
   if (tzdiff < -(12*60))
@@ -274,7 +274,7 @@ struct timeval *CliTimer( struct timeval *tv )
 //
 // This function is used only for generation of "Summary" stats.
 
-int CliClock(struct timeval *tv) 
+int CliClock(struct timeval *tv)
 {
   static struct timeval base = {0,0};
   static int need_base_time = 1;
@@ -299,7 +299,7 @@ int CliClock(struct timeval *tv)
     struct timeval now;
     if (CliGetMonotonicClock(&now) != 0)
     {
-      return -1;    
+      return -1;
     }
     if (now.tv_sec < base.tv_sec ||
        (now.tv_sec == base.tv_sec && now.tv_usec < base.tv_usec))
@@ -320,18 +320,18 @@ int CliClock(struct timeval *tv)
 /* --------------------------------------------------------------------- */
 
 // CliGetMonotonicClock() should return a ...
-// real (not virtual per process, but secs that increment as a wall clock 
-// would), monotonic (won't speed up/slow down), linear time (won't go 
-// backward, won't wrap) and is not subject to resetting or the user changing 
-// day/date. It need not be correlated to the time-of-day. The epoch 
-// (base time) can be anything just as long as it remains constant over 
-// the course of the client's lifetime. 
+// real (not virtual per process, but secs that increment as a wall clock
+// would), monotonic (won't speed up/slow down), linear time (won't go
+// backward, won't wrap) and is not subject to resetting or the user changing
+// day/date. It need not be correlated to the time-of-day. The epoch
+// (base time) can be anything just as long as it remains constant over
+// the course of the client's lifetime.
 //
-// This function is used to determine total elapsed runtime for completed 
+// This function is used to determine total elapsed runtime for completed
 // work (both single and "Summary:" stats - see CliClock() above).
 //
-// If CliGetThreadUserTime() is not supported, then this function is also 
-// used for the other (fine-res) crunch timing eg core selection/timeslice 
+// If CliGetThreadUserTime() is not supported, then this function is also
+// used for the other (fine-res) crunch timing eg core selection/timeslice
 // optimization etc.
 //
 // On non-preemptive systems this function is particularly critical since
@@ -351,7 +351,7 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
 	#elif (CLIENT_OS == OS_BEOS)
     {
-      bigtime_t now = system_time();    
+      bigtime_t now = system_time();
       tv->tv_sec = (time_t)(now / 1000000LL);    /* microseconds -> seconds */
       tv->tv_usec = (time_t)(now % 1000000LL);    /* microseconds < 1 second */
     }
@@ -360,7 +360,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       /* wrapper (for scaling/emu) around GetHighResolutionTimer() */
       if (nwCliGetHardwareClock(tv)!=0) /* microsecs since boot */
         return -1;
-    }      
+    }
     #elif (CLIENT_OS == OS_RISCOS)
     {
       static unsigned long last_ctr = 0, wrap_hi = 0, wrap_lo = 0;
@@ -375,24 +375,13 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = (time_t)((ctr/100UL) + wrap_hi + (usecs / 1000000UL);
       tv->tv_usec = usecs % 1000000UL;
     }
-    #elif (CLIENT_OS == OS_OS2)
-    {
-        ULONG counters[2]; /* uptime in millisecs and secs */
-        if (DosQuerySysInfo(QSV_MS_COUNT, QSV_TIME_LOW,
-            (void *)&counters[0], sizeof(counters)))
-            return -1;
-        counters[1] /= 86400; /* use only day count of secs */
-        /* and use the millisecs counter for the rest of secs */
-        tv->tv_sec =  (counters[1]*86400)+(counters[0]/86400000UL);
-        tv->tv_usec = (counters[0]%1000) * 1000;
-    }
-    #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
+    #elif (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS == OS_OS2)
     {
       #if (CLIENT_OS == OS_OS2)
         #define myULONG ULONG
       #else
         #define myULONG DWORD
-      #endif  
+      #endif
       static int sguard = -1;
       static myULONG lastcheck = 0, wrap_count = 0;
       unsigned long usecs;
@@ -411,7 +400,7 @@ int CliGetMonotonicClock( struct timeval *tv )
         wrap_count = ++l_wrap_count;
       lastcheck = ticks;
       sguard--;
- 
+
       usecs = ((ticks%1000UL)*1000UL) + (l_wrap_count * 296000UL);
       tv->tv_usec = usecs % 1000000ul;
       tv->tv_sec = (time_t)((ticks/1000UL) + (l_wrap_count * 4294967UL)) +
@@ -422,7 +411,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       /* in platforms/dos/dostime.cpp */
       /* resolution (granularity) is 54925us */
       if (getmicrotime(tv)!=0)
-        return -1;       
+        return -1;
     }
     #elif (CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS)
     {
@@ -431,33 +420,33 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv.tv_sec = (time_t)(hirestime / 1000000);
       tv.tv_usec = (unsigned long)(hirestime % 1000000);
     }
-    #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/ 
-    { 
+    #elif (CLIENT_OS == OS_LINUX) /*only RTlinux has clock_gettime/gethrtime*/
+    {
       /* we have no choice but to use getrusage() [we can */
       /* do that because each thread has its own pid] */
       struct rusage rus;
       if (getrusage(RUSAGE_SELF,&rus) != 0)
         return -1;
-      tv->tv_sec  = rus.ru_utime.tv_sec  + rus.ru_stime.tv_sec; 
+      tv->tv_sec  = rus.ru_utime.tv_sec  + rus.ru_stime.tv_sec;
       tv->tv_usec = rus.ru_utime.tv_usec + rus.ru_stime.tv_usec;
       if (tv->tv_usec >= 1000000)
       {
         tv->tv_usec -= 1000000;
         tv->tv_sec++;
-      }  
+      }
     }
     #elif 0
     {
       /* DO NOT USE THIS WITHOUT ENSURING ...
-         a) that clock() does *not* return virtual time. 
+         a) that clock() does *not* return virtual time.
             (under unix clock() is often implemented via
-            times() is thus virtual. posix 1b compatible OSs 
+            times() is thus virtual. posix 1b compatible OSs
             should have clock_gettime())
          b) that clock() is not dependant on system time
             (all watcom clibs have this bug)
          c) that the value from clock() does indeed count up to
             Uxxx_MAX (whatever size clock_t is) before wrapping.
-            At least one implementation (EMX 0.9) is known to 
+            At least one implementation (EMX 0.9) is known to
             wrap at (0xfffffffful/10).
       */
       static int sguard = -1;
@@ -476,7 +465,7 @@ int CliGetMonotonicClock( struct timeval *tv )
         wrap_count = ++l_wrap_count;
       lastcheck = counter;
       sguard--;
-              
+
       cps = CLOCKS_PER_SEC;
       tv->tv_usec = ((counter%cps)*(1000000ul/cps));
       tv->tv_sec = (time_t)(basetime + (counter / cps);
@@ -491,7 +480,7 @@ int CliGetMonotonicClock( struct timeval *tv )
         #else
         tv->tv_usec = (unsigned long)((((double)(counter%cps))
                                      * 1000000.0)/((double)cps));
-        #endif    
+        #endif
       }
       if (l_wrap_count)
       {
@@ -575,7 +564,7 @@ int CliGetThreadUserTime( struct timeval *tv )
         }
         if (isnt < 0) /* first try? */
           isnt = 0; /* don't try again */
-      } 
+      }
     }
     #endif
   }
