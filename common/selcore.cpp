@@ -9,7 +9,7 @@
  * -------------------------------------------------------------------
  */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.47.2.26 1999/12/09 13:16:18 cyp Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.47.2.27 1999/12/11 00:45:44 cyp Exp $"; }
 
 
 #include "cputypes.h"
@@ -157,10 +157,10 @@ static const char **__corenames_for_contest( unsigned int cont_i )
         corenames_table[RC5][5] = "BRF Kx/MMX"; /* is this k6-2 only? */
         #endif
         #ifdef MMX_BITSLICER
-        corenames_table[DES][2] = "MMX DES bitslicer";
+        corenames_table[DES][2] = "BRF MMX bitslice";
         #endif
         #if defined(MMX_CSC)
-	corenames_table[CSC][4] = "6 bit - MMX bitslicer";
+	corenames_table[CSC][1] = "6 bit - bitslice";//replaces '6 bit - called'
         #endif
       }
     }
@@ -570,10 +570,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (detected_type >= 0)
         {
           int cindex = -1;
-          if ((detected_type & 0x100) != 0 && /* have mmx */
-             __corecount_for_contest(contestid) > 2) /* have mmx-bitslicer */
+          #ifdef MMX_BITSLICER
+          if ((detected_type & 0x100) != 0) /* have mmx */
             cindex = 2; /* mmx bitslicer */
           else 
+          #endif
           {
             switch ( detected_type & 0xff )
             {
@@ -602,10 +603,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (detected_type >= 0)
         {
           int cindex = -1; 
-          if ((detected_type & 0x100) != 0 && /* have mmx */
-             __corecount_for_contest(contestid) > 4) /* have csc-mmx */
-            cindex = 4; /* csc mmx */
+          #if defined(MMX_CSC)
+          if ((detected_type & 0x100) != 0) /* have mmx */
+            cindex = 1; /* == 6bit - called - MMX */
           else
+	  #endif
 	  {
 	    // this is only valid for nasm'd cores or GCC 2.95 and up
 	    switch ( detected_type & 0xff )
