@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.22 2004/03/12 06:40:03 snikkel Exp $
+ * $Id: ogr.cpp,v 1.2.4.23 2004/03/28 06:15:46 jlawson Exp $
  */
 #include <stdlib.h> /* malloc (if using non-static choose dat) */
 #include <string.h> /* memset */
@@ -3155,7 +3155,7 @@ static int ogr_create_pass2(void *input, int inputlen, void *state,
   ** starting point must be higher.
   */
 #if 1
-  #pragma warning OGR-20-P2 (test case) is enabled
+  #pragma message("OGR-20-P2 (test case) is enabled")
   if (workstub->stub.marks == 20 && workstub->stub.length < 4) {
     if (minpos <= 20 || minpos > OGR[20-1] - OGR[(20-2) - workstub->stub.length]) {
       return CORE_E_FORMAT;         // Too low.
