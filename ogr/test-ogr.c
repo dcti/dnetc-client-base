@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
   }
   if (argc == 1) {
     for (i = 0; i < NTESTS; i++) {
-      struct stub stub;
+      struct Stub stub;
       stub.marks = BestKnownRulers[i][0];
       stub.length = 5; //BestKnownRulers[i][0] / 5 + 1;
       for (j = 0; j < stub.length; j++) {
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     }
   } else {
     if (argc > 2) {
-      struct stub stub;
+      struct Stub stub;
       stub.marks = atoi(argv[1]);
       stub.length = argc - 2;
       for (i = 0; i < stub.length; i++) {
