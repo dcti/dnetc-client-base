@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.13 2003/09/07 05:59:05 snikkel Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.14 2003/09/07 19:15:32 mweiser Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -91,224 +91,224 @@
 /* determine current compiling platform */
 #if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
   #if defined(NTALPHA) || defined(_M_ALPHA)
-    #define CLIENT_CPU    CPU_ALPHA
-    #define CLIENT_OS     OS_WIN32
+    #define CLIENT_CPU     CPU_ALPHA
+    #define CLIENT_OS      OS_WIN32
     #define CLIENT_OS_NAME "Win32"
   #elif defined(ASM_PPC)
-    #define CLIENT_CPU    CPU_POWERPC
-    #define CLIENT_OS     OS_WIN32
+    #define CLIENT_CPU     CPU_POWERPC
+    #define CLIENT_OS      OS_WIN32
     #define CLIENT_OS_NAME "Win32"
   #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32) /* win16 */
-    #define CLIENT_CPU    CPU_X86
-    #define CLIENT_OS     OS_WIN16
+    #define CLIENT_CPU     CPU_X86
+    #define CLIENT_OS      OS_WIN16
     #define CLIENT_OS_NAME "Win16"
   #elif defined(__WINDOWS386__) /* standard 32bit client built for win16 */
-    #define CLIENT_CPU    CPU_X86
-    #define CLIENT_OS     OS_WIN16
+    #define CLIENT_CPU     CPU_X86
+    #define CLIENT_OS      OS_WIN16
     #define CLIENT_OS_NAME "Win16"
   #else
-    #define CLIENT_CPU    CPU_X86
-    #define CLIENT_OS     OS_WIN32
+    #define CLIENT_CPU     CPU_X86
+    #define CLIENT_OS      OS_WIN32
     #define CLIENT_OS_NAME "Win32"
   #endif
 #elif defined(DJGPP) || defined(DOS4G) || defined(__MSDOS__)
-  #define CLIENT_OS     OS_DOS
-  #define CLIENT_CPU    CPU_X86
-  #define CLIENT_OS_NAME "x86 DOS"
+  #define CLIENT_OS        OS_DOS
+  #define CLIENT_CPU       CPU_X86
+  #define CLIENT_OS_NAME   "x86 DOS"
 #elif defined(__NETWARE__)
-  #define CLIENT_OS_NAME "NetWare"
+  #define CLIENT_OS_NAME   "NetWare"
   #if defined(_M_IX86)
-    #define CLIENT_OS     OS_NETWARE
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_OS      OS_NETWARE
+    #define CLIENT_CPU     CPU_X86
   #elif defined(_M_SPARC)
-    #define CLIENT_OS     OS_NETWARE
-    #define CLIENT_CPU    CPU_SPARC
+    #define CLIENT_OS      OS_NETWARE
+    #define CLIENT_CPU     CPU_SPARC
   #elif defined(_M_ALPHA)
-    #define CLIENT_OS     OS_NETWARE
-    #define CLIENT_CPU    CPU_ALPHA
+    #define CLIENT_OS      OS_NETWARE
+    #define CLIENT_CPU     CPU_ALPHA
   #endif
 #elif defined(__EMX__) || defined(__OS2__)
-  #define CLIENT_OS_NAME "OS/2"
-  #define CLIENT_OS     OS_OS2
-  #define CLIENT_CPU    CPU_X86
+  #define CLIENT_OS_NAME   "OS/2"
+  #define CLIENT_OS        OS_OS2
+  #define CLIENT_CPU       CPU_X86
 #elif defined(linux)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
   #if defined(__ps2linux__)
     #define CLIENT_OS_NAME "PS2 Linux"
-    #define CLIENT_OS     OS_PS2LINUX
+    #define CLIENT_OS      OS_PS2LINUX
   #else
     #define CLIENT_OS_NAME "Linux"
-    #define CLIENT_OS     OS_LINUX
+    #define CLIENT_OS      OS_LINUX
   #endif
   #if defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
-    #define CLIENT_CPU    CPU_PA_RISC
+    #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(ASM_SH4) /* cross compile, ergo don't use __sh__ */
-    #define CLIENT_CPU   CPU_SH4
+    #define CLIENT_CPU     CPU_SH4
   #elif defined(ASM_ALPHA) || defined(__alpha__)
-    #define CLIENT_CPU    CPU_ALPHA
+    #define CLIENT_CPU     CPU_ALPHA
   #elif defined(ASM_X86) || defined(__i386__)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #elif defined(__S390__) && defined(S390_Z_ARCH)	
-    #define CLIENT_CPU    CPU_S390	/* like S390 except rotate.h */
+    #define CLIENT_CPU     CPU_S390	/* like S390 except rotate.h */
     #undef  CLIENT_OS_NAME
     #define CLIENT_OS_NAME "Linux (z/Architecture)"
   #elif defined(__S390__)
-    #define CLIENT_CPU    CPU_S390
+    #define CLIENT_CPU     CPU_S390
   #elif defined(__S390X__)
-    #define CLIENT_CPU    CPU_S390X
+    #define CLIENT_CPU     CPU_S390X
   #elif defined(__IA64__)
-    #define CLIENT_CPU    CPU_IA64
+    #define CLIENT_CPU     CPU_IA64
   #elif defined(ARM) || defined(__arm__)
-    #define CLIENT_CPU    CPU_ARM
+    #define CLIENT_CPU     CPU_ARM
   #elif defined(ASM_SPARC) || defined(__sparc__)
-    #define CLIENT_CPU    CPU_SPARC
+    #define CLIENT_CPU     CPU_SPARC
   #elif defined(ASM_PPC)
-    #define CLIENT_CPU    CPU_POWERPC
+    #define CLIENT_CPU     CPU_POWERPC
   #elif defined(ASM_68K)
-    #define CLIENT_CPU    CPU_68K
+    #define CLIENT_CPU     CPU_68K
   #elif defined(ASM_MIPS) || defined(__mips)
-    #define CLIENT_CPU    CPU_MIPS
+    #define CLIENT_CPU     CPU_MIPS
   #elif defined(ASM_X86_64) || defined(__x86_64) || defined(__x86_64__) 
-    #define CLIENT_CPU    CPU_X86_64
+    #define CLIENT_CPU     CPU_X86_64
   #endif
 #elif defined(__FreeBSD__)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME "FreeBSD"
-  #define CLIENT_OS     OS_FREEBSD
+  #define CLIENT_OS_NAME   "FreeBSD"
+  #define CLIENT_OS        OS_FREEBSD
   #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #elif defined(__alpha__) || defined(ASM_ALPHA)
-    #define CLIENT_CPU    CPU_ALPHA
+    #define CLIENT_CPU     CPU_ALPHA
   #elif defined(__ppc__) || defined(ASM_PPC)
-    #define CLIENT_CPU    CPU_PPC
+    #define CLIENT_CPU     CPU_PPC
   #elif defined(__sparc__) || defined(__sparc_v9__) || defined(ASM_SPARC)
-    #define CLIENT_CPU    CPU_SPARC
+    #define CLIENT_CPU     CPU_SPARC
   #endif
 #elif defined(__NetBSD__)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "NetBSD"
-  #define CLIENT_OS       OS_NETBSD
+  #define CLIENT_OS_NAME   "NetBSD"
+  #define CLIENT_OS        OS_NETBSD
   #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #elif defined(__arm32__) || defined(ARM)
-    #define CLIENT_CPU    CPU_ARM
+    #define CLIENT_CPU     CPU_ARM
   #elif defined(__alpha__) || defined(ASM_ALPHA)
-    #define CLIENT_CPU    CPU_ALPHA
+    #define CLIENT_CPU     CPU_ALPHA
   #elif defined(__vax__) || defined(ASM_VAX)
-    #define CLIENT_CPU    CPU_VAX
+    #define CLIENT_CPU     CPU_VAX
   #elif defined(__m68k__) || defined(ASM_68K)
-    #define CLIENT_CPU    CPU_68K
+    #define CLIENT_CPU     CPU_68K
   #elif defined(__mips__) || defined(ASM_MIPS)
-    #define CLIENT_CPU    CPU_MIPS
+    #define CLIENT_CPU     CPU_MIPS
   #elif defined(__powerpc__) || defined(ASM_PPC)
-    #define CLIENT_CPU    CPU_POWERPC
+    #define CLIENT_CPU     CPU_POWERPC
   #elif defined(__sparc__) || defined(ASM_SPARC)
-    #define CLIENT_CPU    CPU_SPARC
+    #define CLIENT_CPU     CPU_SPARC
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "OpenBSD"
-  #define CLIENT_OS       OS_OPENBSD
+  #define CLIENT_OS_NAME   "OpenBSD"
+  #define CLIENT_OS        OS_OPENBSD
   #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #elif defined(__alpha__) || defined(ASM_ALPHA)
-    #define CLIENT_CPU    CPU_ALPHA
+    #define CLIENT_CPU     CPU_ALPHA
   #elif defined(__sparc__)
-    #define CLIENT_CPU    CPU_SPARC
+    #define CLIENT_CPU     CPU_SPARC
   #elif defined(__m68k__) || defined(ASM_68K)
-    #define CLIENT_CPU    CPU_68K
+    #define CLIENT_CPU     CPU_68K
   #endif
 #elif defined(bsdi)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "BSD/OS"
-  #define CLIENT_OS       OS_BSDOS
+  #define CLIENT_OS_NAME   "BSD/OS"
+  #define CLIENT_OS        OS_BSDOS
   #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #endif
 #elif defined(__QNX__)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS       OS_QNX
+  #define CLIENT_OS        OS_QNX
   #if defined(__QNXNTO__)
     #define CLIENT_OS_NAME "QNX6"
   #else
-    #define CLIENT_OS_NAME  "QNX4"
+    #define CLIENT_OS_NAME "QNX4"
   #endif
   #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #elif defined(ASM_PPC)
-    #define CLIENT_CPU    CPU_POWERPC
+    #define CLIENT_CPU     CPU_POWERPC
   #elif defined(ASM_MIPS) || defined(ASM_MIPS)
-    #define CLIENT_CPU    CPU_MIPS
+    #define CLIENT_CPU     CPU_MIPS
   #elif defined(ASM_ARM)
-    #define CLIENT_CPU    CPU_ARM
+    #define CLIENT_CPU     CPU_ARM
   #elif defined(ASM_SH4) /* cross compile, ergo don't use  __sh__ */
-    #define CLIENT_CPU    CPU_SH4
+    #define CLIENT_CPU     CPU_SH4
   #endif
 #elif defined(solaris) || defined(sun) || defined(_SUN68K_)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
   #if defined(sunos) || defined(_SUN68K_)
-    #define CLIENT_OS_NAME  "SunOS"
-    #define CLIENT_OS       OS_SUNOS
+    #define CLIENT_OS_NAME "SunOS"
+    #define CLIENT_OS      OS_SUNOS
   #else
-    #define CLIENT_OS_NAME  "Solaris"
-    #define CLIENT_OS       OS_SOLARIS
+    #define CLIENT_OS_NAME "Solaris"
+    #define CLIENT_OS      OS_SOLARIS
   #endif
   #if defined(_SUN68K_) || defined(ASM_68K)
-    #define CLIENT_CPU    CPU_68K
+    #define CLIENT_CPU     CPU_68K
   #elif defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #elif defined(__sparc) || defined(ASM_SPARC)
-    #define CLIENT_CPU    CPU_SPARC
+    #define CLIENT_CPU     CPU_SPARC
   #endif
 #elif defined(sco5)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "SCO OpenServer"
-  #define CLIENT_OS       OS_SCO
+  #define CLIENT_OS_NAME   "SCO OpenServer"
+  #define CLIENT_OS        OS_SCO
   #if defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #endif
 #elif defined(__osf__)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "DEC Unix"
-  #define CLIENT_OS       OS_DEC_UNIX
+  #define CLIENT_OS_NAME   "DEC Unix"
+  #define CLIENT_OS        OS_DEC_UNIX
   #if defined(__alpha)
-    #define CLIENT_CPU    CPU_ALPHA
+    #define CLIENT_CPU     CPU_ALPHA
   #endif
 #elif defined(sinix)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "Sinix"
-  #define CLIENT_OS       OS_SINIX
+  #define CLIENT_OS_NAME   "Sinix"
+  #define CLIENT_OS        OS_SINIX
   #if defined(ASM_MIPS) || defined(__mips)
-    #define CLIENT_CPU    CPU_MIPS
+    #define CLIENT_CPU     CPU_MIPS
   #endif
 #elif defined(ultrix)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "Ultrix"
-  #define CLIENT_OS       OS_ULTRIX
+  #define CLIENT_OS_NAME   "Ultrix"
+  #define CLIENT_OS        OS_ULTRIX
   #if defined(ASM_MIPS) || defined(__mips)
-    #define CLIENT_CPU    CPU_MIPS
+    #define CLIENT_CPU     CPU_MIPS
   #endif
 #elif defined(IRIX) || defined(Irix) || defined(irix)
   #ifndef __unix__ /* should already be defined */
@@ -320,15 +320,15 @@
    * specific platform the build was for (e.g. "Irix (IP19)").
    */
   #ifndef CLIENT_OS_NAME
-    #define CLIENT_OS_NAME  "Irix"
+    #define CLIENT_OS_NAME "Irix"
   #endif /* ! CLIENT_OS_NAME */
-  #define CLIENT_OS       OS_IRIX
-  #define CLIENT_CPU    CPU_MIPS
+  #define CLIENT_OS        OS_IRIX
+  #define CLIENT_CPU       CPU_MIPS
 #elif defined(__VMS)
-  #define CLIENT_OS_NAME  "VMS"
-  #define CLIENT_OS       OS_VMS
+  #define CLIENT_OS_NAME   "VMS"
+  #define CLIENT_OS        OS_VMS
   #if defined(__ALPHA)
-    #define CLIENT_CPU    CPU_ALPHA
+    #define CLIENT_CPU     CPU_ALPHA
   #endif
 #elif defined(_HPUX) || defined(__hpux) || defined(__hpux__)
   #ifndef __unix__ /* should already be defined */
@@ -337,32 +337,32 @@
   typedef unsigned long long uint64_t;
   typedef unsigned int uint32_t;
   typedef long long int64_t;
-  #define CLIENT_OS_NAME  "HP-UX"
-  #define CLIENT_OS       OS_HPUX
+  #define CLIENT_OS_NAME   "HP-UX"
+  #define CLIENT_OS        OS_HPUX
   #if defined(__hppa) || defined(__hppa__) || defined(ASM_HPPA)
-    #define CLIENT_CPU    CPU_PA_RISC
+    #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(_HPUX_M68K)
-    #define CLIENT_CPU    CPU_68K
+    #define CLIENT_CPU     CPU_68K
   #endif
 #elif defined(_DGUX)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
-  #define CLIENT_OS_NAME  "DG/UX"
-  #define CLIENT_OS       OS_DGUX
-  #define CLIENT_CPU      CPU_88K
+  #define CLIENT_OS_NAME   "DG/UX"
+  #define CLIENT_OS        OS_DGUX
+  #define CLIENT_CPU       CPU_88K
 #elif defined(_AIX)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
   #endif
   #define CLIENT_OS_NAME   "AIX"
-  #define CLIENT_OS     OS_AIX
+  #define CLIENT_OS        OS_AIX
   /* AIXALL hides itself as POWER, it's more easy to cope with this problem */
   /* in the POWER tree, because this is used on AIX only */
   #if defined(_ARCH_PPC) || defined(ASM_PPC) || defined(_AIXALL)
-    #define CLIENT_CPU    CPU_POWERPC
+    #define CLIENT_CPU     CPU_POWERPC
   #elif (defined(_ARCH_PWR) || defined(_ARCH_PWR2) || defined(ASM_POWER))
-    #define CLIENT_CPU    CPU_POWER
+    #define CLIENT_CPU     CPU_POWER
   #endif
   /* make shure we are only using threads if the compiler suuports it */
   /* for egcs, we have to use -mthreads, for xlc, use cc_r */
@@ -371,15 +371,15 @@
   #endif
 #elif defined(macintosh)
   #define CLIENT_OS_NAME   "Mac OS"
-  #define CLIENT_OS     OS_MACOS
+  #define CLIENT_OS        OS_MACOS
   #if __POWERPC__
-    #define CLIENT_CPU    CPU_POWERPC
+    #define CLIENT_CPU     CPU_POWERPC
   #elif __MC68K__
-    #define CLIENT_CPU    CPU_68K
+    #define CLIENT_CPU     CPU_68K
   #endif
 #elif defined(__APPLE__)
    #define CLIENT_OS_NAME  "Mac OS X"
-   #define CLIENT_OS OS_MACOSX
+   #define CLIENT_OS       OS_MACOSX
    #ifndef __unix__
    #define __unix__
    #endif
@@ -391,75 +391,75 @@
      /* MACH 3.x based versions of Mac OS X (min. Mac OS X DP4 or Darwin 1.0) */
    #endif
    #if defined(__ppc__)
-     #define CLIENT_CPU CPU_POWERPC
+     #define CLIENT_CPU    CPU_POWERPC
    #elif defined(__i386__)
-     #define CLIENT_CPU CPU_X86
+     #define CLIENT_CPU    CPU_X86
    #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */
   #define __unix__ /* it ain't that special! */
   #endif
   #define CLIENT_OS_NAME   "BeOS"
-  #define CLIENT_OS     OS_BEOS
+  #define CLIENT_OS        OS_BEOS
   #if defined(__POWERPC__) || defined(__PPC__)
-    #define CLIENT_CPU    CPU_POWERPC
+    #define CLIENT_CPU     CPU_POWERPC
   #elif defined(__INTEL__)
-    #define CLIENT_CPU CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #endif
 #elif defined(AMIGA)
   #define CLIENT_OS_NAME   "Amiga OS"
-  #define CLIENT_OS     OS_AMIGAOS
+  #define CLIENT_OS        OS_AMIGAOS
   #ifdef __PPC__
-    #define CLIENT_CPU    CPU_POWERPC
+    #define CLIENT_CPU     CPU_POWERPC
   #else
-    #define CLIENT_CPU    CPU_68K
+    #define CLIENT_CPU     CPU_68K
   #endif
 #elif defined(__riscos)
   #define CLIENT_OS_NAME   "RISC OS"
-  #define CLIENT_OS     OS_RISCOS
-  #define CLIENT_CPU    CPU_ARM
+  #define CLIENT_OS        OS_RISCOS
+  #define CLIENT_CPU       CPU_ARM
 #elif defined(__NeXT__)
   #ifndef __unix__
   #define __unix__ /* just in case */
   #endif
   #define CLIENT_OS_NAME   "NeXTstep"
-  #define CLIENT_OS     OS_NEXTSTEP
+  #define CLIENT_OS        OS_NEXTSTEP
   #if defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #elif defined(ASM_68K)
-    #define CLIENT_CPU    CPU_68K
+    #define CLIENT_CPU     CPU_68K
   #elif defined(ASM_HPPA)
-    #define CLIENT_CPU    CPU_PA_RISC
+    #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(ASM_SPARC)
-    #define CLIENT_CPU    CPU_SPARC
+    #define CLIENT_CPU     CPU_SPARC
   #endif
 #elif defined(__MVS__)
   #define CLIENT_OS_NAME   "OS/390"
-  #define CLIENT_OS     OS_OS390
-  #define CLIENT_CPU    CPU_S390
+  #define CLIENT_OS        OS_OS390
+  #define CLIENT_CPU       CPU_S390
 #elif defined(_SEQUENT_)
   #ifndef __unix__
   #define __unix__
   #endif
-  #define CLIENT_OS     OS_DYNIX
+  #define CLIENT_OS        OS_DYNIX
   #define CLIENT_OS_NAME   "Dynix"
   #if defined(ASM_X86)
-    #define CLIENT_CPU    CPU_X86
+    #define CLIENT_CPU     CPU_X86
   #endif
 #endif
 
 #if !defined(CLIENT_OS)
-  #define CLIENT_OS     OS_UNKNOWN
+  #define CLIENT_OS        OS_UNKNOWN
 #endif
 #if !defined(CLIENT_OS_NAME)
-  #define CLIENT_OS_NAME "**Unknown OS**"
+  #define CLIENT_OS_NAME   "**Unknown OS**"
 #endif
 #if !defined(CLIENT_CPU)
-  #define CLIENT_CPU    CPU_UNKNOWN
+  #define CLIENT_CPU       CPU_UNKNOWN
 #endif
 #if defined(ASM_NONE)
   #undef CLIENT_CPU
-  #define CLIENT_CPU CPU_UNKNOWN
+  #define CLIENT_CPU       CPU_UNKNOWN
 #elif (CLIENT_OS == OS_UNKNOWN) || (CLIENT_CPU == CPU_UNKNOWN)
   /* ignoreunknowncpuos is used by the client's testplat.cpp utility. */
   #if !defined(IGNOREUNKNOWNCPUOS)
