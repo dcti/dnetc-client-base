@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.56  1998/12/23 03:24:56  silby
+// Client once again listens to keyserver for next contest start time,
+// tested, it correctly updates.  Restarting after des blocks have
+// been recieved has not yet been implemented, I don't have a clean
+// way to do it yet.  Writing of contest data to the .ini has been
+// moved back to confrwv with its other ini friends.
+//
 // Revision 1.55  1998/12/22 15:58:24  jcmichot
 // *** empty log message ***
 //
@@ -211,7 +218,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.55 1998/12/22 15:58:24 jcmichot Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.56 1998/12/23 03:24:56 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -1067,6 +1074,7 @@ int Client::Run( void )
   
   time_t timeNow;
   time_t timeRun=0, timeLast=0, timeNextConnect=0, timeNextCheckpoint = 0;
+  time_t timeNextScheduledUpdateCheck;
   int checkpointsDisabled = (nodiskbuffers != 0);
   unsigned int checkpointsPercent = 0;
   int isPaused=0, wasPaused=0;
@@ -1402,6 +1410,40 @@ int Client::Run( void )
       ModeReqSet(MODEREQ_FETCH|MODEREQ_FLUSH|MODEREQ_FQUIET);
       }
     #endif
+
+    //------------------------------------
+    // Check for universally coordinated update
+    //------------------------------------
+
+    #define TIME_AFTER_START_TO_UPDATE 10800 // Three hours
+    #define UPDATE_INTERVAL 600 // Ten minutes
+
+    if ((scheduledupdatetime != 0) &&
+        (timeNow > scheduledupdatetime) &&
+        (timeNow < scheduledupdatetime+TIME_AFTER_START_TO_UPDATE) &&
+        (preferred_contest_id==1))
+      {
+      // Sanity check when next update check will occur
+      if ((timeNextScheduledUpdateCheck < scheduledupdatetime) ||
+         (timeNextScheduledUpdateCheck > scheduledupdatetime + TIME_AFTER_START_TO_UPDATE))
+        {
+        timeNextScheduledUpdateCheck = scheduledupdatetime;
+        Log("I've just detected that it's time to start another\n");
+        Log("DES contest.  I will now attempt to get blocks.\n");
+        };
+      if (timeNow > timeNextScheduledUpdateCheck)
+        {
+        // If we haven't gotten the des start signal yet, keep updating
+        if (contestdone[1] != 0) 
+          {
+          contestdone[1]=0; // Since we can't force a flush, we must
+                            // pretend the contest started so a
+                            // flush will occur
+          ModeReqSet(MODEREQ_FETCH);
+          };
+        timeNextScheduledUpdateCheck=timeNow+UPDATE_INTERVAL;
+        };
+      };
 
     //------------------------------------
     //handle 'connectoften' requests

@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: confrwv.cpp,v $
+// Revision 1.10  1998/12/23 03:24:56  silby
+// Client once again listens to keyserver for next contest start time,
+// tested, it correctly updates.  Restarting after des blocks have
+// been recieved has not yet been implemented, I don't have a clean
+// way to do it yet.  Writing of contest data to the .ini has been
+// moved back to confrwv with its other ini friends.
+//
 // Revision 1.9  1998/12/23 00:41:45  silby
 // descontestclosed and scheduledupdatetime now read from the .ini file.
 //
@@ -58,7 +65,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.9 1998/12/23 00:41:45 silby Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.10 1998/12/23 03:24:56 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -71,6 +78,8 @@ return "@(#)$Id: confrwv.cpp,v 1.9 1998/12/23 00:41:45 silby Exp $"; }
 #include "cpucheck.h"  // GetProcessorType() for mmx stuff
 #include "confopt.h"   // conf_option table
 #include "network.h"   // ntohl()
+#include "triggers.h"  // RaiseRestartRequestTrigger()
+#include "clicdata.h"  // CliClearContestData()
 
 // --------------------------------------------------------------------------
 
@@ -655,5 +664,100 @@ int Client::WriteConfig(int writefull /* defaults to 0*/)
 
 // --------------------------------------------------------------------------
 
+// update contestdone and randomprefix .ini entries
+void RefreshRandomPrefix( Client *client )
+{       
+  if (client->stopiniio == 0 && client->nodiskbuffers == 0)
+    {
+    const char *OPTION_SECTION = "parameters";
+    IniSection ini;
+    unsigned int cont_i;
+    s32 randomprefix, flagbits;
+    int inierror = (ini.ReadIniFile( 
+                       GetFullPathForFilename( client->inifilename ) ) != 0);
+    int inichanged = 0;
 
+    if (client->randomchanged)
+      {
+      randomprefix = (s32)(client->randomprefix);
+      ini.setrecord(OPTION_SECTION, "randomprefix", IniString(randomprefix));
+
+      flagbits = 0;
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+        {
+        flagbits |= ((client->contestdone[cont_i])?(1<<cont_i):(0));
+
+        char buffer[32];
+        if (cont_i==0) strcpy(buffer,"contestdone");
+        else sprintf(buffer,"contestdone%u", cont_i+1 );
+        if (client->contestdone[cont_i])
+          {
+//LogScreen("write: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+          ini.setrecord(OPTION_SECTION, buffer, 
+              IniString((client->contestdone[cont_i])?("1"):("0")));
+//LogScreen("write: end\n");
+          }
+        else
+          {
+//LogScreen("erase: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+          IniRecord *inirec;
+          if ((inirec=ini.findfirst(OPTION_SECTION, buffer))!=NULL)
+            inirec->values.Erase();
+//LogScreen("erase: end\n");
+          }
+        }
+      ini.setrecord(OPTION_SECTION, "contestdoneflags", IniString(flagbits));
+      ini.setrecord(OPTION_SECTION, "descontestclosed",
+                    IniString((s32)htonl(client->descontestclosed)));
+      ini.setrecord(OPTION_SECTION, "scheduledupdatetime",
+                    IniString((s32)htonl(client->scheduledupdatetime)));
+      client->randomchanged = 0;
+      inichanged = 1;
+      }
+    else if (!inierror)
+      {  
+      randomprefix = ini.getkey(OPTION_SECTION, "randomprefix", "0")[0];
+      if (randomprefix) client->randomprefix = randomprefix;
+
+      u32 oldflags=0, newflags=0;
+
+      IniRecord *inirec;
+      if ((inirec=ini.findfirst(OPTION_SECTION, "contestdoneflags"))!=NULL)
+        newflags = ini.getkey(OPTION_SECTION, "contestdoneflags", "0")[0];
+      else
+        {
+        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+          {
+          char buffer[32];
+          if (cont_i==0) strcpy(buffer,"contestdone");
+          else sprintf(buffer,"contestdone%u", cont_i+1 );
+          flagbits = ini.getkey(OPTION_SECTION, buffer, "0")[0];
+          newflags |= ((flagbits)?(1<<cont_i):(0)); 
+          }
+        }
+      oldflags = 0;
+      for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+        {
+        oldflags |= ((client->contestdone[cont_i])?(1<<cont_i):(0)); 
+        client->contestdone[cont_i]=(((newflags&(1<<cont_i))==0)?(0):(1));
+//LogScreen("read: client->contestdone[%u] ==> %u\n", cont_i, client->contestdone[cont_i]);
+        }
+      if (newflags != oldflags)
+        {
+        for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
+          {
+          if ((newflags & (1<<cont_i)) != (oldflags & (1<<cont_i)))
+            CliClearContestInfoSummaryData( cont_i );
+          }
+        RaiseRestartRequestTrigger();
+        }
+      }   
+    
+    if (inichanged)
+      ini.WriteIniFile( GetFullPathForFilename( client->inifilename ) );
+    }
+  return;
+}
+
+// -----------------------------------------------------------------------
 
