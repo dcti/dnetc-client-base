@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.164  1998/07/30 02:33:20  blast
+// Lowered minimum network timeout from 30 to 5 ...
+//
 // Revision 1.163  1998/07/29 05:14:33  silby
 // Changes to win32 so that LurkInitiateConnection now works - required the addition of a new .ini key connectionname=.  Username and password are automatically retrieved based on the connectionname.
 //
@@ -150,7 +153,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.163 1998/07/29 05:14:33 silby Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.164 1998/07/30 02:33:20 blast Exp $";
 return id; }
 #endif
 
@@ -1469,7 +1472,7 @@ s32 Client::ReadConfig(void)
   tempconfig=ini.getkey(OPTION_SECTION, "cktime", "0")[0];
   if (tempconfig) checkpoint_min=max(2,tempconfig);
   tempconfig=ini.getkey(OPTION_SECTION, "nettimeout", "60")[0];
-  if (tempconfig) nettimeout=min(300,max(30,nettimeout));
+  if (tempconfig) nettimeout=min(300,max(5,nettimeout));
   tempconfig=ini.getkey(OPTION_SECTION, "noexitfilecheck", "0")[0];
   if (tempconfig) noexitfilecheck=1;
   tempconfig=ini.getkey(OPTION_SECTION, "exitfilechecktime", "30")[0];
@@ -1593,7 +1596,7 @@ void Client::ValidateConfig( void )
     else if (checkpoint_min > 30) checkpoint_min=30;
   if (exitfilechecktime < 5) exitfilechecktime=5;
     else if (exitfilechecktime > 600) exitfilechecktime=600;
-  nettimeout=min(300,max(30,nettimeout));
+  nettimeout=min(300,max(5,nettimeout));
 
 #ifndef DONT_USE_PATHWORK  //ie use it
 
@@ -2940,7 +2943,7 @@ void Client::ParseCommandlineOptions(int Argc, char *Argv[], s32 *inimissing)
       else if ( strcmp( Argv[i], "-nettimeout" ) == 0 ) // Change network timeout
       {
         LogScreenf("Setting network timeout to %s\n",Argv[i+1]);
-        nettimeout = (s32) min(300,max(30,atoi(Argv[i+1])));
+        nettimeout = (s32) min(300,max(5,atoi(Argv[i+1])));
         l_inimissing=0; // Don't complain if the inifile is missing
         Argv[i][0] = Argv[i+1][0] = 0;
         i++; // Don't try and parse the next argument
