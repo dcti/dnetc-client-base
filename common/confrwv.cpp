@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.37 2000/06/06 12:09:15 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.38 2000/06/13 17:57:50 cyp Exp $"; }
 
 //#define TRACE
 
@@ -394,6 +394,41 @@ static int __parse_timestring(const char *source, int oldstyle_hours_compat )
 
 /* ------------------------------------------------------------------------ */
 
+//determine the default value for "autofindkeyserver" based on the keyserver
+//name. Effective only if the "autofindkeyserver" entry doesn't exist.
+
+static int __getautofinddefault(const char *hostname)
+{
+  char buffer[64]; char sig[] = "distributed.net";
+  unsigned int ui = 0;
+  while (ui<sizeof(buffer) && hostname[ui] && hostname[ui]!=':') 
+  {
+    buffer[ui]=(char)tolower(hostname[ui]);
+    ui++;
+  }
+  if (ui < sizeof(buffer))
+  {
+    buffer[ui] = '\0';
+    if (ui == 0)
+      return 1;
+    if (ui == 1 && buffer[0] == '*')
+      return 1;
+    if (strcmp(buffer,"auto")==0 || strcmp(buffer,"(auto)")==0)
+      return 1;  //one config version accidentally wrote "auto" out
+    if (ui >= (sizeof( sig ) - 1) &&
+                 strcmp( &buffer[(ui-(sizeof( sig )-1))], sig )==0)
+    {
+      if (ui == (sizeof(sig)-1))
+        return 1; /* plain "distributed.net" */
+      else if (buffer[(ui-(sizeof( sig )))] == '.') /* [*].distributed.net */
+        return 1; /* make the hostname require reentry (once) */
+    }
+  }
+  return 0;
+}
+
+/* ------------------------------------------------------------------------ */
+
 // Convert old ini settings to new (if new doesn't already exist/is not empty).
 // Returns 0 on succes, or negative if any failures occurred.
 
@@ -705,44 +740,23 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   }
   if (!GetPrivateProfileStringB( OPTSECT_NET, "keyserver", "", buffer, sizeof(buffer), fn ))
   {
-    client->keyproxy[0] = '\0'; //default
-    client->autofindkeyserver = 1;  //default
-    client->keyport = 0; //default
     if (GetPrivateProfileStringB( OPTION_SECTION, "keyproxy", "", buffer, sizeof(buffer), fn ))
     {
-      char sig[] = "distributed.net";
-      ui = 0;
-      while (buffer[ui]) {
-        buffer[ui]=(char)tolower(buffer[ui]);
-        ui++;
-      } 
-      if (ui >= 4 && (strcmp(buffer,"auto")==0 || strcmp(buffer,"(auto)")==0))
-        buffer[0] = '\0'; //one config version accidentally wrote "auto" out
-      else if (ui >= (sizeof( sig ) - 1) && 
-               strcmp( &buffer[(ui-(sizeof( sig )-1))], sig )==0)
-      {
-        if (ui == (sizeof(sig)-1)) 
-          buffer[0] = '\0'; /* plain "distributed.net" */
-        else if (buffer[(ui-(sizeof( sig )))] == '.') /*[*].distributed.net*/
-          buffer[0] = '\0'; /* make the hostname require reentry (once) */
-      }    
-      if (buffer[0])
-      {      
-        client->autofindkeyserver = 0;
-        strncpy( client->keyproxy, buffer, sizeof(client->keyproxy) );
-        client->keyproxy[sizeof(client->keyproxy)-1] = '\0';
-      }
-    }  
+      if (__getautofinddefault(buffer))
+        buffer[0] = '\0'; /* force user to update hostname setting (once) */
+    }
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "keyport", 0, fn ))!=0)
     {
       if (i < 0 || i > 0xffff || i == 2064)
-        i = 0;
-      else
-        client->keyport = i;
+        i = 0;    
     }
-    WritePrivateProfileStringB( OPTSECT_NET,"autofindkeyserver",((client->autofindkeyserver)?(NULL):("no")), fn);
-    if (client->keyproxy[0] || client->keyport)
+    if (buffer[0] || i)
     {
+      strncpy( client->keyproxy, buffer, sizeof(client->keyproxy) );
+      client->keyproxy[sizeof(client->keyproxy)-1] = '\0';
+      client->autofindkeyserver = ((buffer[0])?(0):(1));
+      WritePrivateProfileStringB( OPTSECT_NET,"autofindkeyserver",((client->autofindkeyserver)?(NULL):("no")), fn);
+      client->keyport = i;
       modfail += _readwrite_hostname_and_port( 1, fn,
                                 OPTSECT_NET, "keyserver",
                                 client->keyproxy, sizeof(client->keyproxy),
@@ -1027,7 +1041,7 @@ int ReadConfig(Client *client)
                                 client->keyproxy, sizeof(client->keyproxy),
                                 &(client->keyport) );
   //NetOpen() gets (autofindkeyserver)?(""):(client->keyproxy))
-  client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", client->autofindkeyserver, fn );
+  client->autofindkeyserver = GetPrivateProfileIntB( OPTSECT_NET, "autofindkeyserver", __getautofinddefault(client->keyproxy), fn );
   client->nettimeout = GetPrivateProfileIntB( OPTSECT_NET, "nettimeout", client->nettimeout, fn );
   client->nofallback = GetPrivateProfileIntB( OPTSECT_NET, "nofallback", client->nofallback, fn );
 
