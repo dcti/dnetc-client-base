@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.18.2.1 1999/09/18 18:09:20 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.18.2.2 1999/11/14 18:59:19 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -28,12 +28,11 @@ static struct contestInfo
   unsigned int BlocksDone;
   double IterDone;
   struct timeval TimeDone;
-  struct timeval TimeStart;
-} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0}, {0,0} },
-                  { "DES", 1,  2, 0, 0, {0,0}, {0,0} },
-                  { "OGR", 2,  1, 0, 0, {0,0}, {0,0} },
-                  { "CSC", 3,  1, 0, 0, {0,0}, {0,0} },
-                  {  NULL,-1,  0, 0, 0, {0,0}, {0,0} }  };
+} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0} },
+                  { "DES", 1,  2, 0, 0, {0,0} },
+                  { "OGR", 2,  1, 0, 0, {0,0} },
+                  { "CSC", 3,  1, 0, 0, {0,0} },
+                  {  NULL,-1,  0, 0, 0, {0,0} }  };
 
 /* ----------------------------------------------------------------------- */
 
@@ -94,7 +93,6 @@ int CliClearContestInfoSummaryData( int contestid )
   conInfo->BlocksDone = 0;
   conInfo->IterDone = (double)(0);
   conInfo->TimeDone.tv_sec = conInfo->TimeDone.tv_usec = 0;
-  conInfo->TimeStart.tv_sec = conInfo->TimeStart.tv_usec = 0;
   return 0;
 }  
 
@@ -113,12 +111,10 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
   if (totaliter)   *totaliter   = conInfo->IterDone;
   if (totaltime)
   {
-    if (conInfo->BlocksDone <= 1)
-    {
-      totaltime->tv_sec = conInfo->TimeDone.tv_sec;
-      totaltime->tv_usec = conInfo->TimeDone.tv_usec;
-    }
-    else
+    totaltime->tv_sec = conInfo->TimeDone.tv_sec;
+    totaltime->tv_usec = conInfo->TimeDone.tv_usec;
+#if 0  
+    if (conInfo->BlocksDone > 1)
     {
       //get time since first call to CliTimer() (time when 1st prob started)
       CliClock(totaltime);
@@ -129,6 +125,7 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
         totaltime->tv_usec = conInfo->TimeDone.tv_usec;
       }
     }
+#endif
   }
   return 0;
 }
