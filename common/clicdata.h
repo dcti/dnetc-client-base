@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clicdata.h,v $
+// Revision 1.10  1998/07/15 05:49:11  ziggyb
+// included the header baseincs.h because that's where timeval is and it won't compile without it being defined
+//
 // Revision 1.9  1998/07/07 21:55:08  cyruspatel
 // Serious house cleaning - client.h has been split into client.h (Client
 // class, FileEntry struct etc - but nothing that depends on anything) and
@@ -39,6 +42,7 @@
 
 #ifndef _CLICDATA_H_
 #define _CLICDATA_H_
+#include "baseincs.h"   // for timeval
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
