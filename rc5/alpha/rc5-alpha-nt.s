@@ -67,7 +67,7 @@ rc5_unit_func:
 //   asaxp, so that the assembler will do instruction
 //   reordering after the macros are expanded.
 
-     lda    sp,-272(sp)             // Save registers
+     lda    sp,-288(sp)             // Save registers
      stq    ra,0(sp)
      stq    s0,8(sp)
      stq    s1,16(sp)
@@ -78,6 +78,7 @@ rc5_unit_func:
      stq    s6,56(sp)
      .prologue
      sll    a1,0x1,v0              // Convert timeslice to keycount
+     stq    v0,272(sp)             // Save away for final answer
 
      // We now have all of the registers to work with
 
@@ -524,7 +525,13 @@ EndSearch:
      ldq    s1,16(sp)
      ldq    s0,8(sp)
      ldq    ra,0(sp)
-     lda    sp,272(sp)
+
+// Adjust return value to be consistant with other cores
+// return values
+     ldq    at,272(sp)
+     subl   at,v0,v0
+
+     lda    sp,288(sp)
      ret    ra
 
 Carry:
