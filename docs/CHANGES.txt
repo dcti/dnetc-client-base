@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.23 2003/04/09 02:42:22 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.24 2003/04/18 12:02:02 andreasb Exp $
 ==========================================================================
 
 2.9000
 ------
 
 2.9005-484  new: x86: detect Athlon with Barton core (#3227)
+            new: x86: detect Celeron with Tualatin core / brand id 1 (#3246)
             imp: x86: changed some preselected cores (#3233)
 
 2.9005-483  fix: x86: re-added SS-2 core - new version fixes bug #3187
