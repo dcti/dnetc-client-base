@@ -21,13 +21,14 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.81.2.2 2004/08/13 01:58:28 bdragon Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.81.2.3 2004/08/13 18:09:34 snikkel Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9009-494  chg: all: Major clean up in the OGR core base
             imp: ppc: Modified KOGE cores - should be faster in most cases
+            new: solaris: 64-bit sparc client with faster 64-bit OGR
             imp: alpha: Added EV4 and EV67-specific 64-bit cores
 
 2.9008-493  new: ppc: Enabled KOGE cores for all PPC targets, except AIX
