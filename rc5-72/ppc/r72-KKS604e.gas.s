@@ -38,9 +38,13 @@
 #		8 keys at once, all keys (within such "block") having the same mid
 #		and lo values).
 #
-# $Id: r72-KKS604e.gas.s,v 1.1.2.1 2003/03/12 12:13:15 snake Exp $
+# $Id: r72-KKS604e.gas.s,v 1.1.2.2 2003/03/12 20:31:44 oliver Exp $
 #
 # $Log: r72-KKS604e.gas.s,v $
+# Revision 1.1.2.2  2003/03/12 20:31:44  oliver
+# Linker errors when compiled with gas 2.11 - fixed
+# Moved executed_key data from .data to .rodata
+#
 # Revision 1.1.2.1  2003/03/12 12:13:15  snake
 # Added optimized gas compliant cores (like those for MacOS X)
 #
@@ -271,8 +275,8 @@ set_counter:
 		
 		lwz		r2,cypher_lo(r3)
 		
-		lis		r10,(expanded_key)@h
-		ori		r10,r10,(expanded_key)@l
+		lis		r10,(expanded_key)@ha
+		la		r10,(expanded_key)@l(r10)
 		
 
 	#---------------------------------------------------------------------
@@ -898,8 +902,7 @@ epilog:
 
 #============================================================================
 
-		.data
-#		.const
+		.rodata
 		.align	4
 
 		
