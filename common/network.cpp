@@ -1,8 +1,17 @@
+// Hey, Emacs, this a -*-C++-*- file !
+
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Id: network.cpp,v 1.17 1998/06/13 23:33:18 cyruspatel Exp $
+//                      Fixed NetWare stuff and added #include "sleepdef.h"
+//                      (which should now warn if macros are not the same)
+//
 
 #include "network.h"
+#include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
+
 #define VERBOSE_OPEN //print cause of ::Open() errors
 
 #include <stddef.h> // for offsetof
@@ -13,27 +22,9 @@
 #define UU_ENC(Ch) (char) (((Ch) & 077) != 0 ? ((Ch) & 077) + 0x20 : '`')
 
 #if (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_DOS)
-  #include <varargs.h>
+  #include <varargs.h> //cannot use in network.h (client.h uses stdarg.h)
 #elif (CLIENT_OS == OS_AMIGAOS)
   static struct Library *SocketBase;
-#elif ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
-  extern "C" void usleep(unsigned int);
-  #if defined(_SUNOS3_)
-  extern "C" int fcntl(int, int, int);
-  #endif
-  extern "C" {
-  int socket(int, int, int);
-  int setsockopt(int, int, int, char *, int);
-  int connect(int, struct sockaddr *, int);
-  }
-#elif (CLIENT_OS == OS_NETWARE)
-  #ifdef gethostbyname     //this is in "hbyname.cpp"
-  #undef gethostbyname
-  #endif
-  #ifdef inet_ntoa         //this is also in "hbyname.cpp"
-  #undef inet_ntoa
-  #endif
-  #include "netware/hbyname.cpp"  // this is a domain name resolver
 #endif
 
 #pragma pack(1)               // no padding allowed
@@ -880,22 +871,24 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
     {
       if (need_close || gethttpdone) break;
 #if (CLIENT_OS == OS_WIN32)
-      Sleep( 100 );   // Prevent racing on error (1/10 second)
+      usleep( 100000 );  // use define in sleepdef.h and catch #error
+      //Sleep( 100 );   // Prevent racing on error (1/10 second)
 #elif (CLIENT_OS == OS_WIN16)
+      usleep( 100000 );  // use define in sleepdef.h and catch #error
       // nothing
 #elif (CLIENT_OS == OS_OS2)
-      DosSleep( 100000 );   // Prevent racing on error (1/10 second)
-#elif (CLIENT_OS == OS_NETWARE)
-      delay( 1000 );  // full 1 second on Netware due to so many reported network problems.
-#elif defined(__WATCOM__)
-      delay( 100 );  // Prevent racing on error (1/10 second)
+      usleep( 100000 );  // use define in sleepdef.h and catch #error
+      //DosSleep( 100000 );   // Prevent racing on error (1/10 second)
 #elif (CLIENT_OS == OS_BEOS)
-      snooze( 100000 );  // Prevent racing on error (1/10 second)
+      usleep( 100000 );  // use define in sleepdef.h and catch #error
+      //snooze( 100000 );  // Prevent racing on error (1/10 second)
 #elif (CLIENT_OS == OS_VMS)
       sleep( 1 );  // Prevent racing on error (1 second)
 #elif (CLIENT_OS == OS_SOLARIS)
       sleep(1); // full 1 second on Solaris due to so many reported network problems.
 #elif (CLIENT_OS == OS_HPUX)
+      usleep( 100000 );  // use define in sleepdef.h and catch #error
+  #if 0    
   #ifdef _STRUCT_TIMESPEC
       // HP-UX 10.x has nanosleep() rather than usleep()
       struct timespec interval, remainder;
@@ -905,6 +898,7 @@ s32 Network::Get( u32 length, char * data, u32 timeout )
   #else
       // HP-UX 9.x doesn't have nanosleep() or usleep()
       sleep(1);  // Prevent racing on error (1 second)
+  #endif
   #endif
 #else
       usleep( 100000 );  // Prevent racing on error (1/10 second)

@@ -3,6 +3,11 @@
 // Copyright distributed.net 1997-1998 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
+//
+// $Id: network.h,v 1.12 1998/06/13 23:33:20 cyruspatel Exp $
+//                      Fixed NetWare stuff and added #include "sleepdef.h"
+//                      (which should now warn if macros are not the same)
+//
 
 //#define NONETWORK         // define to eliminate network functionality
 //#define SELECT_FIRST      // define to perform select() before reading
@@ -15,6 +20,7 @@
 
 #include "cputypes.h"
 #include "autobuff.h"
+#include "sleepdef.h"    //  Fix sleep()/usleep() macros there! <--
 
 #if ((CLIENT_OS == OS_AMIGAOS)|| (CLIENT_OS == OS_RISCOS))
 extern "C" {
@@ -81,26 +87,6 @@ extern "C" {
     #define close(sock) socket_close(sock)
   #endif
   typedef int SOCKET;
-#elif (CLIENT_OS == OS_NETWARE)
-  #include <process.h>
-  #include <io.h>
-  extern "C" {
-    #include <sys/types.h>
-    #include <netinet/in.h>
-    #include <sys/socket.h>
-    #include <netdb.h>
-    #include <sys/ioctl.h>
-    #include <sys/stat.h>     /* for stat() */
-    #include <arpa/inet.h>
-  }
-  typedef int SOCKET;
-  #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
-  #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
-  #define sleep(x) delay(1000*x)
-
-  #include <errno.h>  //CYP moved from network.cpp
-  #include <fcntl.h>  //CYP moved from network.cpp
-  #define usleep(x) delay(x/1000)  //CYP added
 #elif (CLIENT_OS == OS_MACOS)
   #include <gusi.h>
   typedef int SOCKET;
@@ -170,23 +156,49 @@ extern "C" {
   #include <arpa/inet.h>
   #include <sys/time.h>
   #include <unistd.h>
+  #include <fcntl.h>
+  #include <netdb.h>
+  typedef int SOCKET;
   #if (CLIENT_OS == OS_DEC_UNIX)
     // found in <unistd.h>, but requires _XOPEN_SOURCE_EXTENDED,
     // which causes more trouble...
     extern "C" int usleep(useconds_t);
   #endif
-  #include <fcntl.h>
-  #include <netdb.h>
   #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
   #endif
   #if (CLIENT_OS == OS_AIX)
     #include <errno.h>
   #endif
-  #if defined(_SUNOS3_)
-    #define _SOCKET_H_ALREADY_
+  #if ((CLIENT_OS == OS_SUNOS) && (CLIENT_CPU==CPU_68K))
+    extern "C" void usleep(unsigned int);
+    #if defined(_SUNOS3_)
+      #define _SOCKET_H_ALREADY_
+      extern "C" int fcntl(int, int, int);
+    #endif
+    extern "C" {
+    int socket(int, int, int);
+    int setsockopt(int, int, int, char *, int);
+    int connect(int, struct sockaddr *, int);
+    }
   #endif
-  typedef int SOCKET;
+  #if (CLIENT_OS == OS_NETWARE)
+    #define read(sock, buff, len) recv(sock, (char*)buff, len, 0)
+    #define write(sock, buff, len) send(sock, (char*)buff, len, 0)
+    #ifdef gethostbyname     //this is in "hbyname.cpp"
+    #undef gethostbyname
+    #endif
+    extern struct hostent *gethostbyname( char *hostname );
+    #ifdef inet_ntoa         //this is also in "hbyname.cpp"
+    #undef inet_ntoa
+    #endif
+    extern char *inet_ntoa( struct in_addr addr );
+    #ifdef inet_addr         //this is also in "hbyname.cpp"
+    #undef inet_addr         //also bad proto in netware sdk13
+    #endif                   
+    extern long my_inet_addr( char *aaddr );
+    #define inet_addr(x) my_inet_addr(x)
+  #endif
 #endif
 
 #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_RISCOS))
@@ -329,4 +341,3 @@ public:
 
 
 #endif
-
