@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.8 2004/03/28 06:13:18 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.9 2004/05/07 19:32:21 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -20,6 +20,7 @@ HAVE_RC5_72_CORES=1
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
 HAVE_OGR_CORES=1
+HAVE_OGR_PASS2=1
 
 # --------------------------------------------
 
@@ -330,6 +331,10 @@ OGR_OBJS =                           \
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
 !else
 !error No OGR cores for this architecture.
+!endif
+
+!ifdef HAVE_OGR_PASS2
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_PASS2
 !endif
 
 # --------------------------------------------
