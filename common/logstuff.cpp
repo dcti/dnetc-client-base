@@ -1,16 +1,10 @@
 /* Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * ----------------------------------------------------------------------
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
- *
- * Please get in touch with me before implementing support for 
- * the extended file logging types (rotate/fifo/restart types).
- * ----------------------------------------------------------------------
 */
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.39 1999/11/08 02:02:40 cyp Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.40 1999/12/06 19:59:12 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -341,9 +335,14 @@ static void InternalLogFile( char *msgbuffer, unsigned int msglen, int /*flags*/
 
 static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*flags*/ )
 {
- if ( msglen && logstatics.mailmessage && logstatics.spoolson &&
+  if ( msglen && logstatics.mailmessage && logstatics.spoolson &&
                                   (logstatics.loggingTo & LOGTO_MAIL) != 0)
-    logstatics.mailmessage->append( msgbuffer ); 
+  {                              
+    static int recursion_check = 0; //network stuff sometimes Log()s.
+    if ((++recursion_check) == 1)
+      logstatics.mailmessage->append( msgbuffer ); 
+    --recursion_check;
+  }
   return;
 }
 
@@ -354,10 +353,6 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 // a (va_list *) instead to avoid this problem
 void LogWithPointer( int loggingTo, const char *format, va_list *arglist ) 
 {
-  static int recursion_check = 0;
-  if ((++recursion_check) > 2) /* log->mail->network */
-    loggingTo &= ~LOGTO_MAIL;
-
   char msgbuffer[MAX_LOGENTRY_LEN];
   unsigned int msglen = 0;
   char *buffptr, *obuffptr;
@@ -366,7 +361,6 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
   
   msgbuffer[0]=0;
   loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
-
 
   if ( !format || !*format )
     loggingTo = LOGTO_NONE;
@@ -425,29 +419,35 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     msglen = strlen( msgbuffer );
   }
 
-  #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
-  if (loggingTo != LOGTO_NONE)
-  {
-    buffptr = &msgbuffer[0];
-    do{
-      while (*buffptr == '\r' || *buffptr == '\n' )
-         buffptr++;
-      obuffptr = buffptr;
-      while (*buffptr && *buffptr != '\r' && *buffptr != '\n' )
-        buffptr++;
-      if ((buffptr-obuffptr) > 79)
-      {
-        obuffptr[75] = ' '; obuffptr[76] = obuffptr[77] = obuffptr[78] = '.';
-        memmove( obuffptr+79, buffptr, strlen(buffptr)+1 );
-        buffptr = obuffptr+79;
-      }    
-    } while (*buffptr);
-    msglen = strlen( msgbuffer );
-  }      
-  #endif
+  if (logstatics.spoolson && (loggingTo & LOGTO_FILE) != 0 )
+    InternalLogFile( msgbuffer, msglen, 0 );
 
+  if (logstatics.spoolson && (loggingTo & LOGTO_MAIL) != 0 )
+    InternalLogMail( msgbuffer, msglen, 0 );
+  
   if (( loggingTo & LOGTO_SCREEN ) != 0)
   {
+    #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
+    //if (ConIsScreen())
+    {
+      buffptr = &msgbuffer[0];
+      do{
+        while (*buffptr == '\r' || *buffptr == '\n' )
+           buffptr++;
+        obuffptr = buffptr;
+        while (*buffptr && *buffptr != '\r' && *buffptr != '\n' )
+          buffptr++;
+        if ((buffptr-obuffptr) > 79)
+        {
+          obuffptr[75] = ' '; obuffptr[76] = obuffptr[77] = obuffptr[78] = '.';
+          memmove( obuffptr+79, buffptr, strlen(buffptr)+1 );
+          buffptr = obuffptr+79;
+        }    
+      } while (*buffptr);
+      msglen = strlen( msgbuffer );
+    }      
+    #endif
+
     buffptr = &msgbuffer[0];
     if ((loggingTo & LOGTO_RAWMODE)==0)
     {
@@ -461,7 +461,6 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
         msglen++;
         memmove( msgbuffer+1, msgbuffer, msglen );
         msgbuffer[0] = '\n';
-  // CRAMER - should this even be here? (I think not)
         logstatics.stableflag = 1;
       }
     }  
@@ -473,13 +472,6 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     }
   }
   
-  if (logstatics.spoolson && ( loggingTo & LOGTO_FILE ) != 0)
-    InternalLogFile( msgbuffer, msglen, 0 );
-
-  if (logstatics.spoolson && ( loggingTo & LOGTO_MAIL ) != 0)
-    InternalLogMail( msgbuffer, msglen, 0 );
-      
-  --recursion_check;
   return;
 }
 
