@@ -3,6 +3,13 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: problem.cpp,v $
+// Revision 1.34  1998/09/23 22:05:20  blast
+// Multi-core support added for m68k.
+// Autodetection of cores added for AmigaOS. (Manual selection
+// possible of course).
+// Two new 68k cores are now added. rc5-000_030-jg.s and rc5-040_060-jg.s
+// Both made by John Girvin.
+//
 // Revision 1.33  1998/08/24 04:43:26  cyruspatel
 // timeslice is now rounded up to be multiple of PIPELINE_COUNT and even.
 //
@@ -71,7 +78,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.33 1998/08/24 04:43:26 cyruspatel Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.34 1998/09/23 22:05:20 blast Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -106,10 +113,9 @@ return "@(#)$Id: problem.cpp,v 1.33 1998/08/24 04:43:26 cyruspatel Exp $"; }
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
   int whichcrunch = 0;
 #elif (CLIENT_CPU == CPU_68K)
-  extern "C" int rc5_unit_func( RC5UnitWork *work );
   extern u32 des_unit_func( RC5UnitWork * rc5unitwork, u32 timeslice );
-//  extern "C" __asm int rc5_girv( register __a0 RC5UnitWork *work );
-// Testing a new 68030 core which might be used later...
+  extern "C" __asm u32 (*rc5_unit_func)( register __a0 RC5UnitWork *work, register __d0 u32 timeslice);
+// Testing a new 68040/68060 core which might be used later...
 #elif (CLIENT_CPU == CPU_ARM)
   u32 (*rc5_unit_func)( RC5UnitWork * rc5unitwork, unsigned long iterations  );
   u32 (*des_unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -544,13 +550,63 @@ s32 Problem::Run( u32 threadnum )
     }
   }
 }
+#elif (CLIENT_CPU == CPU_68K)
+  unsigned long kiter = 0;
+  if (contest == 0) {
+    kiter = rc5_unit_func( &rc5unitwork, timeslice );
+    if ( kiter < timeslice*pipeline_count )
+    {
+    // found it?
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo + kiter;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+      finished = 1;
+      return( 1 );
+    }
+    // increment the count of keys done
+    // note: doesn't account for carry
+    contestwork.keysdone.lo += ((pipeline_count*timeslice) + pipeline_count);
+  }
+  else
+  {
+    timeslice *= pipeline_count;
+    u32 nbits=1; while (timeslice > (1ul << nbits)) nbits++;
+
+    if (nbits < MIN_DES_BITS) nbits = MIN_DES_BITS;
+    else if (nbits > MAX_DES_BITS) nbits = MAX_DES_BITS;
+    timeslice = (1ul << nbits) / pipeline_count;
+    kiter = des_unit_func ( &rc5unitwork, nbits );
+    contestwork.keysdone.lo += kiter;
+    if (kiter < ( timeslice * pipeline_count ) )
+    {
+      // found it?
+      rc5result.key.hi = contestwork.key.hi;
+      rc5result.key.lo = contestwork.key.lo;
+      rc5result.keysdone.hi = contestwork.keysdone.hi;
+      rc5result.keysdone.lo = contestwork.keysdone.lo;
+      rc5result.iterations.hi = contestwork.iterations.hi;
+      rc5result.iterations.lo = contestwork.iterations.lo;
+      rc5result.result = RESULT_FOUND;
+      finished = 1;
+      return( 1 );
+    }
+    else if (kiter != (timeslice * pipeline_count))
+    {
+        LogScreen("kiter wrong %ld %ld\n",
+               (long) kiter, (long)(timeslice*pipeline_count));
+    }
+  }
 #else
   unsigned long kiter = 0;
   if (contest == 0) {
     while ( timeslice-- ) // timeslice ignores the number of pipelines
     {
-      u32 result = rc5_unit_func( &rc5unitwork );
-//      u32 result = rc5_girv( &rc5unitwork );
+//      u32 result = rc5_unit_func( &rc5unitwork );
+      u32 result = rufmdu( &rc5unitwork, timeslize );
 // for testing new 68030 core .. Look above...
       if ( result )
       {
@@ -634,6 +690,8 @@ s32 Problem::Run( u32 threadnum )
     }
   }
 #endif
+
+
 
   if ( ( contestwork.keysdone.hi > contestwork.iterations.hi ) ||
        ( ( contestwork.keysdone.hi == contestwork.iterations.hi ) &&
