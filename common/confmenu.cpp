@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.62 2002/10/06 19:57:12 andreasb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.62.2.1 2003/01/13 01:20:03 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -761,12 +761,12 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
         // we handle the main menu separately because of the ID prompt
         // and because we want to enforce a definitive selection.
         // Other than that, its a simplified version of a non-main menu.
-        
+
         int id_menu = (int)conf_options[CONF_ID].optionscreen;
         const char *id_menuname = NULL;
         menuname = "mainmenu";
         optioncount = 0;
-          
+
         for (menuoption=0; menuoption < CONF_OPTION_COUNT; menuoption++)
         {
           if (conf_options[menuoption].disabledtext != NULL)
@@ -783,10 +783,10 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               break;
           }
         }
-        
+
         if (optioncount == 0)
           returnvalue = -1;
-        
+
         while (whichmenu == CONF_MENU_MAIN && returnvalue == 0)
         {
           char chbuf[6];
@@ -800,7 +800,10 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                        "\n 0) Save settings and exit\n\n");
           if (id_menuname && client->id[0] == '\0')
             LogScreenRaw("Note: You have not yet provided a distributed.net ID.\n"
-            "      Please go to the '%s' and set it.\n", id_menuname);
+                         "      Please go to the '%s' and set it.\n", id_menuname);
+          else if (id_menuname && !utilIsUserIDValid(client->id))
+            LogScreenRaw("Note: The distributed.net ID you provided is invalid.\n"
+                         "      Please go to the '%s' and correct it.\n", id_menuname);
           LogScreenRaw("\nChoice --> " );
           ConInStr(chbuf, 2, 0);
           menuoption = ((strlen(chbuf)==1 && isdigit(chbuf[0]))?(atoi(chbuf)):(-1));
@@ -1225,6 +1228,12 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                 if (newval_d == 0 && editthis == CONF_CONNPROFILE)
                   parm[0]=0;
               }
+            }
+
+            if (editthis == CONF_ID)
+            {
+              if (newval_isok)
+                newval_isok = utilIsUserIDValid(parm);
             }
           }
         }

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.5 2003/01/07 15:10:28 oliver Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.6 2003/01/13 01:20:03 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -232,7 +232,8 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
                     "http://www.distributed.net/bugs/\n");
-      if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 )
+      if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 &&
+          utilIsUserIDValid(dnet_id) )
         LogTo( logto, "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
       else if (level == 2)
         LogTo( logto, "\n* =========================================================================="

@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.2 2002/11/25 15:49:57 stream Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.3 2003/01/13 01:20:03 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -1461,11 +1461,15 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           else if (run_level != 0)
           {
             /* if (logging_is_initialized) */
+            if (utilIsUserIDValid(argvalue))
               LogScreenRaw("Setting distributed.net ID to %s\n", client->id );
+            else
+              LogScreenRaw("Ignored invalid distributed.net ID '%s'\n", argvalue );
           }
           else
           {
-            strcpy( client->id, argvalue );
+            if (utilIsUserIDValid(argvalue))
+              strcpy( client->id, argvalue );
             *inimissing = 0; // Don't complain if the inifile is missing
           }
         }
