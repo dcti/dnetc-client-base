@@ -5,6 +5,14 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: problem.h,v $
+// Revision 1.37  1999/02/15 06:26:36  silby
+// Complete rewrite of Problem::Run to make it 64-bit
+// compliant and begin combination of all processor
+// types into common code.  Additional checks to
+// ensure that cores are performing properly have also been
+// added.  Porters should verify that their core is
+// working properly with these changes.
+//
 // Revision 1.36  1999/02/04 22:49:32  remi
 // Added #ifdef(DWORZ) into the {MIN,MAX}_DES_BITS selection code.
 //
@@ -127,8 +135,7 @@
   #if defined(BIT_32)
     #define MIN_DES_BITS 19
     #define MAX_DES_BITS 19
-  #elif defined(BIT_64) && defined(BITSLICER_WITH_LESS_BITS) \
-                        && !defined(DWORZ)
+  #elif (defined(BIT_64) && defined(BITSLICER_WITH_LESS_BITS) && !defined(DWORZ))
     #define MIN_DES_BITS 16
     #define MAX_DES_BITS 16
   #elif defined(BIT_64)
@@ -201,6 +208,7 @@ public:
   ContestWork contestwork;
   RC5UnitWork rc5unitwork;
   RC5Result rc5result;
+  u64 refL0;
 
   #if (CLIENT_CPU == CPU_X86)
   u32 (*unit_func)( RC5UnitWork * rc5unitwork, u32 timeslice );
@@ -259,12 +267,17 @@ public:
      // return a modified ::tslice value that [has been adjusted if 
      // >(iter-keysdone) and] is an even multiple of pipeline_count and 2 
 
+
 #if (CLIENT_OS == OS_MACOS) && defined(MAC_GUI)
   u32 GetKeysDone() { return(rc5result.keysdone.lo); }
     // Returns keys completed for Mac GUI display.
 #endif
 
 };
+
+void IncrementKey(u64 &key, u32 iters);
+   // Increments a key
+
 
 #endif
 
