@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if (CLIENT_OS == OS_AMIGA)
+#if (CLIENT_OS == OS_AMIGAOS)
 #include "common/problem.h"
 #include "common/convdes.h"
 #else
