@@ -6,31 +6,31 @@
 ##               [dos | netware | os2 | w32 | w16]
 ##               or anything else with a section at the end of this file
 ##
-## $Id: makefile.wat,v 1.30 2000/06/02 06:29:38 jlawson Exp $
+## $Id: makefile.wat,v 1.31 2000/07/11 02:50:33 mfeiri Exp $
 
 BASENAME = dnetc
 
 %EXTOBJS  = #extra objs (made elsewhere) but need linking here
-%DEFALL   = /DDYN_TIMESLICE /D__showids__ /IOGR
-            #defines used everywhere
+%DEFALL   = /DDYN_TIMESLICE /D__showids__ /IOGR #defines used everywhere
 %SYMALIAS = # symbols that need redefinition 
-%COREOBJS = output\rg486.obj     output\rc5-rgk5.obj  output\rg6x86.obj   &
-            output\rc5-rgk6.obj  output\brfp5.obj     output\rc5-rgp6.obj
+%COREOBJS = # constructed at runtime
 %LINKOBJS = output\problem.obj  &
             output\confrwv.obj   output\autobuff.obj  output\buffbase.obj &
             output\mail.obj      output\client.obj    output\disphelp.obj &
-            output\iniread.obj   output\network.obj   output\scram.obj    &
+            output\iniread.obj   output\network.obj   output\netres.obj   &
             output\clitime.obj   output\clicdata.obj  output\clirate.obj  &
             output\clisrate.obj  output\cpucheck.obj  output\pathwork.obj &
             output\cliident.obj  output\checkpt.obj   output\x86ident.obj &
-            output\logstuff.obj  output\triggers.obj  output\buffupd.obj  &
+            output\logstuff.obj  output\triggers.obj  output\random.obj   &
             output\selcore.obj   output\netinit.obj   output\cmdline.obj  &
             output\selftest.obj  output\pollsys.obj   output\probman.obj  &
             output\probfill.obj  output\clievent.obj  output\bench.obj    &
             output\clirun.obj    output\setprio.obj   output\console.obj  &
             output\modereq.obj   output\confmenu.obj  output\confopt.obj  &
-            output\util.obj      output\base64.obj    output\random.obj   &
-            output\netres.obj    output\buffpriv.obj
+            output\util.obj      output\base64.obj    
+%PRIVMODS = common\buffpriv.cpp  common\buffupd.cpp   common\scram.cpp
+%PRIVOBJS = output\buffpriv.obj  output\buffupd.obj   output\scram.obj
+%PUBOBJS =  output\buffpub.obj
             # this list can be added to in the platform specific section
             # 49 std OBJ's (+3 desmmx, +1 rc5mmx, +2 mt, +x plat specific)
 
@@ -44,14 +44,9 @@ BASENAME = dnetc
                    output\csc-mmx.obj
 %cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc -DMMX_CSC
 %cscstd_SYMALIAS = 
-#                  csc_unit_func_1k=_csc_unit_func_1k
-#                  csc_unit_func_6b_i=_csc_unit_func_6b_i &
-#                  csc_unit_func_1k=_csc_unit_func_1k &
-#                  csc_unit_func_6b=_csc_unit_func_6b
-#                  csc_unit_func_1k_i=_csc_unit_func_1k_i &                   
-#                  
 #---
-%ogrstd_LINKOBJS = output\ogr.obj output\choosedat.obj output\crc32.obj 
+%ogrstd_LINKOBJS = output\ogr.obj output\ogr_sup.obj &
+                   output\choosedat.obj output\crc32.obj 
 %ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr
 %ogrstd_SYMALIAS = #
 #---
@@ -60,13 +55,14 @@ BASENAME = dnetc
 %desstd_DEFALL   = /DBRYD -DHAVE_DES_CORES
 %desstd_SYMALIAS = #
 #---
-%rc5std_LINKOBJS = output\rg486.obj output\rc5-rgk5.obj output\rg6x86.obj &
-                   output\rc5-rgk6.obj output\brfp5.obj output\rc5-rgp6.obj
-%rc5std_DEFALL   = #
+%rc5std_LINKOBJS = output\rg486.obj output\rc5-rgk5.obj output\brfp5.obj &
+                   output\rc5-rgk6.obj output\rc5-rgp6.obj output\rg6x86.obj &
+                   output\rc5-hbk7.obj
+%rc5std_DEFALL   = /DHAVE_RC5_CORES
 %rc5std_SYMALIAS = #
 #---
 %rc5smc_LINKOBJS = output\rc5-486-smc-rg.o
-%rc5smc_DEFALL   = #
+%rc5smc_DEFALL   = /DSMC
 %rc5smc_SYMALIAS = #
 #---
 %rc5mmx_LINKOBJS = output\rc5mmx.obj 
@@ -82,14 +78,16 @@ BASENAME = dnetc
 %desmmx_SYMALIAS = #
 #---
 %des_mt_LINKOBJS = output\p2bdespro.obj output\bbdeslow.obj &
-                   output\des-slice.obj output\deseval.obj output\sboxes-kwan4.obj 
+                   output\des-slice.obj output\deseval.obj &
+                   output\sboxes-kwan4.obj
 %des_mt_DEFALL   = /DKWAN 
 %des_mt_SYMALIAS = #
 #---
 
 #-----------------------------------------------------------------------
 
-%CC=wpp386
+%CCPP=wpp386
+%CC=wcc386
 %CCASM=wasm
 %LINK=wlink #\develop\watcom\binnt\wlink.exe
 
@@ -186,6 +184,10 @@ declare_for_desmmx : .symbolic
   @set DEFALL   = $(%desmmx_DEFALL) $(%DEFALL) 
   @set SYMALIAS = $(%desmmx_SYMALIAS) $(%SYMALIAS) 
 
+declare_for_rc5 : .symbolic
+  @set COREOBJS = $(%rc5std_LINKOBJS) $(%COREOBJS)
+  @set DEFALL   = $(%rc5std_DEFALL) $(%DEFALL) 
+
 declare_for_rc5mmx : .symbolic
   @set COREOBJS = $(%rc5mmx_LINKOBJS) $(%COREOBJS)
   @set DEFALL   = $(%rc5mmx_DEFALL) $(%DEFALL) 
@@ -232,6 +234,10 @@ output\rg6x86.obj : rc5\x86\nasm\rg6x86.asm $(%dependall)
   $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
+output\rc5-hbk7.obj : rc5\x86\nasm\rc5-hbk7.asm $(%dependall)
+  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
+  @set isused=1
+
 #output\rg-p5.obj : rc5\rg-p5.asm $(%dependall)
 #  @if $(%TASMEXE).==. *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
 #  @if not $(%TASMEXE).==. $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
@@ -253,181 +259,185 @@ output\x86ident.obj : platforms\x86ident.asm $(%dependall)
   @set isused=1
 
 output\confrwv.obj : common\confrwv.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\confopt.obj : common\confopt.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\confmenu.obj : common\confmenu.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\util.obj : common\util.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\base64.obj : common\base64.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\random.obj : common\random.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\pollsys.obj : common\pollsys.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\probman.obj : common\probman.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\probfill.obj : common\probfill.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\bench.obj : common\bench.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\clirun.obj : common\clirun.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\checkpt.obj : common\checkpt.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\setprio.obj : common\setprio.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\console.obj : common\console.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\cpucheck.obj : common\cpucheck.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\client.obj : common\client.cpp  $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\cmdline.obj : common\cmdline.cpp  $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\buffupd.obj : common\buffupd.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\selcore.obj : common\selcore.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\selftest.obj : common\selftest.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\problem.obj : common\problem.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\disphelp.obj : common\disphelp.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\clitime.obj : common\clitime.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\clicdata.obj : common\clicdata.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\clirate.obj : common\clirate.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\clisrate.obj : common\clisrate.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\clistime.obj : common\clistime.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\pathwork.obj : common\pathwork.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\autobuff.obj : common\autobuff.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\network.obj : common\network.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\netres.obj : common\netres.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\netinit.obj : common\netinit.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\lurk.obj : common\lurk.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\iniread.obj : common\iniread.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\scram.obj : common\scram.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\mail.obj : common\mail.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\buffbase.obj : common\buffbase.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
+  @set isused=1
+
+output\buffpub.obj : common\buffpub.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\buffpriv.obj : common\buffpriv.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: 
   @set isused=1
 
 output\cliident.obj : common\cliident.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\clievent.obj : common\clievent.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\triggers.obj : common\triggers.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\modereq.obj : common\modereq.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 output\logstuff.obj : common\logstuff.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 # ----------------------------------------------------------------
 
 output\des-slice-meggs.obj : des\des-slice-meggs.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\deseval-mmx.obj : des\mmx-bitslice\deseval-mmx.asm $(%dependall) 
@@ -439,27 +449,27 @@ output\deseval-mmx.obj : des\mmx-bitslice\deseval-mmx.asm $(%dependall)
 #  @set isused=1
 
 output\des-slice.obj : des\des-slice.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\x86-slic.obj : des\x86-slic.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\deseval.obj : des\deseval.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\sboxes-kwan4.obj : des\sboxes-kwan4.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\sboxes-k.obj : des\sboxes-k.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\sboxes-kwan3.obj : des\sboxes-kwan3.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\p1bdespro.obj : des\brydmasm\p1bdespro.asm $(%dependall)
@@ -503,11 +513,11 @@ output\bbdeslow.obj : des\brydmasm\bbdeslow.asm $(%dependall)
   @set isused=1
 
 output\des-x86.obj : des\des-x86.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\convdes.obj : common\convdes.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
 # ----------------------------------------------------------------
@@ -526,7 +536,7 @@ output\csc-mmx.obj : csc\x86\mmx\csc-mmx.asm $(%dependall) .AUTODEPEND
   @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[:..\ $[@
   @set isused=1
 
-output\csc-common.obj : csc\x86\csc-comm.asm $(%dependall) .AUTODEPEND
+output\csc-common.obj : csc\x86\csc-common.asm $(%dependall) .AUTODEPEND
   @if exist $[*.obj copy $[*.obj $^@ >nul: 
   @if exist $[*.obj wtouch $^@
   @if exist $[*.obj @echo Updated $^@ from $[*.obj
@@ -564,96 +574,100 @@ output\csc-6b-i.obj : csc\x86\csc-6b-i.asm $(%dependall) .AUTODEPEND
 # ----------------------------------------------------------------
 
 output\ogr.obj : ogr\ogr.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\choosedat.obj : ogr\choosedat.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\crc32.obj : ogr\crc32.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 # ----------------------------------------------------------------
 
 output\netware.obj : platforms\netware\netware.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 # ----------------------------------------------------------------
 
 output\cdoscon.obj : platforms\dos\cdoscon.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\cdosidle.obj : platforms\dos\cdosidle.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\cdostime.obj : platforms\dos\cdostime.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\cdosemu.obj : platforms\dos\cdosemu.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\cdosinet.obj : platforms\dos\cdosinet.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\cdoskeyb.obj : platforms\dos\cdoskeyb.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\cdospmeh.obj : platforms\dos\cdospmeh.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 # ----------------------------------------------------------------
 
 output\w32svc.obj : platforms\win32cli\w32svc.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32cons.obj : platforms\win32cli\w32cons.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32pre.obj : platforms\win32cli\w32pre.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32sock.obj : platforms\win32cli\w32sock.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32ras.obj : platforms\win32cli\w32ras.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32x86.obj : platforms\win32cli\w32x86.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
-output\w32pid.obj : platforms\win32cli\w32pid.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
+#output\w32pid.obj : platforms\win32cli\w32pid.cpp $(%dependall) .AUTODEPEND
+#  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+#  @set isused=1
 
 output\w32exe.obj : platforms\win32cli\w32exe.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32ini.obj : platforms\win32cli\w32ini.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32util.obj : platforms\win32cli\w32util.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 output\w32ss.obj : platforms\win32cli\w32ss.cpp $(%dependall) .AUTODEPEND
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  @set isused=1
+
+output\w32snapp.obj : platforms\win32cli\w32snapp.c $(%LINKOBJS) .AUTODEPEND
   *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
@@ -663,13 +677,16 @@ output\w32cuis.obj : platforms\win32cli\w32cuis.c $(%LINKOBJS) .AUTODEPEND
            /fo=$^@ /"lib $(%LIBFILES) op start=main" $[@
    @if not $(%EXECOMPRESSOR).==. @$(%EXECOMPRESSOR) $(BASENAME).com
 
+
+
 output\w32ssb.obj : platforms\win32cli\w32ssb.cpp platforms\win32cli\w32cons.rc &
                     output\w32util.obj output\w32ss.obj output\w32ini.obj &
                     output\w32exe.obj
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) platforms\win32cli\w32ssb.cpp $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) platforms\win32cli\w32ssb.cpp $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
   @if $(%OSNAME).==win16. @wlink $(%LFLAGS) name $(BASENAME).scr &
-                file output\w32ssb.obj,output\w32ss.obj,output\w32util.obj
+                file output\w32ssb.obj,output\w32ss.obj,output\w32util.obj &
+                file output\w32ini.obj,output\w32exe.obj
   @if $(%OSNAME).==win16. @if exist $(BASENAME).rex @del $(BASENAME).rex
   @if $(%OSNAME).==win16. @ren $(BASENAME).scr $(BASENAME).rex
   @if $(%OSNAME).==win16. *@wbind $(BASENAME).rex &
@@ -682,7 +699,8 @@ output\w32ssb.obj : platforms\win32cli\w32ssb.cpp platforms\win32cli\w32cons.rc 
   @if $(%OSNAME).==win16. @if exist $(BASENAME).rex @del $(BASENAME).rex
   @if $(%OSNAME).==win32. @wlink $(%LFLAGS) name $(BASENAME).scr &
                 lib $(%LIBFILES) &
-                file output\w32ss.obj,output\w32util.obj,output\w32ssb.obj
+                file output\w32ssb.obj,output\w32ss.obj,output\w32util.obj &
+                file output\w32ini.obj,output\w32exe.obj
   @if $(%OSNAME).==win32. @wrc -31 -bt=nt &
                 -i$(%WATCOM)\h;$(%WATCOM)\h\win -fo=output\$(BASENAME).res &
                 platforms\win32cli\w32cons.rc $(BASENAME).scr
@@ -691,7 +709,7 @@ output\w32ssb.obj : platforms\win32cli\w32ssb.cpp platforms\win32cli\w32cons.rc 
 # ----------------------------------------------------------------
 
 output\os2inst.obj : platforms\os2cli\os2inst.cpp $(%dependall) .AUTODEPEND
-  *$(%CC) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
   @set isused=1
 
 #-----------------------------------------------------------------------
@@ -701,7 +719,11 @@ platform: .symbolic
   @set AFLAGS    = $(%AFLAGS) /q              ## assemble quietly
   @set CFLAGS    = $(%CFLAGS) $(%DEFALL)      ## tack on global defines
   @set isused=0
+  @for %i in ($(%PRIVMODS)) do @if not exist %i @set isused=1
+  @if not $(%isused).==0. @set LINKOBJS=$(%LINKOBJS) $(%PUBOBJS)
+  @if $(%isused).==0. @set LINKOBJS=$(%LINKOBJS) $(%PRIVOBJS)
   @set LINKOBJS= $(%COREOBJS) $(%LINKOBJS) 
+  @set isused=0
   @if not exist $(%BINNAME) @set isused=1
   @for %i in ($(%LINKOBJS)) do @%make %i
   @for %i in ($(%PRELINKDEPS)) do @%make %i
@@ -743,7 +765,7 @@ dolink : .symbolic
 .ERROR
   @if $(%BINNAME).==. @%quit
   @if not exist $(%BINNAME) @%quit
-  @del $(%BINNAME)
+# @del $(%BINNAME)
   @echo Target '$(%BINNAME)' deleted.
 
 # =======================================================================
@@ -763,7 +785,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set CFLAGS    = /zp8 /wx /we /6s /fp3 /fpc /zm /ei /mf &
                       /bt=dos /d__MSDOS__ /wcd=604 /wcd=594 /wcd=7 &
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE &
-                      /iplatforms/dos /I$(%watcom)\h #/Iplatforms\dos\libtcp
+                      /iplatforms\dos /I$(%watcom)\h #/Iplatforms\dos\libtcp
      @set OPT_SIZE  = /s /os 
      @set OPT_SPEED = /oneatx /oh /oi+ 
      @set LINKOBJS  = $(%LINKOBJS) output\cdostime.obj output\cdosidle.obj &
@@ -777,12 +799,13 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @set DOCFILES  = docs\readme.dos docs\$(BASENAME).txt docs\readme.txt
      @set ZIPFILE   = $(BASENAME)-dos-x86-cli
      @set BINNAME   = $(BASENAME).com
+     @%make declare_for_rc5
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
 #    @%make declare_for_csc
      @%make platform
      #-------------------------
@@ -813,12 +836,13 @@ os2: .symbolic                                       # OS/2
      @set LINKOBJS  = output\os2inst.obj  output\lurk.obj
      @set OBJDIROP  = /fo=output\
      @set ERRDIROP  =                      # no /fr= option for Watcom 10.0
+     @%make declare_for_rc5
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
 #    @%make declare_for_csc
      @%make platform
 
@@ -829,7 +853,7 @@ w16: .symbolic                                       # Windows/16
      @set TASMEXE   = \develop\tasm32\tasm32.exe
      @set LFLAGS    = system win386 symtrace open #debug all op de 'SCRSAVE : distributed.net client for Windows'
      @set CFLAGS    = /3s /w4 /zW /bt=windows /d_Windows &
-                      /i$(%watcom)\h;$(%watcom)\h\win /iplatforms/win32cli &
+                      /i$(%watcom)\h;$(%watcom)\h\win /iplatforms\win32cli &
                       /DBITSLICER_WITH_LESS_BITS /DDYN_TIMESLICE 
                       #/d2
                       #/zp8 /6s /fp3 /fpc /zm /ei /mf /bt=dos /d_Windows &
@@ -840,7 +864,7 @@ w16: .symbolic                                       # Windows/16
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32cons.obj &
                       output\w32sock.obj output\w32svc.obj output\w32x86.obj &
                       output\w32util.obj output\w32exe.obj output\w32ini.obj &
-                      output\w32pid.obj $(%LINKOBJS)
+                      $(%LINKOBJS)
      @set PRELINKDEPS = output\w32ssb.obj
      @set POSTLINKTGTS = 
      @set LIBFILES  =
@@ -852,12 +876,13 @@ w16: .symbolic                                       # Windows/16
      @set ZIPFILE   = $(BASENAME)-win16-x86-cli
      @set BINNAME   = $(BASENAME).exe
      @if exist $(BASENAME).rex @del $(BASENAME).rex
+     @%make declare_for_rc5
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   #@%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
 #    @%make declare_for_csc
      @%make platform
      #---------------------------
@@ -878,14 +903,14 @@ w32: .symbolic                               # win32
      @set WLINKOPS  = alignment=64 map
      @set LFLAGS    = sys nt_win op de 'distributed.net client for Windows' #nt
      @set CFLAGS    = /zp8 /s /fpd /6s /bm /fp3 /mf /bt=nt /DWIN32 /DLURK &
-                      /iplatforms/win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
+                      /iplatforms\win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
                       /DINIT_TIMESLICE=0x40000 /DDYN_TIMESLICE
      @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
      @set LINKOBJS  = output\w32pre.obj output\w32ss.obj output\w32svc.obj &
                       output\w32cons.obj output\w32sock.obj output\w32ras.obj &
                       output\w32util.obj output\w32exe.obj output\w32ini.obj &
-                      output\w32pid.obj output\lurk.obj $(%LINKOBJS)
+                      output\w32snapp.obj output\lurk.obj $(%LINKOBJS)
      @set PRELINKDEPS = output\w32ssb.obj output\w32cuis.obj
      @set POSTLINKTGTS = 
      @set LIBFILES  = user32,kernel32,advapi32,gdi32
@@ -896,13 +921,14 @@ w32: .symbolic                               # win32
      @set ZIPOPTS   = -exo
      @set ZIPFILE   = #$(BASENAME)-win32-x86-cli
      @set BINNAME   = $(BASENAME).exe
-     @set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
+#    @set EXECOMPRESSOR=\develop\upx\upxw.exe -9 --compress-resources=0
+     @%make declare_for_rc5
 ##   @%make declare_for_des
 ##   @%make declare_for_desmt
 ##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
 #    @%make declare_for_csc
      @%make platform
      #---------------------------------
@@ -919,7 +945,7 @@ w32ss: .symbolic                               # win32 screen saver
      @set WLINKOPS  = map #alignment=16 objalign=16
      @set LFLAGS    = sys nt_win op de 'distributed.net client for Windows' #nt
      @set CFLAGS    = /zp8 /s /fpd /6s /fp3 /bm /mf /bt=nt /DWIN32 /DLURK &
-                      /iplatforms/win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
+                      /iplatforms\win32cli /i$(%watcom)\h;$(%watcom)\h\nt &
                       /DSSSTANDALONE
      @set OPT_SIZE  = /s /os
      @set OPT_SPEED = /oneatx /oh /oi+ /ei #/oneatx /oh /oi+ 
@@ -969,15 +995,15 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set AFLAGS    = /5s /fp3 /bt=netware /ms
      @set TASMEXE   = \develop\tasm32\tasm32.exe
      @set NASMEXE   = \develop\nasm\nasmw.exe
-     @set WLINKOPS  = xdcdata=platforms/netware/client.xdc &
-                      version=0.0 multiload nod map #osdomain
+     @set WLINKOPS  = version=0.0 multiload nod map &
+                      xdcdata=platforms/netware/client.xdc #osdomain
      @set LFLAGS    = op scr 'none' op osname='NetWare NLM' symtrace spawnlp #sys netware
      @set OPT_SIZE  = /os /s  
      @set OPT_SPEED = /oneatx /oh /oi+  
      @set CFLAGS    = /zp1 /wx /we /6s /fp3 /fpc /zm /ei /ms &
                       /bt=dos /d__NETWARE__ /wcd=604 /wcd=594 /wcd=7 &
                       /DBITSLICER_WITH_LESS_BITS /bt=netware &
-                      /DNO_DES_SUPPORT /DMULTITHREAD &
+                      /DMULTITHREAD &
                       /i$(inc_386) #/fpc /bt=netware /i$(%watcom)\novh #/bm
                       #/zp1 /zm /6s /fp3 /ei /ms /d__NETWARE__ &
      @set LIBFILES  = nwwatemu,inetlib,plib3s #plibmt3s,clib3s,math387s,emu387
@@ -995,19 +1021,22 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set ZIPPER    = #c:\util\pkzip
      @set DOCFILES  = docs\readme.nw docs\$(BASENAME).txt docs\readme.txt
      @set BINNAME   = $(BASENAME).nlm
-     @set COPYRIGHT = 'Copyright 1997-1999 distributed.net\r\n  Visit http://www.distibuted.net/ for more information'
+     @set COPYRIGHT = 'Copyright 1997-2000 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
-##   #@%make declare_for_des
-##   #@%make declare_for_desmt
-##   #@%make declare_for_desmmx
+     @%make declare_for_rc5
+#    @%make declare_for_des
+#    @%make declare_for_desmt
+##   @%make declare_for_desmmx
      @%make declare_for_rc5mmx
      #@%make declare_for_rc5smc
-#    @%make declare_for_ogr
+     @%make declare_for_ogr
 #    @%make declare_for_csc
      @%make platform
      #
-     @\develop\sdkcdall\nlmdump\nlm_dos.exe *$(BASENAME).nlm /b:$(BASENAME).map 
+     echo got here 1
+     @\develop\sdkcdall\nlmdump\nlm_w32.exe *$(BASENAME).nlm /b:$(BASENAME).map 
+     echo got here 2
      #@\develop\sdkcd13\nwsdk\tools\nlmpackx $(BASENAME).nlm $(BASENAME).nlx
      #@del $(BASENAME).nlm
      #@ren $(BASENAME).nlx $(BASENAME).nlm
