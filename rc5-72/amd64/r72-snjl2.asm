@@ -8,7 +8,7 @@
 ;
 ; Based off the r72-ss2.asm core, by Ianos Gnatiuc <ssianky@hotmail.com>
 ; (r72-ss2 was based on r72-dg2 and r72ansi2 cores)
-; $Id: r72-snjl2.asm,v 1.1.2.5 2003/11/04 05:53:50 jlawson Exp $
+; $Id: r72-snjl2.asm,v 1.1.2.6 2003/11/04 06:02:26 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -42,8 +42,7 @@ BITS 64
 %endmacro
 
 ;; local storage variables
-defwork S1_baseaddr,26
-%define S1(N)       [S1_baseaddr + (N)*4] 
+defwork work_S1,26		; array accessed via S1() macro.
 defwork work_iter,1
 defwork work_L0hi,1
 defwork work_L0mid,1
@@ -62,12 +61,15 @@ defwork S1_ROL3,1
 defwork S2_ROL3,1
 ;defwork L0_ROL,1
 ;defwork L1_ROL,1
-defwork S2_baseaddr,26
-%define S2(N)       [S2_baseaddr + (N)*4]
+defwork work_S2,26		; array accessed via S2() macro.
 defwork S2_L1,1
 defwork RC5_72UnitWork,2	; 1st argument (64-bit pointer), passed in rdi
 defwork iterations,2		; 2nd argument (64-bit pointer), passed in rsi
 
+;; macros to access into arrays.
+%define S1(N)       [work_S1 + (N)*4] 
+%define S2(N)       [work_S2 + (N)*4]
+	
 ;; offsets within the parameter structure (rax contains base address).
 %define RC5_72UnitWork_plainhi  rax +  0
 %define RC5_72UnitWork_plainlo  rax +  4
