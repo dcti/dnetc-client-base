@@ -9,7 +9,7 @@
  * module.
 */
 #ifndef __NETBASE_H__
-#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.1.2.1 2000/10/20 21:00:03 cyp Exp $"
+#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.1.2.2 2000/10/24 21:36:35 cyp Exp $"
 
 #include "cputypes.h" /* u32 */
 
@@ -60,6 +60,7 @@ const char *net_strerror(int /*ps_*/errnum, SOCKET fd);
  * loaded/unloaded. open may implicitely (lib load) or exlicitely
  * (user wants dialup control) cause a dialup connection. If 
  * a dialup was explicitely caused, net_close() will disconnect.
+ * If local_port is non-zero, a listener is created.
 */
 int net_open( SOCKET *sockP, u32 local_addr, int local_port );
 int net_close( SOCKET sock );
@@ -77,12 +78,17 @@ int net_read( SOCKET sock, char *data, unsigned int *bufsz,
 int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
               u32 that_address, int that_port, int iotimeout );
 
-/* connect to a peer. Stacks that correctly implement connectionless
- * TCP sendto()/recvfrom() do nothing and the physical connect and
- * reconnect will be handled by the stack at send/recv time. Other 
- * implementations will connect() here.
+/* connect to a peer. that_address and that_port are the address to 
+ * connect to. The authoritative peer address and port will be returned.
+ * If a specific local address is to be connected() from, then pass that
+ * address via this_address, otherwise pass zero/null. The effective 
+ * local address and port will be returned via this_address/this_port.
+ * Note that, for client connections, this is the only way to obtain the 
+ * address of the local and/or peer endpoints.
 */
-int net_connect( SOCKET sock, u32 that_address, int that_port,int iotimeout);
+int net_connect( SOCKET sock, u32 *that_address, int *that_port,
+                              u32 *this_address, int *this_port,
+                              int iotimeout /* millisecs */ );
 
 /* NETDB name to address resolution. Returns error code on error, 0 on success
  * On entry, max_addrs contains the number of address slots in addr_list, on

@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.5 2000/07/01 13:43:28 cyp Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.1.2.6 2000/10/24 21:36:34 cyp Exp $"
 
 /* ..Put() returns <0 on ioerr, else 0 on success */
 int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
@@ -43,8 +43,8 @@ unsigned long BufferReComputeWorkUnitsToFetch(Client *client, unsigned int conte
 long BufferImportFileRecords( Client *client, const char *source_file, int interactive);
 
 /* fetch/flush from remote file */
-long BufferFlushFile( Client *client, const char *loadermap_flags );
-long BufferFetchFile( Client *client, const char *loadermap_flags );
+long BufferFlushFile( Client *client, int break_pending, const char *loadermap_flags );
+long BufferFetchFile( Client *client, int break_pending, const char *loadermap_flags );
 
 /* automatically open a buffer and read/write/count single records */
 long PutBufferRecord(Client *client, const WorkRecord * data);

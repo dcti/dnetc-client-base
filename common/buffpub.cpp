@@ -8,7 +8,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.1.2.7 2000/09/20 18:26:23 cyp Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.1.2.8 2000/10/24 21:36:34 cyp Exp $"; }
 
 #include "cputypes.h"
 #include "cpucheck.h" //GetNumberOfDetectedProcessors()
@@ -341,6 +341,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   const char *ffmsg = "--fetch and --flush services are not available.\n";
   int check_flags, updatefailflags, updatemodeflags, net_state_shown = 0;
   int fill_even_if_not_totally_empty = (client->connectoften || interactive);
+  int break_pending = CheckExitRequestTriggerNoIO();
 
   #define BUFFERUPDATE_MODE_FILE 0x01
   #define BUFFERUPDATE_MODE_NET  0x02
@@ -443,14 +444,20 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   /* -------------------------------------- */
 
   updatefailflags = didfetch = didflush = didnews = 0;
-  if ((doflush || dofetch) && !CheckExitRequestTriggerNoIO())
+  if ((doflush || dofetch))
   {
+    if ((updatemodeflags & BUFFERUPDATE_MODE_NET)!=0)
+    {
+      /* XXX */
+    }
+
     if ((updatemodeflags & BUFFERUPDATE_MODE_FILE)!=0)
     {
       int transerror = 0;
-      if (transerror == 0 && !dontfetch && !CheckExitRequestTriggerNoIO())
+      if (transerror == 0 && !dontfetch)
       {
-        long transferred = BufferFetchFile( client, &loaderflags_map[0] );
+        long transferred = BufferFetchFile( client, break_pending, 
+                                            &loaderflags_map[0] );
         if (transferred < 0)
         {
           transerror = 1;
@@ -460,9 +467,10 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
         else if (transferred > 0)
           didfetch = 1;
       }
-      if (transerror == 0 && !dontflush && !CheckExitRequestTriggerNoIO())
+      if (transerror == 0 && !dontflush)
       {
-        long transferred = BufferFlushFile( client, &loaderflags_map[0] );
+        long transferred = BufferFlushFile( client, break_pending,
+                                            &loaderflags_map[0] );
         if (transferred < 0)
         {
           transerror = 1;
@@ -498,19 +506,12 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
 
   if (updatefailflags == updatemodeflags && !didfetch && !didflush)
   {                             /* all methods failed completely */
-    if (interactive && !net_state_shown && !CheckExitRequestTrigger())
-    {
-      if ((updatefailflags & BUFFERUPDATE_MODE_NET)!=0)
-      {
-        LogScreen( "Could not update to/from the net. Network down?\n" );
-      }
-    }
     return -1;
   }
-  if (interactive && !CheckExitRequestTrigger())
+  if (interactive && (break_pending || !CheckExitRequestTrigger()))
   {
     ffmsg = "%sput buffers are %sNo %s required.\n";
-    if (!dontfetch && !dofetch && !didfetch)
+    if (!dontfetch && !didfetch)
       LogScreen(ffmsg, "In", "full (or projects are closed).\n", "fetch");
     if (!dontflush && !doflush && !didflush)
       LogScreen(ffmsg, "Out", "empty. ", "flush");

@@ -6,7 +6,7 @@
  *
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.12.2.38 2000/09/24 13:46:25 andreasb Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.12.2.39 2000/10/24 21:36:34 cyp Exp $"; }
 
 //#define PROFILE_DISK_HITS
 
@@ -301,6 +301,7 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
 long GetBufferRecord( Client *client, WorkRecord* data,
                       unsigned int contest, int use_out_file)
 {
+  int break_pending = CheckExitRequestTriggerNoIO();
   unsigned long workstate;
   unsigned int tmp_contest;
   membuffstruct *membuff;
@@ -407,8 +408,13 @@ long GetBufferRecord( Client *client, WorkRecord* data,
         return (long)count; // all is well, data is a valid entry.
       }
     }
-  /* bad packet, but loop if we have more in buff */
-  } while (count && !CheckExitRequestTriggerNoIO());
+    /* bad packet, but loop if we have more in buff */
+    if (!break_pending)
+    {
+      if (CheckExitRequestTriggerNoIO())
+        break;
+    }
+  } while (count);
 
   return -1;
 }
@@ -596,7 +602,8 @@ unsigned long BufferReComputeWorkUnitsToFetch(Client *client, unsigned int conte
 
 /* --------------------------------------------------------------------- */
 
-long BufferFetchFile( Client *client, const char *loaderflags_map )
+long BufferFetchFile( Client *client, int break_pending, 
+                      const char *loaderflags_map )
 {
   unsigned long donetrans_total_wu = 0, donetrans_total_pkts = 0;
   char basename[sizeof(client->remote_update_dir)  +
@@ -634,7 +641,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     unsigned long totrans_wu, donetrans_pkts = 0, donetrans_wu = 0;
     long inbuffer_count = 0, inbuffer_count_last = -1, inbuffer_count_warnings = 0;
 
-    if (CheckExitRequestTriggerNoIO())
+    if (!break_pending && CheckExitRequestTriggerNoIO())
       break;
 
     if (loaderflags_map[contest] != 0)
@@ -649,7 +656,7 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
     totrans_wu = 1;
     while (totrans_wu > 0 )
     {
-      if (CheckExitRequestTriggerNoIO())
+      if (!break_pending && CheckExitRequestTriggerNoIO())
         break;
 
       /* update the count to fetch - NEVER do this outside the loop */
@@ -772,7 +779,8 @@ long BufferFetchFile( Client *client, const char *loaderflags_map )
 
 /* --------------------------------------------------------------------- */
 
-long BufferFlushFile( Client *client, const char *loadermap_flags )
+long BufferFlushFile( Client *client, int break_pending,
+                      const char *loadermap_flags )
 {
   long totaltrans_pkts = 0, totaltrans_wu = 0;
   char basename[sizeof(client->remote_update_dir)  +
@@ -809,7 +817,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     WorkRecord wrdata;
     long totrans_pkts, totrans_pkts_last, totrans_pkts_warnings;
 
-    if (CheckExitRequestTriggerNoIO())
+    if (!break_pending && CheckExitRequestTriggerNoIO())
       break;
     if (loadermap_flags[contest] != 0) /* contest is closed or disabled */
       continue; /* proceed to next contest */
@@ -828,7 +836,7 @@ long BufferFlushFile( Client *client, const char *loadermap_flags )
     {
       long workunits;
 
-      if (CheckExitRequestTriggerNoIO())
+      if (!break_pending && CheckExitRequestTriggerNoIO())
         break;
 
       totrans_pkts = GetBufferRecord( client, &wrdata, contest, 1 );
@@ -967,7 +975,8 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
     cont_count = contestid+1;
   }    
 
-  need_flush = need_fetch = 0; closed_expired = -1;
+  need_flush = need_fetch = 0; 
+  closed_expired = -1;
   for (pos = cont_start; pos < cont_count; pos++)
   {
     unsigned int cont_i = (unsigned int)(client->loadorder_map[pos]);
@@ -991,7 +1000,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
             ((unsigned long)CliTimer(0)->tv_sec) >= 
      	      ((unsigned long)client->scheduledupdatetime)))
           {  
-            closed_expired = 1;
+            closed_expired = 2;
           }  
           #if defined(PROJECTFLAGS_CLOSED_TTL) && \
               (PROJECTFLAGS_CLOSED_TTL > 0) /* any expiry time at all? */
@@ -1000,7 +1009,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
             if (((unsigned long)tv.tv_sec) > 
               (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_CLOSED_TTL)) 
             {  
-              closed_expired = 1;
+              closed_expired = 3;
             }  
           }      
           #endif

@@ -11,7 +11,7 @@
 */
 
 #ifndef __NETCONN_H__
-#define __NETCONN_H__ "@(#)$Id: netconn.h,v 1.1.2.1 2000/10/20 21:00:03 cyp Exp $"
+#define __NETCONN_H__ "@(#)$Id: netconn.h,v 1.1.2.2 2000/10/24 21:36:35 cyp Exp $"
 
 /* netconn_open(): create a new connection. Returns a 'handle' for
  * subsequent netconn_xxx() operations or NULL on error.
@@ -43,6 +43,11 @@ int netconn_getname(void *cookie, char *buffer, unsigned int len );
  * on error. Probably only useful for debugging.
 */
 u32 netconn_getpeer(void *cookie);
+
+/* netconn_getaddr(): get address connected from, or zero
+ * on error (or not connected).
+*/
+u32 netconn_getaddr(void *cookie);
 
 /* netconn_setpeer(): set address of host to connect to in the event
  * of a disconnect. (in the event of an HTTP/1.0 close)

@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.1.2.3 2000/10/23 02:04:21 cyp Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.1.2.4 2000/10/24 21:36:35 cyp Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -76,6 +76,7 @@ typedef struct
   int  verbose_level;     // currently, only 0 == no messages
   int  iotimeout;         // use blocking calls if iotimeout is <0
   int  startmode;         // initial (user preference) encoding/proxy flags
+  int  break_pending;     // if ^Cs was seen at start, don't do ^C checks
 
   int  mode;              // startmode as modified at runtime
   SOCKET sock;            // socket file handle
@@ -106,6 +107,8 @@ typedef struct
   const char *conn_hostname; // hostname we connect()ing to (fwall or server)
   int  conn_hostport;  // port we are connect()ing to
   u32  conn_hostaddr;  // the address we are connect()ing to
+  int  local_hostport; // the port we are connect()ing from
+  u32  local_hostaddr; // the address we are connect()ing from
 
   NETSPOOL netbuffer;  // "persistant" storage decoding HTTP/UUE stream
   int puthttpdone;     // reset the connection before every http ::Put
@@ -123,6 +126,17 @@ static NETSTATE *__cookie2netstate(void *cookie)
       netstate = (NETSTATE *)0;
   }
   return netstate;
+}
+
+static int __break_check(NETSTATE *netstate) 
+{
+  /* if break was already seen at netconn_open() time, 
+     then do any more break checks. otherwise final 
+     mail and nodiskbuffer flush won't work.
+  */
+  if (!netstate->break_pending)
+    return CheckExitRequestTrigger();
+  return 0;
 }
 
 /* ==================================================================== */
@@ -625,7 +639,7 @@ static int __open_connection(void *cookie)
     int is_fwalled = ((netstate->fwall_hostname[0] != 0) &&
                      ((netstate->startmode & (MODE_HTTP|MODE_SOCKS4|MODE_SOCKS5))!=0) );
 
-    if (CheckExitRequestTrigger())
+    if (__break_check(netstate)) 
     {
       success = 0;
       maxtries = -1; /* we'll want to break out of the loop below */
@@ -741,13 +755,17 @@ static int __open_connection(void *cookie)
                ((netstate->conn_hostaddr)?(net_ntoa(netstate->conn_hostaddr)):(netstate->conn_hostname)),
              (unsigned int)(netstate->conn_hostport) );
       }
+      netstate->local_hostaddr = 0;
+      netstate->local_hostport = 0;
       rc = net_connect(netstate->sock, 
-                       netstate->conn_hostaddr, 
-                       netstate->conn_hostport, 
+                       &(netstate->conn_hostaddr), 
+                       &(netstate->conn_hostport), 
+                       &(netstate->local_hostaddr),
+                       &(netstate->local_hostport),
                        netstate->iotimeout );
       if (rc != 0)
       {
-        if (netstate->verbose_level > 0 && !CheckExitRequestTrigger())
+        if (netstate->verbose_level > 0 && !__break_check(netstate))
         {
           LogScreen( "%sonnect to host %s:%u failed.\n%s\n",
              ((netstate->reconnected)?("Rec"):("\rC")),
@@ -1013,7 +1031,7 @@ int netconn_read( void *cookie, char * data, int numRequested )
                       netstate->iotimeout);
         if (rc != 0)
         {
-          if (netstate->verbose_level > 0 && !CheckExitRequestTrigger())
+          if (netstate->verbose_level > 0 && !__break_check(netstate))
             LogScreen("Net::read: %s\n", net_strerror(rc, netstate->sock ));
           break;
         }
@@ -1288,7 +1306,7 @@ int netconn_read( void *cookie, char * data, int numRequested )
                         netstate->iotimeout);
           if (rc != 0)
           {
-            if (netstate->verbose_level > 0 && !CheckExitRequestTrigger())
+            if (netstate->verbose_level > 0 && !__break_check(netstate))
               LogScreen("Net::read: %s\n", net_strerror(rc, netstate->sock ));
             need_close = 1;
           }
@@ -1525,7 +1543,7 @@ int netconn_write( void *cookie, const char * data, int length )
     }
     else
     {
-      if (netstate->verbose_level > 0 && !CheckExitRequestTrigger())
+      if (netstate->verbose_level > 0 && !__break_check(netstate))
         LogScreen("Net::write: %s\n", net_strerror(rc,netstate->sock) );
       rc = -1;
     }
@@ -1581,6 +1599,19 @@ int netconn_setpeer(void *cookie, u32 address)
   if (!netstate->svc_hostaddr)
     netstate->svc_hostaddr = address;
   return netstate->svc_hostaddr;
+}
+
+/* ====================================================================== */
+
+/* netconn_getaddr(): get address connected from, or zero
+ * on error (or not connected).
+*/
+u32 netconn_getaddr(void *cookie)
+{
+  NETSTATE *netstate = __cookie2netstate(cookie);
+  if (!netstate)
+    return 0;
+  return netstate->local_hostaddr;
 }
 
 /* ====================================================================== */
@@ -1679,6 +1710,7 @@ void *netconn_open( const char * _servname, int _servport,
     netstate->mode = 0;
     netstate->startmode = 0;
     netstate->puthttpdone = 0;
+    netstate->break_pending = CheckExitRequestTrigger();
 
     netstate->svc_hostport = netstate->conn_hostport = 0;
     netstate->svc_hostaddr = netstate->conn_hostaddr = 0;

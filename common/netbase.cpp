@@ -59,7 +59,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.1.2.3 2000/10/24 19:34:20 oliver Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.1.2.4 2000/10/24 21:36:35 cyp Exp $"; }
 
 //#define TRACE /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -264,39 +264,6 @@ extern "C" {
 #define ps_ELASTERR ps_EINPROGRESS
 
 #endif
-
-/* ======================================================================== */
-/* MISC                                                                     */
-/* ======================================================================== */
-
-static void __calc_timeout_metrics(int iotimeout, /* millisecs */
-                                   int *maxloops, /* max number of loops */ 
-                                   int *mssleep ) /* sleep time per loop */
-{
-  *maxloops = *mssleep = 0;
-  if (iotimeout != 0)
-  {
-    if (iotimeout < 0) /* "blocking" */
-      iotimeout = 90*1000;  /* == 90 second timeout */
-    *maxloops = (iotimeout+249)/250; /* quarter sec loops */
-    *mssleep = 250; /* 250 millisecs */
-  }
-  return;
-}
-
-
-// a) u32 -> in_addr.s_addr ->inet_ntoa is a hassle;
-// b) BSD specs in_addr, but some implementations want a u_long;
-// c) it works around context issues.
-// d) it works everywhere, even when there is no net api loaded
-const char *net_ntoa(u32 addr)
-{
-  static char buff[sizeof("255.255.255.255  ")];
-  char *p = (char *)(&addr);
-  sprintf( buff, "%d.%d.%d.%d",
-      (p[0]&255), (p[1]&255), (p[2]&255), (p[3]&255) );
-  return buff;
-}
 
 /* ======================================================================== */
 /* STACK INITIALIZATION/CONTROL                                             */
@@ -577,7 +544,7 @@ static int net_init_check_deinit( int doWhat, int only_test_api_avail )
 #define is_netapi_callable() (net_init_check_deinit(0,1) == 0)
 
 /* ======================================================================== */
-/* TRACE HELPER                                                             */
+/* MISC helpers                                                             */
 /* ======================================================================== */
 
 #if defined(TRACE)
@@ -588,6 +555,22 @@ static const char *internal_net_strerror(const char *, int , SOCKET );
 #define trace_expand_api_rc(__rc, __fd) \
           ((__rc < 0)?(internal_net_strerror(" ", ps_stdneterr, __fd )):(""))
 #endif /* if defined(TRACE) */
+
+static void __calc_timeout_metrics(int iotimeout, /* millisecs */
+                                   int *maxloops, /* max number of loops */ 
+                                   int *mssleep ) /* sleep time per loop */
+{
+  *maxloops = *mssleep = 0;
+  if (iotimeout != 0)
+  {
+    if (iotimeout < 0) /* "blocking" */
+      iotimeout = 90*1000;  /* == 90 second timeout */
+    *maxloops = (iotimeout+249)/250; /* quarter sec loops */
+    *mssleep = 250; /* 250 millisecs */
+  }
+  return;
+}
+
 
 /* ======================================================================== */
 /* ERROR CODE MANAGEMENT                                                    */
@@ -1067,6 +1050,7 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
   else if (is_netapi_callable())
   {
     int retry_count = 0;
+    int break_pending = CheckExitRequestTriggerNoIO();
     for (;;)
     {
       #if defined(_TIUSER_)
@@ -1289,7 +1273,11 @@ static int net_look( SOCKET fd, int events, int *revents, int mstimeout )
       #endif /* SOCK_STREAM */
 
       /* we have EINTR if we got here */
-      if (CheckExitRequestTriggerNoIO())
+      /* we do *not* checkexitrequesttrigger unless 
+         eintr _and_ there was no exit pending when we started,
+         otherwise we'd never be able to send mail on shutdown.
+      */
+      if (!break_pending && CheckExitRequestTriggerNoIO())
       {
         rc = ps_EINTR;
         break;
@@ -1838,11 +1826,6 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
   if (rc == 0)
   {
     #if defined(AF_INET)
-    struct sockaddr_in saddr;
-    memset((void *) &saddr, 0, sizeof(saddr));
-    saddr.sin_family = AF_INET;
-    saddr.sin_port = htons(((u16)local_port));
-    saddr.sin_addr.s_addr = local_addr;
     #endif
 
     #if defined(_TIUSER_)
@@ -1851,23 +1834,31 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
       rc = ps_stdneterr;
       if (fd != -1)
       {
-        struct t_bind bnd;
-        bnd.addr.maxlen = bnd.addr.len = sizeof(saddr);
-        bnd.addr.buf = (char *)&saddr;
-        /* If you pass in zero to qlen, you get a connection endpoint. 
-           If you pass in a nonzero value, you get a listener.
-        */
-        bnd.qlen = ((local_port == 0)?(0):(5));
-        if ( t_bind( fd, &bnd, ((struct t_bind *)0) ) != -1 )
+        rc = 0; 
+        if ( local_port != 0)
         {
-          *sockP = fd;
-          rc = 0;
+          struct t_bind bnd;
+          struct sockaddr_in saddr;
+          memset((void *) &saddr, 0, sizeof(saddr));
+          saddr.sin_family = AF_INET;
+          saddr.sin_port = htons(((u16)local_port));
+          saddr.sin_addr.s_addr = local_addr;
+          bnd.addr.maxlen = bnd.addr.len = sizeof(saddr);
+          bnd.addr.buf = (char *)&saddr;
+          bnd.qlen = 5; /* MAX_CIND */
+          if ( t_bind( fd, &bnd, ((struct t_bind *)0) ) == -1 )
+            rc = ps_stdneterr;
         }
-        else
-        {
-          t_close(fd);
-        }  
       }
+      if (rc == 0)
+      {
+        *sockP = fd;
+        rc = 0;
+      }
+      else
+      {
+        t_close(fd);
+      }  
     }
     #elif defined(SOCK_STREAM)                       /* BSD sox */
     {
@@ -1879,22 +1870,24 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
       if (fd != -1)
       {
         rc = bsd_condition_new_socket( fd, (local_port != 0) );
-        if (rc == 0)
+        if (rc == 0 && local_port) /* server */
         {
-          if (local_addr || local_port)
+          struct sockaddr_in saddr;
+          memset((void *) &saddr, 0, sizeof(saddr));
+          saddr.sin_family = AF_INET;
+          saddr.sin_port = htons(((u16)local_port));
+          saddr.sin_addr.s_addr = local_addr;
+          TRACE_OPEN((+1,"bind(fd,%s:%d,...)\n",net_ntoa(local_addr),local_port));
+          while (bind(fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
           {
-            TRACE_OPEN((+1,"bind(fd,%s:%d,...)\n",net_ntoa(local_addr),local_port));
-            while (bind(fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
-            {
-              if (net_match_errno(ps_EINTR)) /* caught a signal */
-                continue;                    /* retry */
-              rc = ps_stdneterr;
-              break;
-            } 
-            TRACE_OPEN((-1,"bind(fd,%s:%d,...) => %d%s\n",net_ntoa(local_addr),local_port,rc, trace_expand_ps_rc(rc,fd) ));
-          }
+            if (net_match_errno(ps_EINTR)) /* caught a signal */
+              continue;                    /* retry */
+            rc = ps_stdneterr;
+            break;
+          } 
+          TRACE_OPEN((-1,"bind(fd,%s:%d,...) => %d%s\n",net_ntoa(local_addr),local_port,rc, trace_expand_ps_rc(rc,fd) ));
         }
-        if (rc == 0  && local_port != 0) /* server */
+        if (rc == 0 && local_port) /* server */
         {
           TRACE_OPEN((+1,"listen(fd,5)\n"));
           while (listen(fd, 5) < 0)
@@ -1935,8 +1928,9 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
 /* CONNECT/ACCEPT                                                           */
 /* ======================================================================== */
 
-int net_connect( SOCKET sock, u32 that_address, int that_port,
-                 int iotimeout /* millisecs */ )
+int net_connect( SOCKET sock, u32 *that_address, int *that_port,
+                              u32 *this_address, int *this_port,
+                              int iotimeout /* millisecs */ )
 {
   int rc = ps_ENETDOWN;
 
@@ -1950,8 +1944,13 @@ int net_connect( SOCKET sock, u32 that_address, int that_port,
   {
     rc = ps_EINVAL;
   }
+  else if (!*that_address || *that_port <= 0 || *that_port > 0xffff)
+  {
+    rc = ps_EINVAL;
+  }
   else if (net_init_check_deinit(0,0) == 0)  /* check */
   {
+    int break_pending = CheckExitRequestTriggerNoIO();
     int loopcount = 0, maxloops = 0, mssleep = 0;
     __calc_timeout_metrics(iotimeout, /* millisecs */
                            &maxloops, /* max number of loops */ 
@@ -1959,173 +1958,269 @@ int net_connect( SOCKET sock, u32 that_address, int that_port,
 
 #if defined(_TIUSER_)                                         //OSI/XTI/TLI
     {
-      int err;
-      struct t_call sndcall;
       struct sockaddr_in saddr;
+      struct t_bind bnd;
+      struct t_bind *bndP = (struct t_bind *)0;
 
-      memset((void *) &saddr, 0, sizeof(saddr));
-      saddr.sin_family = AF_INET;
-      saddr.sin_port = htons(((u16)that_port));
-      saddr.sin_addr.s_addr = that_address;
+      memset( &bnd, 0, sizeof(struct t_bind) ); 
+      memset( &saddr, 0, sizeof(struct sockaddr_in) );
 
-      memset((void *) &sndcall, 0, sizeof(sndcall));
-      sndcall.addr.len = sizeof(saddr);
-      sndcall.addr.maxlen = sizeof(saddr);
-      sndcall.addr.buf = (char *)&saddr;
+      bnd.addr.maxlen = bnd.addr.len = sizeof(saddr);
+      bnd.addr.buf = (char *)&saddr;
+      bnd.qlen = 0; /* listen depth */
 
-      err = 0;
-      rc = t_connect( sock, &sndcall, ((struct t_call *)0) );
-      if (rc < 0)
-        err = t_errno;
-      while (rc < 0 && err == TNODATA)
+      if (this_address)
       {
-        struct pollfd pfd;
-        pfd.fd = sock;
-        pfd.events = POLLOUT;
-        pfd.revents = 0;
-        if (poll(&pfd, 1, mssleep) < 0)
+        if (*this_address)
         {
-          t_errno = err = TSYSERR;
-          break;
+          saddr.sin_family = AF_INET;
+          saddr.sin_addr.s_addr = *this_address;
+          bndP = &bnd;
         }
-        if (pfd.revents != 0) /* POLLOUT/POLLERR/POLLHUP */
-        {
-          rc = t_rcvconnect(sock, ((struct t_call *)0) );
-          if (rc < 0)
-            err = t_errno;
-        }
-        else if (CheckExitRequestTriggerNoIO())
-        {
-          t_errno = err = TSYSERR;
-          errno = EINTR;
-        }
-        else if ((++loopcount) > maxloops)
-        {
-          t_errno = err = TSYSERR;
-          errno = ETIMEDOUT;
-        }
-      } /* while (rc < 0 && err == TNODATA) */
-      if (rc < 0)
+      }
+      rc = ps_stdneterr;
+      if (t_bind( sock, bndP, &bnd ) != -1)
       {
-        rc = ps_stdneterr;
-        if (err == TLOOK)
+        u32 bound_addr = saddr.sin_addr.s_addr; 
+        int bound_port = 0xffff & ((int)htons(saddr.sin_port));
+        struct t_call sndcall;
+        int err;
+
+        memset((void *) &saddr, 0, sizeof(saddr));
+        saddr.sin_family = AF_INET;
+        saddr.sin_port = (u16)htons(((u16)*that_port));
+        saddr.sin_addr.s_addr = *that_address;
+
+        memset((void *) &sndcall, 0, sizeof(sndcall));
+        sndcall.addr.len = sizeof(saddr);
+        sndcall.addr.maxlen = sizeof(saddr);
+        sndcall.addr.buf = (char *)&saddr;
+
+        err = 0;
+        rc = t_connect( sock, &sndcall, &sndcall );
+        if (rc < 0)
+          err = t_errno;
+        while (rc < 0 && err == TNODATA)
         {
-          err = t_look(sock);
-          if (err == T_CONNECT)
-            rc = 0;
-          else if (err == T_DISCONNECT)
+          struct pollfd pfd;
+          pfd.fd = sock;
+          pfd.events = POLLOUT;
+          pfd.revents = 0;
+          if (poll(&pfd, 1, mssleep) < 0)
           {
-            struct t_discon tdiscon;
-            tdiscon.udata.buf = (char *)0;
-            tdiscon.udata.maxlen = 0;
-            tdiscon.udata.len = 0;
-            if (t_rcvdis(sock, &tdiscon) < 0)
-              tdiscon.reason = ECONNREFUSED;
-            t_errno = TSYSERR;
-            errno = tdiscon.reason;
+            t_errno = err = TSYSERR;
+            break;
           }
+          if (pfd.revents != 0) /* POLLOUT/POLLERR/POLLHUP */
+          {
+            rc = t_rcvconnect(sock, &sndcall );
+            if (rc < 0)
+              err = t_errno;
+          }
+          else if (!break_pending && CheckExitRequestTriggerNoIO())
+          {
+            t_errno = err = TSYSERR;
+            errno = EINTR;
+          }
+          else if ((++loopcount) > maxloops)
+          {
+            t_errno = err = TSYSERR;
+            errno = ETIMEDOUT;
+          }
+        } /* while (rc < 0 && err == TNODATA) */
+        if (rc < 0)
+        {
+          rc = ps_stdneterr;
+          if (err == TLOOK)
+          {
+            int look = t_look(sock);
+            if (look == T_CONNECT)
+            {
+              if (t_rcvconnect(sock, &sndcall )==0)
+                rc = 0;
+              else
+              {
+                err = t_errno;
+                if (err == TLOOK);
+                  look = t_look(sock);
+              }
+            }
+            if (look == T_DISCONNECT)
+            {
+              struct t_discon tdiscon;
+              tdiscon.udata.buf = (char *)0;
+              tdiscon.udata.maxlen = 0;
+              tdiscon.udata.len = 0;
+              if (t_rcvdis(sock, &tdiscon) < 0)
+                tdiscon.reason = ECONNREFUSED;
+              t_errno = TSYSERR;
+              errno = tdiscon.reason;
+            }
+          } /* err == TLOOK */
+        } /* if (rc < 0) */
+        if (rc == 0)
+        {
+          if (this_address)
+            *this_address = bound_addr;
+          if (this_port)
+            *this_port = bound_port;
+          if (that_address)
+            *that_address = saddr.sin_addr.s_addr; 
+          if (that_port)
+            *that_port = 0xffff & ((int)htons(saddr.sin_port));
         }
-      } /* if (rc < 0) */
+      }
     } /* _TIUSER_ */
     #elif defined(SOCK_STREAM) //BSD sox
     {
       struct sockaddr_in saddr;
-      int in_progress = 0, is_async = 1;
 
-      memset((void *) &saddr, 0, sizeof(saddr));
-      saddr.sin_family = AF_INET;
-      saddr.sin_port = htons(((u16)that_port));
-      saddr.sin_addr.s_addr = that_address;
-
-      #if defined(FIONREAD)  /* socket default state is blocking */
-      is_async = 0;
-      if (iotimeout >= 0) /* we have a non-blocking timeout value */
+      rc = 0;
+      if (this_address)
       {
-        if (net_set_nonblocking(sock) == 0) /* so convert to non-blocking */
-          is_async = 1;
-      }    
-      #endif
-
-      TRACE_CONNECT((+1,"connect(s, %s:%d)\n", net_ntoa(that_address), that_port));
-      rc = connect(sock, (struct sockaddr *)&saddr, sizeof(saddr));
-      TRACE_CONNECT((-1,"connect(s) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
-
-      TRACE_CONNECT((0,"phase 1: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
-      if (rc != 0) /* connect error or not complete */
-      {
-        rc = ps_stdneterr;
-        if (is_async && net_match_errno(ps_EINPROGRESS))
+        if (*this_address)
         {
-          in_progress = 1;
-          rc = 0;
-        }  
-      }   
-      TRACE_CONNECT((0,"phase 2: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
-      if (is_async) /* connect was executed asynchronously */
-      {
-        #if defined(FIONREAD) /* socket default state is blocking */
-        int rc2 = net_set_blocking(sock); /* so return to blocking state */
-        if (rc == 0) rc = rc2;
-        #endif
-      }
-      TRACE_CONNECT((0,"phase 3: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
-      if (rc == 0 && in_progress) /* connect completion pending */
-      {
-        TRACE_CONNECT((+1,"EINPROGRESS loop\n"));
-        for (;;)
-        {
-          int revents = 0;
-#if defined(LOOK_NOT_POLL)
-          rc = net_look( sock, ps_T_CONNECT, &revents, mssleep );
-          if (rc != 0)
-            break;
-          if (revents == ps_T_CONNECT)
+          memset((void *) &saddr, 0, sizeof(saddr));
+          saddr.sin_family = AF_INET;
+          saddr.sin_addr.s_addr = *this_address;
+          TRACE_CONNECT((+1,"bind(fd,%s:%d,...)\n",net_ntoa(*local_addr),0));
+          while (bind(sock, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
           {
-            rc = 0;
+            if (net_match_errno(ps_EINTR)) /* caught a signal */
+              continue;                    /* retry */
+            rc = ps_stdneterr;
             break;
           } 
-#else
-          rc = net_poll1( sock, POLLOUT|POLLIN, &revents, mssleep );
-          if (rc != 0)
-            break;
-          if ((revents & POLLERR)!=0) /* this shouldn't happen */
-          {                           /* (rc should be non-zero) */
-            rc = ps_stdneterr; 
-            break;
-          }    
-          if ((revents & POLLIN)!=0)  /* we have an error */
+          TRACE_CONNECT((-1,"bind(fd,%s:%d,...) => %d%s\n",net_ntoa(local_addr),0,rc, trace_expand_ps_rc(rc,fd) ));
+        }        
+      }
+
+      if (rc == 0)
+      {
+        int in_progress = 0, is_async = 1;
+        memset((void *) &saddr, 0, sizeof(saddr));
+        saddr.sin_family = AF_INET;
+        saddr.sin_port = htons(((u16)*that_port));
+        saddr.sin_addr.s_addr = *that_address;
+
+        #if defined(FIONREAD)  /* socket default state is blocking */
+        is_async = 0;
+        if (iotimeout >= 0) /* we have a non-blocking timeout value */
+        {
+          if (net_set_nonblocking(sock) == 0) /* so convert to non-blocking */
+            is_async = 1;
+        }    
+        #endif
+
+        TRACE_CONNECT((+1,"connect(s, %s:%d)\n", net_ntoa(that_address), that_port));
+        rc = connect(sock, (struct sockaddr *)&saddr, sizeof(saddr));
+        TRACE_CONNECT((-1,"connect(s) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
+
+        TRACE_CONNECT((0,"phase 1: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
+        if (rc != 0) /* connect error or not complete */
+        {
+          rc = ps_stdneterr;
+          if (is_async && net_match_errno(ps_EINPROGRESS))
           {
-            char c;
-            TRACE_CONNECT((+1,"recv(s,&ch,1,0)\n"));
-            rc = recv(sock, &c, 1, 0);
-            TRACE_CONNECT((-1,"recv(s,&ch,1,0) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
-            if (rc != 0) /* should always be the case here */
+            in_progress = 1;
+            rc = 0;
+          }  
+        }   
+        TRACE_CONNECT((0,"phase 2: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
+        if (is_async) /* connect was executed asynchronously */
+        {
+          #if defined(FIONREAD) /* socket default state is blocking */
+          int rc2 = net_set_blocking(sock); /* so return to blocking state */
+          if (rc == 0) rc = rc2;
+          #endif
+        }
+        TRACE_CONNECT((0,"phase 3: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
+        if (rc == 0 && in_progress) /* connect completion pending */
+        {
+          TRACE_CONNECT((+1,"EINPROGRESS loop\n"));
+          for (;;)
+          {
+            int revents = 0;
+#if defined(LOOK_NOT_POLL)
+            rc = net_look( sock, ps_T_CONNECT, &revents, mssleep );
+            if (rc != 0)
+              break;
+            if (revents == ps_T_CONNECT)
             {
-              rc = ps_stdneterr;
+              rc = 0;
+              break;
+            } 
+#else
+            rc = net_poll1( sock, POLLOUT|POLLIN, &revents, mssleep );
+            if (rc != 0)
+              break;
+            if ((revents & POLLERR)!=0) /* this shouldn't happen */
+            {                           /* (rc should be non-zero) */
+              rc = ps_stdneterr; 
+              break;
+            }    
+            if ((revents & POLLIN)!=0)  /* we have an error */
+            {
+              char c;
+              TRACE_CONNECT((+1,"recv(s,&ch,1,0)\n"));
+              rc = recv(sock, &c, 1, 0);
+              TRACE_CONNECT((-1,"recv(s,&ch,1,0) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
+              if (rc != 0) /* should always be the case here */
+              {
+                rc = ps_stdneterr;
+                break;
+              }
+            }    
+            if ((revents & POLLOUT)!=0)
+            {
+              rc = 0;
               break;
             }
-          }    
-          if ((revents & POLLOUT)!=0)
-          {
-            rc = 0;
-            break;
-          }
 #endif
-          if (CheckExitRequestTriggerNoIO())
+            if (!break_pending && CheckExitRequestTriggerNoIO())
+            {
+              rc = ps_EINTR;
+              break;
+            }
+            if ((++loopcount) >= maxloops) 
+            {
+              rc = ps_ETIMEDOUT;
+              break;
+            }
+          } /* for (;;) */
+          TRACE_CONNECT((-1,"EINPROGRESS loop =>%d%s\n",rc,trace_expand_ps_rc(rc,sock)));
+        } /* connect completion pending */    
+        if (rc == 0)
+        {
+          socklen_t addrsz;
+          if (this_address || this_port)
           {
-            rc = ps_EINTR;
-            break;
+            addrsz = sizeof(saddr);
+            memset((void *) &saddr, 0, sizeof(saddr));
+            saddr.sin_family = AF_INET;
+            if (getsockname(sock, (struct sockaddr *)&saddr, &addrsz) == 0)
+            {
+              if (this_address)
+                *this_address = saddr.sin_addr.s_addr;
+              if (this_port)
+                *this_port = 0xffff & ((int)htons(saddr.sin_port));
+            }
           }
-          if ((++loopcount) >= maxloops) 
-          {
-            rc = ps_ETIMEDOUT;
-            break;
+          if (that_address || that_port)
+          { 
+            addrsz = sizeof(saddr);
+            memset((void *) &saddr, 0, sizeof(saddr));
+            saddr.sin_family = AF_INET;
+            if (getpeername(sock, (struct sockaddr *)&saddr, &addrsz) == 0)
+            {
+              if (that_address)
+                *that_address = saddr.sin_addr.s_addr;
+              if (that_port)
+                *that_port = 0xffff & ((int)htons(saddr.sin_port));
+            }
           }
-        } /* for (;;) */
-        TRACE_CONNECT((-1,"EINPROGRESS loop =>%d%s\n",rc,trace_expand_ps_rc(rc,sock)));
-      } /* connect completion pending */    
-      //if (rc != 0)
-      //shutdown(sock,2); /* prevent further activity on the socket */
+        }
+      } /* bind was successful */
     } /* BSD sox */
 #endif
   } /* (net_init_check_deinit(0,0)) */
@@ -2151,6 +2246,8 @@ int net_accept( SOCKET listen_fd, SOCKET *conn_fdP,
     rc = ps_EINVAL;
   else if (!is_netapi_callable())
     rc = ps_ENOSYS;
+  else if (CheckExitRequestTriggerNoIO())
+    rc = ps_EINTR;
   else
   {  
     int eintr_count = 0; /* only used by BSD sox */
@@ -2329,6 +2426,7 @@ int net_read( SOCKET sock, char *data, unsigned int *bufsz,
   }
   else if (net_init_check_deinit(0,0) == 0) /* check */
   {
+    int break_pending = CheckExitRequestTriggerNoIO();
     int tryloops = 0, maxloops = 0, mssleep = 0;
     unsigned int remainingtodo = totaltodo;
     unsigned int recvquota = 1500; /* how much to read per read() call */
@@ -2494,7 +2592,7 @@ int net_read( SOCKET sock, char *data, unsigned int *bufsz,
           }
         }
       } /* if ((revents & POLLIN) != 0) */
-      if (CheckExitRequestTriggerNoIO())
+      if (!break_pending && CheckExitRequestTriggerNoIO())
       {
         rc = ps_EINTR;
         break;
@@ -2517,66 +2615,6 @@ int net_read( SOCKET sock, char *data, unsigned int *bufsz,
 
 /* --------------------------------------------------------------------- */
 
-#if 0
-int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
-               u32 that_address, int that_port, int iotimeout /*millisecs*/ )
-{
-  unsigned int totaltodo = ((bufsz)?(*bufsz):(0));
-  unsigned int totaldone = 0;
-  char *data = (char *)0;
-  int rc;
-
-  if (__data) 
-    *((const char **)&data) = __data; /* drop const without compiler warning*/    
-
-  TRACE_WRITE((+1,"net_write(s,%p, %d,'%s:%d',%d)\n",
-             data, totaltodo, net_ntoa(that_address),that_port,iotimeout ));
-
-  rc = ps_ENETDOWN;
-  if ( sock == INVALID_SOCKET )
-    rc = ps_EBADF;
-  else if (!data || !bufsz || !that_address || that_port<=0 || that_port>0xffff)
-    rc = ps_EINVAL;
-  else if (net_init_check_deinit(0,0) == 0) /* check */
-  {
-    rc = 0;
-    if (*bufsz)
-    {
-      int written;
-      struct sockaddr_in saddr;
-      memset((void *) &saddr, 0, sizeof(saddr));
-      saddr.sin_family = AF_INET;
-      saddr.sin_port = htons(((u16)that_port));
-      saddr.sin_addr.s_addr = that_address;
-
-      TRACE_WRITE((+1,"sendto(s,data,%d,0,'%s:%d',%d)\n",*bufsz,net_ntoa(that_address),that_port,sizeof(saddr) ));
-      written = sendto(sock, data, (int)*bufsz, 0, 
-                           (struct sockaddr *)&saddr, sizeof(saddr) );
-      TRACE_WRITE((-1,"sendto() => %d\n", rc ));
-      if (written < 0)
-      {
-        rc = ps_stdneterr;
-      }
-      else if (written == 0) /* timed out */
-      {
-        rc = 0; //ps_ETIMEDOUT;
-      }
-      else
-      {
-        totaldone = written;
-      }
-    } /* if (*bufsz) */
-  } /* if (net_init_check_deinit(0,0) != 0) */
-
-  if (bufsz)
-    *bufsz = totaldone;
-  //if (rc != 0)
-  //  rc = 0;
-  TRACE_WRITE((-1,"net_write() => %d%s, [written=%u]\n", rc,
-                            trace_expand_ps_rc(rc,sock), totaldone));
-  return rc;
-}
-#else  
 int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
                u32 that_address, int that_port, int iotimeout /*millisecs*/ )
 {
@@ -2601,6 +2639,7 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
     rc = 0;
     if (totaltodo)
     {
+      int break_pending = CheckExitRequestTriggerNoIO();
       int tryloops = 0, maxloops = 0, mssleep = 0;
       unsigned int remainingtodo = totaltodo;
       unsigned int sendquota = 1500; /* how much to send per send() call */
@@ -2730,7 +2769,7 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
             }
           }
         } /* if ((revents & POLLOUT) != 0) */
-        if (CheckExitRequestTriggerNoIO())
+        if (!break_pending && CheckExitRequestTriggerNoIO())
         {
           rc = ps_EINTR;
           break;
@@ -2751,33 +2790,22 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
                             trace_expand_ps_rc(rc,sock), totaldone));
   return rc;
 }
-#endif
 
 /* ======================================================================== */
-/* NETDB                                                                    */
+/* CONVERSION                                                               */
 /* ======================================================================== */
 
-int net_gethostname(char *buffer, unsigned int len)
+// a) u32 -> in_addr.s_addr ->inet_ntoa is a hassle;
+// b) BSD specs in_addr, but some implementations want a u_long;
+// c) it works around context issues.
+// d) it works everywhere, even when there is no net api loaded
+const char *net_ntoa(u32 addr)
 {
-  if (buffer && ((int)len) > 0)
-  {
-    if (is_netapi_callable())
-    {
-      #if (defined(_TIUSER_) || defined(SOCK_STREAM))
-      if (gethostname(buffer, len) == 0)
-      {
-        /* BSD man page for gethostname(3) sez: "The returned name is 
-           null-terminated, unless insufficient space is provided."
-        */
-        buffer[len-1] = '\0';
-        return 0;
-      }
-      return ps_stdneterr;      
-      #endif
-    }
-    return ps_ENETDOWN;
-  }
-  return ps_EINVAL;
+  static char buff[sizeof("255.255.255.255  ")];
+  char *p = (char *)(&addr);
+  sprintf( buff, "%d.%d.%d.%d",
+      (p[0]&255), (p[1]&255), (p[2]&255), (p[3]&255) );
+  return buff;
 }
 
 /* --------------------------------------------------------------------- */
@@ -2919,6 +2947,57 @@ int net_aton( const char *cp, u32 *addrp )
   if (_inet_atox( cp, addrp, 4, 'h' ) == 0)
     return 0;
   return ps_EINVAL;
+}
+
+/* ======================================================================== */
+/* NETDB                                                                    */
+/* ======================================================================== */
+
+int net_gethostname(char *buffer, unsigned int len)
+{
+  int rc = ps_EINVAL;
+  if (buffer && ((int)len) > 0)
+  {
+    rc = ps_ENOSYS;
+    #if (defined(_TIUSER_) || defined(SOCK_STREAM))
+    rc = ps_ENETDOWN;
+    if (is_netapi_callable())
+    {
+      char scratch[256]; /* MAXHOSTNAMELEN */
+      rc = ps_stdneterr;
+      if (gethostname(scratch, sizeof(scratch)) == 0)
+      {
+        /* BSD man page for gethostname(3) sez: "The returned name is 
+           null-terminated, unless insufficient space is provided."
+        */
+        scratch[sizeof(scratch)-1] = '\0';
+        #if (CLIENT_OS == OS_WIN32)|| (CLIENT_OS == OS_WIN16)
+        {
+          /* <quote> If no local host name has been configured gethostname 
+             must succeed and return a token host name that gethostbyname 
+             or WSAAsyncGetHostByName can resolve. </quote>
+             How stupid can anymore get?
+          */
+          //hostname is REG_SZ in 
+          //HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Hostname
+          #define MSCRAP_HOSTNAME_TOKEN "-" /* aforementioned "token" hostname */
+          if (strcmp( scratch, MSCRAP_HOSTNAME_TOKEN ) == 0) 
+            scratch[0] = '\0';
+        }
+        #endif /* win32 */
+
+        rc = ps_ENOENT;  
+        if (scratch[0])
+        {
+          strncpy( buffer, scratch, len );
+          buffer[len-1] = '\0';
+          rc = 0;
+        }
+      } /* if gethostname() == 0 */
+    } /* if (is_netapi_callable()) */
+    #endif /* (defined(_TIUSER_) || defined(SOCK_STREAM)) */
+  } /* if (buffer && ((int)len) > 0) */
+  return rc;
 }
 
 /* --------------------------------------------------------------------- */
