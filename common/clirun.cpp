@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: clirun.cpp,v $
+// Revision 1.17  1998/10/27 00:43:04  remi
+// OLD_NICENCESS -> OLDNICENESS
+//
 // Revision 1.16  1998/10/27 00:39:24  remi
 // - Added a few #ifdef to allow compilation of a glibc client without threads.
 // - #ifdef'ed the old niceness/priority code
@@ -69,7 +72,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.16 1998/10/27 00:39:24 remi Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.17 1998/10/27 00:43:04 remi Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -883,7 +886,7 @@ int Client::Run( void )
 
   struct thread_param_block *thread_data_table = NULL;
 
-#ifdef OLD_NICENESS
+#ifdef OLDNICENESS
   //priority is a temporary hack
   unsigned int priority = ((niceness==2)?(9):((niceness==1)?(4):(0)));
 #endif
