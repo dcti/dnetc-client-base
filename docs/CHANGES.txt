@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.4.2.82 2001/02/26 01:13:11 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.4.2.83 2001/03/02 01:27:26 andreasb Exp $
 ==========================================================================
 
 2.8000
@@ -38,6 +38,7 @@ Version change log: $Id: CHANGES.txt,v 1.4.2.82 2001/02/26 01:13:11 andreasb Exp
             imp: some: OGR behaves more predictably on non-preemptive systems.
             new: macos: dnetc can now find its support files in the active
                  systems "Application Support" or "Preferences" folder.
+            fix: all: packets were saved and reloaded after buffer update.
 
 2.8012.466  new: x86: most unix-ish clients now support the RC5/SMC core.
             imp: some: even faster OGR core.
