@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.108.2.118 2001/06/25 00:55:56 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.108.2.119 2001/07/27 08:46:11 mfeiri Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -170,12 +170,6 @@ void ProblemFree(void *__thisprob)
   SuperProblem *thisprob = (SuperProblem *)__thisprob;
   if (thisprob)
   {
-    // sorry, this is needed for mutex emulation
-    #if (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-    if (MPLibraryIsLoaded())
-      MPDeleteCriticalRegion(thisprob->copy_lock.MPregion);
-    #endif
-    
     memset( thisprob, 0, sizeof(SuperProblem) );
     __problem_counter--;
     cmem_free((void *)thisprob);
@@ -258,12 +252,6 @@ Problem *ProblemAlloc(void)
 
     memset( thisprob, 0, sizeof(SuperProblem) );
     memcpy( &(thisprob->copy_lock), &initmux, sizeof(fastlock_t));
-    
-    // sorry, this is needed for mutex emulation
-    #if (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-    if (MPLibraryIsLoaded())
-      MPCreateCriticalRegion(&(thisprob->copy_lock.MPregion));
-    #endif
     
     thisprob->iprobs[PICKPROB_CORE].priv_data.threadindex = 
     thisprob->iprobs[PICKPROB_MAIN].priv_data.threadindex = 
