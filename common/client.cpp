@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: client.cpp,v $
+// Revision 1.186  1999/01/27 02:47:30  silby
+// timeslice is now initialized during client creation.
+//
 // Revision 1.185  1999/01/26 17:27:58  michmarc
 // Updated banner messages for new DES slicing routines
 //
@@ -173,7 +176,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.185 1999/01/26 17:27:58 michmarc Exp $"; }
+return "@(#)$Id: client.cpp,v 1.186 1999/01/27 02:47:30 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -261,6 +264,7 @@ static void __initialize_client_object(Client *client)
   client->nonewblocks=0;
   client->nettimeout=60;
   client->noexitfilecheck=0;
+  client->timeslice=0x10000;
 #if defined(MMX_BITSLICER) || defined(MMX_RC5)
   client->usemmx = 1;
 #endif
