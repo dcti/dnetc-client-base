@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.48.2.8 1999/09/18 18:02:32 cyp Exp $"; }
+return "@(#)$Id: console.cpp,v 1.48.2.9 1999/09/22 03:08:14 cyp Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -23,6 +23,7 @@ return "@(#)$Id: console.cpp,v 1.48.2.8 1999/09/18 18:02:32 cyp Exp $"; }
 #include "cputypes.h"
 #include "baseincs.h"
 #include "network.h"
+#include "version.h"  //CLIENT_VERSIONSTRING
 #include "clitime.h"
 #include "triggers.h"
 #include "modereq.h"
@@ -194,9 +195,6 @@ int ConOut(const char *msg)
 ** ConOutModal() should only be used when the console is known to be
 ** uninitialized and should be avoided. Not affected by -hidden/-quiet mode
 */
-
-#define CLICONS_LONGNAME "distributed.net client " CLIENT_VERSIONSTRING ""
-
 int ConOutModal(const char *msg)
 {
   #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32S)
