@@ -10,14 +10,17 @@
 #include "client.h"
 
 
+//#define NOPAGER        // define if you don't like the built-in pager
+
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
 #include <termios.h>
+#define TERMIOSPAGER
 #endif
 
 
 // --------------------------------------------------------------------------
 
-#if !defined(NOCONFIG)
+#if !defined(NOCONFIG) && !defined(NOPAGER)
 // read a single keypress, without waiting for an Enter if possible
 static int readkeypress()
 {
@@ -29,7 +32,7 @@ static int readkeypress()
   if (!ch) ch = (getch() << 8);
 #elif (CLIENT_OS == OS_RISCOS)
   ch = _swi(OS_ReadC, _RETURN(0));
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_NETBSD)
+#elif defined(TERMIOSPAGER)
   struct termios stored;
   struct termios newios;
 
@@ -179,12 +182,14 @@ void Client::DisplayHelp( const char * unrecognized_option )
     }
     if (!done)
     {
-      printf( "\nUnrecognized option '%s'\n"
-         "Press enter/space to display a list of valid command line\n"
-         "options or press any other key to quit... ", unrecognized_option );
+      printf( "\nUnrecognized option '%s'\n", unrecognized_option);
+#if !defined(NOPAGER)
+      printf( "Press enter/space to display a list of valid command line\n"
+              "options or press any other key to quit... ");
       int i = readkeypress();
       printf("\n");
       if (i != '\n' && i != '\r' && i != ' ') return;
+#endif
     }
   }
 
@@ -199,6 +204,15 @@ void Client::DisplayHelp( const char * unrecognized_option )
                   CLIENT_CONTEST*100 + CLIENT_BUILD, CLIENT_BUILD_FRAC );
   helpheader[0] = whoami;
 
+#if defined(NOPAGER)
+  {
+    int i;
+    for (i = 0; i < headerlines; i++)
+      printf("%s\n", helpheader[i] );
+    for (i = 0; i < bodylines; i++)
+      printf("%s\n", helpbody[i] );
+  }
+#else
   while (true)
   {
     int i;
@@ -235,6 +249,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
       break;
     }
   }
+#endif
   printf("\n\n");
   return;
 }
