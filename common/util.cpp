@@ -3,6 +3,10 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: util.cpp,v $
+// Revision 1.3  1999/03/18 17:31:48  gregh
+// Initialize the default preferred contest map appropriately
+// based on the number of contests.
+//
 // Revision 1.2  1999/03/18 07:52:47  gregh
 // Cast short to int when passing to printf(%d).
 //
@@ -13,7 +17,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.2 1999/03/18 07:52:47 gregh Exp $"; }
+return "@(#)$Id: util.cpp,v 1.3 1999/03/18 17:31:48 gregh Exp $"; }
 #endif
 
 #include "baseincs.h" /* string.h */
@@ -93,7 +97,11 @@ const char *projectmap_expand( const char *map )
 
 const char *projectmap_build( char *buf, const char *strtomap )
 {
+#if CONTEST_COUNT == 3
   static char default_map[CONTEST_COUNT] = { 1,2,0 };
+#else
+  static char default_map[CONTEST_COUNT] = { 1,0 };
+#endif
   static char map[CONTEST_COUNT];
   unsigned int map_pos, i;
   int contestid;
