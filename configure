@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.4 2002/11/23 02:04:31 andreasb Exp $
+# @(#)$Id: configure,v 1.288.2.5 2002/11/25 21:33:40 pfeffi Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2407,11 +2407,7 @@ if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
     echo " ---------------------------------------------"
     exit 1
   fi
-  if [ "$BUILDNAME" = "x86-os2" ]; then
-     emxbind testplat
-  else
-     ${TARGET_STRIP} testplat
-  fi
+  ${TARGET_STRIP} testplat
 else
   cc common/testplat.cpp -o testplat
 fi
@@ -2594,6 +2590,10 @@ if [ -n "$TARGET_TARBALL" ]; then
     FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}\${ARCHIVENAME_APPEND}"
     if [ "$TARGET_ARCTYPE" = "zip" ]; then
       echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
+      if [ "$BUILDNAME" = "x86-os2" ]; then
+        # add icon to zipfile
+        echo "	zip -9j $FULLTARNAME.zip plat\\os2\\dnetc.ico" >> Makefile
+      fi
     elif [ "$TARGET_ARCTYPE" = "zipflat" ]; then
       # zip file with flat directory structure.
       echo "	zip -9 -j $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
@@ -2625,7 +2625,9 @@ echo "" >> Makefile
 #
 if [ -n "$TARGET_TARBALL" ]; then
   echo "ftp:" >> Makefile
-  if [ -f ./upload.sh ]; then
+  if [ "$BUILDNAME" = "x86-os2" -a -f upload.cmd ] ; then
+    echo "	\$(SHELL) /C .\\upload.cmd ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+  elif [ -f ./upload.sh ]; then
     if [ -n "$TARGET_TARBALL_COMMENT" ]; then
       echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
     fi
@@ -2829,7 +2831,7 @@ fi
 
 if [ "$BUILDNAME" = "x86-os2" ]; then
  echo "Generating rules for .res and .rc"
- echo "output/${TARGET_BINNAME}.res:	plat\os2\dnetc.rc"         >>Makefile
+ echo "output/${TARGET_BINNAME}.res:	plat/os2/dnetc.rc"         >>Makefile
  echo "	rc -r plat\os2\dnetc.rc output\\${TARGET_BINNAME}.res" >>Makefile
  echo "" >> Makefile
 fi
