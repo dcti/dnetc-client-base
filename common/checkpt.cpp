@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: checkpt.cpp,v $
+// Revision 1.9  1999/03/18 03:42:43  cyp
+// Adjustment for new Problem::RetrieveState() syntax.
+//
 // Revision 1.8  1999/02/21 21:44:58  cyp
 // tossed all redundant byte order changing. all host<->net order conversion
 // as well as scram/descram/checksumming is done at [get|put][net|disk] points
@@ -27,7 +30,7 @@
 //
 #if (!defined(lint) && defined(__showids__))
 const char *checkpt_cpp(void) {
-return "@(#)$Id: checkpt.cpp,v 1.8 1999/02/21 21:44:58 cyp Exp $"; }
+return "@(#)$Id: checkpt.cpp,v 1.9 1999/03/18 03:42:43 cyp Exp $"; }
 #endif
 
 #include "client.h"   // FileHeader, Client class
@@ -118,8 +121,7 @@ int Client::CheckpointAction( int action, unsigned int load_problem_count )
           {
           if (thisprob->IsInitialized())
             {
-            cont_i = (unsigned int)thisprob->RetrieveState(
-                                    (ContestWork *) &fileentry, 0);
+            thisprob->RetrieveState((ContestWork *) &fileentry, &cont_i, 0);
             if (cont_i < CONTEST_COUNT /* 0,1,2...*/ )
               {
               fileentry.contest = (u8)cont_i;
