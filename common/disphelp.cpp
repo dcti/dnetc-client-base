@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.72.4.6 2004/06/27 21:50:34 jlawson Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.72.4.7 2004/07/23 03:13:44 piru Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -155,9 +155,8 @@ void GenerateManPage( void )
   const char *appname = utilGetAppName();
   FILE *manp;
 
-  strncpy(buffer,appname,sizeof(buffer));
-  buffer[sizeof(buffer)-1] = '\0';
-  strcpy( buffer, buffer );
+  strncpy(buffer,appname,sizeof(buffer)-2);
+  buffer[sizeof(buffer)-2-1] = '\0';
   strcat( buffer, ".1" );
 
   manp = fopen(buffer,"w");
