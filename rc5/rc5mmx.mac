@@ -1,0 +1,180 @@
+;macros for the RC5 MMX core
+
+; for testing pursposes, the output ciphertext is copied into
+; Plaintext[]; the code that this affects is at the very bottom
+; of rc5mmx2a.asm 
+
+%define RC5UnitWork     esp+work_size+20
+%define timeslice       esp+work_size+24
+
+%define RC5UnitWork_plainhi   eax+0
+%define RC5UnitWork_plainlo   eax+4
+%define RC5UnitWork_cipherhi  eax+8
+%define RC5UnitWork_cipherlo  eax+12
+%define RC5UnitWork_L0hi      eax+16
+%define RC5UnitWork_L0lo      eax+20
+
+%define Key0            ebp+0
+
+%define work_key_lo     ebp+0
+%define work_key_lo1    ebp+1
+%define work_key_lo2    ebp+2
+%define work_key_lo3    ebp+3
+%define work_key1_lo    ebp+4
+%define work_key2_lo    ebp+8
+%define work_key3_lo    ebp+12
+%define work_key_hi     ebp+16
+%define work_key_hi1    ebp+17
+%define work_key_hi2    ebp+18
+%define work_key_hi3    ebp+19
+%define work_key1_hi    ebp+20
+%define work_key2_hi    ebp+24
+%define work_key3_hi    ebp+28
+%define	work_P_0        ebp+32
+%define	work_P_1        ebp+40
+%define	work_C_0        ebp+48
+%define	work_C_1        ebp+56
+%define Key             ebp+64
+%define	Table           ebp+96     ; Needs to be divisible by 8
+%define AllZeros        ebp+512    ; 96 + 26 * 16
+%define ShiftMask       ebp+520
+%define Table0          ebp+528
+%define work_size       744        ; Extra 8 bytes for rounding to quadword 
+                                   ; (probably only needs 4 but the cost is small)
+
+%macro encryption_round 9
+                          ;  %1    %2    %3    %4    %5    %6    %7    %8
+                          ;-----------------------------------------------
+                          ; r0:?? B1:B0       r1:?? x3:x2 B3:B2 B3:B2 x3:x2
+
+   pand mm%7, [ShiftMask] ;                         x3:x2 B3:B2 B3:B2 x3:x2
+   punpckhdq mm%1, mm%4   ; r1:r0 B1:B0 
+   paddd mm%1, [%9]       ; A1:A0 B1:B0      
+   punpckldq mm%5, mm%5   ;                         x2:x2 B3:B2 s3:s2 x3:x2 
+   movd [AllZeros], mm%7  ;                         x2:x2 B3:B2 s3:s2 x3:x2 
+   psrlq mm%7, 32         ;                         x2:x2 B3:B2 00:s3 x3:x2 
+   psllq mm%5, [AllZeros] ;                         r2:?? B3:B2 00:s3 x3:x2 
+   pxor mm%2, mm%1        ; A1:A0 x1:x0   
+   punpckhdq mm%8, mm%8   ;                         r2:?? B3:B2 00:s3 x3:x3 
+   movq mm%3, mm%1        ; A1:A0 x1:x0 A1:A0  
+   psllq mm%8, mm%7       ;                         r2:?? B3:B2 00:s3 r3:?? 
+   movq mm%4, mm%2        ; A1:A0 x1:x0 A1:A0 x1:x0 
+   pand mm%3, [ShiftMask] ; A1:A0 x1:x0 s1:s0 x1:x0 
+   punpckhdq mm%5, mm%8   ;                         r3:r2 B3:B2       
+   paddd mm%5, [%9+8]     ;                         A3:A2 B3:B2 
+   punpckldq mm%2, mm%2   ; A1:A0 x0:x0 s1:s0 x1:x0
+   movd [AllZeros], mm%3  ; A1:A0 x0:x0 s1:s0 x1:x0
+   psrlq mm%3, 32         ; A1:A0 x0:x0 00:s1 x1:x0
+   psllq mm%2, [AllZeros] ; A1:A0 r0:?? 00:s1 x1:x0
+   pxor mm%6, mm%5        ;                         A3:A2 x3:x2 
+   punpckhdq mm%4, mm%4   ; A1:A0 r0:?? 00:s1 x1:x1
+   movq mm%7, mm%5        ;                         A3:A2 x3:x2 A3:A2
+   psllq mm%4, mm%3       ; A1:A0 r0:?? 00:s1 r1:??
+   movq mm%8, mm%6        ;                         A3:A2 x3:x2 A3:A2 x3:x2
+%endmacro
+
+%macro keytable_round 5
+   ; %1 where keytable[i] comes from
+   ; %2 where keytable[i] goes to
+   ; %3 where L[i] comes from 
+   ; %4 where L[i] goes to
+   ; %5 where L[i+1] comes from
+
+                          ;   0     1     2     3     4     5     6     7 
+                          ;-----------------------------------------------
+                          ; A1:A0 x0:x0 s1:s0 x1:x0 A3:A2 B3:B2 
+
+   paddd mm5, mm4         ;                         A3:A2 +3:+2
+   punpckhdq mm3, mm3     ; A1:A0 x0:x0 s1:s0 x1:x1
+   movd [AllZeros], mm2   ; A1:A0 x0:x0 s1:s0 x1:x0
+   psrlq mm2, 32          ; A1:A0 x0:x0 00:s1 x1:x0
+   psllq mm1, [AllZeros]  ; A1:A0 r0:?? 00:s1 x1:x1
+   movq mm6, mm5          ;                         A3:A2 +3:+2 +3:+2
+   paddd mm5, [%3+8]      ;                         A3:A2 x3:x2 +3:+2
+   psllq mm3, mm2         ; A1:A0 r0:?? 00:s1 r1:??
+   pand mm6, [ShiftMask]  ;                         A3:A2 x3:x2 s3:s2
+   punpckhdq mm1, mm3     ; A1:A0 B1:B0
+   movq mm7, mm5          ;                         A3:A2 x3:x2 s3:s2 x3:x2
+   punpckldq mm5, mm5     ;                         A3:A2 x2:x2 s3:s2 x3:x2
+   movd [AllZeros], mm6   ;                         A3:A2 x3:x2 s3:s2 x3:x2
+   psrlq mm6, 32          ;                         A3:A2 x3:x2 00:s3 x3:x2
+   movq [%4], mm1         ; A1:A0 B1:B0
+   punpckhdq mm7, mm7     ;                         A3:A2 x3:x2 00:s3 x3:x3
+   paddd mm0, [%1]        ; +1:+0 B1:B0
+   psllq mm7, mm6         ;                         A3:A2 x3:x2 00:s3 r3:??
+   psllq mm5, [AllZeros]  ;                         A3:A2 r2:?? 00:s3 r3:??
+   paddd mm0, mm1         ; x1:x0 B1:B0 
+   punpckhdq mm5, mm7     ;                         A3:A2 B3:B2
+   movq mm2, mm0          ; x1:x0 B1:B0 x1:x0 
+   paddd mm4, mm5         ;                         +3:+2 B3:B2
+   pslld mm0, 3           ; f1:f0 B1:B0 x1:x0 
+   movq [%4+8], mm5       ;                         +3:+2 B3:B2
+   psrld mm2, 29          ; f1:f0 B1:B0 b1:b0 
+   paddd mm4, [%1+8]      ;                         x3:x2 B3:B2
+   por mm0, mm2           ; A1:A0 B1:B0     
+   movq mm6, mm4          ;                         x3:x2 B3:B2 x3:x2
+   pslld mm4, 3           ;                         f3:f2 B3:B2 x3:x2
+   movq [%2], mm0         ; A1:A0 B1:B0
+   paddd mm1, mm0         ; A1:A0 +1:+0
+   psrld mm6, 29          ;                         f3:f2 B3:B2 b3:b2
+   movq mm2, mm1          ; A1:A0 +1:+0 +1:+0
+   paddd mm1, [%5]        ; A1:A0 x1:x0 +1:+0
+   por mm4, mm6           ;                         A3:A2 B3:B2
+   pand mm2, [ShiftMask]  ; A1:A0 x1:x0 s1:s0
+   movq mm3, mm1          ; A1:A0 x1:x0 s1:s0 x1:x0
+   movq [%2+8], mm4       ;                         A3:A2 B3:B2 
+   punpckldq mm1, mm1     ; A1:A0 x0:x0 s1:s0 x1:x0
+%endmacro
+
+%macro keytable_round_1 5
+   ; %1 where keytable[i] comes from
+   ; %2 where keytable[i] goes to
+   ; %3 where L[i] comes from 
+   ; %4 where L[i] goes to
+   ; %5 where L[i+1] comes from
+
+                          ;   0     1     2     3     4     5     6     7 
+                          ;-----------------------------------------------
+                          ; A1:A0 x0:x0 s1:s0 x1:x0 A3:A2 B3:B2 
+
+   paddd mm5, mm4         ;                         A3:A2 +3:+2
+   punpckhdq mm3, mm3     ; A1:A0 x0:x0 s1:s0 x1:x1
+   movd [AllZeros], mm2   ; A1:A0 x0:x0 s1:s0 x1:x0
+   psrlq mm2, 32          ; A1:A0 x0:x0 00:s1 x1:x0
+   psllq mm1, [AllZeros]  ; A1:A0 r0:?? 00:s1 x1:x1
+   movq mm6, mm5          ;                         A3:A2 +3:+2 +3:+2
+   pand mm6, [ShiftMask]  ;                         A3:A2 x3:x2 s3:s2
+   psllq mm3, mm2         ; A1:A0 r0:?? 00:s1 r1:??
+   paddd mm5, [%3+8]      ;                         A3:A2 x3:x2 +3:+2
+   punpckhdq mm1, mm3     ; A1:A0 B1:B0
+   movq mm7, mm5          ;                         A3:A2 x3:x2 s3:s2 x3:x2
+   punpckldq mm5, mm5     ;                         A3:A2 x2:x2 s3:s2 x3:x2
+   movd [AllZeros], mm6   ;                         A3:A2 x3:x2 s3:s2 x3:x2
+   psrlq mm6, 32          ;                         A3:A2 x3:x2 00:s3 x3:x2
+   movq [%4], mm1         ; A1:A0 B1:B0
+   punpckhdq mm7, mm7     ;                         A3:A2 x3:x2 00:s3 x3:x3
+   paddd mm0, [%1]        ; +1:+0 B1:B0
+   psllq mm7, mm6         ;                         A3:A2 x3:x2 00:s3 r3:??
+   psllq mm5, [AllZeros]  ;                         A3:A2 r2:?? 00:s3 r3:??
+   paddd mm0, mm1         ; x1:x0 B1:B0 
+   punpckhdq mm5, mm7     ;                         A3:A2 B3:B2
+   movq mm2, mm0          ; x1:x0 B1:B0 x1:x0 
+   paddd mm4, mm5         ;                         +3:+2 B3:B2
+   pslld mm0, 3           ; f1:f0 B1:B0 x1:x0 
+   movq [%4+8], mm5       ;                         +3:+2 B3:B2
+   psrld mm2, 29          ; f1:f0 B1:B0 b1:b0 
+   paddd mm4, [%1]        ;                         x3:x2 B3:B2
+   por mm0, mm2           ; A1:A0 B1:B0     
+   movq mm6, mm4          ;                         x3:x2 B3:B2 x3:x2
+   pslld mm4, 3           ;                         f3:f2 B3:B2 x3:x2
+   movq [%2], mm0         ; A1:A0 +1:+0
+   paddd mm1, mm0         ; A1:A0 +1:+0
+   psrld mm6, 29          ;                         f3:f2 B3:B2 b3:b2
+   movq mm2, mm1          ; A1:A0 +1:+0 +1:+0
+   paddd mm1, [%5]        ; A1:A0 x1:x0 +1:+0
+   por mm4, mm6           ;                         A3:A2 B3:B2
+   pand mm2, [ShiftMask]  ; A1:A0 x1:x0 s1:s0
+   movq mm3, mm1          ; A1:A0 x1:x0 s1:s0 x1:x0
+   movq [%2+8], mm4       ;                         A3:A2 B3:B2 
+   punpckldq mm1, mm1     ; A1:A0 x0:x0 s1:s0 x1:x0
+%endmacro
