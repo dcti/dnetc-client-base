@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.3 1999/10/07 18:36:09 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.4 1999/10/08 21:19:19 remi Exp $"; }
 
 //#define TRACE
 
@@ -105,7 +105,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn ) /* <0 if 
   for (ui=0; ui<2; ui++)
   {
     i = ((ui)?(RC5):(DES));
-    p = ((ui)?("threshold"):("threshold2"));
+    p = (char*)((ui)?("threshold"):("threshold2"));
     if (!GetPrivateProfileStringB( __getprojsectname(i), "fetch-threshold", "", buffer, sizeof(buffer), fn )
      && !GetPrivateProfileStringB( __getprojsectname(i), "flush-threshold", "", buffer, sizeof(buffer), fn ))
     {
