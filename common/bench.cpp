@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.39 1999/12/07 03:18:27 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.40 1999/12/07 04:20:39 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -188,55 +188,78 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     }
   }
 
-  tslice = 0x10000;
+  tslice = 0; /* zero means 'use calibrated value' */
   non_preemptive_os.yps = 0; /* assume preemptive OS */
   non_preemptive_os.did_adjust = 0;
-  
+
   #if (CLIENT_OS == OS_NETWARE)
-  if (GetFileServerMajorVersionNumber() < 5)
+  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
+    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
+  else if (GetFileServerMajorVersionNumber() < 5)
   {
     non_preemptive_os.yps = 1000/10; /* 10 ms minimum yield rate */ 
-    tslice = 2048;
+    tslice = 0; /* zero means 'use calibrated value' */
   }  
   #elif (CLIENT_OS == OS_MACOS)
-  {
+  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
+    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
+  else
+  {    
     non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */
-    tslice = 4096;
-    if (contestid == RC5 && selcoreGetSelectedCoreForContest(contestid) == 2)
-      tslice = 0x8000; /* vector core is very, very fast */
+    tslice = 0; /* zero means 'use calibrated value' */
   }
   #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32 /* win32s */) 
-  if (winGetVersion() < 400) /* win16 or win32s */
-  {
+  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
+    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
+  else if (winGetVersion() < 400) /* win16 or win32s */
+  {  
     non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */ 
-    tslice = 2048;
+    tslice = 0;  /* zero means 'use calibrated value' */
   } 
   #elif (CLIENT_OS == OS_RISCOS)
-  if (riscos_check_taskwindow())
+  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
+    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
+  else if (riscos_check_taskwindow())
   {
     non_preemptive_os.yps = 1000/100; /* 100 ms minimum yield rate */ 
-    tslice = 4096;
+    tslice = 0;  /* zero means 'use calibrated value' */
   }
   #endif
 
-  if (non_preemptive_os.yps == 0 && ( flags & TBENCHMARK_CALIBRATION ) == 0 )
+  if (tslice == 0 && ( flags & TBENCHMARK_CALIBRATION ) == 0 )
   {
     long res;
     if ((flags & TBENCHMARK_QUIET) == 0)
-      LogScreen("Calibrating ... " );
+    {
+      selcoreGetSelectedCoreForContest(contestid); /* let selcore message */
+      //LogScreen("Calibrating ... " );
+    }  
     res = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
-    if ((flags & TBENCHMARK_QUIET) == 0)
-      LogScreen("\n" );
-    if( res != -1 )
-      tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
+    if ( res == -1 ) /* LoadState failed */
+    {
+      if ((flags & TBENCHMARK_QUIET) == 0)
+        LogScreen("\rCalibration failed!\n");
+      return -1;
+    }  
+    tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
+    //if ((flags & TBENCHMARK_QUIET) == 0)
+    //  LogScreen("\rCalibrating ... done. (%lu)\n", (unsigned long)tslice );
+    if (non_preemptive_os.yps)
+      tslice /= non_preemptive_os.yps;
   }
-
+  if (tslice == 0)
+  { 
+    tslice = 0x10000;
+    if (non_preemptive_os.yps)
+      tslice = 4096;
+  }
+  
   totalruntime.tv_sec = 0;
   totalruntime.tv_usec = 0;
   scropen = run = -1;
   keysdone.lo = 0;
   keysdone.hi = 0;
-  last_permille = 0;
+  last_permille = 10000;
   
   /* --------------------------- */
 
