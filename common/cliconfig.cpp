@@ -3,6 +3,11 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.150  1998/07/11 23:49:28  cyruspatel
+// Added a check for OS2/Win/WinNT VMs to the DOS client - it spits out an
+// advisory notice (to use a native client) if it finds itself running in one
+// those environments.
+//
 // Revision 1.149  1998/07/11 09:47:14  cramer
 // Added support for solaris numcpu auto detection.
 //
@@ -270,7 +275,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-static const char *id="@(#)$Id: cliconfig.cpp,v 1.149 1998/07/11 09:47:14 cramer Exp $";
+static const char *id="@(#)$Id: cliconfig.cpp,v 1.150 1998/07/11 23:49:28 cyruspatel Exp $";
 return id; }
 #endif
 
@@ -1130,10 +1135,10 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           #endif
           break;
         #ifdef MMX_BITSLICER
-	case CONF_MMX:
+  case CONF_MMX:
           choice = yesno(parm);
-	  if ((choice < 0) || (choice >= 1))
-	    usemmx = 1;
+    if ((choice < 0) || (choice >= 1))
+      usemmx = 1;
           break;
         #endif
         default:
@@ -3101,6 +3106,9 @@ void Client::PrintBanner(const char * /*clname*/)
           #endif
           "Execute with option '-help' for online help, or read rc5des" EXTN_SEP "txt for\n"
           "for a list of command line options.\n");
+#if (CLIENT_OS == OS_DOS)
+  dosCliCheckPlatform();
+#endif  
 }
 
 // --------------------------------------------------------------------------
