@@ -13,7 +13,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.133.2.66 2000/12/25 02:38:54 cyp Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.133.2.67 2000/12/31 12:30:02 cyp Exp $"; }
 
 //#define TRACE
 
@@ -268,12 +268,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                   if (strcmp(procname,binnames[bin_index])==0)
                   {
                     int dont_count_it = 0;
-                    #if (CLIENT_OS == OS_LINUX)
                     sprintf( buffer, "/proc/%s/status", dp->d_name );
                     file = fopen( buffer, "r" );
                     if (file)
                     {
                       pid_t ppid = 0;
+                      #if (CLIENT_OS == OS_LINUX)
                       while (fgets(buffer, sizeof(buffer), file))
                       {
                         buffer[sizeof(buffer)-1] = '\0';
@@ -283,8 +283,34 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                           break;
                         } 
                       }
+                      #elif (CLIENT_OS == OS_FREEBSD)
+                      len = fread( buffer, 1, sizeof(buffer), file );
+                      if (len == sizeof(buffer))
+                        len--;
+                      buffer[len] = '\0';
+                      q = strchr(buffer,' ');
+                      if (q)
+                      {
+                        while (*q == ' ' || *q == '\t')
+                          q++;
+                        len = 0;
+                        while (isdigit(q[len]))
+                          len++;  
+                        if (q[len] == ' ' && 
+                            len == strlen(dp->d_name) &&
+                            memcmp(dp->d_name,q,len) == 0)
+                        {
+                          q += len;
+                          while (*q == ' ' || *q == '\t')
+                            q++;
+                          ppid = (pid_t)atoi(q);  
+                          if (ppid == 1)
+                            dont_count_it = 1;
+                        }  
+                      }  
+                      #endif
                       fclose(file);
-                      if (ppid != 0)
+                      if (ppid != 0 && !dont_count_it)
                       {
                         unsigned int nn;
                         for (nn = 0; nn < sigd_count; nn++)
@@ -297,7 +323,6 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                         }
                       }
                     }
-                    #endif
                     if (thatpid)
                     {
                       if (!dont_count_it)
