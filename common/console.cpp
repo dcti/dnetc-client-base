@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.75.2.2 2003/01/19 22:49:50 snake Exp $"; }
+return "@(#)$Id: console.cpp,v 1.75.2.3 2003/06/08 09:06:19 pfeffi Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -39,6 +39,11 @@ return "@(#)$Id: console.cpp,v 1.75.2.2 2003/01/19 22:49:50 snake Exp $"; }
   || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) \
   || ((CLIENT_OS==OS_QNX) && defined(__QNXNTO__)) \
   || (CLIENT_OS==OS_DYNIX)) || (CLIENT_OS == OS_PS2LINUX)
+#include <termios.h>
+#define HAVE_TERMIOS
+#endif
+#if (CLIENT_OS == OS_SCO)
+#define _SVID3
 #include <termios.h>
 #define HAVE_TERMIOS
 #endif
@@ -698,8 +703,9 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
         (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
         (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_PS2LINUX) || \
-        ( (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ ) )
-    /* good for any non-sco flavour? */
+        ( (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ ) ) || \
+	(CLIENT_OS == OS_SCO)
+    /* good for any flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
     ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
