@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C-*- file !
  *
- * Copyright distributed.net 1997-2000 - All Rights Reserved
+ * Copyright distributed.net 1997-1999 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.77 2000/01/04 12:49:46 cyp Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.78 2000/01/08 16:41:19 cyp Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -70,7 +70,7 @@
 /* #define OS_UNUSED_8  33 */ /* never used. was os400 */
 #define OS_RISCOS       34
 #define OS_DGUX         35
-/* #define OS_UNUSED_9  36 */ /*obsolete: WIN32S; w32==w32s and w16==32bit */
+/* #define OS_WIN32S    36 */ /*obsolete (32-bit Win32s) w16 client is 32bit*/
 #define OS_SINIX        37
 #define OS_DYNIX        38
 #define OS_OS390        39
@@ -170,6 +170,8 @@
     #define CLIENT_CPU    CPU_ALPHA
   #elif defined(__vax__) || defined(ASM_VAX)
     #define CLIENT_CPU    CPU_VAX
+  #elif defined(__m68k__) || defined(ASM_68K)
+    #define CLIENT_CPU    CPU_68K
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
   #ifndef __unix__ /* should already be defined */
@@ -384,7 +386,8 @@
 /* ----------------------------------------------------------------- */
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_88K) || \
-     (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_POWERPC) || \
+     (CLIENT_CPU == CPU_SPARC) || \
+     (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      ((CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)))
    #define CORES_SUPPORT_SMP
@@ -409,7 +412,9 @@
 #elif (CLIENT_OS == OS_FREEBSD)
   typedef int /*pid_t*/ THREADID;
   #define OS_SUPPORTS_SMP
-#elif defined(MULTITHREAD)
+// can we just use if defined(_POSIX_THREADS), as this is often defined if POSIX
+// threads are supported ?? Patrick Hildenbrand (patrick@mail4you.de)
+#elif defined(MULTITHREAD) || (CLIENT_OS == OS_AIX)
   #include <pthread.h>
   typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
@@ -419,6 +424,9 @@
   #if (CLIENT_OS == OS_DGUX)
     #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
     #define pthread_sigmask(a,b,c)
+  #elif (CLIENT_OS == OS_AIX)
+	// only for AIX 4.1 ???
+    #define pthread_sigmask(a,b,c) sigthreadmask(a,b,c)
   #endif
 #else 
   typedef int THREADID;
