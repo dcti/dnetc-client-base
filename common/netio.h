@@ -6,7 +6,7 @@
 //
 
 #ifndef __NETIO_H__
-#define __NETIO_H__ "@(#)$Id: netio.h,v 1.1.2.2 1999/04/18 00:38:31 jlawson Exp $"
+#define __NETIO_H__ "@(#)$Id: netio.h,v 1.1.2.3 1999/04/22 09:15:36 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -93,14 +93,14 @@ extern int netio_createsocket(SOCKET &sock);
 extern int netio_close(SOCKET &sock);
 extern int netio_resolve(const char *hosttgt, u32 &hostaddress);
 extern int netio_openlisten(SOCKET &sock, u32 addr, u16 port);
-extern int netio_connect(SOCKET &sock, char *host, u16 port, u32 &addr, u32 listenaddr);
+extern int netio_connect(SOCKET &sock, const char *host, u16 port, u32 &addr, u32 listenaddr);
 extern int netio_accept(SOCKET sock, SOCKET &snew, u32 &hostaddress);
 extern const char *netio_ntoa(u32 hostaddr);
 extern int netio_recv(SOCKET sock, void *data, int len);
-extern int netio_send(SOCKET sock, void *data, int len);
+extern int netio_send(SOCKET sock, const void *data, int len);
 extern int netio_select(int width, fd_set *, fd_set *, fd_set *, struct timeval *);
 extern int netio_gethostname( char *buffer, unsigned int len );
-extern int netio_gethostaddr( u32 *addr ); /* get *our* address */
+extern int netio_gethostaddr( u32 *addr );
 extern int netio_setsockopt( SOCKET sock, int cond_type, int parm );
 
 #endif /* NETIO_H */

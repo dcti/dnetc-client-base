@@ -4,7 +4,7 @@
 //
 
 const char *netio_cpp(void) {
-return "@(#)$Id: netio.cpp,v 1.1.2.3 1999/04/18 00:38:30 jlawson Exp $"; }
+return "@(#)$Id: netio.cpp,v 1.1.2.4 1999/04/22 09:15:36 jlawson Exp $"; }
 
 #define __NETIO_CPP__ /* suppress redefinitions in netio.h */
 #include "netio.h"
@@ -316,7 +316,7 @@ int netio_openlisten(SOCKET &sock, u32 addr, u16 port)
 // from the specified local interface.
 // Returns -1 on error, 0 on success.
 
-int netio_connect(SOCKET &sock, char *host, u16 port, u32 &addr, u32 listenaddr)
+int netio_connect(SOCKET &sock, const char *host, u16 port, u32 &addr, u32 listenaddr)
 {
   // resolve the address we will connect to.
   if ((host && netio_resolve(host, addr) < 0) || !addr)
@@ -517,7 +517,7 @@ int netio_recv(SOCKET s, void *data, int len)
 
 // ----------------------------------------------------------------------
 
-int netio_send(SOCKET s, void *data, int len)
+int netio_send(SOCKET s, const void *data, int len)
 {
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_NETWARE)
   return send(s, (char*)data, len, 0);
