@@ -5,7 +5,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.60.2.49 2000/12/14 19:45:57 cyp Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.60.2.50 2000/12/14 23:18:34 oliver Exp $"; }
 
 //#define TRACE
 
@@ -1340,11 +1340,11 @@ int ConfigRead(Client *client)
   {
     if ((cont_name = __getprojsectname(cont_i)) != ((const char *)0))
     {
+      client->coretypes[cont_i] =
+         GetPrivateProfileIntB(cont_name, "core",
+                       client->coretypes[cont_i],fn);
       if (cont_i != OGR)
       {
-        client->coretypes[cont_i] =
-           GetPrivateProfileIntB(cont_name, "core",
-                         client->coretypes[cont_i],fn);
         /* note that the default preferred_blocksize is now <=0 (auto) */
         client->preferred_blocksize[cont_i] =
            GetPrivateProfileIntB(cont_name, "preferred-blocksize",
@@ -1519,9 +1519,9 @@ int ConfigWrite(Client *client)
         __XSetProfileInt( p, "flush-workunit-threshold", client->outthreshold[cont_i], fn, 0, 0 );
         #endif
         __XSetProfileInt( p, "fetch-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
+        __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
         if (cont_i != OGR)
         {
-          __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
           if (client->preferred_blocksize[cont_i] > 0 ||
               GetPrivateProfileStringB(p,"preferred-blocksize","",buffer,2,fn))
           {
