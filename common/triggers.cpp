@@ -16,6 +16,9 @@
 // -----------------------------------------------------------------------
 //
 // $Log: triggers.cpp,v $
+// Revision 1.7  1998/10/04 17:52:49  silby
+// Made CliSetupSignals public because win32 needs to call it when console is initted.
+//
 // Revision 1.6  1998/09/28 02:17:40  cyp
 // NetWare change: removed signal handling for SIGINT, polls keyboard instead.
 //
@@ -36,7 +39,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.6 1998/09/28 02:17:40 cyp Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.7 1998/10/04 17:52:49 silby Exp $"; }
 #endif
 
 // --------------------------------------------------------------------------
@@ -50,8 +53,6 @@ return "@(#)$Id: triggers.cpp,v 1.6 1998/09/28 02:17:40 cyp Exp $"; }
 #ifdef DONT_USE_PATHWORK
 #define GetFullPathForFilename(x) (x)
 #endif
-
-static void CliSetupSignals( void ); //for forward resolution
 
 // --------------------------------------------------------------------------
 
@@ -365,7 +366,7 @@ void CliSignalHandler
 
 // -----------------------------------------------------------------------
 
-static void CliSetupSignals( void )
+void CliSetupSignals( void )
 {
   #if (CLIENT_OS == OS_MACOS) 
     // nothing

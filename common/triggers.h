@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: triggers.h,v $
+// Revision 1.3  1998/10/04 17:52:50  silby
+// Made CliSetupSignals public because win32 needs to call it when console is initted.
+//
 // Revision 1.2  1998/09/17 15:11:31  cyp
 // Implemented -HUP handling. (See main() for implementation details)
 //
@@ -51,5 +54,12 @@ extern int CheckExitRequestTriggerNoIO(void);
 //just return the pause trigger state (no poll cycle)
 //preferred method for child threads 
 extern int CheckPauseRequestTriggerNoIO(void); 
+
+//Hooks whatever signals are needed to be hooked.
+//Normally should NEVER be called, since initializetriggers
+//handles this.  Win32 needs to reinit this when consoles
+//are created, however.
+extern void CliSetupSignals( void );
+
 
 #endif //__TRIGGERS_H__
