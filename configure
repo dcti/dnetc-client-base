@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.222.2.137 2000/02/21 11:55:58 myshkin Exp $
+# @(#)$Id: configure,v 1.222.2.138 2000/02/24 18:53:47 trevorh Exp $
 
 # *** Notes for v2.8001+ ***
 #
@@ -1578,7 +1578,7 @@ case "$1" in
         }
 	TARGET_AS="gcc -c"
         TARGET_CC="gcc"
-	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC272_X86 -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -DLURK -DHAVE_OGR_CORES -D__showids__"
+	TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC295_X86 -Os -O6 -fexceptions -funroll-loops -DMMX_RC5 -I. -I${C_INCLUDE_PATH} -DMULTITHREAD -DLURK -DHAVE_OGR_CORES -D__showids__"
 	TARGET_LDFLAGS="-Zmt"
 	TARGET_ADDSRCS="common/lurk.cpp platforms/os2cli/os2inst.cpp $OGR_ANSI_SRCS"
 	TARGET_ADDASMS="platforms/x86ident.S"
@@ -1588,6 +1588,7 @@ TARGET_NASM="nasm097.exe"
         TARGET_LIBS="-lsocket -lvideo"
         TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
         TARGET_OS=OS2
+        TARGET_TARBALL="os2-x86"
         ;;
 
 
