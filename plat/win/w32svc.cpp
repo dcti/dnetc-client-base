@@ -6,7 +6,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.1.2.1 2001/01/21 15:10:26 cyp Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.1.2.2 2001/03/26 17:57:24 cyp Exp $"; }
 
 //#define TRACE
 
@@ -1264,6 +1264,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
                                               ServiceCtrlHandler);
       if (serviceStatusHandle != 0)
       {
+        svc_bits = svc_bits; /* possibly unused */ 
         SetServiceBits(serviceStatusHandle, svc_bits, TRUE, TRUE );
         break;
       }
