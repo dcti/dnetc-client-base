@@ -10,6 +10,11 @@
 // ------------------------------------------------------------------
 //
 // $Log: baseincs.h,v $
+// Revision 1.47  1999/01/18 15:22:55  patrick
+//
+// added/changed some OS2 includes to work also for gcc.
+// added unistd.h for AIX
+//
 // Revision 1.46  1999/01/11 11:52:35  snake
 //
 // small openbsd fix
@@ -209,11 +214,16 @@ extern "C" {
   #include <sys/timeb.h>
   #include <conio.h>
   #include <share.h>
-  #include <direct.h>
+  #if defined(__WATCOMC__)
+    // patrick: not used with gcc (where, whom is this file, WATCOM ?)
+    #include <direct.h>
+  #endif
   #include <fcntl.h>
   #include <io.h>
   #include "platforms/os2cli/os2defs.h"
+  #if !defined(__EMX__)               // not currently supported (patrick)
   #include "platforms/os2cli/dod.h"   // needs to be included after Client
+  #endif
   #include "lurk.h"
   #include "platforms/os2cli/os2inst.h" //-install/-uninstall functionality
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
@@ -303,6 +313,8 @@ extern "C" {
   #include <unistd.h>
   extern "C" int nice(int);
   extern "C" int gethostname(char *, int);
+#elif (CLIENT_OS == OS_AIX)
+  #include <unistd.h>		// nice()
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS==OS_BSDI) || (CLIENT_OS == OS_OPENBSD)
   #include <sys/time.h>
   #include <unistd.h>
