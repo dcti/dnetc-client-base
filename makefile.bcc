@@ -12,7 +12,7 @@
 # (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
 # A list of all mirrors is at http://www.kernel.org/mirrors/
 #
-# $Id: makefile.bcc,v 1.33.2.4 2003/03/26 15:18:02 andreasb Exp $
+# $Id: makefile.bcc,v 1.33.2.5 2003/09/01 07:06:26 jlawson Exp $
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -94,6 +94,11 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/coremem.obj    \
+        $(OUTPUTPATH)/core_rc5.obj   \
+        $(OUTPUTPATH)/core_r72.obj   \
+        $(OUTPUTPATH)/core_des.obj   \
+        $(OUTPUTPATH)/core_csc.obj   \
+        $(OUTPUTPATH)/core_ogr.obj   \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
         $(OUTPUTPATH)/iniread.obj    \
