@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.11 2003/11/28 00:43:31 snake Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.12 2003/12/07 23:00:54 kakace Exp $"; }
 
 //#define TRACE
 
@@ -58,6 +58,37 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.11 2003/11/28 00:43:31 snake Exp $"; }
 #endif
 
 
+#if defined(HAVE_OGR24_PASS2)
+
+#if (CLIENT_CPU == CPU_POWERPC)
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table(void);
+    #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
+    extern "C" CoreDispatchTable *vec_ogr24_p2_get_dispatch_table(void);
+    #endif
+#elif (CLIENT_CPU == CPU_ALPHA)
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table(void);
+  #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table_cix(void);
+  #endif
+#elif (CLIENT_CPU == CPU_68K)
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table_000(void);
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table_020(void);
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table_030(void);
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table_040(void);
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table_060(void);
+#elif (CLIENT_CPU == CPU_X86)
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table(void); //A
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table_nobsr(void); //B
+//#elif (CLIENT_CPU == CPU_ARM)
+//      extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
+//      extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
+#else
+    extern "C" CoreDispatchTable *ogr24_p2_get_dispatch_table(void);
+#endif
+
+#endif  /* HAVE_OGR24_PASS2 */
+
+
 /* ======================================================================== */
 
 
@@ -107,6 +138,56 @@ void DeinitializeCoreTable_ogr()
 {
   /* ogr does not require any deinitialization */
 }
+
+
+#if defined(HAVE_OGR24_PASS2)
+int InitializeCoreTable_ogr24_p2(int first_time)
+{
+  DNETC_UNUSED_PARAM(first_time);
+
+#if defined(HAVE_MULTICRUNCH_VIA_FORK)
+  if (first_time) {
+    // HACK! for bug #3006
+    // call the functions once to initialize the static tables before the client forks
+      #if CLIENT_CPU == CPU_X86
+        ogr24_p2_get_dispatch_table();
+        ogr24_p2_get_dispatch_table_nobsr();
+      #elif CLIENT_CPU == CPU_POWERPC
+        ogr24_p2_get_dispatch_table();
+        #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
+          vec_ogr24_p2_get_dispatch_table();
+        #endif
+      #elif (CLIENT_CPU == CPU_68K)
+        ogr24_p2_get_dispatch_table_000();
+        ogr24_p2_get_dispatch_table_020();
+        ogr24_p2_get_dispatch_table_030();
+        ogr24_p2_get_dispatch_table_040();
+        ogr24_p2_get_dispatch_table_060();
+      #elif (CLIENT_CPU == CPU_ALPHA)
+        ogr24_p2_get_dispatch_table();
+        #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
+           ogr24_p2_get_dispatch_table_cix();
+        #endif
+      #elif (CLIENT_CPU == CPU_VAX)
+        ogr24_p2_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_SPARC)
+        ogr24_p2_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_AMD64)
+        ogr24_p2_get_dispatch_table();
+      #else
+        #error FIXME! call all your *ogr_get_dispatch_table* functions here once
+      #endif
+  }
+#endif
+  return 0;
+}
+
+
+void DeinitializeCoreTable_ogr24_p2()
+{
+  /* ogr does not require any deinitialization */
+}
+#endif  /* HAVE_OGR24_PASS2 */
 
 /* ======================================================================== */
 
@@ -435,6 +516,106 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
   return -1; /* core selection failed */
 }
 
+/* ------------------------------------------------------------- */
+
+#if defined(HAVE_OGR24_PASS2)
+int selcoreSelectCore_ogr24_p2(unsigned int threadindex,
+                          int *client_cpuP, struct selcore *selinfo)
+{
+  int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
+  unit_func_union unit_func; /* declared in problem.h */
+  int cruncher_is_asynchronous = 0; /* on a co-processor or similar */
+  int pipeline_count = 2; /* most cases */
+  int client_cpu = CLIENT_CPU; /* usual case */
+  int coresel = selcoreGetSelectedCoreForContest(OGR_24_P2);
+
+  DNETC_UNUSED_PARAM(threadindex);
+
+  if (coresel < 0)
+    return -1;
+  memset( &unit_func, 0, sizeof(unit_func));
+
+
+  /* ================================================================== */
+
+#if (CLIENT_CPU == CPU_POWERPC)
+# if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
+  if (coresel == 1)                           /* "PPC-vector" */
+    unit_func.ogr = vec_ogr24_p2_get_dispatch_table();
+# endif
+
+  if (!unit_func.ogr) {
+    unit_func.ogr = ogr24_p2_get_dispatch_table(); /* "PPC-scalar" */
+    coresel = 0;
+  }
+#elif (CLIENT_CPU == CPU_68K)
+  if (coresel == 4)
+    unit_func.ogr = ogr24_p2_get_dispatch_table_060();
+  else if (coresel == 3)
+    unit_func.ogr = ogr24_p2_get_dispatch_table_040();
+  else if (coresel == 2)
+    unit_func.ogr = ogr24_p2_get_dispatch_table_030();
+  else if (coresel == 1)
+    unit_func.ogr = ogr24_p2_get_dispatch_table_020();
+  else
+  {
+    unit_func.ogr = ogr24_p2_get_dispatch_table_000();
+    coresel = 0;
+  }
+#elif (CLIENT_CPU == CPU_ALPHA)
+  #if (CLIENT_OS != OS_VMS)       /* Include for other OSes */
+    if (coresel == 1)       
+      unit_func.ogr = ogr24_p2_get_dispatch_table_cix();
+    else
+  #endif 
+      unit_func.ogr = ogr24_p2_get_dispatch_table();
+#elif (CLIENT_CPU == CPU_X86)
+  if (coresel == 0) //A
+    unit_func.ogr = ogr24_p2_get_dispatch_table(); //A
+  else
+  {
+    unit_func.ogr = ogr24_p2_get_dispatch_table_nobsr(); //B
+    coresel = 1;
+  }
+#elif (CLIENT_CPU == CPU_AMD64)
+  unit_func.ogr = ogr24_p2_get_dispatch_table();
+  coresel = 0;
+//#elif (CLIENT_CPU == CPU_ARM)
+//  if (coresel == 0)
+//    unit_func.ogr = ogr_get_dispatch_table_arm1();
+//  else
+//  {
+//    unit_func.ogr = ogr_get_dispatch_table_arm2();
+//    coresel = 1;
+//  }
+#else
+  //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+  unit_func.ogr = ogr24_p2_get_dispatch_table();
+  coresel = 0;
+#endif
+
+  /* ================================================================== */
+
+
+  if (coresel >= 0 && unit_func.gen &&
+     coresel < ((int)corecount_for_contest(OGR_24_P2)) )
+  {
+    if (client_cpuP)
+      *client_cpuP = client_cpu;
+    if (selinfo)
+    {
+      selinfo->client_cpu = client_cpu;
+      selinfo->pipeline_count = pipeline_count;
+      selinfo->use_generic_proto = use_generic_proto;
+      selinfo->cruncher_is_asynchronous = cruncher_is_asynchronous;
+      memcpy( (void *)&(selinfo->unit_func), &unit_func, sizeof(unit_func));
+    }
+    return coresel;
+  }
+
+  return -1; /* core selection failed */
+}
+#endif /* HAVE_OGR24_PASS2 */
 /* ------------------------------------------------------------- */
 
 #endif // defined(HAVE_OGR_CORES)
