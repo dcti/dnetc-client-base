@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *rc5ansi4_cpp(void) {
-return "@(#)$Id: rc5ansi4.cpp,v 1.15 2002/10/19 16:47:56 acidblood Exp $"; }
+return "@(#)$Id: rc5ansi4.cpp,v 1.16 2002/10/19 16:53:52 acidblood Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -259,7 +259,7 @@ s32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B2 == rc5_72unitwork->cypher.hi)
       {
-        *iterations -= (kiter + 1)*4 + 1;
+        *iterations -= (kiter + 1)*4 - 1;
         return RESULT_FOUND;
       }
     }
@@ -272,7 +272,7 @@ s32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B3 == rc5_72unitwork->cypher.hi)
       {
-        *iterations -= (kiter + 1)*4 + 2;
+        *iterations -= (kiter + 1)*4 - 2;
         return RESULT_FOUND;
       }
     }
@@ -285,7 +285,7 @@ s32 rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B4 == rc5_72unitwork->cypher.hi)
       {
-        *iterations -= (kiter + 1)*4 + 3;
+        *iterations -= (kiter + 1)*4 - 3;
         return RESULT_FOUND;
       }
     }
