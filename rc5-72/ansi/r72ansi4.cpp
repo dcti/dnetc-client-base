@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72ansi4_cpp(void) {
-return "@(#)$Id: r72ansi4.cpp,v 1.20.2.2 2003/01/29 01:29:58 andreasb Exp $"; }
+return "@(#)$Id: r72ansi4.cpp,v 1.20.2.3 2003/03/01 00:17:09 snake Exp $"; }
 
 #include "ccoreio.h"
 #include "rotate.h"
@@ -38,7 +38,7 @@ s32 CDECL rc5_72_unit_func_ansi_4 (RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     L1[1] = L2[1] = L3[1] = L4[1] = rc5_72unitwork->L0.mid;
     L1[0] = L2[0] = L3[0] = L4[0] = rc5_72unitwork->L0.lo;
 
-#define KEY_INIT(i) S1[i] = S2[i] = S3[i] = S4[i] = P + (i*Q);
+#define KEY_INIT(i) S1[i] = S2[i] = S3[i] = S4[i] = P + ((u32)i*Q);
 
 	KEY_INIT(0L);
 	KEY_INIT(1L);
