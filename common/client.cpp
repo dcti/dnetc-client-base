@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.66 2000/03/20 12:50:52 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.67 2000/04/11 14:45:00 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -170,18 +170,47 @@ int ClientGetOutThreshold(Client *client, int contestid, int /* force */)
     else
     {
       int inthresh = client->inthreshold[contestid];
-      /* if both thresholds are non-zero, make sure outthresh <= inthresh */
-      /* but if inthreshold is zero (use time), just return outthresh */
-      /* (allow split personality: intresh=time,outthres=workunits) */
+      /*
+      if both thresholds are non-zero, make sure outthresh <= inthresh
+      but if inthreshold is zero (use time), just return outthresh 
+      (allow split personality: intresh=time,outthres=workunits) 
+                                                                   
+      note that an (outthresh > 0 && < inthresh) effectively disables
+      contest _rotation_, and enables contest _fallover_.
+
+      Example scenarios:
+      1) User wants to run both OGR and RC5, allocating 3 times as much cpu
+         time to OGR than to RC5. These would be the required settings:
+         load_order=OGR,RC5      (the order in which the client LOOKs for work)
+         inthresholds=OGR=6,RC5=2    (OGR thresh is 3 times RC5 thresh)
+         outthresholds=OGR=0,RC5=0 (an outhresh<=0 means ">=inthresh")  
+         what happens: 
+         client looks for work. OGR is available. does OGR.
+         (repeat OGR inthresh times)
+         client looks for work, no OGR is available, RC5 is. does RC5.
+         (repeat RC5 inthresh times)
+         client looks for work, no OGR, no RC5 available. 
+                fetches&flushes. 
+         client looks for work. OGR is available. does OGR.
+      2) User wants to run OGR as long as OGR is available, the do RC5 (until 
+         OGR is available again).
+         load_order=OGR,RC5
+         inthresholds=OGR=6,RC5=2
+         outthresholds=OGR=5,RC5=1   (values are > 0 AND < inthresh)
+         client looks for work. OGR is available. does OGR.
+         (repeat OGR outhresh times) 
+         out threshold now crossed. flushes&fetches.
+         client looks for work. OGR is available. does OGR.
+      3) User wants to run ONLY contest XXX.
+         load_order=XXX,<all others>=0
+         if contest XXX is NOT RC5, and no work is available, the client
+         will exit. if contest XXX is RC5, and no work is available, it will
+         do randoms.
+      */
       if (inthresh > 0)
       {
         if (outthresh >= inthresh) /* an outthreshold >= inthreshold means */
           outthresh = 0;  /* outthreshold is ignorable (inthreshold rules) */
-        #if 0
-        *** Why overwrite outthresh > 0 with inthresh ??? ***
-        else
-          outthresh = inthresh;
-        #endif
       }
     }
   }
