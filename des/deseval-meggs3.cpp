@@ -1,5 +1,9 @@
 //
 // $Log: deseval-meggs3.cpp,v $
+// Revision 1.15  1999/11/17 21:51:52  sampo
+// remove Dakidd's cvs merge error in previous revision in regards to ambiguous
+// type 'slice'
+//
 // Revision 1.14  1999/10/06 19:37:43  dakidd
 // All occurrences of "slice" changed to "SliceType" to resolve "ambiguous class reference - found slice/std::slice" error under CW pro 5. (Apparently, CWP5 has a "std::slice" class)
 //
@@ -52,7 +56,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *deseval_meggs3_cpp(void) {
-return "@(#)$Id: deseval-meggs3.cpp,v 1.14 1999/10/06 19:37:43 dakidd Exp $"; }
+return "@(#)$Id: deseval-meggs3.cpp,v 1.15 1999/11/17 21:51:52 sampo Exp $"; }
 #endif
 
 #include <cputypes.h>		/* Isn't this needed for using CLIENT_OS defines? */
@@ -79,6 +83,7 @@ return "@(#)$Id: deseval-meggs3.cpp,v 1.14 1999/10/06 19:37:43 dakidd Exp $"; }
 
 #if (CLIENT_OS == OS_MACOS)
 #define TICKS ((unsigned long *)0x16a)
+#define slice unsigned long
 extern void DES_YieldToMain(void);
 extern unsigned long DES_ticks_to_use;
 extern unsigned long DES_yield_ticks;
