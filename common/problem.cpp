@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.121 1999/11/16 19:26:05 cyp Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.122 1999/11/23 15:41:37 cyp Exp $"; }
 
 /* ------------------------------------------------------------- */
 
@@ -455,11 +455,14 @@ static int __core_picker(Problem *problem, unsigned int contestid)
     }
     #elif (CLIENT_CPU == CPU_X86)
     {
-      static int detectedtype = -1;
-      if (detectedtype == -1)
-        detectedtype = GetProcessorType(1 /* quietly */);
+      static int ismmx = -1;
       if (coresel < 0 || coresel > 5)
         coresel = 0;
+      if (ismmx == -1)
+      {
+        long det = GetProcessorType(1 /* quietly */);
+        ismmx = (det >= 0) ? (det & 0x100) : 0;
+      }
       problem->pipeline_count = 2; /* most cases */
       if (coresel == 1)   // Intel 386/486
       {
@@ -479,7 +482,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       {
         problem->x86_unit_func = rc5_unit_func_k6;
         #if defined(MMX_RC5_AMD)
-        if (detectedtype >= 0 && (detectedtype & 0x100) != 0)
+        if (ismmx)
         { 
           problem->x86_unit_func = rc5_unit_func_k6_mmx;
           problem->pipeline_count = 4;
@@ -490,7 +493,7 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       {
         problem->x86_unit_func = rc5_unit_func_p5;
         #if defined(MMX_RC5)
-        if (detectedtype >= 0 && (detectedtype & 0x100) != 0)
+        if (ismmx)
         { 
           problem->x86_unit_func = rc5_unit_func_p5_mmx;
           problem->pipeline_count = 4; // RC5 MMX core is 4 pipelines
@@ -537,10 +540,13 @@ static int __core_picker(Problem *problem, unsigned int contestid)
       #endif
       #if defined(MMX_BITSLICER) 
       {
-        static long detectedtype = -1;
-        if (detectedtype == -1)
-          detectedtype = GetProcessorType(1 /* quietly */);
-        if (detectedtype >= 0 && (detectedtype & 0x100) != 0) 
+        static int ismmx = -1;
+        if (ismmx == -1)
+        {
+          long det = GetProcessorType(1 /* quietly */);
+          ismmx = (det >= 0) ? (det & 0x100) : 0;
+        }
+        if (ismmx) 
           slicit = (u32 (*)(RC5UnitWork *,u32))des_unit_func_mmx;
       }
       #endif  

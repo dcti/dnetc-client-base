@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.23 1999/11/16 22:44:39 cyp Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.24 1999/11/23 15:41:35 cyp Exp $"; }
 
 #include "baseincs.h" //for timeval
 #include "clitime.h" //required for CliTimerDiff() and CliClock()
@@ -28,11 +28,12 @@ static struct contestInfo
   unsigned int BlocksDone;
   double IterDone;
   struct timeval TimeDone;
-} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0} },
-                  { "DES", 1,  2, 0, 0, {0,0} },
-                  { "OGR", 2,  1, 0, 0, {0,0} },
-                  { "CSC", 3,  1, 0, 0, {0,0} },
-                  {  NULL,-1,  0, 0, 0, {0,0} }  };
+  unsigned int UnitsDone;
+} conStats[] = {  { "RC5", 0,  1, 0, 0, {0,0}, 0 },
+                  { "DES", 1,  2, 0, 0, {0,0}, 0 },
+                  { "OGR", 2,  1, 0, 0, {0,0}, 0 },
+                  { "CSC", 3,  1, 0, 0, {0,0}, 0 },
+                  {  NULL,-1,  0, 0, 0, {0,0}, 0 }  };
 
 /* ----------------------------------------------------------------------- */
 
@@ -101,7 +102,7 @@ int CliClearContestInfoSummaryData( int contestid )
 // obtain summary data for a contest. unrequired args may be NULL
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
-                               double *totaliter, struct timeval *totaltime)
+      double *totaliter, struct timeval *totaltime, unsigned int *totalunits)
 {
   struct contestInfo *conInfo =
                       __internalCliGetContestInfoVectorForID( contestid );
@@ -109,6 +110,7 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
     return -1;
   if (totalblocks) *totalblocks = conInfo->BlocksDone;
   if (totaliter)   *totaliter   = conInfo->IterDone;
+  if (totalunits)  *totalunits  = conInfo->UnitsDone;
   if (totaltime)
   {
     totaltime->tv_sec = conInfo->TimeDone.tv_sec;
@@ -135,7 +137,7 @@ int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
 // add data to the summary data for a contest.
 // returns 0 if added successfully, !0 if error (bad contestID).
 int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
-                                double *additer, struct timeval *addtime)
+        double *additer, struct timeval *addtime, unsigned int *addunits)
 {
   struct contestInfo *conInfo =
                        __internalCliGetContestInfoVectorForID( contestid );
@@ -143,6 +145,7 @@ int CliAddContestInfoSummaryData( int contestid, unsigned int *addblocks,
     return -1;
   if (addblocks) conInfo->BlocksDone += (*addblocks);
   if (additer)   conInfo->IterDone = conInfo->IterDone + (*additer);
+  if (addunits)  conInfo->UnitsDone += (*addunits);
   if (addtime)
   {
     conInfo->TimeDone.tv_sec += addtime->tv_sec;

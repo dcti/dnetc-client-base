@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck-conflict.cpp,v 1.89 1999/11/16 19:26:05 cyp Exp $"; }
+return "@(#)$Id: cpucheck-conflict.cpp,v 1.90 1999/11/23 15:41:36 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -620,7 +620,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     if ( vendorid == 0x7943 /* 'yC' */ ) // Cyrix CPU
     {
       static struct cpuxref cyrixxref[]={
-          {    0x40,  950,     0, "486"       }, // use Pentium core
+          {    0x40,  950,     6, "486"       }, // Pentium or SMC core
           {  0x0440,  950,     0, "MediaGX"   },
           {  0x0490, 1185,     0, "5x86"      },
           {  0x0520, 2090,     3, "6x86"      }, // "Cyrix 6x86/6x86MX/M2"
@@ -629,9 +629,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000, 2115,    -1, NULL        }
           }; internalxref = &cyrixxref[0];
       vendorname = "Cyrix ";
-      #if defined(SMC)            //self modifying core
-      cyrixxref[0].coretouse = 1; // /bugs/ #99  pentium -> 486smc
-      #endif                      // des is unaffected. both 0/1 use p5 core
       cpuidbmask = 0xfff0; //strip last 4 bits, don't need stepping info
     }
     else if ( vendorid == 0x6952 /* 'iR' */  ) //"RiseRiseRiseRise"
@@ -648,7 +645,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     {
       static struct cpuxref centaurxref[]={
           {  0x0540, 1200,0x100, "C6"          }, // use Pentium core
-          {  0x0585, 1346,0x102, "WinChip 2"   }, // pentium Pro (I think)
+          {  0x0585, 1346,0x108, "WinChip 2"   }, // pentium Pro (I think)
           {  0x0000, 1346,   -1, NULL          }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT ";
@@ -726,8 +723,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0540, 1432, 0x100, "Pentium MMX" },
           {  0x0570, 1416,     0, "Pentium" },
           {  0x0580, 1432, 0x100, "Pentium MMX" },
-          {  0x0600, 2785,     2, "Pentium Pro" },
-          {  0x0610, 2785,     2, "Pentium Pro" },
+          {  0x0600, 2785,     8, "Pentium Pro" },
+          {  0x0610, 2785,     8, "Pentium Pro" },
           {  0x0630, 2785, 0x102, "Pentium II" },
           {  0x0650, 2785, 0x102, "Pentium II" },
           {  0x0660, 2785, 0x102, "Pentium II" }, //or Celeron-A or Xeon

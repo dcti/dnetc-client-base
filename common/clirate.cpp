@@ -8,7 +8,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clirate_cpp(void) {
-return "@(#)$Id: clirate.cpp,v 1.24 1999/04/17 07:38:35 gregh Exp $"; }
+return "@(#)$Id: clirate.cpp,v 1.25 1999/11/23 15:41:35 cyp Exp $"; }
 
 #include "cputypes.h" //for u64 define
 #include "client.h"   //for project constants
@@ -26,7 +26,7 @@ double CliGetKeyrateForContest( int contestid )
   struct timeval totaltime;
   double totaliter;
 
-  if (CliGetContestInfoSummaryData( contestid, NULL, &totaliter, &totaltime))
+  if (CliGetContestInfoSummaryData( contestid, NULL, &totaliter, &totaltime, NULL ))
     return ((double)(0));  //clicdata.cpp says no such contest
   if (!totaltime.tv_sec && !totaltime.tv_usec)
     return ((double)(0));
@@ -41,7 +41,7 @@ double CliGetKeyrateForContest( int contestid )
 //internal - see CliGetKeyrateForProblem() for description
 static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
 {
-  unsigned int count, contestid;
+  unsigned int count, contestid, units;
   struct timeval tv;
   ContestWork work;
   int resultcode;
@@ -53,7 +53,7 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   resultcode = prob->RetrieveState( &work, &contestid, 0 ); 
   if (resultcode < 0)
     return ((double)(-2));   // not initialized or core error
-  if (resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
+  if (doSave && resultcode != RESULT_NOTHING && resultcode != RESULT_FOUND)
     return ((double)(-2));   // not finished
     
   /*
@@ -72,9 +72,12 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
     case RC5:
     case DES:
     case CSC:
+      units = (((work.crypto.iterations.lo) >> 28) +
+               ((work.crypto.iterations.hi) <<  4) );
       keys = U64TODOUBLE(work.crypto.keysdone.hi,work.crypto.keysdone.lo);
       break;
     case OGR:
+      units = 1;
       keys = U64TODOUBLE(work.ogr.nodes.hi,work.ogr.nodes.lo);
       break;
   }
@@ -92,7 +95,7 @@ static double __CliGetKeyrateForProblem( Problem *prob, int doSave )
   if (doSave)
   {
     count = 1; //number of blocks to add to clicdata.cpp information
-    CliAddContestInfoSummaryData( contestid, &count, &keys, &tv );
+    CliAddContestInfoSummaryData( contestid, &count, &keys, &tv, &units );
   }
 
   return ((double)(keys))/

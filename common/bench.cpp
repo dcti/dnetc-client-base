@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.34 1999/11/08 02:02:34 cyp Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.35 1999/11/23 15:41:35 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // general includes
@@ -71,7 +71,7 @@ static void __show_notbest_msg(unsigned int contestid)
 
 long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 {
-  long retvalue = 0;
+  long retvalue;
   int run, scropen; u32 tslice; 
   Problem *problem;
   ContestWork contestwork;
@@ -82,20 +82,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   contname = CliGetContestNameFromID(contestid);
   if (!contname)
     return 0;
-
-  tslice = 0x10000;
-  #if (CLIENT_OS == OS_NETWARE)
-  if (GetFileServerMajorVersionNumber() < 5)
-  tslice = GetTimesliceBaseline(); //in cpucheck.cpp
-  #elif (CLIENT_OS == OS_MACOS)
-  tslice = GetTimesliceToUse(contestid);
-  #endif
-  totalruntime.tv_sec = 0;
-  totalruntime.tv_usec = 0;
-  timesrun = 0;
-  scropen = run = -1;
-  problem = new Problem();
-  retvalue = 0;
 
   switch (contestid)
   {
@@ -135,6 +121,23 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     }
   }
 
+  tslice = 0x10000;
+  #if (CLIENT_OS == OS_NETWARE)
+  if (GetFileServerMajorVersionNumber() < 5)
+  tslice = GetTimesliceBaseline(); //in cpucheck.cpp
+  #elif (CLIENT_OS == OS_MACOS)
+  tslice = GetTimesliceToUse(contestid);
+  #endif
+  totalruntime.tv_sec = 0;
+  totalruntime.tv_usec = 0;
+  timesrun = 0;
+  scropen = run = -1;
+
+  /* --------------------------- */
+
+  problem = new Problem();
+  run = RESULT_WORKING;
+
   while (((unsigned int)totalruntime.tv_sec) < numsecs)
   {
     run = RESULT_WORKING;
@@ -153,17 +156,14 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         nwCliThreadSwitchLowPriority();
       #endif
       if ( run < 0 )
-      {
-        retvalue = -1; /* core error */
         break;
-      }
       else if ((flags & TBENCHMARK_IGNBRK)!=0 && 
                 CheckExitRequestTriggerNoIO())
       {
-        retvalue = -1; /* core error */
         run = -1; /* error */
         if (scropen > 0)
           LogScreen("\rBenchmarking %s ... *Break*       ", contname );
+        break;
       }
       else
       {
@@ -175,33 +175,49 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           runtime.tv_usec -= 1000000;
           runtime.tv_sec++;
         }
+        if (scropen > 0)
+        {
+          unsigned long permille = (((runtime.tv_sec * 1000) + 
+                                    (runtime.tv_usec / 1000)) ) / numsecs;
+          if (permille >= 1000)
+            permille = 1000;
+          LogScreen("\rBenchmarking %s ... %u.%02u%% done", 
+                     contname, (unsigned int)(permille/10), 
+                               (unsigned int)((permille%10)*10) );
+        }
         if ( run != RESULT_WORKING) /* finished this block */
         {
           timesrun++;
           totalruntime.tv_sec = runtime.tv_sec;
           totalruntime.tv_usec = runtime.tv_usec;
         }
-        if (scropen > 0)
+        else if ( ((unsigned int)runtime.tv_sec) >= numsecs )
         {
-          unsigned long permille = (((runtime.tv_sec * 1000) + 
-                         (runtime.tv_usec / 1000)) ) / numsecs;
-          if (permille > 1000)
-            permille = 1000;
-          LogScreen("\rBenchmarking %s ... %u.%02u%% done", 
-                     contname, (unsigned int)(permille/10), 
-                               (unsigned int)((permille%10)*10) );
+          totalruntime.tv_sec = runtime.tv_sec;
+          totalruntime.tv_usec = runtime.tv_usec;
+          break;
         }
       }
     } 
     if ( run < 0 )
       break;
   }
-
+  if (run < 0) /* errors or ^C */
+    run = -1; /* core error */
+  else if (problem->RetrieveState(&contestwork, NULL, 0) < 0)
+    run = -1; /* core error */
   if (scropen > 0)
     LogScreen("\n");
+  delete problem;
   
-  if (!(run < 0))  /* no errors, no ^C */
+  /* --------------------------- */
+  
+  retvalue = -1; /* assume error */
+  if (run >= 0) /* no errors, no ^C */
   {
+    char ratestr[32];
+    double rate, xdone;
+
     switch (contestid)
     {
       case RC5:
@@ -209,15 +225,15 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       case CSC:
       {
         unsigned int count;
-        if (!CliGetContestInfoBaseData( contestid, NULL, &count ))
+        if (CliGetContestInfoBaseData( contestid, NULL, &count ) == 0)
         {
-          char ratestr[32];
-          double rate;
-          double keysdone = ((double)contestwork.crypto.iterations.lo)
-                          * ((double)timesrun);
+          xdone = ((double)contestwork.crypto.iterations.lo)
+                            * ((double)timesrun);
+          if ( run == RESULT_WORKING ) //didn't finish
+            xdone = xdone + ((double)contestwork.crypto.keysdone.lo);
           if (count>1) //iteration-to-keycount-multiplication-factor
-            keysdone = (keysdone)*((double)(count));
-          rate = ((double)(keysdone))/ (((double)(totalruntime.tv_sec))+
+            xdone = (xdone)*((double)(count));
+          rate = ((double)(xdone))/ (((double)(totalruntime.tv_sec))+
                    (((double)(totalruntime.tv_usec))/((double)(1000000L))));
           LogScreen("Completed in %s [%skeys/sec]\n",  
                  CliGetTimeString( &totalruntime, 2 ),
@@ -228,25 +244,21 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       }
       case OGR:
       {
-        if (problem->RetrieveState(&contestwork, NULL, 0) < 0)
-          retvalue = -1; /* core error */
-        else 
         {
-          char ratestr[32];
-          double nodesdone = ((double)contestwork.ogr.nodes.lo)
-                           * ((double)timesrun);
-          double rate = ((double)(nodesdone))/ (((double)(totalruntime.tv_sec))+
+          xdone = ((double)contestwork.ogr.nodes.lo) * ((double)timesrun);
+          if ( run == RESULT_WORKING ) //didn't finish
+            xdone = xdone + ((double)contestwork.ogr.nodes.lo);
+          rate = ((double)(xdone))/ (((double)(totalruntime.tv_sec))+
                   (((double)(totalruntime.tv_usec))/((double)(1000000L))));
           LogScreen("Completed in %s [%snodes/sec]\n",
-                 CliGetTimeString( &totalruntime, 2 ),
-                 CliGetKeyrateAsString( ratestr, rate ) );
+                   CliGetTimeString( &totalruntime, 2 ),
+                   CliGetKeyrateAsString( ratestr, rate ) );
           retvalue = (long)rate;
         }
         break;
       }
     }
   }
-  delete problem;
 
   return retvalue;
 }  
