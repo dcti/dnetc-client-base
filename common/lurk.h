@@ -2,7 +2,6 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 
-// These are config variables, everything needs access to them
 
 #ifndef __LURK_H__
 
@@ -13,6 +12,8 @@
 class Lurk
   {
 public:
+
+// These are config variables, everything needs access to them
 
 s32 lurkmode;
   // Mode of operation
@@ -26,6 +27,10 @@ char connectionname[100];
   // For win32, name of connection to use, perhaps useful for other lurkers.
 
 Lurk();
+
+char *GetEntryList(long *finalcount);
+  // Gets the list of possible dial-up networking connections for the
+  // user to select. - called in cliconfig
 
 s32 CheckIfConnectRequested(void);
   // Returns the possible values of connectrequested

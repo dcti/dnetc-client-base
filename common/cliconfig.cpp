@@ -3,6 +3,9 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: cliconfig.cpp,v $
+// Revision 1.170  1998/08/07 05:28:47  silby
+// Changed lurk so that win32 users can now easily select the connection to use for dial on demand.
+//
 // Revision 1.169  1998/08/05 19:04:14  cyruspatel
 // Changed some Log()/LogScreen()s to LogRaw()/LogScreenRaw()s, ensured that
 // DeinitializeLogging() is called, and ensured that InitializeLogging() is
@@ -171,7 +174,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *cliconfig_cpp(void) {
-return "@(#)$Id: cliconfig.cpp,v 1.169 1998/08/05 19:04:14 cyruspatel Exp $"; }
+return "@(#)$Id: cliconfig.cpp,v 1.170 1998/08/07 05:28:47 silby Exp $"; }
 #endif
 
 #include "cputypes.h"
@@ -308,7 +311,7 @@ struct optionstruct
   s32 type;//type: 0=other, 1=string, 2=integer, 3=boolean (yes/no)
   s32 menuposition;//number on that menu to appear as
   void *thevariable;//pointer to the variable
-  const char *choicelist;//pointer to the char* array of choices
+  char *choicelist;//pointer to the char* array of choices
                          //(used for numeric responses)
   s32 choicemin;//minimum choice number
   s32 choicemax;//maximum choice number
@@ -642,7 +645,7 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           LogScreenRaw("%2d) %s ==> ",
                  (int)options[choice].menuposition,
                  options[choice].description);
- 
+
           if (options[choice].type==1)
             {
             if (options[choice].thevariable != NULL)
@@ -686,9 +689,21 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
       // prompt for new value
       if (options[choice].type==1)
         {
-        LogScreenRaw("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
-              options[choice].description, options[choice].comments,
-              options[choice].defaultsetting,(char *)options[choice].thevariable);
+        if (options[choice].choicelist == NULL)
+          {
+          LogScreenRaw("\n%s %s\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+                options[choice].description, options[choice].comments,
+                options[choice].defaultsetting,(char *)options[choice].thevariable);
+          }
+        else
+          {
+          LogScreenRaw("\n%s %s\n",options[choice].description,options[choice].comments);
+          for ( temp = options[choice].choicemin; temp < options[choice].choicemax+1; temp++)
+            LogScreenRaw("  %2d) %s\n", (int) temp,options[choice].choicelist+temp*60);
+          LogScreen("\nDefault Setting: %s\nCurrent Setting: %s\nNew Setting --> ",
+            options[choice].defaultsetting,
+            (char *)options[choice].thevariable);
+          }
         }
       else if (options[choice].type==2)
         {
@@ -735,19 +750,8 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
             break;
             }
           }
-        for (unsigned int i=strlen(parm);i>0;i--) //strip trailing whitespace
-          {
-          if (isspace(parm[i]))
-            parm[i]=0;
-          }
-        p=parm;                                   //strip leading white space
-        while (*p && isspace(*p))
-          p++;
-        if (p!=parm)
-          {
-          char *q = parm;
-          do { *q = *p++; } while (*q++);
-          }
+          while (isspace(parm[strlen(parm)-1])) parm[strlen(parm)-1]=0; //strip trailing whitespace
+          while (isspace(parm[0])) strcpy(parm,(parm+1));
         } // if ( !SignalTriggered )
       } //if ( choice >= 0 ) //if valid CONF_xxx option
 
@@ -1109,7 +1113,15 @@ s32 Client::ConfigureGeneral( s32 currentmenu )
           if (choice >= 0) *(s32 *)options[CONF_DIALWHENNEEDED].thevariable=choice;
           break;
         case CONF_CONNECTNAME:
-          strncpy( dialup.connectionname, parm, sizeof(dialup.connectionname));
+          choice=atoi(parm);
+          if ( ((choice > 0) || (parm[0]=='0')) &&
+               (choice <= options[CONF_CONNECTNAME].choicemax) )
+            {
+            strcpy( (char *)options[CONF_CONNECTNAME].thevariable,
+                     options[CONF_CONNECTNAME].choicelist+choice*60);
+            }
+          else strncpy( (char *)options[CONF_CONNECTNAME].thevariable,
+                        parm, sizeof(dialup.connectionname)-1);
           break;
         #endif
         default:
@@ -1287,6 +1299,20 @@ options[CONF_MMX].thevariable=&usemmx;
 #ifdef LURK
 options[CONF_DIALWHENNEEDED].thevariable=&dialup.dialwhenneeded;
 options[CONF_CONNECTNAME].thevariable=&dialup.connectionname;
+
+options[CONF_CONNECTNAME].choicelist=dialup.GetEntryList(&options[CONF_CONNECTNAME].choicemax);
+
+if (options[CONF_CONNECTNAME].choicemax < 1)
+  {
+  options[CONF_CONNECTNAME].optionscreen=0;
+  options[CONF_CONNECTNAME].choicelist=NULL;
+  }
+else
+  {
+  options[CONF_CONNECTNAME].choicemin=0;
+  options[CONF_CONNECTNAME].choicemax--;
+  };
+
 #else
 options[CONF_DIALWHENNEEDED].optionscreen=0;
 options[CONF_CONNECTNAME].optionscreen=0;

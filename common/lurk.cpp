@@ -20,6 +20,8 @@ Lurk dialup;
   typedef DWORD (WINAPI *rasgeterrorstringT)(UINT, LPTSTR, DWORD);
   typedef DWORD (WINAPI *rasgetentrydialparamsT)(LPSTR,
                  LPRASDIALPARAMS, LPBOOL);
+  typedef DWORD (WINAPI *rasenumentriesT)(LPTSTR, LPTSTR,
+                 LPRASENTRYNAME, LPDWORD, LPDWORD);
 
 static rasenumconnectionsT rasenumconnections = NULL;
 static rasgetconnectstatusT rasgetconnectstatus = NULL;
@@ -27,6 +29,7 @@ static rashangupT rashangup = NULL;
 static rasdialT rasdial = NULL;
 static rasgeterrorstringT rasgeterrorstring = NULL;
 static rasgetentrydialparamsT rasgetentrydialparams = NULL;
+static rasenumentriesT rasenumentries = NULL;
 #endif
 
 Lurk::Lurk()
@@ -35,6 +38,40 @@ Lurk::Lurk()
 islurkstarted=0;
 oldlurkstatus=0;
 
+}
+
+char *Lurk::GetEntryList(long *finalcount)
+{
+#if (CLIENT_OS==OS_WIN32)
+RASENTRYNAME rasentries[10];
+static char configentries[10][60];
+unsigned long buffersize;
+u32 entrycount;
+char *EntryList;
+
+if (islurkstarted != 1) Start();
+if (islurkstarted != 1) return NULL; // Lurk can't be started, evidently
+
+rasentries[0].dwSize=sizeof(RASENTRYNAME);
+
+buffersize=sizeof(rasentries);
+entrycount=0;
+
+rasenumentries(NULL,NULL,&rasentries[0],&buffersize,&entrycount);
+
+if (entrycount >= 1)
+  for (unsigned int temp=0;temp < entrycount;temp++)
+    {
+    strncpy(&configentries[temp][0],&rasentries[temp].szEntryName[0], 60);
+    };
+
+EntryList=&configentries[0][0];
+*finalcount=(int)entrycount;
+return EntryList;
+#else
+*finalcount=0;
+return NULL;
+#endif
 }
 
 s32 Lurk::CheckIfConnectRequested(void)
@@ -235,6 +272,19 @@ s32 Lurk::Start(void)// Initializes Lurk Mode
     rasgetentrydialparams = (rasgetentrydialparamsT)
       GetProcAddress(hinstance,"RasGetEntryDialParamsA");
     if (rasgetentrydialparams==NULL)
+    {
+      FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,GetLastError(),MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR) &lpMsgBuf,0,NULL);
+      LogScreen("%s\n",lpMsgBuf);
+      LogScreen("Dial-up must be installed for -lurk/-lurkonly\n");
+      LocalFree( lpMsgBuf );
+      return -1;
+    }
+    rasenumentries = (rasenumentriesT)
+      GetProcAddress(hinstance,"RasEnumEntriesA");
+    if (rasenumentries==NULL)
     {
       FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
