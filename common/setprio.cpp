@@ -11,6 +11,9 @@
 */
 //
 // $Log: setprio.cpp,v $
+// Revision 1.35  1998/11/13 15:24:51  silby
+// win32 is back to 8,1
+//
 // Revision 1.34  1998/11/02 04:32:07  cyp
 // win32 main-thread priority is adjusted downwards too if running non-threaded.
 //
@@ -35,7 +38,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.34 1998/11/02 04:32:07 cyp Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.35 1998/11/13 15:24:51 silby Exp $"; }
 #endif
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
@@ -110,10 +113,10 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       main_thrid = our_thrid;
 
     int newprio=THREAD_PRIORITY_LOWEST;
-    if (prio >= 9)      newprio = THREAD_PRIORITY_NORMAL; /* +0 */
-    else if (prio >= 5) newprio = THREAD_PRIORITY_BELOW_NORMAL; /* -1 */
+//    if (prio >= 9)      newprio = THREAD_PRIORITY_NORMAL; /* +0 */
+    if (prio >= 5) newprio = THREAD_PRIORITY_BELOW_NORMAL; /* -1 */
     else if (prio >= 1) newprio = THREAD_PRIORITY_LOWEST; /* -2 */
-    //else if (prio == 0) newprio = THREAD_PRIORITY_IDLE;  /* -15 */
+    else if (prio == 0) newprio = THREAD_PRIORITY_IDLE;  /* -15 */
     /* At thread_prio_idle, the crunch stops when a screen saver is active.
        There is no priority level between -15 and -2! */
     SetPriorityClass(GetCurrentProcess(),NORMAL_PRIORITY_CLASS);
