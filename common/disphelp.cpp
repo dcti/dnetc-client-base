@@ -3,8 +3,14 @@
 // Any other distribution or use of this source violates copyright.
 //
 // $Log: disphelp.cpp,v $
+// Revision 1.40  1998/10/03 05:43:33  cyp
+// Genericified to use ConClear() and ConGetKey(). Why on earth do we
+// "avoid_bad_interaction_with_external_pagers"? We should be avoiding the
+// pagers themselves if they interact badly.
+//
 // Revision 1.39  1998/09/05 20:12:18  silby
-// Change so that disphelp is a valid function for the win32gui, it just doesn't do anything (perhaps a windows help file will open in the future?)
+// Change so that disphelp is a valid function for the win32gui, it just 
+// doesn't do anything (perhaps a windows help file will open in the future?)
 //
 // Revision 1.38  1998/08/10 20:08:00  cyruspatel
 // Removed reference to NO!NETWORK
@@ -26,16 +32,7 @@
 // updates to get Borland C++ to compile under Win32.
 //
 // Revision 1.32  1998/07/07 21:55:39  cyruspatel
-// Serious house cleaning - client.h has been split into client.h (Client
-// class, FileEntry struct etc - but nothing that depends on anything) and
-// baseincs.h (inclusion of generic, also platform-specific, header files).
-// The catchall '#include "client.h"' has been removed where appropriate and
-// replaced with correct dependancies. cvs Ids have been encapsulated in
-// functions which are later called from cliident.cpp. Corrected other
-// compile-time warnings where I caught them. Removed obsolete timer and
-// display code previously def'd out with #if NEW_STATS_AND_LOGMSG_STUFF.
-// Made MailMessage in the client class a static object (in client.cpp) in
-// anticipation of global log functions.
+// client.h has been split into client.h and baseincs.h 
 //
 // Revision 1.31  1998/07/06 01:41:19  cyruspatel
 // Added support for /DNOTERMIOS and /DNOCURSES compiler switches to allow
@@ -132,7 +129,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *disphelp_cpp(void) {
-static const char *id="@(#)$Id: disphelp.cpp,v 1.39 1998/09/05 20:12:18 silby Exp $";
+static const char *id="@(#)$Id: disphelp.cpp,v 1.40 1998/10/03 05:43:33 cyp Exp $";
 return id; }
 #endif
 
@@ -143,7 +140,8 @@ return id; }
 #include "cmpidefs.h" //strcmpi()
 #include "sleepdef.h"
 #include "triggers.h" //[Check|Raise]ExitRequestTrigger()
-#include "logstuff.h" //Log()/LogScreen()/CliScreenClear()
+#include "logstuff.h" //Log()/LogScreen()
+#include "console.h"  //ConClear(), ConInkey()
 
 // --------------------------------------------------------------------------
 
@@ -173,64 +171,13 @@ return id; }
 
 // --------------------------------------------------------------------------
 
-#if ((defined(NOCURSES) || defined(NOTERMIOS)) && ((CLIENT_OS == OS_LINUX) || \
-   (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)))
-#include "network.h"
-int InKey(void)         //added Aug 09 1998 - cyp
-{
-  fd_set readfds;
-  struct timeval tv;
-
-  do
-    {
-    FD_ZERO(&readfds);
-    FD_SET(0,&readfds);
-    tv.tv_sec = 0;
-    tv.tv_usec = 100000; //1/10 sec
-    if (select( 1, &readfds, NULL, NULL, &tv ) )
-      return getchar();
-    } while (!CheckExitRequestTrigger());
-
-  return 0x03;
-}
-#endif
-
 #if !defined(NOCONFIG)
 // read a single keypress, without waiting for an Enter if possible
 static int readkeypress()
 {
-  int ch;
-#if (defined(NOCONFIG) || (defined(NOLESS) && defined(NOMORE)))
-  ch = -1;  // actually nothing. function never gets called.
-#elif (CLIENT_OS == OS_WIN32)
-  // Tested under Win32. May work under OS2 too. Not sure with DOS or Netware.
-  for (;;) {
-    if (CheckExitRequestTrigger())
-      return -1;
-    if (kbhit()) {
-      ch = getch();
-      if (!ch) ch = (getch() << 8);
-      break;
-    } else
-      usleep (50*1000); // with a 50ms delay, no visible processor activity
-                        // with NT4/P200 and still responsive to user requests
-  }
-
-#elif (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_DOS) || \
-  (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_NETWARE)
-  ch = getch();
-  if (!ch) ch = (getch() << 8);
-  if (ch == 0x03) // ^C
-    RaiseExitRequestTrigger();
-
-#elif (CLIENT_OS == OS_RISCOS)
-  ch = _swi(OS_ReadC, _RETURN(0));
-
-#elif defined(TERMIOSPAGER)
-  struct termios stored;
-  struct termios newios;
-
-  /* Wait a bit to avoid bad interaction with external pagers
+#if defined(TERMIOSPAGER)
+  usleep (200*1000);
+  /* Wait a bit to avoid bad interaction with external pagers 
    *
    * Without this delay (just a guess) :
    * 1) We start outputing some text, change the termios settings
@@ -254,34 +201,9 @@ static int readkeypress()
    * This is a hack, it will not work if the external pager takes more than
    * 2/10s to start up...
    */
-  usleep (200*1000);
+#endif  /* the rest is generic */
 
-  /* Get the original termios configuration */
-  tcgetattr(0,&stored);
-
-  /* Disable canonical mode, and set buffer size to 1 byte */
-  /* Disable echo. With echo turned on, the string "--More--"
-   * won't be erased if the user hit CR)
-   */
-  memcpy(&newios,&stored,sizeof(struct termios));
-  newios.c_lflag &= ~(ICANON | ECHO);
-  newios.c_cc[VTIME] = 0;
-  newios.c_cc[VMIN] = 1;
-
-  /* Activate the new settings */
-  tcsetattr(0,TCSANOW,&newios);
-
-  /* Read the single character */
-  ch = getchar();
-
-  /* Restore the original settings */
-  tcsetattr(0,TCSANOW,&stored);
-
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)
-  ch = InKey(); //getchar();  //see above - cyp
-#endif
-
-  return ch;
+  return ConInKey(-1); /* -1 == wait forever. returns zero if break. */
 }
 #endif
 
@@ -510,7 +432,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
       if (!nostdin && !forcenopagemode)
         {
         int i = readkeypress();
-        if (CheckExitRequestTrigger())
+        if (CheckExitRequestTriggerNoIO())
           return;
         fprintf( outstream, "\n" );
         if (i != '\n' && i != '\r' && i != ' ')
@@ -555,7 +477,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
               fprintf( outstream, "--More--" );
               fflush( outstream );
               readkeypress();
-              if (CheckExitRequestTrigger())
+              if (CheckExitRequestTriggerNoIO())
                 break;
               fprintf( outstream, "\r" ); //overwrite the --More--
               #endif
@@ -582,7 +504,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
             fprintf( outstream, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
           }
         else
-          CliScreenClear(); //this applies to stdout only
+          ConClear(); //this applies to stdout only
 
         for (i = 0; i < headerlines; i++)
           fprintf( outstream, "%s\n", helpheader[i] );
@@ -600,7 +522,7 @@ void Client::DisplayHelp( const char * unrecognized_option )
 
       fflush( outstream );
       i = readkeypress();
-      if (CheckExitRequestTrigger())
+      if (CheckExitRequestTriggerNoIO())
         break;
       fprintf( outstream, "\r");
 
