@@ -11,6 +11,14 @@ Bugs Listing
            .ini file with parameters given on the command line. This
            is probably not the expected behaviour, at least from the 
            user point of view.
+  Comments: (Silby) I'll look into this. It appears that this *only*
+            occurs when the contest switches or the random keyspace
+            changes. Fixing it should not be tough.
+  More Comments: (Silby) This isn't new, actually. It's just more obvious
+                 because I have more options in there. I'll make a new
+                 procedure that only updates the randomprefix and
+                 contest status.
+
 
 5-31-98 - Oscar Chang
   New Bug: Between 403 and 406, there is a drop of almost 50k keys/sec on my
