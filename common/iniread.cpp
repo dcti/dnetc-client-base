@@ -18,25 +18,9 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.37.4.1 2003/08/09 12:54:11 mweiser Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.37.4.2 2003/08/25 08:32:07 mweiser Exp $"; }
 
-#include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
-#include <string.h>  /* strlen()/memmove() */
-#include <ctype.h>   /* tolower()/isctrl(). do not use isspace()! */
-#include <stdlib.h>  /* malloc()/free()/atoi() */
-#include <limits.h>  /* UINT_MAX */
-
-#if defined(__BORLANDC__) || defined(_MSC_VER)
-#include <io.h>      /* access() */
-#elif defined(__riscos)
-extern "C" { /* headers are unsafe for c++ */
-#include <unistd.h>
-}
-#elif __NeXT__
-#include <libc.h>    /* access() */
-#else
-#include <unistd.h>  /* access() */
-#endif
+#include "baseincs.h"
 #include "iniread.h"
 
 #ifndef SEEK_SET   /* some OSs (sunos4) don't have SEEK_* */

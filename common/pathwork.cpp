@@ -24,33 +24,15 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.21.4.4 2003/08/09 12:54:11 mweiser Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.21.4.5 2003/08/25 08:32:07 mweiser Exp $"; }
 
 // #define TRACE
 
-#include <stdio.h>
-#include <string.h>
-#include "cputypes.h"
+#include "baseincs.h"
 #include "pathwork.h"
 #include "util.h"      // trace
 
-#if (CLIENT_OS == OS_DOS) ||  ( (CLIENT_OS == OS_OS2) && !defined(__EMX__) )
-  #include <dos.h>  //drive functions
-  #include <ctype.h> //toupper
-  #if defined(__WATCOMC__)
-    #include <direct.h> //getcwd
-  #elif defined(__TURBOC__)
-    #include <dir.h>
-  #endif
-#elif (CLIENT_OS == OS_RISCOS)
-  #include <kernel.h>
-  #include <swis.h>
-#elif defined(__unix__)
-  #if (CLIENT_OS == OS_NEXTSTEP)
-    #include <libc.h>    /* geteuid() */
-  #else
-    #include <unistd.h>  /* geteuid() */
-  #endif
+#if defined(__unix__)
   #include <pwd.h>       /* getpwnam(), getpwuid(), struct passwd */
   #define HAVE_UNIX_TILDE_EXPANSION
 #endif

@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.9 2003/05/25 12:08:31 andreasb Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.10 2003/08/25 08:32:07 mweiser Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -78,44 +78,24 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.9 2003/05/25 12:08:31 andreasb Exp $"; }
 #define TRACE_WRITE(x)    //TRACE_OUT(x) /* net_write() */
 #define TRACE_NETDB(x)    //TRACE_OUT(x) /* net_resolve() */
 
-#include "cputypes.h"
-#if (CLIENT_OS == OS_AMIGAOS)
-extern "C" {
-#endif
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <time.h>
-#include <errno.h>
-#if (CLIENT_OS == OS_AMIGAOS)
-}
-#endif
-
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #define WIN32_LEAN_AND_MEAN /* don't want winsock.h included here */
   #ifndef STRICT
     #define STRICT
   #endif
-  #include <windows.h>
-  #include "w32sock.h" //winsock wrappers
-  #include "w32util.h" //winGetVersion()
   #if defined(_MSC_VER)
   #pragma warning(disable:4127) /* 'conditional expression is constant' */
   #endif              /* caused by do{}while(0) in winsock.h fd_set ops */
-#elif (CLIENT_OS == OS_DOS)
-  //ntohl()/htonl() defines are in...
-  #include "plat/dos/clidos.h"
-#elif (CLIENT_OS == OS_VMS)
-  #include <signal.h>
+#endif
+
+#include "baseincs.h"
+
+#if (CLIENT_OS == OS_VMS)
   #ifdef __VMS_UCX__ // define for UCX instead of Multinet on VMS
-    #include <sys/types.h>
     #include <sys/socket.h>
-    #include <netinet/in.h>
     #include <arpa/inet.h>
     #include <sys/time.h>
     #include <unistd.h>
-    #include <fcntl.h>
     #include <netdb.h>
     #include <unixio.h>
   #elif defined(MULTINET)
@@ -125,7 +105,6 @@ extern "C" {
     #include "multinet_root:[multinet.include.sys]time.h"
     #include "multinet_root:[multinet.include.sys]socket.h"
     #include "multinet_root:[multinet.include]netdb.h"
-    #include "multinet_root:[multinet.include.netinet]in.h"
     #include "multinet_root:[multinet.include.netinet]in_systm.h"
     #ifndef multinet_inet_addr
       extern "C" unsigned long int inet_addr(const char *cp);
@@ -136,21 +115,12 @@ extern "C" {
   #endif
 #elif (CLIENT_OS == OS_OS2)
   #define BSD_SELECT
-  #include <sys/types.h>
-  #include <fcntl.h>
   #include <netdb.h>
-  #include <netinet/in.h>
   #include <sys/socket.h>
-  #include <sys/time.h>
   #include <sys/select.h>
   #include <sys/ioctl.h>
-  #if defined(__EMX__)
-    // this has to stay as long as the define below is needed
-    #include <io.h>
-  #endif
 #elif (CLIENT_OS == OS_AMIGAOS)
   extern "C" {
-  #include "plat/amigaos/amiga.h"
   #include <assert.h>
   #define _KERNEL
   #include <sys/socket.h>
@@ -161,32 +131,18 @@ extern "C" {
   #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
   }
 #elif (CLIENT_OS == OS_BEOS)
-  #include <sys/types.h>
   #include <sys/socket.h>
-  #include <netinet/in.h>
   #include <sys/ioctl.h>
-  #include <sys/time.h>
-  #include <unistd.h>
-  #include <fcntl.h>
   #include <netdb.h>
   #define MSG_PEEK 0
 #else
-  #include <sys/types.h>
   #include <sys/socket.h>
-  #include <netinet/in.h>
   #include <arpa/inet.h>
   #include <sys/ioctl.h>
   #include <sys/time.h>
-  #include <unistd.h>
-  #include <fcntl.h>
   #include <netdb.h>
   #if (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_ALPHA)
     #include <asm/byteorder.h>
-  #elif (CLIENT_OS == OS_QNX)
-    #include <sys/select.h>
-    #if !defined(__QNXNTO__)
-      #include <unix.h>
-    #endif
   #elif (CLIENT_OS == OS_DYNIX) && defined(NTOHL)
     #define ntohl(x)  NTOHL(x)
     #define htonl(x)  HTONL(x)
@@ -202,17 +158,12 @@ extern "C" {
     int setsockopt(int, int, int, char *, int);
     int connect(int, struct sockaddr *, int);
     }
-  #elif (CLIENT_OS == OS_AIX)
-    #include <sys/select.h>
-    #include <strings.h>
   #elif (CLIENT_OS == OS_ULTRIX)
     extern "C" {
       int socket(int, int, int);
       int setsockopt(int, int, int, char *, int);
       int connect(int, struct sockaddr *, int);
     }
-  #elif (CLIENT_OS == OS_NEXTSTEP)
-    #include <libc.h>
   #elif (CLIENT_OS == OS_NETWARE)
     extern "C" {
     #pragma pack(1)
