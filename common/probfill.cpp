@@ -9,7 +9,7 @@
 //#define STRESS_RANDOMGEN_ALL_KEYSPACE
 
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.58.2.16 1999/12/19 19:23:23 cyp Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.58.2.17 1999/12/20 05:26:19 cyp Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
@@ -477,7 +477,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
   if (bufcount < 0) /* normal load from buffer failed */
   {
     *load_needed = __gen_random( client, &wrdata );
-    if (load_needed == 0)
+    if (*load_needed == 0) /* no err */
     {
       didload = 1;
       didrandom = 1;
