@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.9 2003/11/11 02:42:39 kakace Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.10 2003/12/08 17:10:28 stream Exp $"; }
 
 //#define TRACE
 
@@ -313,7 +313,6 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
   #include <io.h>
   #include <dos.h>             // sleep
   #include <process.h>
-  #define soclose(s) close(s)     
 #else //IBM distributed OS/2 developers toolkit
   #include <process.h>
   #include <types.h>
