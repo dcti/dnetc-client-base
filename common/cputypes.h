@@ -5,6 +5,9 @@
 // Any other distribution or use of this source violates copyright.
 // 
 // $Log: cputypes.h,v $
+// Revision 1.19  1998/06/15 00:13:09  skand
+// define NetBSD/alpha
+//
 // Revision 1.18  1998/06/13 21:46:52  friedbait
 // 'Log' keyword added such that we can easily track the change history
 //
@@ -180,6 +183,9 @@ struct s128 { s64 hi, lo; };
   #elif defined(ARM)
     #define CLIENT_OS     OS_NETBSD
     #define CLIENT_CPU    CPU_ARM
+  #elif defined(ASM_ALPHA)
+    #define CLIENT_OS     OS_NETBSD
+    #define CLIENT_CPU    CPU_ALPHA
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
   #if defined(ASM_X86)
