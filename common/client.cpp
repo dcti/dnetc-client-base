@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.206.2.33 1999/12/12 01:36:39 mfeiri Exp $"; }
+return "@(#)$Id: client.cpp,v 1.206.2.34 1999/12/12 12:18:35 cyp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -356,11 +356,12 @@ static int ClientMain( int argc, char *argv[] )
 #if (CLIENT_OS == OS_MACOS)
 int main( void )
 {
-  extern void MacInitToolbox();
-  char *argv[1];
+  extern void MacInitToolbox(void);
+  char *argv[2]; 
   ((const char **)argv)[0] = utilGetAppName();
+  argv[1] = (char *)0;
   MacInitToolbox();
-  ClientMain(0,argv);
+  ClientMain(1,argv);
   return 0;
 }
 #elif (CLIENT_OS==OS_WIN32S) || (CLIENT_OS==OS_WIN16) || (CLIENT_OS==OS_WIN32)
