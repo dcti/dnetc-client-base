@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.79 2005/03/08 22:29:13 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.80 2005/04/11 21:00:25 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -139,7 +139,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     {
       cpucount = GetNumberOfRegisteredProcessors();
     }
-	#elif (CLIENT_OS == OS_NETWARE6)
+    #elif (CLIENT_OS == OS_NETWARE6)
     {
       cpucount = NXGetCpuCount();
     }
@@ -1112,7 +1112,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0580, CPU_F_I586, 0x0A, "C2" }, /* uses RG Cx re-pair */
           {  0x0590, CPU_F_I586, 0x0A, "C3" },
           /* I'm not sure about the following two: are they I586 or I686 ? so do it the safe way */
-	  {  0x0650, CPU_F_I586, 0x0C, "6x86MX/MII" },
+          {  0x0650, CPU_F_I586, 0x0C, "6x86MX/MII" },
           {  0x0660, CPU_F_I586, 0x0C, "C3 (Samuel)" }, /* THIS IS NOT A P6 !!! */
           {  0x0670, CPU_F_I586, 0x0C, "C3 (Samuel 2/3 or Ezra)" },
           {  0x0680, CPU_F_I586, 0x0C, "C3 (Ezra-T)" },
@@ -1435,8 +1435,8 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x41560200, 0xfffffff0, 0, 1, 1, "ARM 620" },
     { 0x41007000, 0xfffffff0, 0, 1, 1, "ARM 700" },
     { 0x41007100, 0xfffffff0, 0, 1, 1, "ARM 710" },
-    { 0x41007500, 0xffffffff, 0, 1, 1, "ARM 7500" },	// 7500/FEL are "artificial" ids
-    { 0x410F7500, 0xffffffff, 0, 1, 1, "ARM 7500FEL" },	// created by IOMD detection
+    { 0x41007500, 0xffffffff, 0, 1, 1, "ARM 7500" },  // 7500/FEL are "artificial" ids
+    { 0x410F7500, 0xffffffff, 0, 1, 1, "ARM 7500FEL" },  // created by IOMD detection
     { 0x41047100, 0xfffffff0, 0, 1, 1, "ARM 7100" },
     { 0x41807100, 0xfffffff0, 0, 1, 1, "ARM 710T" },
     { 0x41807200, 0xfffffff0, 0, 1, 1, "ARM 720T" },
@@ -1609,8 +1609,8 @@ static long __GetRawProcessorID(const char **cpuname )
       {
         if (ids[n].id == 0)
         {
-	  detectedname = namebuf;
-	  detectedtype = 0;
+          detectedname = namebuf;
+          detectedtype = 0;
         }
         else
         {
@@ -1902,7 +1902,7 @@ static long __GetRawProcessorID(const char **cpuname)
   /* parse the prtconf output looking for the cpu name */
   strncpy (name, "", 256);
   /* 'prtconf -vp' outputs the detailed device node list from openboot ROM */
-  if ((prtconf = popen ("/usr/sbin/prtconf -vp", "r")) != NULL) {	
+  if ((prtconf = popen ("/usr/sbin/prtconf -vp", "r")) != NULL) {
     while (fgets(buf, 256, prtconf) != NULL) {
       if (strstr (buf, "Node") != NULL) {  /* if new device node, clear name */
         strncpy (name, "", 256);
@@ -2454,11 +2454,13 @@ void DisplayProcessorInformation(void)
 {
   const char *scpuid, *smaxscpus, *sfoundcpus;
   GetProcessorInformationStrings( &scpuid, &smaxscpus, &sfoundcpus );
+  unsigned int clockmhz = GetProcessorFrequency();
 
   LogRaw("Automatic processor identification tag: %s\n"
+    "Estimated processor clock speed (0 if unknown): %u MHz\n"
     "Number of processors detected by this client: %s\n"
     "Number of processors supported by this client: %s\n",
-    scpuid, sfoundcpus, smaxscpus );
+    scpuid, clockmhz, sfoundcpus, smaxscpus );
   return;
 }
 
