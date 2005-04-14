@@ -6,7 +6,7 @@
 ; x86 Processor frequency identification for distributed.net effort
 ; returns output of rdtsc if available
 ;
-; $Id: x86rdtsc.asm,v 1.1.2.1 2005/04/14 20:32:11 snikkel Exp $
+; $Id: x86rdtsc.asm,v 1.1.2.2 2005/04/14 21:49:40 jlawson Exp $
 ;
 ; return u64
 
@@ -70,16 +70,7 @@ Standard:
   pop ecx
   pop ebx
 
-  push ebp
-  mov ebp,esp
-  sub esp,$8
-  rdtsc
-  mov [ebp-8],eax
-  mov [ebp-4],edx
-  mov eax,[ebp-8]
-  mov edx,[ebp-4]
-  mov esp,ebp
-  pop ebp
+  rdtsc        			; result is returned in edx:eax
   ret
 
 NotSupported:
