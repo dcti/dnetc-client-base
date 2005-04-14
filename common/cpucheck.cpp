@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.80 2005/04/11 21:00:25 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.81 2005/04/14 20:32:11 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -63,6 +63,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.80 2005/04/11 21:00:25 jlawson Exp $"; }
 #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
   extern "C" u32 x86ident( void ) asm ("x86ident");
   extern "C" u32 x86features( void ) asm ("x86features");
+  extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
   extern "C" u32 x86htcount( void ) asm ("x86htcount");
 #else
 #if defined(__WATCOMC__)
@@ -70,10 +71,12 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.80 2005/04/11 21:00:25 jlawson Exp $"; }
   // must be declared as "cdecl" to allow compiler save necessary registers.
   extern "C" u32 __cdecl x86ident( void );
   extern "C" u32 __cdecl x86features( void );
+  extern "C" ui64 __cdecl x86rdtsc( void );
   extern "C" u32 __cdecl x86htcount( void );
 #else
   extern "C" u32 x86ident( void );
   extern "C" u32 x86features( void );
+  extern "C" ui64 x86rdtsc( void );
   extern "C" u32 x86htcount( void );
 #endif
   extern "C" u32 x86ident_haveioperm; /* default is zero */
@@ -2240,6 +2243,35 @@ unsigned int GetProcessorFrequency()
     {
       freq = (freqhz + 500000) / 1000000;
     }
+  #elif (CLIENT_CPU == CPU_X86)
+    unsigned int nearest33 = 0, nearest25 = 0;
+    int i;
+    for (i=0;i<2;i++)
+    {	
+      ui64 prevtime = x86rdtsc();
+      usleep(1000000);
+      ui64 newtime = x86rdtsc();
+      freq += (unsigned int)((newtime - prevtime) / 1000000.0);
+    }
+    freq /= 2;
+    if ((freq - ((int)(freq / 25) * 25)) < abs(freq - (((int)(freq / 25) + 1) * 25)))
+    {
+      nearest25 = (int)(freq / 25) * 25;
+    } else {
+      nearest25 = ((int)(freq / 25) + 1) * 25;
+    }
+    if ((freq - ((int)(freq / 33) * 33)) < abs(freq - (((int)(freq / 33) + 1) * 33)))
+    {
+      nearest33 = (int)(freq / 33) * 33;
+    } else {
+      nearest33 = ((int)(freq / 33) + 1) * 33;
+    }
+    if (abs(freq - nearest25) < abs(freq - nearest33))
+    {
+      freq = nearest25;
+    } else {
+      freq = nearest33;
+    }
   #endif
 
   return freq;
@@ -2334,6 +2366,7 @@ unsigned long GetProcessorFeatureFlags()
 void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscpus, const char ** sfoundcpus )
 {
   const char *maxcpu_s, *foundcpu_s, *cpuid_s;
+  long features;
 
 #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
     (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
@@ -2347,9 +2380,6 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
   else
   {
     static char namebuf[200];
-  #if (CLIENT_CPU == CPU_X86)
-    long x86features;
-  #endif
     if (cpuid_s == NULL) cpuid_s = "*unknown*";
     if (*cpuid_s =='\0') cpuid_s = "???";
   #if (CLIENT_CPU == CPU_ARM)
@@ -2367,38 +2397,38 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
       sprintf( namebuf, "%04X:%04X\n\tname: ",(int)((rawid>>16)&0xffff),(int)(rawid&0xffff));
     strcat( namebuf, cpuid_s ); /* always valid */
     strcat( namebuf, "\n\tfeatures: " );
-    x86features = GetProcessorFeatureFlags();
-    if (x86features & CPU_F_MMX) {
+    features = GetProcessorFeatureFlags();
+    if (features & CPU_F_MMX) {
       strcat( namebuf, "MMX " );
     }
-    if (x86features & CPU_F_CYRIX_MMX_PLUS) {
+    if (features & CPU_F_CYRIX_MMX_PLUS) {
       strcat( namebuf, "Cyrix_MMX+ " );
     }
-    if (x86features & CPU_F_AMD_MMX_PLUS) {   
+    if (features & CPU_F_AMD_MMX_PLUS) {   
       strcat( namebuf, "AMD_MMX+ " );   
     }
-    if (x86features & CPU_F_3DNOW) {   
+    if (features & CPU_F_3DNOW) {   
       strcat( namebuf, "3DNOW " );   
     }
-    if (x86features & CPU_F_3DNOW_PLUS) {   
+    if (features & CPU_F_3DNOW_PLUS) {   
       strcat( namebuf, "3DNOW+ " );   
     }
-    if (x86features & CPU_F_SSE) {   
+    if (features & CPU_F_SSE) {   
       strcat( namebuf, "SSE " );   
     }
-    if (x86features & CPU_F_SSE2) {   
+    if (features & CPU_F_SSE2) {   
       strcat( namebuf, "SSE2 " );   
     }
-    if (x86features & CPU_F_SSE3) {   
+    if (features & CPU_F_SSE3) {   
       strcat( namebuf, "SSE3 " );   
     }
-    if (x86features & CPU_F_AMD64) {
+    if (features & CPU_F_AMD64) {
       strcat( namebuf, "AMD64 " );
     }
-    if (x86features & CPU_F_EM64T) {
+    if (features & CPU_F_EM64T) {
       strcat( namebuf, "EM64T " );
     }
-    if (x86features & CPU_F_HYPERTHREAD) {   
+    if (features & CPU_F_HYPERTHREAD) {   
       static char htbuf[60];
       sprintf( htbuf, "Hyper-Threading(%u) ", x86htcount() );
       strcat( namebuf, htbuf );   
