@@ -6,7 +6,7 @@
 ; x86 Processor frequency identification for distributed.net effort
 ; returns output of rdtsc if available
 ;
-; $Id: x86rdtsc.asm,v 1.1.2.2 2005/04/14 21:49:40 jlawson Exp $
+; $Id: x86rdtsc.asm,v 1.1.2.3 2005/04/14 22:01:06 jlawson Exp $
 ;
 ; return u64
 
@@ -64,6 +64,11 @@ Standard:
   cmp eax, 1            ; See if CPUID code 1 is supported
   jb near NotSupported
 
+  mov eax,1
+  cpuid
+  test edx,00000010h    	; See if Time-Stamp Counter is supported
+  jz near NotSupported
+	
   pop edi 
   pop esi
   pop edx   
@@ -79,5 +84,6 @@ NotSupported:
   pop edx
   pop ecx
   pop ebx
-
+  xor eax,eax
+  xor edx,edx
   ret
