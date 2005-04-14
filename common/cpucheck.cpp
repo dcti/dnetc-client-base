@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.82 2005/04/14 21:21:56 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.83 2005/04/14 22:08:53 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2253,24 +2253,27 @@ unsigned int GetProcessorFrequency()
       ui64 newtime = x86rdtsc();
       freq += (unsigned int)((newtime - prevtime) / 1000000.0);
     }
-    freq /= 2;
-    if ((int)(freq - ((int)(freq / 25) * 25)) < (int)abs(freq - (((int)(freq / 25) + 1) * 25)))
+    if (freq != 0)
     {
-      nearest25 = (int)(freq / 25) * 25;
-    } else {
-      nearest25 = ((int)(freq / 25) + 1) * 25;
-    }
-    if ((int) (freq - ((int)(freq / 33) * 33)) < abs(freq - (((int)(freq / 33) + 1) * 33)))
-    {
-      nearest33 = (int)(freq / 33) * 33;
-    } else {
-      nearest33 = ((int)(freq / 33) + 1) * 33;
-    }
-    if (abs(freq - nearest25) < abs(freq - nearest33))
-    {
-      freq = nearest25;
-    } else {
-      freq = nearest33;
+      freq /= 2;
+      if ((int)(freq - ((int)(freq / 25) * 25)) < (int)abs(freq - (((int)(freq / 25) + 1) * 25)))
+      {
+        nearest25 = (int)(freq / 25) * 25;
+      } else {
+        nearest25 = ((int)(freq / 25) + 1) * 25;
+      }
+      if ((int) (freq - ((int)(freq / 33) * 33)) < abs(freq - (((int)(freq / 33) + 1) * 33)))
+      {
+        nearest33 = (int)(freq / 33) * 33;
+      } else {
+        nearest33 = ((int)(freq / 33) + 1) * 33;
+      }
+      if (abs(freq - nearest25) < abs(freq - nearest33))
+      {
+        freq = nearest25;
+      } else {
+        freq = nearest33;
+      }
     }
   #endif
 
