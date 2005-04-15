@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.87 2005/04/15 16:58:00 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.88 2005/04/15 19:17:41 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2245,21 +2245,20 @@ unsigned int GetProcessorFrequency()
       freq = (freqhz + 500000) / 1000000;
     }
   #elif (CLIENT_CPU == CPU_X86)
-    int i;
+    struct timeval tv1, tv2, elapsed_time;
     ui64 calltime = x86rdtsc();
     usleep(0);
     calltime = x86rdtsc() - calltime;
-
-    for (i=0;i<2;i++)
-    {	
-      ui64 prevtime = x86rdtsc();
-      usleep(1000000);
-      ui64 newtime = x86rdtsc();
-      freq += (unsigned int)((newtime - prevtime - calltime) / 1000000.0);
-    }
+    
+    CliGetMonotonicClock(&tv1); 
+    ui64 prevtime = x86rdtsc();
+    usleep(1000000);
+    ui64 newtime = x86rdtsc();
+    CliGetMonotonicClock(&tv2);
+    CliTimerDiff(&elapsed_time,&tv1,&tv2);
+    freq = (unsigned int)((newtime - prevtime - calltime) / (elapsed_time.tv_usec + elapsed_time.tv_sec * 1000000));
     if (freq != 0)
     {
-      freq /= 2;
       if (freq < 250) {
         unsigned int nearest25, nearest30, nearest33;
         if ((freq - ((unsigned int)(freq / 25) * 25)) < 
