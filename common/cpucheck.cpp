@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.85 2005/04/15 16:30:56 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.86 2005/04/15 16:38:23 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2269,7 +2269,7 @@ unsigned int GetProcessorFrequency()
           nearest25 = ((unsigned int)(freq / 25) + 1) * 25;
         }
         if ((freq - ((unsigned int)(freq / 30) * 30)) < 
-          abs(freq - (((unsigned int)(freq / 30) + 1) * 30)))
+          (unsigned int)abs(freq - (((unsigned int)(freq / 30) + 1) * 30)))
         {
           nearest30 = (unsigned int)(freq / 30) * 30;
         } else {
