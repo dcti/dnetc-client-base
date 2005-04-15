@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.84 2005/04/15 15:41:36 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.85 2005/04/15 16:30:56 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2261,23 +2261,26 @@ unsigned int GetProcessorFrequency()
       freq /= 2;
       if (freq < 250) {
         unsigned int nearest25, nearest30, nearest33;
-        if ((int)(freq - ((int)(freq / 25) * 25)) < (int)abs(freq - (((int)(freq / 25) + 1) * 25)))
+        if ((freq - ((unsigned int)(freq / 25) * 25)) < 
+          (unsigned int)abs(freq - (((unsigned int)(freq / 25) + 1) * 25)))
         {
-          nearest25 = (int)(freq / 25) * 25;
+          nearest25 = (unsigned int)(freq / 25) * 25;
         } else {
-          nearest25 = ((int)(freq / 25) + 1) * 25;
+          nearest25 = ((unsigned int)(freq / 25) + 1) * 25;
         }
-        if ((int)(freq - ((int)(freq / 30) * 30)) < (int)abs(freq - (((int)(freq / 30) + 1) * 30)))
+        if ((freq - ((unsigned int)(freq / 30) * 30)) < 
+          abs(freq - (((unsigned int)(freq / 30) + 1) * 30)))
         {
-          nearest30 = (int)(freq / 30) * 30;
+          nearest30 = (unsigned int)(freq / 30) * 30;
         } else {
-          nearest30 = ((int)(freq / 30) + 1) * 30;
+          nearest30 = ((unsigned int)(freq / 30) + 1) * 30;
         }
-        if ((int) (freq - ((int)(freq / (33 + 1/3)) * (33 + 1/3))) < abs(freq - (((int)(freq / (33 + 1/3)) + 1) * (33 + 1/3))))
+        if ((freq - ((unsigned int)(freq / (100.0/3.0)) * (100.0/3.0))) < 
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / (100.0/3.0)) + 1) * (100.0/3.0)))))
         {
-          nearest33 = (int)(freq / (33 + 1/3)) * (33 + 1/3);
+          nearest33 = (unsigned int)((unsigned int)(freq / (100.0/3.0)) * (100.0/3.0));
         } else {
-          nearest33 = ((int)(freq / (33 + 1/3)) + 1) * (33 + 1/3);
+          nearest33 = (unsigned int)(((unsigned int)(freq / (100.0/3.0)) + 1) * (100.0/3.0));
         }
         if (abs(freq - nearest25) < abs(freq - nearest30))
         {
@@ -2296,23 +2299,26 @@ unsigned int GetProcessorFrequency()
         }
       } else {
         unsigned int nearest66, nearest100, nearest166;
-        if ((int) (freq - ((int)(freq / (66 + 2/3)) * (66 + 2/3))) < abs(freq - (((int)(freq / (66 + 2/3)) + 1) * (66 + 2/3))))
+        if ((freq - ((unsigned int)(freq / (200.0/3.0)) * (200.0/3.0))) < 
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / (200.0/3.0)) + 1) * (200.0/3.0)))))
         {
-          nearest66 = (int)(freq / (66 + 2/3)) * (66 + 2/3);
+          nearest66 = (unsigned int)((unsigned int)(freq / (200.0/3.0)) * (200.0/3.0));
         } else {
-          nearest66 = ((int)(freq / (66 + 2/3)) + 1) * (66 + 2/3);
+          nearest66 = (unsigned int)(((unsigned int)(freq / (200.0/3.0)) + 1) * (200.0/3.0));
         }
-        if ((int)(freq - ((int)(freq / 100) * 100)) < (int)abs(freq - (((int)(freq / 100) + 1) * 100)))
+        if ((freq - ((unsigned int)(freq / 100) * 100)) < 
+          (unsigned int)abs(freq - (((unsigned int)(freq / 100) + 1) * 100)))
         {
-          nearest100 = (int)(freq / 100) * 100;
+          nearest100 = (unsigned int)(freq / 100) * 100;
         } else {
-          nearest100 = ((int)(freq / 100) + 1) * 100;
+          nearest100 = ((unsigned int)(freq / 100) + 1) * 100;
         }
-        if ((int) (freq - ((int)(freq / (166 + 2/3)) * (166 + 2/3))) < abs(freq - (((int)(freq / (166 + 2/3)) + 1) * (166 + 2/3))))
+        if ((freq - ((unsigned int)(freq / (500.0/3.0)) * (500.0/3.0))) < 
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / (500.0/3.0)) + 1) * (500.0/3.0)))))
         {
-          nearest166 = (int)(freq / (166 + 2/3)) * (166 + 2/3);
+          nearest166 = (unsigned int)((unsigned int)(freq / (500.0/3.0)) * (500.0/3.0));
         } else {
-          nearest166 = ((int)(freq / (166 + 2/3)) + 1) * (166 + 2/3);
+          nearest166 = (unsigned int)(((unsigned int)(freq / (500.0/3.0)) + 1) * (500.0/3.0));
         }
         if (abs(freq - nearest66) < abs(freq - nearest100))
         {
