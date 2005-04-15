@@ -10,12 +10,13 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.86 2005/04/15 16:38:23 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.87 2005/04/15 16:58:00 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
 #include "cpucheck.h"  //just to keep the prototypes in sync.
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
+#include "sleepdef.h"  //usleep
 
 #if (CLIENT_OS == OS_DEC_UNIX)
 #  include <unistd.h>
