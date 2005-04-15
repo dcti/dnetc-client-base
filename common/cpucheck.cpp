@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.83 2005/04/14 22:08:53 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.84 2005/04/15 15:41:36 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2244,35 +2244,91 @@ unsigned int GetProcessorFrequency()
       freq = (freqhz + 500000) / 1000000;
     }
   #elif (CLIENT_CPU == CPU_X86)
-    unsigned int nearest33 = 0, nearest25 = 0;
     int i;
+    ui64 calltime = x86rdtsc();
+    usleep(0);
+    calltime = x86rdtsc() - calltime;
+
     for (i=0;i<2;i++)
     {	
       ui64 prevtime = x86rdtsc();
       usleep(1000000);
       ui64 newtime = x86rdtsc();
-      freq += (unsigned int)((newtime - prevtime) / 1000000.0);
+      freq += (unsigned int)((newtime - prevtime - calltime) / 1000000.0);
     }
     if (freq != 0)
     {
       freq /= 2;
-      if ((int)(freq - ((int)(freq / 25) * 25)) < (int)abs(freq - (((int)(freq / 25) + 1) * 25)))
-      {
-        nearest25 = (int)(freq / 25) * 25;
+      if (freq < 250) {
+        unsigned int nearest25, nearest30, nearest33;
+        if ((int)(freq - ((int)(freq / 25) * 25)) < (int)abs(freq - (((int)(freq / 25) + 1) * 25)))
+        {
+          nearest25 = (int)(freq / 25) * 25;
+        } else {
+          nearest25 = ((int)(freq / 25) + 1) * 25;
+        }
+        if ((int)(freq - ((int)(freq / 30) * 30)) < (int)abs(freq - (((int)(freq / 30) + 1) * 30)))
+        {
+          nearest30 = (int)(freq / 30) * 30;
+        } else {
+          nearest30 = ((int)(freq / 30) + 1) * 30;
+        }
+        if ((int) (freq - ((int)(freq / (33 + 1/3)) * (33 + 1/3))) < abs(freq - (((int)(freq / (33 + 1/3)) + 1) * (33 + 1/3))))
+        {
+          nearest33 = (int)(freq / (33 + 1/3)) * (33 + 1/3);
+        } else {
+          nearest33 = ((int)(freq / (33 + 1/3)) + 1) * (33 + 1/3);
+        }
+        if (abs(freq - nearest25) < abs(freq - nearest30))
+        {
+          if (abs(freq - nearest25) < abs(freq - nearest33))
+          {
+            freq = nearest25;
+          } else {
+            freq = nearest33;
+          }
+        } 
+        else if (abs(freq - nearest30) < abs(freq - nearest33))
+        {
+          freq = nearest30;
+        } else {
+          freq = nearest33;
+        }
       } else {
-        nearest25 = ((int)(freq / 25) + 1) * 25;
-      }
-      if ((int) (freq - ((int)(freq / 33) * 33)) < abs(freq - (((int)(freq / 33) + 1) * 33)))
-      {
-        nearest33 = (int)(freq / 33) * 33;
-      } else {
-        nearest33 = ((int)(freq / 33) + 1) * 33;
-      }
-      if (abs(freq - nearest25) < abs(freq - nearest33))
-      {
-        freq = nearest25;
-      } else {
-        freq = nearest33;
+        unsigned int nearest66, nearest100, nearest166;
+        if ((int) (freq - ((int)(freq / (66 + 2/3)) * (66 + 2/3))) < abs(freq - (((int)(freq / (66 + 2/3)) + 1) * (66 + 2/3))))
+        {
+          nearest66 = (int)(freq / (66 + 2/3)) * (66 + 2/3);
+        } else {
+          nearest66 = ((int)(freq / (66 + 2/3)) + 1) * (66 + 2/3);
+        }
+        if ((int)(freq - ((int)(freq / 100) * 100)) < (int)abs(freq - (((int)(freq / 100) + 1) * 100)))
+        {
+          nearest100 = (int)(freq / 100) * 100;
+        } else {
+          nearest100 = ((int)(freq / 100) + 1) * 100;
+        }
+        if ((int) (freq - ((int)(freq / (166 + 2/3)) * (166 + 2/3))) < abs(freq - (((int)(freq / (166 + 2/3)) + 1) * (166 + 2/3))))
+        {
+          nearest166 = (int)(freq / (166 + 2/3)) * (166 + 2/3);
+        } else {
+          nearest166 = ((int)(freq / (166 + 2/3)) + 1) * (166 + 2/3);
+        }
+        if (abs(freq - nearest66) < abs(freq - nearest100))
+        {
+          if (abs(freq - nearest66) < abs(freq - nearest166))
+          {
+            freq = nearest66;
+          } else {
+            freq = nearest166;
+          }
+        } 
+        else if (abs(freq - nearest100) < abs(freq - nearest166))
+        {
+          freq = nearest100;
+        } else {
+          freq = nearest166;
+        }
       }
     }
   #endif
