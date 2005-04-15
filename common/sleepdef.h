@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.5 2004/06/27 21:48:07 jlawson Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.37.2.6 2005/04/15 18:53:14 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -131,7 +131,7 @@
   #include <sys/time.h>
   #define _xsleep(_secs,_usecs) {struct timeval tv__={(_secs),(_usecs)};select(0,NULL,NULL,NULL,&tv__);}
   #undef usleep
-  #define usleep(x) _xsleep(0,(x))
+  #define usleep(x) _xsleep(((x)/1000000),((x)%1000000))
   #undef sleep
   #define sleep(x) _xsleep((x),0)
 #elif (CLIENT_OS == OS_QNX) && !(defined(__QNXNTO__))
