@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: gentests72.cpp,v 1.7.2.2 2003/01/29 01:29:58 andreasb Exp $
+ * $Id: gentests72.cpp,v 1.7.2.3 2005/04/30 16:02:10 kakace Exp $
 */
 /**************************************************************************/
 /*                                                                        */
@@ -142,14 +142,19 @@ int main ()
 	     case 4 :key[4] = 0x00;
 	     case 3 :key[5] = 0x00;
 	     case 2 :key[6] = 0x00; comment = "increment"; break;
+
+       case 20:
+       case 21:
        case 22:
        case 23:
-       case 24:
-       case 25:
            key[7] = 0;
-           key[8] = testcase - 22;
+           key[8] = testcase - 20;
            comment = "aggressive";
            break;
+
+       case 24: key[7] = 0x01; key[8] = 0x00; break;
+       case 25: key[7] = 0x01; key[8] = 0x01; break;
+
        case 30: key[7] = 0; key[8] = 42; comment = "dummy"; break;
 	 }
          iv[0]=Random( ) & 0xFFFFFFFF;
@@ -184,6 +189,8 @@ int main ()
               expected_result = 0;
               comment = "no success";
               break;
+          case 24:
+          case 25:
           case 26:
           case 27:
           case 28:
@@ -208,7 +215,7 @@ int main ()
       // Print the pipeline and comment stuff
       printf(" // ");
       key_lo = (key[5]<<24) + (key[6]<<16) + (key[7]<<8) + key[8];
-      startkey_lo = (key_lo & 0xffff0000L) - 0x00010000;
+      startkey_lo = (key_lo & 0xffff0000L) - (testcase>1 && testcase<=6) ? 0x00010000 : 0;
       for (j = 1; j <= 4; ++j)
         printf("%d", (key_lo - startkey_lo)%j);
       if (comment)
