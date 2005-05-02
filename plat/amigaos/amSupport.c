@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.2.4.12 2004/07/18 17:48:55 oliver Exp $
+ * $Id: amSupport.c,v 1.2.4.13 2005/05/02 00:24:37 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -395,7 +395,9 @@ int amigaInit(int *argc, char **argv[])
    #endif
 
    #if USE_RESETHANDLER
-   add_resethandler();
+   if (done) {
+      add_resethandler();
+   }
    #endif
 
    return(done);
