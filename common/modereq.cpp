@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.38.4.2 2003/01/22 04:17:26 andreasb Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.38.4.3 2005/05/03 17:24:01 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -245,7 +245,7 @@ int ModeReqRun(Client *client)
         modereq.reqbits &= ~(MODEREQ_IDENT);
         retval |= (MODEREQ_IDENT);
       }
-      if ((bits & MODEREQ_UNLOCK)!=0)
+      if ((bits & MODEREQ_UNLOCK) != 0)
       {
         if (modereq.filetounlock)
         {
@@ -255,7 +255,7 @@ int ModeReqRun(Client *client)
         modereq.reqbits &= ~(MODEREQ_UNLOCK);
         retval |= (MODEREQ_UNLOCK);
       }
-      if ((bits & MODEREQ_IMPORT)!=0)
+      if ((bits & MODEREQ_IMPORT) != 0)
       {
         if (modereq.filetoimport && client)
         {
@@ -265,13 +265,13 @@ int ModeReqRun(Client *client)
         }
         modereq.reqbits &= ~(MODEREQ_IMPORT);
       }
-      if ((bits & MODEREQ_CPUINFO)!=0)
+      if ((bits & MODEREQ_CPUINFO) != 0)
       {
         DisplayProcessorInformation(); 
         modereq.reqbits &= ~(MODEREQ_CPUINFO);
         retval |= (MODEREQ_CPUINFO);
       }
-      if ((bits & (MODEREQ_TEST | MODEREQ_TEST_ALLCORE))!=0)
+      if ((bits & (MODEREQ_TEST | MODEREQ_TEST_ALLCORE)) != 0)
       {
         int testfailed = 0;
         do
@@ -290,7 +290,7 @@ int ModeReqRun(Client *client)
             if (sel_contests == 0 /*none set==all set*/
              || (sel_contests & (1L<<contest)) != 0)
             {
-              if ((bits & (MODEREQ_TEST_ALLCORE))!=0)
+              if ((bits & (MODEREQ_TEST_ALLCORE)) != 0)
               {
                 if (client->corenumtotestbench < 0)
                 {
@@ -311,7 +311,7 @@ int ModeReqRun(Client *client)
         retval |= (MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
         modereq.reqbits &= ~(MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
       }
-      if ((bits & MODEREQ_VERSION)!=0)
+      if ((bits & MODEREQ_VERSION) != 0)
       {
         /* the requested information already has been printed */
         modereq.reqbits &= ~(MODEREQ_VERSION);
