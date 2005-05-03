@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.89 2005/04/20 03:26:35 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.90 2005/05/03 17:13:26 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2245,7 +2245,7 @@ unsigned int GetProcessorFrequency()
     {
       freq = (freqhz + 500000) / 1000000;
     }
-  #elif (CLIENT_CPU == CPU_X86)
+  #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     struct timeval tv1, tv2, elapsed_time;
     ui64 calltime = x86rdtsc();
     usleep(0);
@@ -2347,7 +2347,7 @@ unsigned int GetProcessorFrequency()
 //cores may get disabled due to missing features
 unsigned long GetProcessorFeatureFlags()
 {
-  #if (CLIENT_CPU == CPU_X86)
+  #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     return (__GetRawProcessorID(NULL, 'f')) | (x86features());
   #elif (CLIENT_CPU == CPU_POWERPC)
     unsigned long ppc_features = 0;
@@ -2457,7 +2457,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     if (riscos_count_cpus() == 2)
       strcat(strcat(namebuf,"\n\t+ "),riscos_x86_determine_name());
     #endif
-  #elif (CLIENT_CPU == CPU_X86)
+  #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     namebuf[0] = '\0';
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%04x:%04x" */
       sprintf( namebuf, "%04X:%04X\n\tname: ",(int)((rawid>>16)&0xffff),(int)(rawid&0xffff));
