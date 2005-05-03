@@ -7,7 +7,7 @@
 ;     Jeff Lawson <bovine@distributed.net>
 ;
 ; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
-; $Id: r72-snjl.asm,v 1.1.2.7 2004/06/27 20:32:40 jlawson Exp $
+; $Id: r72-snjl.asm,v 1.1.2.8 2005/05/03 17:00:59 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -589,7 +589,7 @@ test_key_3:
 
 align 16
 inc_key:
-        cmp     dl, 0xFD
+        cmp     dl, 0xFB
         mov     ecx, [RC5_72UnitWork_L0mid]
         mov     ebx, [RC5_72UnitWork_L0lo]
 
