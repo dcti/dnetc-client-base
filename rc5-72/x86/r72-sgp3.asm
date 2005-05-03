@@ -6,7 +6,7 @@
 ; Version 1.2    2003/09/24  11:08
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-sgp3.asm,v 1.1.2.3 2003/10/02 09:09:44 andreasb Exp $
+; $Id: r72-sgp3.asm,v 1.1.2.4 2005/05/03 17:22:38 jlawson Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -590,6 +590,10 @@ complex_incr:
 
         ADD_TO_EBX_ECX_DL 1
 
+        mov     L3(2), edx
+        mov     L3(1), ecx
+        mov     L3(0), ebx
+	
         mov     L3backup(2), edx
         mov     L3backup(1), ecx
         mov     L3backup(0), ebx
