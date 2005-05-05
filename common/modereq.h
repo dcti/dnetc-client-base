@@ -14,7 +14,7 @@
 */ 
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.20.4.2 2003/01/22 04:17:26 andreasb Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.20.4.3 2005/05/05 23:16:59 kakace Exp $"
 
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002
@@ -33,9 +33,12 @@
 #define MODEREQ_TEST               0x00002000 /* normal test */
 #define MODEREQ_TEST_ALLCORE       0x00004000 /* all cores for (each) contest */
 #define MODEREQ_TEST_MASK          0x00006000 /* combined mask */
-#define MODEREQ_RESTART            0x00008000 /* restart client after mode processing */
-#define MODEREQ_VERSION            0x00010000
-#define MODEREQ_ALL                0x0001FFFF /* mask of all - needed internally */
+#define MODEREQ_STRESS             0x00008000 /* stress-test */
+#define MODEREQ_STRESS_ALLCORE     0x00010000 /* all cores for contest */
+#define MODEREQ_STRESS_MASK        0x00018000 /* combined mask */
+#define MODEREQ_RESTART            0x00020000 /* restart client after mode processing */
+#define MODEREQ_VERSION            0x00040000
+#define MODEREQ_ALL                0x0007FFFF /* mask of all - needed internally */
 
 
 /* get mode bit(s). if modemask is -1, all bits are returned */

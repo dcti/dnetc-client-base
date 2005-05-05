@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.160.2.20 2004/06/27 21:50:34 jlawson Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.160.2.21 2005/05/05 23:16:59 kakace Exp $"; }
 
 //#define TRACE
 
@@ -1714,7 +1714,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       else if ( strcmp( thisarg, "-benchmark"   ) == 0  ||
                 strcmp( thisarg, "-benchmark2"  ) == 0 ||
                 strcmp( thisarg, "-bench"  ) == 0 ||
-                strcmp( thisarg, "-test" ) == 0 )
+                strcmp( thisarg, "-test" ) == 0 ||
+                strcmp( thisarg, "-stress" ) == 0)
       {
         havemode = 1;
         if (argvalue)
@@ -1859,7 +1860,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       else if ( strcmp( thisarg, "-benchmark" ) == 0  ||
                 strcmp( thisarg, "-bench" ) == 0 ||
                 strcmp( thisarg, "-benchmark2" ) == 0 ||
-                strcmp( thisarg, "-test" ) == 0 )
+                strcmp( thisarg, "-test" ) == 0 ||
+                strcmp( thisarg, "-stress") == 0)
       {
         int do_mode = MODEREQ_BENCHMARK;
         *inimissing = 0; // Don't need ini
@@ -1871,6 +1873,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           do_mode = MODEREQ_BENCHMARK_ALLCORE;
         else if (strcmp( thisarg, "-test"  ) == 0)
           do_mode = MODEREQ_TEST_ALLCORE;
+        else if (strcmp( thisarg, "-stress" ) == 0)
+          do_mode = MODEREQ_STRESS_ALLCORE;
 
         ModeReqClear(-1); //clear all - only do benchmark/test
         ModeReqSet( do_mode );

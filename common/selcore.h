@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.10 2004/08/14 23:31:59 kakace Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.16.2.11 2005/05/05 23:16:59 kakace Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -97,6 +97,7 @@ void selcoreEnumerateWide( int (*enumcoresproc)(
 /* benchmark/test each core - return < 0 on error, 0 = not supported, > 0=ok */
 long selcoreBenchmark( unsigned int cont_i, unsigned int secs, int corenum );
 long selcoreSelfTest( unsigned int cont_i, int corenum );
+long selcoreStressTest( unsigned int cont_i, int corenum );
 
 /* ClientMain() calls these */
 int InitializeCoreTable( int *coretypes );

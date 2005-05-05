@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.85.2.15 2005/04/30 16:02:48 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.85.2.16 2005/05/05 23:16:59 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -15,6 +15,7 @@ return "@(#)$Id: selftest.cpp,v 1.85.2.15 2005/04/30 16:02:48 kakace Exp $"; }
 #include "cpucheck.h"  // GetNumberOfDetectedProcessors() [for RISCOS]
 #include "clicdata.h"  // CliGetContestNameFromID()
 #include "clievent.h"  // ClientEventSyncPost()
+#include "selftest.h"
 
 // --------------------------------------------------------------------------
 
@@ -834,4 +835,15 @@ long SelfTest( unsigned int contest )
   } /* for ( threadpos = 0; threadpos < threadcount; threadpos++ ) */
 
   return (successes);
+}
+
+
+long StressTest(unsigned int contest)
+{
+  switch (contest) {
+    #if defined(HAVE_RC5_72_CORES)
+    case RC5_72: return StressRC5_72();
+    #endif
+    default: return SelfTest(contest);
+  }
 }

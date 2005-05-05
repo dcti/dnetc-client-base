@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.112.2.67 2004/08/14 23:32:00 kakace Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.112.2.68 2005/05/05 23:16:59 kakace Exp $"; }
 
 //#define TRACE
 
@@ -404,8 +404,10 @@ static long __bench_or_test( int which,
         }
         selcorestatics.corenum[cont_i] = -1; /* reset to show name */
 
-        if (which == 's') /* selftest */
+        if (which == 't') /* selftest */
           rc = SelfTest( cont_i );
+        else if (which == 's') /* stresstest */
+          rc = StressTest( cont_i );
         else
           rc = TBenchmark( cont_i, benchsecs, 0 );
         #if (CLIENT_OS != OS_WIN32 || !defined(SMC))
@@ -457,6 +459,11 @@ long selcoreBenchmark( unsigned int cont_i, unsigned int secs, int corenum )
 }
 
 long selcoreSelfTest( unsigned int cont_i, int corenum)
+{
+  return __bench_or_test( 't', cont_i, 0, corenum );
+}
+
+long selcoreStressTest( unsigned int cont_i, int corenum)
 {
   return __bench_or_test( 's', cont_i, 0, corenum );
 }
