@@ -15,7 +15,7 @@
  *   - AppleCPUThermo, an IOKit Object that provides "temp-monitor" from a
  *     dedicated sensor near the CPU (PowerMac MDD and XServe only)
  *   - IOHWSensor, an IOKit Object that provides "temp-sensor" data from a
- *     dedicated sensor (PowerBook Alu and PowerMac G5)
+ *     dedicated sensor
  *
  * NOTES: Apple uses various sensors in its models
  *
@@ -32,7 +32,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.1.2.4 2004/07/01 17:48:58 kakace Exp $
+ *  $Id: temperature.cpp,v 1.1.2.5 2005/05/07 20:54:05 kakace Exp $
  */
 
 #include <string.h>
@@ -46,6 +46,11 @@
 #include "cpucheck.h"
 
 SInt32 macosx_cputemp(void);
+
+typedef struct {
+  const char *location;   /* Location string ("CPU TOPSIDE", etc) */
+  SInt32      divisor;    /* Scale */
+} SensorInfos;
 
 
 static SInt32 _readTAU(void) {
@@ -84,15 +89,16 @@ static SInt32 _readTAU(void) {
 
 /*
 ** className := IO Class name (AppleCPUThermo / IOHWSensor)
-** location  := The string to be matched by the "location" key, or NULL to 
-**              match all instances of the given IO Class.
+** sensors   := Sensor(s) informations. If NULL, the function matches any
+**              location and the temperature returned is converted to the
+**              fixed point format but not scaled.
 ** dataKey   := Key that provides the raw temperature value.
 ** Returns the largest raw temperature value.
 */
 
-static SInt32 _readTemperature(const char *className, const char *location, CFStringRef dataKey) 
+static SInt32 _readTemperature(const char *className, SensorInfos *sensors, CFStringRef dataKey) 
 {
-  SInt32 temp, temperature = -1;
+  SInt32 temp, divisor = 1, temperature = -1;
   char strbuf[64];
   CFNumberRef number = NULL;
   CFStringRef string = NULL;
@@ -119,15 +125,20 @@ static SInt32 _readTemperature(const char *className, const char *location, CFSt
           ** Check whether the "location" key matches the string pointed to by location.
           ** If the IO Class doesn't have a "location" key, location must be NULL.
           */
-          if(location == NULL) {
+          if(sensors == NULL) {
             matched = 1;      /* match all instances */
           }
           else if (CFDictionaryGetValueIfPresent(properties, CFSTR("location"), (const void **) &string)) {
             if (CFStringGetTypeID() == CFGetTypeID(string) 
                   && CFStringGetCString(string, strbuf, sizeof(strbuf), CFStringGetSystemEncoding())) {
-						
-              if (strncmp(strbuf, location, strlen(location)) == 0)
-                matched = 1;
+              SensorInfos *p;
+              for (p = sensors; p->location != NULL; p++) {
+                if (strcmp(strbuf, p->location) == 0) {
+                  matched = 1;
+                  divisor = p->divisor;   /* Scale */
+                  break;
+                }
+              }
             }
           }
 				
@@ -139,6 +150,7 @@ static SInt32 _readTemperature(const char *className, const char *location, CFSt
             if (CFNumberGetTypeID() == CFGetTypeID(number) 
                       && CFNumberGetValue(number, kCFNumberSInt32Type, &temp)) {
 						
+              temp = (temp * 100) / divisor;
               if (temp > temperature)	
                 temperature = temp;
             }
@@ -156,6 +168,7 @@ static SInt32 _readTemperature(const char *className, const char *location, CFSt
   return temperature;         /* -1 := Error / No sensor */
 }
 
+
 /*
 ** PowerMac MDD and XServe
 */
@@ -165,23 +178,33 @@ static SInt32 _readAppleCPUThermo(void)
     SInt32 k = -1;
     
     if ( (rawT = _readTemperature("AppleCPUThermo", NULL, CFSTR("temperature"))) >= 0)
-      k = (rawT * 100) / 256 + 27315;
+      k = rawT / 256 + 27315;
     
     return k;    /* Temperature (* 100, in kelvin) or -1 (error / no sensor) */
 }
 
+
 /*
-** PowerBook Alu (12", 15" and 17") and PowerMac G5
-** For all those models, the value associated with the "location" key begins
-** with "CPU "  ("CPU BOTTOMSIZE", "CPU A AD7417 AMB", etc)
+** PowerBook Alu (12", 15" and 17"), PowerMac G5 and iMacG5
 */
+
+static SensorInfos _sensors[] = {
+  {"CPU/INTREPID BOTTOMSIDE", 65536},     // AluBook 15"
+  {"CPU BOTTOMSIDE",          65536},     // AluBook 15" and 17"
+  {"CPU TOPSIDE",             65536},     // AluBook 12"
+  {"CPU A AD7417 AD1",           10},     // PowerMac G5
+  {"CPU B AD7417 AD1",           10},     // PowerMac G5 (2nd CPU)
+  {"CPU T-Diode",                10},     // iMac G5
+  {NULL,                          1}      // LAST ENTRY
+};
+
 static SInt32 _readIOHWSensor(void)
 {
     SInt32 rawT;
     SInt32 k = -1;
     
-    if ( (rawT = _readTemperature("IOHWSensor", "CPU ", CFSTR("current-value"))) >= 0)
-      k = (rawT * 100) / 65536 + 27315;
+    if ( (rawT = _readTemperature("IOHWSensor", _sensors, CFSTR("current-value"))) >= 0)
+      k = rawT + 27315;
     
     return k;    /* Temperature (* 100, in kelvin) or -1 (error / no sensor) */
 }
