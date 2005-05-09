@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.34 2005/01/20 19:48:01 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.35 2005/05/09 21:04:56 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -49,6 +49,7 @@ extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_sgp_3( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_ma_4( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_AMD64)
 extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
@@ -116,6 +117,7 @@ const char **corenames_for_contest_rc572()
       "SS 2-pipe",
       "GO 2-pipe",
       "SGP 3-pipe",
+      "MA 4-pipe",
       #else /* no nasm -> only ansi cores */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -222,6 +224,13 @@ int apply_selcore_substitution_rules_rc572(int cindex)
       (GetProcessorFeatureFlags() & CPU_F_SSE)))) {
       if (cindex == 6) {  /* GO2 core requires extended MMX */
         cindex = 1;      /* default core */
+      }
+    }
+
+    if (!((GetProcessorFeatureFlags() & CPU_F_SSE) && 
+          (GetProcessorFeatureFlags() & CPU_F_SSE2))) {
+      if (cindex == 8) {  /* MA4 core requires SSE2 */
+        cindex = 1;     /* default core */
       }
     }
   }
@@ -569,6 +578,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       case 7:
         unit_func.gen_72 = rc5_72_unit_func_sgp_3;
         pipeline_count = 3;
+        break;
+      case 8:
+        unit_func.gen_72 = rc5_72_unit_func_ma_4;
+        pipeline_count = 4;
         break;
      // -----------
      #elif (CLIENT_CPU == CPU_AMD64)

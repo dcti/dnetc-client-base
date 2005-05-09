@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.148 2005/05/05 23:16:40 kakace Exp $
+# @(#)$Id: configure,v 1.288.2.149 2005/05/09 21:04:56 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -255,8 +255,8 @@ add_sources() # $1=os, $2=arch, $3=custom
                          rc5-72/x86/r72-dg3a.asm \
                          rc5-72/x86/r72-ss2.asm \
                          rc5-72/x86/r72-go2.asm \
-                         rc5-72/x86/r72-sgp3.asm"
-
+                         rc5-72/x86/r72-sgp3.asm \
+                         rc5-72/x86/r72-ma4.asm"
       fi
     fi # HAVE_RC5_72
 
