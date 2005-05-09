@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.14 2005/04/15 16:58:00 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.15 2005/05/09 19:57:57 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -157,6 +157,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/selcore.obj    \
         $(OUTPUTPATH)/selftest.obj   \
         $(OUTPUTPATH)/setprio.obj    \
+        $(OUTPUTPATH)/stress.obj     \
         $(OUTPUTPATH)/triggers.obj   \
         $(OUTPUTPATH)/util.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(COMMONPATH) -DLURK
@@ -429,6 +430,9 @@ $(VC_CHECK):
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 !endif
+
+{$(RC572SRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
