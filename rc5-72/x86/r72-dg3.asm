@@ -3,7 +3,14 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.3.2.10 2005/05/03 17:20:57 jlawson Exp $
+; $Id: r72-dg3.asm,v 1.3.2.11 2005/05/10 19:31:48 snikkel Exp $
+
+; Modified by Alexey <alexey.kovalev@intel.com>
+; Performance impromevements for P4 2.667Ghz:
+; History:
+; - initial performance: 3,803,443 keys/sec
+; - "lea shiftreg, [A1 + B1]" in KEYSETUP_BLOCK was replaced with add's and 
+;     moved to top of macro: 4,371,251 keys/sec = +15% improvement
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -122,16 +129,20 @@ defwork save_ebp
 
 
 %macro KEYSETUP_BLOCK 3
-        rol     A1, 3
+
+	mov	shiftreg, B1
+	add     B1, L1(%3)
+        
+	rol     A1, 3	
         rol     A2, 3
         rol     A3, 3
 
-        lea     shiftreg, [A1 + B1]
-        add     B1, L1(%3)
+        add	shiftreg, A1
         mov     S1(%2), A1
 
         add     B1, A1
-        rol     B1, shiftcount
+        rol     B1, shiftcount 
+	
 %ifidn %1,S
         add     A1, S1(%2+1)
 %else
@@ -174,38 +185,36 @@ defwork save_ebp
 %endmacro
 
 %macro ENCRYPTION_BLOCK 1
-        mov     shiftreg, B1
-        xor     A1, B1
-        xor     A2, B2
-
+        xor     A1, B1	
+        mov     shiftreg, B1	
         rol     A1, shiftcount
-        mov     shiftreg, B2
         add     A1, S1(2*%1)
-
-        xor     A3, B3
+	
+        xor     A2, B2	
+	mov     shiftreg, B2	
         rol     A2, shiftcount
-        mov     shiftreg, B3
-
         add     A2, S2(2*%1)
+	        
+        xor     A3, B3		
+	mov     shiftreg, B3	
         rol     A3, shiftcount
-        mov     shiftreg, A1
+	add     A3, S3(2*%1)
+	
+        xor     B1, A1	
+        mov     shiftreg, A1	
+	rol     B1, shiftcount	
+	add     B1, S1(2*%1+1)
 
-        add     A3, S3(2*%1)
-        xor     B1, A1
-        xor     B2, A2
-
-        rol     B1, shiftcount
-        mov     shiftreg, A2
-        add     B1, S1(2*%1+1)
-
-        xor     B3, A3
-        rol     B2, shiftcount
-        mov     shiftreg, A3
-
+        xor     B2, A2	
+	mov     shiftreg, A2
+	rol     B2, shiftcount
         add     B2, S2(2*%1+1)
+		
+        xor     B3, A3
+        mov     shiftreg, A3
         rol     B3, shiftcount
-
         add     B3, S3(2*%1+1)
+
 %endmacro
 
 
