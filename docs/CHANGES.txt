@@ -21,15 +21,16 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.90 2005/05/09 21:04:56 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.91 2005/05/11 19:59:22 snikkel Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9010-495  fix: x86: Fixed cores dg3, sgp3 and snjl.
             new: all: Added a stress-test for RC5-72 cores
-            imp:macosx: Revised temperature monitoring for G5
-            new: x86: Add new core ma4 (#3415)
+            imp: macosx: Revised temperature monitoring for G5
+            new: x86: Added new cores ma4 (#3415) and mmx (#3770)
+            imp: x86: Speed improvements for dg3 (#3601) and go2 (#3265) cores
 
 2.9009-494  chg: all: Major clean up in the OGR core base
             imp: ppc: Modified KOGE cores - should be faster in most cases
