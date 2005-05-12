@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.3.2.7 2005/03/08 18:05:42 snikkel Exp $
+; $Id: x86ident.asm,v 1.3.2.8 2005/05/12 06:09:06 jlawson Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -389,7 +389,7 @@ _cx486:         ; -----------------------------------------------------
                 jnz     _cxeval        ; don't need DIR1 if not
                 getCCR  CX86_DIR1      ; read DIR1
                 mov     ch, al         ; save it
-                jmp     short _cxeval  ; go evaluate
+                jmp     _cxeval        ; go evaluate
 
 _cx486s:        getCCR  CX86_CCR2      ; get the CCR2 value 
                 mov     cl, al         ; save ccr2
