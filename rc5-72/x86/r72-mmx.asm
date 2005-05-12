@@ -6,7 +6,7 @@
 ;  Author: Carsten Haustein (chaus@cs.uni-potsdam.de)
 ;
 ;---------------------------------------------------------------------
-; $Id: r72-mmx.asm,v 1.1.2.1 2005/05/11 19:59:05 snikkel Exp $
+; $Id: r72-mmx.asm,v 1.1.2.2 2005/05/12 13:13:23 stream Exp $
 
 
 ;
@@ -248,7 +248,7 @@
 [GLOBAL rc5_72_unit_func_mmx]
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _DATA USE32 ALIGN=16]
+[SECTION _DATA USE32 ALIGN=16 CLASS=DATA]
 %else
 [SECTION .data]
 %endif
@@ -283,7 +283,7 @@
 
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
-[SECTION _TEXT USE32 ALIGN=16]
+[SECTION _TEXT USE32 ALIGN=16 CLASS=CODE]
 %else
 [SECTION .text]
 %endif
