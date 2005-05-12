@@ -4,14 +4,18 @@
 ; For use by distributed.net. 
 ;
 ; based on r72-dg2 and RC5-64 'RG/HB re-pair II' cores
-; $Id: r72-go2.asm,v 1.1.2.8 2005/05/10 19:32:22 snikkel Exp $
+; $Id: r72-go2.asm,v 1.1.2.9 2005/05/12 04:23:06 jlawson Exp $
 
 %define P	  0xB7E15163
 %define Q	  0x9E3779B9
 %define S_not(N)  (P+Q*(N))
 
-
+%ifdef __OMF__ 		;  Borland and Watcom compilers/linkers
 [SECTION _DATA FLAT USE32 align=16 CLASS=DATA]
+%else
+[SECTION .data]
+%endif
+
 
 incr		dd	2,3
 S_not_3		dd	S_not(3),S_not(3)
