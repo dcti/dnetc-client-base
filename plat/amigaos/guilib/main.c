@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: main.c,v 1.2.4.3 2005/05/14 19:11:13 oliver Exp $
+ * $Id: main.c,v 1.2.4.4 2005/05/14 21:29:07 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -159,7 +159,7 @@ struct NewMenu ClientMenus[] = {
 
 const char AboutText[] =
    "distributed.net client - a product of distributed.net\n"
-   "%s\nCopyright (C) 1997-2004 distributed.net\n\n"
+   "%s\nCopyright (C) 1997-2005 distributed.net\n\n"
    "\33cAmigaOS clients maintained by\n"
    "Oliver Roberts <oliver@futaura.co.uk>\n\n"
    "ClassAct/ReAction GUI module (v%ld.%ld) maintained by\n"

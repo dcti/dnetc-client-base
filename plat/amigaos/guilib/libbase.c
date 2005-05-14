@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: libbase.c,v 1.2.4.1 2004/05/08 10:29:31 oliver Exp $
+ * $Id: libbase.c,v 1.2.4.2 2005/05/14 21:29:07 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -21,7 +21,7 @@ LONG _start(VOID)
 }
 
 const char ExLibName[] = "dnetcgui.library";
-#define ExLibID (VSTRING "\0Copyright © 2001-2004 Oliver Roberts. All rights reserved.")
+#define ExLibID (VSTRING "\0Copyright © 2001-2005 Oliver Roberts. All rights reserved.")
 
 struct ExecBase *SysBase       = NULL;
 struct DosLibrary  *DOSBase       = NULL;
@@ -295,7 +295,7 @@ STATIC CONST struct TagItem LibCreateTags[] =
    {TAG_DONE,       0}
 };
 
-STATIC CONST struct Resident RomTag = {
+STATIC CONST struct Resident RomTag __attribute__((used)) = {
    RTC_MATCHWORD,
    (struct Resident *)&RomTag,
    (struct Resident *)&RomTag+1,
