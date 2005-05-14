@@ -16,7 +16,7 @@
  * The pipe shim itself is generic and will work without changes with any
  * backend that SetStdHandle()s the 'advertised' pipe ends.
  *
- * $Id: w32cuis.c,v 1.2.4.1 2004/06/27 22:01:26 jlawson Exp $
+ * $Id: w32cuis.c,v 1.2.4.2 2005/05/14 04:48:35 jlawson Exp $
 */
 
 /* #define HAVE_EXEC_AS_TEMPFILE */  /* davehart's solution */
@@ -574,6 +574,9 @@ static int __ansigetopts( const char *cmdbuf, int cmdbuflen,
 static HWND __get_console_hwnd(void)
 {
   HWND hwnd = NULL;
+
+// TODO: when on Win2k/WinXP we should directly call GetConsoleWindow()
+
   char szWinTitle[MAX_PATH];
   DWORD dwLen = GetConsoleTitle( szWinTitle, sizeof( szWinTitle ) );
   if (dwLen > 0 && dwLen < (sizeof(szWinTitle)-20))
@@ -710,23 +713,40 @@ static DWORD __exec_with_pipes(const char *filename) /* cyp's solution */
         }
         else
         {
-          char buffer[1024];
-          int wpos = 0, ok = lstrlen(filename);
-          while (ok > 0 && filename[ok-1]!='\\' &&
-                           filename[ok-1]!='/' &&
-                           filename[ok-1]!=':')
-            ok--;
-          while (filename[ok] && filename[ok]!='.')
-            buffer[wpos++] = filename[ok++];
+          char buffer[1024], buffer2[64];
+          BOOL ok = FALSE;
+
+          // copy just the basename (ie: "dnetc") into buffer.
+          int wpos = 0, spos = lstrlen(filename);
+          while (spos > 0 && filename[spos-1]!='\\' &&
+                           filename[spos-1]!='/' &&
+                           filename[spos-1]!=':')
+            spos--;
+          while (filename[spos] && filename[spos]!='.' && wpos < sizeof(buffer) - 16)
+            buffer[wpos++] = filename[spos++];
+
+          // append a suffix (ie: "dnetc.apipe.in") to create the stdin name.
           lstrcpy( &buffer[wpos], ".apipe.in" );
-          wsprintf(&buffer[sizeof(buffer)-64],"%ld",HandleToLong(clientIn));
-          ok = 0;
-          if (SetEnvironmentVariable(buffer,&buffer[sizeof(buffer)-64]))
+
+          // quick check to see if the variable is already set.  if it is found
+          // then we are probably in a recursion loop and we should stop now.
+          if (GetEnvironmentVariable(buffer, buffer2, sizeof(buffer2)) ||
+              GetLastError() != ERROR_ENVVAR_NOT_FOUND)
           {
-            wsprintf(&buffer[sizeof(buffer)-64],"%ld",(long)clientOut);
-            lstrcpy( &buffer[wpos], ".apipe.out" );
-            if (SetEnvironmentVariable(buffer,&buffer[sizeof(buffer)-64]))
-              ok = 1;
+            errMessage("Console recursion loop detected", 0);
+            SetLastError(ERROR_BAD_PATHNAME);
+          }
+          else
+          {
+            wsprintf(buffer2,"%ld",HandleToLong(clientIn));
+            if (SetEnvironmentVariable(buffer,buffer2))
+            {
+              // append a suffix (ie: "dnetc.apipe.out") to create the stdout name.
+              lstrcpy( &buffer[wpos], ".apipe.out" );
+              wsprintf(buffer2,"%ld",HandleToLong(clientOut));
+              if (SetEnvironmentVariable(buffer,buffer2))
+                ok = TRUE;
+            }
           }
           if (!ok)
           {
