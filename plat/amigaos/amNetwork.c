@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amNetwork.c,v 1.2.4.2 2004/01/08 21:00:48 oliver Exp $
+ * $Id: amNetwork.c,v 1.2.4.3 2005/05/14 19:08:38 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -57,6 +57,9 @@ BOOL GenesisIsOnline(LONG flags);
 struct Library *SocketBase = NULL;
 #ifndef NO_MIAMI
 struct Library *MiamiBase = NULL;
+#ifdef __amigaos4__
+struct MiamiIFace *IMiami = NULL;
+#endif
 #endif
 struct Library *GenesisBase = NULL;
 static struct Library *TSocketBase = NULL;
@@ -148,9 +151,18 @@ int amigaNetworkingInit(BOOL notlurking)
    if (notlurking) {
       #ifndef NO_MIAMI
       MiamiBase = OpenLibrary((unsigned char *)"miami.library",11UL);
+      #ifdef __amigaos4__
+      if (MiamiBase) {
+         if (!(IMiami = (struct MiamiIFace *)GetInterface( MiamiBase, "main", 1L, NULL ))) {
+            CloseLibrary(MiamiBase);
+            MiamiBase = NULL;
+	 }
+      }
+      #else
       if (!MiamiBase) {
          GenesisBase = OpenLibrary("genesis.library",0UL);
       }
+      #endif
       #elif !defined(__amigaos4__)
       GenesisBase = OpenLibrary("genesis.library",0UL);
       #endif
@@ -175,6 +187,10 @@ void amigaNetworkingDeinit(void)
    }
 #ifndef NO_MIAMI
    if (MiamiBase) {
+      #ifdef __amigaos4__
+      DropInterface((struct Interface *)IMiami);
+      IMiami = NULL;
+      #endif
       CloseLibrary(MiamiBase);
       MiamiBase = NULL;
    }
@@ -249,7 +265,7 @@ static int __CheckOnlineStatus(void)
 */
 int amigaOnOffline(int online, char *ifacename)
 {
-   #ifndef __amigaos4__
+   #if !defined(NO_MIAMI) || !defined(__amigaos4__)
    struct RxsLib *RexxSysBase;
    struct MsgPort *arexxreply,*port;
    struct RexxMsg *arexxmsg;
@@ -260,10 +276,12 @@ int amigaOnOffline(int online, char *ifacename)
 
    #ifndef NO_MIAMI
    port = FindPort("MIAMI.1");
+   #ifndef __amigaos4__
    if (!port) {
       port = FindPort("GENESIS");
       genesis = 1;
    }
+   #endif
    #elif !defined(__amigaos4__)
    port = FindPort("GENESIS");
    genesis = 1;
