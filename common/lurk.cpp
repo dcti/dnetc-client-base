@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.61.4.13 2004/06/27 21:39:34 jlawson Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.61.4.14 2005/05/14 19:02:15 oliver Exp $"; }
 
 //#define TRACE
 
@@ -538,8 +538,22 @@ const char **LurkGetConnectionProfileList(void)
     static char namestorage[8][IFNAMSIZ];
     static const char *configptrs[10];
     struct Library *MiamiBase;
+    #ifdef __amigaos4__
+    struct MiamiIFace *IMiami;
+    #endif
     configptrs[0] = NULL;
-    if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
+    MiamiBase = OpenLibrary((unsigned char *)"miami.library",11);
+    #ifdef __amigaos4__
+    if (MiamiBase)
+    {
+       if (!(IMiami = (struct MiamiIFace *)GetInterface( MiamiBase, "main", 1L, NULL )))
+       {
+          CloseLibrary(MiamiBase);
+          MiamiBase = NULL;
+       }
+    }
+    #endif
+    if (MiamiBase)
     {
       struct if_nameindex *name,*nameindex;
       if ((nameindex = if_nameindex())) {
@@ -557,6 +571,9 @@ const char **LurkGetConnectionProfileList(void)
         configptrs[cnt] = NULL;
         if_freenameindex(nameindex);
       }
+      #ifdef __amigaos4__
+      DropInterface((struct Interface *)IMiami);
+      #endif
       CloseLibrary(MiamiBase);
     }
     return configptrs;
@@ -1518,11 +1535,25 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
              if (strcmp(ifr->ifr_name,"mi0") == 0) // IFF_UP is always set for mi0
              {
                struct Library *MiamiBase;
-               if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
+               MiamiBase = OpenLibrary((unsigned char *)"miami.library",11);
+               #ifdef __amigaos4__
+               if (MiamiBase)
+               {
+                 struct MiamiIFace *IMiami;
+                 if ((IMiami = (struct MiamiIFace *)GetInterface( MiamiBase, "main", 1L, NULL )))
+                 {
+                   isup = MiamiIsOnline("mi0");
+                   DropInterface((struct Interface *)IMiami);
+                   CloseLibrary(MiamiBase);
+                 }
+               }
+               #else
+               if (MiamiBase)
                {
                  isup = MiamiIsOnline("mi0");
                  CloseLibrary(MiamiBase);
                }
+               #endif
              }
              else if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
              #else
