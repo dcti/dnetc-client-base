@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.24 2004/07/13 22:26:07 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.25 2005/05/14 21:15:08 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -241,7 +241,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2004, distributed.net\n");
+                    "Copyright 1997-2005, distributed.net\n");
 #if defined HAVE_RC5_64_CORES
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
