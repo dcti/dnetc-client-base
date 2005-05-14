@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.10.4.5 2004/08/28 20:19:11 oliver Exp $
+ Document revision $Id: readme.amiga,v 1.10.4.6 2005/05/14 19:03:15 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -180,6 +180,7 @@
     FETCH   - Fetch new packets for the client(s)
     FLUSH   - Flush the client(s) buffers
     RESTART - Restart the clients(s)
+    CLEAR   - Clear the console window
 
   4.3  Myzar - alternative front-end for the client ------------------
 
