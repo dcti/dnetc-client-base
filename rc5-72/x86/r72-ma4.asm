@@ -2,12 +2,13 @@
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
+;  (requires SSE2 instruction support)
 ; MMX Extentions: Matt Andrews <andrewsm@ufl.edu> 2003/09/17
 ; Author: Slawomir Piotrowski <sgp@telsatgp.com.pl>
 ; Version 1.0    2003/09/08  23:53
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-ma4.asm,v 1.1.2.2 2003/09/23 10:26:32 andreasb Exp $
+; $Id: r72-ma4.asm,v 1.1.2.3 2005/05/14 18:22:51 jlawson Exp $
 
 ; SIMD Core Idea
 ; The only areas of the CPU that former cores have not utilized are the
