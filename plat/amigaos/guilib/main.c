@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: main.c,v 1.2.4.2 2004/05/08 10:29:31 oliver Exp $
+ * $Id: main.c,v 1.2.4.3 2005/05/14 19:11:13 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -40,7 +40,7 @@
 #define DNETC_MSG_UNPAUSE	0x8
 
 enum { REXX_QUIT=0, REXX_HIDE, REXX_SHOW, REXX_PAUSE, REXX_UNPAUSE,
-       REXX_UPDATE, REXX_FETCH, REXX_FLUSH, REXX_RESTART, NUM_REXX };
+       REXX_UPDATE, REXX_FETCH, REXX_FLUSH, REXX_RESTART, REXX_CLEAR, NUM_REXX };
 
 struct ClientGUIParams GUIParams;
 
@@ -110,7 +110,7 @@ ULONG ArexxHookCmds;
 
 struct ConsoleLines ConsoleLines68K, ConsoleLinesPPC;
 
-enum { MENU_IGNORE_ID, MENU_PAUSE_ID, MENU_HIDE_ID, MENU_ABOUT_ID, MENU_QUIT_ID, MENU_68KPAUSE_ID,
+enum { MENU_IGNORE_ID, MENU_PAUSE_ID, MENU_HIDE_ID, MENU_ABOUT_ID, MENU_QUIT_ID, MENU_CLEAR_ID, MENU_68KPAUSE_ID,
        MENU_68KRESTART_ID, MENU_68KBENCHMARK_ID, MENU_68KBENCHMARKALL_ID,
        MENU_68KTEST_ID, MENU_68KCONFIG_ID, MENU_68KFETCH_ID, MENU_68KFLUSH_ID, MENU_68KUPDATE_ID, MENU_68KSHUTDOWN_ID,
        MENU_PPCPAUSE_ID, MENU_PPCRESTART_ID, MENU_PPCBENCHMARK_ID, MENU_PPCBENCHMARKALL_ID,
@@ -119,11 +119,13 @@ enum { MENU_IGNORE_ID, MENU_PAUSE_ID, MENU_HIDE_ID, MENU_ABOUT_ID, MENU_QUIT_ID,
 
 struct NewMenu ClientMenus[] = {
    { NM_TITLE, "Project",	NULL, 0, 0, NULL },
-   {  NM_ITEM, "About...",		"A",  0, 0, (APTR)MENU_ABOUT_ID },
-   {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
    {  NM_ITEM, "Pause All",	"P",  CHECKIT | MENUTOGGLE, 0, (APTR)MENU_PAUSE_ID },
    {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
+   {  NM_ITEM, "Clear Window",	"Z",  0, 0, (APTR)MENU_CLEAR_ID },
+   {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
    {  NM_ITEM, "Hide",		"H",  0, 0, (APTR)MENU_HIDE_ID },
+   {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
+   {  NM_ITEM, "About...",		"A",  0, 0, (APTR)MENU_ABOUT_ID },
    {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
    {  NM_ITEM, "Quit",		"Q",  0, 0, (APTR)MENU_QUIT_ID  },
    { NM_TITLE, "68K Client",    NULL, NM_MENUDISABLED, 0, NULL },
@@ -324,6 +326,21 @@ VOID UnIconify(VOID)
    }
 }
 
+static VOID ClearConsole(struct ConsoleLines *console, struct Gadget *gadget)
+{
+   if (gadget) {
+      if (GlbIWindowP) {
+         UpdateGadget(GlbIWindowP,gadget,LISTBROWSER_Labels,~0,TAG_END);
+      }
+      FreeListBrowserList(&console->list);
+      NewList(&console->list);
+      console->numlines = 0;
+      if (GlbIWindowP) {
+         UpdateGadget(GlbIWindowP,gadget,LISTBROWSER_Labels,(ULONG)console,TAG_END);
+      }
+   }
+}
+
 SAVEDS VOID HandleAppMenu(REG(a0,struct Hook *hook), REG(a2,Object *winobj), REG(a1,struct AppMessage *msg))
 {
    if (msg->am_Type == AMTYPE_APPMENUITEM) {
@@ -342,7 +359,8 @@ SAVEDS VOID HandleRexx(REG(a0,struct ARexxCmd *cmd), REG(a1,struct RexxMsg *rm))
       DNETC_MSG_FETCH | DNETC_MSG_FLUSH,
       DNETC_MSG_FETCH,
       DNETC_MSG_FLUSH,
-      DNETC_MSG_RESTART
+      DNETC_MSG_RESTART,
+      0
    };
 
    ULONG id = cmd->ac_ID; 
@@ -355,6 +373,11 @@ SAVEDS VOID HandleRexx(REG(a0,struct ARexxCmd *cmd), REG(a1,struct RexxMsg *rm))
 
       case REXX_SHOW:
          if (!GlbWindowP) UnIconify();
+         break;
+
+      case REXX_CLEAR:
+         ClearConsole(&ConsoleLines68K,GlbGadgetsP[GAD_CON68K]);
+         ClearConsole(&ConsoleLinesPPC,GlbGadgetsP[GAD_CONPPC]);
          break;
 
       default:
@@ -419,6 +442,11 @@ LIBFUNC ULONG dnetcguiHandleMsgs(REG(d0,ULONG signals),REG(a6,struct LibBase *lb
 
                               case MENU_HIDE_ID:
                                  Iconify();
+                                 break;
+
+                              case MENU_CLEAR_ID:
+                                 ClearConsole(&ConsoleLines68K,GlbGadgetsP[GAD_CON68K]);
+                                 ClearConsole(&ConsoleLinesPPC,GlbGadgetsP[GAD_CONPPC]);
                                  break;
 
                               case MENU_PAUSE_ID:
