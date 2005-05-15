@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.1.2.7 2004/08/16 01:42:08 piru Exp $
+ Document revision $Id: readme.morphos,v 1.1.2.8 2005/05/15 11:30:38 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -130,15 +130,16 @@
     It is possible to control the clients with ARexx, via the DNETC.1
     port.  The following commands are available:
 
-    QUIT    - Shutdown the client(s) and exit
+    QUIT    - Shutdown the client and exit
     HIDE    - Iconify/hide the GUI
     SHOW    - Uniconify/show the GUII
-    PAUSE   - Pause the client(s)
-    UNPAUSE - Unpause the client(s)
-    UPDATE  - Flush the client(s) buffers and fetch new packets
-    FETCH   - Fetch new packets for the client(s)
-    FLUSH   - Flush the client(s) buffers
-    RESTART - Restart the clients(s)
+    PAUSE   - Pause the client
+    UNPAUSE - Unpause the client
+    UPDATE  - Flush the client buffers and fetch new packets
+    FETCH   - Fetch new packets for the client
+    FLUSH   - Flush the client buffers
+    RESTART - Restart the clients
+    CLEAR   - Clear the console window
 
  5.0  Credits & thank yous -------------------------------------------
 
