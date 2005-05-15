@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.36 2005/05/11 19:59:05 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.37 2005/05/15 12:18:44 piru Exp $"; }
 
 //#define TRACE
 
@@ -321,8 +321,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
         /* non-altivec defaults, if no OS support */
         case 0x8000: cindex = -1; break; // 7450 (G4+)    == ?
         case 0x8001: cindex = -1; break; // 7455 (G4+)    == ?
-        case 0x8002: cindex = 2;  break; // 7457/7447 (G4+) == KKS 604e
+        case 0x8002: cindex = 2;  break; // 7447/7457 (G4+) == KKS 604e
         case 0x8003: cindex = -1; break; // 7447A (G4+)   == ?
+        case 0x8004: cindex = -1; break; // 7448 (G4+)    == ?
         case 0x800C: cindex = -1; break; // 7410 (G4)     == ?
         case 0x0039: cindex = -1; break; // 970 (G5)      == ?
         case 0x003C: cindex = -1; break; // 970FX (G5)    == ?
@@ -340,6 +341,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
             case 0x8001: cindex = 4; break; // 7455 (G4+)  == KKS 7450
             case 0x8002: cindex = 4; break; // 7457/7447 (G4+)  == KKS 7450
             case 0x8003: cindex = 4; break; // 7447A (G4+)  == KKS 7450
+            case 0x8004: cindex = 4; break; // 7448 (G4+)  == KKS 7450
             case 0x800C: cindex = 3; break; // 7410 (G4)   == KKS 7400
             #if 0       // Disabled (kakace)
             case 0x0039: cindex = 7; break; // 970 (G5)    == KKS 970
@@ -769,6 +771,7 @@ unsigned int estimate_nominal_rate_rc572()
         case 0x8001:      // 7455
         case 0x8002:      // 7457/7447
         case 0x8003:      // 7447A
+        case 0x8004:      // 7448
           keyrate = (detected_flags & CPU_F_ALTIVEC) ? 10700 : 3500; break;
         case 0x0039:      // 970
         case 0x003C:      // 970FX

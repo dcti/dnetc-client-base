@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.34 2005/01/20 19:48:01 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.35 2005/05/15 12:18:44 piru Exp $"; }
 
 //#define TRACE
 
@@ -329,7 +329,8 @@ int selcoreGetPreselectedCoreForProject_ogr()
           case 0x8000: // 7441/7450/7451
           case 0x8001: // 7445/7455
           case 0x8002: // 7447/7457
-          case 0x8003: // 744x/745x
+          case 0x8003: // 7447A
+          case 0x8004: // 7448
               cindex = 1; break;      // PPC-vector
           default:
               cindex =-1; break;      // default : micro-bench
@@ -587,6 +588,7 @@ unsigned int estimate_nominal_rate_ogr()
         case 0x8001:      // 7455
         case 0x8002:      // 7457/7447
         case 0x8003:      // 7447A
+        case 0x8004:      // 7448
           noderate = (detected_flags & CPU_F_ALTIVEC) ? 24000 : 17000; break;
         case 0x0039:      // 970
         case 0x003C:      // 970FX

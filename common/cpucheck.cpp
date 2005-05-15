@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.91 2005/05/15 08:38:21 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.92 2005/05/15 12:18:44 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -507,7 +507,8 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x8000, "7441/7450/7451 (G4)" },
       {    0x8001, "7445/7455 (G4)"      },
       {    0x8002, "7447/7457 (G4)"      },
-      {    0x8003, "7447A (G4)"        },
+      {    0x8003, "7447A (G4)"          },
+      {    0x8004, "7448 (G4)"           },
       {    0x800C, "7410 (G4)"           },
       { NONPVR(1), "620"                 }, //not PVR based
       { NONPVR(2), "630"                 }, //not PVR based
@@ -683,6 +684,7 @@ static long __GetRawProcessorID(const char **cpuname)
            { "7447/7457",       0x8002  },
            { "7410",            0x800C  },
            { "7447A",           0x8003  },
+           { "7448",            0x8004  },
            { "PPC970",          0x0039  },
            { "PPC970FX",        0x003C  }
            };
@@ -805,6 +807,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x8001:   // 7455 (G4)
       case 0x8002:   // 7447/7457 (G4)
       case 0x8003:   // 7447A (G4)
+      case 0x8004:   // 7448 (G4)
       case 0x800C:   // 7410 (G4)
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
@@ -837,6 +840,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x8001:   // 7455 (G4)
       case 0x8002:   // 7457/7447 (G4)
       case 0x8003:   // 7447A (G4)
+      case 0x8004:   // 7448 (G4)
       case 0x800C:   // 7410 (G4)
       case 0x0039:   // 970 (G5)
       case 0x003C:   // 970FX (G5)
