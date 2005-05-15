@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.93 2005/05/15 12:19:20 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.94 2005/05/15 23:31:03 jlawson Exp $
 ==========================================================================
 
 2.9000
@@ -33,6 +33,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.93 2005/05/15 12:19:20 piru Exp $
             imp: x86: Speed improvements for dg3 (#3601) and go2 (#3265) cores
             fix: win32: Prevent possible console mode recursion loop (#3846)
             imp: ppc: Now recognize PPC 7448
+            fix: win32: Eliminate random crash on NT service shutdown (#3159)
 
 2.9009-494  chg: all: Major clean up in the OGR core base
             imp: ppc: Modified KOGE cores - should be faster in most cases
