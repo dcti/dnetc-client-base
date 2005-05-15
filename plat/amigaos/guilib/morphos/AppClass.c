@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 2004 - All Rights Reserved
+ * Copyright distributed.net 2004-2005 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: AppClass.c,v 1.1.2.3 2004/01/14 01:21:19 piru Exp $
+ * $Id: AppClass.c,v 1.1.2.4 2005/05/15 11:29:07 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -77,12 +77,21 @@ static ULONG mCloseReq(struct Application_Data *data, struct DnetcLibrary *LibBa
 }
 
 /**********************************************************************
-	mUnIconifiedc
+	mUnIconified
 **********************************************************************/
 
 static ULONG mUnIconified(struct Application_Data *data)
 {
 	return DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
+}
+
+/**********************************************************************
+	mClerConsole
+**********************************************************************/
+
+static ULONG mClearConsole(struct Application_Data *data)
+{
+	return DoMethod(data->list, MUIM_NList_Clear);
 }
 
 /**********************************************************************
@@ -96,6 +105,7 @@ static ULONG mGetMenuItem(struct Application_Data *data, struct DnetcLibrary *Li
 	switch (msg->menu)
 	{
 		case MENU_MUISETTINGS_ID	: DoMethod(obj, MUIM_Application_OpenConfigWindow, 0); break;
+		case MENU_CLEAR_ID			: DoMethod(obj, MUIM_MyApplication_ClearConsole); break;
 		case MENU_ABOUT_ID	: set(data->req, MUIA_Window_Open, TRUE); break;
 
 		case MENU_PPCPAUSE_ID	:
@@ -189,6 +199,7 @@ DISPATCHERPROTO(MyApp_Dispatcher)
 		case MUIM_MyApplication_GetMenuItem		: return mGetMenuItem	(data, LibBase, (APTR)msg, obj);
 		case MUIM_MyApplication_CloseReq			: return mCloseReq		(data, LibBase);
 		case MUIM_MyApplication_UnIconified		: return mUnIconified		(data);
+		case MUIM_MyApplication_ClearConsole		: return mClearConsole		(data);
 	}
 	return DoSuperMethodA(cl, obj, msg);
 }

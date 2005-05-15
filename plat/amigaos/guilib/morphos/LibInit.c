@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 2004 - All Rights Reserved
+ * Copyright distributed.net 2004-2005 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: LibInit.c,v 1.1.2.1 2004/01/09 22:43:27 piru Exp $
+ * $Id: LibInit.c,v 1.1.2.2 2005/05/15 11:29:07 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *

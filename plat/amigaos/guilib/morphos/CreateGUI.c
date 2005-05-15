@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 2004 - All Rights Reserved
+ * Copyright distributed.net 2004-2005 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.c,v 1.1.2.5 2004/01/14 01:21:19 piru Exp $
+ * $Id: CreateGUI.c,v 1.1.2.6 2005/05/15 11:29:07 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -25,6 +25,7 @@
 
 #include	"CreateGUI.h"
 #include	"guilib_version.h"
+#include	"AppClass.h"
 
 struct Library		*MUIMasterBase	= NULL;
 
@@ -42,6 +43,8 @@ static struct NewMenu Menus[]	=
 {
    { NM_TITLE, "Project",	NULL, 0, 0, NULL },
    {  NM_ITEM, "MUI settings...",	"M", 0, 0, (APTR)MENU_MUISETTINGS_ID },
+   {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
+   {  NM_ITEM, "Clear Window",	"Z",  0, 0, (APTR)MENU_CLEAR_ID },
    {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
    {  NM_ITEM, "About...",		"A",  0, 0, (APTR)MENU_ABOUT_ID },
    {  NM_ITEM, NM_BARLABEL,	NULL, 0, 0, NULL},
@@ -61,6 +64,24 @@ static struct NewMenu Menus[]	=
    { NM_END }
 };
 
+static
+ULONG arexx_clear(struct Hook *MyHook,
+                  Object *app,
+                  LONG *params)
+{
+	DoMethod(app, MUIM_MyApplication_ClearConsole, 0);
+
+	return 0;
+}
+
+static const struct Hook arexx_clear_hook =
+{
+	{0, 0},
+	(ULONG (*)(void)) HookEntry,
+	(ULONG (*)(void)) arexx_clear,
+	0
+};
+
 static struct MUI_Command commands[]	=
 {
 	{ "PAUSE"	, MC_TEMPLATE_ID, DNETC_MSG_PAUSE, NULL },
@@ -68,7 +89,9 @@ static struct MUI_Command commands[]	=
 	{ "UPDATE"	, MC_TEMPLATE_ID, DNETC_MSG_FETCH | DNETC_MSG_FLUSH, NULL },
 	{ "FETCH"	, MC_TEMPLATE_ID, DNETC_MSG_FETCH, NULL },
 	{ "FLUSH"	, MC_TEMPLATE_ID, DNETC_MSG_FLUSH, NULL },
-	{ "RESTART"	, MC_TEMPLATE_ID, DNETC_MSG_RESTART, NULL }
+	{ "RESTART"	, MC_TEMPLATE_ID, DNETC_MSG_RESTART, NULL },
+	{ "CLEAR"	, NULL, 0, &arexx_clear_hook },
+	{ NULL, NULL, 0, NULL}
 };
 
 /**********************************************************************
@@ -89,7 +112,7 @@ Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct Dn
 	RawDoFmt(
 	 "\33cdistributed.net client - a product of distributed.net\n"
 	 "%s\n"
-	 "Copyright 1997-2004 distributed.net\n"
+	 "Copyright 1997-2005 distributed.net\n"
 	 "\n"
 	 "\n"
 	 "MorphOS client maintained by\n"

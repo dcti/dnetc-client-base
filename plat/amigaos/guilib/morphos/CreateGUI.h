@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 2004 - All Rights Reserved
+ * Copyright distributed.net 2004-2005 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.h,v 1.1.2.1 2004/01/09 22:43:27 piru Exp $
+ * $Id: CreateGUI.h,v 1.1.2.2 2005/05/15 11:29:07 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -27,7 +27,7 @@
 
 #define	MENUBASE	0x8000
 
-enum { MENU_IGNORE_ID = MENUBASE, MENU_MUISETTINGS_ID, MENU_ABOUT_ID, MENU_QUIT_ID,
+enum { MENU_IGNORE_ID = MENUBASE, MENU_MUISETTINGS_ID, MENU_ABOUT_ID, MENU_QUIT_ID, MENU_CLEAR_ID,
        MENU_PPCPAUSE_ID, MENU_PPCRESTART_ID, MENU_PPCBENCHMARK_ID, MENU_PPCBENCHMARKALL_ID,
        MENU_PPCTEST_ID, MENU_PPCCONFIG_ID, MENU_PPCFETCH_ID, MENU_PPCFLUSH_ID, MENU_PPCUPDATE_ID, MENU_PPCSHUTDOWN_ID };
 
