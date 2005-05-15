@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.90 2005/05/03 17:13:26 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.91 2005/05/15 08:38:21 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2248,15 +2248,16 @@ unsigned int GetProcessorFrequency()
   #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     struct timeval tv1, tv2, elapsed_time;
     ui64 calltime = x86rdtsc();
-    usleep(0);
+    sleep(0);
     calltime = x86rdtsc() - calltime;
     
     CliGetMonotonicClock(&tv1); 
     ui64 prevtime = x86rdtsc();
-    usleep(1000000);
+    sleep(1);
     ui64 newtime = x86rdtsc();
     CliGetMonotonicClock(&tv2);
     CliTimerDiff(&elapsed_time,&tv1,&tv2);
+
     freq = (unsigned int)((newtime - prevtime - calltime) / (elapsed_time.tv_usec + elapsed_time.tv_sec * 1000000));
     if (freq != 0)
     {
