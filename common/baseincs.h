@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.18 2004/10/13 20:28:38 jbgill Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.19 2005/05/16 21:47:38 jbgill Exp $"
 
 #include "cputypes.h"
 
@@ -174,6 +174,7 @@
   #include "plat/netware/netware.h" //for stuff in netware.cpp
 #elif (CLIENT_OS == OS_NETWARE6)
   #include <sys/time.h>
+  #include <sys/times.h>
   #include <sys/file.h>
   #include <unistd.h>
   #include <fcntl.h>
