@@ -21,7 +21,7 @@ Version bump guide:
   `------------- Denotes a client rewrite.
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.95 2005/05/16 06:53:42 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.96 2005/05/16 17:09:49 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -35,6 +35,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.95 2005/05/16 06:53:42 jlawson Exp
             imp: ppc: Now recognize PPC 7448
             fix: win32: Eliminate random crash on NT service shutdown (#3159)
             new: all: Display detected CPU clockspeed on "-cpuinfo"
+            imp: ppc: Select vector cores as defaults whenever possible.
 
 2.9009-494  chg: all: Major clean up in the OGR core base
             imp: ppc: Modified KOGE cores - should be faster in most cases
