@@ -19,7 +19,13 @@ Running:
   Extract the zip file into a directory on the server, and "load <path>/dnetc"
 at the console.  Then follow the regular steps for configuring and running 
 the client as you would on any other platform.  To stop running, do "unload
-dnetc" at the console.
+dnetc" at the console.  If your system does not already have libgcc_s.nlm
+in sys:\system, you will need to put the version included with this client
+there yourself (or in another directory on your search path).  I would recommend 
+using the libgcc_s.nlm that Novell supplies with your Netware version versus
+using the one included here whenever possible.
+  
+
  
 Notes:
 
