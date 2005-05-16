@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.35 2005/05/15 12:18:44 piru Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.36 2005/05/16 16:53:06 kakace Exp $"; }
 
 //#define TRACE
 
@@ -315,6 +315,9 @@ int selcoreGetPreselectedCoreForProject_ogr()
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
       if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
+        cindex = 1;     // PPC-vector
+
+        #if 0 //------------- Yes, PPC-Vector is for any AltiVec capable CPU !
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
           case 0x0039: // PPC 970
@@ -335,6 +338,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
           default:
               cindex =-1; break;      // default : micro-bench
         }
+        #endif //------------
       }
       #endif
     }
@@ -552,7 +556,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
 
 unsigned int estimate_nominal_rate_ogr()
 {
-  unsigned int rate = 0;
+  unsigned int rate = 0;  /* Unknown - Not available */
 
   #if (CLIENT_CPU == CPU_POWERPC)
     static long detected_type = -123;

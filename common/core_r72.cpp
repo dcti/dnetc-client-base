@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.37 2005/05/15 12:18:44 piru Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.38 2005/05/16 16:53:06 kakace Exp $"; }
 
 //#define TRACE
 
@@ -317,21 +317,22 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x0009: cindex = 6; break; // 604e           == MH 1-pipe 604e
         case 0x000A: cindex = 6; break; // 604ev          == MH 1-pipe 604e
         case 0x7000: cindex = 5; break; // 750FX          == MH 1-pipe
-        #if (CLIENT_OS == OS_MORPHOS)
         /* non-altivec defaults, if no OS support */
-        case 0x8000: cindex = -1; break; // 7450 (G4+)    == ?
-        case 0x8001: cindex = -1; break; // 7455 (G4+)    == ?
-        case 0x8002: cindex = 2;  break; // 7447/7457 (G4+) == KKS 604e
-        case 0x8003: cindex = -1; break; // 7447A (G4+)   == ?
-        case 0x8004: cindex = -1; break; // 7448 (G4+)    == ?
-        case 0x800C: cindex = -1; break; // 7410 (G4)     == ?
-        case 0x0039: cindex = -1; break; // 970 (G5)      == ?
-        case 0x003C: cindex = -1; break; // 970FX (G5)    == ?
-        #endif
+        case 0x000C: cindex = 0; break; // 7400 (G4)      == MH 2-pipe
+        case 0x8000: cindex = 2; break; // 7450 (G4+)     == KKS 604e
+        case 0x8001: cindex = 2; break; // 7455 (G4+)     == KKS 604e
+        case 0x8002: cindex = 2; break; // 7447/7457 (G4+) == KKS 604e
+        case 0x8003: cindex = 2; break; // 7447A (G4+)    == KKS 604e
+        case 0x8004: cindex = 2; break; // 7448 (G4+)     == KKS 604e
+        case 0x800C: cindex = 0; break; // 7410 (G4)      == MH 2-pipe
+        case 0x0039: cindex = 1; break; // 970 (G5)       == KKS 2pipes
+        case 0x003C: cindex = 1; break; // 970FX (G5)     == KKS 2pipes
         default:     cindex =-1; break; // no default
       }
 
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+      // Note : KKS 7540 (AltiVec) is now set as default for any unknown CPU ID
+      // since new CPUs are likely to be improved G4/G5 class CPUs.
       if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
@@ -350,7 +351,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
             case 0x0039: cindex = 4; break; // Redirect G5 to KKS 7450
             case 0x003C: cindex = 4; break; // Ditto
             #endif
-            default:     cindex =-1; break; // no default
+            default:     cindex = 4; break; // KKS 7450
         }
       }
       #endif
@@ -735,7 +736,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
 */
 unsigned int estimate_nominal_rate_rc572()
 {
-  unsigned int rate = 0;   /* Not available */
+  unsigned int rate = 0;   /* Unknown - Not available */
 
   #if (CLIENT_CPU == CPU_POWERPC)
     static long detected_type = -123;
