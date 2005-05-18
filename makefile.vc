@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.17 2005/05/12 04:23:49 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.18 2005/05/18 15:31:44 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -39,8 +39,8 @@ OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 #EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
 #EXECOMPRESSOR2 =
-EXECOMPRESSOR = pecompact.exe 
-EXECOMPRESSOR2 = /A /X
+EXECOMPRESSOR = pec2.exe
+EXECOMPRESSOR2 = /NoBackup /CodeIntegrityCheck:Y /StripDebug:Y /WinModuleLoader:Y
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 OPTS_CC_CPU =
 OPTS_M_PLAT = AMD64
@@ -51,8 +51,8 @@ CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 
 !ifdef DEBUG
 OPTS_CC_DEBUG = -MTd -Zi -DDEBUG -Od
-OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
-#OPTS_LINK_DEBUG = /debug /pdb:dnetc.pdb
+#OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
+OPTS_LINK_DEBUG = /debug /pdb:dnetc.pdb
 !else
 OPTS_CC_DEBUG = -MT -DNDEBUG
 OPTS_LINK_DEBUG = /release
@@ -462,21 +462,21 @@ $(RES_FILE):    $(RC_FILE)
 # the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
 $(BASENAME).scr: $(VC_CHECK) $(SCR_OBJS) $(RES_FILE)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,4.00 /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
-!ifdef EXECOMPRESSOR
+!if defined(EXECOMPRESSOR) && !defined(DEBUG)
         $(EXECOMPRESSOR) $(BASENAME).scr $(EXECOMPRESSOR2)
 !endif
 
 
 $(BASENAME).com: $(VC_CHECK) $(CUI_OBJS) 
         link $(OPTS_LINK) /SUBSYSTEM:CONSOLE,3.10 /OUT:$(BASENAME).com /NODEFAULTLIB $(OPTS_LIBS) $(CUI_OBJS)
-!ifdef EXECOMPRESSOR
-        $(EXECOMPRESSOR) $(BASENAME).com $(EXECOMPRESSOR2)
-!endif
+#!if defined(EXECOMPRESSOR) && !defined(DEBUG)
+#        $(EXECOMPRESSOR) $(BASENAME).com $(EXECOMPRESSOR2)
+#!endif
 
 
 $(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
-!ifdef EXECOMPRESSOR
+!if defined(EXECOMPRESSOR) && !defined(DEBUG)
         $(EXECOMPRESSOR) $(BASENAME).exe $(EXECOMPRESSOR2)
 !endif
 
