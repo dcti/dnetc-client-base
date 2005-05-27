@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.36 2005/05/16 16:53:06 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.37 2005/05/27 08:02:33 stream Exp $"; }
 
 //#define TRACE
 
@@ -61,6 +61,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.36 2005/05/16 16:53:06 kakace Exp $"; }
 #elif (CLIENT_CPU == CPU_X86)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm(int); //all assembly
 #elif (CLIENT_CPU == CPU_ARM)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
@@ -89,6 +90,7 @@ int InitializeCoreTable_ogr(int first_time)
       #if CLIENT_CPU == CPU_X86
         ogr_get_dispatch_table();
         ogr_get_dispatch_table_nobsr();
+        ogr_get_dispatch_table_asm(2);
       #elif CLIENT_CPU == CPU_POWERPC
         ogr_get_dispatch_table();
         #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
@@ -161,6 +163,7 @@ const char **corenames_for_contest_ogr()
   #if (CLIENT_CPU == CPU_X86)
       "GARSP 6.0-A",
       "GARSP 6.0-B",
+      "GARSP 6.0-asm-rt1-gen",
   #elif (CLIENT_CPU == CPU_AMD64)
       "GARSP 6.0-64",
   #elif (CLIENT_CPU == CPU_ARM)
@@ -500,9 +503,16 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   if (coresel == 0) //A
     unit_func.ogr = ogr_get_dispatch_table(); //A
   else
-  {
+  if (coresel == 1) //B
     unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
-    coresel = 1;
+  else
+  {
+    unit_func.ogr = ogr_get_dispatch_table_asm(coresel); //all assembly
+    if (unit_func.ogr == NULL)  // no such core
+    {
+        unit_func.ogr = ogr_get_dispatch_table(); //fallback to A
+        coresel = 0;
+    }
   }
 #elif (CLIENT_CPU == CPU_AMD64)
   //unit_func.ogr = ogr_get_dispatch_table();
