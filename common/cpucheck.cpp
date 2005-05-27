@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.92 2005/05/15 12:18:44 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.93 2005/05/27 20:14:38 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1079,6 +1079,15 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       vendorname = ""; /* nothing */
       cpuidbmask = 0xfff0;
     }
+    else if ( vendorid == 0x534E /* 'SN' NOTE! */) /* "Geode by NSC" */
+    {
+      static struct cpuxref natsemi_xref[]={
+          {  0x0540, CPU_F_I586,    0x10, "Geode"     },
+         {  0x0000, 0,               -1, NULL        }
+          }; internalxref = &natsemi_xref[0];
+      vendorname = "National";
+      cpuidbmask = 0x0ff0;
+    }
     else if ( vendorid == 0x4D54 /* 'MT' NOTE! */) /* "GenuineTMx86" */
     {
       static struct cpuxref transmeta_xref[]={
@@ -1087,6 +1096,14 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0000, 0,               -1, NULL        }
           }; internalxref = &transmeta_xref[0];
       vendorname = "Transmeta";
+      cpuidbmask = 0x0ff0;
+    }
+    else if ( vendorid == 0x6953 /* 'iS' */) /* "SiS SiS SiS " */
+    { 
+      static struct cpuxref sis_xref[]={
+          {  0x0000, 0,               -1, NULL        }  
+          }; internalxref = &sis_xref[0];
+      vendorname = "SiS";
       cpuidbmask = 0x0ff0;
     }
     else if ( vendorid == 0x7943 /* 'yC' */ ) /* CyrixInstead */

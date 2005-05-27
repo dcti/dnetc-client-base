@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.3.2.9 2005/05/18 04:19:09 jlawson Exp $
+; $Id: x86ident.asm,v 1.3.2.10 2005/05/27 20:14:38 snikkel Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -25,12 +25,14 @@
 ;                    [bxBXdxDXcxCX]
 ;                     GenuineIntel = 'eG' = 0x6547
 ;                     GenuineTMx86 = 'MT' = 0x4D54 <-- NOTE!
+;                     Geode by NSC = 'SN' = 0x534E <-- NOTE!
 ;                     AuthenticAMD = 'uA' = 0x7541
 ;                     CyrixInstead = 'yC' = 0x7943
 ;                     NexGenDriven = 'eN' = 0x654E
 ;                     CentaurHauls = 'eC' = 0x6543
 ;                     UMC UMC UMC  = 'MU' = 0x4D55
 ;                     RiseRiseRise = 'iR' = 0x6952
+;                     SiS SiS SiS  = 'iS' = 0x6953
 ;            loword = bits 12..15 for identification extensions
 ;                     bits 11...0 for family/model/stepping per CPUID
 ;                                 or 0x0300 for 386, 0x0400 for 486
@@ -218,8 +220,13 @@ _ne586a:        mov     edx, ebx        ; this is now our vendor id (in DX)
                 cmp     ecx,3638784Dh   ; '68xM' as in GenuineT[Mx86]
                 jnz     _neTM           ; not a Transmeta chip
                 mov     edx,38784D54h   ; '8xMT' as in Genuine[TMx8]6
+_neTM:          cmp     ecx,43534E20h   ; 'CSN ' as in Geode by[ NSC]
+                jnz     _neNS           ; not a National Semi chip
+                mov     edx,2043534Eh   ; ' CSN' as in Geode by [NSC ]
 
-_neTM:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
+                                        ; assume it is an Intel otherwise
+
+_neNS:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
                 shl     eax,16          ; move it up
                 mov     ax,400h         ; assume 486
                 or      edx,edx         ; max cpuid level is zero?
