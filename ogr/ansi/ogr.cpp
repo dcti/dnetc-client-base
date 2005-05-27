@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.34 2004/08/14 23:33:35 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.35 2005/05/27 08:00:14 stream Exp $
  */
 #include <string.h>   /* memset */
 
@@ -159,16 +159,18 @@
 
 #include "ogr.h"
 
-static const int OGR[] = {
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+#if OGROPT_HAVE_OGR_CYCLE_ASM == 0
+static const
+#endif
+int OGR[] = {
   /*  1 */    0,   1,   3,   6,  11,  17,  25,  34,  44,  55,
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
 };
-
-
-#if defined(__cplusplus)
-extern "C" {
-#endif
 
 /*
 ** CHOOSEDAT optimization (OGROPT_STRENGTH_REDUCE_CHOOSE)
@@ -212,7 +214,9 @@ static int ogr_init(void);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
 static int ogr_cleanup(void);
+#if (OGROPT_HAVE_OGR_CYCLE_ASM == 0)
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
+#endif
 static int ogr_create(void *input, int inputlen, void *state, int statelen,
                       int minpos);
 #if (OGROPT_HAVE_OGR_CYCLE_ASM < 2)
@@ -1066,6 +1070,7 @@ static int ogr_cleanup(void)
 
 /* ----------------------------------------------------------------------- */
 
+#if (OGROPT_HAVE_OGR_CYCLE_ASM == 0)
 CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 {
   static CoreDispatchTable dispatch_table;
@@ -1077,7 +1082,7 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.cleanup   = ogr_cleanup;
   return &dispatch_table;
 }
-
+#endif
 
 /* ----------------------------------------------------------------------- */
 

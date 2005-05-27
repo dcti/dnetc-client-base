@@ -5,7 +5,12 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.1.4.1 2004/08/14 23:36:16 kakace Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.1.4.2 2005/05/27 08:00:14 stream Exp $"
+
+/*
+ * Macro to check assertions at compile-time (e.g. sizeof(foo) == something)
+ */
+#define STATIC_ASSERT(cond)  { typedef int safoo[(cond) ? 1 : -1]; }
 
 /* If we were to cover the whole range of 0x00000000 ... 0xffffffff
    we would need ...
@@ -42,44 +47,57 @@
 #elif defined(__WATCOMC__)
 
   #if (OGROPT_ALTERNATE_CYCLE == 0) && (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1)
-    #error fixme: No longer compatible with existing code
-    // need to shift-in "newbit"
-    void COMP_LEFT_LIST_RIGHT_xx(U *levcomp, U *levlist, int s);
-    #pragma aux COMP_LEFT_LIST_RIGHT_xx =  \
-      "mov eax,[edi+4]"                   \
-      "mov edx,[esi+12]"                  \
-      "shld [edi+0],eax,cl"               \
-      "shrd [esi+16],edx,cl"              \
-      "mov eax,[edi+8]"                   \
-      "mov edx,[esi+8]"                   \
-      "shld [edi+4],eax,cl"               \
-      "shrd [esi+12],edx,cl"              \
-      "mov eax,[edi+12]"                  \
-      "mov edx,[esi+4]"                   \
-      "shld [edi+8],eax,cl"               \
-      "shrd [esi+8],edx,cl"               \
-      "mov eax,[edi+16]"                  \
-      "mov edx,[esi+0]"                   \
-      "shld [edi+12],eax,cl"              \
-      "shrd [esi+4],edx,cl"               \
-      "shl eax,cl"                        \
-      "shr edx,cl"                        \
-      "mov [edi+16],eax"                  \
-      "mov [esi+0],edx"                   \
-      parm [edi] [esi] [ecx] modify exact [edx eax];
+    #include <stddef.h>   /* offsetof */
 
-    #define COMP_LEFT_LIST_RIGHT(lev,s) \
-      COMP_LEFT_LIST_RIGHT_xx(&(lev->comp[0]),&(lev->list[0]),s)
+    void LIST_RIGHT_xx(void *levlist, int s, int newbit);
+    void COMP_LEFT_xx(void *levcomp, int s);
+    #pragma aux LIST_RIGHT_xx =  \
+      "mov  edx,[edi+12]"                  \
+      "shrd [edi+16],edx,cl"               \
+      "mov  edx,[edi+8]"                   \
+      "shrd [edi+12],edx,cl"               \
+      "mov  edx,[edi+4]"                   \
+      "shrd [edi+8],edx,cl"                \
+      "mov edx,[edi+0]"                    \
+      "shrd [edi+4],edx,cl"                \
+      "shrd edx,esi,cl"                    \
+      "mov  [edi+0],edx"                   \
+      parm [edi] [ecx] [esi] modify exact [edx];
+
+    #pragma aux COMP_LEFT_xx =  \
+      "mov  eax,[edi+4]"        \
+      "mov  edx,[edi+8]"        \
+      "shld [edi+0],eax,cl"     \
+      "shld eax,edx,cl"         \
+      "mov  [edi+4],eax"        \
+      "mov  eax,[edi+12]"       \
+      "shld edx,eax,cl"         \
+      "mov  [edi+8],edx"        \
+      "mov  edx,[edi+16]"       \
+      "shld eax,edx,cl"         \
+      "mov  [edi+12],eax"       \
+      "shl  edx,cl"             \
+      "mov  [edi+16],edx"       \
+      parm [edi] [ecx] modify exact [eax edx ebx];
+
+    #define COMP_LEFT_LIST_RIGHT(lev,s)        \
+      STATIC_ASSERT( offsetof(struct Level, list) == 0  );   \
+      STATIC_ASSERT( offsetof(struct Level, comp) == 40 );   \
+      STATIC_ASSERT( sizeof(lev->list) == 20 );              \
+      STATIC_ASSERT( sizeof(lev->comp) == 20 );              \
+      LIST_RIGHT_xx(&(lev->list[0]),s,newbit); \
+      COMP_LEFT_xx(&(lev->comp[0]),s);         \
+      newbit = 0;                              \
+      comp0  = lev->comp[0];                   
+
   #endif
 
-  int __CNTLZ__(unsigned int);
-  #pragma aux __CNTLZ__ =  \
-          "not  eax"     \
-          "mov  edx,20h" \
-          "bsr  eax,eax" \
-          "sub  edx,eax" \
-          value [edx] parm [eax] modify exact [eax edx] nomemory;
-  #define __CNTLZ(x) __CNTLZ__(x)
+  int __CNTLONEREV__(unsigned int);
+  #pragma aux __CNTLONEREV__ =  \
+          "bsr  eax,eax"      \
+          value [eax] parm [eax] modify [eax] nomemory;
+  #define __CNTLZ(x) (32-__CNTLONEREV__(~(x)))
+
 
 #elif defined(__GNUC__)
 
