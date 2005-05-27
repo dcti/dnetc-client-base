@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.38 2005/05/16 16:53:06 kakace Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.39 2005/05/27 15:02:44 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -119,7 +119,7 @@ const char **corenames_for_contest_rc572()
       "GO 2-pipe",
       "SGP 3-pipe",
       "MA 4-pipe",
-      "MMX 2-pipe",
+      "MMX 4-pipe",
       #else /* no nasm -> only ansi cores */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -365,7 +365,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         #if !defined(HAVE_NO_NASM)
         switch (detected_type & 0xff) // FIXME remove &0xff
         {
-          case 0x00: cindex = (have_mmx?9   // P5 MMX     == MMX 2-pipe 
+          case 0x00: cindex = (have_mmx?9   // P5 MMX     == MMX 4-pipe 
                                        :2); // P5         == DG 2-pipe
 		                 break;
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
@@ -597,7 +597,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         break;
       case 9:
         unit_func.gen_72 = rc5_72_unit_func_mmx;
-        pipeline_count = 2;
+        pipeline_count = 4;
         break;
      // -----------
      #elif (CLIENT_CPU == CPU_AMD64)
