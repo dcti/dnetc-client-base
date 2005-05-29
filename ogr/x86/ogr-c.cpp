@@ -6,7 +6,7 @@
  * Wrapper around ogr.cpp for all processor WITH a fast bsr instruction.
  * (ie, PPro, PII, PIII)
  *
- * $Id: ogr-c.cpp,v 1.1.2.1 2005/05/27 08:00:14 stream Exp $
+ * $Id: ogr-c.cpp,v 1.1.2.2 2005/05/29 17:02:52 stream Exp $
 */
 
 #define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_foo /* shutup declaration in ogr.cpp */
@@ -64,18 +64,24 @@ extern "C" {
 #define TOTAL_ASM_CORES  1
 
 #define CYCLE_THUNK(func) \
-extern "C" int CDECL ogr_##func##_asm(void *state, int *pnodes, int with_time_constraints);  \
-static int cycle_thunk_##func(void *state, int *pnodes, int with_time_constraints)  \
+extern "C" int CDECL ogr_##func##_asm( \
+    void *state, \
+    int *pnodes, \
+    int with_time_constraints, \
+    unsigned char const *choose_dat, \
+    int (CDECL *found_one_cdecl_func)(const struct State *oState) \
+); \
+static int cycle_thunk_##func(void *state, int *pnodes, int with_time_constraints) \
 { \
-    return ogr_##func##_asm(state, pnodes, with_time_constraints); \
+    return ogr_##func##_asm(state, pnodes, with_time_constraints, ogr_choose_dat, found_one_cdecl_thunk); \
 }
 
-CYCLE_THUNK(watcom_rt1);
-
-int CDECL found_one_cdecl_thunk(const struct State *oState)
+static int CDECL found_one_cdecl_thunk(const struct State *oState)
 {
     return found_one(oState);
 }
+
+CYCLE_THUNK(watcom_rt1);
 
 CoreDispatchTable * ogr_get_dispatch_table_asm (int coresel)
 {

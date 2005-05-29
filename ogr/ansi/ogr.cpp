@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.35 2005/05/27 08:00:14 stream Exp $
+ * $Id: ogr.cpp,v 1.2.4.36 2005/05/29 17:02:51 stream Exp $
  */
 #include <string.h>   /* memset */
 
@@ -163,9 +163,7 @@
 extern "C" {
 #endif
 
-#if OGROPT_HAVE_OGR_CYCLE_ASM == 0
 static const
-#endif
 int OGR[] = {
   /*  1 */    0,   1,   3,   6,  11,  17,  25,  34,  44,  55,
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,

@@ -23,16 +23,25 @@ cpu	386
 	[SECTION .data]
 %endif
 
-extern	_ogr_choose_dat
-extern	_OGR
+;
+; Better keep local copy of this table due to differences in naming
+; of external symbols (even cdecl) in different compilers.
+;
+_OGR:	dd   0,   1,   3,   6,  11,  17,  25,  34,  44,  55	; /*  1 */ 
+	dd  72,  85, 106, 127, 151, 177, 199, 216, 246, 283	; /* 11 */ 
+	dd 333, 356, 372, 425, 480, 492, 553, 585, 623		; /* 21 */
+;
+; Address of found_one can be kept on stack (as extra parameter to ogr_cycle)
+; but both cases are Ok and this one is simpler.
+;
+_found_one_cdecl_ptr:
+	dd   0
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 	[SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
 %else
 	[SECTION .text]
 %endif
-
-extern	_found_one_cdecl_thunk
 
 %macro  _xalign 2
 	%assign __distance %1-(($-$$) & (%1-1))
@@ -47,7 +56,7 @@ extern	_found_one_cdecl_thunk
 	%endif
 %endmacro
 
-global	_ogr_watcom_rt1_asm
+global	_ogr_watcom_rt1_asm, ogr_watcom_rt1_asm
 
 	%define	sizeof_level 44h		; sizeof(level)
 
@@ -57,6 +66,8 @@ ogr_cycle_:
 	push	edi
 	push	ebp
 	sub	esp,30H
+	add	ecx,3
+	mov	dword [esp+1cH],ecx	; ogr_choose_dat+3
 	mov	dword [esp+0cH],edx	; pnodes
 	mov	edx,[edx]
 	mov	dword [esp+2cH],edx	; *pnodes
@@ -95,7 +106,7 @@ ogr_cycle_:
 ;	10H	maxlength
 ;	14H	nodes
 ;	18H	oState
-;	1CH	offsetof(level->comp) == [ebp+40] => KILLED
+;	1CH	offsetof(level->comp) == [ebp+40] => KILLED => Now ogr_choose_dat+3
 ;	20H	remdepth
 ;	24H	depth
 ;	28H	limit
@@ -114,7 +125,7 @@ ogr_cycle_:
 
 	jmp	outerloop
 
-%if ($-$$) <> 74h
+%if ($-$$) <> 7Bh
 	%error	"Assembly of jumps and constant must be optimized, add -O5 to NASM options"
 %endif
 
@@ -176,7 +187,8 @@ outerloop:
 	imul	edi,0cH
 	mov	edx,dword [esp+20H]	; remdepth
 	xor	eax,eax
-	mov	al,byte [_ogr_choose_dat+edi+edx+3]
+	add	edi,dword [esp+1cH]	; ogr_choose_dat+3
+	mov	al,byte [edi+edx]	; mov al,byte [_ogr_choose_dat+edi+edx+3]
 	mov	edx,dword [esp+10H]	; maxlength
 	sub	edx,eax
 	;    if (depth <= halfdepth2) {
@@ -328,8 +340,12 @@ L$58:
 	dec	dword [esp+20H]
 	;    continue;
 
-; The trick is that there is no difference where to check count of nodes,
-; in the begining or in the end of loop. +/- 1 node means nothing.
+; When core processed at least given number of nodes (or a little more)
+; it must return to main client for rescheduling. It's required for
+; timeslicing in non-preemptive OS'es.
+; The trick is that there is no difference where to check count of nodes
+; we've processed, in the begining or in the end of loop. +/- 1 iteration
+; of the core means nothing for cleint's scheduler.
 ; Checking nodecount here help us do not break perfecly aligned
 ; command sequence from "outerloop" to "stay".
 
@@ -420,7 +436,7 @@ L$61:
 	push	ecx
 	push	edx
 	push	eax			; parameter
-	call	_found_one_cdecl_thunk
+	call	[_found_one_cdecl_ptr]
 	add	esp, 4
 	pop	edx
 	pop	ecx
@@ -430,10 +446,14 @@ L$61:
 	jmp	stay
 
 _ogr_watcom_rt1_asm:
+ogr_watcom_rt1_asm:
 	push	ebx
+	mov	eax, [esp+24]		; found_one cdecl procedure
+	mov	[_found_one_cdecl_ptr], eax
 	mov	eax, [esp+8]		; state
 	mov	edx, [esp+12]		; pnodes
 	mov	ebx, [esp+16]		; with_time_constraints (ignored, always true)
+	mov	ecx, [esp+20]		; address of ogr_choose_dat table
 	call	ogr_cycle_
 	pop	ebx
 	ret
