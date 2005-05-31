@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.151 2005/05/14 19:05:33 oliver Exp $
+# @(#)$Id: configure,v 1.288.2.152 2005/05/31 17:21:22 stream Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -297,7 +297,9 @@ add_sources() # $1=os, $2=arch, $3=custom
         # -- nasm/ogr --
         #TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr.asm"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-a.cpp $OGR/x86/ogr-b.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-c.cpp"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS"
+        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr-asm1-rt.asm"
         ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       fi
     fi # HAVE_OGR
@@ -2973,7 +2975,7 @@ fi
 if [ -z "$TARGET_NASM_FMT" ]; then
   TARGET_NASM_FMT="elf"
 fi
-TARGET_NASMFLAGS="-f $TARGET_NASM_FMT" # -i rc5/x86/ -i des/x86/ -i csc/x86/"
+TARGET_NASMFLAGS="-O5 -f $TARGET_NASM_FMT" # -i rc5/x86/ -i des/x86/ -i csc/x86/"
 if [ "$TARGET_NASM_FMT" = "elf" ]; then
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__ELF__"
 elif [ "$TARGET_NASM_FMT" = "obj" ]; then

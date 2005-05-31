@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.18 2005/05/18 15:31:44 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.19 2005/05/31 17:21:22 stream Exp $
 #
 
 BASENAME = dnetc
@@ -354,6 +354,8 @@ OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr-a.obj      \
         $(OUTPUTPATH)/ogr-b.obj      \
+        $(OUTPUTPATH)/ogr-c.obj      \
+        $(OUTPUTPATH)/ogr-asm1-rt.obj\
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
@@ -426,7 +428,7 @@ $(VC_CHECK):
         nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(OGRSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
+        nasmw -O5 -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(OGRSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
