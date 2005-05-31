@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.93 2005/05/27 20:14:38 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.94 2005/05/31 19:08:02 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -60,27 +60,28 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.93 2005/05/27 20:14:38 snikkel Exp $"; }
    if we have an ID but no name:       return ID, set cpuname to ""
                                                    -  cyp April/03/1999
 */
-
-#if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
-  extern "C" u32 x86ident( void ) asm ("x86ident");
-  extern "C" u32 x86features( void ) asm ("x86features");
-  extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
-  extern "C" u32 x86htcount( void ) asm ("x86htcount");
-#else
-#if defined(__WATCOMC__)
-  // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
-  // must be declared as "cdecl" to allow compiler save necessary registers.
-  extern "C" u32 __cdecl x86ident( void );
-  extern "C" u32 __cdecl x86features( void );
-  extern "C" ui64 __cdecl x86rdtsc( void );
-  extern "C" u32 __cdecl x86htcount( void );
-#else
-  extern "C" u32 x86ident( void );
-  extern "C" u32 x86features( void );
-  extern "C" ui64 x86rdtsc( void );
-  extern "C" u32 x86htcount( void );
-#endif
-  extern "C" u32 x86ident_haveioperm; /* default is zero */
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+  #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+    extern "C" u32 x86ident( void ) asm ("x86ident");
+    extern "C" u32 x86features( void ) asm ("x86features");
+    extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
+    extern "C" u32 x86htcount( void ) asm ("x86htcount");
+  #else
+    #if defined(__WATCOMC__)
+      // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
+      // must be declared as "cdecl" to allow compiler save necessary registers.
+      extern "C" u32 __cdecl x86ident( void );
+      extern "C" u32 __cdecl x86features( void );
+      extern "C" ui64 __cdecl x86rdtsc( void );
+      extern "C" u32 __cdecl x86htcount( void );
+    #else
+      extern "C" u32 x86ident( void );
+      extern "C" u32 x86features( void );
+      extern "C" ui64 x86rdtsc( void );
+      extern "C" u32 x86htcount( void );
+    #endif
+    extern "C" u32 x86ident_haveioperm; /* default is zero */
+  #endif
 #endif
 
 /* ------------------------------------------------------------------------ */
