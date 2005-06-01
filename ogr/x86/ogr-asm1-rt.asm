@@ -2,16 +2,16 @@
 ; Assembly core for OGR
 ;
 ; Based on disassembled output of Watcom compiler which suddenly generated
-; code about 15% faster then current Windows client.
+; code about 15% faster than prior Windows clients.
 ;
-; Watcom's output was optimizied a little more manually (alas, this compiler
+; Watcom's output was optimized a little more manually (alas, this compiler
 ; cannot align loops), but pipeline optimization can be far away from complete.
 ; This code was developed on and tuned for PII-Celeron CPU, on other processors
-; it's performance can be comparable or even less then current cores.
+; its performance can be comparable or even less then current cores.
 ;
-; Anyway, on my system this code works about 30% faster then Windows client.
+; Anyway, on my system this code works about 30% faster than Windows client.
 ;
-; Addintional improvements can be achevied by better optimization of pipelines
+; Additional improvements can be achieved by better optimization of pipelines
 ; and usage of MMX instruction/registers.
 ;
 
