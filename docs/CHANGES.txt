@@ -23,13 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.98 2005/06/02 15:28:25 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.99 2005/06/02 15:35:34 snikkel Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9011-496  new: x86: Added new assembly OGR core.
             fix: x86: Correct RC5 core count speed factor for mmx (#3770)
+            fix: x86: Properly detect National Geode (#3852)
 
 2.9010-495  fix: x86: Fixed cores dg3, sgp3 and snjl.
             new: all: Added a stress-test ("-stress") for RC5-72 cores
