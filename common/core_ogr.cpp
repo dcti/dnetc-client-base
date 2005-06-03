@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.37 2005/05/27 08:02:33 stream Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.38 2005/06/03 19:03:00 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -351,42 +351,24 @@ int selcoreGetPreselectedCoreForProject_ogr()
       {
         switch ( detected_type & 0xff ) // FIXME remove &0xff
         {
-          case 0x00: cindex = 1; break; // P5           == without BSR (B)
-          case 0x01: cindex = 1; break; // 386/486      == without BSR (B)
-          case 0x02: cindex = 0; break; // PII          == with BSR (A)
-          case 0x03: cindex = 0; break; // Cyrix Model 4 == with BSR (A)
-          case 0x04: cindex = 0; break; // K5           == with BSR (A) (#3809)
-          #if defined(__GNUC__) || defined(__WATCOMC__) || defined(__BORLANDC__)
-          case 0x05: cindex = 1; break; // K6/K6-2/K6-3 == without BSR (B)  #2228
-          #elif defined(_MSC_VER)
-          case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == with BSR (A)  #2789
-          #else
-          #warning "FIXME: no OGR core autoselected on a K6 for your compiler"
-          #endif
-          case 0x06: cindex = 1; break; // Cyrix 486    == without BSR (B)
-          case 0x07: cindex = 0; break; // orig Celeron == with BSR (A)
-          case 0x08: cindex = 0; break; // PPro         == with BSR (A)
-          case 0x09: cindex = 0; break; // AMD K7       == with BSR (A)
-          case 0x0A: cindex = 1; break; // Centaur C6   == without BSR (B)
-          #if defined(__GNUC__) || defined(__ICC) || defined(_MSC_VER)
-          case 0x0B: cindex = 0; break; // Pentium 4    == with BSR (A)
-          #elif defined(__WATCOMC__) || defined(__BORLANDC__)
-          case 0x0B: cindex = 1; break; // Pentium 4    == without BSR (B)
-          #else
-          #warning "FIXME: no OGR core autoselected on a P4 for your compiler"
-          #endif
-          case 0x0C: cindex = 1; break; // Via C3       == without BSR (B)
-          #if defined(__GNUC__) || defined(__ICC) || defined(_MSC_VER)
-          case 0x0D: cindex = 0; break; // Pentium M    == with BSR (A)
-          #elif defined(__WATCOMC__) || defined(__BORLANDC__)
-          case 0x0D: cindex = 1; break; // Pentium M    == without BSR (B)
-          #else 
-          #warning "FIXME: no OGR core autoselected on a PM for your compiler"
-          #endif
-          case 0x0E: cindex = 0; break; // Pentium III  == with BSR (A)
-          case 0x0F: cindex = 1; break; // Via C3 Nehemiah == without BSR (B)
-          case 0x10: cindex = 0; break; // Cyrix Model 5 == with BSR (A)
-          case 0x11: cindex = 0; break; // Cyrix Model 6 == with BSR (A)
+          case 0x00: cindex = 2; break; // P5           == asm-rt1-gen (C)
+          case 0x01: cindex = 2; break; // 386/486      == asm-rt1-gen (C)
+          case 0x02: cindex = 2; break; // PII          == asm-rt1-gen (C)
+          case 0x03: cindex = 2; break; // Cyrix Model4 == asm-rt1-gen (C)
+          case 0x04: cindex = 2; break; // K5           == asm-rt1-gen (C)
+          case 0x05: cindex = 2; break; // K6/K6-2/K6-3 == asm-rt1-gen (C)
+          case 0x06: cindex = 2; break; // Cyrix 486    == asm-rt1-gen (C)
+          case 0x07: cindex = 2; break; // orig Celeron == asm-rt1-gen (C)
+          case 0x08: cindex = 2; break; // PPro         == asm-rt1-gen (C)
+          case 0x09: cindex = 2; break; // AMD K7/K8    == asm-rt1-gen (C)
+          case 0x0A: cindex = 2; break; // Centaur C6   == asm-rt1-gen (C)
+          case 0x0B: cindex = 2; break; // Pentium 4    == asm-rt1-gen (C)
+          case 0x0C: cindex = 2; break; // Via C3       == asm-rt1-gen (C)
+          case 0x0D: cindex = 2; break; // Pentium M    == asm-rt1-gen (C)
+          case 0x0E: cindex = 2; break; // Pentium III  == asm-rt1-gen (C)
+          case 0x0F: cindex = 2; break; // Via C3 Nehemiah == asm-rt1-gen (C)
+          case 0x10: cindex = 2; break; // Cyrix Model5 == asm-rt1-gen (C)
+          case 0x11: cindex = 2; break; // Cyrix Model6 == asm-rt1-gen (C)
           default:   cindex =-1; break; // no default
         }
       }
