@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.100 2005/06/03 19:03:00 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.101 2005/06/05 19:31:15 snikkel Exp $
 ==========================================================================
 
 2.9000
@@ -31,6 +31,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.100 2005/06/03 19:03:00 snikkel Ex
 2.9011-496  new: x86: Added new assembly OGR core and selected as default
             fix: x86: Correct RC5 core count speed factor for mmx (#3770)
             fix: x86: Properly detect National Geode (#3852)
+            new: x86-64: Added new KBE-64 core and selected as default for K8
 
 2.9010-495  fix: x86: Fixed cores dg3, sgp3 and snjl.
             new: all: Added a stress-test ("-stress") for RC5-72 cores

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.40 2005/06/03 19:03:00 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.41 2005/06/05 19:31:15 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -53,6 +53,7 @@ extern "C" s32 CDECL rc5_72_unit_func_ma_4( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_mmx( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_AMD64)
 extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -127,6 +128,7 @@ const char **corenames_for_contest_rc572()
       #endif
   #elif (CLIENT_CPU == CPU_AMD64)
       "SNJL 3-pipe",
+      "KBE-64 3-pipe",
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
@@ -399,7 +401,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x06: cindex = 2; break; // Cx486          == ANSI 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
           case 0x08: cindex =-1; break; // PPro           == ?
-          case 0x09: cindex = 0; break; // K7             == ANSI 4-pipe
+          case 0x09: cindex = 0; break; // K7/K8          == ANSI 4-pipe
           case 0x0A: cindex =-1; break; // Centaur C6     == ?
           case 0x0B: cindex = 0; break; // Pentium 4      == ANSI 4-pipe
           case 0x0C: cindex =-1; break; // Via C3         == ?
@@ -416,8 +418,15 @@ int selcoreGetPreselectedCoreForProject_rc572()
   // ===============================================================
   #elif (CLIENT_CPU == CPU_AMD64)
   {
-    // for now, all x86-64 processors just use the first core.
-    cindex = 0;
+    if (detected_type >= 0)
+    {
+      switch (detected_type & 0xff) // FIXME remove &0xff
+      {
+        case 0x09: cindex = 1; break; // K8               == KBE-64 3-pipe
+        case 0x0B: cindex =-1; break; // Pentium 4        == ?
+        default:   cindex =-1; break; // no default
+      }
+    }
   }
   // ===============================================================
   #elif (CLIENT_CPU == CPU_ARM)
@@ -606,14 +615,18 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         pipeline_count = 3;
         break;
       case 1:
+        unit_func.gen_72 = rc5_72_unit_func_kbe;
+        pipeline_count = 3;
+        break;
+      case 2:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;
         pipeline_count = 4;
         break;
-      case 2:
+      case 3:
         unit_func.gen_72 = rc5_72_unit_func_ansi_2;
         pipeline_count = 2;
         break;
-      case 3:
+      case 4:
       default:
         unit_func.gen_72 = rc5_72_unit_func_ansi_1;
         pipeline_count = 1;
