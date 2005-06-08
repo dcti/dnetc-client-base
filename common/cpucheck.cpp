@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.94 2005/05/31 19:08:02 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.95 2005/06/08 15:15:00 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2322,20 +2322,20 @@ unsigned int GetProcessorFrequency()
           freq = nearest33;
         }
       } else {
-        unsigned int nearest66, nearest100, nearest166;
+        unsigned int nearest50, nearest66, nearest166;
+        if ((freq - ((unsigned int)(freq / (50.0)) * (50.0))) <
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / (50.0)) + 1) * (50.0)))))
+        {
+          nearest50 = (unsigned int)((unsigned int)(freq / (50.0)) * (50.0)); 
+        } else {
+          nearest50 = (unsigned int)(((unsigned int)(freq / (50.0)) + 1) * (50.0));
+        }
         if ((freq - ((unsigned int)(freq / (200.0/3.0)) * (200.0/3.0))) < 
           (unsigned int)abs((int)(freq - (((unsigned int)(freq / (200.0/3.0)) + 1) * (200.0/3.0)))))
         {
           nearest66 = (unsigned int)((unsigned int)(freq / (200.0/3.0)) * (200.0/3.0));
         } else {
           nearest66 = (unsigned int)(((unsigned int)(freq / (200.0/3.0)) + 1) * (200.0/3.0));
-        }
-        if ((freq - ((unsigned int)(freq / 100) * 100)) < 
-          (unsigned int)abs(freq - (((unsigned int)(freq / 100) + 1) * 100)))
-        {
-          nearest100 = (unsigned int)(freq / 100) * 100;
-        } else {
-          nearest100 = ((unsigned int)(freq / 100) + 1) * 100;
         }
         if ((freq - ((unsigned int)(freq / (500.0/3.0)) * (500.0/3.0))) < 
           (unsigned int)abs((int)(freq - (((unsigned int)(freq / (500.0/3.0)) + 1) * (500.0/3.0)))))
@@ -2344,18 +2344,18 @@ unsigned int GetProcessorFrequency()
         } else {
           nearest166 = (unsigned int)(((unsigned int)(freq / (500.0/3.0)) + 1) * (500.0/3.0));
         }
-        if (abs(freq - nearest66) < abs(freq - nearest100))
+        if (abs(freq - nearest50) < abs(freq - nearest66))
         {
-          if (abs(freq - nearest66) < abs(freq - nearest166))
+          if (abs(freq - nearest50) < abs(freq - nearest166))
           {
-            freq = nearest66;
+            freq = nearest50;
           } else {
             freq = nearest166;
           }
         } 
-        else if (abs(freq - nearest100) < abs(freq - nearest166))
+        else if (abs(freq - nearest66) < abs(freq - nearest166))
         {
-          freq = nearest100;
+          freq = nearest66;
         } else {
           freq = nearest166;
         }
