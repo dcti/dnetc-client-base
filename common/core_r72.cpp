@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.41 2005/06/05 19:31:15 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.42 2005/06/08 18:52:56 thsv Exp $"; }
 
 //#define TRACE
 
@@ -630,7 +630,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       default:
         unit_func.gen_72 = rc5_72_unit_func_ansi_1;
         pipeline_count = 1;
-        coresel = 3; // yes, we explicitly set coresel in the default case !
+        coresel = 4; // yes, we explicitly set coresel in the default case !
         break;
     // -----------
     #elif (CLIENT_CPU == CPU_POWERPC) && \
