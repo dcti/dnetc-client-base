@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.43 2005/06/08 19:36:07 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.44 2005/06/11 14:08:42 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -374,7 +374,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x02: cindex = 1; break; // Pentium II     == SES 2-pipe
           case 0x03: cindex = 7; break; // Cyrix Model 4  == SGP 3-pipe (#3665)
           case 0x04: cindex = 7; break; // K5             == SGP 3-pipe
-          case 0x05: cindex = 5; break; // K6             == SS 2-pipe (#3293)
+          case 0x05: cindex = 9; break; // K6             == MMX 4-pipe (#3863)
           case 0x06: cindex = 0; break; // Cx486          == SES 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
           case 0x08: cindex = 1; break; // PPro           == SES 2-pipe (#3708)
