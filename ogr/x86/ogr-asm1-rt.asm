@@ -1,6 +1,8 @@
 ;
 ; Assembly core for OGR
 ;
+; Created by Roman Trunov (proxyma@tula.net)
+;
 ; Based on disassembled output of Watcom compiler which suddenly generated
 ; code about 15% faster than prior Windows clients.
 ;
@@ -14,6 +16,10 @@
 ; Additional improvements can be achieved by better optimization of pipelines
 ; and usage of MMX instruction/registers.
 ;
+; 2005-06-18: Removed local variable "limit", it's allocated on stack and
+;             contains only copy of "lev->limit". I cannot allocate it in
+;             register and there no difference how to reference it in
+;             memory - as [esp+xx] or [ebp+xx]. Gained 2% in speed.
 
 cpu	386
 
@@ -109,7 +115,7 @@ ogr_cycle_:
 ;	1CH	offsetof(level->comp) == [ebp+40] => KILLED => Now ogr_choose_dat+3
 ;	20H	remdepth
 ;	24H	depth
-;	28H	limit
+;	28H	limit => KILLED.
 ;	2cH	mark => KILLED. Now contains *pnodes for fast compare.
 
 	mov	ebx,dword [ebp+3cH]	;   int mark = lev->mark;
@@ -196,11 +202,11 @@ outerloop:
 	cmp	eax,dword [esp+8]	; halfdepth2
 	jle	checklimit
 store_limit:
-	mov	dword [esp+28H],edx	; limit (save on stack)
+;	mov	dword [esp+28H],edx	; limit (save on stack) => KILLED
 	;    lev->limit = limit;
 	mov	dword [ebp+40H],edx
+	test	esi, 80000000h		; for align
 	;    nodes++;
-	mov	eax, eax		; for align
 	inc	dword [esp+14H]
 
 	_natural_align
@@ -225,7 +231,7 @@ stay:   ; Most important internal loop
 	sub	eax,ecx			; s
 	;      if ((mark += s) > limit) goto up;   /* no spaces left */
 	add	ebx,eax
-	cmp	ebx,dword [esp+28H]	; limit
+	cmp	ebx,dword [ebp+40H]	; limit (==lev->limit)
 	mov	ecx,eax
 	jg	up
 	;      COMP_LEFT_LIST_RIGHT(lev, s);
@@ -267,7 +273,6 @@ stay:   ; Most important internal loop
 
 	mov	ecx,dword [ebp+28H]	; comp0  = ...
 	xor	esi,esi			; newbit = 0
-;	and	esi,0			; to align next label
 
 L$58:
 	;    lev->mark = mark;
@@ -344,9 +349,9 @@ L$58:
 ; it must return to main client for rescheduling. It's required for
 ; timeslicing in non-preemptive OS'es.
 ; The trick is that there is no difference where to check count of nodes
-; we've processed, in the begining or in the end of loop. +/- 1 iteration
-; of the core means nothing for cleint's scheduler.
-; Checking nodecount here help us do not break perfecly aligned
+; we've processed, in the beginning or in the end of loop. +/- 1 iteration
+; of the core means nothing for client's scheduler.
+; Checking node count here help us do not break perfectly aligned
 ; command sequence from "outerloop" to "stay".
 
 	mov	eax,dword [esp+14H]	; nodes
@@ -361,12 +366,12 @@ L$58:
 	;      if ((mark += 32) > limit) goto up;
 L$57_:
 	add	ebx,20H
-	cmp	ebx,dword [esp+28H]	; limit
+	cmp	ebx,dword [ebp+40H]	; limit (==lev->limit)
 	jg	up
 
 	cmp	ecx,0ffffffffH
 	; small optimize. in both cases (ecx == -1 and not) we perform
-	; COMP_LEFT_LIST_RIGHT_32, then just jump to diferent labels.
+	; COMP_LEFT_LIST_RIGHT_32, then just jump to different labels.
 	mov	eax,dword [ebp+0cH]
 	mov	dword [ebp+10H],eax
 	mov	eax,dword [ebp+8]
@@ -399,8 +404,8 @@ up:
 	;      newbit = 0;
 	mov	ecx,dword [ebp+28H]	; comp0  to ecx
 	;    limit = lev->limit;
-	mov	eax,dword [ebp+40H]
-	mov	dword [esp+28H],eax
+;	mov	eax,dword [ebp+40H]	;
+;	mov	dword [esp+28H],eax	; KILLED
 	;    mark = lev->mark;
 	mov	ebx,dword [ebp+3cH]
 	;    remdepth++;
