@@ -313,7 +313,7 @@ L$58:
 	mov	dword [ebp+sizeof_level+14H],edi	; dist0 =
 	or	edx,dword [ebp+18H]
 	mov	dword [ebp+sizeof_level+18H],edx	; temp2 =
-	mov	ecx,dword [ebp+28H]
+;	mov	ecx,dword [ebp+28H]			; comp0 already cached
 	or	ecx,edi
 	mov	dword [ebp+sizeof_level+28H],ecx	; comp0 =
 	or	edx,dword [ebp+2cH]
