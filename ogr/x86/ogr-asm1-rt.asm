@@ -145,7 +145,7 @@ checklimit:
 	; Don't forget to store limit when leaving globally!
 	;      if (depth <= halfdepth) {
 	cmp	eax,dword [esp]
-	jg	L$56
+	jg	L$56	; wrong prediction, but speed remains same
 ; This check unnecessary - we're always working with_time_constraints
 ;	;        if (nodes >= *pnodes) {
 ;	mov	eax,dword [esp+14H]	; nodes
@@ -310,8 +310,8 @@ L$58:
 	mov	edx,dword [ebp+4]		; lev->list[1]
 	mov	dword [ebp+sizeof_level+4],edx	; temp2, lev2->list[0]
 	or	edi,dword [ebp+14H]
-	mov	dword [ebp+sizeof_level+14H],edi	; dist0 =
 	or	edx,dword [ebp+18H]
+	mov	dword [ebp+sizeof_level+14H],edi	; dist0 =
 	mov	dword [ebp+sizeof_level+18H],edx	; temp2 =
 ;	mov	ecx,dword [ebp+28H]			; comp0 already cached
 	or	ecx,edi
@@ -392,8 +392,8 @@ L$57_:
 	mov	dword [ebp+34H],eax
 	mov	dword [ebp+38H],esi
 
-	jne	L$58	; ecx != -1
-	jmp	stay	; ecx == -1
+	je	stay	; ecx == -1
+	jmp	L$58	; ecx != -1
 
 	align	16
 up:
