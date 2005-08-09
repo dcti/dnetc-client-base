@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.38 2005/06/03 19:03:00 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.39 2005/08/09 19:13:52 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -366,7 +366,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
           case 0x0C: cindex = 2; break; // Via C3       == asm-rt1-gen (C)
           case 0x0D: cindex = 2; break; // Pentium M    == asm-rt1-gen (C)
           case 0x0E: cindex = 2; break; // Pentium III  == asm-rt1-gen (C)
-          case 0x0F: cindex = 2; break; // Via C3 Nehemiah == asm-rt1-gen (C)
+          case 0x0F: cindex = 0; break; // Via C3 Nehemiah == (A)
           case 0x10: cindex = 2; break; // Cyrix Model5 == asm-rt1-gen (C)
           case 0x11: cindex = 2; break; // Cyrix Model6 == asm-rt1-gen (C)
           default:   cindex =-1; break; // no default

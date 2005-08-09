@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.104 2005/07/06 16:39:08 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.105 2005/08/09 19:13:52 snikkel Exp $
 ==========================================================================
 
 2.9000
@@ -34,6 +34,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.104 2005/07/06 16:39:08 snikkel Ex
             new: x86-64: Added new KBE-64 core and selected as default for K8/P4
             chg: x86: pre-selection for AMD K6 (#3863)
             chg: x86: pre-selection for Pentium M (#3870)
+            chg: x86: OGR pre-selection for C3 (#3885)
 
 2.9010-495  fix: x86: Fixed cores dg3, sgp3 and snjl.
             new: all: Added a stress-test ("-stress") for RC5-72 cores
