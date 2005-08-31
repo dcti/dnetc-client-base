@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.96 2005/08/25 13:33:22 gavin Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.97 2005/08/31 16:33:17 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -65,7 +65,6 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.96 2005/08/25 13:33:22 gavin Exp $"; }
     extern "C" u32 x86ident( void ) asm ("x86ident");
     extern "C" u32 x86features( void ) asm ("x86features");
     extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
-    extern "C" u32 x86htcount( void ) asm ("x86htcount");
   #else
     #if defined(__WATCOMC__)
       // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
@@ -73,12 +72,10 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.96 2005/08/25 13:33:22 gavin Exp $"; }
       extern "C" u32 __cdecl x86ident( void );
       extern "C" u32 __cdecl x86features( void );
       extern "C" ui64 __cdecl x86rdtsc( void );
-      extern "C" u32 __cdecl x86htcount( void );
     #else
       extern "C" u32 x86ident( void );
       extern "C" u32 x86features( void );
       extern "C" ui64 x86rdtsc( void );
-      extern "C" u32 x86htcount( void );
     #endif
     extern "C" u32 x86ident_haveioperm; /* default is zero */
   #endif
@@ -301,19 +298,7 @@ int GetNumberOfLogicalProcessors ( void )
 
 int GetNumberOfPhysicalProcessors ( void )
 {
-#if (CLIENT_CPU == CPU_X86)
-  if (GetProcessorFeatureFlags() & CPU_F_HYPERTHREAD) {
-    if ((GetNumberOfLogicalProcessors() % x86htcount()) != 0) {
-      return -1;
-    } else {
-      return (int)(GetNumberOfLogicalProcessors() / x86htcount());
-    }
-  } else {
-    return GetNumberOfDetectedProcessors();
-  }
-#else
   return GetNumberOfDetectedProcessors();
-#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1210,6 +1195,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0680, CPU_F_I686,       9, "K7-8 (Athlon XP/MP or Duron)" }, // Thoroughbred or Applebred core
           {  0x06A0, CPU_F_I686,       9, "K7-10 (Athlon XP/MP/XP-M)" }, // Barton core
           {  0x0F40, CPU_F_I686,       9, "K8-4" }, //engineering sample
+          {  0x1F30, CPU_F_I686,       9, "K8 (Athlon 64 X2)" },
           {  0x1F40, CPU_F_I686,       9, "K8-4 (Athlon 64)" },
           {  0x2F40, CPU_F_I686,       9, "K8-4 (Mobile Athlon 64)" },
           {  0x3F40, CPU_F_I686,       9, "K8-4 (Opteron 1xx)" },
@@ -1357,6 +1343,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         //{  0x0F10, CPU_F_I686, 0x0B, "Pentium 4" }, /* 1.4 - 2.0GHz P4  (0.18u) */
         //{  0x0F20, CPU_F_I686, 0x0B, "Pentium 4" }, /* >=2.0GHz P4-512k (0.13u) */
         //{  0x0F30, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
+        //{  0x0F40, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
           {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
           {  0xEF00, CPU_F_I686, 0x0B, "Xeon (Foster)" },
           {  0x8F10, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
@@ -1370,12 +1357,12 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0xCF20, CPU_F_I686, 0x0B, "Xeon MP (Prestonia)" }, /* (#3696) */
           {  0xEF20, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Northwood)" },
           {  0xFF20, CPU_F_I686, 0x0B, "Mobile Celeron 4 (Northwood)" },
-          {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" }, /* (#3627) */
+          {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4 (0.09u)" }, /* (#3627) */
           {  0x9F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" },
           {  0xAF30, CPU_F_I686, 0x0B, "Celeron 4 (Prescott)" },
           {  0xBF30, CPU_F_I686, 0x0B, "Xeon (Nocona)" },
           {  0xEF30, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Prescott)" },
-          {  0x0F40, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" }, /* (#3807) unsupported brand id */
+          {  0x0F40, CPU_F_I686, 0x0B, "Pentium 4 (0.09u)" }, /* (#3807) unsupported brand id */
           {  0x9F40, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" },
           {  0xAF40, CPU_F_I686, 0x0B, "Celeron 4 (Prescott)" },
           {  0xBF40, CPU_F_I686, 0x0B, "Xeon (Nocona)" },
@@ -2516,11 +2503,6 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     }
     if (features & CPU_F_EM64T) {
       strcat( namebuf, "EM64T " );
-    }
-    if (features & CPU_F_HYPERTHREAD) {   
-      static char htbuf[60];
-      sprintf( htbuf, "Hyper-Threading(%u) ", x86htcount() );
-      strcat( namebuf, htbuf );   
     }
   #else
     sprintf(namebuf, "%ld\n\tname: %s", rawid, cpuid_s );
