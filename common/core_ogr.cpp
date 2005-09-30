@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.39 2005/08/09 19:13:52 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.40 2005/09/30 05:37:23 stream Exp $"; }
 
 //#define TRACE
 
@@ -164,6 +164,7 @@ const char **corenames_for_contest_ogr()
       "GARSP 6.0-A",
       "GARSP 6.0-B",
       "GARSP 6.0-asm-rt1-gen",
+      "GARSP 6.0-asm-rt1-mmx",
   #elif (CLIENT_CPU == CPU_AMD64)
       "GARSP 6.0-64",
   #elif (CLIENT_CPU == CPU_ARM)
@@ -257,7 +258,17 @@ int apply_selcore_substitution_rules_ogr(int cindex)
     cindex = 0;                                     /* force PPC-scalar */
   if ((feature & CPU_F_64BITOPS) == 0 && cindex == 2)     /* PPC-64bit  */
     cindex = 0;                                     /* force PPC-32bit  */
-#endif
+# elif (CLIENT_CPU == CPU_X86)
+  if (cindex == 3) /* ASM-MMX core requires 64-bit core modules and MMX */
+  {
+#  if !defined(HAVE_I64) /* no 64-bit support? */
+    cindex = 2; /* force ASM-Generic */
+#  else /* no MMX? */
+    if (!(GetProcessorFeatureFlags() & CPU_F_MMX))
+      cindex = 2;
+#  endif
+  }
+# endif
 
   return cindex;
 }
@@ -349,6 +360,11 @@ int selcoreGetPreselectedCoreForProject_ogr()
   #elif (CLIENT_CPU == CPU_X86)
       if (detected_type >= 0)
       {
+#ifdef HAVE_I64 // Need 64-bit support and MMX
+        if (detected_flags & CPU_F_MMX)
+          cindex = 3;  // asm-rt1-mmx (D)
+        else
+#endif
         switch ( detected_type & 0xff ) // FIXME remove &0xff
         {
           case 0x00: cindex = 2; break; // P5           == asm-rt1-gen (C)

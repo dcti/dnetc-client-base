@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.36 2005/05/29 17:02:51 stream Exp $
+ * $Id: ogr.cpp,v 1.2.4.37 2005/09/30 05:37:23 stream Exp $
  */
 #include <string.h>   /* memset */
 
@@ -199,11 +199,16 @@ extern const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
    #define NO_FUNCTION_INLINE(x) x
 #endif
 
-#if (OGROPT_HAVE_OGR_CYCLE_ASM == 1)
-  #define FOUND_ONE_DECL(x) int found_one(x)
-#else
+/*
+ * Look like found_one() must be declared as static in all cases,
+ * assembly core must receive a pointer to a wrapper with known
+ * calling convention. Otherwise lot of bad things happens.
+ */
+// #if (OGROPT_HAVE_OGR_CYCLE_ASM == 1)
+//   #define FOUND_ONE_DECL(x) int found_one(x)
+// #else
   #define FOUND_ONE_DECL(x) static int found_one(x)
-#endif
+// #endif
 
 
 #ifndef __MRC__
