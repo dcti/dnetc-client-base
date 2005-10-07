@@ -6,7 +6,7 @@
 */
 
 #ifndef DOSQSS_H
-#define DOSQSS_H "@(#)$Id: dosqss.h,v 1.1.2.3 2003/02/23 21:00:14 pfeffi Exp $"
+#define DOSQSS_H "@(#)$Id: dosqss.h,v 1.1.2.4 2005/10/07 04:58:57 stream Exp $"
 
 
 #ifdef __cplusplus
@@ -28,10 +28,6 @@ APIRET APIENTRY DosQuerySysState(ULONG func,ULONG arg1,ULONG arg2,
     }
 #else
   APIRET16 APIENTRY16 DosQProcStatus(PVOID buffer, USHORT buffer_size);
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 typedef struct {
@@ -186,5 +182,55 @@ typedef struct {
 #define DOSQSS_PROCESS 0x01
 
 #define DOSQSS_MODULE  0x04
+
+// -----------------------------------------------------------------------
+
+/*** Signal support (16-bit) ***/
+
+/* Signal Numbers for DosSetSigHandler  */
+
+#define SIG_CTRLC                  1       /* Control C                  */
+#define SIG_BROKENPIPE             2       /* Broken Pipe                */
+#define SIG_KILLPROCESS            3       /* Program Termination        */
+#define SIG_CTRLBREAK              4       /* Control Break              */
+#define SIG_PFLG_A                 5       /* Process Flag A             */
+#define SIG_PFLG_B                 6       /* Process Flag B             */
+#define SIG_PFLG_C                 7       /* Process Flag C             */
+#define SIG_CSIGNALS               8       /* number of signals plus one */
+
+/* Flag Numbers for DosFlagProcess */
+
+#define PFLG_A                     0       /* Process Flag A             */
+#define PFLG_B                     1       /* Process Flag B             */
+#define PFLG_C                     2       /* Process Flag C             */
+
+/* Signal actions */
+
+#define SIGA_KILL                  0
+#define SIGA_IGNORE                1
+#define SIGA_ACCEPT                2
+#define SIGA_ERROR                 3
+#define SIGA_ACKNOWLEDGE           4
+
+/* DosFlagProcess codes */
+
+#define FLGP_SUBTREE               0
+#define FLGP_PID                   1
+
+#define DosSetSigHandler        Dos16SetSigHandler
+#define DosFlagProcess          Dos16FlagProcess
+
+typedef void (pascal __far16 *PFNSIGHANDLER)(USHORT, USHORT);
+
+APIRET16 APIENTRY16 DosSetSigHandler(PFNSIGHANDLER pfnSigHandler,
+                                     PFNSIGHANDLER FAR * ppfnPrev, PUSHORT pfAction,
+                                     USHORT fAction, USHORT usSigNum);
+
+APIRET16 APIENTRY16 DosFlagProcess(PID pid, USHORT fScope, USHORT usFlagNum,
+                                   USHORT usFlagArg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

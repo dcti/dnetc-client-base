@@ -13,7 +13,7 @@
  *
 */
 const char *os2inst_cpp(void) {
-return "@(#)$Id: os2inst.cpp,v 1.2.4.6 2003/10/30 21:57:29 pfeffi Exp $"; }
+return "@(#)$Id: os2inst.cpp,v 1.2.4.7 2005/10/07 04:58:57 stream Exp $"; }
 
 // #define TRACE
 
@@ -269,6 +269,12 @@ int os2CliSendSignal(int action, const char *exename)
       break;
    case DNETC_MSG_RESTART:
       rc = kill(pids[i], SIGHUP);
+      break;
+#elif defined(__WATCOMC__)
+   case DNETC_MSG_PAUSE:
+   case DNETC_MSG_UNPAUSE:
+   case DNETC_MSG_RESTART:
+      rc = DosFlagProcess(pids[i], FLGP_PID, PFLG_A, action);
       break;
 #endif
    default: // others are not supported. yet.

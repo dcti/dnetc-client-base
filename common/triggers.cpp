@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.17 2004/06/27 21:41:41 jlawson Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.18 2005/10/07 04:58:57 stream Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -1090,6 +1090,24 @@ extern "C" void CliSignalHandler( int sig )
 }
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
 
+#if (CLIENT_OS == OS_OS2) && defined(__WATCOMC__)
+#include "dosqss.h"
+void pascal __far16 MoreOS2Signals(USHORT sigArg, USHORT sigNumber)
+{
+  // Ack signal
+  DosSetSigHandler(MoreOS2Signals, NULL, NULL, SIGA_ACKNOWLEDGE, sigNumber);
+  if (sigNumber == SIG_PFLG_A) /* signals connected to user signal "A" */
+  {
+    switch (sigArg)
+    {
+      case DNETC_MSG_PAUSE:   RaisePauseRequestTrigger(); break;
+      case DNETC_MSG_UNPAUSE: ClearPauseRequestTrigger(); break;
+      case DNETC_MSG_RESTART: RaiseRestartRequestTrigger(); break;
+    }
+  }
+}
+#endif
+
 // -----------------------------------------------------------------------
 
 #if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) || \
@@ -1198,6 +1216,10 @@ static void __init_signal_handlers( int doingmodes )
       SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
     #endif
   #endif /* defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL) */
+  #if (CLIENT_OS == OS_OS2) && defined(__WATCOMC__)
+    // Pause/unpause in plain OS/2 works thru "user signal" */
+    DosSetSigHandler(MoreOS2Signals, NULL, NULL, SIGA_ACCEPT, SIG_PFLG_A);
+  #endif
   #if defined(SIGQUIT)
   SETSIGNAL( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
