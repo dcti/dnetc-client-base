@@ -5,7 +5,7 @@
  *
  * Wrapper around ogr64.cpp for assembly x86 64-bit cores.
  *
- * $Id: ogr-d.cpp,v 1.1.2.1 2005/09/30 05:37:23 stream Exp $
+ * $Id: ogr-d.cpp,v 1.1.2.2 2005/10/21 21:37:30 kakace Exp $
 */
 
 #include <stddef.h>
@@ -35,6 +35,8 @@
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0
 #endif
 
+#define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_asm_mmx
+
 #include "ansi/ogr-64.cpp"
 
 /*
@@ -55,7 +57,7 @@ extern "C" int CDECL ogr_##func##_asm( \
     unsigned char const *choose_dat, \
     int (CDECL *found_one_cdecl_func)(const struct State *oState) \
 ); \
-static int cycle_thunk_##func(void *state, int *pnodes, int with_time_constraints) \
+static int ogr_cycle(void *state, int *pnodes, int with_time_constraints) \
 { \
     return ogr_##func##_asm(state, pnodes, with_time_constraints, ogr_choose_dat, found_one_cdecl_thunk); \
 }
@@ -66,54 +68,6 @@ static int CDECL found_one_cdecl_thunk(const struct State *oState)
 }
 
 CYCLE_THUNK(watcom_rt1_mmx64);
-
-void setup_asm64_ogr_core(CoreDispatchTable *table, int index)
-{
-  (void) index;  /* To be used later, only one 64-bit asm function exist now */
-
-  STATIC_ASSERT( sizeof(struct Level) == 0x50 );
-  STATIC_ASSERT( offsetof(struct State, Levels) == 32 );
-
-  table->init      = ogr_init;
-  table->create    = ogr_create;
-  table->getresult = ogr_getresult;
-  table->destroy   = ogr_destroy;
-  table->cleanup   = ogr_cleanup;
-  table->cycle     = cycle_thunk_watcom_rt1_mmx64;
-}
-
-#if defined(__cplusplus)
-}
-#endif
-
-#else // HAVE_I64
-
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
-/*
- * Only need definition of CoreDispatchTable. Other OGR setup and optimization
- * options are totally incorrect but we don't care.
- */
-#include "ansi/ogr.h"
-
-/*
- * No int64 support. Well, these pointers shouldn't be called at all.
- * Reset all fields to NULL (they've got garbage in ogr-c.cpp).
- * If we've got a GPF, fix core selection routines!
- */
-void setup_asm64_ogr_core(CoreDispatchTable *table, int index)
-{
-  (void) index;
-
-  table->init      = NULL;
-  table->create    = NULL;
-  table->getresult = NULL;
-  table->destroy   = NULL;
-  table->cleanup   = NULL;
-  table->cycle     = NULL;
-}
 
 #if defined(__cplusplus)
 }

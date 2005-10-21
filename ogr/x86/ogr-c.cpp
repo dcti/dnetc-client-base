@@ -6,10 +6,8 @@
  * Wrapper around ogr.cpp for all processor WITH a fast bsr instruction.
  * (ie, PPro, PII, PIII)
  *
- * $Id: ogr-c.cpp,v 1.1.2.3 2005/09/30 05:37:23 stream Exp $
+ * $Id: ogr-c.cpp,v 1.1.2.4 2005/10/21 21:37:30 kakace Exp $
 */
-
-#define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_foo /* shutup declaration in ogr.cpp */
 
 #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
 #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
@@ -26,6 +24,8 @@
   #undef  OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0
 #endif
+
+#define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_asm_gen
 
 #include "ansi/ogr.cpp"
 #include "ccoreio.h"       /* CDECL    */
@@ -60,9 +60,6 @@
 extern "C" {
 #endif
 
-#define FIRST_ASM_CORE   2
-#define TOTAL_ASM_CORES  2
-
 #define CYCLE_THUNK(func) \
 extern "C" int CDECL ogr_##func##_asm( \
     void *state, \
@@ -71,7 +68,7 @@ extern "C" int CDECL ogr_##func##_asm( \
     unsigned char const *choose_dat, \
     int (CDECL *found_one_cdecl_func)(const struct State *oState) \
 ); \
-static int cycle_thunk_##func(void *state, int *pnodes, int with_time_constraints) \
+static int ogr_cycle(void *state, int *pnodes, int with_time_constraints) \
 { \
     return ogr_##func##_asm(state, pnodes, with_time_constraints, ogr_choose_dat, found_one_cdecl_thunk); \
 }
@@ -82,40 +79,6 @@ static int CDECL found_one_cdecl_thunk(const struct State *oState)
 }
 
 CYCLE_THUNK(watcom_rt1);
-
-extern void setup_asm64_ogr_core(CoreDispatchTable *table, int index);
-
-CoreDispatchTable * ogr_get_dispatch_table_asm (int coresel)
-{
-  static CoreDispatchTable dispatch_table[TOTAL_ASM_CORES];
-  int    i;
-
-  STATIC_ASSERT( sizeof(struct Level) == 0x44 );
-  STATIC_ASSERT( offsetof(struct State, Levels) == 32 );
-
-  for (i = 0; i < TOTAL_ASM_CORES; i++)
-  {
-    dispatch_table[i].init      = ogr_init;
-    dispatch_table[i].create    = ogr_create;
-    dispatch_table[i].getresult = ogr_getresult;
-    dispatch_table[i].destroy   = ogr_destroy;
-    dispatch_table[i].cleanup   = ogr_cleanup;
-  }
-  dispatch_table[0].cycle  = cycle_thunk_watcom_rt1;
-
-/*
- * Sorry for a little mess (dispatch_table[1] unnecessary and incorrectly
- * filled in loop above, then completely overwritten in setup_asm64_ogr_core()).
- * It's simpler because only one 64-bit asm core exist now.
- */
-  setup_asm64_ogr_core(&dispatch_table[1], 0);
-
-  coresel -= FIRST_ASM_CORE;
-  if (coresel < 0 || coresel >= TOTAL_ASM_CORES)
-    return NULL;
-
-  return &dispatch_table[coresel];
-}
 
 #if defined(__cplusplus)
 }
