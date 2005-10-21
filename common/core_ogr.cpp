@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.41 2005/10/21 21:38:14 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.42 2005/10/21 22:02:10 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -61,9 +61,9 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.41 2005/10/21 21:38:14 kakace Exp $"; }
 #elif (CLIENT_CPU == CPU_X86)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_gen(int);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_gen(void);
     #if defined(HAVE_I64)
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_mmx(int);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_mmx(void);
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
