@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.40 2005/09/30 05:37:23 stream Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.41 2005/10/21 21:38:14 kakace Exp $"; }
 
 //#define TRACE
 
@@ -61,7 +61,10 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.40 2005/09/30 05:37:23 stream Exp $"; }
 #elif (CLIENT_CPU == CPU_X86)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm(int); //all assembly
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_gen(int);
+    #if defined(HAVE_I64)
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_mmx(int);
+    #endif
 #elif (CLIENT_CPU == CPU_ARM)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
@@ -90,7 +93,10 @@ int InitializeCoreTable_ogr(int first_time)
       #if CLIENT_CPU == CPU_X86
         ogr_get_dispatch_table();
         ogr_get_dispatch_table_nobsr();
-        ogr_get_dispatch_table_asm(2);
+        ogr_get_dispatch_table_asm_gen();
+        #if defined(HAVE_I64)
+          ogr_get_dispatch_table_asm_mmx();
+        #endif
       #elif CLIENT_CPU == CPU_POWERPC
         ogr_get_dispatch_table();
         #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
@@ -164,7 +170,9 @@ const char **corenames_for_contest_ogr()
       "GARSP 6.0-A",
       "GARSP 6.0-B",
       "GARSP 6.0-asm-rt1-gen",
+      #ifdef HAVE_I64
       "GARSP 6.0-asm-rt1-mmx",
+      #endif
   #elif (CLIENT_CPU == CPU_AMD64)
       "GARSP 6.0-64",
   #elif (CLIENT_CPU == CPU_ARM)
@@ -498,20 +506,18 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   #endif
       unit_func.ogr = ogr_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_X86)
-  if (coresel == 0) //A
-    unit_func.ogr = ogr_get_dispatch_table(); //A
-  else
   if (coresel == 1) //B
     unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
   else
-  {
-    unit_func.ogr = ogr_get_dispatch_table_asm(coresel); //all assembly
-    if (unit_func.ogr == NULL)  // no such core
-    {
-        unit_func.ogr = ogr_get_dispatch_table(); //fallback to A
-        coresel = 0;
-    }
-  }
+  if (coresel == 2) //C
+    unit_func.ogr = ogr_get_dispatch_table_asm_gen();
+  #if defined(HAVE_I64)
+  else
+  if (coresel == 3) //D
+    unit_func.ogr = ogr_get_dispatch_table_asm_mmx();
+  #endif
+  else
+    unit_func.ogr = ogr_get_dispatch_table(); //A
 #elif (CLIENT_CPU == CPU_AMD64)
   //unit_func.ogr = ogr_get_dispatch_table();
   unit_func.ogr = ogr64_get_dispatch_table();
