@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.37 2005/09/30 05:37:23 stream Exp $
+ * $Id: ogr.cpp,v 1.2.4.38 2005/10/21 21:34:24 kakace Exp $
  */
 #include <string.h>   /* memset */
 
@@ -204,11 +204,7 @@ extern const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
  * assembly core must receive a pointer to a wrapper with known
  * calling convention. Otherwise lot of bad things happens.
  */
-// #if (OGROPT_HAVE_OGR_CYCLE_ASM == 1)
-//   #define FOUND_ONE_DECL(x) int found_one(x)
-// #else
-  #define FOUND_ONE_DECL(x) static int found_one(x)
-// #endif
+#define FOUND_ONE_DECL(x) static int found_one(x)
 
 
 #ifndef __MRC__
@@ -217,9 +213,7 @@ static int ogr_init(void);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
 static int ogr_cleanup(void);
-#if (OGROPT_HAVE_OGR_CYCLE_ASM == 0)
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
-#endif
 static int ogr_create(void *input, int inputlen, void *state, int statelen,
                       int minpos);
 #if (OGROPT_HAVE_OGR_CYCLE_ASM < 2)
@@ -1073,7 +1067,6 @@ static int ogr_cleanup(void)
 
 /* ----------------------------------------------------------------------- */
 
-#if (OGROPT_HAVE_OGR_CYCLE_ASM == 0)
 CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
 {
   static CoreDispatchTable dispatch_table;
@@ -1085,7 +1078,6 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.cleanup   = ogr_cleanup;
   return &dispatch_table;
 }
-#endif
 
 /* ----------------------------------------------------------------------- */
 
