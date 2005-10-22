@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.38 2005/10/21 21:34:24 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.39 2005/10/22 11:44:01 kakace Exp $
  */
 #include <string.h>   /* memset */
 
@@ -900,6 +900,26 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
 
 
 /* ----------------------------------------------------------------------- */
+/* WARNING : Buffers cannot store every marks of the ruler being checked. The
+**  STUB_MAX macro determines how many "diffs" are stored and retrieved when
+**  the core restarts a stub.
+**  As a result, the core shall not be interrupted without care : if it's
+**  interrupted beyond the mark that can be stored in the buffers, then the
+**  node count becomes inacurate. This bug caused troubles on clients running
+**  on non-preemptive OS and on clients using cores designed for such OSes.
+**  The OGROPT_IGNORE_TIME_CONSTRAINTS_ARG macro should be defined whenever
+**  possible. The sole purpose of the "with_time_constraints" argument is to
+**  ensure responsiveness on non-preemptive OSes, especially on slow machines.
+**
+**  The fix makes use of a checkpoint to remember the node count upto the last
+**  mark that can be recorded in the buffers. This node count is returned to
+**  the caller, even if the core is interrupted beyond that mark. Thus, the
+**  total node count maintained by the caller is kept in sync despite the
+**  limitations of the buffers.
+**  The number of extra nodes checked (beyond that mark) is stored into the
+**  State data structure and it is used as the initial node count in case the
+**  core is not interrupted (thus avoiding unecessary overhead).
+*/
 
 #if (OGROPT_HAVE_OGR_CYCLE_ASM == 0)
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
@@ -910,6 +930,12 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   struct Level *lev = &oState->Levels[depth];
   int nodes = 0;
   int mark = lev->mark;
+
+  #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+    int checkpoint = 0;
+    nodes = oState->node_offset;
+    oState->node_offset = 0;
+  #endif
 
   /*
   ** Copy useful datas into local variables to speed things up a bit. For
@@ -931,18 +957,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   OGR_CYCLE_CACHE_ALIGN;
 
   for (;;) {
-    int limit;
-
-    if (with_time_constraints) { /* if (...) is optimized away if unused */
-       #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
-       if (nodes >= *pnodes) {
-         retval = CORE_S_CONTINUE;
-         break;
-       }  
-       #endif  
-    }
-
-    limit = maxlength - choose(dist0 >> ttmDISTBITS, remdepth);
+    int limit = maxlength - choose(dist0 >> ttmDISTBITS, remdepth);
 
     /*
     ** Compute the maximum position for the current mark. The most common case
@@ -962,6 +977,20 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
       else if (limit >= maxlength - levHalfDepth->mark) {
         limit = maxlength - levHalfDepth->mark - 1;
       }
+    }
+
+    if (with_time_constraints) { /* if (...) is optimized away if unused */
+      #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
+      if (depth <= (1+STUB_MAX) - oState->startdepth)
+        checkpoint = nodes;
+
+      if (nodes >= *pnodes) {
+        retval = CORE_S_CONTINUE;
+        oState->node_offset = nodes - checkpoint;
+        nodes = checkpoint;
+        break;
+      }  
+      #endif  
     }
 
     nodes++;

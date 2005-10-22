@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.17 2004/08/14 23:33:35 kakace Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.18 2005/10/22 11:44:02 kakace Exp $"
 
 #include <limits.h>
 #if (UINT_MAX < 0xfffffffful)
@@ -199,6 +199,7 @@ struct State {
   int startdepth;
   int depth;
   struct Level Levels[MAXDEPTH];
+  int node_offset;          /* node count cache for non-preemptive OS */
 };
 
 #define OGR_PROBLEM_SIZE (((8*OGR_INT_SIZE+15)&(-16))+(OGR_LEVEL_SIZE*MAXDEPTH))
