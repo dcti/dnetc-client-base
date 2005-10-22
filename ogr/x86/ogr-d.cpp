@@ -5,7 +5,7 @@
  *
  * Wrapper around ogr64.cpp for assembly x86 64-bit cores.
  *
- * $Id: ogr-d.cpp,v 1.1.2.2 2005/10/21 21:37:30 kakace Exp $
+ * $Id: ogr-d.cpp,v 1.1.2.3 2005/10/22 06:10:47 stream Exp $
 */
 
 #include <stddef.h>
@@ -64,6 +64,9 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints) \
 
 static int CDECL found_one_cdecl_thunk(const struct State *oState)
 {
+    STATIC_ASSERT( sizeof(struct Level) == 0x50 );
+    STATIC_ASSERT( offsetof(struct State, Levels) == 32 );
+
     return found_one(oState);
 }
 
