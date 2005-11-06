@@ -6,7 +6,7 @@
  * Wrapper around ogr.cpp for all processor WITH a fast bsr instruction.
  * (ie, PPro, PII, PIII)
  *
- * $Id: ogr-c.cpp,v 1.1.2.5 2005/10/22 06:10:47 stream Exp $
+ * $Id: ogr-c.cpp,v 1.1.2.6 2005/11/06 17:53:15 stream Exp $
 */
 
 #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
@@ -77,6 +77,7 @@ static int CDECL found_one_cdecl_thunk(const struct State *oState)
 {
     STATIC_ASSERT( sizeof(struct Level) == 0x44 );
     STATIC_ASSERT( offsetof(struct State, Levels) == 32 );
+    STATIC_ASSERT( offsetof(struct State, node_offset) == 0x818 );
 
     return found_one(oState);
 }

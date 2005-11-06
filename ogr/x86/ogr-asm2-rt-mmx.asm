@@ -20,6 +20,8 @@
 ;             contains only copy of "lev->limit". I cannot allocate it in
 ;             register and there no difference how to reference it in
 ;             memory - as [esp+xx] or [ebp+xx]. Gained 2% in speed.
+;
+; 2005-11-01: Added fix for cached nodes.
 
 cpu	586
 
@@ -28,6 +30,9 @@ cpu	586
 %else
 	[SECTION .data]
 %endif
+
+%define STUB_MAX 10
+%define with_time_constraints 1
 
 ;
 ; Better keep local copy of this table due to differences in naming
@@ -77,6 +82,7 @@ global	_ogr_watcom_rt1_mmx64_asm, ogr_watcom_rt1_mmx64_asm
 	%define lev_mark   48H
 	%define lev_limit  4cH
 
+	%define ostate_node_offset  0980H
 ;
 ; Registers assigned:
 ;
@@ -94,7 +100,7 @@ ogr_cycle_:
 	push	esi
 	push	edi
 	push	ebp
-	sub	esp,30H
+	sub	esp,38H
 	add	ecx,3
 	mov	dword [esp+1cH],ecx	; ogr_choose_dat+3
 	mov	dword [esp+0cH],edx	; pnodes
@@ -106,7 +112,20 @@ ogr_cycle_:
 	mov	dword [esp+24H],edx	; int depth = oState->depth + 1;
 	imul	edx,sizeof_level
 	lea	ebp,[eax+edx+20H]	; lev = &oState->Levels[depth]
-	and	dword [esp+14H],0	; int nodes = 0;
+%if with_time_constraints
+	mov	edx,dword [eax+ostate_node_offset]
+	add	dword [esp+2cH],edx	; *pnodes += oState->node_offset;
+	mov	dword [esp+14H],edx	; nodes = oState->node_offset;
+	xor	edx,edx
+	mov	dword [esp+30H],edx	; int checkpoint = 0;
+	mov	dword [eax+ostate_node_offset],edx	; oState->node_offset = 0;
+	; int checkpoint_depth = (1+STUB_MAX) - oState->startdepth;
+	mov	edx,(1+STUB_MAX)
+	sub	edx,dword [eax+18H]
+	mov	dword [esp+34H],edx
+%else
+ 	and	dword [esp+14H],0	; int nodes = 0;
+%endif
 	mov	ecx,dword [eax+10H]
 	imul	ecx,sizeof_level
 	lea	ebx,[eax+ecx+20H]
@@ -140,6 +159,8 @@ ogr_cycle_:
 ;	24H	depth
 ;	28H	limit => KILLED.
 ;	2cH	mark => KILLED. Now contains *pnodes for fast compare.
+;	30H	checkpoint
+;	34H	checkpoint_depth
 
 	mov	ebx,dword [ebp+lev_mark]	;   int mark = lev->mark;
 
@@ -172,7 +193,7 @@ ogr_cycle_:
 	jmp	outerloop
 
 %if ($-$$) <> 95h
-	%error	"Assembly of jumps and constant must be optimized, add -O5 to NASM options"
+;	%error	"Assembly of jumps and constant must be optimized, add -O5 to NASM options"
 %endif
 
 	align	16
@@ -186,11 +207,13 @@ checklimit:
 	;      if (depth <= halfdepth) {
 	cmp	eax,dword [esp]
 	jg	L$56
-; This check unnecessary - we're always working with_time_constraints
-;	;        if (nodes >= *pnodes) {
-;	mov	eax,dword [esp+14H]	; nodes
-;	cmp	eax,dword [esp+2cH]	; *pnodes
-;	jge	L$54
+%if with_time_constraints
+%else
+	;        if (nodes >= *pnodes) {
+	mov	eax,dword [esp+14H]	; nodes
+	cmp	eax,dword [esp+2cH]	; *pnodes
+	jge	L$54
+%endif
 	;        limit = maxlength - OGR[remdepth];
 	mov	eax,dword [esp+20H]	; remdepth
 	mov	edx,dword [esp+10H]	; maxlength
@@ -216,6 +239,15 @@ L$56:
 	;        limit = maxlength - levHalfDepth->mark - 1;
 	lea	edx,[eax-1]
 	jmp	store_limit
+
+%if with_time_constraints
+%else
+L$54:
+	;          retval = CORE_S_CONTINUE;
+	;          break;
+	mov	eax,1
+	jmp	L$53_exit
+%endif
 
 	align	16
 outerloop:
@@ -361,10 +393,13 @@ L$58:
 
 	;    lev++;
 	add	ebp,sizeof_level
-	;    depth++;
-	inc	dword [esp+24H]
 	;    remdepth--;
 	dec	dword [esp+20H]
+	;    depth++;
+;	inc	dword [esp+24H]
+	mov	edx,dword [esp+24H]
+	inc	edx
+	mov	dword [esp+24H],edx
 	;    continue;
 
 ; When core processed at least given number of nodes (or a little more)
@@ -376,12 +411,35 @@ L$58:
 ; Checking node count here help us do not break perfectly aligned
 ; command sequence from "outerloop" to "stay".
 
+%if with_time_constraints
+	;      if (depth <= checkpoint_depth)
+	;        checkpoint = nodes;
+;	mov	edx,dword [esp+24H]	; depth cached above
 	mov	eax,dword [esp+14H]	; nodes
+	cmp	edx,dword [esp+34H]	; checkpoint_depth
+	jg	L$01
+	mov	dword [esp+30H],eax
+	nop				; align next label
+; Unaligned L$01 gives huge slowdown. Alas, NASM cannot correctly
+; expand current address in macro. Please check listing!
+;	_natural_align
+L$01:
+	;      if (nodes >= *pnodes) {
 	cmp	eax,dword [esp+2cH]	; *pnodes
 	jl	outerloop
-	xor	eax,eax
-	inc	eax		; mov	eax,1 but shorter (bad align below)
+	;        oState->node_offset = nodes - checkpoint;
+	sub	eax,dword [esp+30H]	; nodes - checkpoint
+	mov	edx,dword [esp+18H]	; oState
+	mov	dword [edx+ostate_node_offset],eax
+	;        nodes = checkpoint;
+	mov	eax,dword [esp+30H]
+	mov	dword [esp+14H],eax
+	;	 retval = CORE_S_CONTINUE;
+	mov	eax,1
 	jmp	L$53_exit
+%else
+	jmp	outerloop
+%endif
 
 	align	16
 
@@ -495,7 +553,7 @@ L$53_exit:
 	mov	edx,dword [esp+14H]
 	mov	ecx,dword [esp+0cH]
 	mov	dword [ecx],edx
-	add	esp,30H
+	add	esp,38H
 	pop	ebp
 	pop	edi
 	pop	esi
