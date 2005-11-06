@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.39 2005/10/22 11:44:01 kakace Exp $
+ * $Id: ogr.cpp,v 1.2.4.40 2005/11/06 10:55:38 stream Exp $
  */
 #include <string.h>   /* memset */
 
@@ -933,6 +933,8 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 
   #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
     int checkpoint = 0;
+    int checkpoint_depth = (1+STUB_MAX) - oState->startdepth;
+    *pnodes += oState->node_offset; /* force core to do some work */
     nodes = oState->node_offset;
     oState->node_offset = 0;
   #endif
@@ -981,13 +983,13 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 
     if (with_time_constraints) { /* if (...) is optimized away if unused */
       #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
-      if (depth <= (1+STUB_MAX) - oState->startdepth)
+      if (depth <= checkpoint_depth)
         checkpoint = nodes;
 
       if (nodes >= *pnodes) {
-        retval = CORE_S_CONTINUE;
         oState->node_offset = nodes - checkpoint;
         nodes = checkpoint;
+        retval = CORE_S_CONTINUE;
         break;
       }  
       #endif  
