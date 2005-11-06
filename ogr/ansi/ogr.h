@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.18 2005/10/22 11:44:02 kakace Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.19 2005/11/06 17:45:57 stream Exp $"
 
 #include <limits.h>
 #if (UINT_MAX < 0xfffffffful)
@@ -95,6 +95,12 @@ typedef struct {
    * Clean up anything allocated in init().
    */
   int (*cleanup)(void);
+
+  /*
+   * Get value of cached nodes (node_offset field) - offset of this field
+   * in state structure is different for 32- and 64-bit OGR.
+   */
+  int (*getnodeoffset)(void *state);
 
 } DNETC_PACKED CoreDispatchTable;
 

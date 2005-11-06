@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.2.4.40 2005/11/06 10:55:38 stream Exp $
+ * $Id: ogr.cpp,v 1.2.4.41 2005/11/06 17:45:57 stream Exp $
  */
 #include <string.h>   /* memset */
 
@@ -1054,6 +1054,14 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 }
 #endif  /* OGROPT_HAVE_OGR_CYCLE_ASM */
 
+/* ----------------------------------------------------------------------- */
+
+static int ogr_getnodeoffset(void *state)
+{
+  struct State *oState = (struct State *)state;
+
+  return oState->node_offset;
+}
 
 /* ----------------------------------------------------------------------- */
 
@@ -1107,6 +1115,7 @@ CoreDispatchTable * OGR_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.getresult = ogr_getresult;
   dispatch_table.destroy   = ogr_destroy;
   dispatch_table.cleanup   = ogr_cleanup;
+  dispatch_table.getnodeoffset = ogr_getnodeoffset;
   return &dispatch_table;
 }
 

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.24 2005/11/06 10:55:38 stream Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.25 2005/11/06 17:45:57 stream Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1614,9 +1614,9 @@ static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
   iterationsP = iterationsP;
 #else
   int r, nodes;
-  struct State *state = (State *) thisprob->priv_data.core_membuffer;
-  int prev_node_offset = state->node_offset;
+  int prev_node_offset, cur_node_offset;
 
+  prev_node_offset = (thisprob->pub_data.unit_func.ogr)->getnodeoffset(thisprob->priv_data.core_membuffer);
   nodes = (int)(*iterationsP);
   r = (thisprob->pub_data.unit_func.ogr)->cycle(
                           thisprob->priv_data.core_membuffer,
@@ -1627,7 +1627,8 @@ static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
    * This number may be NOT equal to number of actually processed OGR nodes,
    * which is returned in 'nodes'. See ogr.cpp for details about node caching.
    */
-  *iterationsP = (u32)(nodes + state->node_offset - prev_node_offset);
+  cur_node_offset = (thisprob->pub_data.unit_func.ogr)->getnodeoffset(thisprob->priv_data.core_membuffer);
+  *iterationsP = (u32)(nodes + cur_node_offset - prev_node_offset);
 
   u32 newnodeslo = thisprob->priv_data.contestwork.ogr_p2.nodes.lo + nodes;
   if (newnodeslo < thisprob->priv_data.contestwork.ogr_p2.nodes.lo) {
