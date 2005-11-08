@@ -31,8 +31,14 @@ cpu	386
 	[SECTION .data]
 %endif
 
+;
+; Define OGR_DEBUG to 0 or 1 to get single core for debugging and
+; nice listing. 1 - with_time_constraints, 0 - without them.
+;
+;%define OGR_DEBUG 0
+;%define OGR_DEBUG 1
+
 %define STUB_MAX 10
-%define with_time_constraints 1
 
 ;
 ; Better keep local copy of this table due to differences in naming
@@ -73,6 +79,45 @@ global	_ogr_watcom_rt1_asm, ogr_watcom_rt1_asm
 
 	%define ostate_node_offset  0818H
 
+%define comp_offset 40			; offsetof(struct Level, comp)
+%macro  COMP_LEFT_LIST_RIGHT_cl  2
+	; %1 - register with level
+	; %2 - register with newbit
+
+	mov	edx,dword [%1+0cH]
+	mov	eax,dword [%1+8]
+	shrd	dword [%1+10H],edx,cl
+	shrd	edx,eax,cl
+	mov	edi,dword [%1+4]
+	mov	dword [%1+0cH],edx
+	shrd	eax,edi,cl
+	mov	edx,dword [%1]
+	mov	dword [%1+8],eax
+	shrd	edi,edx,cl
+	shrd	edx,%2,cl		; newbit
+	mov	dword [%1],edx
+	mov	dword [%1+4],edi
+
+	mov	eax,dword [%1+comp_offset+4]
+	mov	edx,dword [%1+comp_offset+8]
+	shld	dword [%1+comp_offset],eax,cl
+	shld	eax,edx,cl
+	mov	dword [%1+comp_offset+4],eax
+	mov	eax,dword [%1+comp_offset+0cH]
+	shld	edx,eax,cl
+	mov	dword [%1+comp_offset+8],edx
+	mov	edx,dword [%1+comp_offset+10H]
+	shld	eax,edx,cl
+	mov	dword [%1+comp_offset+0cH],eax
+	shl	edx,cl
+	mov	dword [%1+comp_offset+10H],edx
+%endmacro
+
+%ifdef OGR_DEBUG
+	%define with_time_constraints OGR_DEBUG
+%else
+	%macro ogr_cycle_macro 0
+%endif
 ogr_cycle_:
 	push	ecx
 	push	esi
@@ -151,14 +196,14 @@ ogr_cycle_:
 	mov	edi,dword [ebp+14H]
 	mov	esi,1
 
-	jmp	outerloop
+	jmp	.outerloop
 
 %if ($-$$) <> 7Bh
 ;	%error	"Assembly of jumps and constant must be optimized, add -O5 to NASM options"
 %endif
 
 	align	16
-checklimit:
+.checklimit:
 	; we enter here with:
 	; 	eax = depth
 	;	edx = limit
@@ -167,13 +212,13 @@ checklimit:
 	; Don't forget to store limit when leaving globally!
 	;      if (depth <= halfdepth) {
 	cmp	eax,dword [esp]
-	jg	L$56	; wrong prediction, but speed remains same
+	jg	.L$56	; wrong prediction, but speed remains same
 %if with_time_constraints
 %else
 	;        if (nodes >= *pnodes) {
 	mov	eax,dword [esp+14H]	; nodes
 	cmp	eax,dword [esp+2cH]	; *pnodes
-	jge	L$54
+	jge	.L$54
 %endif
 	;        limit = maxlength - OGR[remdepth];
 	mov	eax,dword [esp+20H]	; remdepth
@@ -184,34 +229,34 @@ checklimit:
 	mov	edi,dword [esp+18H]	; oState
 	mov	eax,dword [edi+0cH]	; oState->half_length
 	cmp	edx,eax
-	jle	store_limit
+	jle	.store_limit
 	;          limit = oState->half_length;
 	mov	edx,eax
-	jmp	store_limit
+	jmp	.store_limit
 
 	align	16
-L$56:
+.L$56:
 	;      else if (limit >= maxlength - levHalfDepth->mark) {
 	mov	eax,dword [esp+10H]	; maxlength
 	mov	edi,dword [esp+4]	; levHalfDepth
 	sub	eax,dword [edi+3cH]	; levHalfDepth->mark
 	cmp	eax,edx
-	jg	store_limit
+	jg	.store_limit
 	;        limit = maxlength - levHalfDepth->mark - 1;
 	lea	edx,[eax-1]
-	jmp	store_limit
+	jmp	.store_limit
 
 %if with_time_constraints
 %else
-L$54:
+.L$54:
 	;          retval = CORE_S_CONTINUE;
 	;          break;
 	mov	eax,1
-	jmp	L$53
+	jmp	.L$53
 %endif
 
 	align	16
-outerloop:
+.outerloop:
 	;    limit = maxlength - choose(dist0 >> ttmDISTBITS, remdepth);
 	shr	edi,14H			; dist0
 	imul	edi,0cH
@@ -224,8 +269,8 @@ outerloop:
 	;    if (depth <= halfdepth2) {
 	mov	eax,dword [esp+24H]	; depth
 	cmp	eax,dword [esp+8]	; halfdepth2
-	jle	checklimit
-store_limit:
+	jle	.checklimit
+.store_limit:
 ;	mov	dword [esp+28H],edx	; limit (save on stack) => KILLED
 	;    lev->limit = limit;
 	mov	dword [ebp+40H],edx
@@ -235,7 +280,7 @@ store_limit:
 
 	_natural_align
 
-stay:   ; Most important internal loop
+.stay:	; Most important internal loop
 	;
 	; entry: ebx = mark   (keep and update!)
 	;	 ecx = comp0  (reloaded immediately after shift)
@@ -247,7 +292,7 @@ stay:   ; Most important internal loop
 	;
 	;    if (comp0 < 0xfffffffe) {
 	cmp	ecx,0fffffffeH
-	jnb	L$57_
+	jnb	.L$57_
 	;      int s = LOOKUP_FIRSTBLANK( comp0 );
 	not	ecx
 	mov	eax,20H
@@ -257,53 +302,19 @@ stay:   ; Most important internal loop
 	add	ebx,eax
 	cmp	ebx,dword [ebp+40H]	; limit (==lev->limit)
 	mov	ecx,eax
-	jg	up
+	jg	.up
 	;      COMP_LEFT_LIST_RIGHT(lev, s);
-%define comp_offset 40			; offsetof(struct Level, comp)
-%macro  COMP_LEFT_LIST_RIGHT_cl  2
-	; %1 - register with level
-	; %2 - register with newbit
-
-	mov	edx,dword [%1+0cH]
-	mov	eax,dword [%1+8]
-	shrd	dword [%1+10H],edx,cl
-	shrd	edx,eax,cl
-	mov	edi,dword [%1+4]
-	mov	dword [%1+0cH],edx
-	shrd	eax,edi,cl
-	mov	edx,dword [%1]
-	mov	dword [%1+8],eax
-	shrd	edi,edx,cl
-	shrd	edx,%2,cl		; newbit
-	mov	dword [%1],edx
-	mov	dword [%1+4],edi
-
-	mov	eax,dword [%1+comp_offset+4]
-	mov	edx,dword [%1+comp_offset+8]
-	shld	dword [%1+comp_offset],eax,cl
-	shld	eax,edx,cl
-	mov	dword [%1+comp_offset+4],eax
-	mov	eax,dword [%1+comp_offset+0cH]
-	shld	edx,eax,cl
-	mov	dword [%1+comp_offset+8],edx
-	mov	edx,dword [%1+comp_offset+10H]
-	shld	eax,edx,cl
-	mov	dword [%1+comp_offset+0cH],eax
-	shl	edx,cl
-	mov	dword [%1+comp_offset+10H],edx
-
-%endmacro
 	COMP_LEFT_LIST_RIGHT_cl  ebp, esi	; level in ebp, newbit in esi
 
 	mov	ecx,dword [ebp+28H]	; comp0  = ...
 	xor	esi,esi			; newbit = 0
 
-L$58:
+.L$58:
 	;    lev->mark = mark;
 	;    if (remdepth == 0) {                  /* New ruler ? (last mark placed) */
 	mov	dword [ebp+3cH],ebx	; lev->mark
 	cmp	dword [esp+20H],0	; remdepth
-	je	L$61
+	je	.L$61
 	;    PUSH_LEVEL_UPDATE_STATE(lev);         /* Go deeper */
 	;    #define PUSH_LEVEL_UPDATE_STATE(lev) {            \
 	;      U temp1, temp2;                                 \
@@ -387,15 +398,15 @@ L$58:
 ;	mov	edx,dword [esp+24H]	; depth cached above
 	mov	eax,dword [esp+14H]	; nodes
 	cmp	edx,dword [esp+34H]	; checkpoint_depth
-	jg	L$01
+	jg	.L$01
 	mov	dword [esp+30H],eax
 ; Unaligned L$01 gives huge slowdown. Alas, NASM cannot correctly
 ; expand current address in macro. Please check listing!
 ;	_natural_align
-L$01:
+.L$01:
 	;      if (nodes >= *pnodes) {
 	cmp	eax,dword [esp+2cH]	; *pnodes
-	jl	outerloop
+	jl	.outerloop
 	;        oState->node_offset = nodes - checkpoint;
 	sub	eax,dword [esp+30H]	; nodes - checkpoint
 	mov	edx,dword [esp+18H]	; oState
@@ -405,19 +416,19 @@ L$01:
 	mov	dword [esp+14H],eax
 	;	 retval = CORE_S_CONTINUE;
 	mov	eax,1
-	jmp	L$53
+	jmp	.L$53
 %else
-	jmp	outerloop
+	jmp	.outerloop
 %endif
 
 	align	16
 
 	;    else {  /* s >= 32 */
 	;      if ((mark += 32) > limit) goto up;
-L$57_:
+.L$57_:
 	add	ebx,20H
 	cmp	ebx,dword [ebp+40H]	; limit (==lev->limit)
-	jg	up
+	jg	.up
 
 	cmp	ecx,0ffffffffH
 	; small optimize. in both cases (ecx == -1 and not) we perform
@@ -442,11 +453,11 @@ L$57_:
 	mov	dword [ebp+34H],eax
 	mov	dword [ebp+38H],esi
 
-	je	stay	; ecx == -1
-	jmp	L$58	; ecx != -1
+	je	.stay	; ecx == -1
+	jmp	.L$58	; ecx != -1
 
 	align	16
-up:
+.up:
 	;    lev--;
 	sub	ebp,sizeof_level
 	;    #define POP_LEVEL(lev)  \
@@ -464,9 +475,9 @@ up:
 	;    depth--;
 	;    if (depth <= 0) {
 	dec	dword [esp+24H]
-	jg	stay
+	jg	.stay
 	xor	eax,eax
-L$53:
+.L$53:
 	mov	dword [ebp+3cH],ebx	; mark
 	mov	edx,dword [esp+24H]
 	dec	edx
@@ -485,7 +496,7 @@ L$53:
 	pop	ecx
 	ret
 
-L$61:
+.L$61:
 	mov	eax,dword [esp+18H]
 	push	ebx			; preserve regs clobbered by cdecl
 	push	ecx
@@ -497,8 +508,22 @@ L$61:
 	pop	ecx
 	pop	ebx			; restore clobbered regs
 	cmp	eax,1
-	jne	L$53
-	jmp	stay
+	jne	.L$53
+	jmp	.stay
+%ifndef OGR_DEBUG
+	%endmacro
+%endif
+
+%ifndef OGR_DEBUG
+	%define ogr_cycle_		ogr_cycle_with_tc
+	%define with_time_constraints	1
+	ogr_cycle_macro
+
+	align	16
+	%define ogr_cycle_		ogr_cycle_no_tc
+	%define with_time_constraints	0
+	ogr_cycle_macro
+%endif
 
 _ogr_watcom_rt1_asm:
 ogr_watcom_rt1_asm:
@@ -507,8 +532,16 @@ ogr_watcom_rt1_asm:
 	mov	[_found_one_cdecl_ptr], eax
 	mov	eax, [esp+8]		; state
 	mov	edx, [esp+12]		; pnodes
-	mov	ebx, [esp+16]		; with_time_constraints (ignored, always true)
+;	mov	ebx, [esp+16]		; with_time_constraints (ignored inside cycle)
 	mov	ecx, [esp+20]		; address of ogr_choose_dat table
+%ifdef OGR_DEBUG
 	call	ogr_cycle_
+%else
+	mov	ebx, ogr_cycle_no_tc
+	cmp	dword [esp+16], 0
+	je	.f
+	mov	ebx, ogr_cycle_with_tc
+.f:	call	ebx
+%endif
 	pop	ebx
 	ret
