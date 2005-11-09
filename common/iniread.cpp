@@ -18,7 +18,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.37.4.3 2003/10/24 15:26:03 jr_brady Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.37.4.4 2005/11/09 19:29:22 kakace Exp $"; }
 
 #include "baseincs.h"
 #include "iniread.h"
@@ -32,6 +32,10 @@ return "@(#)$Id: iniread.cpp,v 1.37.4.3 2003/10/24 15:26:03 jr_brady Exp $"; }
 #if 0 /* embedded comment handling is not api conform */
 #define ALLOW_EMBEDDED_COMMENTS 
 #endif
+
+/* Also convert '_' to '-' */
+#define TOUPPER(x) ((x)=='_'?'-':toupper(x))
+
 
 /* ini_doit() functionality:
    section exists:  w create new key+value
@@ -215,7 +219,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
               i++;
             while (sect[n]==' ' || sect[n]=='\t')
               n++;
-            while (i<(linelen-1) && sect[n] && toupper(sect[n])==toupper(data[keyoff+i]))
+            while (i<(linelen-1) && sect[n] && TOUPPER(sect[n])==TOUPPER(data[keyoff+i]))
             { i++; n++; }
             while (i<(linelen-1) && (data[keyoff+i]==' ' || data[keyoff+i]=='\t'))
               i++;
@@ -257,7 +261,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 i=n=0;
                 while (key[n]==' ' || key[n]=='\t')
                   n++;
-                while (i<keylen && key[n] && toupper(key[n])==toupper(data[keyoff+i]))
+                while (i<keylen && key[n] && TOUPPER(key[n])==TOUPPER(data[keyoff+i]))
                 {i++; n++;}
                 while (key[n]==' ' || key[n]=='\t')
                   n++;
