@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.97 2005/08/31 16:33:17 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.98 2005/11/09 21:30:50 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1359,12 +1359,12 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0xFF20, CPU_F_I686, 0x0B, "Mobile Celeron 4 (Northwood)" },
           {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4 (0.09u)" }, /* (#3627) */
           {  0x9F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" },
-          {  0xAF30, CPU_F_I686, 0x0B, "Celeron 4 (Prescott)" },
+          {  0xAF30, CPU_F_I686, 0x0B, "Celeron D (Prescott)" },
           {  0xBF30, CPU_F_I686, 0x0B, "Xeon (Nocona)" },
           {  0xEF30, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Prescott)" },
-          {  0x0F40, CPU_F_I686, 0x0B, "Pentium 4 (0.09u)" }, /* (#3807) unsupported brand id */
+          {  0x0F40, CPU_F_I686, 0x0B, "Pentium 4/Mobile Pentium 4-M/Pentium D/Celeron D/Xeon" }, /* (#3807, #3864, #3868) unsupported brand id */
           {  0x9F40, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" },
-          {  0xAF40, CPU_F_I686, 0x0B, "Celeron 4 (Prescott)" },
+          {  0xAF40, CPU_F_I686, 0x0B, "Celeron D (Prescott)" },
           {  0xBF40, CPU_F_I686, 0x0B, "Xeon (Nocona)" },
           {  0xEF40, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Prescott)" },
           {  0x0000, 0,               -1, NULL }
