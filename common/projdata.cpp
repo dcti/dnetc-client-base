@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.2.2.4 2004/05/20 21:13:14 kakace Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.2.2.5 2005/11/09 19:26:53 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"
@@ -30,7 +30,7 @@ static const struct ProjectInfo_t
   { CSC,                  "CSC",    "csc", "csc",    "keys",  1 },
   { OGR_NEXTGEN_SOMEDAY,  "OGR_NG", "og2", "ogr_ng", "nodes", 1 },
   { RC5_72,               "RC5-72", "r72", "rc5-72", "keys",  1 },
-  { OGR_P2,               "OGR-P2", "ogf", "ogr_p2", "nodes", 1 },
+  { OGR_P2,               "OGR-P2", "ogf", "ogr-p2", "nodes", 1 },
   { -1,                   NULL,     NULL,  NULL,     NULL,    0 }
 #if (PROJECT_COUNT != 7)
   #error PROJECT_NOT_HANDLED("ProjectInfo[]: static initializer was last updated for PROJECT_COUNT == 7")
