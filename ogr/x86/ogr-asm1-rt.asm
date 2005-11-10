@@ -471,7 +471,7 @@ ogr_cycle_:
 	mov	ebx,dword [ebp+3cH]
 	;    remdepth++;
 	xor	esi,esi			; newbit to esi
-	inc	dword [esp+20H]
+	add	dword [esp+20H], 1	; faster then 'inc' here (stall with 'xor'?)
 	;    depth--;
 	;    if (depth <= 0) {
 	dec	dword [esp+24H]
