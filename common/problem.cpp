@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.25 2005/11/06 17:45:57 stream Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.26 2005/11/10 07:18:46 stream Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1614,9 +1614,7 @@ static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
   iterationsP = iterationsP;
 #else
   int r, nodes;
-  int prev_node_offset, cur_node_offset;
 
-  prev_node_offset = (thisprob->pub_data.unit_func.ogr)->getnodeoffset(thisprob->priv_data.core_membuffer);
   nodes = (int)(*iterationsP);
   r = (thisprob->pub_data.unit_func.ogr)->cycle(
                           thisprob->priv_data.core_membuffer,
@@ -1626,9 +1624,18 @@ static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
    * We'll calculate and return true number of core iterations for timesling.
    * This number may be NOT equal to number of actually processed OGR nodes,
    * which is returned in 'nodes'. See ogr.cpp for details about node caching.
+   *
+   * Following code based on kakace' rules:
+   *   a) if cruncher_is_time_constrained is true, core MUST exit after
+   *      processing exactly requested number of iterations; returned number
+   *      of nodes is ignored due to node caching.
+   *   b) if cruncher_is_time_constrained is false, core MUST NOT cache nodes
+   *      and value in 'nodes' MUST be true number of iterations done.
+   * If core failed to follow these rules due to coding errors or optimization,
+   * things may became unpredictable.
    */
-  cur_node_offset = (thisprob->pub_data.unit_func.ogr)->getnodeoffset(thisprob->priv_data.core_membuffer);
-  *iterationsP = (u32)(nodes + cur_node_offset - prev_node_offset);
+  if (!thisprob->pub_data.cruncher_is_time_constrained)
+    *iterationsP = (u32)nodes; /* with t.c., iter. count not changed */
 
   u32 newnodeslo = thisprob->priv_data.contestwork.ogr_p2.nodes.lo + nodes;
   if (newnodeslo < thisprob->priv_data.contestwork.ogr_p2.nodes.lo) {
