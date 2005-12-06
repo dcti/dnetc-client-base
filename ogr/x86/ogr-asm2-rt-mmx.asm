@@ -279,10 +279,11 @@ ogr_cycle_:
 .store_limit:
 	; limit (save on stack) => KILLED
 	;    lev->limit = limit;
-	mov	dword [ebp+lev_limit],edx
-	test	esi, 80000000h		; for align
+	; two commands below must use DWORD operand offset to align next label.
+	; funny but it improves only MMX core on my PII-Celeron...
+	mov	dword [dword ebp+lev_limit],edx
 	;    nodes++;
-	inc	dword [esp+14H]
+	inc	dword [dword esp+14H]
 
 	_natural_align
 
