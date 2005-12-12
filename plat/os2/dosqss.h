@@ -6,7 +6,7 @@
 */
 
 #ifndef DOSQSS_H
-#define DOSQSS_H "@(#)$Id: dosqss.h,v 1.1.2.4 2005/10/07 04:58:57 stream Exp $"
+#define DOSQSS_H "@(#)$Id: dosqss.h,v 1.1.2.5 2005/12/12 17:55:54 stream Exp $"
 
 
 #ifdef __cplusplus
@@ -220,6 +220,9 @@ typedef struct {
 #define DosSetSigHandler        Dos16SetSigHandler
 #define DosFlagProcess          Dos16FlagProcess
 
+#if defined(__EMX__)
+   /* Nothing. This stuff must be not used under EMX (already emulated by EMX) */
+#else
 typedef void (pascal __far16 *PFNSIGHANDLER)(USHORT, USHORT);
 
 APIRET16 APIENTRY16 DosSetSigHandler(PFNSIGHANDLER pfnSigHandler,
@@ -228,6 +231,7 @@ APIRET16 APIENTRY16 DosSetSigHandler(PFNSIGHANDLER pfnSigHandler,
 
 APIRET16 APIENTRY16 DosFlagProcess(PID pid, USHORT fScope, USHORT usFlagNum,
                                    USHORT usFlagArg);
+#endif /* __EMX__ */
 
 #ifdef __cplusplus
 }
