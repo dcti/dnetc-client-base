@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.99 2006/01/04 03:57:44 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.100 2006/01/06 16:05:46 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -485,6 +485,7 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x0020, "403G/403GC/403GCX"   },
       {    0x0039, "970 (G5)"            },
       {    0x003C, "970FX (G5)"          }, // XServe G5. See bug #3675
+      {    0x0044, "970MP (G5)"          }, // Dual core
       {    0x0050, "821"                 },
       {    0x0080, "860"                 },
       {    0x0081, "8240"                },
@@ -672,7 +673,8 @@ static long __GetRawProcessorID(const char **cpuname)
            { "7447A",           0x8003  },
            { "7448",            0x8004  },
            { "PPC970",          0x0039  },
-           { "PPC970FX",        0x003C  }
+           { "PPC970FX",        0x003C  },
+           { "PPC970MP",        0x0044  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
@@ -685,6 +687,7 @@ static long __GetRawProcessorID(const char **cpuname)
               if (detectedtype == 0x000C ||
                   detectedtype == 0x0039 ||
                   detectedtype == 0x003C ||
+                  detectedtype == 0x0044 ||
                   detectedtype & 0x8000)
               {
                 if (memcmp( &p[l], ", altivec supported", 19)==0)
@@ -830,6 +833,7 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x800C:   // 7410 (G4)
       case 0x0039:   // 970 (G5)
       case 0x003C:   // 970FX (G5)
+      case 0x0044:   // 970MP (G5)
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0

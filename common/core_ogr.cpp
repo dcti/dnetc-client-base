@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.42 2005/10/21 22:02:10 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.43 2006/01/06 16:05:46 kakace Exp $"; }
 
 //#define TRACE
 
@@ -343,7 +343,8 @@ int selcoreGetPreselectedCoreForProject_ogr()
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
           case 0x0039: // PPC 970
-          case 0x003C: // PPC 970FX (XServe G5)
+          case 0x003C: // PPC 970FX
+          case 0x0044: // PPC 970MP
             #ifdef HAVE_KOGE_PPC_CORES
               cindex = 1; break;      // PPC-vector
             #else
@@ -610,6 +611,7 @@ unsigned int estimate_nominal_rate_ogr()
           noderate = (detected_flags & CPU_F_ALTIVEC) ? 24000 : 17000; break;
         case 0x0039:      // 970
         case 0x003C:      // 970FX
+        case 0x0044:      // 970MP
           noderate = (detected_flags & CPU_F_ALTIVEC) ? 16500 : 12500; break;
       }
 

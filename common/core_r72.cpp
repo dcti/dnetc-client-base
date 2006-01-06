@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.45 2005/07/05 20:39:12 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.46 2006/01/06 16:05:46 kakace Exp $"; }
 
 //#define TRACE
 
@@ -329,6 +329,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x800C: cindex = 0; break; // 7410 (G4)      == MH 2-pipe
         case 0x0039: cindex = 1; break; // 970 (G5)       == KKS 2pipes
         case 0x003C: cindex = 1; break; // 970FX (G5)     == KKS 2pipes
+        case 0x0044: cindex = 1; break; // 970MP (G5)     == KKS 2pipes
         default:     cindex =-1; break; // no default
       }
 
@@ -349,9 +350,11 @@ int selcoreGetPreselectedCoreForProject_rc572()
             #if 0       // Disabled (kakace)
             case 0x0039: cindex = 7; break; // 970 (G5)    == KKS 970
             case 0x003C: cindex = 7; break; // 970 FX
+            case 0x0044: cindex = 7; break; // 970 MP
             #else
             case 0x0039: cindex = 4; break; // Redirect G5 to KKS 7450
-            case 0x003C: cindex = 4; break; // Ditto
+            case 0x003C: cindex = 4; break; // Ditto (970FX)
+            case 0x0044: cindex = 4; break; // Ditto (970MP)
             #endif
             default:     cindex = 4; break; // KKS 7450
         }
@@ -789,6 +792,7 @@ unsigned int estimate_nominal_rate_rc572()
           keyrate = (detected_flags & CPU_F_ALTIVEC) ? 10700 : 3500; break;
         case 0x0039:      // 970
         case 0x003C:      // 970FX
+        case 0x0044:      // 970MP
           keyrate = (detected_flags & CPU_F_ALTIVEC) ? 7500 : 2450; break;
       }
 
