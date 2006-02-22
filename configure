@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.156 2005/09/30 05:37:22 stream Exp $
+# @(#)$Id: configure,v 1.288.2.157 2006/02/22 03:33:09 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1113,8 +1113,14 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -DASM_X86 -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
                  -malign-functions=5 -malign-loops=4 -funroll-loops"
-        opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
+	if [ "$2" = "macosx" ]; then
+	  # Apple's gcc is confused by '-mcpu=pentiumpro'
+          opts310="$OPTS_GCC310 -O2 -DASM_X86 -fforce-addr \
                  -falign-functions=5 -falign-loops=4 -funroll-loops"
+	else
+          opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
+                 -falign-functions=5 -falign-loops=4 -funroll-loops"
+	fi
         ;;
 
     *internal-amd64)
@@ -2474,17 +2480,17 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
-    *x86-macosx)
+    *x86-macosx)                 # Mac OS X, Darwin
         generate_gcc_opts "x86" "macosx"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
 
-        # set empty to use ANSI cores and x86ident.S with Apple as
-        # doesn't need -force_cpusubtype_ALL like NeXT
+        # To use nasm's macho output, you will need a custom patch:
+        # http://sf.net/project/shownotes.php?release_id=337548
         TARGET_NASM_FMT="macho"
 
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="darwin-x86"
+        TARGET_TARBALL="macosx-x86"
         add_sources "macosx" "x86"
         ;;
 
