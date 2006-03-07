@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.100 2006/01/06 16:05:46 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.101 2006/03/07 15:20:25 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1429,6 +1429,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x66B0, CPU_F_I686, 0x0E, "Mobile Pentium III-M" },
           {  0x26D0, CPU_F_I686, 0x0D, "Celeron M ULV" },
           {  0x66D0, CPU_F_I686, 0x0D, "Pentium M" }, /* 0.09 um 0.5 or 2MB L2 (#3745) */
+          {  0x06E0, CPU_F_I686, 0x0D, "Core" }, /* (#3939) */
           {  0x36A0, CPU_F_I686, 0x0E, "Pentium III Xeon" },
           {  0x0700, CPU_F_I686,    5, "Itanium" }, /* 6547:0701. #5 == RG RISC-rotate II */
         //{  0x0F00, CPU_F_I686, 0x0B, "Pentium 4" }, /* 1.3 - 1.5GHz P4  (0.18u) */
