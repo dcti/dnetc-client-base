@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.20 2006/03/07 20:33:42 sod75 Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.21 2006/03/07 20:41:34 sod75 Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -472,8 +472,6 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 	else
 	 {
 	       // now check if it has subirectories (should have 1 per PSU)
-		#define FALSE 0
-		#define TRUE !FALSE
 		int dircount,i;
 		struct direct **files;
 	        dircount = scandir("/proc/acpi/ac_adapter/", &files, NULL, NULL);
