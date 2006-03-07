@@ -18,11 +18,11 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.18 2005/10/07 04:58:57 stream Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.19 2006/03/07 19:55:48 sod75 Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
-//#define TRACE
+#define TRACE
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "pathwork.h"  // GetFullPathForFilename()
@@ -455,8 +455,67 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         {
           TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
           trigstatics.pause_if_no_mains_power = 0;
+	}
+        // Hang on, don't disable yet, let's try acpi first. STAN
+	else
+	{
+	// first check if the relevant directory can be opened
+	#define __USE_GNU 1
+	 int dirfd = open( "/proc/acpi/ac_adapter/", O_DIRECTORY );
+	 close(dirfd);
+	 //printf ( "dirfd   : %d \n", dirfd );
+	 if ( dirfd == -1 )
+	 {        //nope, oh well we tried
+       		TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+	        trigstatics.pause_if_no_mains_power = 0;
+	 }
+	else
+	 {
+	       // now check if it has subirectories (should have 1 per PSU)
+		#define FALSE 0
+		#define TRUE !FALSE
+		int dircount,i;
+		struct direct **files;
+	        dircount = scandir("/proc/acpi/ac_adapter/", &files, NULL, NULL);
+	        if (dircount != 3) 
+		// assumptions : 3 = 1 actual subdir + . + ..
+		// less subdirs = acpi not set up
+		// more then 3 = more then 1 PSU, so not a laptop, so who cares anyway
+		{  TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+		   trigstatics.pause_if_no_mains_power = 0; }
+		else
+		{  //disableme = 0;
+	           // ok now let's check what the lonely PSU says 
+		   char dir_name[4];
+		   for (i=1;i<dircount+1;++i)
+		   {
+		    if ((strcmp(files[i-1]->d_name, ".") != 0) && (strcmp(files[i-1]->d_name, "..") != 0))
+		    {
+		     strcpy(dir_name,files[i-1]->d_name);
+		     //printf("\n"); // flush buffer 
+		     char ACPI_PATH[33] = "/proc/acpi/ac_adapter/";
+		     char str3[7] = "/state";
+		     strcat (ACPI_PATH,dir_name);
+		     strcat (ACPI_PATH,str3);
+		     char bufferb[40];
+		     int readsz = -1;
+		     int state = open(ACPI_PATH, O_RDONLY );
+		     readsz = read(state, bufferb, sizeof(bufferb));
+		     close(state);
+		    if ( readsz == 33 ) // "state:   on-line"=33 vs off-line=34
+		     {   return 0; // we are not on battery 
+		     }
+		    else
+		     {   return 1; // yes we are on battery
+		     }
+		    }
+		   }
+		 } 
+	
+	 } 
+
         }
-      }
+      } // return 1; //STAN
     } /* #if (linux & !cpu_ppc) */
     #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_POWERPC)
     {
@@ -494,6 +553,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
         if (disableme) /* disable further checks */
         {
+	//Let's try acpi first STAN	
+
           TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
           trigstatics.pause_if_no_mains_power = 0;
         }

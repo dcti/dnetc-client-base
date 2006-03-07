@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.19 2005/05/16 21:47:38 jbgill Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.20 2006/03/07 19:55:48 sod75 Exp $"
 
 #include "cputypes.h"
 
@@ -212,6 +212,7 @@
   #include <sys/file.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
+  #include <sys/dir.h> /*scandir*/
   #undef NULL    /* some broken header unconditionally */
   #define NULL 0 /* defines NULL to be ((void *)0) */
   #if defined(_MIT_POSIX_THREADS)
