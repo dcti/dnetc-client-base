@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.21 2006/03/07 20:41:34 sod75 Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.22 2006/03/07 21:47:06 sod75 Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -460,10 +460,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 	else
 	{
 	// first check if the relevant directory can be opened
-	#define __USE_GNU 1
 	 int dirfd = open( "/proc/acpi/ac_adapter/", O_DIRECTORY );
 	 close(dirfd);
-	 //printf ( "dirfd   : %d \n", dirfd );
 	 if ( dirfd == -1 )
 	 {        //nope, oh well we tried
        		TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
@@ -482,25 +480,19 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 		{  TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
 		   trigstatics.pause_if_no_mains_power = 0; }
 		else
-		{  //disableme = 0;
-	           // ok now let's check what the lonely PSU says 
-		   char dir_name[4];
+		{  // ok now let's check what the lonely PSU says 
 		   for (i=1;i<dircount+1;++i)
 		   {
 		    if ((strcmp(files[i-1]->d_name, ".") != 0) && (strcmp(files[i-1]->d_name, "..") != 0))
 		    {
-		     strcpy(dir_name,files[i-1]->d_name);
-		     //printf("\n"); // flush buffer 
-		     char acpi_path[33] = "/proc/acpi/ac_adapter/";
-		     char str3[7] = "/state";
-		     strcat (acpi_path,dir_name);
-		     strcat (acpi_path,str3);
+		     char acpi_path[256];
+		     snprintf(acpi_path,sizeof(acpi_path),"/proc/acpi/ac_adapter/%s/state",files[i-1]->d_name);
 		     char bufferb[40];
 		     int readsz = -1;
-		     int state = open(api_path, O_RDONLY );
+		     int state = open(acpi_path, O_RDONLY );
 		     readsz = read(state, bufferb, sizeof(bufferb));
 		     close(state);
-		    if(strstr(buffer,"on-line"))
+		    if(strstr(bufferb,"on-line"))
 		     {   return 0; // we are not on battery 
 		     }
 		    else
@@ -509,11 +501,9 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 		    }
 		   }
 		 } 
-	
 	 } 
-
         }
-      } // return 1; //STAN
+      } 
     } /* #if (linux & !cpu_ppc) */
     #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_POWERPC)
     {
