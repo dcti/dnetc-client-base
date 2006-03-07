@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.19 2006/03/07 19:55:48 sod75 Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.20 2006/03/07 20:33:42 sod75 Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -493,16 +493,16 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 		    {
 		     strcpy(dir_name,files[i-1]->d_name);
 		     //printf("\n"); // flush buffer 
-		     char ACPI_PATH[33] = "/proc/acpi/ac_adapter/";
+		     char acpi_path[33] = "/proc/acpi/ac_adapter/";
 		     char str3[7] = "/state";
-		     strcat (ACPI_PATH,dir_name);
-		     strcat (ACPI_PATH,str3);
+		     strcat (acpi_path,dir_name);
+		     strcat (acpi_path,str3);
 		     char bufferb[40];
 		     int readsz = -1;
-		     int state = open(ACPI_PATH, O_RDONLY );
+		     int state = open(api_path, O_RDONLY );
 		     readsz = read(state, bufferb, sizeof(bufferb));
 		     close(state);
-		    if ( readsz == 33 ) // "state:   on-line"=33 vs off-line=34
+		    if(strstr(buffer,"on-line"))
 		     {   return 0; // we are not on battery 
 		     }
 		    else
