@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.22 2006/03/07 21:47:06 sod75 Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.23 2006/03/08 04:31:25 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -370,7 +370,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU != CPU_POWERPC)
+    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86)
     {
       static long time_last = 0;
       long time_now = (time(0)/60); /* not more than once per minute */
@@ -455,56 +455,60 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         {
           TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
           trigstatics.pause_if_no_mains_power = 0;
-	}
+        }
         // Hang on, don't disable yet, let's try acpi first. STAN
-	else
-	{
-	// first check if the relevant directory can be opened
-	 int dirfd = open( "/proc/acpi/ac_adapter/", O_DIRECTORY );
-	 close(dirfd);
-	 if ( dirfd == -1 )
-	 {        //nope, oh well we tried
-       		TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
-	        trigstatics.pause_if_no_mains_power = 0;
-	 }
-	else
-	 {
-	       // now check if it has subirectories (should have 1 per PSU)
-		int dircount,i;
-		struct direct **files;
-	        dircount = scandir("/proc/acpi/ac_adapter/", &files, NULL, NULL);
-	        if (dircount != 3) 
-		// assumptions : 3 = 1 actual subdir + . + ..
-		// less subdirs = acpi not set up
-		// more then 3 = more then 1 PSU, so not a laptop, so who cares anyway
-		{  TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
-		   trigstatics.pause_if_no_mains_power = 0; }
-		else
-		{  // ok now let's check what the lonely PSU says 
-		   for (i=1;i<dircount+1;++i)
-		   {
-		    if ((strcmp(files[i-1]->d_name, ".") != 0) && (strcmp(files[i-1]->d_name, "..") != 0))
-		    {
-		     char acpi_path[256];
-		     snprintf(acpi_path,sizeof(acpi_path),"/proc/acpi/ac_adapter/%s/state",files[i-1]->d_name);
-		     char bufferb[40];
-		     int readsz = -1;
-		     int state = open(acpi_path, O_RDONLY );
-		     readsz = read(state, bufferb, sizeof(bufferb));
-		     close(state);
-		    if(strstr(bufferb,"on-line"))
-		     {   return 0; // we are not on battery 
-		     }
-		    else
-		     {   return 1; // yes we are on battery
-		     }
-		    }
-		   }
-		 } 
-	 } 
+        else
+        {
+          // first check if the relevant directory can be opened
+          int dirfd = open( "/proc/acpi/ac_adapter/", O_DIRECTORY );
+          close(dirfd);
+          if ( dirfd == -1 )
+            {
+              //nope, oh well we tried
+              TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+              trigstatics.pause_if_no_mains_power = 0;
+            }
+          else
+            {
+              // now check if it has subirectories (should have 1 per PSU)
+              int dircount,i;
+              struct direct **files;
+              dircount = scandir("/proc/acpi/ac_adapter/", &files, NULL, NULL);
+              if (dircount != 3) 
+                // assumptions : 3 = 1 actual subdir + . + ..
+                // less subdirs = acpi not set up
+                // more then 3 = more then 1 PSU, so not a laptop, so who cares anyway
+                {
+                  TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+                  trigstatics.pause_if_no_mains_power = 0; 
+                }
+              else
+                {
+                  // ok now let's check what the lonely PSU says 
+                  for (i=1;i<dircount+1;++i)
+                    {
+                      if ((strcmp(files[i-1]->d_name, ".") != 0) && (strcmp(files[i-1]->d_name, "..") != 0))
+                        {
+                          char acpi_path[256];
+                          snprintf(acpi_path,sizeof(acpi_path),"/proc/acpi/ac_adapter/%s/state",files[i-1]->d_name);
+                          char bufferb[40];
+                          int readsz = -1;
+                          int state = open(acpi_path, O_RDONLY );
+                          readsz = read(state, bufferb, sizeof(bufferb));
+                          close(state);
+                          if(strstr(bufferb,"on-line")) {
+                            return 0; // we are not on battery 
+                          } else {   
+                              return 1; // yes we are on battery
+                          }
+                        }
+                    }
+                } 
+            } 
         }
       } 
-    } /* #if (linux & !cpu_ppc) */
+    } /* #if (linux & cpu_x86) */
+
     #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_POWERPC)
     {
       static long time_last = 0;
@@ -524,7 +528,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
             if (strstr(buffer, "AC Power") == buffer)
             {
               if (sscanf(buffer, "AC Power               : %d",
-			 &ac_status) == 1)
+                         &ac_status) == 1)
               {
                 disableme = 0;
                 break;
@@ -541,8 +545,6 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
         if (disableme) /* disable further checks */
         {
-	//Let's try acpi first STAN	
-
           TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
           trigstatics.pause_if_no_mains_power = 0;
         }
@@ -577,11 +579,11 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         {
           TRACE_OUT((+1,"APM check\n"));
           TRACE_OUT((0,"aiop->ai_major = %d\n", info.ai_major));
-	    		TRACE_OUT((0,"aiop->ai_minor = %d\n", info.ai_minor));
-		    	TRACE_OUT((0,"aiop->ai_acline = %d\n",  info.ai_acline));
-			    TRACE_OUT((0,"aiop->ai_batt_stat = %d\n", info.ai_batt_stat));
-    			TRACE_OUT((0,"aiop->ai_batt_life = %d\n", info.ai_batt_life));
-	    		TRACE_OUT((0,"aiop->ai_status = %d\n", info.ai_status));
+          TRACE_OUT((0,"aiop->ai_minor = %d\n", info.ai_minor));
+          TRACE_OUT((0,"aiop->ai_acline = %d\n",  info.ai_acline));
+          TRACE_OUT((0,"aiop->ai_batt_stat = %d\n", info.ai_batt_stat));
+          TRACE_OUT((0,"aiop->ai_batt_life = %d\n", info.ai_batt_life));
+          TRACE_OUT((0,"aiop->ai_status = %d\n", info.ai_status));
           TRACE_OUT((-1,"conclusion: AC line state: %s\n", ((info.ai_acline==0)?
                  ("offline"):((info.ai_acline==1)?("online"):("unknown"))) ));
         }
@@ -595,10 +597,10 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       if (disableme)
       {
         /* possible causes for a disable are
-	** EPERM: no permission to open /dev/apm) or
-	** ENXIO: apm device not configured, or disabled [kern default],
-	** or (for ioctl()) real<->pmode transition or bios error.
-       	*/
+        ** EPERM: no permission to open /dev/apm) or
+        ** ENXIO: apm device not configured, or disabled [kern default],
+        ** or (for ioctl()) real<->pmode transition or bios error.
+        */
         TRACE_OUT((0,"pause_if_no_mains_power check error: %s\n", strerror(errno)));
         TRACE_OUT((0,"disabling further pause_if_no_mains_power checks\n"));
         trigstatics.pause_if_no_mains_power = 0;
