@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.20 2006/03/07 19:55:48 sod75 Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.85.2.21 2006/03/12 16:26:48 kakace Exp $"
 
 #include "cputypes.h"
 
@@ -235,7 +235,6 @@
 #elif (CLIENT_OS == OS_MACOSX)
   #include <sys/time.h>
   #include <sys/vmparam.h> //USRSTACK
-  #include <sys/exec.h>  //PS_STRINGS
   #include <sys/sysctl.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */

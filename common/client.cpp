@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.26 2006/01/06 16:02:54 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.27 2006/03/12 16:26:48 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -618,11 +618,14 @@ int main( int argc, char *argv[] )
     }
   }
   #elif (CLIENT_OS == OS_MACOSX)                  /* SPT_TYPE==SPT_PSSTRINGS */
+  /* NOTHING - PS_STRINGS are no longer supported and there's no way to
+  ** change the name of our process.
   if (needchange)
   {
     PS_STRINGS->ps_nargvstr = 1;
     PS_STRINGS->ps_argvstr = (char *)defname;
   }
+  */
   #elif 0                                     /*  SPT_TYPE == SPT_SYSMIPS */
   if (needchange)
   {
