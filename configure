@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.157 2006/02/22 03:33:09 jlawson Exp $
+# @(#)$Id: configure,v 1.288.2.158 2006/03/12 16:34:57 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -835,6 +835,7 @@ gcc_get_ver() {
     #gcc_v="NeXT Computer, Inc. version cc-437.2.6, gcc version 2.5.8"
     #gcc_v="Apple Computer, Inc. GCC version 1175, based on gcc version 3.1 20020420 (prerelease)"
     #gcc_v="gcc version 3.3 20030304 (Apple Computer, Inc. build 1495)"
+    #gcc_v="gcc version 4.0.1 (Apple Computer, Inc. build 5247)"
 
     gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
     #echo "gccver_line=#$gccver_line#"
@@ -910,6 +911,9 @@ generate_gcc_opts() {
                  -Wmissing-prototypes \
                  -Wstrict-prototypes -Wconversion -Winline \
                  -Waggregate-return -Wcast-qual -Woverloaded-virtual"
+  OPTS_GCC400_WARN="-W -Wall -Wpointer-arith -Wcast-align \
+                 -Wconversion -Winline \
+                 -Waggregate-return -Wcast-qual -Woverloaded-virtual"
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
                  -fno-inline-functions"
   # g++-2.5.8 has -fno-rtti and -fno-handle-exceptions is on by default but
@@ -922,11 +926,13 @@ generate_gcc_opts() {
   #WARNING WARNING: don't use 2.8.x at all.
   OPTS_295_PLUS="-fstrict-aliasing" #-fno-exceptions -fno-rtti
   OPTS_310_PLUS="-fstrict-aliasing -fno-exceptions -fno-rtti"
+  OPTS_400_PLUS="-fstrict-aliasing -fno-exceptions -fno-rtti"
 
   OPTS_GCC258="${OPTS_GCC258_WARN} ${OPTS_GCC_BASE} ${OPTS_258_PLUS}"
   OPTS_GCC272="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
   OPTS_GCC295="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
   OPTS_GCC310="${OPTS_GCC310_WARN} ${OPTS_GCC_BASE} ${OPTS_310_PLUS}"
+  OPTS_GCC400="${OPTS_GCC400_WARN} ${OPTS_GCC_BASE} ${OPTS_400_PLUS}"
 
   #this is a list of which -O does what for 2.72.x - 2.95.2
   #(see <gccsrc>/gcc/toplev.c; grep for "optimize ")
@@ -966,6 +972,7 @@ generate_gcc_opts() {
   opts295=""
   opts310=""
   opts330=""          # Will be equal to opts310 if left blank
+  opts400=""          # Will be equal to opts310 if left blank
   arch="internal-$1"  # do it this way to hide from "./configure list"
   case "$arch" in
 
@@ -1070,6 +1077,7 @@ generate_gcc_opts() {
         if [ "${2}" = "macosx" ]; then
           # All cores are asm-optimized : We don't need strong optimizations.
           opts330="$OPTS_GCC310 -Os -DASM_PPC"
+          opts400="$OPTS_GCC400 -O2 -DASM_PPC"
         fi
         ;;
 
@@ -1115,7 +1123,7 @@ generate_gcc_opts() {
                  -malign-functions=5 -malign-loops=4 -funroll-loops"
 	if [ "$2" = "macosx" ]; then
 	  # Apple's gcc is confused by '-mcpu=pentiumpro'
-          opts310="$OPTS_GCC310 -O2 -DASM_X86 -fforce-addr \
+          opts400="$OPTS_GCC400 -O2 -DASM_X86 -mtune=pentiumpro -fforce-addr \
                  -falign-functions=5 -falign-loops=4 -funroll-loops"
 	else
           opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
@@ -1138,13 +1146,16 @@ generate_gcc_opts() {
   OPTS_GCC258_WARN=
   OPTS_GCC272_WARN=
   OPTS_GCC310_WARN=
+  OPTS_GCC400_WARN=
   OPTS_GCC_BASE=
   OPTS_272_PLUS=
   OPTS_295_PLUS=
   OPTS_310_PLUS=
+  OPTS_400_PLUS=
   OPTS_GCC272=
   OPTS_GCC295=
   OPTS_GCC310=
+  OPTS_GCC400=
 
   # ------
 
@@ -1153,8 +1164,13 @@ generate_gcc_opts() {
   if [ -z "$opts330" ]; then
      opts330="$opts310"
   fi
+  if [ -z "$opts400" ]; then
+     opts400="$opts310"
+  fi
 
-  if [ $gccver -ge 3030000 ]; then
+  if [ $gccver -ge 4000000 ]; then
+    gccopts="$opts400" # 4.0 and above
+  elif [ $gccver -ge 3030000 ]; then
     gccopts="$opts330" # 3.3 and above
   elif [ $gccver -ge 3010000 ]; then
     gccopts="$opts310" # 3.1 and 3.2
