@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.28 2004/11/01 17:39:53 jbgill Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.29 2006/03/12 16:31:30 kakace Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -574,8 +574,6 @@
   #if (CLIENT_OS == OS_DGUX)
     #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
     #define pthread_sigmask(a,b,c)
-  #elif (CLIENT_OS == OS_MACOSX)
-    #define pthread_sigmask(a,b,c) /*no*/
   #elif (CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)
     #define pthread_sigmask(a,b,c) /*no*/
   #elif (CLIENT_OS == OS_AIX)
