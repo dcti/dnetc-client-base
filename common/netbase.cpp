@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.5.2.21 2006/03/12 16:32:37 kakace Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.5.2.22 2006/03/12 21:19:21 kakace Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -185,9 +185,13 @@ return "@(#)$Id: netbase.cpp,v 1.5.2.21 2006/03/12 16:32:37 kakace Exp $"; }
     || ((CLIENT_OS == OS_QNX) && (defined(__QNXNTO__))) \
     || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4)) \
     || (CLIENT_OS == OS_SOLARIS) \
-    || (CLIENT_OS == OS_RISCOS) \
-    || (CLIENT_OS == OS_MACOSX)
+    || (CLIENT_OS == OS_RISCOS) 
   /* nothing - socklen_t already defined */
+#elif (CLIENT_OS == OS_MACOSX)
+  #ifndef _BSD_SOCKLEN_T_
+    #define _BSD_SOCKLEN_T_ int32_t     // Missing in SDKs < 10.3.0
+    typedef _BSD_SOCKLEN_T_ socklen_t;
+  #endif
 #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION < 199701))
   #define socklen_t size_t
   /* only needed for old BSD/OS (before 4.x) */
