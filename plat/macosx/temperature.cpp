@@ -32,7 +32,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.1.2.5 2005/05/07 20:54:05 kakace Exp $
+ *  $Id: temperature.cpp,v 1.1.2.6 2006/03/12 16:28:58 kakace Exp $
  */
 
 #include <string.h>
@@ -102,10 +102,10 @@ static SInt32 _readTemperature(const char *className, SensorInfos *sensors, CFSt
   char strbuf[64];
   CFNumberRef number = NULL;
   CFStringRef string = NULL;
-  io_object_t handle = NULL; 
-  io_iterator_t objectIterator = NULL;
+  io_object_t handle;
+  io_iterator_t objectIterator;
   CFMutableDictionaryRef properties = NULL;
-  mach_port_t master_port = NULL;
+  mach_port_t master_port;
 
   /* Bug #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2,
   ** so we obtain the default port the old way */

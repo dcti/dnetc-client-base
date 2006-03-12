@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.101 2006/03/07 15:20:25 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.102 2006/03/12 16:29:07 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -569,10 +569,10 @@ static long __GetRawProcessorID(const char **cpuname)
   {
     // We prefer raw PVR values over the IDs provided by host_info()
     CFDataRef value = NULL;
-    io_object_t device = NULL;
-    io_iterator_t objectIterator = NULL;
+    io_object_t device;
+    io_iterator_t objectIterator;
     CFMutableDictionaryRef properties = NULL;
-    mach_port_t master_port = NULL;
+    mach_port_t master_port;
     detectedtype = -1L;
 
     // In I/O Registry Search for "IOPlatformDevice" devices
