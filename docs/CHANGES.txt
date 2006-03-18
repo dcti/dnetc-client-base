@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.109 2006/01/06 16:05:54 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.110 2006/03/18 14:23:05 kakace Exp $
 ==========================================================================
 
 2.9000
@@ -31,6 +31,7 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.109 2006/01/06 16:05:54 kakace Exp
 2.9012-497  new: x86: Added new MMX assembly OGR core, selected for MMX CPUs
             fix: ogr: some platforms reported incorrect node counts if restarted
             imp: ppc: Recognize PPC970MP (G5 dual core)
+            fix: macosx: StartupItems permissions fixed (#3942)
 
 2.9011-496  new: x86: Added new assembly OGR core and selected as default
             fix: x86: Correct RC5 core count speed factor for mmx (#3770)
