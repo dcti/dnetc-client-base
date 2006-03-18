@@ -18,11 +18,11 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.31.2.24 2006/03/12 16:31:30 kakace Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.31.2.25 2006/03/18 14:17:15 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
-#define TRACE
+//#define TRACE
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "pathwork.h"  // GetFullPathForFilename()
