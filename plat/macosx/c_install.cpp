@@ -17,7 +17,7 @@
  * See also
  * http://developer.apple.com/documentation/MacOSX/Conceptual/BPSystemStartup/Concepts/BootProcess.html
  *
- * $Id: c_install.cpp,v 1.1.2.2 2004/05/22 23:04:41 kakace Exp $
+ * $Id: c_install.cpp,v 1.1.2.3 2006/03/18 14:20:44 kakace Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,7 +94,7 @@ static int create_start_script(const char *script_name,
   */
 
   for (i = 1; i < argc; i++) {
-    const char *p = argv[i];
+    p = argv[i];
     if (*p == '-' && p[1] == '-')
       p++;
     if (strcmp(p, "-quiet") == 0 || strcmp(p, "-hide") == 0)
@@ -154,7 +154,7 @@ static int create_start_script(const char *script_name,
   );
   fprintf( file, "\nRunService \"$1\"\n");
 
-  fchmod( fileno(file), S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH); /* -rwxrwxr-x */
+  fchmod( fileno(file), S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH); /* -rwxr-xr-x */
   fclose(file);
   return 0;
 }
@@ -181,7 +181,7 @@ static int create_startup_params_file(const char *stparams_filename,
     "  OrderPreference = \"None\";\n"
     "}\n" );
 
-  fchmod(fileno(file), S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH); /* -rw-rw-r-- */
+  fchmod(fileno(file), S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH); /* -rw-r--r-- */
   fclose(file);
   return 0;
 }
@@ -197,9 +197,9 @@ static const char *get_basename(const char *argv0)
 
 static int createDir(const char *path)
 {
-  int rc = mkdir(path, 0775);
+  int rc = mkdir(path, 0755);
   if (rc == 0) {
-    chmod(path, 0775);      // BUG: Mac OS 10.1.3 always creates directories
+    chmod(path, 0755);      // BUG: Mac OS 10.1.3 always creates directories
                             // with flags drwxr-xr-x
     return 1;               // Directory created.
   }
