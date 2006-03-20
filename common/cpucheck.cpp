@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.102 2006/03/12 16:29:07 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.103 2006/03/20 21:44:12 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1173,7 +1173,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     {
       /* see "AMD Processor Recognition Application Note" available at
          http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/20734.pdf 
-         also http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf*/
+         also http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf */
       static struct cpuxref amdxref[]={
           {  0x0400, CPU_F_I486,       0, "486"      },
           {  0x0430, CPU_F_I486,       0, "486DX2"   },
@@ -1965,7 +1965,7 @@ static long __GetRawProcessorID(const char **cpuname)
   return detectedtype;
 #elif (CLIENT_OS == OS_SOLARIS)
   FILE *prtconf;
-  char buf[256], name[256], *work_s, *work_t;
+  char buf[256], name[256], c_name[256], *work_s, *work_t;
   int i, foundcpu = 0;
 
   /* DON'T RENUMBER */
@@ -1999,26 +1999,39 @@ static long __GetRawProcessorID(const char **cpuname)
   {19, "UltraSPARC-IIi", "UltraSPARC-IIi"},
   {20, "UltraSPARC-III", "UltraSPARC-III"},
   {20, "UltraSPARC-III+", "UltraSPARC-III"},  /* UltraSPARC-III Cu */
-  {21, "UltraSPARC-IIIi", "UltraSPARC-IIIi"},
+  {21, "UltraSPARC-IIIi", "UltraSPARC-IIIi"}, /* .13u */
+  {21, "UltraSPARC-IIIi+", "UltraSPARC-IIIi+"}, /* unconfirmed, .09u, adds cache? */
   {22, "UltraSPARC-IV", "UltraSPARC-IV"},
-  {23, "SPARC64-IV", "SPARC64-IV"}
+  {22, "UltraSPARC-IV+", "UltraSPARC-IV+"}, /* unconfirmed, .09u adds 2MB L2 cache, external L3 doubled to 32MB */
+  {23, "SPARC64-IV", "SPARC64-IV"},
+  {24, "UltraSPARC-T1", "UltraSPARC-T1"}
   };
 
   detectedtype = -1L;  /* detection supported, but failed */
 
   /* parse the prtconf output looking for the cpu name */
   strncpy (name, "", 256);
+  strncpy (c_name, "", 256);
   /* 'prtconf -vp' outputs the detailed device node list from openboot ROM */
   if ((prtconf = popen ("/usr/sbin/prtconf -vp", "r")) != NULL) {
     while (fgets(buf, 256, prtconf) != NULL) {
       if (strstr (buf, "Node") != NULL) {  /* if new device node, clear name */
+        if (foundcpu) {
+          if (strlen (name) != 0) { /* we found a cpu name */
+            break;
+          } else if (strlen (c_name) != 0) { /* we found a cpu name in the 
+                                                compatible field */
+            strncpy (name, c_name, 256);
+            break;
+          } else {
+            foundcpu = 0;
+          }
+        }
         strncpy (name, "", 256);
+        strncpy (c_name, "", 256);
       }
       if (strstr (buf, "'cpu'") != NULL) {  /* if device is cpu */
         foundcpu = 1;
-        if (strlen (name) != 0) {  /* if we have device name already */
-          break;
-        }
       }
       if ((work_s = strstr (buf, "name:")) != NULL) {  /* if value is 
                                                           device name */
@@ -2028,9 +2041,17 @@ static long __GetRawProcessorID(const char **cpuname)
           work_t = strstr (work_s, "'");
           *(work_t) = '\0';
           strncpy (name, work_s, 256);
-          if (foundcpu == 1) {  /* if we know device is cpu */
-            break;
-          }
+        }
+      }
+      if ((work_s = strstr (buf, "compatible:")) != NULL) {  /* if value is
+                                                          device name held
+                                                          in compatible field */
+        /* extract cpu name, format: "name:  '<manufacturer>,<cpu name>' */
+        if ((work_s = strstr (buf, ",")) != NULL) {
+          work_s++;  
+          work_t = strstr (work_s, "'");
+          *(work_t) = '\0';
+          strncpy (c_name, work_s, 256);
         }
       }
     }
