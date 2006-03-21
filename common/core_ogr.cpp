@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.43 2006/01/06 16:05:46 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.44 2006/03/21 00:02:25 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -208,6 +208,8 @@ const char **corenames_for_contest_ogr()
       "GARSP 6.0 Scalar-64",        /* 64-bit core */
       #endif
     #endif
+  #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+      "GARSP 6.0-64",
   #elif (CLIENT_CPU == CPU_SPARC)
       "GARSP 6.0",
   #elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
