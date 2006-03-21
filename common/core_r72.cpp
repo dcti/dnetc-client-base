@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.46 2006/01/06 16:05:46 kakace Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.47 2006/03/21 02:39:37 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -385,7 +385,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x0A: cindex = 5; break; // Centaur C6     == SS 2-pipe (#3809)
           case 0x0B: cindex = 7; break; // Pentium 4      == SGP 3-pipe
           case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
-          case 0x0D: cindex = 6; break; // Pentium M      == GO 2-pipe
+          case 0x0D: cindex = 6; break; // Pentium M      == GO 2-pipe (#3870)
           case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
           case 0x0F: cindex = 7; break; // Via C3 Nehemiah == SGP 3-pipe (#3621)
           case 0x10: cindex = 5; break; // Cyrix Model 5  == SS 2-pipe (#3580)
@@ -488,6 +488,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 21: cindex = 5; break; // UltraSPARC-IIIi  == AnBe 2-pipe
         case 22: cindex = 5; break; // UltraSPARC-IV    == AnBe 2-pipe
         case 23: cindex = 3; break; // SPARC64-IV       == KKS 2-pipe
+        case 24: cindex = 4; break; // UltraSPARC-T1    == AnBe 1-pipe
         default: cindex =-1; break; // no default
       }
     }
