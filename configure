@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.158 2006/03/12 16:34:57 kakace Exp $
+# @(#)$Id: configure,v 1.288.2.159 2006/05/10 00:09:25 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -908,8 +908,7 @@ generate_gcc_opts() {
                  -Wnested-externs" #-Wshadow shows std header errors
   OPTS_GCC272_WARN="$OPTS_GCC258_WARN -Wmissing-declarations"
   OPTS_GCC310_WARN="-W -Wall -Wpointer-arith -Wcast-align \
-                 -Wmissing-prototypes \
-                 -Wstrict-prototypes -Wconversion -Winline \
+                 -Wconversion -Winline \
                  -Waggregate-return -Wcast-qual -Woverloaded-virtual"
   OPTS_GCC400_WARN="-W -Wall -Wpointer-arith -Wcast-align \
                  -Wconversion -Winline \
@@ -2400,6 +2399,8 @@ case "$1" in
                             # FreeBSD sparc-elf 5.x, snake (experimental)
                             # FreeBSD alpha-elf 4.x, snake
                             # FreeBSD amd64-elf 5.x, snake
+        # note: include the major version number in the make target:
+        # use "configure freebsd5-x86" , "configure freebsd6-sparc" etc.
         infer_arch_and_version "FreeBSD"
         inferred_bf="elf"
         if [ $inferred_ver_major -lt 3 ]; then
@@ -2419,7 +2420,8 @@ case "$1" in
         # We don't really need the libc_r stuff anyway because the "threads"
         # are really rfork()'d children.    -cyp Feb/13/2000
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="freebsd-${inferred_arch}-${inferred_bf}"
+        #TARGET_TARBALL="freebsd-${inferred_arch}-${inferred_bf}"
+        TARGET_TARBALL="$1-${inferred_bf}"
         add_sources "freebsd" "${inferred_arch}"
         ;;
 
