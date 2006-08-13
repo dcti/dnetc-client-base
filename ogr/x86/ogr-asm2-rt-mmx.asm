@@ -203,6 +203,10 @@ ogr_cycle_:
 
 	jmp	.outerloop
 
+;
+; !!! Don't spend too much time optimizing code above this point.
+; !!! It's executed only once.
+;
 %if ($-$$) <> 95h
 ;	%error	"Assembly of jumps and constant must be optimized, add -O5 to NASM options"
 %endif
@@ -330,8 +334,8 @@ ogr_cycle_:
 	mov	edx,ecx			; copy "not comp0"
 	mov	ecx,eax			; ecx=s (for shift below)
 	mov	eax,64
-	sub	eax,ecx			; eax=ss (64-s)
 	not	edx			; recover comp0
+	sub	eax,ecx			; eax=ss (64-s)
 	movd	mm6,ecx			; mm6 = s
 	movd	mm7,eax			; mm7 = ss
 
@@ -558,9 +562,7 @@ ogr_cycle_:
 	mov	edx,dword [esp+24H]
 	dec	edx
 	mov	ecx,dword [esp+18H]
-	mov	ecx,dword [ecx+18H]
-	add	edx,ecx
-	mov	ecx,dword [esp+18H]
+	add	edx,dword [ecx+18H]
 	mov	dword [ecx+1cH],edx
 	mov	edx,dword [esp+14H]
 	mov	ecx,dword [esp+0cH]
