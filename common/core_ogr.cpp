@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.44 2006/03/21 00:02:25 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.45 2006/08/13 09:28:29 stream Exp $"; }
 
 //#define TRACE
 
@@ -64,6 +64,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.44 2006/03/21 00:02:25 snikkel Exp $"; }
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_gen(void);
     #if defined(HAVE_I64)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_mmx(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_mmx_amd(void);
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
@@ -96,6 +97,7 @@ int InitializeCoreTable_ogr(int first_time)
         ogr_get_dispatch_table_asm_gen();
         #if defined(HAVE_I64)
           ogr_get_dispatch_table_asm_mmx();
+          ogr_get_dispatch_table_asm_mmx_amd();
         #endif
       #elif CLIENT_CPU == CPU_POWERPC
         ogr_get_dispatch_table();
@@ -172,6 +174,7 @@ const char **corenames_for_contest_ogr()
       "GARSP 6.0-asm-rt1-gen",
       #ifdef HAVE_I64
       "GARSP 6.0-asm-rt1-mmx",
+      "GARSP 6.0-asm-rt1-mmx-amd",
       #endif
   #elif (CLIENT_CPU == CPU_AMD64)
       "GARSP 6.0-64",
@@ -269,7 +272,7 @@ int apply_selcore_substitution_rules_ogr(int cindex)
   if ((feature & CPU_F_64BITOPS) == 0 && cindex == 2)     /* PPC-64bit  */
     cindex = 0;                                     /* force PPC-32bit  */
 # elif (CLIENT_CPU == CPU_X86)
-  if (cindex == 3) /* ASM-MMX core requires 64-bit core modules and MMX */
+  if (cindex >= 3) /* ASM-MMX core requires 64-bit core modules and MMX */
   {
 #  if !defined(HAVE_I64) /* no 64-bit support? */
     cindex = 2; /* force ASM-Generic */
@@ -373,7 +376,13 @@ int selcoreGetPreselectedCoreForProject_ogr()
       {
 #ifdef HAVE_I64 // Need 64-bit support and MMX
         if (detected_flags & CPU_F_MMX)
-          cindex = 3;  // asm-rt1-mmx (D)
+        {
+          switch ( detected_type & 0xff ) // FIXME remove &0xff
+          {
+            case 0x09: cindex = 4; break; // AMD K7/K8  == asm-rt1-mmx-amd (E)
+            default:   cindex = 3; break; // asm-rt1-mmx (D)
+          }
+        }
         else
 #endif
         switch ( detected_type & 0xff ) // FIXME remove &0xff
@@ -518,6 +527,9 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   else
   if (coresel == 3) //D
     unit_func.ogr = ogr_get_dispatch_table_asm_mmx();
+  else
+  if (coresel == 4) //E
+    unit_func.ogr = ogr_get_dispatch_table_asm_mmx_amd();
   #endif
   else
     unit_func.ogr = ogr_get_dispatch_table(); //A
