@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.21 2006/08/13 09:28:29 stream Exp $
+# $Id: makefile.vc,v 1.83.2.22 2006/08/14 08:41:20 stream Exp $
 #
 
 BASENAME = dnetc
@@ -356,6 +356,7 @@ OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr-b.obj      \
         $(OUTPUTPATH)/ogr-c.obj      \
         $(OUTPUTPATH)/ogr-d.obj      \
+        $(OUTPUTPATH)/ogr-e.obj      \
         $(OUTPUTPATH)/ogr-asm1-rt.obj\
         $(OUTPUTPATH)/ogr-asm2-rt-mmx.obj\
         $(OUTPUTPATH)/ogr-asm2-rt-mmx-amd.obj\
