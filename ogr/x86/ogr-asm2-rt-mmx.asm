@@ -135,7 +135,7 @@ ogr_cycle_:
 	sub	edx,dword [eax+18H]
 	mov	dword [esp+34H],edx
 %else
- 	and	dword [esp+14H],0	; int nodes = 0;
+	and	dword [esp+14H],0	; int nodes = 0;
 %endif
 	mov	ecx,dword [eax+10H]
 	imul	ecx,sizeof_level
@@ -214,7 +214,7 @@ ogr_cycle_:
 	align	16
 .checklimit:
 	; we enter here with:
-	; 	eax = depth
+	;	eax = depth
 	;	edx = limit
 	; we must return back to store_limit with:
 	;	edx = limit
@@ -335,8 +335,8 @@ ogr_cycle_:
 	mov	ecx,eax			; ecx=s (for shift below)
 	mov	eax,64
 	not	edx			; recover comp0
-	sub	eax,ecx			; eax=ss (64-s)
 	movd	mm6,ecx			; mm6 = s
+	sub	eax,ecx			; eax=ss (64-s)
 	movd	mm7,eax			; mm7 = ss
 
 	psrlq	mm4,mm6
@@ -466,10 +466,10 @@ ogr_cycle_:
 	cmp	ebx,dword [ebp+lev_limit]	; limit (==lev->limit)
 	jg	.up
 
-	cmp	ecx,0ffffffffH
-
 	; small optimize. in both cases (ecx == -1 and not) we perform
 	; COMP_LEFT_LIST_RIGHT_32, then just jump to different labels.
+	;
+	; Alas, long chain of MMX shifts gets a penalty on Intel CPUs :-(
 
 	;    #define COMP_LEFT_LIST_RIGHT_32(lev)      \
 	;      list2 = (list2 >> 32) | (list1 << 32);  \
@@ -481,6 +481,7 @@ ogr_cycle_:
 
 					;  mm2  mm3  mm4     mm2  mm3  mm4
 	punpckhdq mm4,mm4		;           6789 =>           6767
+	cmp	ecx,0ffffffffH
 	punpckldq mm4,mm3		;      2345 6767 =>      2345 4567
 	punpckhdq mm3,mm3		;      2345 4567 =>      2323 4567
 	punpckldq mm3,mm2		; NN01 2323 4567 => NN01 0123 4567
@@ -614,7 +615,7 @@ ogr_watcom_rt1_mmx64_asm:
 ;	mov	ebx, [esp+16]		; with_time_constraints (ignored inside cycle)
 	mov	ecx, [esp+20]		; address of ogr_choose_dat table
 %ifdef OGR_DEBUG
- 	call	ogr_cycle_
+	call	ogr_cycle_
 %else
 	mov	ebx, ogr_cycle_no_tc
 	cmp	dword [esp+16], 0
