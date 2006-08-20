@@ -6,7 +6,7 @@
 ;  Author: Carsten Haustein (chaus@cs.uni-potsdam.de)
 ;
 ;---------------------------------------------------------------------
-; $Id: r72-mmx.asm,v 1.1.2.2 2005/05/12 13:13:23 stream Exp $
+; $Id: r72-mmx.asm,v 1.1.2.3 2006/08/20 10:31:31 stream Exp $
 
 
 ;
@@ -33,6 +33,8 @@
 ;
 ; local data
 ;
+%define align_value     8                 ; local data quadword aligned
+;
 %define L1              ebp+0             ; Arrange elements as "structure of
 %define L2              L1+16             ; arrays"
 %define L3              L2+16
@@ -44,7 +46,7 @@
 %define work_P_1        work_P_0+8
 %define work_C_0        work_P_1+8
 %define work_C_1        work_C_0+8
-%define work_size       work_C_1+8-L1+7   ; extra 7 bytes for alignment
+%define work_size       work_C_1+8-L1+align_value  ; extra bytes for alignment
 
 
 ;
@@ -299,10 +301,10 @@ rc5_72_unit_func_mmx:
    sub esp, work_size
    pcmpeqd mm7, mm7           ; create shift mask in mm7 (mm7 = -1:-1)
 
-   lea ebp, [esp+7]
+   lea ebp, [esp+align_value]
    psrlq mm7, 59              ; mm7 = 00000000:0000001f
 
-   and ebp, -8                ; make local data quadword aligned
+   and ebp, -align_value      ; make local data aligned
 
 ; 32 bit register assigment
 ; eax - test ciphertext high, temporary, result
