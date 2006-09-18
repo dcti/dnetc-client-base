@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.104 2006/08/21 20:25:17 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.105 2006/09/18 16:49:22 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1199,7 +1199,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0670, CPU_F_I686,       9, "K7-7 (Duron)"           }, // Morgan core = Palomino core w/ 64K L2
           {  0x0680, CPU_F_I686,       9, "K7-8 (Athlon XP/MP or Duron)" }, // Thoroughbred or Applebred core
           {  0x06A0, CPU_F_I686,       9, "K7-10 (Athlon XP/MP/XP-M)" }, // Barton core
-          {  0x0F10, CPU_F_I686,       9, "K8-1" },
+          {  0x0F10, CPU_F_I686,       9, "K8-1 (Opteron 2xx)" },
           {  0x1F10, CPU_F_I686,       9, "K8-1" },
           {  0x2F10, CPU_F_I686,       9, "K8-1" },
           {  0x3F10, CPU_F_I686,       9, "K8-1" },
