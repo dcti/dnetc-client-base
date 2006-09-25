@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.105 2006/09/18 16:49:22 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.106 2006/09/25 14:18:05 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1215,7 +1215,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0xDF10, CPU_F_I686,       9, "K8-1" },
           {  0xEF10, CPU_F_I686,       9, "K8-1 (Opteron 2xx)" },
           {  0xFF10, CPU_F_I686,       9, "K8-1" },
-          {  0x0F30, CPU_F_I686,       9, "K8-3" },
+          {  0x0F30, CPU_F_I686,       9, "K8-3 (Athlon64 X2)" },
           {  0x1F30, CPU_F_I686,       9, "K8-3 (Athlon64 X2)" },
           {  0x2F30, CPU_F_I686,       9, "K8-3" },
           {  0x3F30, CPU_F_I686,       9, "K8-3" },
