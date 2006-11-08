@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.107 2006/10/01 15:35:38 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.108 2006/11/08 02:38:01 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1132,7 +1132,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0660, CPU_F_I586, 0x0C, "C3 (Samuel)" }, /* THIS IS NOT A P6 !!! */
           {  0x0670, CPU_F_I586, 0x0C, "C3 (Samuel 2/3 or Ezra)" },
           {  0x0680, CPU_F_I586, 0x0C, "C3 (Ezra-T)" },
-          {  0x0690, CPU_F_I586, 0x0F, "C3 (Nehemiah)" },
+          {  0x0690, CPU_F_I586, 0x0F, "C3 (C5 Nehemiah)" },
+          {  0x06A0, CPU_F_I586, 0x0A, "C7 (Ester)" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT";
