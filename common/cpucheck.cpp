@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.108 2006/11/08 02:38:01 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.109 2006/11/24 15:59:04 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1439,6 +1439,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         //{  0x0F20, CPU_F_I686, 0x0B, "Pentium 4" }, /* >=2.0GHz P4-512k (0.13u) */
         //{  0x0F30, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
         //{  0x0F40, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
+          {  0x0F60, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.065u) */
           {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
           {  0xEF00, CPU_F_I686, 0x0B, "Xeon (Foster)" },
           {  0x8F10, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
@@ -1462,6 +1463,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0xAF40, CPU_F_I686, 0x0B, "Celeron D (Prescott)" },
           {  0xBF40, CPU_F_I686, 0x0B, "Xeon (Nocona)" },
           {  0xEF40, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Prescott)" },
+          {  0x0F60, CPU_F_I686, 0x0B, "Pentium 4/4-M/D/Celeron D/Xeon" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel"; 
