@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.9 2004/08/20 16:32:43 snikkel Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.10 2006/11/27 10:33:31 jt Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -32,6 +32,7 @@
 #if (CLIENT_CPU == CPU_POWERPC)
   #define CPU_F_ALTIVEC         (0x00000001L)
   #define CPU_F_64BITOPS        (0x00000002L)
+  #define CPU_F_SYNERGISTIC     (0x00000004L)
 #endif
 
 //return number of processors detected (by the hardware/from the OS)

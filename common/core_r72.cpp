@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.48 2006/10/01 15:35:38 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.49 2006/11/27 10:33:31 jt Exp $"; }
 
 //#define TRACE
 
@@ -330,6 +330,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x0039: cindex = 1; break; // 970 (G5)       == KKS 2pipes
         case 0x003C: cindex = 1; break; // 970FX (G5)     == KKS 2pipes
         case 0x0044: cindex = 1; break; // 970MP (G5)     == KKS 2pipes
+        case 0x0070: cindex = 1; break; // Cell BE        == KKS 2pipes
         default:     cindex =-1; break; // no default
       }
 
@@ -351,10 +352,12 @@ int selcoreGetPreselectedCoreForProject_rc572()
             case 0x0039: cindex = 7; break; // 970 (G5)    == KKS 970
             case 0x003C: cindex = 7; break; // 970 FX
             case 0x0044: cindex = 7; break; // 970 MP
+            case 0x0070: cindex = 7; break; // Cell Broadband Engine
             #else
             case 0x0039: cindex = 4; break; // Redirect G5 to KKS 7450
             case 0x003C: cindex = 4; break; // Ditto (970FX)
             case 0x0044: cindex = 4; break; // Ditto (970MP)
+            case 0x0070: cindex = 3; break; // Cell Broadband Engine
             #endif
             default:     cindex = 4; break; // KKS 7450
         }
@@ -795,6 +798,7 @@ unsigned int estimate_nominal_rate_rc572()
         case 0x0039:      // 970
         case 0x003C:      // 970FX
         case 0x0044:      // 970MP
+        case 0x0070:      // Cell Broadband Engine
           keyrate = (detected_flags & CPU_F_ALTIVEC) ? 7500 : 2450; break;
       }
 

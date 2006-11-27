@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.29 2006/03/12 16:31:30 kakace Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.30 2006/11/27 10:33:31 jt Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -156,6 +156,9 @@
   #if defined(__ps2linux__)
     #define CLIENT_OS_NAME "PS2 Linux"
     #define CLIENT_OS      OS_PS2LINUX
+  #elif defined(__ps3__)
+    #define CLIENT_OS_NAME "PS3 Linux"
+    #define CLIENT_OS      OS_LINUX
   #else
     #define CLIENT_OS_NAME "Linux"
     #define CLIENT_OS      OS_LINUX

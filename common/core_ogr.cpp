@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.49 2006/10/01 15:35:38 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.50 2006/11/27 10:33:31 jt Exp $"; }
 
 //#define TRACE
 
@@ -350,6 +350,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
           case 0x0039: // PPC 970
           case 0x003C: // PPC 970FX
           case 0x0044: // PPC 970MP
+          case 0x0070: // Cell Broadband Engine
             #ifdef HAVE_KOGE_PPC_CORES
               cindex = 1; break;      // PPC-vector
             #else
@@ -629,6 +630,7 @@ unsigned int estimate_nominal_rate_ogr()
         case 0x0039:      // 970
         case 0x003C:      // 970FX
         case 0x0044:      // 970MP
+        case 0x0070:      // Cell Broadband Engine
           noderate = (detected_flags & CPU_F_ALTIVEC) ? 16500 : 12500; break;
       }
 

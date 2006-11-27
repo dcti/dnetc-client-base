@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.109 2006/11/24 15:59:04 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.110 2006/11/27 10:33:31 jt Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -487,6 +487,7 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x003C, "970FX (G5)"          }, // XServe G5. See bug #3675
       {    0x0044, "970MP (G5)"          }, // Dual core
       {    0x0050, "821"                 },
+      {    0x0070, "Cell Broadband Engine" },
       {    0x0080, "860"                 },
       {    0x0081, "8240"                },
       {    0x4011, "405GP"               },
@@ -674,7 +675,8 @@ static long __GetRawProcessorID(const char **cpuname)
            { "7448",            0x8004  },
            { "PPC970",          0x0039  },
            { "PPC970FX",        0x003C  },
-           { "PPC970MP",        0x0044  }
+           { "PPC970MP",        0x0044  },
+           { "Cell Broadband Engine", 0x0070  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
@@ -683,11 +685,12 @@ static long __GetRawProcessorID(const char **cpuname)
             if (memcmp( p, sigs[n].sig, l)==0 && (!p[l] || isspace(p[l]) || p[l]==','))
             {
               detectedtype = (long)sigs[n].rid;
-              /* 7400, 7410, 7450, 7455 (G4), 970, 970FX (G5) */
+              /* 7400, 7410, 7450, 7455 (G4), 970, 970FX (G5),Cell */
               if (detectedtype == 0x000C ||
                   detectedtype == 0x0039 ||
                   detectedtype == 0x003C ||
                   detectedtype == 0x0044 ||
+                  detectedtype == 0x0070 ||
                   detectedtype & 0x8000)
               {
                 if (memcmp( &p[l], ", altivec supported", 19)==0)
@@ -851,7 +854,9 @@ static long __GetRawProcessorID(const char **cpuname)
 
     for (n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++) {
       if (cpuridtable[n].rid == detectedtype) {
-        strcpy(namebuf, "PowerPC ");
+      	if (detectedtype != 0x0070) { /* without Cell */
+          strcpy(namebuf, "PowerPC ");
+        }
         strcat(namebuf, cpuridtable[n].name);
         detectedname = (const char *)&namebuf[0];
         break;
@@ -2511,6 +2516,10 @@ unsigned long GetProcessorFeatureFlags()
       long type = __GetRawProcessorID(NULL);
       if ( (type & (1L << 25)) != 0)
         ppc_features |= CPU_F_ALTIVEC;
+      if ( (type & 0xFFFF) == 0x0070 {		/* Cell Broadband Engine */
+        ppc_features |= CPU_F_64BITOPS;
+        ppc_features |= CPU_F_SYNERGISTIC;
+      }
     #elif (CLIENT_OS == OS_AMIGAOS)  // AmigaOS PPC
       #if defined(__amigaos4__)
         /* AmigaOS 4.x */
