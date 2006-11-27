@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.110 2006/11/27 10:33:31 jt Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.111 2006/11/27 15:12:01 jt Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -854,7 +854,7 @@ static long __GetRawProcessorID(const char **cpuname)
 
     for (n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++) {
       if (cpuridtable[n].rid == detectedtype) {
-      	if (detectedtype != 0x0070) { /* without Cell */
+        if (detectedtype != 0x0070) { /* without Cell */
           strcpy(namebuf, "PowerPC ");
         }
         strcat(namebuf, cpuridtable[n].name);
@@ -2516,7 +2516,7 @@ unsigned long GetProcessorFeatureFlags()
       long type = __GetRawProcessorID(NULL);
       if ( (type & (1L << 25)) != 0)
         ppc_features |= CPU_F_ALTIVEC;
-      if ( (type & 0xFFFF) == 0x0070 {		/* Cell Broadband Engine */
+      if ( (type & 0xFFFF) == 0x0070) {     /* Cell Broadband Engine */
         ppc_features |= CPU_F_64BITOPS;
         ppc_features |= CPU_F_SYNERGISTIC;
       }
