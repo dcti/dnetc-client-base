@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.111 2006/11/27 15:12:01 jt Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.112 2007/01/15 07:44:39 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -44,6 +44,9 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.111 2006/11/27 15:12:01 jt Exp $"; }
 #  include <exec/resident.h>
 #  include <exec/system.h>
 #endif
+
+
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -79,6 +82,13 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.111 2006/11/27 15:12:01 jt Exp $"; }
     #endif
     extern "C" u32 x86ident_haveioperm; /* default is zero */
   #endif
+#endif
+
+
+#if (CLIENT_CPU == CPU_AMD64)
+#define x86ident()    0       // TODO
+#define x86features()  0
+#define x86htcount()  0
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -129,7 +139,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       get_system_info(&the_info);
       cpucount = the_info.cpu_count;
     }
-    #elif (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
       SYSTEM_INFO systeminfo;
       GetSystemInfo(&systeminfo);
@@ -596,7 +606,7 @@ static long __GetRawProcessorID(const char **cpuname)
       mach_port_deallocate(mach_task_self(), master_port);
     }
   }
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (detectedtype == -2L)
   {
     SYSTEM_INFO si;
@@ -877,6 +887,8 @@ static long __GetRawProcessorID(const char **cpuname)
 
 # undef NONPVR
 #endif /* (CLIENT_CPU == CPU_POWERPC) */
+
+/* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_POWER)
 static long __GetRawProcessorID(const char **cpuname) {
