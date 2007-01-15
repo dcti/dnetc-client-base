@@ -11,7 +11,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.60.4.5 2004/10/13 20:28:38 jbgill Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.60.4.6 2007/01/15 07:57:03 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -20,7 +20,14 @@ return "@(#)$Id: setprio.cpp,v 1.60.4.5 2004/10/13 20:28:38 jbgill Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
-//See public functions at end for explanation
+//! Internal helper to change thread and process priorities.
+/*!
+ * See public functions at end for explanation
+ *
+ * \param prio Desired priority (0 lowest, 9 highest)
+ * \param set_for_thread Change global (0) or local thread (1) priority.
+ * \return Zero on success, negative on error.
+ */
 static int __SetPriority( unsigned int prio, int set_for_thread )
 {
   if (((int)prio) < 0 || prio > 9) 
@@ -49,15 +56,14 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   {
     static int useidleclass = -1;           // track detection state.
-    int threadprio = 0, classprio = 0;
-    HANDLE our_thrid = GetCurrentThread();  // Win32 pseudo-handle constant.
+    const HANDLE our_thrid = GetCurrentThread();  // Win32 pseudo-handle constant.
 
     if (set_for_thread && (w32ConGetType() & 0xff)=='G') 
-    { // crunchers in a 'fat-'GUI client always run at idle prio
+    { // crunchers in a GUI client always run at idle prio
       prio = 0;
     }
   
-    /* ************************** Article ID: Q106253 *******************
+    /* ******* Microsoft Knowledgebase Article ID: Q106253 ***************
                               process priority class
     THREAD_PRIORITY          Normal, in      Normal, in
                       Idle   Background      Foreground    High    Realtime
@@ -70,12 +76,13 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     _IDLE               1         1               1          1        16
     ******************************************************************* */
   
-    /* If we want to run with an idle priority *class*, we need to be able
+    /* In order to get the absolute lowest priority for cruncher threads,
+       we ideally want to run with both idle priority class for the
+       process and idle thread priority for the cruncher threads.
+
+       However to run with an idle priority *class*, we need to be able
        to set a *thread* priority of _TIME_CRITICAL for the main and 
        window-handler threads, otherwise I/O will be laggy beyond belief.
-
-       If we cannot set _TIME_CRITICAL, then we have no choice but to use a 
-       NORMAL_PRIO_CLASS. Such is win32 scheduling; stupid, stupid, stupid.
     */
     if (useidleclass == -1) /* haven't selected yet */
     {         
@@ -83,9 +90,15 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       Sleep(1);
       SetThreadPriority( our_thrid, THREAD_PRIORITY_TIME_CRITICAL);    
       if (GetThreadPriority( our_thrid ) == THREAD_PRIORITY_TIME_CRITICAL)
+      {
+        /* We can successfully use _TIME_CRITICAL, so remember that for later. */
         useidleclass = 1;
+      }
       else
       {
+        /* We cannot set _TIME_CRITICAL, so we have no choice but to use a 
+         * NORMAL_PRIO_CLASS for the process.
+         */
         useidleclass = 0;
         SetPriorityClass( GetCurrentProcess(), NORMAL_PRIORITY_CLASS );
         Sleep(1);
@@ -93,7 +106,8 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       SetThreadPriority( our_thrid, THREAD_PRIORITY_NORMAL );    
     }
 
-    if (useidleclass == 1)
+    int threadprio = 0, classprio = 0;
+    if (useidleclass)
     {
       classprio = IDLE_PRIORITY_CLASS;
       if (!set_for_thread) threadprio = THREAD_PRIORITY_TIME_CRITICAL;/* 15 */
@@ -110,7 +124,7 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
       if (!set_for_thread) threadprio = THREAD_PRIORITY_NORMAL;       /*  8 */
       else if (prio >= 7)  threadprio = THREAD_PRIORITY_BELOW_NORMAL; /*  6 */
       else if (prio >= 5)  threadprio = THREAD_PRIORITY_LOWEST;       /*  5 */
-      else                 threadprio = THREAD_PRIORITY_IDLE;         /*  1 */
+      else /* prio < 5 */  threadprio = THREAD_PRIORITY_IDLE;         /*  1 */
     }
     //SetPriorityClass( GetCurrentProcess(), classprio );
     //Sleep(1);
@@ -326,20 +340,32 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
 
 /* --------------------------------------------------------------------- */
 
-// called on crunch controller startup. not called by worker threads.
-int SetGlobalPriority(unsigned int prio) /* prio level (0-9 inclusive) */
+//! Initialize global process-wide priority for startup.
+/*! 
+ * called on crunch controller startup. not called by worker threads.
+ *
+ * \param prio Requested priority level (0-9 inclusive).
+ * \return Zero on success, negative on error.
+ */
+int SetGlobalPriority(unsigned int prio)
 {
-  return __SetPriority( prio, 0 ); /* => 0 on success, <0 on error */
+  return __SetPriority( prio, 0 );
 }
 
 /* --------------------------------------------------------------------- */
 
-// called by each worker threads at startup, since different scaled 
-// priorities might be used for them (ie, they don't inherit from global, 
-// or need to override what they inherited)
-int SetThreadPriority(unsigned int prio) /* prio level (0-9 inclusive) */
+//! Change the local priority for just the calling thread.
+/*!
+ * Called by each worker threads at startup, since different scaled 
+ * priorities might be used for them (ie, they don't inherit from global, 
+ * or need to override what they inherited).
+ *
+ * \param prio Requested priority level (0-9 inclusive).
+ * \return Zero on success, negative on error.
+ */
+int SetThreadPriority(unsigned int prio)
 {
-  return __SetPriority( prio, 1 ); /* => 0 on success, <0 on error */
+  return __SetPriority( prio, 1 );
 }
 
 
