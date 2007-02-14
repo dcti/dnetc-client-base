@@ -12,6 +12,10 @@
 ; to each other, but Intel chip have a penalty in this case.
 ;
 ;
+; 2007-02-03: (RT) More effecient registers assignment and math optimization
+;                  in inner loop. Less commands, 2% faster.
+;             (CE) More AMD-specific instruction reorders.
+;
 
 cpu	586
 
@@ -69,7 +73,7 @@ global	_ogr_watcom_rt1_mmx64_amd_asm, ogr_watcom_rt1_mmx64_amd_asm
 ;
 ; Registers assigned:
 ;
-; ecx = comp0 (32 bit)
+; esi = comp0 (32 bit)
 ; mm0 = comp1
 ; mm1 = comp2
 ; mm2 = list0 (32 bit) in lower part, newbit in high part
@@ -174,7 +178,7 @@ ogr_cycle_:
 	movq	mm3,[ebp+lev_list1]		;	lev->list[1]
 	movq	mm4,[ebp+lev_list2]		;	lev->list[2]
 	mov	edi,dword [ebp+lev_dist0]	; (u32) dist0
-	mov	ecx,dword [ebp+lev_comp0]	; (u32) lev->comp[0]
+	mov	esi,dword [ebp+lev_comp0]	; (u32) lev->comp[0]
 	movq	mm0,[ebp+lev_comp1]		;	lev->comp[1]
 	movq	mm1,[ebp+lev_comp2]		;	lev->comp[2]
 	punpckldq mm2,mm7			;	  ... | 1 << 32
@@ -272,23 +276,23 @@ ogr_cycle_:
 .stay:   ; Most important internal loop
 	;
 	; entry: ebx = mark   (keep and update!)
-	;	 ecx = comp0  (reloaded immediately after shift)
+	;	 esi = comp0  (reloaded immediately after shift)
 	;	 ebp = level
-	;	 esi =
+	;	 ecx =
 	;	 edi will be dist0  (reloaded later, don't care)
-	; usable: eax, edx, esi, edi
-	; usable with care: ecx
+	; usable: eax, edx, ecx, edi
+	; usable with care: esi
 	;
 	;    if (comp0 < 0xfffffffe) {
-	cmp	ecx,0fffffffeH
+	cmp	esi,0fffffffeH
 	jnb	.L$57_
 	;      int s = LOOKUP_FIRSTBLANK( comp0 );
-	not	ecx
-	mov	eax,20H
-	bsr	edx,ecx
-	sub	eax,edx			; s
+	not	esi
+	mov	ecx,20H
+	bsr	edx,esi
+	sub	ecx,edx			; s
 	;      if ((mark += s) > limit) goto up;   /* no spaces left */
-	add	ebx,eax
+	add	ebx,ecx
 	cmp	ebx,dword [ebp+lev_limit]	; limit (==lev->limit)
 	jg	.up
 	;      COMP_LEFT_LIST_RIGHT(lev, s);
@@ -315,20 +319,16 @@ ogr_cycle_:
 	; 1. mm4 = (mm4 >> (mm6)) | ( mm3 << mm7 )
 	; 2. mm3 = (mm3 >> (mm6)) | ( mm2 << mm7 )
 	; 3. mm2 =  mm2 >> (mm6);
-        ; 4. ecx = comp0 = (u32) ((edx << (ecx)) | mm0 >> eax)
+        ; 4. esi = comp0 = (u32) ((edx << (ecx)) | mm0 >> eax)
 	; 5. mm0   = (mm0 << (mm6)) |        mm1 >> mm7;
 	; 6. mm1   = (mm1 << (mm6))
 	;    }
 
-					; eax=s, ecx = not comp0
-	mov	edx,ecx			; copy "not comp0"
-	mov	ecx,eax			; ecx=s (for shift below)
-	mov	eax,64
-	not	edx			; recover comp0
-	sub	eax,ecx			; eax=ss (64-s)
-
+					; ecx=s, edx=bsr, esi = not comp0
+	not	esi			; recover comp0
+	add	edx,32			; ss = (64-s) = 64-(32-bsr) = 32+bsr
 	movd	mm6,ecx			; mm6 = s
-        movd	mm7,eax			; mm7 = ss
+        movd	mm7,edx			; mm7 = ss
 
 
 ;       1               2               3               4               5               6
@@ -345,19 +345,18 @@ ogr_cycle_:
 						    	punpckhdq mm5,mm5
 									psllq	mm0,mm6
 						    	movd	eax,mm5
-						    	shld	edx,eax,cl
+						    	shld	esi,eax,cl
 									movq	mm5,mm1
-						    	mov	ecx,edx     ; comp0 !
 											psllq	mm1,mm6
 									psrlq	mm5,mm7
 									por	mm0,mm5
 
 .L$58:
-					; comp0 must be in ecx
+					; comp0 must be in esi
 	;    lev->mark = mark;
 	;    if (remdepth == 0) {                  /* New ruler ? (last mark placed) */
-	mov	dword [ebp+lev_mark],ebx	; lev->mark
 	cmp	dword [esp+20H],0		; remdepth
+	mov	dword [ebp+lev_mark],ebx	; lev->mark
 	je	.L$61
 	;    PUSH_LEVEL_UPDATE_STATE(lev);         /* Go deeper */
 
@@ -375,7 +374,7 @@ ogr_cycle_:
 	;
 	; lev2->dist[n] = lev->dist[n] | lev->list[n];
 	;
-	; Note! new comp0, dist0 must be loaded to ecx, edi
+	; Note! new comp0, dist0 must be loaded to esi, edi
 
 	movd	edi,mm2				; list0
 
@@ -387,14 +386,14 @@ ogr_cycle_:
 	movq	[ebp+lev_list2],mm4		; lev->list[2] = list2
 
 		por	mm7,mm3				; dist1 |= list1
-	mov	[ebp+lev_comp0],ecx		; lev->comp[0] = comp0
+	mov	[ebp+lev_comp0],esi		; lev->comp[0] = comp0
 		por	mm6,mm4				; dist2 |= list2
 	movq	[ebp+lev_comp1],mm0		; lev->comp[1] = comp1
 	movq	[ebp+lev_comp2],mm1		; lev->comp[2] = comp2
 
 		or	edi,[ebp+lev_dist0]		; dist0 |= list0
 		mov	[ebp+sizeof_level+lev_dist0],edi ; lev2->dist0 = dist0
-		or	ecx,edi				; comp0 |= dist0
+		or	esi,edi				; comp0 |= dist0
 
 		movq	[ebp+sizeof_level+lev_dist1],mm7 ; lev2->dist1 = dist1
 	xor	eax,eax
@@ -407,15 +406,12 @@ ogr_cycle_:
 
 	punpckldq mm2,mm7			; list0 |= ((U)1 << 32);
 
-	;    lev++;
-	add	ebp,sizeof_level
 	;    remdepth--;
 	dec	dword [esp+20H]
+	;    lev++;
+	add	ebp,sizeof_level
 	;    depth++;
 	inc	dword [esp+24H]
-;	mov	edx,dword [esp+24H]
-;	inc	edx
-;	mov	dword [esp+24H],edx
 	;    continue;
 
 ; When core processed at least given number of nodes (or a little more)
@@ -466,9 +462,9 @@ ogr_cycle_:
 	cmp	ebx,dword [ebp+lev_limit]	; limit (==lev->limit)
 	jg	.up
 
-	cmp	ecx,0ffffffffH
+	cmp	esi,0ffffffffH
 
-	; small optimize. in both cases (ecx == -1 and not) we perform
+	; small optimize. in both cases (esi == -1 and not) we perform
 	; COMP_LEFT_LIST_RIGHT_32, then just jump to different labels.
 
 	;    #define COMP_LEFT_LIST_RIGHT_32(lev)      \
@@ -479,29 +475,46 @@ ogr_cycle_:
 	;      comp1 = (comp1 << 32) | (comp2 >> 32);  \
 	;      comp2 <<= 32;
 
-					;  mm2  mm3  mm4     mm2  mm3  mm4
-	punpckhdq mm4,mm4		;           6789 =>           6767
-	punpckldq mm4,mm3		;      2345 6767 =>      2345 4567
-	punpckhdq mm3,mm3		;      2345 4567 =>      2323 4567
-	punpckldq mm3,mm2		; NN01 2323 4567 => NN01 0123 4567
-	punpckhdq mm2,mm7		; NN01 0123 4567 => ZZNN 0123 4567
+	; Column 1
+	;  mm2  mm3  mm4     mm2  mm3  mm4
+        ;           6789 =>           6767
+	;      2345 6767 =>      2345 4567
+	;      2345 4567 =>      2323 4567
+	; NN01 2323 4567 => NN01 0123 4567
+	; NN01 0123 4567 => ZZNN 0123 4567
+	
+	; Column 2
+	; comp1 [0123] => mm6 (copy)
+	; [0123] => [0101]
+	; comp0 => reloaded to esi
 
-	movq	  mm6,mm0		; comp1 [0123] => mm6 (copy)
-	punpckhdq mm6,mm6		; [0123] => [0101]
-	movd	  ecx,mm6		; comp0 => reloaded to ecx
+	; Column 3
+	;  mm0  mm1  mm7
+	; 0123 4567 ----        start
+	; 2300 4567 ----
+	; 2300 4567 4567
+	; 2300 4567 0045
+	; 2345 4567 ----
+	; 2345 67ZZ ----
 
-					;  mm0  mm1  mm7
-					; 0123 4567 ----
-	psllq	  mm0,32		; 2300 4567 ----
-	movq	  mm7,mm1		; 2300 4567 4567
-	psrlq	  mm7,32		; 2300 4567 0045
-	por	  mm0,mm7		; 2345 4567 ----
-	psllq	  mm1,32		; 2345 67ZZ ----
+	punpckhdq mm4,mm4
+	punpckldq mm4,mm3
+			movq	  mm6,mm0
+	punpckhdq mm3,mm3
+			punpckhdq mm6,mm6
+	punpckldq mm3,mm2		
+					psllq	  mm0,32
+	punpckhdq mm2,mm7		
+			movd	  esi,mm6
+					movq	  mm7,mm1
+					psrlq	  mm7,32
+					psllq	  mm1,32
+					por	  mm0,mm7
 
 	; Good that MMX do not set ALU flags
 
-	jne	.L$58	; ecx != -1
-	jmp	.stay	; ecx == -1
+	jne	.L$58	; esi != -1
+	jmp	.stay	; esi == -1
 
 	align	16
 .up:
@@ -522,7 +535,7 @@ ogr_cycle_:
 	movd	mm2,[ebp+lev_list0]		; (u32) lev->list[0], newbit = 0
 	movq	mm3,[ebp+lev_list1]		;	lev->list[1]
 	movq	mm4,[ebp+lev_list2]		;	lev->list[2]
-	mov	ecx,dword [ebp+lev_comp0]	; (u32) lev->comp[0]
+	mov	esi,dword [ebp+lev_comp0]	; (u32) lev->comp[0]
 	movq	mm0,[ebp+lev_comp1]		;	lev->comp[1]
 	movq	mm1,[ebp+lev_comp2]		;	lev->comp[2]
 	; dist not loaded because it's not cached
@@ -539,7 +552,7 @@ ogr_cycle_:
 	xor	eax,eax
 .L$53_exit:
 	;
-	; ecx must be loaded with comp0!
+	; esi must be loaded with comp0!
 	;
 	;    #define SAVE_FINAL_STATE(lev)   \
 	;      lev->list[0] = list0;         \
@@ -555,7 +568,7 @@ ogr_cycle_:
 	movd	[ebp+lev_list0],mm2		; lev->list[0]
 	movq	[ebp+lev_list1],mm3
 	movq	[ebp+lev_list2],mm4
-	mov	[ebp+lev_comp0],ecx		; lev->comp[0] = comp0
+	mov	[ebp+lev_comp0],esi		; lev->comp[0] = comp0
 	movq	[ebp+lev_comp1],mm0		; lev->comp[1]
 	movq	[ebp+lev_comp2],mm1
 
