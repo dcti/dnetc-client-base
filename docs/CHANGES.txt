@@ -23,11 +23,13 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.111 2006/08/21 20:25:41 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.112 2007/02/14 08:49:41 stream Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9013-499  imp: x86: Faster OGR MMX cores (1-3%, depending on CPU)
+
 2.9013-498  new: x86: Added new AMD optimized OGR core, selected for AMD CPUs
 
 2.9012-497  new: x86: Added new MMX assembly OGR core, selected for MMX CPUs
