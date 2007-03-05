@@ -38,9 +38,12 @@
 #		8 keys at once, all keys (within such "block") having the same mid
 #		and lo values).
 #
-# $Id: r72-KKS604e.gas.s,v 1.1.2.2 2003/03/12 20:31:44 oliver Exp $
+# $Id: r72-KKS604e.gas.s,v 1.1.2.3 2007/03/05 03:39:18 mfeiri Exp $
 #
 # $Log: r72-KKS604e.gas.s,v $
+# Revision 1.1.2.3  2007/03/05 03:39:18  mfeiri
+# explicitly truncate key table to 32 bit
+#
 # Revision 1.1.2.2  2003/03/12 20:31:44  oliver
 # Linker errors when compiled with gas 2.11 - fixed
 # Moved executed_key data from .data to .rodata
@@ -908,29 +911,30 @@ epilog:
 		
 expanded_key:					# Static expanded key table S[]
 
+		# explicitly truncate calculated values to 32 bit
 		.long	0xBF0A8B1D		# ROTL3(P)
-		.long	P+Q
-		.long	P+Q*2
-		.long	P+Q*3
-		.long	P+Q*4
-		.long	P+Q*5
-		.long	P+Q*6
-		.long	P+Q*7
-		.long	P+Q*8
-		.long	P+Q*9
-		.long	P+Q*10
-		.long	P+Q*11
-		.long	P+Q*12
-		.long	P+Q*13
-		.long	P+Q*14
-		.long	P+Q*15
-		.long	P+Q*16
-		.long	P+Q*17
-		.long	P+Q*18
-		.long	P+Q*19
-		.long	P+Q*20
-		.long	P+Q*21
-		.long	P+Q*22
-		.long	P+Q*23
-		.long	P+Q*24
-		.long	P+Q*25
+		.long	(P+Q) & 0xffffffff
+		.long	(P+Q*2) & 0xffffffff
+		.long	(P+Q*3) & 0xffffffff
+		.long	(P+Q*4) & 0xffffffff
+		.long	(P+Q*5) & 0xffffffff
+		.long	(P+Q*6) & 0xffffffff
+		.long	(P+Q*7) & 0xffffffff
+		.long	(P+Q*8) & 0xffffffff
+		.long	(P+Q*9) & 0xffffffff
+		.long	(P+Q*10) & 0xffffffff
+		.long	(P+Q*11) & 0xffffffff
+		.long	(P+Q*12) & 0xffffffff
+		.long	(P+Q*13) & 0xffffffff
+		.long	(P+Q*14) & 0xffffffff
+		.long	(P+Q*15) & 0xffffffff
+		.long	(P+Q*16) & 0xffffffff
+		.long	(P+Q*17) & 0xffffffff
+		.long	(P+Q*18) & 0xffffffff
+		.long	(P+Q*19) & 0xffffffff
+		.long	(P+Q*20) & 0xffffffff
+		.long	(P+Q*21) & 0xffffffff
+		.long	(P+Q*22) & 0xffffffff
+		.long	(P+Q*23) & 0xffffffff
+		.long	(P+Q*24) & 0xffffffff
+		.long	(P+Q*25) & 0xffffffff
