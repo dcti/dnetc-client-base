@@ -1,10 +1,8 @@
 ; RC5-72 Assembly version - AMD Duron/Athlon/Athlon XP optimized version
 ; integer/mmx mixed version - 2 pipe
-; Vyacheslav Chupyatov - goteam@mail.ru - 26/04/2003
+; Vyacheslav Chupyatov - goteam@mail.ru - 26/04/2003,07/03/2007
 ; For use by distributed.net. 
-;
-; based on r72-dg2 and RC5-64 'RG/HB re-pair II' cores
-; $Id: r72-go2.asm,v 1.1.2.9 2005/05/12 04:23:06 jlawson Exp $
+; $Id: r72-go2.asm,v 1.1.2.10 2007/04/03 08:12:27 stream Exp $
 
 %define P	  0xB7E15163
 %define Q	  0x9E3779B9
@@ -13,11 +11,12 @@
 %ifdef __OMF__ 		;  Borland and Watcom compilers/linkers
 [SECTION _DATA FLAT USE32 align=16 CLASS=DATA]
 %else
-[SECTION .data]
+[SECTION .data align=16]
 %endif
 
 
-incr		dd	2,3
+incr1		dd	2,3
+incr2		dd	4,5
 S_not_3		dd	S_not(3),S_not(3)
 S_not_4		dd	S_not(4),S_not(4)
 S_not_5		dd	S_not(5),S_not(5)
@@ -41,7 +40,6 @@ S_not_16	dd	S_not(16),S_not(16)
 %endif
 
 [GLOBAL _rc5_72_unit_func_go_2]
-[GLOBAL rc5_72_unit_func_go_2_]
 [GLOBAL rc5_72_unit_func_go_2]
 
 
@@ -60,24 +58,26 @@ S_not_16	dd	S_not(16),S_not(16)
 %endmacro
 
 defwork work_L,3
-defwork work_S,52
-defwork	dummy
-defwork RC5_72_L0hi
-defwork work_pre1_r1
-defwork work_pre2_r1
-defwork work_pre3_r1
-defwork work_pre4_r1
-defwork work_P_0
-defwork work_P_1
-defwork work_C_0
-defwork work_C_1
-defwork work_pre5_r1
 defwork work_iterations
+defwork work_S,52
+defwork RC5_72_L0hi
+defwork work_C_1
+defwork work_pre1_r1
+defwork	iterations_addr
+defwork work_pre2_r1
+defwork work_P_0
+defwork work_pre3_r1
+defwork work_P_1
+defwork work_pre4_r1
+defwork work_C_0
+defwork work_pre5_r1
 defwork save_ebx
 defwork save_esi
 defwork save_edi
 defwork save_ebp
 defwork	S_ext,52
+defwork	unitwork_addr
+defwork save_esp
 
 
 %define RC5_72UnitWork_plainhi	eax+0
@@ -160,17 +160,23 @@ defwork	S_ext,52
 align 16
 startseg:
 _rc5_72_unit_func_go_2:
-rc5_72_unit_func_go_2_:
 rc5_72_unit_func_go_2:
 ;------ integer stream -------- mmx helper ----------
-				emms
 				mov	eax,0x1f
+	mov	ecx, esp
+	sub	esp, work_size
+
 				movd	mm3,eax
 
-	sub	esp, work_size
-	mov	[save_ebp], ebp
+	lea	eax, [RC5_72UnitWork]
+	and	esp,-64
+	mov	[save_esp], ecx
 
-	mov	eax, [RC5_72UnitWork]
+	mov	[save_ebp], ebp
+	lea	ecx,[eax+4]
+	mov	eax, [eax]
+
+	mov	[unitwork_addr],eax
 	mov	[save_ebx], ebx
 	mov	[save_esi], esi
 
@@ -179,8 +185,9 @@ rc5_72_unit_func_go_2:
 	mov	edi, [RC5_72UnitWork_plainhi]
 
 	mov	esi, [RC5_72UnitWork_cipherlo]
+	mov	[iterations_addr],ecx
+	mov	edx, [ecx]
 	mov	ecx, [RC5_72UnitWork_cipherhi]
-	mov	edx, [iterations]
 
 	mov	[work_P_0], ebx
 	mov	[work_P_1], edi
@@ -479,6 +486,7 @@ key_setup_1_bigger_loop:
 
 	add	B1_1,ecx
 	rol	A2,3
+					pshufw	B3_2,[RC5_72_L0hi],0x44 
 
 	rol	B1_1,cl
 	lea	ecx,[A2+B2]
@@ -523,6 +531,7 @@ key_setup_1_bigger_loop:
 
 	rol	A2,3
 	add	B1_0,ecx
+					paddb	B3_2,[incr1]
  
 	rol	B1_0,cl
 	lea	ecx,[A2+B2]
@@ -538,41 +547,39 @@ key_setup_1_bigger_loop:
 	rol	B2,cl
 	lea	ecx,[A1+B1_0]
 	mov	L2(0),B2
+
 	mov	S1(16),A1
+	add	A2,B2
 	;---
 k7align 16
 key_setup_1_inner_loop:
-	add	A2,B2
-	add	A1,S_not(17)
-					pshufw	B3_2,[RC5_72_L0hi],0x44 
-
 	add	B1_1,ecx
+	add	A1,S_not(17)
 	rol	A2,3
-					pshufw	B3_2,[RC5_72_L0hi],0x44 
 
 	rol	B1_1,cl
-	lea	ecx,[A2+B2]
-	mov	S2(16),A2
+	rep	lea	ecx,[A2+B2]
+	mov	B2,L2(1)
 
 	add	A1,B1_1
-	mov	B2,L2(1)
-					pshufw	A3,[work_pre4_r1],0x44 
-
-	rep	add	B2,ecx
-	rep	rol	A1,3
+	mov	S2(16),A2
 	add	A2,S_not(17)
+
+	add	B2,ecx
+	rol	A1,3
+	mov	S1(17),A1
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_1]
 	mov	L2(1),B2
 ;---------------------Round 1(18)-------------------
 	add	A2,B2
-	mov	S1(17),A1
 	add	A1,S_not(18)
+					pshufw	mm5,[work_pre5_r1],0x44 
 
 	add	B1_2,ecx
 	rol	A2,3
-					pshufw	mm5,[work_pre5_r1],0x44 
+					paddd	B3_2,mm5
 
 	rol	B1_2,cl
 	lea	ecx,[A2+B2]
@@ -584,11 +591,11 @@ key_setup_1_inner_loop:
 
 	add	B2,ecx
 	rol	A1,3
-					paddd	B3_2,[incr]
+					pshufw	A3,[work_pre4_r1],0x44 
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_2]
-	mov	L2(2),B2
+					pshufw	mm7,mm5,0xee
 	;---
 	add	A2,B2
 	mov	S1(18),A1
@@ -596,7 +603,7 @@ key_setup_1_inner_loop:
 
 	add	B1_0,ecx
 	rol	A2,3
-					pshufw	mm7,mm5,0xee
+	mov	L2(2),B2
 
 	rol	B1_0,cl
 	lea	ecx,[A2+B2]
@@ -606,11 +613,11 @@ key_setup_1_inner_loop:
 	mov	B2,L2(0)
 	add	A2,S_not(19)
 
-	add	B2,ecx
+	rep	add	B2,ecx
 	rol	A1,3
 					paddd	A3,[S_not_3]
 
-	rol	B2,cl
+	rep	rol	B2,cl
 	lea	ecx,[A1+B1_0]
 	mov	L2(0),B2
 ;---------------------Round 1(20)-------------------
@@ -620,10 +627,10 @@ key_setup_1_inner_loop:
 
 	add	B1_1,ecx
 	rol	A2,3
-					paddd	B3_2,mm5
+					pand	mm5,mm3
 
-	rol	B1_1,cl
-	lea	ecx,[A2+B2]
+	rep	rol	B1_1,cl
+	rep	lea	ecx,[A2+B2]
 	mov	B2,L2(1)
 
 	add	A1,B1_1
@@ -632,21 +639,21 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					pand	mm5,mm3
+					pshufw	A3_H,B3_2,0xee
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_1]
 	mov	L2(1),B2
 	;---
-	add	A2,B2
-	mov	S1(20),A1
+	rep	add	A2,B2
+	rep	mov	S1(20),A1
 	add	A1,S_not(21)
 
 	add	B1_2,ecx
 	rol	A2,3
-					pshufw	A3_H,B3_2,0xee
+					pand	mm7,mm3
 
-	rol	B1_2,cl
+	rep	rol	B1_2,cl
 	lea	ecx,[A2+B2]
 	mov	B2,L2(2)
 
@@ -654,9 +661,9 @@ key_setup_1_inner_loop:
 	mov	S2(20),A2
 	add	A2,S_not(21)
 
-	rol	A1,3
-	add	B2,ecx
-					pand	mm7,mm3
+	rep	rol	A1,3
+	rep	add	B2,ecx
+					punpckldq	B3_2,B3_2
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_2]
@@ -668,15 +675,15 @@ key_setup_1_inner_loop:
 
 	add	B1_0,ecx
 	rep	rol	A2,3
-					punpckldq	B3_2,B3_2
+					psllq	A3_H,mm7
 
 	rol	B1_0,cl
 	lea	ecx,[A2+B2]
 	mov	S2(21),A2
 
 	add	A1,B1_0
-					psllq	A3_H,mm7
 	mov	B2,L2(0)
+					psllq	B3_2,mm5
 
 	rol	A1,3
 	add	B2,ecx
@@ -692,39 +699,39 @@ key_setup_1_inner_loop:
 
 	add	B1_1,ecx
 	rol	A2,3
-					psllq	B3_2,mm5
-
-	rep	rol	B1_1,cl
-	lea	ecx,[A2+B2]
-	rep	mov	B2,L2(1)
-
-	add	A1,B1_1
-	mov	S2(22),A2
-	add	A2,S_not(23)
-
-	rol	A1,3
-	rep	add	B2,ecx
 					punpckhdq	B3_2,A3_H
 
-	rol	B2,cl
+	rol	B1_1,cl
+	lea	ecx,[A2+B2]
+	mov	B2,L2(1)
+
+	add	A1,B1_1
+					paddd	A3,B3_2
+					movq	mm5,B3_2
+
+	add	B2,ecx
+	mov	S2(22),A2
+	rol	A1,3
+
+	rep	rol	B2,cl
 	lea	ecx,[A1+B1_1]
-	mov	L2(1),B2
+	add	A2,S_not(23)
 ;---------------------Round 1(24)-------------------
 	add	A2,B2
 	mov	S1(23),A1
 	add	A1,S_not(24)
 
 	add	B1_2,ecx
-	rep	rol	A2,3
-					paddd	A3,B3_2
+	rol	A2,3
+	mov	L2(1),B2
 
-	rol	B1_2,cl
+	rep	rol	B1_2,cl
 	lea	ecx,[A2+B2]
-	rep	mov	B2,L2(2)
+	mov	B2,L2(2)
 
 	add	A1,B1_2
 	mov	S2(23),A2
-					movq	mm5,B3_2
+					movq	A3_H,A3
 
 	rol	A1,3
 	add	B2,ecx
@@ -740,7 +747,7 @@ key_setup_1_inner_loop:
 
 	add	B1_0,ecx
 	rol	A2,3
-					movq	A3_H,A3
+                                        pslld	A3_H,3
 
 	rol	B1_0,cl
 	lea	ecx,[A2+B2]
@@ -748,7 +755,7 @@ key_setup_1_inner_loop:
 
 	add	A1,B1_0
 	mov	S2(24),A2
-                                        pslld	A3_H,3
+					psrld	A3,29
 
 	rol	A1,3
 	add	B2,ecx
@@ -762,9 +769,9 @@ key_setup_1_inner_loop:
 	mov	S1(25),A1
 	add	A1,0xBF0A8B1D				;S(0)
 
-	add	B1_1,ecx
-	rol	A2,3					;S2(25)
-					psrld	A3,29
+	rep	rol	A2,3					;S2(25)
+	rep	add	B1_1,ecx
+					por	A3,A3_H
 
 	rol	B1_1,cl 				;L1(1)
 	lea	ecx,[A2+B2]
@@ -775,7 +782,7 @@ key_setup_1_inner_loop:
 	mov	S2(25),A2
 
 	rep	rol	A1,3
-	add	B2,ecx
+	rep	add	B2,ecx
 	add	A2,0xBF0A8B1D				;S(0)
 
 	rol	B2,cl
@@ -788,19 +795,19 @@ key_setup_1_inner_loop:
 
 	add	B1_2,ecx
 	rol	A2,3
-					por	A3,A3_H
+					paddd	mm5,A3
 
 	rol	B1_2,cl
 	lea	ecx,[A2+B2]
-	rep	mov	B2,L2(2)
+	mov	B2,L2(2)
 
-	add	A1,B1_2
+	rep	add	A1,B1_2
 	mov	S2_alt(0),A2
 	add	A2,[work_pre2_r1]
 
 	rol	A1,3
 	add	B2,ecx
-					paddd	mm5,A3
+					paddd	B3_0,mm5
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_2]
@@ -812,10 +819,10 @@ key_setup_1_inner_loop:
 
 	rol	A2,3					;S2(25)
 	add	B1_0,ecx
-					paddd	B3_0,mm5
+					pshufw	mm7,mm5,0xee
 
 	rol	B1_0,cl 				;L1(1)
-	rep	lea	ecx,[A2+B2]
+	lea	ecx,[A2+B2]
 	rep	mov	B2,L2(0)
 
 	add	A1,B1_0
@@ -824,19 +831,19 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					pshufw	mm7,mm5,0xee
+					pand	mm5,mm3
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_0]
-	rep	mov	L2(0),B2
+	mov	L2(0),B2
 	;---
 	add	A2,B2
 	mov	S1(2),A1
 	add	A1,S1(3)
 
-	rep	add	B1_1,ecx
+	add	B1_1,ecx
 	rol	A2,3
-					pand	mm5,mm3
+					pshufw	A3_H,B3_0,0xee
 
 	rol	B1_1,cl
 	lea	ecx,[A2+B2]
@@ -846,21 +853,21 @@ key_setup_1_inner_loop:
 	mov	S2_alt(2),A2
 	add	A2,S2(3)
 
-	rep	add	B2,ecx
-	rep	rol	A1,3
-					pshufw	A3_H,B3_0,0xee
+	add	B2,ecx
+	rol	A1,3
+                                        movq	S(3),A3
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_1]
 	mov	L2(1),B2
 ;---------------------Round 2(4)-------------------
-	rep	add	A2,B2
+	add	A2,B2
 	mov	S1_alt(3),A1
 	add	A1,S1(4)
 
 	add	B1_2,ecx
 	rol	A2,3
-                                        movq	S(3),A3
+					paddd	A3,[S_not_4]
 
 	rol	B1_2,cl
 	lea	ecx,[A2+B2]
@@ -870,9 +877,9 @@ key_setup_1_inner_loop:
 	mov	S2_alt(3),A2
 	add	A2,S2(4)
 
-	rol	A1,3
-	add	B2,ecx
-					paddd	A3,[S_not_4]
+	rep	rol	A1,3
+	rep	add	B2,ecx
+					pand	mm7,mm3
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_2]
@@ -883,8 +890,8 @@ key_setup_1_inner_loop:
 	add	A1,S1(5)
 
 	rep	add	B1_0,ecx
-	rol	A2,3
-					pand	mm7,mm3
+	rep	rol	A2,3
+					punpckldq	B3_0,B3_0
 
 	rol 	B1_0,cl
 	lea	ecx,[A2+B2]
@@ -896,7 +903,7 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					punpckldq	B3_0,B3_0
+					psllq	A3_H,mm7
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_0]
@@ -908,9 +915,9 @@ key_setup_1_inner_loop:
 
 	add	B1_1,ecx
 	rol	A2,3
-					psllq	A3_H,mm7
+					psllq	B3_0,mm5
 
-	rol	B1_1,cl
+	rep	rol	B1_1,cl
 	lea	ecx,[A2+B2]
 	mov	B2,L2(1)
 
@@ -918,9 +925,9 @@ key_setup_1_inner_loop:
 	mov	S2_alt(5),A2
 	add	A2,S2(6)
 
-	add	B2,ecx
-	rol	A1,3
-					psllq	B3_0,mm5
+	rep	add	B2,ecx
+	rep	rol	A1,3
+					punpckhdq	B3_0,A3_H
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_1]
@@ -932,7 +939,7 @@ key_setup_1_inner_loop:
 
 	rep	add	B1_2,ecx
 	rep	rol	A2,3
-					punpckhdq	B3_0,A3_H
+				        paddd	A3,B3_0
 
 	rol	B1_2,cl
 	lea	ecx,[A2+B2]
@@ -942,11 +949,11 @@ key_setup_1_inner_loop:
 	mov	S2_alt(6),A2
 	add	A2,S2(7)
 
-	rol	A1,3
+	rep	rol	A1,3
 	rep	add	B2,ecx
-				        paddd	A3,B3_0
+					movq	A3_H,A3
 
-	rep	rol	B2,cl
+	rol	B2,cl
 	lea	ecx,[A1+B1_2]
 	mov	L2(2),B2
 ;---------------------Round 2(8)-------------------
@@ -956,45 +963,45 @@ key_setup_1_inner_loop:
 
 	add	B1_0,ecx
 	rol	A2,3
-                                        pshufw	B3_1,[work_pre3_r1],0x44
+					pslld	A3_H,3
 
-	rol	B1_0,cl
+	rep	rol	B1_0,cl
 	lea	ecx,[A2+B2]
-	rep	mov	B2,L2(0)
+	mov	B2,L2(0)
 
 	add	A1,B1_0
 	mov	S2_alt(7),A2
-	add	A2,S2(8)
+					psrld	A3,29
 
 	add 	B2,ecx
-	rep	rol	A1,3
-					movq	A3_H,A3
+	rol	A1,3
+	add	A2,S2(8)
 
-	rol	B2,cl
-	lea	ecx,[A1+B1_0]
+	rep	rol	B2,cl
+	rep	lea	ecx,[A1+B1_0]
 	mov	L2(0),B2
 	;---
 	add	A2,B2
 	mov	S1(8),A1
 	add	A1,S1(9)
 
-	add	B1_1,ecx
+	rep	add	B1_1,ecx
 	rol	A2,3
-					pslld	A3_H,3
+                                        pshufw	B3_1,[work_pre3_r1],0x44
 
-	rep	rol 	B1_1,cl
-	rep	lea	ecx,[A2+B2]
+	rol 	B1_1,cl
+	lea	ecx,[A2+B2]
 	mov	B2,L2(1)
 
-	add	A1,B1_1
-	mov	S2_alt(8),A2
+	rep	add	A1,B1_1
+	rep	mov	S2_alt(8),A2
 	add	A2,S2(9)
 
-	rol	A1,3
-	add	B2,ecx
-					psrld	A3,29
+	rep	rol	A1,3
+	rep	add	B2,ecx
+					por	A3,A3_H
 
-	rep	rol	B2,cl
+	rol	B2,cl
 	lea	ecx,[A1+B1_1]
 	mov	L2(1),B2
 ;---------------------Round 2(10)-------------------
@@ -1004,10 +1011,10 @@ key_setup_1_inner_loop:
 
 	add	B1_2,ecx
 	rol	A2,3
-					por	A3,A3_H
+					movq	mm5,B3_0
 
-	rol	B1_2,cl
-	lea	ecx,[A2+B2]
+	rep	rol	B1_2,cl
+	rep	lea	ecx,[A2+B2]
 	mov	B2,L2(2)
 
 	add	A1,B1_2
@@ -1016,11 +1023,11 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					movq	mm5,B3_0
+					paddd	mm5,A3
 
-	rol	B2,cl
-	lea	ecx,[A1+B1_2]
-	rep	mov	L2(2),B2
+	rep	rol	B2,cl
+	rep	lea	ecx,[A1+B1_2]
+	mov	L2(2),B2
 	;---
 	add	A2,B2
 	mov	S1(10),A1
@@ -1028,7 +1035,7 @@ key_setup_1_inner_loop:
 
 	rol	A2,3
 	add	B1_0,ecx
-					paddd	mm5,A3
+					movq	S(4),A3
 
 	rol	B1_0,cl
 	lea	ecx,[A2+B2]
@@ -1040,19 +1047,19 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					movq	S(4),A3
+					paddd	B3_1,mm5
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_0]
 	mov	L2(0),B2
 ;---------------------Round 2(12)-------------------
-	add	A2,B2
+	rep	add	A2,B2
 	mov	S1(11),A1
-					paddd	B3_1,mm5
+					pshufw	mm7,mm5,0xee
 
 	add	B1_1,ecx
-	rep	rol	A2,3
-	rep	add	A1,S1(12)
+	rol	A2,3
+	add	A1,S1(12)
 
 	rol	B1_1,cl
 	lea	ecx,[A2+B2]
@@ -1075,10 +1082,10 @@ key_setup_1_inner_loop:
 	add	A1,S1(13)
 
 	add	B1_2,ecx
-	rep	rol	A2,3
-					pshufw	mm7,mm5,0xee
+	rol	A2,3
+					pand	mm5,mm3
 
-	rep	rol	B1_2,cl
+	rol	B1_2,cl
 	lea	ecx,[A2+B2]
 	mov	B2,L2(2)
 
@@ -1086,11 +1093,11 @@ key_setup_1_inner_loop:
 	mov	S2_alt(12),A2
 	add	A2,S2(13)
 
-	rol	A1,3
+	rep	rol	A1,3
 	rep	add	B2,ecx
-					pand	mm5,mm3
+					pand	mm7,mm3
 
-	rep	rol	B2,cl
+	rol	B2,cl
 	lea	ecx,[A1+B1_2]
 	mov	L2(2),B2
 ;---------------------Round 2(14)-------------------
@@ -1100,9 +1107,9 @@ key_setup_1_inner_loop:
 
 	add	B1_0,ecx
 	rol	A2,3
-					pand	mm7,mm3
+					pshufw	A3_H,B3_1,0xee
 
-	rol	B1_0,cl
+	rep	rol	B1_0,cl
 	lea	ecx,[A2+B2]
 	mov	B2,L2(0)
 
@@ -1110,13 +1117,13 @@ key_setup_1_inner_loop:
 	mov	S2_alt(13),A2
 	add	A2,S2(14)
 
-	rol	A1,3
-	add	B2,ecx
-					pshufw	A3_H,B3_1,0xee
+	rep	rol	A1,3
+	rep	add	B2,ecx
+					punpckldq	B3_1,B3_1
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_0]
-	rep	mov	L2(0),B2
+	mov	L2(0),B2
 	;---
 	add	A2,B2
 	mov	S1(14),A1
@@ -1124,19 +1131,19 @@ key_setup_1_inner_loop:
 
 	add	B1_1,ecx
 	rol	A2,3
-					punpckldq	B3_1,B3_1
+					psllq	A3_H,mm7
 
 	rol 	B1_1,cl
 	lea	ecx,[A2+B2]
-	mov	B2,L2(1)
+	mov	S2_alt(14),A2
 
 	add	A1,B1_1
-	mov	S2_alt(14),A2
-	add	A2,S2(15)
+	mov	B2,L2(1)
+					psllq	B3_1,mm5
 
 	rol	A1,3
 	add	B2,ecx
-					psllq	A3_H,mm7
+	add	A2,S2(15)
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_1]
@@ -1146,9 +1153,9 @@ key_setup_1_inner_loop:
 	mov	S1(15),A1
 	add	A1,S1(16)
 
-	add	B1_2,ecx
+	rep	add	B1_2,ecx
 	rol	A2,3
-					psllq	B3_1,mm5
+					punpckhdq	B3_1,A3_H
 
 	rol	B1_2,cl
 	lea	ecx,[A2+B2]
@@ -1160,23 +1167,23 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					punpckhdq	B3_1,A3_H
+					paddd	A3,B3_1
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_2]
 	mov	S1(16),A1
 	;---
-	rep	add	A2,B2
+	add	A2,B2
 	mov	L2(2),B2
-					paddd	A3,B3_1
+					movq	A3_H,A3
 
-	add	B1_0,ecx
-	rol	A2,3
+	rep	add	B1_0,ecx
+	rep	rol	A2,3
 	add	A1,S1(17)
 
-	rep	rol	B1_0,cl
+	rol	B1_0,cl
 	lea	ecx,[A2+B2]
-	mov	B2,L2(0)
+	rep	mov	B2,L2(0)
 
 	add	A1,B1_0
 	mov	S2_alt(16),A2
@@ -1184,10 +1191,10 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					movq	A3_H,A3
+					pslld	A3_H,3
 
-	rol	B2,cl
-	lea	ecx,[A1+B1_0]
+	rep	rol	B2,cl
+	rep	lea	ecx,[A1+B1_0]
 	mov	L2(0),B2
 ;---------------------Round 2(18)-------------------
 	add	A2,B2
@@ -1196,10 +1203,10 @@ key_setup_1_inner_loop:
 
 	add	B1_1,ecx
 	rol	A2,3
-					pslld	A3_H,3
+					psrld	A3,29
 
 	rol	B1_1,cl
-	lea	ecx,[A2+B2]
+	rep	lea	ecx,[A2+B2]
 	rep	mov	B2,L2(1)
 
 	add	A1,B1_1
@@ -1208,7 +1215,7 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	rep	add	B2,ecx
-					psrld	A3,29
+					por	A3,A3_H
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_1]
@@ -1220,7 +1227,7 @@ key_setup_1_inner_loop:
 
 	rep	add	B1_2,ecx
 	rep	rol	A2,3
-					por	A3,A3_H
+					movq	S(5),A3
 
 	rol	B1_2,cl
 	lea	ecx,[A2+B2]
@@ -1232,7 +1239,7 @@ key_setup_1_inner_loop:
 
 	add	B2,ecx
 	rol	A1,3
-					movq	S(5),A3
+					movq	mm5,B3_1
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_2]
@@ -1244,7 +1251,7 @@ key_setup_1_inner_loop:
 
 	add	B1_0,ecx
 	rol	A2,3
-					movq	mm5,B3_1
+					paddd	mm5,A3	
 
 	rol	B1_0,cl
 	lea	ecx,[A2+B2]
@@ -1256,19 +1263,19 @@ key_setup_1_inner_loop:
 
 	add	B2,ecx
 	rol	A1,3
-					paddd	mm5,A3	
+					paddd	A3,[S_not_6]
 
-	rol	B2,cl
-	lea	ecx,[A1+B1_0]
-	mov	L2(0),B2
+	rep	rol	B2,cl
+	rep	lea	ecx,[A1+B1_0]
+	rep	mov	L2(0),B2
 	;---
 	add	A2,B2
 	mov	S1(20),A1
-	add	A1,S1(21)
+					paddd	B3_2,mm5
 
 	add	B1_1,ecx
 	rol	A2,3
-					paddd	A3,[S_not_6]
+	add	A1,S1(21)
 
 	rol	B1_1,cl
 	lea	ecx,[A2+B2]
@@ -1280,9 +1287,9 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					paddd	B3_2,mm5
+					pshufw	mm7,mm5,0xee
 
-	rep	rol	B2,cl
+	rol	B2,cl
 	lea	ecx,[A1+B1_1]
 	mov	L2(1),B2
 ;---------------------Round 2(22)-------------------
@@ -1291,8 +1298,8 @@ key_setup_1_inner_loop:
 	add	A1,S1(22)
 
 	add	B1_2,ecx
-	rol	A2,3
-					pshufw	mm7,mm5,0xee
+	rep	rol	A2,3
+					pand	mm5,mm3
 
 	rol	B1_2,cl
 	lea	ecx,[A2+B2]
@@ -1302,9 +1309,9 @@ key_setup_1_inner_loop:
 	mov	S2_alt(21),A2
 	add	A2,S2(22)
 
-	rep	rol 	A1,3
-	rep	add	B2,ecx
-					pand	mm5,mm3
+	rol 	A1,3
+	add	B2,ecx
+					pshufw	A3_H,B3_2,0xee
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_2]
@@ -1316,11 +1323,11 @@ key_setup_1_inner_loop:
 
 	rol	A2,3
 	add	B1_0,ecx
-					pshufw	A3_H,B3_2,0xee
+					pand	mm7,mm3
 
 	rol	B1_0,cl
 	lea	ecx,[A2+B2]
-	rep	mov	B2,L2(0)
+	mov	B2,L2(0)
 
 	add	A1,B1_0
 	mov	S2_alt(22),A2
@@ -1328,7 +1335,7 @@ key_setup_1_inner_loop:
 
 	add	B2,ecx
 	rol	A1,3
-					pand	mm7,mm3
+					punpckldq	B3_2,B3_2
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_0]
@@ -1340,7 +1347,7 @@ key_setup_1_inner_loop:
 
 	rol	A2,3
 	add	B1_1,ecx
-					punpckldq	B3_2,B3_2
+					psllq	A3_H,mm7
 
 	rol 	B1_1,cl
 	lea	ecx,[A2+B2]
@@ -1352,7 +1359,7 @@ key_setup_1_inner_loop:
 
 	rol	A1,3
 	add	B2,ecx
-					psllq	A3_H,mm7
+					psllq	B3_2,mm5
 
 	rol	B2,cl
 	lea	ecx,[A1+B1_1]
@@ -1364,7 +1371,7 @@ key_setup_1_inner_loop:
 
 	add	B1_2,ecx
 	rol	A2,3
-					psllq	B3_2,mm5
+					punpckhdq	B3_2,A3_H
 
 	rol	B1_2,cl
 	lea	ecx,[A2+B2]
@@ -1372,7 +1379,7 @@ key_setup_1_inner_loop:
 
 	add	A1,B1_2
 	mov	S2_alt(24),A2
-					punpckhdq	B3_2,A3_H
+					paddd	A3,B3_2
 
 	rep	add	B2,ecx
 	rol	A1,3
@@ -1384,7 +1391,7 @@ key_setup_1_inner_loop:
 
 	add	A2,B2 				;S2[24]+S2[25]+L2[2]
 	mov	S1(25),A1
-					paddd	A3,B3_2
+					movq	A3_H,A3
 
 ;---------------------Round 2-Last-------------
 	add	B1_0,ecx				;L1[0]+S1[25]+L1[2]
@@ -1397,7 +1404,7 @@ key_setup_1_inner_loop:
 
 	add	A1,B1_0 				;S1[25]+S1[0]+L1[0]
 	mov	S2_alt(25),A2
-					movq	A3_H,A3
+					pslld	A3_H,3
 
 	rol	A1,3					;S1[0]
 	add	B2,ecx					;L2[0]+S2[25]+L2[2]
@@ -1405,11 +1412,11 @@ key_setup_1_inner_loop:
 
 	rol	B2,cl					;L2[0]
 	lea	ecx,[A1+B1_0]				;S1[0]+L1[0]
-					pslld	A3_H,3
+					psrld	A3,29
 
 	add	A2,B2 					;S2[25]+L2[0]+S2[0]
 	mov	L2(0),B2
-					psrld	A3,29
+					por	A3,A3_H
 	;---
 	rep	add 	B1_1,ecx				;L1[1]+S1[0]+L1[0]
 	rol	A2,3					;S2[0]
@@ -1424,10 +1431,10 @@ key_setup_1_inner_loop:
 	add	A1,S1(1)				;S1[0]+S1[1]
 
 	add 	B2,ecx					;L2[1]+S2[0]+L2[0]
-					por	A3,A3_H
 					movq	mm5,B3_2
+					movq	S(6),A3
 
-	rep	rol	B2,cl 					;L2[1]
+	rol	B2,cl 					;L2[1]
 	mov	L2(1),B2				;key #2
 	add 	A1,B1_1 				;S1[0]+S1[1]+L1[1]
 
@@ -1440,42 +1447,42 @@ key_setup_1_inner_loop:
 	add	eB1,A1					;eB1
 	add	A1,S1(2)
 
-	xor	eA1,eB1
-	add	B1_2,ecx
-					movq	S(6),A3
+	rep	xor	eA1,eB1
+	rep	add	B1_2,ecx
+					paddd	mm5,A3
 
 	rol	B1_2,cl	
 	;start ROUND3 mixed with encryption
 	mov	ecx,eB1
-					paddd	mm5,A3
-
-	add	A1,B1_2
-	rol	eA1,cl
 					paddd	B3_0,mm5
 
+	rep	add	A1,B1_2
+	rol	eA1,cl
+					pshufw	mm7,mm5,0xee
+
 	rol	A1,3		       
-	rep	mov 	ecx,B1_2
+	mov 	ecx,B1_2
 					paddd	A3,[S_not_7]
 
-	rep	add	eA1,A1
-	rep	add	ecx,A1
+	add	eA1,A1
+	add	ecx,A1
 	add	A1,S1_alt(3)
 
 	add	B1_0,ecx
 	xor	eB1,eA1
-					pshufw	mm7,mm5,0xee
+					pand	mm5,mm3
 
 	rol	B1_0,cl 	       
 	mov	ecx,eA1
-					pand	mm5,mm3
+					pshufw	A3_H,B3_0,0xee
 
 	add	A1,B1_0
 	rol	eB1,cl
 	mov	ecx,B1_0
 
 	rep	rol 	A1,3		       
-					pshufw	A3_H,B3_0,0xee
 					pand	mm7,mm3
+					punpckldq	B3_0,B3_0
 
 	add	eB1,A1	
 	add	ecx,A1
@@ -1483,80 +1490,80 @@ key_setup_1_inner_loop:
 	
 	xor	eA1,eB1
 	add	B1_1,ecx
-					punpckldq	B3_0,B3_0
+					psllq	A3_H,mm7
 
 	rol	B1_1,cl
 	mov	ecx,eB1
-					psllq	A3_H,mm7
+					psllq	B3_0,mm5
 
 	add	A1,B1_1
 	rol	eA1,cl
-	mov	ecx,B1_1
-
-	rep	rol	A1,3
-					psllq	B3_0,mm5
 					punpckhdq	B3_0,A3_H
+
+	mov	ecx,B1_1
+	rol	A1,3
+					paddd	A3,B3_0
 
 	add	eA1,A1
 	add	ecx,A1
 	add	A1,S1_alt(5)
 
-	rep	xor	eB1,eA1
+	xor	eB1,eA1
 	add	B1_2,ecx
-					paddd	A3,B3_0
+					movq	mm5,B3_0
 
 	rol	B1_2,cl
 	mov	ecx,eA1	
-					movq	mm5,B3_0
+					movq	A3_H,A3
 
-	rol	eB1,cl
-	mov	ecx,B1_2
-	add	A1,B1_2
+	rep	rol	eB1,cl
+	rep	mov	ecx,B1_2
+	rep	add	A1,B1_2
 
 	rol	A1,3
-					pshufw	A3_H,A3,0xee
-					punpckldq	A3,A3
+					psrld	A3,29
+					pslld	A3_H,3
 
 	rep	add	ecx,A1
-	rep	add	eB1,A1
-	add	A1,S1_alt(6)
+	add	eB1,A1
+					por	A3,A3_H
 
 	add	B1_0,ecx
 	xor	eA1,eB1
-					psllq	A3_H,3
+	add	A1,S1_alt(6)
 
 	rol	B1_0,cl
 ;------------Round 3(1)------------
-	mov	ecx,eB1
-					psllq	A3,3
-
-	rep	add	A1,B1_0
-	rep	rol	eA1,cl
-	rep	mov	ecx,B1_0
-
-	rol	A1,3		       
-					punpckhdq	A3,A3_H
+	rep	mov	ecx,eB1
 					paddd	mm5,A3
+
+	add	A1,B1_0
+	rol	eA1,cl
+					paddd	B3_1,mm5
+
+	mov	ecx,B1_0
+	rol	A1,3		       
+					pshufw	mm7,mm5,0xee
 
 	add	ecx,A1
 	add	eA1,A1
-					paddd	B3_1,mm5
+	add	A1,S1(7)
 
 	add 	B1_1,ecx
 	xor	eB1,eA1
-	add	A1,S1(7)
-
-	rol	B1_1,cl 	       
-	mov	ecx,eA1
 					movq	S(7),A3
+
+	rep	rol	B1_1,cl 	       
+	rep	mov	ecx,eA1
+					pand	mm5,mm3
 
 	rol	eB1,cl
 	add	A1,B1_1
-					pshufw	mm7,mm5,0xee
-
-	rep	rol	A1,3		       
-	rep	mov	ecx,B1_1
                                         paddd	A3,[S_not_8]
+
+	rol	A1,3		       
+	mov	ecx,B1_1
+					pshufw	A3_H,B3_1,0xee
 
 	add 	ecx,A1
 	add	eB1,A1
@@ -1564,204 +1571,204 @@ key_setup_1_inner_loop:
 
 	add	B1_2,ecx
 	xor	eA1,eB1
-					pand	mm5,mm3
+					pand	mm7,mm3
 
 	rol	B1_2,cl
 ;---
 	mov	ecx,eB1
-					pshufw	A3_H,B3_1,0xee
-
-	add	A1,B1_2
-	rol	eA1,cl
-	mov	ecx,B1_2
-
-	rol	A1,3
-					pand	mm7,mm3
 					punpckldq	B3_1,B3_1
 
-	rep	add	ecx,A1
+	rep	add	A1,B1_2
+	rep	rol	eA1,cl
+					psllq	A3_H,mm7
+
+	mov	ecx,B1_2
+	rol	A1,3
+					psllq	B3_1,mm5
+
+	add	ecx,A1
 	add	eA1,A1
 	add	A1,S1(9)
 
 	add	B1_0,ecx
 	xor	eB1,eA1
-					psllq	A3_H,mm7
+					punpckhdq	B3_1,A3_H
 
-	rol	B1_0,cl
-	mov	ecx,eA1
-					psllq	B3_1,mm5
+	rep	rol	B1_0,cl
+	rep	mov	ecx,eA1
+					paddd	A3,B3_1
 
 	add	A1,B1_0
 	rol	eB1,cl
-	mov	ecx,B1_0
+					movq	A3_H,A3
 
+	rep	mov	ecx,B1_0
 	rol	A1,3
-					punpckhdq	B3_1,A3_H
-					paddd	A3,B3_1
+					pslld	A3_H,3
 
 	add	ecx,A1
 	add	eB1,A1
 	add	A1,S1(10)
 
-	rep	add	B1_1,ecx
+	add	B1_1,ecx
 	xor	eA1,eB1
-					movq	A3_H,A3
+					psrld	A3,29
 
 	rol	B1_1,cl
 ;-------
 	mov	ecx,eB1
-					pslld	A3_H,3
+					movq	mm5,B3_1
 
-	rep	add	A1,B1_1
+	add	A1,B1_1
 	rol	eA1,cl
-	mov	ecx,B1_1		
-
-	rol	A1,3
-					psrld	A3,29
 					por	A3,A3_H
 
-	add	ecx,A1
-	add	eA1,A1
+	mov	ecx,B1_1		
+	rol	A1,3
+					paddd	mm5,A3
+
+	rep	add	ecx,A1
+	rep	add	eA1,A1
 	add	A1,S1(11)
 
 	add	B1_2,ecx
 	xor	eB1,eA1
-					movq	mm5,B3_1
+					paddd	B3_2,mm5
 
-	rep	rol	B1_2,cl
+	rol	B1_2,cl
 	mov	ecx,eA1
-					paddd	mm5,A3
+					movq	S(8),A3
 
 	add	A1,B1_2
 	rol	eB1,cl
-	mov	ecx,B1_2
-
-	rep	rol	A1,3		       
-					paddd	B3_2,mm5
-					movq	S(8),A3
-
-	add	ecx,A1
-	add	eB1,A1
 					pshufw	mm7,mm5,0xee
+
+	mov	ecx,B1_2
+	rol	A1,3		       
+					pshufw	A3_H,B3_2,0xee
+
+	rep	add	ecx,A1
+	rep	add	eB1,A1
+	add	A1,S1(12)
 
 	add	B1_0,ecx
 	xor	eA1,eB1
-	add	A1,S1(12)
+					pand	mm5,mm3
 
 	rol	B1_0,cl
 ;------------Round 3(4)------------
-	mov	ecx,eB1
-					pshufw	A3_H,B3_2,0xee
-
-	rep	add	A1,B1_0
-	rol	eA1,cl
-	mov	ecx,B1_0
-
-	rol	A1,3		       
-					pand	mm5,mm3
+	rep	mov	ecx,eB1
 					pand	mm7,mm3
 
-	rep	add	ecx,A1
+	rep	add	A1,B1_0
+	rep	rol	eA1,cl
+					paddd	A3,[S_not_9]
+
+	mov	ecx,B1_0
+	rol	A1,3		       
+					punpckldq	B3_2,B3_2
+
+	add	ecx,A1
 	add	eA1,A1
 	add	A1,S1(13)
 
-	add	B1_1,ecx
+	rep	add	B1_1,ecx
 	xor	eB1,eA1
-					paddd	A3,[S_not_9]
+					psllq	A3_H,mm7
 
 	rol	B1_1,cl 	       
 	mov	ecx,eA1
-					punpckldq	B3_2,B3_2
-
-	add	A1,B1_1
-	rol	eB1,cl
-	mov	ecx,B1_1
-
-	rol	A1,3		       
-					psllq	A3_H,mm7
 					psllq	B3_2,mm5
+
+	rep	add	A1,B1_1
+	rep	rol	eB1,cl
+					punpckhdq	B3_2,A3_H
+
+	mov	ecx,B1_1
+	rol	A1,3		       
+					paddd	A3,B3_2
 
 	add	ecx,A1
 	add	eB1,A1
-	rep	add	A1,S1(14)
+	add	A1,S1(14)
 
 	add	B1_2,ecx
-	xor	eA1,eB1
-					punpckhdq	B3_2,A3_H
+	rep	xor	eA1,eB1
+					movq	A3_H,A3
 
-	rep	rol	B1_2,cl
+	rol	B1_2,cl
 ;---
-	rep	mov	ecx,eB1
-					paddd	A3,B3_2
+	mov	ecx,eB1
+					psrld	A3,29
 
 	add	A1,B1_2
 	rol	eA1,cl
-	mov	ecx,B1_2
+					pslld	A3_H,3
 
+	mov	ecx,B1_2
 	rol	A1,3
-					movq	A3_H,A3
-					psrld	A3,29
+					movq	mm5,B3_2
 
 	add	ecx,A1
 	add	eA1,A1
-					pslld	A3_H,3
+	add	A1,S1(15)
 
 	add	B1_0,ecx
 	xor	eB1,eA1
-	add	A1,S1(15)
+					por	A3,A3_H
 
 	rol	B1_0,cl
 	mov	ecx,eA1
-					movq	mm5,B3_2
+					paddd	mm5,A3
 
 	add	A1,B1_0
 	rol	eB1,cl
-	mov	ecx,B1_0
-
-	rol	A1,3
-					por	A3,A3_H
 					movq	S(9),A3
 
-	rep	add	eB1,A1
+	mov	ecx,B1_0
+	rol	A1,3
+					paddd	B3_0,mm5
+
+	add	eB1,A1
 	add	ecx,A1
 	add	A1,S1(16)
 
 	rep	add	B1_1,ecx
-	rep	xor	eA1,eB1
-					paddd	mm5,A3
+	xor	eA1,eB1
+					paddd	A3,[S_not_10]
 
 	rol	B1_1,cl
 ;-------
 	mov	ecx,eB1
-					paddd	A3,[S_not_10]
-
-	rep	add	A1,B1_1
-	rol	eA1,cl
-	mov	ecx,B1_1
-
-	rol	A1,3
-					paddd	B3_0,mm5
 					pshufw	mm7,mm5,0xee
+
+	add	A1,B1_1
+	rol	eA1,cl
+					pand	mm5,mm3
+
+	mov	ecx,B1_1
+	rol	A1,3
+					pshufw	A3_H,B3_0,0xee
 
 	add	ecx,A1
 	add	eA1,A1
 	add	A1,S1(17)
 
-	add	B1_2,ecx
-	xor	eB1,eA1
-					pand	mm5,mm3
+	rep	add	B1_2,ecx
+	rep	xor	eB1,eA1
+					pand	mm7,mm3
 
 	rol	B1_2,cl
 	mov	ecx,eA1
-					pshufw	A3_H,B3_0,0xee
-
-	add	A1,B1_2
-	rol	eB1,cl
-	mov	ecx,B1_2
-
-	rep	rol	A1,3		       
-					pand	mm7,mm3
 					punpckldq	B3_0,B3_0
+
+	rep	add	A1,B1_2
+	rep	rol	eB1,cl
+					psllq	A3_H,mm7
+
+	mov	ecx,B1_2
+	rol	A1,3		       
+					psllq	B3_0,mm5
 
 	add	eB1,A1
 	add	ecx,A1
@@ -1769,19 +1776,19 @@ key_setup_1_inner_loop:
 
 	add	B1_0,ecx
 	xor	eA1,eB1
-					psllq	A3_H,mm7
+					punpckhdq	B3_0,A3_H
 
-	rol	B1_0,cl
+	rep	rol	B1_0,cl
 	mov	ecx,eB1
-					psllq	B3_0,mm5
+					paddd	A3,B3_0
 ;------------Round 3(7)------------
-	add	A1,B1_0
-	rol	eA1,cl
+	rep	add	A1,B1_0
+	rep	rol	eA1,cl
 	mov	ecx,B1_0
 
 	rol	A1,3		       
-					punpckhdq	B3_0,A3_H
-					paddd	A3,B3_0
+					movq	A3_H,A3
+					psrld	A3,29
 
 	add	eA1,A1
 	add	ecx,A1
@@ -1789,40 +1796,40 @@ key_setup_1_inner_loop:
 
 	xor	eB1,eA1
 	add	B1_1,ecx
-					movq	A3_H,A3
-
-	rol	B1_1,cl
-	mov	ecx,eA1
 					pslld	A3_H,3
+
+	rep	rol	B1_1,cl
+	rep	mov	ecx,eA1
+					movq	mm5,B3_0
 
 	add	A1,B1_1
 	rol	eB1,cl
-	mov	ecx,B1_1
-
-	rol	A1,3		       
-					psrld	A3,29
 					por	A3,A3_H
 
+	mov	ecx,B1_1
+	rep	rol	A1,3		       
+					paddd	mm5,A3
+
 	add	ecx,A1
-	rep	add	eB1,A1
-					movq	mm5,B3_0
+	add	eB1,A1
+					movq	S(10),A3
 
 	add	B1_2,ecx
 	xor	eA1,eB1
 	add	A1,S1(20)
 
-	rep	rol	B1_2,cl
+	rol	B1_2,cl
 ;---
 	mov	ecx,eB1
-					paddd	mm5,A3
+					paddd	A3,[S_not_11]
 
 	add	A1,B1_2
 	rol	eA1,cl
-	mov	ecx,B1_2
+					paddd	B3_1,mm5
 
-	rol	A1,3
-					movq	S(10),A3
-					paddd	A3,[S_not_11]
+	rep	mov	ecx,B1_2
+	rep	rol	A1,3
+					pshufw	mm7,mm5,0xee
 
 	add	ecx,A1
 	add	eA1,A1
@@ -1830,19 +1837,19 @@ key_setup_1_inner_loop:
 	
 	add	B1_0,ecx
 	xor	eB1,eA1
-					paddd	B3_1,mm5
+					pand	mm5,mm3
 
-	rep	rol	B1_0,cl
-	rep	mov	ecx,eA1
-					pshufw	mm7,mm5,0xee
+	rol	B1_0,cl
+	mov	ecx,eA1
+					pshufw	A3_H,B3_1,0xee
 
 	add	A1,B1_0
 	rol	eB1,cl
-	mov	ecx,B1_0
+                                        pand	mm7,mm3
 
-	rol	A1,3
-					pand	mm5,mm3
-					pshufw	A3_H,B3_1,0xee
+	mov	ecx,B1_0
+	rep	rol	A1,3
+					punpckldq	B3_1,B3_1
 
 	add	ecx,A1
 	add	eB1,A1
@@ -1850,64 +1857,64 @@ key_setup_1_inner_loop:
 
 	add	B1_1,ecx
 	xor	eA1,eB1
-                                        pand	mm7,mm3
+					psllq	A3_H,mm7
 
 	rol	B1_1,cl
 ;-------
 	mov	ecx,eB1
-					punpckldq	B3_1,B3_1
-
-	rep	add	A1,B1_1
-	rol	eA1,cl
-	mov	ecx,B1_1
-
-	rol	A1,3
-					psllq	A3_H,mm7
 					psllq	B3_1,mm5
 
-	rep	add	ecx,A1
-	add	eA1,A1
+	rep	add	A1,B1_1
+	rep	rol	eA1,cl
 					punpckhdq	B3_1,A3_H
+	
+	mov	ecx,B1_1
+	rol	A1,3
+                                        paddd	A3,B3_1
+
+	add	ecx,A1
+	rep	add	eA1,A1
+					movq	A3_H,A3
 
 	add	B1_2,ecx        
 	xor	eB1,eA1
 	add	A1,S1(23)
 
-	rol	B1_2,cl
+	rep	rol	B1_2,cl
 	mov	ecx,eA1
-                                        paddd	A3,B3_1
-
-	rep	add	A1,B1_2
-	rep	rol	eB1,cl
-	rep	mov	ecx,B1_2
-
-	rol	A1,3		      
-					movq	A3_H,A3
 					pslld	A3_H,3
 
-	rep	add	ecx,A1
-	rep	add	eB1,A1
+	add	A1,B1_2
+	rol	eB1,cl
+					psrld	A3,29
+
+	mov	ecx,B1_2
+	rol	A1,3		      
+					por	A3,A3_H
+
+	add	ecx,A1
+	add	eB1,A1
 	add	A1,S1(24)
 
 	add	B1_0,ecx
 	xor	eA1,eB1
-					psrld	A3,29
+					movq	mm5,B3_1
 
 	rol	B1_0,cl
 ;------------Round 3(10)------------
 	mov	ecx,eB1
-					por	A3,A3_H
+					movq	S(11),A3
 
 	add	A1,B1_0
 	rol	eA1,cl
-					movq	mm5,B3_1
+					paddd	mm5,A3
 
 	rep	rol	A1,3		       
-	rep	add	eA1,A1
-					movq	S(11),A3
+	add	eA1,A1
+					pshufw	mm7,mm5,0xee
 
 	cmp	eA1,[work_C_0]
-					paddd	mm5,A3
+					paddd	B3_2,mm5
 	je	near _checkKey1High_k7_mixed
 
 ;Finished Key #1, move data from mmx to integer pipe
@@ -1919,7 +1926,7 @@ _Key2Round3_k7_mixed:
 
 	mov	B1_1,L2(1)
 	add	A1,S2_alt(1)
-					paddd	B3_2,mm5
+					pand	mm5,mm3
 
 	mov	ecx,B1_1
 	mov	eB1,[work_P_1]
@@ -1927,76 +1934,75 @@ _Key2Round3_k7_mixed:
 
 	add	A1,B1_1
 	mov	B1_0,L2(0)
-					pshufw	mm7,mm5,0xee
+					pshufw	A3_H,B3_2,0xee
 
 	rol	A1,3
-					pand	mm5,mm3
-					pshufw	A3_H,B3_2,0xee
+					punpckldq	B3_2,B3_2
+					pand	mm7,mm3
 
 	add	eB1,A1
 	add	ecx,A1
 	add	A1,S2_alt(2)
 
 	add	B1_2,ecx
-	xor	eA1,eB1
-					punpckldq	B3_2,B3_2
+	rep	xor	eA1,eB1
+					psllq	B3_2,mm5
 
 	rol	B1_2,cl
 	mov	ecx,eB1
-					pand	mm7,mm3
+					psllq	A3_H,mm7
 
-	add	A1,B1_2
-	rol	eA1,cl
-	mov	ecx,B1_2
+	rep	add	A1,B1_2
+	rep	rol	eA1,cl
+	rep	mov	ecx,B1_2
 
 	rep	rol	A1,3
-					psllq	B3_2,mm5
-					psllq	A3_H,mm7
+					paddd	A3,[S_not_12]
+					punpckhdq	B3_2,A3_H
 
 	add	eA1,A1
 	add	ecx,A1
 	add	A1,S2_alt(3)
 
-	rep	add	B1_0,ecx
+	add	B1_0,ecx
 	xor	eB1,eA1
-					paddd	A3,[S_not_12]
-					
+					paddd	A3,B3_2					
 					
 	rol	B1_0,cl
 	mov	ecx,eA1
-					punpckhdq	B3_2,A3_H
-
-	add	A1,B1_0
-	rol	eB1,cl
-	mov	ecx,B1_0
-
-	rol	A1,3
-					paddd	A3,B3_2
 					movq	A3_H,A3
 
+	rep	add	A1,B1_0
+	rep	rol	eB1,cl
+					movq	mm5,B3_2
+
+	mov	ecx,B1_0
+	rol	A1,3
+					psrld	A3,29
+
 	rep	add	ecx,A1
+					pslld	A3_H,3
 	add	eB1,A1
-	add	A1,S2_alt(4)
 
 	add	B1_1,ecx
 	xor	eA1,eB1
-					movq	mm5,B3_2
+	add	A1,S2_alt(4)
 
 	rol	B1_1,cl
 	mov	ecx,eB1
-					psrld	A3,29
+					por	A3,A3_H
 
 	add	A1,B1_1
 	rol	eA1,cl
-	mov	ecx,B1_1
+					paddd	mm5,A3
 
+	mov	ecx,B1_1
 	rol	A1,3
-					pslld	A3_H,3
-					por	A3,A3_H
+					movq	S(12),A3
 
 	add	eA1,A1
-	rep	add	ecx,A1
-					paddd	mm5,A3
+	add	ecx,A1
+					paddd	A3,[S_not_13]
 
 	add	B1_2,ecx
 	xor	eB1,eA1
@@ -2004,118 +2010,117 @@ _Key2Round3_k7_mixed:
 
 	rep	rol	B1_2,cl
 	mov	ecx,eA1
-					movq	S(12),A3
+					paddd	B3_0,mm5
 
 	add	A1,B1_2
 	rol	eB1,cl
-	mov	ecx,B1_2
+					pshufw	mm7,mm5,0xee
 
+	mov	ecx,B1_2
 	rol	A1,3
-					paddd	A3,[S_not_13]
-					paddd	B3_0,mm5
+					pand	mm5,mm3
 
 	add	eB1,A1
 	add	ecx,A1
-					pshufw	mm7,mm5,0xee
+					pshufw	A3_H,B3_0,0xee
 
-	add	B1_0,ecx
+	rep	add	B1_0,ecx
 	xor	eA1,eB1
 	add	A1,S2_alt(6)
 
-	rep	rol	B1_0,cl
+	rol	B1_0,cl
 	mov	ecx,eB1
-					pand	mm5,mm3
+					punpckldq	B3_0,B3_0
 
 	add	A1,B1_0
 	rol	eA1,cl
+					pand	mm7,mm3
+
 	mov	ecx,B1_0
-
 	rol	A1,3
-					pshufw	A3_H,B3_0,0xee
-					punpckldq	B3_0,B3_0
+					psllq	B3_0,mm5
 
-	add	eA1,A1
+	rep	add	eA1,A1
 	add	ecx,A1
 	add	A1,S2_alt(7)
 
 	add	B1_1,ecx
 	xor	eB1,eA1
-					pand	mm7,mm3
-
-	rep	rol	B1_1,cl
-	rep	mov	ecx,eA1
-					psllq	B3_0,mm5
-
-	rol	eB1,cl
-	add	A1,B1_1
-	mov	ecx,B1_1
-
-	rol	A1,3
 					psllq	A3_H,mm7
+
+	rol	B1_1,cl
+	mov	ecx,eA1
 					punpckhdq	B3_0,A3_H
-					
-	rep	add	eB1,A1
-	add	ecx,A1
+
+	rep	rol	eB1,cl
+	rep	add	A1,B1_1
 					paddd	A3,B3_0
+
+	mov	ecx,B1_1
+	rol	A1,3
+					movq	A3_H,A3
+					
+	add	eB1,A1
+	add	ecx,A1
+					psrld	A3,29
 
 	xor	eA1,eB1
 	add	B1_2,ecx
 	add	A1,S2_alt(8)
 
-	rol	B1_2,cl
+	rep	rol	B1_2,cl
 	mov	ecx,eB1
-					movq	A3_H,A3
+					pslld	A3_H,3
 
 	rol	eA1,cl
-	rep	add	A1,B1_2
-					psrld	A3,29
+	add	A1,B1_2
+					por	A3,A3_H
 ;---
 
 	rol	A1,3
 	mov	ecx,B1_2	
-					pslld	A3_H,3
+					movq	mm5,B3_0
 
 	add	ecx,A1
 	add	eA1,A1
-					por	A3,A3_H
+	add	A1,S2_alt(9)
 
 	add	B1_0,ecx
 	xor	eB1,eA1
-	add	A1,S2_alt(9)
+					paddd	mm5,A3
 
 	rep	rol	B1_0,cl
-	mov	ecx,eA1
-					movq	mm5,B3_0
+	rep	mov	ecx,eA1
+					paddd	B3_1,mm5
 
 	add	A1,B1_0
 	rol	eB1,cl
-	mov	ecx,B1_0
+					movq	S(13),A3
 
-	rep	rol	A1,3
-					paddd	mm5,A3
-					paddd	B3_1,mm5
+	mov	ecx,B1_0
+	rol	A1,3
+					pshufw	mm7,mm5,0xee
 
 	add	ecx,A1
 	add	eB1,A1
 	add	A1,S2_alt(10)
 
-	add	B1_1,ecx
+	rep	add	B1_1,ecx
 	xor	eA1,eB1
-					movq	S(13),A3
+					paddd	A3,[S_not_14]
 
 	rol	B1_1,cl
 ;-------
-	rep	mov	ecx,eB1
-					pshufw	mm7,mm5,0xee
-
+	mov	ecx,eB1
+					pand	mm5,mm3
 
 	add	A1,B1_1
 	rol	eA1,cl
-					paddd	A3,[S_not_14]
+					pshufw	A3_H,B3_1,0xee
 
 	mov	ecx,B1_1
 	rol	A1,3
-					pand	mm5,mm3
+					punpckldq	B3_1,B3_1
 
 	add	ecx,A1
 	add	eA1,A1
@@ -2123,19 +2128,19 @@ _Key2Round3_k7_mixed:
 
 	add	B1_2,ecx
 	xor	eB1,eA1
-					pshufw	A3_H,B3_1,0xee
+					pand	mm7,mm3
 
 	rol	B1_2,cl
 	mov	ecx,eA1
-					punpckldq	B3_1,B3_1
-
-	add	A1,B1_2
-	rol	eB1,cl
-					pand	mm7,mm3
-
-	rep	mov	ecx,B1_2
-	rep	rol	A1,3		       
 					psllq	B3_1,mm5
+
+	rep	add	A1,B1_2
+	rep	rol	eB1,cl
+					psllq	A3_H,mm7
+
+	mov	ecx,B1_2
+	rol	A1,3		       
+					punpckhdq	B3_1,A3_H
 
 	add	ecx,A1
 	add	eB1,A1
@@ -2143,20 +2148,20 @@ _Key2Round3_k7_mixed:
 
 	add	B1_0,ecx
 	xor	eA1,eB1
-					psllq	A3_H,mm7
-
-	rol	B1_0,cl
-;------------Round 3(4) - key 2------------
-	mov	ecx,eB1
-					punpckhdq	B3_1,A3_H
-
-	rep	add	A1,B1_0
-	rep	rol	eA1,cl
 					paddd	A3,B3_1
 
-	mov	ecx,B1_0
-	rol	A1,3
+	rep	rol	B1_0,cl
+;------------Round 3(4) - key 2------------
+	rep	mov	ecx,eB1
 					movq	A3_H,A3
+
+	add	A1,B1_0
+	rol	eA1,cl
+					movq	mm5,B3_1
+
+	mov	ecx,B1_0
+	rep	rol	A1,3
+					psrld	A3,29
 
 	add	ecx,A1
 	add	eA1,A1
@@ -2164,19 +2169,19 @@ _Key2Round3_k7_mixed:
 
 	add	B1_1,ecx
 	xor	eB1,eA1
-					movq	mm5,B3_1
+					pslld	A3_H,3
 
 	rep	rol	B1_1,cl 	       
 	rep	mov	ecx,eA1
-					psrld	A3,29
+					por	A3,A3_H
 
 	add	A1,B1_1
 	rol	eB1,cl
-	mov	ecx,B1_1
+					movq	S(14),A3
 
+	mov	ecx,B1_1
 	rol	A1,3		       
-					pslld	A3_H,3
-					por	A3,A3_H
+					paddd	mm5,A3
 
 	add	ecx,A1
 	add	eB1,A1
@@ -2184,40 +2189,40 @@ _Key2Round3_k7_mixed:
 
 	add	B1_2,ecx
 	xor	eA1,eB1
-					movq	S(14),A3
+					paddd	B3_2,mm5
 
 	rol	B1_2,cl
 	;---
 	mov	ecx,eB1
-					paddd	mm5,A3
+					pshufw	mm7,mm5,0xee
 
 	add	A1,B1_2
 	rol	eA1,cl
-	mov	ecx,B1_2
+					paddd	A3,[S_not_15]
 
-	rol	A1,3
-					paddd	B3_2,mm5
-					pshufw	mm7,mm5,0xee
+	rep	mov	ecx,B1_2
+	rep	rol	A1,3
+					pand	mm5,mm3
 
 	add	ecx,A1
 	add	eA1,A1
 	add	A1,S2_alt(15)
 
-	rep	add	B1_0,ecx
-	rep	xor	eB1,eA1
-					paddd	A3,[S_not_15]
+	add	B1_0,ecx
+	xor	eB1,eA1
+					pshufw	A3_H,B3_2,0xee
 
 	rol	B1_0,cl
 	mov	ecx,eA1
-					pand	mm5,mm3
+					punpckldq	B3_2,B3_2
 
 	add	A1,B1_0
 	rol	eB1,cl
-	mov	ecx,B1_0
+					pand	mm7,mm3
 
-	rol	A1,3
-					pshufw	A3_H,B3_2,0xee
-					punpckldq	B3_2,B3_2
+	rep	mov	ecx,B1_0
+	rep	rol	A1,3
+					psllq	B3_2,mm5
 
 	add	ecx,A1
 	add	eB1,A1
@@ -2225,80 +2230,80 @@ _Key2Round3_k7_mixed:
 
 	add	B1_1,ecx
 	xor	eA1,eB1
-					pand	mm7,mm3
+					psllq	A3_H,mm7
 
 	rol	B1_1,cl
 	;-------
 	mov	ecx,eB1
-					psllq	B3_2,mm5
-
-	rep	add	A1,B1_1
-	rep	rol	eA1,cl
-	rep	mov	ecx,B1_1
-
-	rep	rol	A1,3
-					psllq	A3_H,mm7
 					punpckhdq	B3_2,A3_H
 
-	rep	add	ecx,A1
-	rep	add	eA1,A1
-					movq	L2(1),B3_2	;L2(2)
+	add	A1,B1_1
+	rol	eA1,cl
+					movq	L2(1),B3_2
+
+	mov	ecx,B1_1
+	rol	A1,3
+					paddd	A3,B3_2
+
+	add	ecx,A1
+	add	eA1,A1
+	add	A1,S2_alt(17)
 			
 	add	B1_2,ecx
 	xor	eB1,eA1
-	add	A1,S2_alt(17)
-
-	rol	B1_2,cl
-	mov	ecx,eA1
 					movq	L2(0),B3_1	;L2(1)
+
+	rep	rol	B1_2,cl
+	mov	ecx,eA1
+					movq	A3_H,A3
 
 	add	A1,B1_2
 	rol	eB1,cl
-	mov	ecx,B1_2
+					psrld	A3,29
 
+	mov	ecx,B1_2
 	rol	A1,3		       
-					paddd	A3,B3_2
-					movq	A3_H,A3
+					pslld	A3_H,3
 
 	add	ecx,A1
-	rep	add	eB1,A1
-					psrld	A3,29
+	add	eB1,A1
+	add	A1,S2_alt(18)
 
 	add	B1_0,ecx
 	xor	eA1,eB1
-	add	A1,S2_alt(18)
-;------------Round 3(7) - key 2------------
-	rep	rol	B1_0,cl
-	mov	ecx,eB1
-					pslld	A3_H,3
-
-	add	A1,B1_0                 
-	rol	eA1,cl
-	mov	ecx,B1_0
-
-	rol	A1,3		       
 					por	A3,A3_H
+;------------Round 3(7) - key 2------------
+	rol	B1_0,cl
+	mov	ecx,eB1
 					movq	mm5,B3_2
+
+	rep	add	A1,B1_0                 
+	rol	eA1,cl
+					movq	S(15),A3
+
+	rep	mov	ecx,B1_0
+	rol	A1,3		       
+					paddd	mm5,A3
 
 	add	ecx,A1
 	add	eA1,A1
 	add	A1,S2_alt(19)
 
-	rep	add	B1_1,ecx
-	rep	xor	eB1,eA1
-					movq	S(15),A3
-
-	rep	rol	B1_1,cl 	       
-	mov	ecx,eA1
-					paddd	mm5,A3
-
-	add	A1,B1_1
-	rol	eB1,cl
-	mov	ecx,B1_1
-					
-	rol	A1,3		       
+	add	B1_1,ecx
+	xor	eB1,eA1
 					paddd	B3_0,mm5
+
+	rol	B1_1,cl 	       
+	mov	ecx,eA1
 					pshufw	mm7,mm5,0xee
+
+	rep	add	A1,B1_1
+	rol	eB1,cl
+					pand	mm5,mm3
+
+	mov	ecx,B1_1					
+	rol	A1,3		       
+					pshufw	A3_H,B3_0,0xee
 
 	add	ecx,A1
 	add	eB1,A1
@@ -2306,85 +2311,85 @@ _Key2Round3_k7_mixed:
 
 	add	B1_2,ecx
 	xor	eA1,eB1
-					pand	mm5,mm3
+					punpckldq	B3_0,B3_0
 
 	rol	B1_2,cl
 	;---
 	mov	ecx,eB1
-					pshufw	A3_H,B3_0,0xee
-
-	add	A1,B1_2
-	rol	eA1,cl
-	mov	ecx,B1_2
-
-	rol	A1,3
-					punpckldq	B3_0,B3_0
 					pand	mm7,mm3
 
-	rep	add	ecx,A1
+	rep	add	A1,B1_2
+	rep	rol	eA1,cl
+					psllq	B3_0,mm5
+
+	mov	ecx,B1_2
+	rol	A1,3
+					paddd	A3,[S_not_16]
+
+	add	ecx,A1
 	add	eA1,A1
 	add	A1,S2_alt(21)
 
 	add	B1_0,ecx
 	xor	eB1,eA1
-					psllq	B3_0,mm5
+					psllq	A3_H,mm7
 
 	rol	B1_0,cl
 	mov	ecx,eA1
-					paddd	A3,[S_not_16]
-
-	rep	add	A1,B1_0
-	rol	eB1,cl
-	mov	ecx,B1_0
-
-	rol	A1,3
-					psllq	A3_H,mm7
 					punpckhdq	B3_0,A3_H
 
-	add	ecx,A1
-	add	eB1,A1
-	add	A1,S2_alt(22)
-
-	add	B1_1,ecx
-	xor	eA1,eB1
+	rep	add	A1,B1_0
+	rep	rol	eB1,cl
 					punpckhdq	A3_H,A3_H
 
-	rep	rol	B1_1,cl
+	mov	ecx,B1_0
+	rol	A1,3
+					movd	L2(0),A3_H
+
+	rep	add	ecx,A1
+	rep	add	eB1,A1
+	rep	add	A1,S2_alt(22)
+
+	rep	add	B1_1,ecx
+	rep	xor	eA1,eB1
+					paddd	A3,B3_0
+
+	rol	B1_1,cl
 	;-------
 	mov	ecx,eB1
 					movq	S(16),A3
 
-	add	A1,B1_1
-	rol	eA1,cl
+	rep	add	A1,B1_1
+	rep	rol	eA1,cl
+					punpckldq	A3,A3
+
 	mov	ecx,B1_1
-
 	rol	A1,3
-					movd	L2(0),A3_H
-					paddd	A3,B3_0
+					movd	S1(0),B3_0
 
-	rep	add	ecx,A1
-	rep	add	eA1,A1
+	add	ecx,A1
+	add	eA1,A1
 	add	A1,S2_alt(23)
 
 	add	B1_2,ecx
 	xor	eB1,eA1
-					punpckldq	A3,A3
+					psllq	A3,3
 
 	rol	B1_2,cl
 	mov	ecx,eA1
-					movd	S1(0),B3_0
-
-	rep	add	A1,B1_2
-	rep	rol	eB1,cl
-	rep	mov	ecx,B1_2
-
-	rol	A1,3		  
-					psllq	A3,3
 					punpckhdq	A3,A3
 
-	rep	add	ecx,A1
-	rep	add	eB1,A1
+	add	A1,B1_2
+	rol	eB1,cl
+					movd	S1(1),B3_1
+
+	mov	ecx,B1_2
+	rol	A1,3		  
 					movd	S1(16),A3
+
+	add	ecx,A1
+	add	eB1,A1
+					movd	S2(0),B3_2
 
 	add	B1_0,ecx
 	xor	eA1,eB1
@@ -2393,14 +2398,13 @@ _Key2Round3_k7_mixed:
 	rol	B1_0,cl
 ;------------Round 3(10) - key 2------------
 	mov	ecx,eB1
-					movd	S1(1),B3_1
+					pshufw	B3_2,[RC5_72_L0hi],0x44 
 
-	add	A1,B1_0
-					movd	S2(0),B3_2
+	rep	rol	eA1,cl
+	rep	add	A1,B1_0
+					paddb	B3_2,[incr2]
 
-	rol	eA1,cl
-	rol	A1,3		       
-
+	rol	A1,3		        
 	add	eA1,A1
 
 	cmp	eA1,[work_C_0]
@@ -2410,20 +2414,20 @@ _NextKey:
 	dec	dword [work_iterations]
 
 	jz	near finished_Found_nothing
-	add	byte [RC5_72_L0hi],2
 
 	mov	B1_0,S1(0)
-	mov	A1,S1(16)
 	mov	A2,S2(16)
+	mov	A1,S1(16)
 	mov	B1_1,S1(1)
 
 	mov	B2,L2(0)
 	lea	ecx,[A1+B1_0]
 	mov	B1_2,S2(0)
 
+	add	byte [RC5_72_L0hi],2
 	jnc	key_setup_1_inner_loop
 	
-	mov	eax, [RC5_72UnitWork]
+	mov	eax, [unitwork_addr]
 	mov	B1_0, [RC5_72UnitWork_L0mid]
 	mov	B2, [RC5_72UnitWork_L0lo]
 	mov	ebx, [RC5_72_L0hi]
@@ -2456,7 +2460,7 @@ _checkKey2High_k7_mixed:
 
 	add	eB1,A1
 
-	mov	eax, [RC5_72UnitWork]
+	mov	eax, [unitwork_addr]
 	mov	edx, [RC5_72UnitWork_L0mid]
 	mov	esi, [RC5_72UnitWork_L0lo]
 	mov	ebx, [RC5_72_L0hi]
@@ -2470,7 +2474,8 @@ _checkKey2High_k7_mixed:
 	jne	_NextKey
 
 	mov	ecx, [work_iterations]
-	mov	esi, [iterations]
+	mov	esi, [iterations_addr]
+	mov	esi, [esi]
 
 	shl	ecx, 1
 
@@ -2498,7 +2503,7 @@ _checkKey1High_k7_mixed:
 	rol	A1,3
 
 	add	eB1,A1
-	mov	eax, [RC5_72UnitWork]
+	mov	eax, [unitwork_addr]
 	mov	edx, [RC5_72UnitWork_L0mid]
 	mov	esi, [RC5_72UnitWork_L0lo]
 	mov	ebx, [RC5_72_L0hi]
@@ -2510,7 +2515,8 @@ _checkKey1High_k7_mixed:
 	jne	_Key2Round3_k7_mixed
 
 	mov	ecx, [work_iterations]
-	mov	esi, [iterations]
+	mov	esi, [iterations_addr]
+	mov	esi, [esi]
 
 	shl	ecx, 1
 
@@ -2520,7 +2526,7 @@ _checkKey1High_k7_mixed:
 	jmp	finished
 
 finished_Found_nothing:
-	mov	eax, [RC5_72UnitWork]
+	mov	eax, [unitwork_addr]
 	mov	ebx,[RC5_72_L0hi]
 	add	bl,2
 	mov	[RC5_72UnitWork_L0hi],ebx
@@ -2541,7 +2547,7 @@ finished:
 
 	mov	edi, [save_edi]
 	mov	ebp, [save_ebp]
-	add	esp, work_size
+	mov	esp, [save_esp]
 
 	emms
 	ret
