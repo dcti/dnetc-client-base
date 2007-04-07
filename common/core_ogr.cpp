@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.50 2006/11/27 10:33:31 jt Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.51 2007/04/07 09:07:57 stream Exp $"; }
 
 //#define TRACE
 
@@ -382,6 +382,8 @@ int selcoreGetPreselectedCoreForProject_ogr()
           {
             case 0x05: cindex = 4; break; // K6/K6-2/K6-3 == asm-rt1-mmx-amd (E)
             case 0x09: cindex = 4; break; // AMD K7/K8  == asm-rt1-mmx-amd (E)
+            case 0x0B: cindex = 4; break; // Pentium 4    == asm-rt1-mmx-amd (E) (#3988)
+            case 0x10: cindex = 4; break; // Cyrix Model5 == asm-rt1-mmx-amd (E) (Untested)
             case 0x11: cindex = 4; break; // Cyrix Model6 == asm-rt1-mmx-amd (E)
             default:   cindex = 3; break; // asm-rt1-mmx (D)
           }
