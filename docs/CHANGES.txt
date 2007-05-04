@@ -23,14 +23,16 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.114 2007/04/07 09:07:57 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.115 2007/05/04 23:20:53 snikkel Exp $
 ==========================================================================
 
 2.9000
 ------
-2.9013-499  imp: x86: Faster OGR MMX cores (1-3%, depending on CPU)
-            imp: x86: Faster RC5-72 GO-2 core (#3265) is now is default for P4
+2.9013-500  imp: x86: Faster RC5-72 GO-2 core (#3265)
+            chg: x86: GO-2 core is now the default selection for P4
             chg: x86: OGR core selection for P4 (#3988 and others)
+
+2.9013-499  imp: x86: Faster OGR MMX cores (1-3%, depending on CPU)
 
 2.9013-498  new: x86: Added new AMD optimized OGR core, selected for AMD CPUs
             new: x86: Detect Intel Core 1/2 (#3939, #3969)
