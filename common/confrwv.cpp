@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.92.2.9 2004/10/26 19:52:52 snikkel Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.92.2.10 2007/07/03 23:58:06 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1427,7 +1427,7 @@ int ConfigWrite(Client *client)
     __XSetProfileStr( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
-    __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 0 );
+    __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 4, 0 );
     __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", &(client->max_buffupd_interval), 0, fn, 0 );
     __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-retry-interval", &(client->max_buffupd_retry_interval), 0, fn, 0 );
 

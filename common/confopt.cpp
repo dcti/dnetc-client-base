@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.51.4.17 2004/06/20 18:30:56 kakace Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.51.4.18 2007/07/03 23:58:06 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -415,7 +415,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 },
 { 
   CONF_FREQUENT                , /* CONF_MENU_BUFF */
-  CFGTXT(ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME),"0 (none)",
+  CFGTXT(ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME),"4 (update on empty in-buffer)",
   /*CFGTXT(*/
   "The following options are extensions to normal threshold management and are\n"
   "not usually necessary:\n"

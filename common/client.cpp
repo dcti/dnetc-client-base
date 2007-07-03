@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.27 2006/03/12 16:26:48 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.28 2007/07/03 23:58:05 snikkel Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -44,6 +44,7 @@ void ResetClientData(Client *client)
   int contest;
   memset((void *)client,0,sizeof(Client));
 
+  client->connectoften=4;
   client->nettimeout=60;
   client->autofindkeyserver=1;
   client->crunchmeter=-1;

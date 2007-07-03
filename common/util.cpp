@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.29.2.17 2004/06/27 21:40:05 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.29.2.18 2007/07/03 23:58:06 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -375,7 +375,7 @@ const int* projectmap_build( int* buf, int* state, const char *strtomap )
     #error PROJECT_NOT_HANDLED("static default load order map expects CONTEST_COUNT == 7")
   #endif
   // you must add _every_ project, obsoletes may come last
-  static const int default_map[PROJECT_COUNT] = { DES,CSC,OGR,RC5,RC5_72,OGR_NEXTGEN_SOMEDAY,OGR_P2 };
+  static const int default_map[PROJECT_COUNT] = { DES,CSC,OGR,OGR_NEXTGEN_SOMEDAY,OGR_P2,RC5,RC5_72 };
   static int default_map_checked = -1;
   static int map[PROJECT_COUNT];
   unsigned int map_pos, i;
