@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.51 2007/08/02 08:08:36 decio Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.52 2007/08/02 08:41:07 decio Exp $"; }
 
 //#define TRACE
 
@@ -714,18 +714,6 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_mh604e_addi;
         pipeline_count = 1;
         break;
-      #if defined(__VEC__) || defined(__ALTIVEC__)
-      case 7:
-        unit_func.gen_72 = rc5_72_unit_func_cellv1_ppe;
-        pipeline_count = 4;
-        break;
-      #endif
-      #if (CLIENT_CPU == CPU_CELLBE)
-      case 8:
-        unit_func.gen_72 = rc5_72_unit_func_cellv1_spe;
-        pipeline_count = 16;
-        break;
-      #endif
       #if defined(__VEC__) || defined(__ALTIVEC__)
       #if 0     // Disabled (kakace)
       case 7:

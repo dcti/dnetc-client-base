@@ -9,7 +9,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.13 2007/08/02 08:08:37 decio Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.14 2007/08/02 08:41:07 decio Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
 
@@ -83,7 +83,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.13 2007/08/02 08:08:37 decio Exp $"; }
 
     #define OGROPT_OGR_CYCLE_ALTIVEC 1    /* For use in ogr.h */
 
-    #if defined (__GNUC__) && !defined(__APPLE_CC__) && (CLIENT_OS != OS_LINUX) && (__GNUC__ >= 3)
+    #if defined (__GNUC__) && !defined(__APPLE_CC__) && (__GNUC__ >= 3)
       #include <altivec.h>
       #define ONES_DECL   (vector unsigned int) {~0u}
     #else
