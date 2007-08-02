@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.28 2007/07/03 23:58:05 snikkel Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.29 2007/08/02 08:08:36 decio Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -272,16 +272,21 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5-72 68K assembly by Malcolm Howell and John Girvin\n");
       #endif
-      #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell and Didier Levet\n"
-                    "Enhancements for 604e CPUs by Roberto Ragusa\n");
+      #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+        #if (CLIENT_CPU == CPU_POWERPC)
+        LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell and Didier Levet\n"
+                      "Enhancements for 604e CPUs by Roberto Ragusa\n");
+        #endif
         #if defined(__VEC__) || defined(__ALTIVEC__)
           #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
-            LogScreenRaw( "RC7-72 Altivec and OGR assembly by Didier Levet\n");
+            LogScreenRaw( "RC5-72 Altivec and OGR assembly by Didier Levet\n");
           #else
             LogScreenRaw( "RC5-72 Altivec assembly by Didier Levet\n");
           #endif
         #endif
+      #endif
+      #if (CLIENT_CPU == CPU_CELLBE)
+      LogScreenRaw( "RC5-72 SPE assembly by Decio Luiz Gazzoni Filho\n");
       #endif
       #if (CLIENT_CPU == CPU_SPARC)
       LogScreenRaw( "RC5-72 SPARC assembly by Didier Levet and Andreas Beckmann\n");

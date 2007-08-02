@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.26 2004/10/13 20:28:38 jbgill Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.2.4.27 2007/08/02 08:08:36 decio Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -281,7 +281,7 @@
     }
   }
 
-#elif (CLIENT_CPU == CPU_POWERPC) && defined(__GNUC__)
+#elif ((CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)) && defined(__GNUC__)
 
   /* based on
   ** http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/powerpc/include/lock.h?rev=1.4.2.1

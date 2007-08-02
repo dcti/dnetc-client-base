@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_des_cpp(void) {
-return "@(#)$Id: core_des.cpp,v 1.1.2.6 2004/01/06 19:46:19 snikkel Exp $"; }
+return "@(#)$Id: core_des.cpp,v 1.1.2.7 2007/08/02 08:08:36 decio Exp $"; }
 
 //#define TRACE
 
@@ -99,7 +99,7 @@ const char **corenames_for_contest_des()
       "Generic",
   #elif (CLIENT_CPU == CPU_ALPHA)
       "dworz/amazing",
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_CELLBE)
       "Generic DES core",
   #elif (CLIENT_CPU == CPU_SPARC)
       "Generic DES core",
@@ -177,7 +177,7 @@ int selcoreGetPreselectedCoreForProject_des()
   #if (CLIENT_CPU == CPU_68K)
     cindex = 0; // only one core
   // ===============================================================
-  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_CELLBE)
     cindex = 0; /* only one DES core */
   // ===============================================================
   #elif (CLIENT_CPU == CPU_X86)

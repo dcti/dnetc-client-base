@@ -5,7 +5,7 @@
 */
 
 const char *stress_r72_cpp(void) {
-return "@(#)$Id: stress.cpp,v 1.1.2.2 2005/05/06 02:20:35 kakace Exp $"; }
+return "@(#)$Id: stress.cpp,v 1.1.2.3 2007/08/02 08:08:37 decio Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"
@@ -105,7 +105,7 @@ return "@(#)$Id: stress.cpp,v 1.1.2.2 2005/05/06 02:20:35 kakace Exp $"; }
 #define KEYBASE_MID 0xDB0EF306
 #define KEYBASE_LO  0x30000000
 
-#define MINIMUM_ITERATIONS 24     /* Borrowed from problem.cpp */
+#define MINIMUM_ITERATIONS 48     /* Borrowed from problem.cpp */
 
 
 struct RC5_Key {
@@ -293,7 +293,7 @@ static long __test_1(void)
 
         /* Check the number of pipelines here, once and for all. */
         if (pipes != 1 && pipes != 2 && pipes != 3 && pipes != 4 &&
-            pipes != 8 && pipes != 12 && pipes != 24) {
+            pipes != 8 && pipes != 12 && pipes != 16 && pipes != 24) {
           LogScreen("\rRC5-72 : INTERNAL ERROR - Number of pipes = %d\n", pipes);
           success = -1L;
         }
@@ -342,7 +342,7 @@ static long __test_2(void)
 {
   ContestWork contestwork;
   Problem *thisprob;
-  u32 maxkeys = 0x408;      /* Must be an even multiple of MINIMUM_ITERATIONS */
+  u32 maxkeys = 0x420;      /* Must be an even multiple of MINIMUM_ITERATIONS */
                             /* and must be > 768 to test 3-pipe cores.        */
   u32 pipes = 1;
   u32 tslice = maxkeys;
@@ -525,8 +525,8 @@ static long __test_4(void)
 {
   ContestWork contestwork;
   Problem *thisprob;
-  u32 maxkeys = 0x32FFCD00;   /* must be > 0x309CDAE6 */
-  u32 tslice = 0x0007FFF8;    /* large enough to find partial matches #3 and
+  u32 maxkeys = 0x33006600;   /* must be > 0x309CDAE6 */
+  u32 tslice = 0x00080010;    /* large enough to find partial matches #3 and
                                  #4 in the same run */
   u32 pipes = 1;
   u32 iters = 0;

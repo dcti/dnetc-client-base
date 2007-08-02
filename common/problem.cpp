@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.26 2005/11/10 07:18:46 stream Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.27 2007/08/02 08:08:37 decio Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -56,7 +56,7 @@ return "@(#)$Id: problem.cpp,v 1.177.2.26 2005/11/10 07:18:46 stream Exp $"; }
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
 #ifndef MINIMUM_ITERATIONS
-#define MINIMUM_ITERATIONS 24
+#define MINIMUM_ITERATIONS 48
 /*
    MINIMUM_ITERATIONS determines minimum number of iterations that will
    be requested, as well as the boundary on which number of iterations will
@@ -2235,7 +2235,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
           case 0x04:  // K5
           case 0x06:  // Cyrix 486
           case 0x0A:  // Centaur C6
-          #elif (CLIENT_CPU == CPU_POWERPC)
+          #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
           case 0x01:  // PPC 601
           #endif
                     should_not_do = +1;

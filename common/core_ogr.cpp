@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.51 2007/04/07 09:07:57 stream Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.52 2007/08/02 08:08:36 decio Exp $"; }
 
 //#define TRACE
 
@@ -30,7 +30,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.51 2007/04/07 09:07:57 stream Exp $"; }
    note: we may have more prototypes here than cores in the client
    note2: if you need some 'cdecl' value define it in selcore.h to CDECL */
 
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
     #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
     /* KOGE cores are faster. The 64-bit core is only enabled when compiling
@@ -99,7 +99,7 @@ int InitializeCoreTable_ogr(int first_time)
           ogr_get_dispatch_table_asm_mmx();
           ogr_get_dispatch_table_asm_mmx_amd();
         #endif
-      #elif CLIENT_CPU == CPU_POWERPC
+      #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
         ogr_get_dispatch_table();
         #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
           ogr64_get_dispatch_table();
@@ -199,7 +199,7 @@ const char **corenames_for_contest_ogr()
     #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
       "GARSP 6.0-CIX-64",
     #endif
-  #elif (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     #ifdef HAVE_KOGE_PPC_CORES
       /* Optimized ASM cores */
       "KOGE 2.0 Scalar",            /* KOGE : Kakace's Optimized Garsp Engine */
@@ -264,7 +264,7 @@ int apply_selcore_substitution_rules_ogr(int cindex)
                  (((det >> 12) & 0xf) != 7) &&
                  (((det >> 16) & 0xf) >= 3);
   if (!have_clz && (cindex == 2))  cindex = 0;
-# elif (CLIENT_CPU == CPU_POWERPC)
+# elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
   int feature = 0;
   feature = GetProcessorFeatureFlags();
   if ((feature & CPU_F_ALTIVEC) == 0 && cindex == 1)      /* PPC-vector */
@@ -334,7 +334,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
   // ===============================================================
   #elif (CLIENT_CPU == CPU_POWER)
     cindex = 0;                         /* only one OGR core on Power */
-  #elif (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     if (detected_type > 0)
     {
       cindex = 0;                       /* PPC-scalar */
@@ -468,7 +468,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
 
   /* ================================================================== */
 
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
   #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
   if (coresel == 1)                               /* PPC Vector/Hybrid */
     unit_func.ogr = vec_ogr_get_dispatch_table();
@@ -593,7 +593,7 @@ unsigned int estimate_nominal_rate_ogr()
 {
   unsigned int rate = 0;  /* Unknown - Not available */
 
-  #if (CLIENT_CPU == CPU_POWERPC)
+  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     static long detected_type = -123;
     static int  cpu_count = 0;
     static unsigned long detected_flags = 0;

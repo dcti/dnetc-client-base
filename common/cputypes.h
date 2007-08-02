@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.30 2006/11/27 10:33:31 jt Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.31 2007/08/02 08:08:37 decio Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -36,6 +36,7 @@
 #define CPU_DESCRACKER  16 /* eff descracker */
 #define CPU_AMD64       17 /* official name */
 #define CPU_X86_64      CPU_AMD64 /* old GNU name before AMD announced AMD64 */
+#define CPU_CELLBE	18
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -185,6 +186,8 @@
     #define CLIENT_CPU     CPU_ARM
   #elif defined(ASM_SPARC) || defined(__sparc__)
     #define CLIENT_CPU     CPU_SPARC
+  #elif defined(__PPU__) || defined(__SPU__)
+    #define CLIENT_CPU     CPU_CELLBE
   #elif defined(ASM_PPC)
     #define CLIENT_CPU     CPU_POWERPC
   #elif defined(ASM_68K)
@@ -598,7 +601,9 @@
   #include <sys/wait.h>     /* wait() */
   #include <sys/time.h>     /* required for resource.h */
   #include <sys/resource.h> /* WIF*() macros */
+  #if (CLIENT_CPU != CPU_CELLBE)
   #include <sys/mman.h>     /* minherit() */
+  #endif
   #ifndef CORES_SUPPORT_SMP 
   #define CORES_SUPPORT_SMP /* no shared data, so cores become smp safe */
   #endif

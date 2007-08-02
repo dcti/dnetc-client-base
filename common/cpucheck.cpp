@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.112 2007/01/15 07:44:39 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.113 2007/08/02 08:08:36 decio Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -45,7 +45,9 @@ return "@(#)$Id: cpucheck.cpp,v 1.114.2.112 2007/01/15 07:44:39 jlawson Exp $"; 
 #  include <exec/system.h>
 #endif
 
-
+#if (CLIENT_CPU == CPU_CELLBE)
+#include <libspe2.h>
+#endif
 
 
 /* ------------------------------------------------------------------------ */
@@ -176,8 +178,9 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         {
           buffer[sizeof(buffer) - 1] = '\0';
           #if (CLIENT_CPU == CPU_X86      || \
-               CLIENT_CPU == CPU_AMD64   || \
+               CLIENT_CPU == CPU_AMD64    || \
                CLIENT_CPU == CPU_POWERPC  || \
+               CLIENT_CPU == CPU_CELLBE   || \
                CLIENT_CPU == CPU_S390     || \
                CLIENT_CPU == CPU_S390X    || \
                CLIENT_CPU == CPU_PA_RISC)
@@ -234,6 +237,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         }
         fclose(cpuinfo);
       }
+
+      #if (CLIENT_CPU == CPU_CELLBE)
+      cpucount += spe_cpu_info_get(SPE_COUNT_USABLE_SPES, -1);
+      #endif
       #endif // (CLIENT_CPU == CPU_ARM)
     }
     #elif (CLIENT_OS == OS_IRIX)
@@ -463,7 +470,7 @@ static long __GetRawProcessorID(const char **cpuname)
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
 
 /* note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit) */
 # define NONPVR(x) ((1L << 16) + (x))
@@ -2268,11 +2275,11 @@ long GetProcessorType(int quietly)
   // only successful detection / detection of a new unknown cpu type gets logged to file
   long retval = -1L;
   const char *apd = "Automatic processor type detection ";
-  #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
+  #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K)   || \
       (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
-      (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_AMD64) || \
-      (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC) || \
-      (CLIENT_CPU == CPU_ARM)
+      (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
+      (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
+      (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -2319,10 +2326,11 @@ long GetProcessorType(int quietly)
 long GetProcessorID()
 {
   long retval = -1L;
-  #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
+  #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K)   || \
       (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
-      (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_ARM) || \
-      (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC)
+      (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
+      (CLIENT_CPU == CPU_ARM)     || (CLIENT_CPU == CPU_MIPS)  || \
+      (CLIENT_CPU == CPU_SPARC)
   {
     long rawid = __GetRawProcessorID(NULL);
     if (rawid < 0)
@@ -2494,7 +2502,7 @@ unsigned long GetProcessorFeatureFlags()
 {
   #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     return (__GetRawProcessorID(NULL, 'f')) | (x86features());
-  #elif (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     unsigned long ppc_features = 0;
     #if (CLIENT_OS == OS_MACOS)
       /* AltiVec software support and hardware support/exsitence */
@@ -2582,11 +2590,11 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
 {
   const char *maxcpu_s, *foundcpu_s, *cpuid_s;
 
-#if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
+#if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K)   || \
     (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
-    (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_AMD64) || \
-    (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC) || \
-    (CLIENT_CPU == CPU_ARM)
+    (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
+    (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
+    (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)
   long rawid = __GetRawProcessorID(&cpuid_s);
   if (rawid < 0)
     cpuid_s = ((rawid==-1)?("?\n\t(identification failed)"):

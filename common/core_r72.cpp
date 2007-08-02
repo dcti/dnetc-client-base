@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.50 2007/04/07 09:07:57 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.51 2007/08/02 08:08:36 decio Exp $"; }
 
 //#define TRACE
 
@@ -21,6 +21,9 @@ return "@(#)$Id: core_r72.cpp,v 1.1.2.50 2007/04/07 09:07:57 stream Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
+#if (CLIENT_CPU == CPU_CELLBE)
+#include <libspe2.h>
+#endif
 
 #if (CLIENT_OS == OS_MORPHOS)
 #define __ALTIVEC__ 1 /* crude hack till we have real gcc-altivec */
@@ -73,6 +76,11 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS970( RC5_72UnitWork *, u32 *, void *);
+# endif
+#elif (CLIENT_CPU == CPU_CELLBE)
+extern "C" s32 CDECL rc5_72_unit_func_cellv1_spe( RC5_72UnitWork *, u32 *, void *);
+# if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+extern "C" s32 CDECL rc5_72_unit_func_cellv1_ppe( RC5_72UnitWork *, u32 *, void *);
 # endif
 #elif (CLIENT_CPU == CPU_SPARC)
 extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
@@ -152,6 +160,9 @@ const char **corenames_for_contest_rc572()
       #if 0     // Disabled (kakace)
       "KKS 970",       /* gas and OSX format, AltiVec only */
       #endif
+  #elif (CLIENT_CPU == CPU_CELLBE)
+      "Cell v1 PPE",
+      "Cell v1 SPE",
   #elif (CLIENT_CPU == CPU_SPARC)
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -211,6 +222,7 @@ int apply_selcore_substitution_rules_rc572(int cindex)
     cindex = 2;                   /* KKS 604e */
   if (!have_vec && cindex == 7)   /* KKS 970 */
     cindex = 1;                   /* KKS 2pipes, see micro-bench in #3310 */
+
 #elif (CLIENT_CPU == CPU_X86)
   {
     long det = GetProcessorType(1);
@@ -330,7 +342,6 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x0039: cindex = 1; break; // 970 (G5)       == KKS 2pipes
         case 0x003C: cindex = 1; break; // 970FX (G5)     == KKS 2pipes
         case 0x0044: cindex = 1; break; // 970MP (G5)     == KKS 2pipes
-        case 0x0070: cindex = 1; break; // Cell BE        == KKS 2pipes
         default:     cindex =-1; break; // no default
       }
 
@@ -352,14 +363,33 @@ int selcoreGetPreselectedCoreForProject_rc572()
             case 0x0039: cindex = 7; break; // 970 (G5)    == KKS 970
             case 0x003C: cindex = 7; break; // 970 FX
             case 0x0044: cindex = 7; break; // 970 MP
-            case 0x0070: cindex = 7; break; // Cell Broadband Engine
             #else
             case 0x0039: cindex = 4; break; // Redirect G5 to KKS 7450
             case 0x003C: cindex = 4; break; // Ditto (970FX)
             case 0x0044: cindex = 4; break; // Ditto (970MP)
-            case 0x0070: cindex = 3; break; // Cell Broadband Engine
             #endif
             default:     cindex = 4; break; // KKS 7450
+        }
+      }
+      #endif
+    }
+  // ===============================================================
+  #elif (CLIENT_CPU == CPU_CELLBE)
+    if (detected_type > 0)
+    {
+      switch ( detected_type & 0xffff) // only compare the low PVR bits
+      {
+        case 0x0070: cindex = 1; break; // Cell BE        == Cell SPE
+        default:     cindex =-1; break; // no default
+      }
+
+      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+      if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
+      {
+        switch ( detected_type & 0xffff) // only compare the low PVR bits
+        {
+            case 0x0070: cindex = 0; break; // Cell BE
+            default:     cindex = 0; break; // KKS 7450
         }
       }
       #endif
@@ -527,8 +557,17 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(RC5_72);
+#if (CLIENT_CPU == CPU_CELLBE)
+  // Each Cell has 2 PPEs
+  static unsigned int PPE_count = 2*spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
 
+  // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs
+  // (core 0); the rest are scheduled on the SPEs (core 1).
+  if (threadindex >= PPE_count)
+    coresel = 1;
+#else
   DNETC_UNUSED_PARAM(threadindex);
+#endif
 
   if (coresel < 0)
     return -1;
@@ -676,6 +715,18 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         pipeline_count = 1;
         break;
       #if defined(__VEC__) || defined(__ALTIVEC__)
+      case 7:
+        unit_func.gen_72 = rc5_72_unit_func_cellv1_ppe;
+        pipeline_count = 4;
+        break;
+      #endif
+      #if (CLIENT_CPU == CPU_CELLBE)
+      case 8:
+        unit_func.gen_72 = rc5_72_unit_func_cellv1_spe;
+        pipeline_count = 16;
+        break;
+      #endif
+      #if defined(__VEC__) || defined(__ALTIVEC__)
       #if 0     // Disabled (kakace)
       case 7:
           unit_func.gen_72 = rc5_72_unit_func_KKS970;
@@ -683,6 +734,18 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
           break;
       #endif
       #endif
+     // -----------
+    #elif (CLIENT_CPU == CPU_CELLBE)
+      #if defined(__VEC__) || defined(__ALTIVEC__)
+      case 0:
+        unit_func.gen_72 = rc5_72_unit_func_cellv1_ppe;
+        pipeline_count = 4;
+        break;
+      #endif
+      case 1:
+        unit_func.gen_72 = rc5_72_unit_func_cellv1_spe;
+        pipeline_count = 16;
+        break;
      // -----------
      #else /* the ansi cores */
       case 0:
@@ -759,7 +822,7 @@ unsigned int estimate_nominal_rate_rc572()
 {
   unsigned int rate = 0;   /* Unknown - Not available */
 
-  #if (CLIENT_CPU == CPU_POWERPC)
+  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     static long detected_type = -123;
     static int  cpu_count = 0;
     static unsigned long detected_flags = 0;

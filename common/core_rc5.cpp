@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_rc5_cpp(void) {
-return "@(#)$Id: core_rc5.cpp,v 1.1.2.8 2004/01/06 19:46:19 snikkel Exp $"; }
+return "@(#)$Id: core_rc5.cpp,v 1.1.2.9 2007/08/02 08:08:36 decio Exp $"; }
 
 //#define TRACE
 
@@ -102,7 +102,7 @@ return "@(#)$Id: core_rc5.cpp,v 1.1.2.8 2004/01/06 19:46:19 snikkel Exp $"; }
     // rc5/68k/crunch.68k.a.o
     extern "C" u32 rc5_68k_crunch_unit_func( RC5UnitWork *, u32 );
   #endif
-#elif (CLIENT_CPU == CPU_POWERPC)
+#elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
   #if (CLIENT_OS != OS_WIN32) //NT has poor PPC assembly
     /* rc5/ppc/rc5_*.cpp
     ** although Be OS isn't supported on 601 machines and there is is
@@ -258,7 +258,7 @@ const char **corenames_for_contest_rc564()
       #else
       "axp bmeyer",
       #endif
-  #elif (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
       /* lintilla depends on allitnil, and since we need both even on OS's
       ** that don't support the 601, we may as well "support" them visually.  */
       "allitnil",
@@ -308,7 +308,7 @@ const char **corenames_for_contest_rc564()
 */
 int apply_selcore_substitution_rules_rc564(int cindex)
 {
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
   int have_vec = 0;
 
   /* OS+compiler support altivec */
@@ -386,7 +386,7 @@ int selcoreGetPreselectedCoreForProject_rc564()
       #endif
     }
   // ===============================================================
-  #elif (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     if (detected_type > 0)
     {
       switch ( detected_type & 0xffff) // only compare the low PVR bits
@@ -734,7 +734,7 @@ int selcoreSelectCore_rc564(unsigned int threadindex,
       pipeline_count = 2;
       coresel = 0;
     }
-    #elif (CLIENT_CPU == CPU_POWERPC)
+    #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     {
       #if (CLIENT_OS == OS_WIN32)
       {

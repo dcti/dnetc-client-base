@@ -9,7 +9,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.3.4.13 2007/08/02 08:08:37 decio Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
 
@@ -83,7 +83,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
 
     #define OGROPT_OGR_CYCLE_ALTIVEC 1    /* For use in ogr.h */
 
-    #if defined (__GNUC__) && !defined(__APPLE_CC__) && (__GNUC__ >= 3)
+    #if defined (__GNUC__) && !defined(__APPLE_CC__) && (CLIENT_OS != OS_LINUX) && (__GNUC__ >= 3)
       #include <altivec.h>
       #define ONES_DECL   (vector unsigned int) {~0u}
     #else
@@ -95,6 +95,25 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
 
 
     /* define the local variables used for the top recursion state */
+  #if (CLIENT_OS == OS_LINUX)
+    #define SETUP_TOP_STATE(lev)  \
+      U comp0 = lev->comp0,       \
+        comp1 = lev->compV.u[0],  \
+        comp2 = lev->compV.u[1],  \
+        comp3 = lev->compV.u[2],  \
+        comp4 = lev->compV.u[3];  \
+      U list0 = lev->list0,       \
+        list1 = lev->listV.u[0],  \
+        list2 = lev->listV.u[1],  \
+        list3 = lev->listV.u[2],  \
+        list4 = lev->listV.u[3];  \
+      U dist0 = lev->dist0,       \
+        dist1 = lev->distV.u[0],  \
+        dist2 = lev->distV.u[1],  \
+        dist3 = lev->distV.u[2],  \
+        dist4 = lev->distV.u[3];  \
+      int newbit = 1;
+  #else
     #define SETUP_TOP_STATE(lev)                            \
       v8_t Varray[32];                                      \
       U comp0, dist0, list0;                                \
@@ -119,8 +138,36 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
           val = vec_add(val, one);                          \
         }                                                   \
       }
+  #endif
           
     /* shift the list to add or extend the first mark */
+  #if (CLIENT_OS == OS_LINUX)
+    #define COMP_LEFT_LIST_RIGHT(lev, s) {  \
+      U temp1, temp2;                       \
+      int ss = 32 - (s);                    \
+      comp0 <<= s;                          \
+      temp1 = newbit << ss;                 \
+      temp2 = list0 << ss;                  \
+      list0 = (list0 >> (s)) | temp1;       \
+      temp1 = list1 << ss;                  \
+      list1 = (list1 >> (s)) | temp2;       \
+      temp2 = list2 << ss;                  \
+      list2 = (list2 >> (s)) | temp1;       \
+      temp1 = list3 << ss;                  \
+      list3 = (list3 >> (s)) | temp2;       \
+      temp2 = comp1 >> ss;                  \
+      list4 = (list4 >> (s)) | temp1;       \
+      temp1 = comp2 >> ss;                  \
+      comp0 |= temp2;                       \
+      temp2 = comp3 >> ss;                  \
+      comp1 = (comp1 << (s)) | temp1;       \
+      temp1 = comp4 >> ss;                  \
+      comp2 = (comp2 << (s)) | temp2;       \
+      comp4 = comp4 << (s);                 \
+      comp3 = (comp3 << (s)) | temp1;       \
+      newbit = 0;                           \
+    }
+  #else
     #define COMP_LEFT_LIST_RIGHT(lev, s)                    \
     {                                                       \
       U comp1;                                              \
@@ -146,10 +193,25 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
       lev->compV.v = compV;                                 \
       newbit = 0;                                           \
     }
+  #endif
 
     /*
     ** shift by word size
     */
+  #if (CLIENT_OS == OS_LINUX)
+    #define COMP_LEFT_LIST_RIGHT_32(lev)  \
+      list4 = list3;                      \
+      list3 = list2;                      \
+      list2 = list1;                      \
+      list1 = list0;                      \
+      list0 = newbit;                     \
+      comp0 = comp1;                      \
+      comp1 = comp2;                      \
+      comp2 = comp3;                      \
+      comp3 = comp4;                      \
+      comp4 = 0;                          \
+      newbit = 0;
+  #else
     #define COMP_LEFT_LIST_RIGHT_32(lev)                    \
       list0 = newbit;                                       \
       v32_t listV1 = vec_lde(listOff, (U *)lev);            \
@@ -159,8 +221,23 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
       listV = vec_sld(listV1, listV, 12);                   \
       lev->compV.v = compV;                                 \
       newbit = 0;
+  #endif
 
     /* set the current mark and push a level to start a new mark */
+  #if (CLIENT_OS == OS_LINUX)
+    #define PUSH_LEVEL_UPDATE_STATE(lev)        \
+      lev->list0 = list0; dist0 |= list0;       \
+      lev->listV.u[0] = list1; dist1 |= list1;  \
+      lev->listV.u[1] = list2; dist2 |= list2;  \
+      lev->listV.u[2] = list3; dist3 |= list3;  \
+      lev->listV.u[3] = list4; dist4 |= list4;  \
+      lev->comp0 = comp0; comp0 |= dist0;       \
+      lev->compV.u[0] = comp1; comp1 |= dist1;  \
+      lev->compV.u[1] = comp2; comp2 |= dist2;  \
+      lev->compV.u[2] = comp3; comp3 |= dist3;  \
+      lev->compV.u[3] = comp4; comp4 |= dist4;  \
+      newbit = 1;
+  #else
     #define PUSH_LEVEL_UPDATE_STATE(lev)                    \
       (lev+1)->list0 = list0;                               \
       distV = vec_or(distV, listV);                         \
@@ -171,8 +248,28 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
       newbit = 1;                                           \
       (lev+1)->compV.v = compV;                             \
       comp0 |= dist0;
+  #endif
 
     /* pop a level to continue work on previous mark */
+  #if (CLIENT_OS == OS_LINUX)
+    #define POP_LEVEL(lev)      \
+      list0 = lev->list0;       \
+      list1 = lev->listV.u[0];  \
+      list2 = lev->listV.u[1];  \
+      list3 = lev->listV.u[2];  \
+      list4 = lev->listV.u[3];  \
+      dist0 &= ~list0;          \
+      comp0 = lev->comp0;       \
+      dist1 &= ~list1;          \
+      comp1 = lev->compV.u[0];  \
+      dist2 &= ~list2;          \
+      comp2 = lev->compV.u[1];  \
+      dist3 &= ~list3;          \
+      comp3 = lev->compV.u[2];  \
+      dist4 &= ~list4;          \
+      comp4 = lev->compV.u[3];  \
+      newbit = 0;
+  #else
     #define POP_LEVEL(lev)                                  \
       listV = lev->listV.v;                                 \
       list0 = lev->list0;                                   \
@@ -181,8 +278,27 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
       dist0 &= ~list0;                                      \
       compV = lev->compV.v;                                 \
       newbit = 0;
+  #endif
 
     /* save the local state variables */
+  #if (CLIENT_OS == OS_LINUX)
+    #define SAVE_FINAL_STATE(lev)   \
+      lev->list0 = list0;           \
+      lev->listV.u[0] = list1;      \
+      lev->listV.u[1] = list2;      \
+      lev->listV.u[2] = list3;      \
+      lev->listV.u[3] = list4;      \
+      lev->dist0 = dist0;           \
+      lev->distV.u[0] = dist1;      \
+      lev->distV.u[1] = dist2;      \
+      lev->distV.u[2] = dist3;      \
+      lev->distV.u[3] = dist4;      \
+      lev->comp0 = comp0;           \
+      lev->compV.u[0] = comp1;      \
+      lev->compV.u[1] = comp2;      \
+      lev->compV.u[2] = comp3;      \
+      lev->compV.u[3] = comp4;
+  #else
     #define SAVE_FINAL_STATE(lev)                           \
       lev->listV.v = listV;                                 \
       lev->distV.v = distV;                                 \
@@ -190,6 +306,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.3.4.12 2004/08/18 18:37:47 kakace Exp $"; }
       lev->list0 = list0;                                   \
       lev->dist0 = dist0;                                   \
       lev->comp0 = comp0;
+  #endif
 
   #endif  /* ALTERNATE_CYCLE == 2 */
 

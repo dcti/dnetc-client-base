@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.10 2006/11/27 10:33:31 jt Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.14.4.11 2007/08/02 08:08:37 decio Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -29,7 +29,7 @@
   #define CPU_F_EM64T           (0x00040000L)
 #endif
 
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
   #define CPU_F_ALTIVEC         (0x00000001L)
   #define CPU_F_64BITOPS        (0x00000002L)
   #define CPU_F_SYNERGISTIC     (0x00000004L)

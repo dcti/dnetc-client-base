@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.9 2004/10/13 20:28:38 jbgill Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.10 2007/08/02 08:08:36 decio Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -784,6 +784,9 @@ int CliGetThreadUserTime( struct timeval *tv )
     tv->tv_usec = tInfo.user_time % 1000000;
   }
   return 0;
+#elif (CLIENT_CPU == CPU_CELLBE)
+  DNETC_UNUSED_PARAM(tv);
+  return -1;
 #elif defined(HAVE_GETRUSAGE) && defined(THREADS_HAVE_OWN_ACCOUNTING)
   if (tv)
   {
