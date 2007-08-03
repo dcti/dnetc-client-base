@@ -3,19 +3,28 @@
 # Any other distribution or use of this source violates copyright.
 #
 # Author: Decio Luiz Gazzoni Filho <decio@distributed.net>
-# $Id: r72-cellv1-spe.s,v 1.1.2.2 2007/08/03 03:12:49 decio Exp $
+# $Id: r72-cellv1-spe.s,v 1.1.2.3 2007/08/03 05:00:35 decio Exp $
 
 	.section bss
 	.align	4
 
+	# Area for saving registers when leaving the main loop
 	.lcomm	save_118,		16
 	.lcomm	save_119,		16
 	.lcomm	save_120,		16
 	.lcomm	save_121,		16
 	.lcomm	save_122,		16
+
+	# The rc5_72unitwork struct
 	.lcomm	rc5_72unitwork,		16
+
+	# Pointer to iteration count in memory
 	.lcomm	iterations_ptr,		16
+
+	# The iteration count itself
 	.lcomm	iterations,		16
+
+	# Data read from the rc5_72unitwork struct
 	.lcomm	plain_hi,		16
 	.lcomm	plain_lo,		16
 	.lcomm	cypher_hi,		16
@@ -27,25 +36,40 @@
 	.lcomm	check_hi,		16
 	.lcomm	check_mid,		16
 	.lcomm	check_lo,		16
+
+	# Cached value of L[0] (recomputed when key.lo changes)
 	.lcomm	L0,			16
+
+	# Cached values of S[1] and L[1] (recomputed when key.mid changes)
 	.lcomm	S1,			16
 	.lcomm	L1,			16
+
+	# Cached values of S[2] (recomputed when key.mid changes)
 	.lcomm	S2_1,			16
 	.lcomm	S2_2,			16
 	.lcomm	S2_3,			16
 	.lcomm	S2_4,			16
+
+	# Cached value of A+B in key setup round 2 (recomputed when key.mid
+	# changes)
 	.lcomm	AB2_1,			16
 	.lcomm	AB2_2,			16
 	.lcomm	AB2_3,			16
 	.lcomm	AB2_4,			16
+
+	# Saved value of L[1] after key setup round 76, used for computing
+	# S[25] in key setup round 77, which is only done when a partial
+	# match happens)
 	.lcomm	L1_76_1,		16
 	.lcomm	L1_76_2,		16
 	.lcomm	L1_76_3,		16
 	.lcomm	L1_76_4,		16
 
+	# P and Q constants from the RC5 algorithm
 	.set	P,		0xB7E15163
 	.set	Q,		0x9E3779B9
 
+	# Generates initial values of S[0..25]; we have S[i] = P+i*Q
 	.macro	gen_S_const	i
 	.int	(P+\i*Q) & 0xFFFFFFFF, (P+\i*Q) & 0xFFFFFFFF, (P+\i*Q) & 0xFFFFFFFF, (P+\i*Q) & 0xFFFFFFFF
 	.if	\i < 26
@@ -55,23 +79,34 @@
 
 	.data
 	.align	4
+	# The initial values for S[0..25]
 S_const:
 	gen_S_const	0
+
+	# The value of S[0] after key setup round 0; it's constant
 S0:
 	.int	0xBF0A8B1D, 0xBF0A8B1D, 0xBF0A8B1D, 0xBF0A8B1D
+
+	# Constants for incrementing the keys
 inc_const:
 	.int	0, 1, 2, 3
+
+	# Byte-swapped value of 16 (= 0x10) for incrementing the keys
 key_inc_const:
 	.int	0x10000000, 0x10000000, 0x10000000, 0x10000000
+
+	# Byte-swap permute mask
 bswap:
 	.int	0x03020100, 0x03020100, 0x03020100, 0x03020100
 
 	.text
 
+	# Return values for the core
 	.set	RESULT_WORKING,		 0
 	.set	RESULT_NOTHING,		 1
 	.set	RESULT_FOUND,		 2
 
+	# Offsets of struct RC5_72UnitWork members
 	.set	offset_plain_hi,	 0
 	.set	offset_plain_lo,	 4
 	.set	offset_cypher_hi,	 8
@@ -84,21 +119,22 @@ bswap:
 	.set	offset_check_mid,	36
 	.set	offset_check_lo,	40
 
-# register allocation:
-#   $2- $27: S1
-#  $28- $30: L1
+	# register allocation:
+	#   $2- $27: S1
+	#  $28- $30: L1
+	#
+	#  $31- $56: S2
+	#  $57- $59: L2
+	#
+	#  $60- $85: S3
+	#  $86- $88: L3
+	#
+	#  $89-$114: S4
+	# $115-$117: L4
+	#
+	# $118-$127:temp
 
-#  $31- $56: S2
-#  $57- $59: L2
-
-#  $60- $85: S3
-#  $86- $88: L3
-
-#  $89-$114: S4
-# $115-$117: L4
-
-# $118-$127:temp
-
+	# Performs the key setup for the r-th round
 .macro	KEY_SETUP	round
 	# suffix 'p' as in previous
 	.set	L1p,	 28+((\round+ 2) %  3)
@@ -125,6 +161,10 @@ bswap:
 	.set	S4c,	 89+((\round   ) % 26)
 
 	# S[i+1] = (S[i+1] + S[i] + L[j]) <<< 3
+
+	# For the first pass through the S[] array (i.e. when round <= 25),
+	# read S[] from the constants in the S_const array; after that, read
+	# the data from the S[] array itself, stored in registers.
 .if \round <= 25
 	a	$S1c, $118, $S1p
 	a	$S2c, $118, $S2p
@@ -144,6 +184,7 @@ bswap:
 
 .if	\round < 25
 	roti	$S1c, $S1c,    3
+	# Load S[] array entry for the next round
 	lqa	$118, S_const+(\round+1)*16
 
 	roti	$S2c, $S2c,    3
@@ -174,6 +215,7 @@ bswap:
 .endm
 
 .macro	ENCRYPTION	round
+	# S1x = S[2i], S2x = S[2i + 1]
 	.set	S11,	  4+2*\round
 	.set	S12,	  4+2*\round+1
 	.set	S21,	 33+2*\round
@@ -325,6 +367,7 @@ _rc5_72_unit_func_cellv1_spe_core:
 	lqa	$125, L0_lo
 	lqa	$126, inc_const
 
+	# Initialize S[0]
 	lqa	  $2, S0
 	lqa	 $31, S0
 	lqa	 $60, S0
@@ -332,6 +375,7 @@ _rc5_72_unit_func_cellv1_spe_core:
 
 	# increment each word of key_hi in L1 by 0,...,3
 	a	 $30, $123, $126
+	# Load S[] array entry for key setup round 2
 	lqa	$118, S_const+2*16
 
 	# Each key in L2[2] is 4 more than the corresponding key in L1[2].
@@ -347,7 +391,15 @@ _rc5_72_unit_func_cellv1_spe_core:
 	# scheduling goes out the window
 	.align 3
 new_key_lo:
+	# Recompute and cache L[0] when key.lo changes; practically, key.lo
+	# will never change within a block, so this code will only be
+	# visited once. Hence its runtime is irrelevant to the keyrate of
+	# the core. But I still went to the trouble of optimizing it (:
 
+	#    L[0] = (L[0] + S[0] + 0) <<< (S[0] + 0)
+	# => L[0] = (L[0] + S[0]) <<< S[0]
+	#
+	# This is computed directly for L1 and L2, then copied to L3 and L4
 	a	 $28, $125,   $2
 	a	 $57, $125,  $31
 
@@ -357,6 +409,7 @@ new_key_lo:
 	nop
 	nop
 
+	# Copy to L3[0] and L4[0] and cache it in memory
 	lr	 $86,  $28
 	stqa	 $28, L0
 
@@ -365,13 +418,27 @@ new_key_lo:
 
 	.align	3
 new_key_mid:
+	# Recompute and cache S[1] and L[1] when key.mid changes; this will
+	# happen every 256 keys divided by 16 pipes = 16 iterations. Hence,
+	# if this code snippet runs in time t, it adds t/16 to the execution
+	# time of the core, so we need to be a little more careful with
+	# scheduling.
+	#
+	# It also computes and caches S[2] and A + B = S[2] + L[1] for use
+	# in key setup round 2.
 
+	# Load the initial value of S[1] = P+Q
 	ilhu	$118, (P+Q)@h
+	# Load key.mid into L1[1]. We could use lr but it is a mnemonic for
+	# an even pipeline instruction, and we need an odd pipeline
+	# instruction to pair with the instruction above
 	rotqbyi	 $29, $124,    0
 
 	iohl	$118, (P+Q)@l
+	# Load key.mid into L2[1]
 	lr	 $58, $124
 
+	# S[1] = (S[1] + S[0] + L[0]) <<< 3
 	a	  $3,   $2, $118
 	a	 $32,  $31, $118
 
@@ -381,16 +448,21 @@ new_key_mid:
 	roti	  $3,   $3,    3
 	roti	 $32,  $32,    3
 
+	# Load S[] array entry for key setup round 2
 	lqa	$118, S_const + 2*16
 	lnop
 
+	# L[1] = (L[1] + S[1] + L[0]) <<< (S[1] + L[0])
 	a	$126,   $3,  $28
+	# Copy L1[1] into L3[1] with an even pipeline instruction
 	rotqbyi	 $61,   $3,    0
 
 	a	$127,  $32,  $57
+	# Copy L1[] into L4[1] with an even pipeline instruction
 	rotqbyi	 $90,   $3,    0
 
 	a	 $29,  $29, $126
+	# Cache S[1] in memory
 	stqa	  $3, S1
 
 	a	 $58,  $58, $127
@@ -402,12 +474,14 @@ new_key_mid:
 	nop
 	nop
 
+	# Copy L[1] to L3[1] and L4[1] and cache it in memory
 	lr	 $87,  $29
 	stqa	 $29, L1
 
 	lr	$116,  $29
 	lnop
 
+	# S[2] = (S[2] + S[1] + L[1]) <<< 3
 	a	  $4, $118,   $3
 	a	 $33, $118,  $32
 	a	 $62, $118,  $61
@@ -423,6 +497,9 @@ new_key_mid:
 	roti	 $62,  $62,    3
 	roti	 $91,  $91,    3
 
+	# Compute and cache S[1] + L[1] (i.e. A+B) for key setup round 2.
+	#
+	# Also cache S[2] in memory.
 	a	  $7,   $4,  $29
 	stqa	  $4, S2_1
 
@@ -445,27 +522,36 @@ new_key_hi:
 
 	# Key setup round 2
 
+	# L[2] = (L[2] + S[2] + L[1]) <<< (S[2] + L[1]), where S[2] + L[1]
+	# is cached. This is interleaved with a bunch of loads and stores.
 	a	 $30,  $30,   $7
+	# Load S[] array entry for next round of key setup
 	lqa	$118, S_const + 3*16
 
 	a	 $59,  $59,  $36
+	# Store incremented key.hi
 	stqa	$123, L0_hi
 
 	rot	 $30,  $30,   $7
+	# Store incremented key.mid
 	stqa	$124, L0_mid
 
 	rot	 $59,  $59,  $36
+	# Store incremented key.lo
 	stqa	$125, L0_lo
 
 	a	 $88,  $88,  $65
+	# Load plain.lo, needed for encryption later
 	lqa	$124, plain_lo
 
 	a	$117, $117,  $94
+	# Load plain.hi, needed for encryption later
 	lqa	$125, plain_hi
 
 	rot	 $88,  $88,  $65
 	rot	$117, $117,  $94
 
+	# Key setup rounds 3-76
 	.align	3
 	KEY_SETUP	  3
 	KEY_SETUP	  4
@@ -541,12 +627,20 @@ new_key_hi:
 	KEY_SETUP	 74
 	KEY_SETUP	 75
 	KEY_SETUP	 76
-#	KEY_SETUP	 77
+
+	# Key setup round 77 is not done here. We don't need S[25] except to
+	# compute B in the last encryption round, and we don't even bother
+	# comparing B to cypher_hi unless A == cypher.lo, which happens with
+	# low probability (1 in 2^32). If it matches, then we compute the
+	# last key setup round and the second half of the last encryption
+	# round outside the main loop.
 
 	# Encryption pre-setup
 
 	.align	3
-	# S[0] = plain_lo + S[0]
+
+	# S[0] = plain_lo + S[0], interleaved with a bunch of loads
+
 	a	  $2, $124,   $2
 	lqa	$126, key_inc_const
 
@@ -559,97 +653,138 @@ new_key_hi:
 	a	 $89, $124,  $89
 	lqa	$124, L0_mid
 
-	# S[1] = plain_hi + S[1]
+	# S[1] = plain_hi + S[1], interleaved with a bunch of loads and
+	# stores
 
 	a	  $3, $125,   $3
+	# Store L1[1] at key setup round 76, needed for computing key setup
+	# round 77 if required later.
 	stqa	 $29, L1_76_1
 
 	a	 $32, $125,  $32
+	# Store L2[1] at key setup round 76, needed for computing key setup
+	# round 77 if required later.
 	stqa	 $58, L1_76_2
 
 	a	 $61, $125,  $61
+	# Store L3[1] at key setup round 76, needed for computing key setup
+	# round 77 if required later.
 	stqa	 $87, L1_76_3
 
 	a	 $90, $125,  $90
 	lqa	$125, L0_lo
 
-	.align	3
 	# Encryption round 0
+
+	.align	3
+
+	# S[0] = ((S[0] ^ S[1]) <<< S[1]) + S[2], interleaved with key
+	# increment code
 	xor	  $2,   $2,   $3
+	# Byte-swap key.hi
 	shufb	$123, $123, $123,  $127
 
 	xor	 $31,  $31,  $32
+	# Byte-swap key.mid
 	shufb	$124, $124, $124,  $127
 
 	xor	 $60,  $60,  $61
+	# Load S[2] for next iteration of the loop
 	lqa	$118, S_const+2*16
 
 	xor	 $89,  $89,  $90
+	# Load cached L[0] into L1[0]
 	lqa	 $28, L0
 
+	# Generate carry from key.hi increment
 	cg	$121, $123, $126
+	# Store L4[1] at key setup round 76, needed for computing key setup
+	# round 77 if required later.
 	stqa	$116, L1_76_4
 
+	# Increment key.hi
 	a	$123, $123, $126
+	# Byte-swap key.lo
 	shufb	$125, $125, $125,  $127
 
+	# Generate carry from key.mid increment
 	cg	$122, $124, $121
+
+	# Load cached L[0] into L2[0]
 	lqa	 $57, L0
 
+	# Add carry from key.hi increment to key.mid
 	a	$124, $124, $121
+	# Byte-swap back key.hi
 	shufb	$123, $123, $123, $127
 
 	rot	  $2,   $2,   $3
 	lqa	$119, inc_const
 
+	# Add carry from key.mid increment to key.lo
 	a	$125, $125, $122
+	# Byte-swap back key.mid
 	shufb	$124, $124, $124, $127
 
 	rot	 $31,  $31,  $32
+	# Load cached L[0] into L3[0]
 	lqa	 $86, L0
 
 	rot	 $60,  $60,  $61
+	# Byte-swap back key.lo
 	shufb	$125, $125, $125, $127
 
 	rot	 $89,  $89,  $90
+	# Move key.hi to L1[2] using an even pipeline instruction
 	rotqbyi	 $30, $123,    0
 
 	a	  $2,   $2,   $4
+	# Load cached L[0] into L4[0]
 	lqa	$115, L0
 
 	a	 $31,  $31,  $33
+	# Load cached L[1] into L1[1]
 	lqa	 $29, L1
 
 	a	 $60,  $60,  $62
+	# Load cached L[1] into L2[1]
 	lqa	 $58, L1
 
 	# increment each word of key_hi in L1 by 0,...,3
 	a	 $30,  $30, $119
+	# Load cached L[1] into L3[1]
 	lqa	 $87, L1
 
 	a	 $89,  $89,  $91
+	# Load cached L[1] into L4[1]
 	lqa	$116, L1
 
+	# Increment keys: L2[2] = L1[2] + {  4,  4,  4,  4 }
 	ai	 $59,  $30,    4
 	lqa	$120, iterations
 
+	# Increment keys: L3[2] = L1[2] + {  8,  8,  8,  8 }
 	ai	 $88,  $30,    8
 	lqa	$126, cypher_lo
 
+	# Increment keys: L4[2] = L1[2] + { 12, 12, 12, 12 }
 	ai	$117,  $30,   12
 	lqa	$127, cypher_hi
 
+	# S[1] = ((S[1] ^ S[0]) <<< S[0]) + S[3]
 	xor	  $3,   $3,   $2
 	xor	 $32,  $32,  $31
 	xor	 $61,  $61,  $60
 	xor	 $90,  $90,  $89
 
+	# Decrement iteration count
 	ai	$120, $120,  -16
 
 	rot	  $3,   $3,   $2
 	rot	 $32,  $32,  $31
 	rot	 $61,  $61,  $60
 	rot	 $90,  $90,  $89
+	# Store iteration count
 	stqa	$120, iterations
 
 	a	  $3,   $3,   $5
@@ -659,17 +794,26 @@ new_key_hi:
 
 	# Encryption round 1
 
-	# S[0] = ((S[0] ^ S[1]) <<< S[1]) + S[2i]
+	# S[0] = ((S[0] ^ S[1]) <<< S[1]) + S[2i], interleaved with a bunch
+	# of loads.
+	#
+	# From now on we store S[0] and S[1] in S[2] and S[3] instead, since
+	# we need to load S[0] and S[1] to be used in the next iteration of
+	# the loop.
 	xor	  $4,   $2,   $3
+	# Load cached S[0] into S1[0]
 	lqa	  $2, S0
 
 	xor	 $33,  $31,  $32
+	# Load cached S[0] into S2[0]
 	lqa	 $31, S0
 
 	xor	 $62,  $60,  $61
+	# Load cached S[0] into S3[0]
 	lqa	 $60, S0
 
 	xor	 $91,  $89,  $90
+	# Load cached S[0] into S4[0]
 	lqa	 $89, S0
 
 	rot	  $4,   $4,   $3
@@ -682,17 +826,22 @@ new_key_hi:
 	a	 $62,  $62,  $64
 	a	 $91,  $91,  $93
 
-	# S[1] = ((S[1] ^ S[0]) <<< S[0]) + S[2i+1]
+	# S[1] = ((S[1] ^ S[0]) <<< S[0]) + S[2i+1], interleaved with a
+	# bunch of loads.
 	xor	  $5,   $3,   $4
+	# Load cached S[1] into S1[1]
 	lqa	  $3, S1
 
 	xor	 $34,  $32,  $33
+	# Load cached S[1] into S2[1]
 	lqa	 $32, S1
 
 	xor	 $63,  $61,  $62
+	# Load cached S[1] into S3[1]
 	lqa	 $61, S1
 
 	xor	 $92,  $90,  $91
+	# Load cached S[1] into S4[1]
 	lqa	 $90, S1
 
 	rot	  $5,   $5,   $4
@@ -705,6 +854,7 @@ new_key_hi:
 	a	 $63,  $63,  $65
 	a	 $92,  $92,  $94
 
+	# Encryption rounds 2-10
 	.align	3
 	ENCRYPTION	 2
 	ENCRYPTION	 3
@@ -715,25 +865,53 @@ new_key_hi:
 	ENCRYPTION	 8
 	ENCRYPTION	 9
 	ENCRYPTION	10
-#	ENCRYPTION	11
+
+	# Encryption round 11, or rather, only the first half of it
+	# (computation of A). As explained above, B is computed (outside the
+	# main loop) only if the comparison A == cypher.lo succeeds.
+
+	# Here's how the comparison is done. We compare A1, A2, A3 and A4 to
+	# cypher.lo, so that each word partition of these registers contains
+	# either 0x00000000 or 0xFFFFFFFF, depending on whether the result
+	# was equal to cypher.lo or not. Then we use the gb (gather bits
+	# from words) to copy the least-significant bits from each word
+	# partition of the registers to the preferred slot of the
+	# destination register. Then we branch based on that. If we do take
+	# the branch and have to test matching keys, we can just test
+	# whether bits 0-3 of the destination register are set.
 
 	# S[0] = ((S[0] ^ S[1]) <<< S[1]) + S[2i]
 	xor	  $4,   $4,   $5
+	# Hint for the unconditional branch to the beginning of the loop.
+	# It's the only branch we expect to take.
+	#
+	# Actually, we expect to take the branch to new_key_mid whenever the
+	# carry from incrementing key.hi is set, but I have no idea how to
+	# use this information to actually speed up the core. Remember, that
+	# branch is only taken once every 16 loop iterations, so the
+	# amortized cost due to pipeline flushen is 18/16 = 1.125 cycles.
+	# If you can insert a hint for that branch without increasing the
+	# execution time of the current code by more than 1 cycle, feel free
+	# to do it.
 	hbra	branch_new_key_hi, new_key_hi
 
 	xor	 $33,  $33,  $34
 	lnop
 
 	rot	  $4,   $4,   $5
+	# Load cached A+B for pipeline 1
 	lqa	  $7, AB2_1
 
 	rot	 $33,  $33,  $34
+	# Load cached A+B for pipeline 2
 	lqa	 $36, AB2_2
 
 	xor	 $62,  $62,  $63
+	# Load cached A+B for pipeline 3
 	lqa	 $65, AB2_3
 
 	xor	 $91,  $91,  $92
+	# Load cached A+B for pipeline 4
 	lqa	 $94, AB2_4
 
 	rot	 $62,  $62,  $63
@@ -742,49 +920,73 @@ new_key_hi:
 	a	  $4,   $4,  $26
 	a	 $33,  $33,  $55
 
+	# Test A1 == cypher.lo
 	ceq	  $6,   $4, $126
+	# Load cached S[2] into S1[2]
 	lqa	  $4, S2_1
 
+	# Test A2 == cypher.lo
 	ceq	 $35,  $33, $126
+	# Load cached S[2] into S2[2]
 	lqa	 $33, S2_2
 
 	a	 $62,  $62,  $84
+	# Set preferred slot of comparison output register 1 with comparison
+	# results from every word partition of A1 (see above)
  	gb	  $6,   $6
 
 	a	 $91,  $91, $113
+	# Set preferred slot of comparison output register 2 with comparison
+	# results from every word partition of A2 (see above)
 	gb	 $35,  $35
 
+	# Test A3 == cypher.lo
 	ceq	 $64,  $62, $126
+	# Load cached S[2] into S3[2]
 	lqa	 $62, S2_3
 
+	# Test A4 == cypher.lo
 	ceq	 $93,  $91, $126
+	# Load cached S[2] into S4[2]
 	lqa	 $91, S2_4
 
+	# Set preferred slot of comparison output register 3 with comparison
+	# results from every word partition of A3 (see above)
 	gb	 $64,  $64
+	# Set preferred slot of comparison output register 4 with comparison
+	# results from every word partition of A4 (see above)
 	gb	 $93,  $93
 
 	.align	3
 cmp_cypher:
 
 test_key_1:
+	# Branch if there was a partial match in one of the keys from A1
 	brnz	  $6, match_key_1
 test_key_2:
+	# Branch if there was a partial match in one of the keys from A2
 	brnz	 $35, match_key_2
 test_key_3:
+	# Branch if there was a partial match in one of the keys from A3
 	brnz	 $64, match_key_3
 test_key_4:
+	# Branch if there was a partial match in one of the keys from A4
 	brnz	 $93, match_key_4
 
 	.align	3
 loop:
-
+	# Finished the loop; pack up and return to main()
 	brz	$120, set_retval
 
+	# key.lo was incremented; re-compute the cache
 	brnz	$121, new_key_lo
 
+	# key.mid was incremented; re-compute the cache
 	brnz	$122, new_key_mid
 
 branch_new_key_hi:
+	# If key.lo and key.mid didn't change, start from key setup round 2
+	# with cached values from previous rounds
 	br	new_key_hi
 
 set_retval:
@@ -874,7 +1076,7 @@ epilogue:
 	bi	$LR
 
 
-
+	# Save registers $118-$122
 .macro SaveRegs
 	stqa	$118, save_118
 	stqa	$119, save_119
@@ -883,6 +1085,7 @@ epilogue:
 	stqa	$122, save_122
 .endm
 
+	# Restore registers $118-$122
 .macro RestoreRegs
 	lqa	$118, save_118
 	lqa	$119, save_119
@@ -891,7 +1094,16 @@ epilogue:
 	lqa	$122, save_122
 .endm
 
+	# Due to the way comparisons are handled, we have that the register
+	# corresponding to pipeline i has:
+	# -bit 3 set if key 4*(i-1) out of 16 matched
+	# -bit 2 set if key 4*(i-1)+1 out of 16 matched
+	# -bit 1 set if key 4*(i-1)+2 out of 16 matched
+	# -bit 0 set if key 4*(i-1)+3 out of 16 matched
+
 match_key_1:
+	# Compute key setup round 77 and second half of encryption round 11
+	# for the first pipeline
 	lqa	 $29, L1_76_1
 
 	a	 $27,  $27,  $26
@@ -944,16 +1156,20 @@ test_full_match_key_1:
 	# Keys 0-3
 	il	$118,    0
 
+	# Test B1 == cypher.hi
 	ceq	$120,   $5, $127
 	gb	$120, $120
 	brnz	$120, found_key
 
 	RestoreRegs
 
+	# Back to the main loop
 	br	test_key_2
 
 
 match_key_2:
+	# Compute key setup round 77 and second half of encryption round 11
+	# for the second pipeline
 	lqa	 $58, L1_76_2
 
 	a	 $56,  $56,  $55
@@ -1006,16 +1222,20 @@ test_full_match_key_2:
 	# Keys 4-7
 	il	$118,    4
 
+	# Test B2 == cypher.hi
 	ceq	$120,  $34, $127
 	gb	$120, $120
 	brnz	$120, found_key
 
 	RestoreRegs
 
+	# Back to the main loop
 	br	test_key_3
 
 
 match_key_3:
+	# Compute key setup round 77 and second half of encryption round 11
+	# for the third pipeline
 	lqa	 $87, L1_76_3
 
 	a	 $85,  $85,  $84
@@ -1069,16 +1289,20 @@ test_full_match_key_3:
 	# Keys 8-11
 	il	$118,    8
 
+	# Test B3 == cypher.hi
 	ceq	$120,  $63, $127
 	gb	$120, $120
 	brnz	$120, found_key
 
 	RestoreRegs
 
+	# Back to the main loop
 	br	test_key_4
 
 
 match_key_4:
+	# Compute key setup round 77 and second half of encryption round 11
+	# for the fourth pipeline
 	lqa	$116, L1_76_4
 
 	a	$114, $114, $113
@@ -1131,12 +1355,14 @@ test_full_match_key_4:
 	# Keys 12-15
 	il	$118,   12
 
+	# Test B3 == cypher.hi
 	ceq	$120,  $92, $127
 	gb	$120, $120
 	brnz	$120, found_key
 
 	RestoreRegs
 
+	# Back to the main loop
 	br	loop
 
 
@@ -1230,6 +1456,8 @@ end_found_key:
 
 	WriteStructMemberCMC	$118,    0
 
+	# We found it!
 	il	$127, RESULT_FOUND
 
+	# Return from the function
 	br	epilogue
