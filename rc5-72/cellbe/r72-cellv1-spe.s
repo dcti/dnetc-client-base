@@ -3,7 +3,7 @@
 # Any other distribution or use of this source violates copyright.
 #
 # Author: Decio Luiz Gazzoni Filho <decio@distributed.net>
-# $Id: r72-cellv1-spe.s,v 1.1.2.1 2007/08/02 08:08:37 decio Exp $
+# $Id: r72-cellv1-spe.s,v 1.1.2.2 2007/08/03 03:12:49 decio Exp $
 
 	.section bss
 	.align	4
@@ -30,6 +30,18 @@
 	.lcomm	L0,			16
 	.lcomm	S1,			16
 	.lcomm	L1,			16
+	.lcomm	S2_1,			16
+	.lcomm	S2_2,			16
+	.lcomm	S2_3,			16
+	.lcomm	S2_4,			16
+	.lcomm	AB2_1,			16
+	.lcomm	AB2_2,			16
+	.lcomm	AB2_3,			16
+	.lcomm	AB2_4,			16
+	.lcomm	L1_76_1,		16
+	.lcomm	L1_76_2,		16
+	.lcomm	L1_76_3,		16
+	.lcomm	L1_76_4,		16
 
 	.set	P,		0xB7E15163
 	.set	Q,		0x9E3779B9
@@ -187,7 +199,6 @@ bswap:
 	a	 $62,  $62, $S31
 	a	 $91,  $91, $S41
 
-.if	\round < 11
 	# S[1] = ((S[1] ^ S[0]) <<< S[0]) + S[2i+1]
 	xor	  $5,   $5,   $4
 	xor	 $34,  $34,  $33
@@ -203,43 +214,6 @@ bswap:
 	a	 $34,  $34, $S22
 	a	 $63,  $63, $S32
 	a	 $92,  $92, $S42
-.else
-	# S[1] = ((S[1] ^ S[0]) <<< S[0]) + S[2i+1]
-	xor	  $5,   $5,   $4
-	hbra	branch_new_key_hi, new_key_hi
-
-	xor	 $34,  $34,  $33
-
-	rot	  $5,   $5,   $4
-
-	ceq	  $4,   $4, $126
-
-	rot	 $34,  $34,  $33
-
-	ceq	 $33,  $33, $126
- 	gb	  $4,   $4
-
-	xor	 $63,  $63,  $62
-	xor	 $92,  $92,  $91
-
-	rot	 $63,  $63,  $62
-	gb	 $33,  $33
-
-	ceq	 $62,  $62, $126
-	rot	 $92,  $92,  $91
-
-	ceq	 $91,  $91, $126
-	gb	 $62,  $62
-
-	a	  $5,   $5, $S12
-	a	 $34,  $34, $S22
-
-	a	 $63,  $63, $S32
-	lnop
-
-	a	 $92,  $92, $S42
-	gb	 $91,  $91
-.endif
 .endm
 
 	.global rc5_72_unit_func_cellv1_spe_core
@@ -356,21 +330,6 @@ _rc5_72_unit_func_cellv1_spe_core:
 	lqa	 $60, S0
 	lqa	 $89, S0
 
-#	lqa	 $28, L0
-#	lqa	 $57, L0
-#	lqa	 $86, L0
-#	lqa	$115, L0
-
-#	lqa	  $3, S1
-#	lqa	 $32, S1
-#	lqa	 $61, S1
-#	lqa	 $90, S1
-
-#	lqa	 $29, L1
-#	lqa	 $58, L1
-#	lqa	 $87, L1
-#	lqa	$116, L1
-
 	# increment each word of key_hi in L1 by 0,...,3
 	a	 $30, $123, $126
 	lqa	$118, S_const+2*16
@@ -449,28 +408,13 @@ new_key_mid:
 	lr	$116,  $29
 	lnop
 
-	.align	3
-new_key_hi:
-
-	# Key setup round 2
 	a	  $4, $118,   $3
-	stqa	$123, L0_hi
-
 	a	 $33, $118,  $32
-	stqa	$124, L0_mid
-
 	a	 $62, $118,  $61
-	stqa	$125, L0_lo
-
 	a	 $91, $118,  $90
-	lqa	$124, plain_lo
 
 	a	  $4,   $4,  $29
-	lqa	$125, plain_hi
-
 	a	 $33,  $33,  $58
-	lqa	$118, S_const + 3*16
-
 	a	 $62,  $62,  $87
 	a	 $91,  $91, $116
 
@@ -479,21 +423,48 @@ new_key_hi:
 	roti	 $62,  $62,    3
 	roti	 $91,  $91,    3
 
-	a	$126,   $4,  $29
-	a	$127,  $33,  $58
-	a	 $30,  $30, $126
-	a	 $59,  $59, $127
+	a	  $7,   $4,  $29
+	stqa	  $4, S2_1
 
-	rot	 $30,  $30, $126
-	rot	 $59,  $59, $127
+	a	 $36,  $33,  $58
+	stqa	 $33, S2_2
 
-	a	$126,  $62,  $87
-	a	$127,  $91, $116
-	a	 $88,  $88, $126
-	a	$117, $117, $127
+	a	 $65,  $62,  $87
+	stqa	 $62, S2_3
 
-	rot	 $88,  $88, $126
-	rot	$117, $117, $127
+	a	 $94,  $91, $116
+	stqa	 $91, S2_4
+
+	stqa	  $7, AB2_1
+	stqa	 $36, AB2_2
+	stqa	 $65, AB2_3
+	stqa	 $94, AB2_4
+
+	.align	3
+new_key_hi:
+
+	# Key setup round 2
+
+	a	 $30,  $30,   $7
+	lqa	$118, S_const + 3*16
+
+	a	 $59,  $59,  $36
+	stqa	$123, L0_hi
+
+	rot	 $30,  $30,   $7
+	stqa	$124, L0_mid
+
+	rot	 $59,  $59,  $36
+	stqa	$125, L0_lo
+
+	a	 $88,  $88,  $65
+	lqa	$124, plain_lo
+
+	a	$117, $117,  $94
+	lqa	$125, plain_hi
+
+	rot	 $88,  $88,  $65
+	rot	$117, $117,  $94
 
 	.align	3
 	KEY_SETUP	  3
@@ -570,7 +541,7 @@ new_key_hi:
 	KEY_SETUP	 74
 	KEY_SETUP	 75
 	KEY_SETUP	 76
-	KEY_SETUP	 77
+#	KEY_SETUP	 77
 
 	# Encryption pre-setup
 
@@ -591,10 +562,13 @@ new_key_hi:
 	# S[1] = plain_hi + S[1]
 
 	a	  $3, $125,   $3
+	stqa	 $29, L1_76_1
+
 	a	 $32, $125,  $32
+	stqa	 $58, L1_76_2
 
 	a	 $61, $125,  $61
-	lnop
+	stqa	 $87, L1_76_3
 
 	a	 $90, $125,  $90
 	lqa	$125, L0_lo
@@ -614,7 +588,7 @@ new_key_hi:
 	lqa	 $28, L0
 
 	cg	$121, $123, $126
-	lnop
+	stqa	$116, L1_76_4
 
 	a	$123, $123, $126
 	shufb	$125, $125, $125,  $127
@@ -741,19 +715,65 @@ new_key_hi:
 	ENCRYPTION	 8
 	ENCRYPTION	 9
 	ENCRYPTION	10
-	ENCRYPTION	11
+#	ENCRYPTION	11
+
+	# S[0] = ((S[0] ^ S[1]) <<< S[1]) + S[2i]
+	xor	  $4,   $4,   $5
+	hbra	branch_new_key_hi, new_key_hi
+
+	xor	 $33,  $33,  $34
+	lnop
+
+	rot	  $4,   $4,   $5
+	lqa	  $7, AB2_1
+
+	rot	 $33,  $33,  $34
+	lqa	 $36, AB2_2
+
+	xor	 $62,  $62,  $63
+	lqa	 $65, AB2_3
+
+	xor	 $91,  $91,  $92
+	lqa	 $94, AB2_4
+
+	rot	 $62,  $62,  $63
+	rot	 $91,  $91,  $92
+
+	a	  $4,   $4,  $26
+	a	 $33,  $33,  $55
+
+	ceq	  $6,   $4, $126
+	lqa	  $4, S2_1
+
+	ceq	 $35,  $33, $126
+	lqa	 $33, S2_2
+
+	a	 $62,  $62,  $84
+ 	gb	  $6,   $6
+
+	a	 $91,  $91, $113
+	gb	 $35,  $35
+
+	ceq	 $64,  $62, $126
+	lqa	 $62, S2_3
+
+	ceq	 $93,  $91, $126
+	lqa	 $91, S2_4
+
+	gb	 $64,  $64
+	gb	 $93,  $93
 
 	.align	3
 cmp_cypher:
 
 test_key_1:
-	brnz	  $4, match_key_1
+	brnz	  $6, match_key_1
 test_key_2:
-	brnz	 $33, match_key_2
+	brnz	 $35, match_key_2
 test_key_3:
-	brnz	 $62, match_key_3
+	brnz	 $64, match_key_3
 test_key_4:
-	brnz	 $91, match_key_4
+	brnz	 $93, match_key_4
 
 	.align	3
 loop:
@@ -872,10 +892,20 @@ epilogue:
 .endm
 
 match_key_1:
+	lqa	 $29, L1_76_1
+
+	a	 $27,  $27,  $26
+	a	 $27,  $27,  $29
+	roti	 $27,  $27,    3
+
+	xor	  $5,   $5, $126
+	rot	  $5,   $5, $126
+	a	  $5,   $5,  $27
+
 	SaveRegs
 
 test_match_key_11:
-	andi	$121,   $4,    8
+	andi	$121,   $6,    8
 	brz	$121, test_match_key_12
 
 	# Key 0 of 16
@@ -884,7 +914,7 @@ test_match_key_11:
 	brsl	$119, report_cmc
 
 test_match_key_12:
-	andi	$121,   $4,    4
+	andi	$121,   $6,    4
 	brz	$121, test_match_key_13
 
 	# Key 1 of 16
@@ -893,7 +923,7 @@ test_match_key_12:
 	brsl	$119, report_cmc
 
 test_match_key_13:
-	andi	$121,   $4,    2
+	andi	$121,   $6,    2
 	brz	$121, test_match_key_14
 
 	# Key 2 of 16
@@ -902,7 +932,7 @@ test_match_key_13:
 	brsl	$119, report_cmc
 
 test_match_key_14:
-	andi	$121,   $4,    1
+	andi	$121,   $6,    1
 	brz	$121, test_full_match_key_1
 
 	# Key 3 of 16
@@ -924,10 +954,20 @@ test_full_match_key_1:
 
 
 match_key_2:
+	lqa	 $58, L1_76_2
+
+	a	 $56,  $56,  $55
+	a	 $56,  $56,  $58
+	roti	 $56,  $56,    3
+
+	xor	 $34,  $34, $126
+	rot	 $34,  $34, $126
+	a	 $34,  $34,  $56
+
 	SaveRegs
 
 test_match_key_21:
-	andi	$121,  $33,    8
+	andi	$121,  $35,    8
 	brz	$121, test_match_key_22
 
 	# Key 4 of 16
@@ -936,7 +976,7 @@ test_match_key_21:
 	brsl	$119, report_cmc
 
 test_match_key_22:
-	andi	$121,  $33,    4
+	andi	$121,  $35,    4
 	brz	$121, test_match_key_23
 
 	# Key 5 of 16
@@ -945,7 +985,7 @@ test_match_key_22:
 	brsl	$119, report_cmc
 
 test_match_key_23:
-	andi	$121,  $33,    2
+	andi	$121,  $35,    2
 	brz	$121, test_match_key_24
 
 	# Key 6 of 16
@@ -954,7 +994,7 @@ test_match_key_23:
 	brsl	$119, report_cmc
 
 test_match_key_24:
-	andi	$121,  $33,    1
+	andi	$121,  $35,    1
 	brz	$121, test_full_match_key_2
 
 	# Key 7 of 16
@@ -976,10 +1016,20 @@ test_full_match_key_2:
 
 
 match_key_3:
+	lqa	 $87, L1_76_3
+
+	a	 $85,  $85,  $84
+	a	 $85,  $85,  $87
+	roti	 $85,  $85,    3
+
+	xor	 $63,  $63, $126
+	rot	 $63,  $63, $126
+	a	 $63,  $63,  $85
+
 	SaveRegs
 
 test_match_key_31:
-	andi	$121,  $62,    8
+	andi	$121,  $64,    8
 	brz	$121, test_match_key_32
 
 	# Key 8 of 16
@@ -988,7 +1038,7 @@ test_match_key_31:
 	brsl	$119, report_cmc
 
 test_match_key_32:
-	andi	$121,  $62,    4
+	andi	$121,  $64,    4
 	brz	$121, test_match_key_33
 
 	# Key 9 of 16
@@ -997,7 +1047,7 @@ test_match_key_32:
 	brsl	$119, report_cmc
 
 test_match_key_33:
-	andi	$121,  $62,    2
+	andi	$121,  $64,    2
 	brz	$121, test_match_key_34
 
 	# Key 10 of 16
@@ -1006,7 +1056,7 @@ test_match_key_33:
 	brsl	$119, report_cmc
 
 test_match_key_34:
-	andi	$121,  $62,    1
+	andi	$121,  $64,    1
 	brz	$121, test_full_match_key_3
 
 	# Key 11 of 16
@@ -1029,10 +1079,20 @@ test_full_match_key_3:
 
 
 match_key_4:
+	lqa	$116, L1_76_4
+
+	a	$114, $114, $113
+	a	$114, $114, $116
+	roti	$114, $114,    3
+
+	xor	 $92,  $92, $126
+	rot	 $92,  $92, $126
+	a	 $92,  $92, $114
+
 	SaveRegs
 
 test_match_key_41:
-	andi	$121,  $91,    8
+	andi	$121,  $93,    8
 	brz	$121, test_match_key_42
 
 	# Key 12 of 16
@@ -1041,7 +1101,7 @@ test_match_key_41:
 	brsl	$119, report_cmc
 
 test_match_key_42:
-	andi	$121,  $91,    4
+	andi	$121,  $93,    4
 	brz	$121, test_match_key_43
 
 	# Key 13 of 16
@@ -1050,7 +1110,7 @@ test_match_key_42:
 	brsl	$119, report_cmc
 
 test_match_key_43:
-	andi	$121,  $91,    2
+	andi	$121,  $93,    2
 	brz	$121, test_match_key_44
 
 	# Key 14 of 16
@@ -1059,7 +1119,7 @@ test_match_key_43:
 	brsl	$119, report_cmc
 
 test_match_key_44:
-	andi	$121,  $91,    1
+	andi	$121,  $93,    1
 	brz	$121, test_full_match_key_4
 
 	# Key 15 of 16
