@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.113 2007/08/02 08:08:36 decio Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.114 2007/08/04 09:49:07 decio Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -164,7 +164,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (rc != 0 || cpucount < 1)
         cpucount = -1;
     }
-    #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && \
+           (CLIENT_CPU != CPU_CELLBE)
     {
       #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
         cpucount = 1;
@@ -180,7 +181,6 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
           #if (CLIENT_CPU == CPU_X86      || \
                CLIENT_CPU == CPU_AMD64    || \
                CLIENT_CPU == CPU_POWERPC  || \
-               CLIENT_CPU == CPU_CELLBE   || \
                CLIENT_CPU == CPU_S390     || \
                CLIENT_CPU == CPU_S390X    || \
                CLIENT_CPU == CPU_PA_RISC)
@@ -237,11 +237,16 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         }
         fclose(cpuinfo);
       }
-
-      #if (CLIENT_CPU == CPU_CELLBE)
-      cpucount += spe_cpu_info_get(SPE_COUNT_USABLE_SPES, -1);
-      #endif
       #endif // (CLIENT_CPU == CPU_ARM)
+    }
+    #elif (CLIENT_CPU == CPU_CELLBE)
+    {
+      // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees
+      // 2 processors), but it has been found that running 2 simultaneous
+      // threads degrades performance, so let's pretend there's only one
+      // PPE. Then add the number of usable SPEs.
+      cpucount = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1) +
+                 spe_cpu_info_get(SPE_COUNT_USABLE_SPES, -1);
     }
     #elif (CLIENT_OS == OS_IRIX)
     {
@@ -2490,6 +2495,23 @@ unsigned int GetProcessorFrequency()
           freq = nearest166;
         }
       }
+    }
+  #elif  (CLIENT_OS == OS_LINUX) && \
+        ((CLIENT_CPU == CPU_POWERPPC) || (CLIENT_CPU == CPU_CELLBE))
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+    if ( cpuinfo )
+    {
+      char buffer[256];
+      while(fgets(buffer, sizeof(buffer), cpuinfo))
+      {
+        buffer[sizeof(buffer) - 1] = '\0';
+        if (strncmp(buffer, "clock\t\t: ", 9) == 0)
+        {
+          freq = (unsigned int)strtod(buffer+9, NULL);
+          break;
+        }
+      }
+      fclose(cpuinfo);
     }
   #endif
 
