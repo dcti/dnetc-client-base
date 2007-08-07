@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.52 2007/08/02 08:41:07 decio Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.53 2007/08/07 07:48:54 decio Exp $"; }
 
 //#define TRACE
 
@@ -558,8 +558,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(RC5_72);
 #if (CLIENT_CPU == CPU_CELLBE)
-  // Each Cell has 2 PPEs
-  static unsigned int PPE_count = 2*spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
+  // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees 2
+  // processors), but it has been found that running 2 simultaneous threads
+  // degrades performance, so let's pretend there's only one PPE.
+  static unsigned int PPE_count = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
 
   // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs
   // (core 0); the rest are scheduled on the SPEs (core 1).
