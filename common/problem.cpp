@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.177.2.27 2007/08/02 08:08:37 decio Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.177.2.28 2007/08/07 07:41:38 decio Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1695,14 +1695,16 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
   /* a brace to ensure 'keystocheck' is not referenced in the common part */
   {
     u32 keystocheck = *keyscheckedP;
+
     // don't allow a too large of a keystocheck be used ie (>(iter-keysdone))
     // (technically not necessary, but may save some wasted time)
-    // FIXME: RETHINK - is this correct and/or useful?
-    if (thisprob->priv_data.contestwork.bigcrypto.keysdone.hi == thisprob->priv_data.contestwork.bigcrypto.iterations.hi)
+    if ((thisprob->priv_data.contestwork.bigcrypto.iterations.hi -
+         thisprob->priv_data.contestwork.bigcrypto.keysdone.hi <= 1) &&
+        (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo +
+         keystocheck < keystocheck))
     {
-      u32 todo = thisprob->priv_data.contestwork.bigcrypto.iterations.lo-thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
-      if (todo < keystocheck)
-        keystocheck = todo;
+      keystocheck = thisprob->priv_data.contestwork.bigcrypto.iterations.lo -
+                    thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
     }
 
     if (keystocheck < MINIMUM_ITERATIONS)
