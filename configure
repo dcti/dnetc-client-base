@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.162 2007/08/02 08:08:36 decio Exp $
+# @(#)$Id: configure,v 1.288.2.163 2007/08/07 08:16:08 decio Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2323,7 +2323,7 @@ case "$1" in
         TARGET_LDFLAGS="-static"
 	TARGET_ASFLAGS="-maltivec"
         TARGET_LIBS="-lspe2 -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.cell"   #platform specific docfile
         TARGET_TARBALL="linux-cellbe"
         add_sources "linux" "cellbe" "altivec"
         ;;

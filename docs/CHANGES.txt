@@ -23,11 +23,13 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.116 2007/07/03 23:58:06 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.117 2007/08/07 08:16:08 decio Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9014-501  new: cellbe: New platform, PlayStation 3/Cell BE
+
 2.9013-500  imp: x86: Faster RC5-72 GO-2 core (#3265)
             chg: x86: GO-2 core is now the default selection for P4
             chg: x86: OGR core selection for P4 (#3988 and others)
