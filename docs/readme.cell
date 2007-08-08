@@ -1,5 +1,5 @@
 distributed.net client for the unix family
- document revision $Id: readme.cell,v 1.1.2.1 2007/08/07 07:42:59 decio Exp $
+ document revision $Id: readme.cell,v 1.1.2.2 2007/08/08 10:17:27 decio Exp $
 
  Welcome to the distributed.net client.
 
@@ -69,14 +69,14 @@ distributed.net client for the unix family
            core and run n crunchers simultaneously.
 
     Note that although Linux reports 2 CPUs per Cell, this is due to the PPE
-    being a 2-way symmetric multi-threaded (SMT) design, roughly similar to 
-    the Hyperthreading technology used in Intel's Pentium 4 CPUs. This means
-    the operating system sees each CPU as 2 distinct CPUs, but physically
-    these CPUs share the majority of execution resources and generally
-    cannot perform at twice the rate of a single CPU. Moreover, since our
-    cores already exploit all available PPE execution resources in a single
-    cruncher, while relying on precise instruction scheduling, it has been
-    observed that running multiple PPE crunchers simultaneously on the same
-    physical PPE has a negative effect on performance. Therefore, in
-    conjunction with the workaround above for SPE cores, running multiple
+    being a 2-way simultaneous multi-threading (SMT) design, roughly similar
+    to the Hyperthreading technology used in Intel's Pentium 4 CPUs. This
+    means the operating system sees each CPU as 2 distinct CPUs, but
+    physically these CPUs share the majority of execution resources and
+    generally cannot perform at twice the rate of a single CPU. Moreover,
+    since our cores already exploit all available PPE execution resources in
+    a single cruncher, while relying on precise instruction scheduling, it
+    has been observed that running multiple PPE crunchers simultaneously on
+    the same physical PPE has a negative effect on performance. Therefore,
+    in conjunction with the workaround above for SPE cores, running multiple
     PPE crunchers in a single Cell is disabled in this client.
