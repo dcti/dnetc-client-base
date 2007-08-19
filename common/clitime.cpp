@@ -14,19 +14,13 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.12 2007/08/19 04:44:09 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.13 2007/08/19 06:19:38 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
 #include "clitime.h"    /* keep the prototypes in sync */
 #include "unused.h"     /* DNETC_UNUSED_* */
 #include "clisync.h"
-
-#if (CLIENT_OS == OS_WIN32) && (CLIENT_CPU == CPU_ALPHA)
-extern "C" int _AcquireSpinLockCount(long *, int);
-extern "C" void _ReleaseSpinLock(long *);
-#pragma intrinsic(_AcquireSpinLockCount, _ReleaseSpinLock)
-#endif
 
 #if (CLIENT_OS == OS_NETWARE6)
 #include <nks/time.h>
@@ -508,86 +502,47 @@ int CliGetMonotonicClock( struct timeval *tv )
       #endif
       /* if (using_qff == 0) */
       {
-        /* '-benchmark rc5' in keys/sec with disabled ThreadUserTime(): */
-        /* using spinlocks: 1,386,849.10 | using critical section: 994,861.48 */
-        static long splbuf[4] = {0,0,0,0}; /* 64bit*2 */
-        static DWORD lastticks = 0, wrap_count = 0;
-        DWORD ticks, l_wrap_count; long *spllp;
-        char *splcp = (char *)&splbuf[0];
+        static DWORD lastticks = 0, wrap_count = (DWORD)-1L;
+        static fastlock_t mutex;
+        DWORD ticks, l_wrap_count;
 
-        int lacquired = 0, locktries = 0;
-        splcp += ((64/8) - (((unsigned long)splcp) & ((64/8)-1)));
-        spllp = (long *)splcp; /* long * to 64bit-aligned spinlock space */
-        while (!lacquired)
-        {
-          #if (CLIENT_CPU == CPU_ALPHA)
-          lacquired = _AcquireSpinLockCount(spllp, 0x0f); /* VC6 intrinsic */
-          locktries += 0x0f;
-          #else
-          if (InterlockedExchange(spllp,1)==0) /* spl must be 32bit-aligned */
-            lacquired = 1;
-          #endif
-          if (!lacquired && ((++locktries)&0x0f)==0)
-            Sleep(0);
+        if (wrap_count == (DWORD)-1L) {
+          fastlock_init(&mutex);
+          wrap_count = 0;
         }
+        fastlock_lock(&mutex);
+
         ticks = GetTickCount(); /* millisecs elapsed since OS start */
         l_wrap_count = wrap_count;
         if (ticks < lastticks)
           wrap_count = ++l_wrap_count;
         lastticks = ticks;
-        #if (CLIENT_CPU == CPU_ALPHA)
-        _ReleaseSpinLock(spllp);  /* VC6 intrinsic */
-        #else
-        *spllp = 0;
-        #endif
+
+        fastlock_unlock(&mutex);
         __clks2tv( 1000, ticks, l_wrap_count, tv );
       }
     }
     #elif (CLIENT_OS == OS_OS2)
     {
-      static long splbuf[2] = {0,0}; /* space for 32bit alignment */
-      char *splptr = (char *)&splbuf[0];
+      static fastlock_t mutex;
+      static ULONG wrap_count = (ULONG)-1L, lastticks = 0;
       ULONG ticks, l_wrap_count = 0;
-      int gotit = 0, lacquired = 0;
+      bool gotit = false;
 
-      splptr += (sizeof(long)-(((unsigned long)splptr) & (sizeof(long)-1)));
-      while (!lacquired)
-      {
-        #if defined(__GNUC__)
-        /* gcc is sometimes too clever */
-        struct __fool_gcc_volatile { unsigned long a[100]; };
-        /* note: no 'lock' prefix even on SMP since xchg is always atomic */
-        __asm__ __volatile__(
-                   "movl $1,%0\n\t"
-                   "xchgl %0,%1\n\t"
-                   "xorl $1,%0\n\t"
-                   : "=r"(lacquired)
-                   : "m"(*((struct __fool_gcc_volatile *)(splptr)))
-                   : "memory");
-        #elif defined(__WATCOMC__)
-        _asm mov edx, splptr
-        _asm mov eax, 1
-        _asm xchg eax,[edx]
-        _asm xor eax, 1
-        _asm mov lacquired,eax
-        #else
-        #error whats up doc?
-        #endif
-        if (!lacquired)
-          DosSleep(1);
+      if (wrap_count == (ULONG)-1L) {
+        fastlock_init(&mutex);
+        wrap_count = 0;
       }
-      if (!DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks)))
-      {
-        static ULONG wrap_count = 0, lastticks = 0;
+      fastlock_lock(&mutex);
+      if (!DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks))) {
         l_wrap_count = wrap_count;
         if (ticks < lastticks)
           wrap_count = ++l_wrap_count;
         lastticks = ticks;
-        gotit = 1;
+        gotit = true;
       }
-      *((long *)splptr) = 0;
-      if (!gotit)
-        return -1;
+      fastlock_unlock(&mutex);
+      if (!gotit) return -1;
       __clks2tv( 1000, ticks, l_wrap_count, tv );
     }
     #elif defined(CTL_KERN) && defined(KERN_BOOTTIME) /* *BSD */
