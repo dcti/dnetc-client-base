@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.10 2007/08/02 08:08:36 decio Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.11 2007/08/19 04:05:22 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -379,19 +379,19 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
       tv->tv_usec = (time_t)(now % 1000000LL); /* microseconds < 1 second */
     }
-	#elif (CLIENT_OS == OS_NETWARE6)
+    #elif (CLIENT_OS == OS_NETWARE6)
     {
-		NXTime_t now;
-		static unsigned int ctr;
-		ctr++;
-		if ( ctr&0xc0000000 !=0 ) {
-			ctr=0;
-			usleep(1);
-		}
-		NXGetTime(NX_SINCE_1970, NX_USECONDS, &now);
-		tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
-		tv->tv_usec = (time_t)(now % 1000000LL); /* microseconds < 1 second */
-	}
+      NXTime_t now;
+      static unsigned int ctr;
+      ctr++;
+      if ( ctr&0xc0000000 !=0 ) {
+        ctr=0;
+        usleep(1);
+      }
+      NXGetTime(NX_SINCE_1970, NX_USECONDS, &now);
+      tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
+      tv->tv_usec = (time_t)(now % 1000000LL); /* microseconds < 1 second */
+    }
     #elif (CLIENT_OS == OS_NETWARE)
     {
       /* atomic_xchg()/MPKYieldThread() are stubbed/emulated in nwmpk.c */
@@ -652,7 +652,7 @@ int CliGetMonotonicClock( struct timeval *tv )
             {
               tt = t1;
               t1 = (t1*10)+((*p++)-'0');
-	    }
+            }
             if (*p++ == '.')
             {
               tt=0;
@@ -660,7 +660,7 @@ int CliGetMonotonicClock( struct timeval *tv )
               {
                 tt = t2;
                 t2 = (t2*10)+((*p++)-'0');
-	      }
+              }
               if (*p++ == ' ')
               {
                 tv->tv_usec = (long)(10000UL * t2);
