@@ -14,12 +14,13 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.11 2007/08/19 04:05:22 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.12 2007/08/19 04:44:09 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
 #include "clitime.h"    /* keep the prototypes in sync */
 #include "unused.h"     /* DNETC_UNUSED_* */
+#include "clisync.h"
 
 #if (CLIENT_OS == OS_WIN32) && (CLIENT_CPU == CPU_ALPHA)
 extern "C" int _AcquireSpinLockCount(long *, int);
@@ -629,16 +630,22 @@ int CliGetMonotonicClock( struct timeval *tv )
          fact that that hasn't been noticed in 5 years is a pretty good
          indication that no linux box ever runs more than 497 days :)
       */
+      int rc = -1;
       #ifdef HAVE_KTHREADS
-      int fd = -1;
+      int fd = open("/proc/uptime",O_RDONLY);
       #else
       static int fd = -1;
-      #endif
-      int rc = -1;
-      if (fd == -1)
+      static fastlock_t mutex;
+      if (fd == -1) {
+        fastlock_init(&mutex);
         fd = open("/proc/uptime",O_RDONLY);
+      }
+      #endif
       if (fd != -1)
       {
+        #ifndef HAVE_KTHREADS
+        fastlock_lock(&mutex);
+        #endif
         if (lseek( fd, 0, SEEK_SET)==0)
         {
           char buffer[128];
@@ -673,6 +680,8 @@ int CliGetMonotonicClock( struct timeval *tv )
         } /* lseek */
         #ifdef HAVE_KTHREADS
         close(fd);
+        #else
+        fastlock_unlock(&mutex);
         #endif
       } /* open */
       return rc;
