@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: r72-cell-spe-wrapper.c,v 1.1.2.1 2007/08/02 08:08:37 decio Exp $"; }
+return "@(#)$Id: r72-cell-spe-wrapper.c,v 1.1.2.2 2007/08/20 15:39:00 decio Exp $"; }
 
 #ifndef CORE_NAME
 #error CORE_NAME not defined
@@ -13,7 +13,6 @@ return "@(#)$Id: r72-cell-spe-wrapper.c,v 1.1.2.1 2007/08/02 08:08:37 decio Exp 
 #include "ccoreio.h"
 #include "r72-cell.h"
 #include <spu_mfcio.h>
-#include <cstdio>
 
 #define SPE_CORE_FUNCTION(name) SPE_CORE_FUNCTION2(name)
 #define SPE_CORE_FUNCTION2(name) rc5_72_unit_func_ ## name ## _spe_core

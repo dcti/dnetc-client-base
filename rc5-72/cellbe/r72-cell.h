@@ -4,16 +4,15 @@
 #include "ccoreio.h"
 #include "cputypes.h"
 
-struct CellR72CoreArgs
+typedef struct
 {
   RC5_72UnitWork rc5_72unitwork;
   u32 iterations;
-};
+} CellR72CoreArgs;
 
-union addr64 {
+typedef union {
     ui64 a64;
     u32 a32[2];
-};
-
+} addr64;
 
 #endif // __R72_CELL_H__

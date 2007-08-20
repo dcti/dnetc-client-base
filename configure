@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.163 2007/08/07 08:16:08 decio Exp $
+# @(#)$Id: configure,v 1.288.2.164 2007/08/20 15:39:00 decio Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -738,10 +738,10 @@ add_sources() # $1=os, $2=arch, $3=custom
     # -------------- rc5-72 --------------
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="0"     # don't add the ansi cores
-      TARGET_PPUWRAPPER="rc5-72/cellbe/r72-cell-ppe-wrapper.cpp"
-      TARGET_ADDPPUCORES="cellv1"
-      TARGET_SPUWRAPPER="rc5-72/cellbe/r72-cell-spe-wrapper.cpp"
-      TARGET_ADDSPUCORES="cellv1"
+      TARGET_R72PPUWRAPPER="rc5-72/cellbe/r72-cell-ppe-wrapper.cpp"
+      TARGET_ADDR72PPUCORES="cellv1"
+      TARGET_R72SPUWRAPPER="rc5-72/cellbe/r72-cell-spe-wrapper.c"
+      TARGET_ADDR72SPUCORES="cellv1"
     fi # HAVE_RC5_72
 
     # -------------- ogr --------------
@@ -762,6 +762,10 @@ add_sources() # $1=os, $2=arch, $3=custom
         # add the 64-bit core to the ANSI cores
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr-64.cpp"
       fi
+      TARGET_OGRPPUWRAPPER="ogr/cellbe/ogr-cell-ppe-wrapper.cpp"
+      TARGET_ADDOGRPPUCORES="cellv1"
+      TARGET_OGRSPUWRAPPER="ogr/cellbe/ogr-cell-spe-wrapper.c"
+      TARGET_ADDOGRSPUCORES="cellv1"
     fi # HAVE_OGR
 
   #-----------------------------------------------------------------
@@ -2315,8 +2319,9 @@ case "$1" in
         TARGET_LD="ppu32-g++"
         TARGET_AR="ppu-ar"
         TARGET_STRIP="ppu-strip"
-        TARGET_SPUCC="spu-g++"
+        TARGET_SPUCC="spu-gcc"
         TARGET_SPUAS="spu-as"
+        TARGET_SPUSTRIP="spu-strip"
         TARGET_PPUEMBEDSPU="ppu32-embedspu"
         generate_gcc_opts "ppc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec -DDYN_TIMESLICE"
@@ -3175,47 +3180,81 @@ if [ -n "${TARGET_ADDSRCS}" ]; then
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
   done
 fi
-if [ -n "${TARGET_ADDPPUCORES}" ]; then
+if [ -n "${TARGET_ADDR72PPUCORES}" ]; then
   echo "Scanning PPE core dependencies..."
 #  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ppucore"
-  for target in ${TARGET_ADDPPUCORES}; do
+  for target in ${TARGET_ADDR72PPUCORES}; do
       TARGETCORE="rc5-72/cellbe/r72-$target-ppe.s"
       TARGETOBJECT=output/`basename $TARGETCORE .s`.o
       echo "  ${TARGETCORE} -> ${TARGETOBJECT}"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ppucore ${TARGETCORE} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72ppucore ${TARGETCORE} ${TARGETOBJECT}"
       TARGETOBJECT=output/r72-$target-ppe-wrapper.o
-      echo "  ${TARGET_PPUWRAPPER} -> ${TARGETOBJECT}"
+      echo "  ${TARGET_R72PPUWRAPPER} -> ${TARGETOBJECT}"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ppuwrapper $target ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72ppuwrapper $target ${TARGETOBJECT}"
   done
 fi
-if [ -n "${TARGET_ADDSPUCORES}" ]; then
+if [ -n "${TARGET_ADDOGRPPUCORES}" ]; then
+  for target in ${TARGET_ADDOGRPPUCORES}; do
+      TARGETOBJECT=output/ogr-$target-ppe-wrapper.o
+      echo "  ${TARGET_OGRPPUWRAPPER} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrppuwrapper $target ${TARGETOBJECT}"
+  done
+fi
+if [ -n "${TARGET_ADDR72SPUCORES}" ]; then
   echo "Scanning SPE core dependencies..."
 #  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spucore"
-  for target in ${TARGET_ADDSPUCORES}; do
+  for target in ${TARGET_ADDR72SPUCORES}; do
       TARGETCORE="rc5-72/cellbe/r72-$target-spe.s"
       TARGETCOREOBJECT=output/`basename $TARGETCORE .s`.o
       echo "  ${TARGETCORE} -> ${TARGETCOREOBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETCOREOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spucore ${TARGETCORE} ${TARGETCOREOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spucore ${TARGETCORE} ${TARGETCOREOBJECT}"
       TARGETWRAPPEROBJECT=output/r72-$target-spe-wrapper.o
-      echo "  ${TARGET_SPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
+      echo "  ${TARGET_R72SPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETWRAPPEROBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spuwrapper $target ${TARGETWRAPPEROBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spuwrapper $target ${TARGETWRAPPEROBJECT}"
       TARGETMERGEDOBJECT=output/r72-$target-spe-merged.o
       echo "  ${TARGETCOREOBJECT},${TARGETWRAPPEROBJECT} -> ${TARGETMERGEDOBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETMERGEDOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spumerge $target ${TARGETMERGEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spumerge $target ${TARGETMERGEDOBJECT}"
       TARGETEMBEDOBJECT=output/r72-$target-spe-embed.o
       echo "  ${TARGETMERGEDOBJECT} -> ${TARGETEMBEDOBJECT}"
       TARGETFUNCTION="rc5_72_unit_func_$target""_spe_wrapper"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETEMBEDOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spuembed $target ${TARGETEMBEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spuembed $target ${TARGETEMBEDOBJECT}"
       TARGETOBJECT=output/r72-$target-spe.a
       echo "  ${TARGETEMBEDOBJECT} -> ${TARGETOBJECT}"
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spuar ${TARGETEMBEDOBJECT} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spuar ${TARGETEMBEDOBJECT} ${TARGETOBJECT}"
+  done
+fi
+if [ -n "${TARGET_ADDOGRSPUCORES}" ]; then
+  for target in ${TARGET_ADDOGRSPUCORES}; do
+      TARGETCORE="ogr/cellbe/ogr-$target-spe.s"
+      TARGETCOREOBJECT=output/`basename $TARGETCORE .s`.o
+      echo "  ${TARGETCORE} -> ${TARGETCOREOBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETCOREOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspucore ${TARGETCORE} ${TARGETCOREOBJECT}"
+      TARGETWRAPPEROBJECT=output/ogr-$target-spe-wrapper.o
+      echo "  ${TARGET_OGRSPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETWRAPPEROBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspuwrapper $target ${TARGETWRAPPEROBJECT}"
+      TARGETMERGEDOBJECT=output/ogr-$target-spe-merged.o
+      echo "  ${TARGETCOREOBJECT},${TARGETWRAPPEROBJECT} -> ${TARGETMERGEDOBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETMERGEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspumerge $target ${TARGETMERGEDOBJECT}"
+      TARGETEMBEDOBJECT=output/ogr-$target-spe-embed.o
+      echo "  ${TARGETMERGEDOBJECT} -> ${TARGETEMBEDOBJECT}"
+      TARGETFUNCTION="ogr_cycle_$target""_spe_wrapper"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETEMBEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspuembed $target ${TARGETEMBEDOBJECT}"
+      TARGETOBJECT=output/ogr-$target-spe.a
+      echo "  ${TARGETEMBEDOBJECT} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspuar ${TARGETEMBEDOBJECT} ${TARGETOBJECT}"
   done
 fi
 
@@ -3264,6 +3303,7 @@ echo "YASMFLAGS = ${TARGET_YASMFLAGS}" >> Makefile
 if [ "${BUILDNAME}" = "cellbe-linux" ]; then
   echo "SPUCC = ${TARGET_SPUCC}" >> Makefile
   echo "SPUAS = ${TARGET_SPUAS}" >> Makefile
+  echo "SPUSTRIP = ${TARGET_SPUSTRIP}" >> Makefile
   echo "PPUEMBEDSPU = ${TARGET_PPUEMBEDSPU}" >> Makefile
   echo "AR = ${TARGET_AR}" >> Makefile
 fi
@@ -3442,19 +3482,33 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "yasm" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "ppucore" ]; then
+    elif [ "${target}" = "r72ppucore" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "ppuwrapper" ]; then
+    elif [ "${target}" = "r72ppuwrapper" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "spucore" ]; then
+    elif [ "${target}" = "r72spucore" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "spuwrapper" ]; then
+    elif [ "${target}" = "r72spuwrapper" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "spumerge" ]; then
+    elif [ "${target}" = "r72spumerge" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "spuembed" ]; then
+    elif [ "${target}" = "r72spuembed" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "spuar" ]; then
+    elif [ "${target}" = "r72spuar" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrppucore" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrppuwrapper" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspucore" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspuwrapper" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspumerge" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspuembed" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspuar" ]; then
       TARGETTYP="$target"
     # ------------------------------------
     elif [ "${TARGETSRC}X" = "X" ]; then
@@ -3605,51 +3659,97 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "ppucore" ]; then
+    elif [ "${TARGETTYP}" = "r72ppucore" ]; then
       echo "$target:	${TARGETSRC}" >> Makefile
       echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "ppuwrapper" ]; then
+    elif [ "${TARGETTYP}" = "r72ppuwrapper" ]; then
       WRAPPERTARGET="output/r72-${TARGETSRC}-ppe-wrapper.o"
-      echo "$target:    ${TARGET_PPUWRAPPER} rc5-72/cellbe/r72-cell.h" >> Makefile
-      echo "	\${CC} -c \${CCFLAGS} -DCORE_NAME=${TARGETSRC} ${TARGET_PPUWRAPPER} -o $target" >> Makefile
+      echo "$target:    ${TARGET_R72PPUWRAPPER} rc5-72/cellbe/r72-cell.h" >> Makefile
+      echo "	\${CC} -c \${CCFLAGS} -DCORE_NAME=${TARGETSRC} ${TARGET_R72PPUWRAPPER} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "spucore" ]; then
+    elif [ "${TARGETTYP}" = "r72spucore" ]; then
       echo "$target:    ${TARGETSRC}" >> Makefile
       echo "	\${SPUAS} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "spuwrapper" ]; then
+    elif [ "${TARGETTYP}" = "r72spuwrapper" ]; then
       CORE="${TARGETSRC}"
-      echo "$target:    $TARGET_SPUWRAPPER rc5-72/cellbe/r72-cell.h" >> Makefile
-      echo "	\${SPUCC} -c -Dlinux -DCORE_NAME=$CORE -O3 \${HPATHS} $TARGET_SPUWRAPPER -o $target" >> Makefile
+      echo "$target:    $TARGET_R72SPUWRAPPER rc5-72/cellbe/r72-cell.h" >> Makefile
+      echo "	\${SPUCC} -c -Dlinux -DCORE_NAME=$CORE -Os \${HPATHS} $TARGET_R72SPUWRAPPER -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "spumerge" ]; then
+    elif [ "${TARGETTYP}" = "r72spumerge" ]; then
       CORE="${TARGETSRC}"
       WRAPPERTARGET="output/r72-$CORE-spe-wrapper.o"
       CORETARGET="output/r72-$CORE-spe.o";
       echo "$target:    $WRAPPERTARGET $CORETARGET" >> Makefile
-      echo "	\${SPUCC} $WRAPPERTARGET $CORETARGET -o $target -Wl,-N /usr/spu/lib/libc.a" >> Makefile
+      echo "	\${SPUCC} $WRAPPERTARGET $CORETARGET -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "spuembed" ]; then
+    elif [ "${TARGETTYP}" = "r72spuembed" ]; then
       CORE="${TARGETSRC}"
       MERGETARGET="output/r72-$CORE-spe-merged.o"
       COREFUNCTION="rc5_72_unit_func_$CORE""_spe_wrapper"
       echo "$target:    $MERGETARGET" >> Makefile
+      echo "	\${SPUSTRIP} $MERGETARGET" >> Makefile
       echo "	\${PPUEMBEDSPU} -m32 $COREFUNCTION $MERGETARGET $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "spuar" ]; then
+    elif [ "${TARGETTYP}" = "r72spuar" ]; then
+      echo "$target:    ${TARGETSRC}" >> Makefile
+      echo "	\${AR} -qcs $target ${TARGETSRC}" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrppuwrapper" ]; then
+      WRAPPERTARGET="output/ogr-${TARGETSRC}-ppe-wrapper.o"
+      echo "$target:    ${TARGET_OGRPPUWRAPPER} ogr/cellbe/ogr-cell.h ogr/ansi/ogr.h ogr/ansi/ogr.cpp" >> Makefile
+      echo "	\${CC} -c \${CCFLAGS} -DCORE_NAME=${TARGETSRC} ${TARGET_OGRPPUWRAPPER} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspucore" ]; then
+      echo "$target:    ${TARGETSRC}" >> Makefile
+      echo "	\${SPUAS} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspuwrapper" ]; then
+      CORE="${TARGETSRC}"
+      echo "$target:    $TARGET_OGRSPUWRAPPER ogr/cellbe/ogr-cell.h ogr/ansi/ogr.h" >> Makefile
+      echo "	\${SPUCC} -c -Dlinux -DCORE_NAME=$CORE -Os \${HPATHS} $TARGET_OGRSPUWRAPPER -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspumerge" ]; then
+      CORE="${TARGETSRC}"
+      WRAPPERTARGET="output/ogr-$CORE-spe-wrapper.o"
+      CORETARGET="output/ogr-$CORE-spe.o";
+      echo "$target:    $WRAPPERTARGET $CORETARGET" >> Makefile
+      echo "	\${SPUCC} $WRAPPERTARGET $CORETARGET -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspuembed" ]; then
+      CORE="${TARGETSRC}"
+      MERGETARGET="output/ogr-$CORE-spe-merged.o"
+      COREFUNCTION="ogr_cycle_$CORE""_spe_wrapper"
+      echo "$target:    $MERGETARGET" >> Makefile
+      echo "	\${SPUSTRIP} $MERGETARGET" >> Makefile
+      echo "	\${PPUEMBEDSPU} -m32 $COREFUNCTION $MERGETARGET $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspuar" ]; then
       echo "$target:    ${TARGETSRC}" >> Makefile
       echo "	\${AR} -qcs $target ${TARGETSRC}" >> Makefile
       echo "" >> Makefile

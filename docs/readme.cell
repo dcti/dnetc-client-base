@@ -1,5 +1,5 @@
 distributed.net client for the unix family
- document revision $Id: readme.cell,v 1.1.2.2 2007/08/08 10:17:27 decio Exp $
+ document revision $Id: readme.cell,v 1.1.2.3 2007/08/20 15:39:00 decio Exp $
 
  Welcome to the distributed.net client.
 
@@ -51,10 +51,15 @@ distributed.net client for the unix family
     that this issue is specific to the PlayStation 3; blade servers using
     Cell processors should have all 8 SPEs available.   
 
-    Currently, we only ship optimized cores for the RC5-72 project. There are 
-    two cores available, "Cell v1 PPE" and "Cell v1 SPE". These run
-    on the main processor (PPE) and co-processors (SPEs) respectively. As
-    the current client architecture doesn't support separate core choices   
+    We ship optimized cores for the RC5-72 and OGR projects. For RC5-72,
+    there are two cores available, "Cell v1 PPE" and "Cell v1 SPE". These
+    run on the main processor (PPE) and co-processors (SPEs) respectively.
+    As for OGR, there are three cores available, the two KOGE cores from
+    the PowerPC client port, which run on the PPE, and a new core, "Cell
+    v1 SPE", which runs on the SPEs. Automatic core selection should
+    select the fastest core for the PPE, namely "KOGE 2.0 Hybrid".
+
+    As the current client architecture doesn't support separate core choices
     for different processors, a temporary workaround has been implemented   
     whereby the first cruncher will use the core selected in the config
     file, and further crunchers will always use the "Cell v1 SPE" core.

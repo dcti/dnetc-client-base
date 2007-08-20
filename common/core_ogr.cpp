@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.52 2007/08/02 08:08:36 decio Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.53 2007/08/20 15:39:00 decio Exp $"; }
 
 //#define TRACE
 
@@ -21,6 +21,10 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.52 2007/08/02 08:08:36 decio Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
+
+#if (CLIENT_CPU == CPU_CELLBE)
+#include <libspe2.h>
+#endif
 
 #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 
@@ -40,6 +44,9 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.52 2007/08/02 08:08:36 decio Exp $"; }
     #endif
     #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
     extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
+    #endif
+    #if (CLIENT_CPU == CPU_CELLBE)
+    extern "C" CoreDispatchTable *spe_ogr_get_dispatch_table(void);
     #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
@@ -106,6 +113,9 @@ int InitializeCoreTable_ogr(int first_time)
         #endif
         #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
           vec_ogr_get_dispatch_table();
+        #endif
+        #if (CLIENT_CPU == CPU_CELLBE)
+          spe_ogr_get_dispatch_table();
         #endif
       #elif (CLIENT_CPU == CPU_68K)
         ogr_get_dispatch_table_000();
@@ -210,6 +220,9 @@ const char **corenames_for_contest_ogr()
       #ifdef HAVE_I64
       "GARSP 6.0 Scalar-64",        /* 64-bit core */
       #endif
+    #endif
+    #if (CLIENT_CPU == CPU_CELLBE)
+      "Cell v1 SPE",
     #endif
   #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
       "GARSP 6.0-64",
@@ -458,8 +471,17 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(contestid);
+#if (CLIENT_CPU == CPU_CELLBE)
+  // Each Cell has 2 PPEs
+  static unsigned int PPE_count = 2*spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
 
+  // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs;
+  // the rest are scheduled on the SPEs.
+  if (threadindex >= PPE_count)
+    coresel = 2;
+#else
   DNETC_UNUSED_PARAM(threadindex);
+#endif
 
   if (coresel < 0)
     return -1;
@@ -472,6 +494,11 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
   if (coresel == 1)                               /* PPC Vector/Hybrid */
     unit_func.ogr = vec_ogr_get_dispatch_table();
+  #endif
+
+  #if (CLIENT_CPU == CPU_CELLBE)
+  if (coresel == 2)
+    unit_func.ogr = spe_ogr_get_dispatch_table();
   #endif
 
   #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
