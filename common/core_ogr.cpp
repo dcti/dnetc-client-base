@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.53 2007/08/20 15:39:00 decio Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.54 2007/08/20 16:16:44 decio Exp $"; }
 
 //#define TRACE
 
@@ -472,8 +472,10 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(contestid);
 #if (CLIENT_CPU == CPU_CELLBE)
-  // Each Cell has 2 PPEs
-  static unsigned int PPE_count = 2*spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
+  // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees 2
+  // processors), and although we should run 2 threads at a time, the way
+  // CPUs are detected precludes us from doing that.
+  static unsigned int PPE_count = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
 
   // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs;
   // the rest are scheduled on the SPEs.
