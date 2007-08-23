@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.114 2007/08/04 09:49:07 decio Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.115 2007/08/23 06:33:16 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1471,12 +1471,12 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0F60, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.065u) */
           {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
           {  0xEF00, CPU_F_I686, 0x0B, "Xeon (Foster)" },
-          {  0x8F10, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
+          {  0x8F10, CPU_F_I686, 0x0B+0x100, "Pentium 4 (Willamette)" }, /* hack: different rules for OGR and RC5-72 */
           {  0xAF10, CPU_F_I686, 0x0B, "Celeron 4 (Willamette)" },
           {  0xBF10, CPU_F_I686, 0x0B, "Xeon MP (Foster)" },
           {  0xEF10, CPU_F_I686, 0x0B, "Xeon (Foster)" },
           {  0x8F20, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" }, /* (#3799) */
-          {  0x9F20, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
+          {  0x9F20, CPU_F_I686, 0x0B+0x100, "Pentium 4 (Northwood)" }, /* hack: different rules for OGR and RC5-72 (#4009) */
           {  0xAF20, CPU_F_I686, 0x0B, "Celeron 4 (Northwood)" },
           {  0xBF20, CPU_F_I686, 0x0B, "Xeon (Prestonia)" },
           {  0xCF20, CPU_F_I686, 0x0B, "Xeon MP (Prestonia)" }, /* (#3696) */
