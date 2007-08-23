@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.3.2.11 2005/05/10 19:31:48 snikkel Exp $
+; $Id: r72-dg3.asm,v 1.3.2.12 2007/08/23 06:30:26 stream Exp $
 
 ; Modified by Alexey <alexey.kovalev@intel.com>
 ; Performance impromevements for P4 2.667Ghz:
@@ -53,10 +53,13 @@ defwork work_P_1
 defwork work_C_0
 defwork work_C_1
 defwork work_iterations
+defwork RC5_72UnitWork
+defwork iterations
 defwork save_ebx
 defwork save_esi
 defwork save_edi
 defwork save_ebp
+defwork save_esp
 
 %define RC5_72UnitWork_plainhi  eax+0
 %define RC5_72UnitWork_plainlo  eax+4
@@ -70,8 +73,8 @@ defwork save_ebp
 %define RC5_72UnitWork_CMCmid   eax+36
 %define RC5_72UnitWork_CMClo    eax+40
 
-%define RC5_72UnitWork          esp+work_size+4
-%define iterations              esp+work_size+8
+%define p_RC5_72UnitWork          esp+work_size+4
+%define p_iterations              esp+work_size+8
 
 %define S1(N)                   [work_s1+((N)*4)]
 %define S2(N)                   [work_s2+((N)*4)]
@@ -221,24 +224,36 @@ defwork save_ebp
 align 16
 startseg:
 rc5_72_unit_func_dg_3:
-rc5_72_unit_func_dg_3_:
 _rc5_72_unit_func_dg_3:
 
+	mov	ecx, esp
         sub     esp, work_size
-        mov     eax, [RC5_72UnitWork]
+        mov     eax, [p_RC5_72UnitWork]
+        mov     edx, [p_iterations]
+	and	esp, byte -64
+;
+; 2007-08-13 stream: don't ask me how this magic constant works - may be
+; variables in work area are placed better in P4 cache lines. It's necessary
+; for older P4's (e.g. Williamette) and has no effect on newer (e.g. "0.09u").
+;
+	sub	esp, byte 0+28
 
         mov     [save_ebp], ebp
         mov     [save_ebx], ebx
         mov     [save_esi], esi
-
+	mov	[save_esp], ecx
         mov     [save_edi], edi
+
+	mov	esi, edx	; == "mov esi, [iterations]" from below
+	mov	[iterations], edx
+	mov	[RC5_72UnitWork], eax
+
         mov     edx, [RC5_72UnitWork_plainlo]
         mov     edi, [RC5_72UnitWork_plainhi]
 
         mov     ebx, [RC5_72UnitWork_cipherlo]
         mov     ecx, [RC5_72UnitWork_cipherhi]
-        mov     esi, [iterations]
-
+        
         mov     [work_P_0], edx
         mov     [work_P_1], edi
         mov     edx, [RC5_72UnitWork_L0hi]
@@ -717,6 +732,6 @@ finished:
 
         mov     edi, [save_edi]
         mov     ebp, [save_ebp]
-        add     esp, work_size
+        mov     esp, [save_esp]
 
         ret

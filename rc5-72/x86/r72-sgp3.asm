@@ -6,7 +6,7 @@
 ; Version 1.2    2003/09/24  11:08
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-sgp3.asm,v 1.1.2.4 2005/05/03 17:22:38 jlawson Exp $
+; $Id: r72-sgp3.asm,v 1.1.2.5 2007/08/23 06:30:26 stream Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -198,14 +198,19 @@ defwork iterations
 align 16
 startseg:
 rc5_72_unit_func_sgp_3:
-rc5_72_unit_func_sgp_3_:
 _rc5_72_unit_func_sgp_3:
 
         mov     ecx, esp
         sub     esp, work_size
         mov     eax, [p_RC5_72UnitWork]
         mov     edx, [p_iterations]
-        and     esp, 0xfffffff0
+        and     esp, byte -64 ; was 0xfffffff0 - not enough for modern P4's
+;
+; 2007-08-13 stream: don't ask me how this magic constant works - may be
+; variables in work area are placed better in P4 cache lines. It's necessary
+; for older P4's (e.g. Williamette) and has no effect on newer (e.g. "0.09u").
+;
+	sub	esp, byte 32+24
 
         mov     [save_ebp], ebp
         mov     [save_ebx], ebx
