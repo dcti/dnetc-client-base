@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.118 2007/08/20 15:39:00 decio Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.119 2007/08/23 06:38:03 stream Exp $
 ==========================================================================
 
 2.9000
@@ -32,6 +32,8 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.118 2007/08/20 15:39:00 decio Exp 
             fix: linux: Fix race condition in heavily multithreaded
                         scenarios causing the first cruncher to randomly
                         stop running until client is restarted.
+            chg: x86: SGP-3 is default RC5-72 core for older P4's (#4009)
+            chg: x86: A little faster and stable speed of DG-3 and SGP-3 cores.
 
 2.9014-501  new: cellbe: New platform, PlayStation 3/Cell BE
 
