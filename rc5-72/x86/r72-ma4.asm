@@ -8,7 +8,7 @@
 ; Version 1.0    2003/09/08  23:53
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-ma4.asm,v 1.1.2.3 2005/05/14 18:22:51 jlawson Exp $
+; $Id: r72-ma4.asm,v 1.1.2.4 2007/08/23 06:30:55 stream Exp $
 
 ; SIMD Core Idea
 ; The only areas of the CPU that former cores have not utilized are the
@@ -350,7 +350,6 @@ align 16
 
 startseg:
 rc5_72_unit_func_ma_4:
-rc5_72_unit_func_ma_4_:
 _rc5_72_unit_func_ma_4:
 
         sub     esp, work_size
