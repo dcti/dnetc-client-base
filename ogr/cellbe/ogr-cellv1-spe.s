@@ -3,7 +3,7 @@
 # Any other distribution or use of this source violates copyright.
 #
 # Author: Decio Luiz Gazzoni Filho <decio@distributed.net>
-# $Id: ogr-cellv1-spe.s,v 1.1.2.1 2007/08/20 15:39:00 decio Exp $
+# $Id: ogr-cellv1-spe.s,v 1.1.2.2 2007/09/03 15:30:56 decio Exp $
 
 	#  struct Level {
 	#    VECTOR listV, compV, distV;
@@ -129,36 +129,38 @@
 	.set	shl32s,			 31
 	.set	pslotmask,		 32
 	.set	_splatRSM,		 33
-	.set	ttmDISTBITS_mask,	 55
+	.set	ttmDISTBITS_mask,	 34
 
 	# temporaries
-	.set	temp1,			 34
-	.set	temp2,			 35
-	.set	temp3,			 36
-	.set	temp4,			 37
-	.set	temp5,			 38
-	.set	temp6,			 39
-	.set	temp7,			 40
-	.set	temp8,			 41
+	.set	temp1,			 35
+	.set	temp2,			 36
+	.set	temp3,			 37
+	.set	temp4,			 38
+	.set	temp5,			 39
+	.set	temp6,			 40
+	.set	temp7,			 41
+	.set	temp8,			 42
+	.set	temp9,			 57
 	.set	temp_RSM,		 temp3
 	.set	temp_WSM,		 temp4
 
 	# found_one()
-	.set	i,			 42
-	.set	j,			 43
-	.set	max,			 44
-	.set	maxdepth,		 45
-	.set	levels,			 46
-	.set	diffs,			 47
-	.set	marks_i,		 48
-	.set	diff,			 49
-	.set	mask,			 50
+	.set	i,			 43
+	.set	j,			 44
+	.set	max,			 45
+	.set	maxdepth,		 46
+	.set	levels,			 47
+	.set	diffs,			 48
+	.set	marks_i,		 49
+	.set	diff,			 50
+	.set	mask,			 51
 
 	# branches
-	.set	stay_addr,		 51
-	.set	end_stay_addr,		 52
-	.set	up_addr,		 53
-	.set	cont_stay_addr,		 54
+	.set	stay_addr,		 52
+	.set	end_stay_addr,		 53
+	.set	up_addr,		 54
+	.set	cont_stay_addr,		 55
+	.set	cllr_addr,		 56
 
 
 	.section bss
@@ -397,6 +399,7 @@ loop_loadLevels:
 	ila		$end_stay_addr, end_stay
 	ila		$up_addr, up
 	ila		$cont_stay_addr, cont_stay
+	ila		$cllr_addr, cllr
 
 
 	#    #define SETUP_TOP_STATE(lev)  \
@@ -517,10 +520,9 @@ up:
 	# goto stay; -- just fall through
 
 	clz		    $s, $temp1					 # 13e
-	rotqbii		$temp8, $list0,      0				 # 13o
+	lnop
 
 	selb		$temp7, $end_stay_addr, $cont_stay_addr, $temp6	 # 14e
-
 
 	.align		3
 stay:
@@ -528,7 +530,7 @@ stay:
 	hbr		end_stay_branch, $temp7
 
 	sfi		$temp1,     $s,     32
-	lnop
+	rotqbii		$temp8, $list0,      0				 # 13o
 
 	# if ((mark += s) > limit) goto up;
 	cgt		$temp7,  $mark, $limit
@@ -536,6 +538,7 @@ stay:
 
 	# Taken with probability 32.1%
 	sfi		$temp3, $temp1,      0
+mark_gt_limit:
 	brnz		$temp7, up
 
 
@@ -565,7 +568,7 @@ stay:
 	#      newbit = 0;                           
 
 	.align		3
-
+cllr:
 	shl		$comp0, $comp0,     $s				#  1e
 	rotqmbi		$listV, $listV, $temp2				#  1o
 
@@ -605,9 +608,6 @@ cont_stay:
 
 	rotmi		$temp1, $temp1, -1				# 15e
 	selb		$temp7, $end_stay_addr, $cont_stay_addr, $temp6	# 16e
-
-	lr		$temp8, $list0					# 17e
-	nop								# 18e
 
 	clz		    $s, $temp1					# 19e
 stay_branch:
@@ -673,14 +673,19 @@ end_stay:
 	a		$temp2, $choose, $temp1				# 15e
 	lqx		$temp1, $choose, $temp1				# 15o
 
+	selb		$temp9, $cllr_addr, $up_addr, $temp6
+	lnop
 
 	il		$newbit, 1					# 16e
 	# lev->mark = mark;
 	stqd		$mark, LEVEL_QUAD_MARK($lev)			# 16o
 
 	andi		$temp4,  $temp2,    0xF				# 17e
+	hbr		mark_gt_limit, $temp9
+
 	# lev++;
 	ai		$lev, $lev, SIZEOF_LEVEL_QUAD			# 18e
+	lnop
 
 	a		$temp4,  $temp4, $_splatchoose			# 19e
 	# depth++;
@@ -699,7 +704,7 @@ for_loop:
 	cgt		$temp2, $depth, $halfdepth2			# 23e
 
 	selb		$temp7, $end_stay_addr, $cont_stay_addr, $temp6	# 24e
-	rotqbii		$temp8, $list0,      0				# 24o
+	lnop
 
 	sf		$limit,  $temp1, $maxlength			# 25e
 	# Taken with probability 0.15%
@@ -795,7 +800,7 @@ cont_found_one:
 	rotmi		$temp1, $temp1, -1
 
 	selb		$temp7, $end_stay_addr, $stay_addr, $temp6
-	rotqbii		$temp8, $list0,      0
+	lnop
 
 	clz		    $s, $temp1
 
