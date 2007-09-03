@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.56.2.13 2007/08/19 06:19:38 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.56.2.14 2007/09/03 14:39:48 decio Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -579,67 +579,113 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) /*only RTlinux has clock_gettime/gethrtime*/
     {
-      /* this is computationally expensive, but we don't have a choice.
-         /proc/uptime is buggy even in the newest kernel (2.4-test2):
-         it wraps at jiffies/HZ, ie ~497 days on a 32bit cpu (and the
-         fact that that hasn't been noticed in 5 years is a pretty good
-         indication that no linux box ever runs more than 497 days :)
-      */
-      int rc = -1;
-      #ifdef HAVE_KTHREADS
-      int fd = open("/proc/uptime",O_RDONLY);
-      #else
-      static int fd = -1;
-      static fastlock_t mutex;
-      if (fd == -1) {
-        fastlock_init(&mutex);
-        fd = open("/proc/uptime",O_RDONLY);
-      }
-      #endif
-      if (fd != -1)
+      static int supports_clock_gettime = -1;
+      if (supports_clock_gettime == -1)
       {
-        #ifndef HAVE_KTHREADS
-        fastlock_lock(&mutex);
-        #endif
-        if (lseek( fd, 0, SEEK_SET)==0)
+        FILE* fp = fopen("/proc/sys/kernel/osrelease","r");
+
+        if (fp)
         {
-          char buffer[128];
-          int len = read( fd, buffer, sizeof(buffer));
-          if (len >= 1 && len < ((int)(sizeof(buffer)-1)) )
+          int major, minor;
+
+          if (fscanf(fp, "%d.%d", &major, &minor) == 2)
           {
-            unsigned long tt = 0, t2 = 0, t1 = 0;
-            register char *p = buffer;
-            buffer[len-1] = '\0';
-            while (t1>=tt && *p >= '0' && *p <='9')
-            {
-              tt = t1;
-              t1 = (t1*10)+((*p++)-'0');
-            }
-            if (*p++ == '.')
-            {
-              tt=0;
-              while (t2>=tt && *p >= '0' && *p <='9')
-              {
-                tt = t2;
-                t2 = (t2*10)+((*p++)-'0');
-              }
-              if (*p++ == ' ')
-              {
-                tv->tv_usec = (long)(10000UL * t2);
-                tv->tv_sec = (time_t)t1;
-                //printf("\rt=%d.%06d\n",tv->tv_sec,tv->tv_usec);
-                rc = 0;
-              }
-            }
+            /* clock_gettime is supported in Linux 2.6 and beyond */
+            if (major > 2 || (major == 2 && minor >= 6))
+              supports_clock_gettime = 1;
+            else
+              supports_clock_gettime = 0;
           }
-        } /* lseek */
+          else
+          {
+            fclose(fp);
+            return -1; /* failed reading file */
+          }
+
+          fclose(fp);
+        }
+        else
+        {
+          return -1; /* failed opening file */
+        }
+      }
+
+      if (supports_clock_gettime)
+      {
+        struct timespec ts;
+        if (clock_gettime(CLOCK_MONOTONIC, &ts))
+          return -1;
+        tv->tv_sec = ts.tv_sec;
+        tv->tv_usec = ts.tv_nsec / 1000;
+      }
+      else
+      {
+        /* this is computationally expensive, but we don't have a choice.
+           /proc/uptime is buggy even in the newest kernel (2.4-test2):
+           it wraps at jiffies/HZ, ie ~497 days on a 32bit cpu (and the
+           fact that that hasn't been noticed in 5 years is a pretty good
+           indication that no linux box ever runs more than 497 days :)
+        */
+        int rc = -1;
         #ifdef HAVE_KTHREADS
-        close(fd);
+        int fd = open("/proc/uptime",O_RDONLY);
         #else
-        fastlock_unlock(&mutex);
+        static int fd = -1, pid = -1;
+        /* The file descriptor is inherited by fork(), so all crunchers
+           share it; however, after fork()ing, there's no way to lock
+           access to file to ensure a single process is reading it at any
+           given time. The solution is reopening the file for each child
+           process, but how do we know we're the child not the parent?
+           This is why we store the pid of the process who originally
+           opened the file; if it differs from ours, open a new file and
+           update the pid.
+        */
+        if (fd == -1 || (getpid() != -1 && getpid() != pid))
+        {
+          fd = open("/proc/uptime",O_RDONLY);
+          pid = getpid();
+        }
         #endif
-      } /* open */
-      return rc;
+        if (fd != -1)
+        {
+          if (lseek( fd, 0, SEEK_SET)==0)
+          {
+            char buffer[128];
+            int len = read( fd, buffer, sizeof(buffer));
+            if (len >= 1 && len < ((int)(sizeof(buffer)-1)) )
+            {
+              unsigned long tt = 0, t2 = 0, t1 = 0;
+              register char *p = buffer;
+              buffer[len-1] = '\0';
+              while (t1>=tt && *p >= '0' && *p <='9')
+              {
+                tt = t1;
+                t1 = (t1*10)+((*p++)-'0');
+              }
+              if (*p++ == '.')
+              {
+                tt=0;
+                while (t2>=tt && *p >= '0' && *p <='9')
+                {
+                  tt = t2;
+                  t2 = (t2*10)+((*p++)-'0');
+                }
+                if (*p++ == ' ')
+                {
+                  tv->tv_usec = (long)(10000UL * t2);
+                  tv->tv_sec = (time_t)t1;
+                  //printf("\rt=%d.%06d\n",tv->tv_sec,tv->tv_usec);
+                  rc = 0;
+                }
+              }
+            }
+          } /* lseek */
+          #ifdef HAVE_KTHREADS
+          close(fd);
+          #endif
+        } /* open */
+        return rc;
+      }
     }
     #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     {
