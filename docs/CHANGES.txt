@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.120 2007/09/03 15:03:23 decio Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.121 2007/09/04 11:08:03 stream Exp $
 ==========================================================================
 
 2.9000
@@ -31,13 +31,14 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.120 2007/09/03 15:03:23 decio Exp 
 2.9015-503  imp: cellbe: Slightly faster SPE OGR core
             fix: linux: Working fix for the race condition alluded to in the
                         changelog for v2.9015-502
+            imp: x86: Faster OGR MMX cores (1-3%, depending on CPU)
 
 2.9015-502  new: cellbe: Added SPE OGR cores
             fix: linux: Fix race condition in heavily multithreaded
                         scenarios causing the first cruncher to randomly
                         stop running until client is restarted.
             chg: x86: SGP-3 is default RC5-72 core for older P4's (#4009)
-            chg: x86: A little faster and stable speed of DG-3 and SGP-3 cores.
+            imp: x86: A little faster and stable speed of DG-3 and SGP-3 cores.
 
 2.9014-501  new: cellbe: New platform, PlayStation 3/Cell BE
 
