@@ -1,6 +1,6 @@
 ;
 ; Assembly core for OGR, MMX version. Based on generic assembly core.
-; $Id: ogr-asm2-rt-mmx.asm,v 1.1.2.8 2007/09/01 09:37:38 stream Exp $
+; $Id: ogr-asm2-rt-mmx.asm,v 1.1.2.9 2007/09/04 11:03:08 stream Exp $
 ;
 ; Created by Roman Trunov (proxyma@tula.net)
 ;
@@ -117,7 +117,7 @@ ogr_cycle_:
 	%define work_depth		esp+0CH		; outer, push/pop
 	%define work_halfdepth2		esp+10H		; outer (R1)
 
-	%define work_halflength		esp+14H		; checklimit (R1)
+	%define work_halfdepth		esp+14H		; checklimit (R1)
 	%define work_max_nodes		esp+18H		; checklimit (R1)
 	%define work_oState_half_length	esp+1CH		; checklimit (R1)
 	%define work_levHalfDepth	esp+20H		; checklimit (R1)
@@ -170,7 +170,7 @@ ogr_cycle_:
 	mov	edx,dword [eax+10H]
 	mov	ebx,dword [eax+18H]
 	sub	edx,ebx
-	mov	dword [work_halflength],edx	; halfdepth  = oState->half_depth - oState->startdepth;
+	mov	dword [work_halfdepth],edx	; halfdepth  = oState->half_depth - oState->startdepth;
 	mov	edx,dword [eax+14H]
 	sub	edx,ebx
 	mov	dword [work_halfdepth2],edx	; halfdepth2 = oState->half_depth2 - oState->startdepth;
@@ -502,7 +502,7 @@ ogr_cycle_:
 	;	edx = limit
 	; Don't forget to store limit when leaving globally!
 	;      if (depth <= halfdepth) {
-	cmp	eax,dword [work_halflength]
+	cmp	eax,dword [work_halfdepth]
 	jg	.L$56
 %if with_time_constraints
 %else
