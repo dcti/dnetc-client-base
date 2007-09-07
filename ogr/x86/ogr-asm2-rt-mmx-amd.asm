@@ -313,8 +313,8 @@ ogr_cycle_:
 					; comp0 must be in esi
 	;    lev->mark = mark;
 	;    if (remdepth == 0) {                  /* New ruler ? (last mark placed) */
-	mov	dword [ebp+lev_mark],ebx	; lev->mark
 	or	edi,edi				; remdepth
+	mov	dword [ebp+lev_mark],ebx	; lev->mark
 	je	.L$61				; chance: almost zero
 	;    PUSH_LEVEL_UPDATE_STATE(lev);         /* Go deeper */
 
@@ -367,7 +367,7 @@ ogr_cycle_:
 	;    lev++;
 	add	ebp,sizeof_level
 	;    remdepth--;
-	sub	edi, 1			; 'sub' is better. stall on flags or better decoding?
+	dec	edi				; AMD want inc/dec
 	;    depth++;
 	;    (split under %if)
 	;    continue;
@@ -391,7 +391,7 @@ ogr_cycle_:
 	mov	eax,dword [work_nodes]	; nodes
 	cmp	edx,dword [work_checkpoint_depth]	; checkpoint_depth
 	jg	.L$01
-	mov	dword [work_checkpoint],eax
+	mov	dword [dword work_checkpoint],eax
 ; Unaligned L$01 gives huge slowdown. Alas, NASM cannot correctly
 ; expand current address in macro. Please check listing!
 	align 16
@@ -443,9 +443,9 @@ ogr_cycle_:
 
 	;    limit = lev->limit; KILLED
 	;    mark = lev->mark;
-	mov	ebx,dword [ebp+lev_mark]
 	;    remdepth++;
-	add	edi,1				; stall on flags below
+	inc	edi				; AMD want inc/dec
+	mov	ebx,dword [ebp+lev_mark]
 	;    depth--;
 	;    if (depth <= 0) {
 	dec	dword [work_depth]
