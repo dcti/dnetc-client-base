@@ -4,10 +4,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogr_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.1.2.1 2007/08/20 15:39:00 decio Exp $"; }
+return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.1.2.2 2007/09/18 07:14:21 decio Exp $"; }
 
 #ifndef CORE_NAME
-#error CORE_NAME defined.
+#error CORE_NAME undefined.
 #endif
 
 #define OGROPT_HAVE_OGR_CYCLE_ASM 2
@@ -238,10 +238,7 @@ return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.1.2.1 2007/08/20 15:39:00 decio Ex
 
 #include "ansi/ogr.cpp"
 
-//#define PPE_WRAPPER_FUNCTION(name) PPE_WRAPPER_FUNCTION2(name)
 #define SPE_WRAPPER_FUNCTION(name) SPE_WRAPPER_FUNCTION2(name)
-
-//#define PPE_WRAPPER_FUNCTION2(name) ogr_cycle_ ## name ## _spe
 #define SPE_WRAPPER_FUNCTION2(name) ogr_cycle_ ## name ## _spe_wrapper
 
 extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
@@ -250,7 +247,9 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
   DNETC_UNUSED_PARAM(with_time_constraints);
 
-  spe_context_ptr_t context;
+  static spe_context_ptr_t context;
+  static bool isInit = false;
+
   unsigned int entry = SPE_DEFAULT_ENTRY;
   spe_stop_info_t stop_info;
   s32 retval = 0;
@@ -258,13 +257,19 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   posix_memalign(&myCellOGRCoreArgs_void, 128, sizeof(CellOGRCoreArgs));
   CellOGRCoreArgs* myCellOGRCoreArgs = (CellOGRCoreArgs*)myCellOGRCoreArgs_void;
 
+  if (!isInit)
+  {
+    // Create SPE thread
+    context = spe_context_create(SPE_EVENTS_ENABLE, NULL);
+    spe_program_load(context, &SPE_WRAPPER_FUNCTION(CORE_NAME));
+
+    isInit = true;
+  }
+
   // Copy function arguments to CellOGRCoreArgs struct
   memcpy(&myCellOGRCoreArgs->state, state, sizeof(struct State));
   memcpy(&myCellOGRCoreArgs->pnodes, pnodes, sizeof(int));
 
-  // Create SPE thread
-  context = spe_context_create(SPE_EVENTS_ENABLE, NULL);
-  spe_program_load(context, &SPE_WRAPPER_FUNCTION(CORE_NAME));
   spe_context_run(context, &entry, 0, (void*)myCellOGRCoreArgs, NULL, &stop_info);
   spe_stop_info_read(context, &stop_info);
 
@@ -281,8 +286,6 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   memcpy(pnodes, &myCellOGRCoreArgs->pnodes, sizeof(int));
 
   free(myCellOGRCoreArgs_void);
-
-  spe_context_destroy(context);
 
   return retval;
 }

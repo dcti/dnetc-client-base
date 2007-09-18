@@ -4,10 +4,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.1.2.1 2007/08/02 08:08:37 decio Exp $"; }
+return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.1.2.2 2007/09/18 07:14:21 decio Exp $"; }
 
 #ifndef CORE_NAME
-#error CORE_NAME defined.
+#error CORE_NAME undefined.
 #endif
 
 #include "ccoreio.h"
@@ -30,7 +30,9 @@ extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
 
 s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  spe_context_ptr_t context;
+  static spe_context_ptr_t context;
+  static bool isInit = false;
+
   unsigned int entry = SPE_DEFAULT_ENTRY;
   spe_stop_info_t stop_info;
   s32 retval = 0;
@@ -38,13 +40,19 @@ s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *
   posix_memalign(&myCellR72CoreArgs_void, 128, sizeof(CellR72CoreArgs));
   CellR72CoreArgs* myCellR72CoreArgs = (CellR72CoreArgs*)myCellR72CoreArgs_void;
 
+  if (!isInit)
+  {
+    // Create SPE thread
+    context = spe_context_create(SPE_EVENTS_ENABLE, NULL);
+    spe_program_load(context, &SPE_WRAPPER_FUNCTION(CORE_NAME));
+
+    isInit = true;
+  }
+
   // Copy function arguments to CellR72CoreArgs struct
   memcpy(&myCellR72CoreArgs->rc5_72unitwork, rc5_72unitwork, sizeof(RC5_72UnitWork));
   memcpy(&myCellR72CoreArgs->iterations, iterations, sizeof(u32));
 
-  // Create SPE thread
-  context = spe_context_create(SPE_EVENTS_ENABLE, NULL);
-  spe_program_load(context, &SPE_WRAPPER_FUNCTION(CORE_NAME));
   spe_context_run(context, &entry, 0, (void*)myCellR72CoreArgs, NULL, &stop_info);
   spe_stop_info_read(context, &stop_info);
 
@@ -61,8 +69,6 @@ s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *
   memcpy(iterations, &myCellR72CoreArgs->iterations, sizeof(u32));
 
   free(myCellR72CoreArgs_void);
-
-  spe_context_destroy(context);
 
   return retval;
 }

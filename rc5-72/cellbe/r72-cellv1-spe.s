@@ -3,7 +3,157 @@
 # Any other distribution or use of this source violates copyright.
 #
 # Author: Decio Luiz Gazzoni Filho <decio@distributed.net>
-# $Id: r72-cellv1-spe.s,v 1.1.2.3 2007/08/03 05:00:35 decio Exp $
+# $Id: r72-cellv1-spe.s,v 1.1.2.4 2007/09/18 07:14:21 decio Exp $
+
+	# A NOTE ON OPTIMIZING THE CORE
+	#
+	# The core is already basically optimal if you use conventional
+	# implementation techniques. There may be a couple of cycles to
+	# shave in key incrementation or comparison, but don't expect even
+	# 1% improvement that way. This is because all RC5 instructions
+	# (addition, 32-bit rotates and XOR) are even pipeline instructions,
+	# and the occasional loads and stores that may be required are odd
+	# pipeline instructions and already paired with even pipeline
+	# instructions. To attain significant speedups, you'll have to think
+	# outside the box.
+	#
+	# One observes that most (say 90% or 95%) of the odd pipeline
+	# instruction slots are free in this core. If there were a way to
+	# use them, significant gains might be realized, but at first sight
+	# none of the odd pipeline instructions are relevant to the
+	# computations being performed.
+	#
+	# However, it turns out that there are other ways of computing
+	# 32-bit rotates without using the rot/roti instruction. I'll focus
+	# on a replacement for rotation by 3, which accounts for half of the
+	# rotations performed on the key schedule of the algorithm. Although
+	# it's possible to come up with a replacement for rotation by a
+	# variable amount, the performance is not worthwhile.
+	#
+	# Our main tool is the 128-bit rotate instruction, rotqbii. Suppose
+	# first that you replicate a value X across all 32-bit slots of a
+	# vector register, i.e. let reg = X | X | X | X. It's not hard to
+	# see that a 128-bit rotation on that register would be equivalent
+	# to a scalar 32-bit rotation by the same amount, due to the
+	# cyclical nature of the data. That suggests a scheme where an
+	# arbitrary vector register with contents X | Y | Z | W is copied to
+	# four registers of the form X | X | X | X, Y | Y | Y | Y,
+	# Z | Z | Z | Z and W | W | W | W, then rotations are performed on
+	# each of them individually, and results are assembled back in a
+	# vector register. As luck would have it, the instruction we use for
+	# packing and unpacking registers is the shuffle bytes (shufb)
+	# instruction, which is also an odd pipeline instruction, so we
+	# don't have to waste any odd pipeline slots on this instruction
+	# sequence.
+	#
+	# However, if you assume the same rotation amount for all 32-bit
+	# slots, some optimizations are applicable. Consider a register
+	# assembled as reg = X | X | Y | Y. Applying a 128-bit rotation by R
+	# to reg produced X rotated by R in the first slot (from left to
+	# right) and Y rotated by R in the third slot, so that only two
+	# 128-bit rotations suffice for emulating a vector 32-bit rotation.
+	# More explicitly, let
+	#
+	# $1:     target register for 32-bit vector rotation
+	# $2, $3: temporaries
+	# $4:     shuffle pattern 0x00010203000102030405060704050607 for
+	#         extracting X | X | Y | Y from X | Y | Z | W
+	# $5:     shuffle pattern 0x08090A0B08090A0B0C0D0E0F0C0D0E0F for
+	#         extracting Z | Z | W | W from X | Y | Z | W
+	# $6:     shuffle pattern 0x0001020308090A0B1011121318191A1B for
+	#         reassembling X | Y | Z | W from X | _ | Y | _ and
+	#         Z | _ | W | _
+	#
+	# Then we can compute a functionally equivalent version of the even
+	# pipeline instruction
+	#
+	# 	roti	$1, $1, rot_amount
+	#
+	# using the following code snippet, which employs only odd pipeline
+	# instructions:
+	#
+	# 	shufb	$2, $1, $1, $4
+	#	shufb	$3, $1, $1, $5
+	#	rotqbii	$2, $2, rot_amount
+	#	rotqbii	$3, $3, rot_amount
+	#	shufb	$1, $2, $3, $6
+	#
+	# In theory, each vector pipe in the key schedule requires 6
+	# instructions per round, and under this scheme one of these
+	# instructions (the rotation by 3) can be replaced by 5 odd pipeline
+	# instructions, which if properly paired would only require 5
+	# cycles. Unfortunately, an impractical number of pipes would be
+	# required to mask latencies in the code above, which would spill
+	# part of the key schedule array to memory (currently this array is
+	# completely stored in registers), and this would render most if not
+	# all the improvements moot. A second possibility that wouldn't
+	# require as many pipes, but is extremely difficult to implement, is
+	# software pipelining, similar to the way the PowerPC cores by
+	# kakace operate. So this is your mission, should you choose to
+	# accept it: take the ideas above and apply them in a way that
+	# produces actual performance improvements.
+	#
+	# There's an improvement for the case of rotation by 3 or any other
+	# small (< 8) rotation amount. Again let reg = X | Y | Z | W and
+	# consider its decomposition into bytes:
+	#
+	# reg = X0 X1 X2 X3 | Y0 Y1 Y2 Y3 | Z0 Z1 Z2 Z3 | W0 W1 W2 W3
+	#
+	# Now shuffle the contents of this register into this form (there
+	# are other equivalent forms, you are free to choose a different one
+	# if it suits you better):
+	#
+	# reg' = X0 X1 X2 X3 | X0 Y0 Y1 Y2 | Y3 Y0 Z0 Z1 | Z2 Z3 Z0 __
+	#
+	# Rotating reg' by 3 will yield X, Y, Z rotated by R in byte slots
+	# 0-3, 5-8, 10-13 respectively (from left to right). More
+	# explicitly, let
+	#
+	# $1, $2,
+	# $3:     target registers for 32-bit vector rotation
+	# $4, $5,
+	# $6, $7: temporaries
+	# $8:     shuffle pattern 0x0001020300040506070408090A0B0880
+	# $9:     shuffle pattern 0x0C0D0E0F0C1011121310141516171480
+	# $10:    shuffle pattern 0x08090A0B080C0D0E0F0C101112131080
+	# $11:    shuffle pattern 0x040506070408090A0B080C0D0E0F0C80
+	# $12:    shuffle pattern 0x00010203050607080A0B0C0D10111213
+	# $13:    shuffle pattern 0x050607080A0B0C0D1011121315161718
+	# $14:    shuffle pattern 0x0A0B0C0D10111213151617181A1B1C1D
+	#
+	# Then we can compute a functionally equivalent version of the
+	# following set of rotations, which uses even pipeline instructions:
+	#
+	# 	roti	$1, $1, rot_amount
+	#	roti	$2, $2, rot_amount
+	#	roti	$3, $3, rot_amount
+	#
+	# using the following code snippet, which employs only odd pipeline
+	# instructions:
+	#
+	# 	shufb	$4, $1, $1,  $8
+	#	shufb	$5, $1, $2,  $9
+	#	shufb	$6, $2, $3, $10
+	#	shufb	$7, $3, $3, $11
+	#	rotqbii	$4, $4, rot_amount
+	#	rotqbii	$5, $5, rot_amount
+	#	rotqbii	$6, $6, rot_amount
+	#	rotqbii	$7, $7, rot_amount
+	#	shufb	$1, $4, $5, $12
+	#	shufb	$2, $5, $6, $13
+	#	shufb	$3, $6, $7, $14
+	#
+	# Hence we replace 3 even pipeline instructions by 10 odd pipeline
+	# instructions, a ratio of 10/3 ~ 3.33, which is better than the 5
+	# instructions above, but again we run into latency issues. Note
+	# that this arrangement is better suited to a 3 vector pipe core
+	# instead of the current 4 vector pipe arrangement. Again, it might
+	# only be possible to exploit this technique using something like
+	# software pipelining, but you're free to experiment. A 6-pipe core
+	# would probably allow the use of this technique without any
+	# software pipelining, but it runs into spill issues as well since
+	# 4 pipes are the maximum one can implement without running out of
+	# registers.
 
 	.section bss
 	.align	4
