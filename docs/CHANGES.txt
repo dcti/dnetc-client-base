@@ -23,12 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.123 2007/09/18 07:14:21 decio Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.124 2007/10/09 05:09:01 jlawson Exp $
 ==========================================================================
 
 2.9000
 ------
 2.9015-504  imp: cellbe: Tidy up cores for public source release
+            fix: x86: broken -stress on intel macosx (#4021)
+
 2.9015-503  imp: cellbe: Slightly faster SPE OGR core
             fix: linux: Working fix for the race condition alluded to in the
                         changelog for v2.9015-502
