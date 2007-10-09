@@ -2,7 +2,7 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.4.2.4 2003/02/22 14:09:21 andreasb Exp $
+// $Id: rotate.h,v 1.4.2.5 2007/10/09 04:45:53 jlawson Exp $
 //
 
 #ifndef __ROTATE_H__
@@ -211,7 +211,7 @@ static __inline__ u32 ROTL(u32 x, u32 y)
 	__asm__ __volatile(
 		"roll %%cl,%0\n\t"
 		:"=g" (res)
-		:"0" (x), "ecx" (y));
+		:"0" (x), "c" (y));
 
 	return res;
 }
