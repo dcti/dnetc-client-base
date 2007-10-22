@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.114 2003/11/01 14:20:14 mweiser Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.115 2007/10/22 16:48:27 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -54,6 +54,10 @@ const char **corenames_for_contest( unsigned int cont_i )
 #endif
 #ifdef HAVE_OGR_CORES
     case OGR:
+      return corenames_for_contest_ogr();
+#endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
       return corenames_for_contest_ogr();
 #endif
     default:
@@ -105,6 +109,10 @@ int apply_selcore_substitution_rules(unsigned int contestid, int cindex)
     case OGR:
       return apply_selcore_substitution_rules_ogr(cindex);
 #endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
+      return apply_selcore_substitution_rules_ogr(cindex);
+#endif
     default:
       return cindex;
     }
@@ -123,6 +131,29 @@ unsigned int corecount_for_contest( unsigned int cont_i )
     return count_i;
   }
   return 0;
+}
+
+/* -------------------------------------------------------------------- */
+
+unsigned int nominal_rate_for_contest( unsigned int cont_i)
+{
+  switch (cont_i)
+  {
+#ifdef HAVE_RC5_72_CORES
+    case RC5_72:
+      return estimate_nominal_rate_rc572();
+#endif
+#ifdef HAVE_OGR_CORES
+    case OGR:
+      return estimate_nominal_rate_ogr();
+#endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
+      return estimate_nominal_rate_ogr();
+#endif
+    default:
+      return 0;
+  }
 }
 
 /* ===================================================================== */
@@ -233,7 +264,7 @@ int DeinitializeCoreTable( void )  /* ClientMain calls this */
   #ifdef HAVE_RC5_72_CORES
   DeinitializeCoreTable_rc572();
   #endif
-  #ifdef HAVE_OGR_CORES
+  #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   DeinitializeCoreTable_ogr();
   #endif
   #ifdef HAVE_DES_CORES
@@ -242,7 +273,6 @@ int DeinitializeCoreTable( void )  /* ClientMain calls this */
   #ifdef HAVE_CSC_CORES
   DeinitializeCoreTable_csc();
   #endif
-
 
   selcore_initlev--;
   return 0;
@@ -295,7 +325,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
   #ifdef HAVE_RC5_72_CORES
   if (InitializeCoreTable_rc572(first_time) < 0) return -1;
   #endif
-  #ifdef HAVE_OGR_CORES
+  #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   if (InitializeCoreTable_ogr(first_time) < 0) return -1;
   #endif
   #ifdef HAVE_DES_CORES
@@ -374,8 +404,10 @@ static long __bench_or_test( int which,
         }
         selcorestatics.corenum[cont_i] = -1; /* reset to show name */
 
-        if (which == 's') /* selftest */
+        if (which == 't') /* selftest */
           rc = SelfTest( cont_i );
+        else if (which == 's') /* stresstest */
+          rc = StressTest( cont_i );
         else
           rc = TBenchmark( cont_i, benchsecs, 0 );
         #if (CLIENT_OS != OS_WIN32 || !defined(SMC))
@@ -428,6 +460,11 @@ long selcoreBenchmark( unsigned int cont_i, unsigned int secs, int corenum )
 
 long selcoreSelfTest( unsigned int cont_i, int corenum)
 {
+  return __bench_or_test( 't', cont_i, 0, corenum );
+}
+
+long selcoreStressTest( unsigned int cont_i, int corenum)
+{
   return __bench_or_test( 's', cont_i, 0, corenum );
 }
 
@@ -455,6 +492,10 @@ int selcoreGetPreselectedCoreForProject(unsigned int projectid)
 #endif
 #ifdef HAVE_OGR_CORES
     case OGR:
+      return selcoreGetPreselectedCoreForProject_ogr();
+#endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
       return selcoreGetPreselectedCoreForProject_ogr();
 #endif
     default:
@@ -612,9 +653,13 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
     case DES:
       return selcoreSelectCore_des( threadindex, client_cpuP, selinfo );
 #endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
+      return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo, contestid );
+#endif
 #ifdef HAVE_OGR_CORES
     case OGR:
-      return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo );
+      return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo, contestid );
 #endif
     default:
       return -1; /* core selection failed */

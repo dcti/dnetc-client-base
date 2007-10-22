@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.31 2003/11/01 14:20:14 mweiser Exp $"; }
+return "@(#)$Id: util.cpp,v 1.32 2007/10/22 16:48:28 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -371,11 +371,11 @@ const char *projectmap_expand( const int *map, const int *state_vec )
 // string or default ==> project order map + project state vec
 const int* projectmap_build( int* buf, int* state, const char *strtomap )
 {
-  #if (CONTEST_COUNT != 6)
-    #error PROJECT_NOT_HANDLED("static default load order map expects CONTEST_COUNT == 6")
+  #if (CONTEST_COUNT != 7)
+    #error PROJECT_NOT_HANDLED("static default load order map expects CONTEST_COUNT == 7")
   #endif
   // you must add _every_ project, obsoletes may come last
-  static const int default_map[PROJECT_COUNT] = { DES,CSC,OGR,RC5,RC5_72,OGR_NEXTGEN_SOMEDAY };
+  static const int default_map[PROJECT_COUNT] = { DES,CSC,OGR,OGR_NEXTGEN_SOMEDAY,OGR_P2,RC5,RC5_72 };
   static int default_map_checked = -1;
   static int map[PROJECT_COUNT];
   unsigned int map_pos, i;
@@ -602,7 +602,7 @@ const char *utilGetAppName(void)
 #elif (CLIENT_OS == OS_BEOS)
   #include <kernel/OS.h>      // get_next_team_info()
   #include <kernel/image.h>   // get_next_image_info()
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>
   #include <tlhelp32.h> /* toolhlp32 structures and function prototypes */
@@ -741,7 +741,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       num_found = os2GetPIDList(procname, pidlist, maxnumpids);
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     {
       if (*procname == '*' || *procname == '#')
       {
@@ -760,7 +760,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           if (hwnd != NULL) /* found! */
           {
             DWORD pid = 0;
-            #if (CLIENT_OS == OS_WIN32)
+            #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
             if ( winGetVersion() >= 400 ) /* not win32s please */
             {                             /* use real pid */
               if (GetWindowThreadProcessId( hwnd, &pid ) == 0)
@@ -793,7 +793,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           }
         }
       } /* find by window or window class */
-      #if (CLIENT_OS == OS_WIN32)
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       else if (winGetVersion() >= 400) /* not win32s please */
       {
         /* calls to CreateToolhelp32Snapshot(), Process32First() and
@@ -1000,22 +1000,20 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     {
       num_found = 0;
       long taskptr;
 
-      #ifndef __PPC__
-      /* 68K */
-      taskptr = (long)FindTask(procname);
-      #else
-      #ifndef __POWERUP__
+      #if !defined(__OS3PPC__)
+      /* 68K / OS4 / MorphOS */
+      taskptr = (long)FindTask((STRPTR)procname);
+      #elif !defined(__POWERUP__)
       /* WarpOS */
       taskptr = (long)FindTaskPPC((char *)procname);
       #else
       /* PowerUp */
       taskptr = (long)PPCFindTask((char *)procname);
-      #endif
       #endif
 
       if (taskptr)
@@ -1107,11 +1105,16 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         const char *pscmd = ((char *)NULL);
         #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
             (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
-            (CLIENT_OS == OS_PS2LINUX)
+            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX)
         pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
+        #elif (CLIENT_OS == OS_MACOSX)
+        /* White spaces in directory/file names make parsing very error */
+        /* prone. The workaround is to ask 'ps' to output the pid and   */
+        /* executable name only, so that we can deal with white spaces  */
+        /* in program names (quite frequent under Mac OS X)             */
+        pscmd = "ps acxw -o pid,command 2>/dev/null";
         #elif (CLIENT_OS == OS_NEXTSTEP)
         /* NeXTstep porduces spaces in process status columns like
          * 26513 p1 SW    0:01 -bash (bash)
@@ -1207,8 +1210,14 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                     while (*foundname && isspace(*foundname))
                       foundname++;
                     p = foundname;
+                    #if (CLIENT_OS == OS_MACOSX)
+                    /* Skip to the end of line, and accept white spaces */
+                    while (*p)
+                      p++;
+                    #else
                     while (*p && !isspace(*p))
                       p++;
+                    #endif
                     *p = '\0';
                     if (!usefullpathcmp)
                     {

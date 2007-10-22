@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *temperature_c(void) {
-return "@(#)$Id: temperature.c,v 1.2 2003/09/12 23:41:00 mweiser Exp $"; }
+return "@(#)$Id: temperature.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

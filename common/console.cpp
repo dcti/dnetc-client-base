@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.77 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: console.cpp,v 1.78 2007/10/22 16:48:25 jlawson Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -27,12 +27,16 @@ return "@(#)$Id: console.cpp,v 1.77 2003/11/01 14:20:13 mweiser Exp $"; }
 #include "sleepdef.h" //usleep()
 #include "console.h"  //ourselves
 
+#if (CLIENT_OS == OS_NETWARE6)
+#include <screen.h>
+#endif
+
 #if !defined(NOTERMIOS) && ((CLIENT_OS==OS_SOLARIS) || (CLIENT_OS==OS_IRIX) \
   || (CLIENT_OS==OS_LINUX) || (CLIENT_OS==OS_NETBSD) || (CLIENT_OS==OS_BEOS) \
   || (CLIENT_OS==OS_FREEBSD) || ((CLIENT_OS==OS_OS2) && defined(__EMX__)) \
   || (CLIENT_OS==OS_AIX) || (CLIENT_OS==OS_DEC_UNIX) || (CLIENT_OS==BSDOS) \
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
-  || ((CLIENT_OS==OS_MACOSX) && !defined(__RHAPSODY__)) \
+  || (CLIENT_OS==OS_MACOSX) \
   || ((CLIENT_OS==OS_QNX) && defined(__QNXNTO__)) \
   || (CLIENT_OS==OS_DYNIX)) || (CLIENT_OS == OS_PS2LINUX)
 #include <termios.h>
@@ -49,7 +53,7 @@ return "@(#)$Id: console.cpp,v 1.77 2003/11/01 14:20:13 mweiser Exp $"; }
 #endif
 
 #if defined(__unix__) || (CLIENT_OS == OS_VMS) || (CLIENT_OS == OS_OS390) \
-  || (CLIENT_OS == OS_AMIGAOS)
+  || (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 #define HAVE_ANSICOMPLIANTTERM /* tty understands basic ansi sequences */
 #endif
 #if defined(__unix__)
@@ -82,7 +86,7 @@ int DeinitializeConsole(int waitforuser)
   {
     if (constatics.runhidden || !constatics.conisatty)
       waitforuser = 0;
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     w32DeinitializeConsole(waitforuser);
     #elif (CLIENT_OS == OS_NETWARE)
     nwCliDeinitializeConsole(waitforuser);
@@ -108,7 +112,7 @@ int InitializeConsole(int *runhidden,int doingmodes)
     constatics.initlevel = 1;
     constatics.runhidden = *runhidden;
 
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_NETWARE)
     retcode = nwCliInitializeConsole(constatics.runhidden,doingmodes);
@@ -125,7 +129,7 @@ int InitializeConsole(int *runhidden,int doingmodes)
      #if defined(__EMX__)
      v_init();
      #endif
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     retcode = amigaInitializeConsole(constatics.runhidden,doingmodes);
     #endif
 
@@ -135,11 +139,11 @@ int InitializeConsole(int *runhidden,int doingmodes)
       constatics.conisatty = 1;
     else if (!constatics.runhidden)
     {
-      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+      #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         constatics.conisatty = w32ConIsScreen();
       #elif (CLIENT_OS == OS_RISCOS)
         constatics.conisatty = 1;
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
         constatics.conisatty = amigaConIsScreen();
       #else
         constatics.conisatty = (isatty(fileno(stdout)));
@@ -154,7 +158,7 @@ int InitializeConsole(int *runhidden,int doingmodes)
 
 int ConIsGUI(void)
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   /* => 'C'=native console, 'c'=pipe console, 'g'=lite GUI, 'G'=fat GUI */
   return ((w32ConGetType() & 0xff)=='G' || (w32ConGetType() & 0xff)=='g');
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
@@ -164,7 +168,7 @@ int ConIsGUI(void)
   return (guiriscos!=0);
   #elif (CLIENT_OS == OS_MACOS) && !defined(MAC_FBA)
   return 1;
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   return amigaConIsGUI();
   #else
   return 0;
@@ -206,13 +210,13 @@ int ConOut(const char *msg)
 {
   if (constatics.initlevel > 0 /*&& constatics.conisatty*/ )
   {
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       w32ConOut(msg);
     #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
       os2conout(msg);
     #elif (CLIENT_OS == OS_MACOS)
       macosConOut(msg);
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       amigaConOut(msg);
     #else
       fwrite( msg, sizeof(char), strlen(msg), stdout);
@@ -231,7 +235,7 @@ int ConOut(const char *msg)
 */
 int ConOutModal(const char *msg)
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     w32ConOutModal(msg);
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
     WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, msg,
@@ -239,7 +243,7 @@ int ConOutModal(const char *msg)
        NULL, MB_OK | MB_INFORMATION | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s\r\n", msg );
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     amigaConOutModal(msg);
   #else
     fprintf( stderr, "%s\n", msg );
@@ -257,7 +261,7 @@ int ConOutModal(const char *msg)
 
 int ConOutErr(const char *msg)
 {
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     w32ConOutErr(msg);
   #elif (CLIENT_OS == OS_OS2) && defined(OS2_PM)
      WinMessageBox( HWND_DESKTOP, HWND_DESKTOP, (PSZ)msg,
@@ -265,7 +269,7 @@ int ConOutErr(const char *msg)
            NULL, MB_OK | MB_APPLMODAL | MB_ERROR | MB_MOVEABLE );
   #elif (CLIENT_OS == OS_NETWARE)
     ConsolePrintf( "%s: %s\r\n", utilGetAppName(), msg );
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     amigaConOutErr(msg);
   #else
     fprintf( stderr, "%s: %s\n", utilGetAppName(), msg );
@@ -312,7 +316,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       {
         ch = macosConGetCh();
       }
-      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+      #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       {
         if (w32ConKbhit())
         {
@@ -328,6 +332,13 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
           ch = nwCliGetCh();
           if (!ch)
             ch = (nwCliGetCh()<<8);
+        }
+      }
+	  #elif (CLIENT_OS == OS_NETWARE6)
+      {
+        if (kbhit()==0)
+        {
+          ch = getcharacter();
         }
       }
       #elif (CLIENT_OS == OS_DOS)
@@ -356,7 +367,7 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
           if (!ch) ch = (getch() << 8);
         #endif
       }
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       {
         fflush(stdout);
         ch = getch();
@@ -621,7 +632,7 @@ int ConGetPos( int *col, int *row )  /* zero-based */
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     return w32ConGetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
     unsigned short r, c;
@@ -642,7 +653,7 @@ int ConGetPos( int *col, int *row )  /* zero-based */
       if (col) *col = (int)c;
       return 0;
     }
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     return amigaConGetPos(col,row);
     #else
     return ((row == NULL && col == NULL) ? (0) : (-1));
@@ -660,7 +671,7 @@ int ConSetPos( int col, int row )  /* zero-based */
     #if defined(HAVE_ANSICOMPLIANTTERM)
     printf("\033" "[%d;%dH", row+1, col+1 );
     return 0;
-    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     return w32ConSetPos(col,row);
     #elif (CLIENT_OS == OS_NETWARE)
     gotoxy( ((unsigned short)col), ((unsigned short)row) );
@@ -719,7 +730,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     v_init();
     v_dimen(&width, &height);
     #endif
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if ( w32ConGetSize(&width,&height) < 0 )
       height = width = 0;
   #elif (CLIENT_OS == OS_NETWARE)
@@ -753,7 +764,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
     }
   #elif (CLIENT_OS == OS_QNX) && defined(__QNXNTO__)
     tcgetsize(fileno(stdout), &height, &width);
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     amigaConGetSize( &width, &height);
   #elif defined(TIOCGWINSZ)
     #error please add support for TIOCGWINSZ to avoid the following stuff
@@ -858,7 +869,7 @@ int ConClear(void)
 {
   if (constatics.initlevel > 0 && constatics.conisatty)
   {
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       return w32ConClear();
     #elif (CLIENT_OS == OS_OS2)
       #ifndef __EMX__

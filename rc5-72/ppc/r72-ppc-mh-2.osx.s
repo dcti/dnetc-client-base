@@ -8,7 +8,7 @@
 ; Written by Malcolm Howell <coreblimey@rottingscorpion.com>
 ; 4th Jan 2003
 ;
-; $Id: r72-ppc-mh-2.osx.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+; $Id: r72-ppc-mh-2.osx.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 
 gcc2_compiled.:
 

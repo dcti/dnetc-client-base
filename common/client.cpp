@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.253 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: client.cpp,v 1.254 2007/10/22 16:48:24 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -44,6 +44,7 @@ void ResetClientData(Client *client)
   int contest;
   memset((void *)client,0,sizeof(Client));
 
+  client->connectoften=4;
   client->nettimeout=60;
   client->autofindkeyserver=1;
   client->crunchmeter=-1;
@@ -67,7 +68,7 @@ static const char *GetBuildOrEnvDescription(void)
 
 #if (CLIENT_OS == OS_DOS)
   return dosCliGetEmulationDescription(); //if in win/os2 VM
-#elif ((CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16))
+#elif ((CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
   static char buffer[32]; long ver = winGetVersion(); /* w32pre.cpp */
   sprintf(buffer,"Windows%s %u.%u", (ver>=2000)?("NT"):(""), (ver/100)%20, ver%100 );
   return buffer;
@@ -112,7 +113,7 @@ static const char *GetBuildOrEnvDescription(void)
   return "";
 #elif (CLIENT_OS == OS_AMIGAOS)
   static char buffer[40];
-  #ifdef __PPC__
+  #ifdef __OS3PPC__
     #ifdef __POWERUP__
     #define PPCINFOTAG_EMULATION (TAG_USER + 0x1f0ff)
     sprintf(buffer,"OS %s, PowerUp%s %ld.%ld",amigaGetOSVersion(),((PPCGetAttr(PPCINFOTAG_EMULATION) == 'WARP') ? " Emu" : ""),PPCVersion(),PPCRevision());
@@ -121,9 +122,59 @@ static const char *GetBuildOrEnvDescription(void)
     #define LIBREV(lib) *((UWORD *)(((UBYTE *)lib)+22))
     sprintf(buffer,"OS %s, WarpOS %d.%d",amigaGetOSVersion(),LIBVER(PowerPCBase),LIBREV(PowerPCBase));
     #endif
+  #elif defined(__PPC__)
+  sprintf(buffer,"OS %s, PowerPC",amigaGetOSVersion());
   #else
   sprintf(buffer,"OS %s, 68K",amigaGetOSVersion());
   #endif
+  return buffer;
+#elif (CLIENT_OS == OS_MORPHOS)
+  static char buffer[40];
+  #define __ALTIVEC__ 1 /* crude hack till we have real gcc-altivec */
+  #include <exec/resident.h>
+  char release[32];
+  int mosVer = 0;
+  struct Resident *m_res;
+  m_res = FindResident("MorphOS");
+  if (m_res)
+  {
+    mosVer = m_res->rt_Version;
+    if (m_res->rt_Flags & RTF_EXTENDED)
+    {
+      sprintf(release, "%d.%d", mosVer, m_res->rt_Revision);
+    }
+    else
+    {
+      /* Anchient MorphOS: parse string (example): MorphOS ID 0.4 (dd.mm.yyyy) */
+      const char *ps = (const char *) m_res->rt_IdString;
+      const char *p = ps;
+      char *d = release;
+      if (p && *p)
+      {
+        while (*p && *p != '.') p++;
+        if (*p)
+        {
+          while (p > ps && p[-1] != ' ') p--;
+
+          while (*p && *p != ' ')
+          {
+            *d++ = *p++;
+          }
+          *d = '\0';
+        }
+      }
+      if (d == release)
+      {
+        /* oops, no clue of revision */
+        sprintf(release, "%d.?", mosVer);
+      }
+    }
+  }
+  else
+  {
+    strcpy(release, "?.?");
+  }
+  sprintf(buffer,"MorphOS %s", release);
   return buffer;
 #elif defined(__unix__) /* uname -sr */
   struct utsname ut;
@@ -191,7 +242,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2003, distributed.net\n");
+                    "Copyright 1997-2006, distributed.net\n");
 #if defined HAVE_RC5_64_CORES
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
@@ -212,7 +263,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
 #endif
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
-        #if defined HAVE_OGR_CORES
+        #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
         LogScreenRaw( "RC5-72 and OGR ARM assembly by Peter Teichmann\n");
         #else
         LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
@@ -221,18 +272,27 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5-72 68K assembly by Malcolm Howell and John Girvin\n");
       #endif
-      #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell and Didier Levet\n"
-                    "Enhancements for 604e CPUs by Roberto Ragusa\n");
-        #if defined(__VEC__) || defined(__ALTIVEC__)
-        LogScreenRaw( "RC5-72 Altivec assembly by Didier Levet\n");
+      #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+        #if (CLIENT_CPU == CPU_POWERPC)
+        LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell and Didier Levet\n"
+                      "Enhancements for 604e CPUs by Roberto Ragusa\n");
         #endif
+        #if defined(__VEC__) || defined(__ALTIVEC__)
+          #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+            LogScreenRaw( "RC5-72 Altivec and OGR assembly by Didier Levet\n");
+          #else
+            LogScreenRaw( "RC5-72 Altivec assembly by Didier Levet\n");
+          #endif
+        #endif
+      #endif
+      #if (CLIENT_CPU == CPU_CELLBE)
+      LogScreenRaw( "RC5-72 and OGR SPE assembly by Decio Luiz Gazzoni Filho\n");
       #endif
       #if (CLIENT_CPU == CPU_SPARC)
       LogScreenRaw( "RC5-72 SPARC assembly by Didier Levet and Andreas Beckmann\n");
       #endif
 #endif
-#if defined HAVE_OGR_CORES
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
       #if (CLIENT_CPU == CPU_ARM)
         #if !defined HAVE_RC5_72_CORES
         LogScreenRaw( "OGR ARM assembly by Peter Teichmann\n");
@@ -395,6 +455,7 @@ static int ClientMain( int argc, char *argv[] )
                                  client->crunchmeter,
                                  0, /* nobaton */
                                  client->logname,
+                                 client->logrotateUTC,
                                  client->logfiletype,
                                  client->logfilelimit,
                                  ((domodes)?(0):(client->messagelen)),
@@ -490,7 +551,7 @@ int main( void )
   ClientMain(1,argv);
   return 0;
 }
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 //if you get compile or link errors it is probably because you compiled with
 //STRICT, which is a no-no when using cpp (think 'overloaded')
 #define WIN32_LEAN_AND_MEAN
@@ -563,11 +624,14 @@ int main( int argc, char *argv[] )
     }
   }
   #elif (CLIENT_OS == OS_MACOSX)                  /* SPT_TYPE==SPT_PSSTRINGS */
+  /* NOTHING - PS_STRINGS are no longer supported and there's no way to
+  ** change the name of our process.
   if (needchange)
   {
     PS_STRINGS->ps_nargvstr = 1;
     PS_STRINGS->ps_argvstr = (char *)defname;
   }
+  */
   #elif 0                                     /*  SPT_TYPE == SPT_SYSMIPS */
   if (needchange)
   {
@@ -705,7 +769,7 @@ int main( int argc, char *argv[] )
   nwCliExitClient(); // destroys AES process, screen, polling procedure
   return rc;
 }
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 int main( int argc, char *argv[] )
 {
   int rc = 20;

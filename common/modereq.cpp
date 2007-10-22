@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.40 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: modereq.cpp,v 1.41 2007/10/22 16:48:26 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -43,8 +43,9 @@ static struct
   const char *helpoption;
   unsigned long bench_projbits;
   unsigned long test_projbits;
+  unsigned long stress_projbits;
   int cmdline_config; /* user passed --config opt, so don't do tty check */
-} modereq = {0,0,(const char *)0,(const char *)0,(const char *)0,0,0,0};
+} modereq = {0,0,(const char *)0,(const char *)0,(const char *)0,0,0,0,0};
 
 /* --------------------------------------------------------------- */
 
@@ -60,6 +61,9 @@ int ModeReqIsProjectLimited(int mode, unsigned int contest_i)
     else if (mode == MODEREQ_TEST ||
           mode == MODEREQ_TEST_ALLCORE )
       l = modereq.test_projbits;
+    else if (mode == MODEREQ_STRESS ||
+          mode == MODEREQ_STRESS_ALLCORE )
+      l = modereq.stress_projbits;
     l &= (1L<<contest_i);
   }
   return (l != 0);
@@ -82,6 +86,9 @@ int ModeReqLimitProject(int mode, unsigned int contest_i)
   else if (mode == MODEREQ_TEST ||
            mode == MODEREQ_TEST_ALLCORE )
     modereq.test_projbits |= l;
+  else if (mode == MODEREQ_STRESS ||
+           mode == MODEREQ_STRESS_ALLCORE)
+    modereq.stress_projbits |= l;
   else
     return -1;
   return 0;
@@ -245,7 +252,7 @@ int ModeReqRun(Client *client)
         modereq.reqbits &= ~(MODEREQ_IDENT);
         retval |= (MODEREQ_IDENT);
       }
-      if ((bits & MODEREQ_UNLOCK)!=0)
+      if ((bits & MODEREQ_UNLOCK) != 0)
       {
         if (modereq.filetounlock)
         {
@@ -255,7 +262,7 @@ int ModeReqRun(Client *client)
         modereq.reqbits &= ~(MODEREQ_UNLOCK);
         retval |= (MODEREQ_UNLOCK);
       }
-      if ((bits & MODEREQ_IMPORT)!=0)
+      if ((bits & MODEREQ_IMPORT) != 0)
       {
         if (modereq.filetoimport && client)
         {
@@ -265,13 +272,13 @@ int ModeReqRun(Client *client)
         }
         modereq.reqbits &= ~(MODEREQ_IMPORT);
       }
-      if ((bits & MODEREQ_CPUINFO)!=0)
+      if ((bits & MODEREQ_CPUINFO) != 0)
       {
         DisplayProcessorInformation(); 
         modereq.reqbits &= ~(MODEREQ_CPUINFO);
         retval |= (MODEREQ_CPUINFO);
       }
-      if ((bits & (MODEREQ_TEST | MODEREQ_TEST_ALLCORE))!=0)
+      if ((bits & (MODEREQ_TEST | MODEREQ_TEST_ALLCORE)) != 0)
       {
         int testfailed = 0;
         do
@@ -290,7 +297,7 @@ int ModeReqRun(Client *client)
             if (sel_contests == 0 /*none set==all set*/
              || (sel_contests & (1L<<contest)) != 0)
             {
-              if ((bits & (MODEREQ_TEST_ALLCORE))!=0)
+              if ((bits & (MODEREQ_TEST_ALLCORE)) != 0)
               {
                 if (client->corenumtotestbench < 0)
                 {
@@ -311,7 +318,47 @@ int ModeReqRun(Client *client)
         retval |= (MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
         modereq.reqbits &= ~(MODEREQ_TEST|MODEREQ_TEST_ALLCORE);
       }
-      if ((bits & MODEREQ_VERSION)!=0)
+      if ((bits & (MODEREQ_STRESS | MODEREQ_STRESS_ALLCORE)) != 0)
+      {
+        int testfailed = 0;
+        do
+        {
+          unsigned int contest; 
+          unsigned long sel_contests = modereq.stress_projbits;
+          modereq.stress_projbits = 0;
+
+          for (contest = 0; !testfailed && contest < CONTEST_COUNT; contest++)
+          {
+            if (CheckExitRequestTriggerNoIO())
+            {
+              testfailed = 1;
+              break;
+            }
+            if (sel_contests == 0 /*none set==all set*/
+             || (sel_contests & (1L<<contest)) != 0)
+            {
+              if ((bits & (MODEREQ_STRESS_ALLCORE)) != 0)
+              {
+                if (client->corenumtotestbench < 0)
+                {
+                  if (selcoreStressTest( contest, -1 ) < 0)
+                    testfailed = 1;
+                }
+                else
+                {
+                  if (selcoreStressTest( contest, client->corenumtotestbench ) < 0)
+                    testfailed = 1;
+                }
+              }
+              else if ( StressTest( contest ) < 0 )
+                 testfailed = 1;
+            }
+          }
+        } while (!testfailed && modereq.stress_projbits);
+        retval |= (MODEREQ_STRESS|MODEREQ_STRESS_ALLCORE);
+        modereq.reqbits &= ~(MODEREQ_STRESS|MODEREQ_STRESS_ALLCORE);
+      }
+      if ((bits & MODEREQ_VERSION) != 0)
       {
         /* the requested information already has been printed */
         modereq.reqbits &= ~(MODEREQ_VERSION);

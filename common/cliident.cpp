@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.28 2003/09/12 22:29:25 mweiser Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.29 2007/10/22 16:48:24 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -74,7 +74,7 @@ return "@(#)$Id: cliident.cpp,v 1.28 2003/09/12 22:29:25 mweiser Exp $"; }
 #include "unused.h"
 #include "util.h"
 #include "version.h"
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
 #include "w32sock.h"
 #include "w32cons.h"
 #include "w32pre.h"
@@ -137,7 +137,7 @@ static const char *h_ident_table[] =
   (const char *)__UNUSED_H__,
   (const char *)__UTIL_H__,
   (const char *)__VERSION_H__,
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   (const char *)__W32SOCK_H__,
   (const char *)__W32CONS_H__,
   (const char *)__W32PRE_H__,
@@ -191,7 +191,7 @@ extern const char *selftest_cpp(void);
 extern const char *setprio_cpp(void);
 extern const char *triggers_cpp(void);
 extern const char *util_cpp(void);
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
 extern const char *w32sock_cpp(void);
 extern const char *w32cons_cpp(void);
 extern const char *w32pre_cpp(void);
@@ -247,7 +247,7 @@ static const char * (*ident_table[])(void) =
   setprio_cpp,
   triggers_cpp,
   util_cpp,
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   w32sock_cpp,
   w32cons_cpp,
   w32pre_cpp,

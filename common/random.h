@@ -13,7 +13,7 @@
 #include "cputypes.h" /* for u32 */
 
 #ifndef __RANDOM_H__
-#define __RANDOM_H__ "@(#)$Id: random.h,v 1.10 2003/11/01 14:20:14 mweiser Exp $"
+#define __RANDOM_H__ "@(#)$Id: random.h,v 1.11 2007/10/22 16:48:27 jlawson Exp $"
 
 u32  Random( const u32 * u32data, unsigned int u32count );
   // count = # of u32s of data...

@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.131 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.132 2007/10/22 16:48:24 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -34,6 +34,7 @@ return "@(#)$Id: clirun.cpp,v 1.131 2003/11/01 14:20:13 mweiser Exp $"; }
 #include "modereq.h"   // ModeReq[Set|IsSet|Run]()
 #include "clievent.h"  // ClientEventSyncPost() and constants
 #include "coremem.h"   // cmem_alloc(), cmem_free()
+#include "bench.h"     // BenchResetStaticVars()
 
 // --------------------------------------------------------------------------
 
@@ -54,6 +55,7 @@ static struct __dyn_timeslice_struct
   {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR_NEXTGEN_SOMEDAY,  200000,  0x8000000,  0x00010,  0x10000 },
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
 };
 // OK!
 static struct __dyn_timeslice_struct
@@ -65,11 +67,12 @@ static struct __dyn_timeslice_struct
   {  CSC, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR_NEXTGEN_SOMEDAY,  200000,  0x8000000,  0x00010,  0x10000 },
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
 };
 
 // OK!
-#if (CONTEST_COUNT != 6)
-  #error PROJECT_NOT_HANDLED("timeslice_tables: static initializers expect CONTEST_COUNT == 6")
+#if (CONTEST_COUNT != 7)
+  #error PROJECT_NOT_HANDLED("timeslice_tables: static initializers expect CONTEST_COUNT == 7")
 #endif
 
 // =====================================================================
@@ -80,7 +83,7 @@ struct thread_param_block
     thread_t threadID;
   #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     unsigned long threadID;
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
@@ -168,7 +171,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #else       // !_irix5_
     sched_yield();
     #endif      // !_irix5_
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     w32Yield(); //not Sleep(0)!
   #elif (CLIENT_OS == OS_DOS)
     dosCliYield(); //dpmi yield
@@ -231,11 +234,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #endif
       macosSmartYield(thrparams->priority);
   #elif (CLIENT_OS == OS_MACOSX)
-    #if defined(__RHAPSODY__)
-    NonPolledUSleep( 0 ); /* yield */
-    #else
     sched_yield();
-    #endif
   #elif (CLIENT_OS == OS_BEOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
@@ -267,12 +266,14 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #else
     NonPolledUSleep(0);
     #endif
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_SCO)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_VMS)
     NonPolledUSleep( 0 ); /* yield */
+  #elif (CLIENT_OS == OS_NETWARE6)
+    NonPolledUSleep( 1 ); /* yield */
   #else
     #error where is your yield function?
     NonPolledUSleep( 0 ); /* yield */
@@ -284,16 +285,20 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
 
 void Go_mt( void * parm )
 {
-#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+#if (CLIENT_OS == OS_AMIGAOS) && !defined(__OS3PPC__)
   /* AmigaOS provides no direct way to pass parameters to sub-tasks! */
   struct Process *thisproc = (struct Process *)FindTask(NULL);
   if (!thisproc->pr_Arguments)
   {
+     #if defined(__amigaos4__)
+     parm = thisproc->pr_Task.tc_UserData;
+     #elif (CLIENT_CPU == CPU_68K)
      struct ThreadArgsMsg *msg;
      WaitPort(&(thisproc->pr_MsgPort));
      msg = (struct ThreadArgsMsg *)GetMsg(&(thisproc->pr_MsgPort));
      parm = msg->tp_Params;
      ReplyMsg((struct Message *)msg);
+     #endif
   }
 #endif
 
@@ -336,14 +341,14 @@ void Go_mt( void * parm )
     //printf("usec:%d, thrprio:%d \n",thrparams->dyn_timeslice_table[0].usec,thrparams->priority);
     #endif
   }
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (thrparams->realthread)
   {
-    DWORD LAffinity, LProcessAffinity, LSystemAffinity;
+    DWORD_PTR LAffinity, LProcessAffinity, LSystemAffinity;
     OSVERSIONINFO osver;
     unsigned int numthreads = thrparams->numthreads;
 
-    osver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+    osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     GetVersionEx(&osver);
     if ((VER_PLATFORM_WIN32_NT == osver.dwPlatformId) && (numthreads > 1))
     {
@@ -399,11 +404,11 @@ void Go_mt( void * parm )
       }
     }
   }
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   if (thrparams->realthread)
   {
     amigaThreadInit();
-    #if (CLIENT_CPU == CPU_POWERPC)
+    #if (CLIENT_CPU == CPU_POWERPC) && defined(__OS3PPC__)
     /* Only necessary when using 68k for time measurement */
     for (int tsinitd=0;tsinitd<CONTEST_COUNT;tsinitd++)
     {
@@ -417,6 +422,7 @@ void Go_mt( void * parm )
         case RC5_72:
           thrparams->dyn_timeslice_table[tsinitd].usec = 8000000;
           break;
+        case OGR_P2:
         case OGR:
           thrparams->dyn_timeslice_table[tsinitd].usec = 4000000;
           break;
@@ -453,7 +459,12 @@ void Go_mt( void * parm )
     {
       thrparams->refillneeded = 1;
       if (thrparams->realthread) // don't race in the loop
-        __cruncher_yield__(thrparams);
+        __cruncher_sleep__(thrparams);
+        /* was :
+        ** __cruncher_yield__(thrparams);
+        ** but that caused the client to busy-wait if no other process/thread
+        ** needs the CPU (see bug #3618, for instance).
+        */
     }
     else
     {
@@ -463,7 +474,7 @@ void Go_mt( void * parm )
       u32 last_count = thisprob->pub_data.core_run_count;
 
       #if (!defined(DYN_TIMESLICE)) /* compile time override */
-      if (is_non_preemptive_cruncher || contest_i == OGR)
+      if (is_non_preemptive_cruncher || contest_i == OGR || contest_i == OGR_P2)
       #endif
       {
         if (last_count == 0) /* prob hasn't started yet */
@@ -553,7 +564,7 @@ void Go_mt( void * parm )
           if (runtime_usec != 0xfffffffful) /* not negative time or other bad thing */
           {
             #ifdef HAVE_I64
-            if (contest_i == OGR)
+            if (contest_i == OGR || contest_i == OGR_P2)
             {
               /* This calculates the optimal timeslice based on a sliding
               ** average of the reached rate. It reacts slower than the
@@ -664,6 +675,19 @@ void Go_mt( void * parm )
   if (thrparams->realthread)
   {
     SetThreadPriority( 9 ); /* 0-9 */
+    #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+    /*
+     * Avoid race condition.
+     *
+     * This is a separate process/task on AmigaOS/MorphOS, but the code
+     * it executes is from the parent. If the parent exits before the child
+     * does, it will unload the code while the child still executes it.
+     *
+     * To avoid this race, make sure rest of the child is run atomic.
+     *
+     */
+    Forbid();
+    #endif
   }
 
   thrparams->hasexited = 1; //the thread is dead
@@ -671,7 +695,7 @@ void Go_mt( void * parm )
   #if ((CLIENT_OS == OS_SUNOS) || (CLIENT_OS == OS_SOLARIS))
   if (thrparams->realthread)
     thr_exit((void *)0);
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   if (thrparams->realthread)
     amigaThreadExit();
   #endif
@@ -695,7 +719,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       DosSetPriority( 2, PRTYC_REGULAR, 0, (ULONG)thrparams->threadID); /* thread to normal prio */
       if (!thrparams->hasexited)
         DosWaitThread( (PTID)&(thrparams->threadID), DCWW_WAIT);
-      #elif (CLIENT_OS == OS_WIN32)
+      #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       while (!thrparams->hasexited)
         Sleep(100);
       #elif (CLIENT_OS == OS_BEOS)
@@ -745,8 +769,31 @@ static int __StopThread( struct thread_param_block *thrparams )
       while (!thrparams->hasexited)
         NonPolledUSleep(100000);
       #elif (CLIENT_OS == OS_AMIGAOS)
+      #if !defined(__OS3PPC__)
+      /* Raise thread's priority so it can exit if a user process is hogging cpu time */
+      Forbid();
+      if (!thrparams->hasexited)
+      {
+        SetTaskPri((struct Task *)thrparams->threadID,0);
+      }
+      Permit();
+      #endif
       while (!thrparams->hasexited)
         NonPolledUSleep(300000);
+      #elif (CLIENT_OS == OS_MORPHOS)
+      /* Make the thread run at least the same priority as ourself */
+      Forbid();
+      if (!thrparams->hasexited)
+      {
+        LONG mypri = 0, thpri = 0;
+        NewGetTaskAttrsA(NULL, &mypri, sizeof(mypri), TASKINFOTYPE_PRI, TAG_DONE);
+        NewGetTaskAttrsA((struct Task *) thrparams->threadID, &thpri, sizeof(thpri), TASKINFOTYPE_PRI, TAG_DONE);
+        if (thpri < mypri)
+          SetTaskPri((struct Task *) thrparams->threadID, mypri);
+      }
+      Permit();
+      while (!thrparams->hasexited)
+        NonPolledUSleep(100000);
       #endif
     }
     ClientEventSyncPost( CLIEVENT_CLIENT_THREADSTOPPED,
@@ -1023,7 +1070,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           success = (thrparams->threadID > 0);
         }
       }
-      #elif (CLIENT_OS == OS_WIN32)
+      #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       {
         if (winGetVersion() < 400) /* win32s */
           use_poll_process = 1;
@@ -1119,8 +1166,14 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
            GetMsg(&(thisproc->pr_MsgPort));
         }
         thrparams->threadID = (int)proc;
-        #else
-        #ifndef __POWERUP__
+        #elif defined(__amigaos4__)
+        thrparams->threadID = (int)IDOS->CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
+                                                     NP_StackSize, 8192,
+                                                     NP_Name, (ULONG)threadname,
+                                                     NP_Child, TRUE,
+                                                     NP_UserData, (ULONG)thrparams,
+                                                     TAG_END);
+        #elif !defined(__POWERUP__)
         struct TagItem tags[5];
         tags[0].ti_Tag = TASKATTR_CODE; tags[0].ti_Data = (ULONG)Go_mt;
         tags[1].ti_Tag = TASKATTR_NAME; tags[1].ti_Data = (ULONG)threadname;
@@ -1136,7 +1189,24 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         tags[3].ti_Tag = TAG_END;
         thrparams->threadID = (int)PPCCreateTask(NULL,&Go_mt,tags);
         #endif
-        #endif
+        if (thrparams->threadID)
+        {
+          success = 1;
+        }
+      }
+      #elif (CLIENT_OS == OS_MORPHOS)
+      {
+        char threadname[64];
+        sprintf(threadname, "%s crunch #%d", utilGetAppName(),
+                                             thrparams->threadnum + 1 );
+        struct TagItem tags[6];
+        tags[0].ti_Tag = TASKTAG_PC; tags[0].ti_Data = (ULONG)Go_mt;
+        tags[1].ti_Tag = TASKTAG_CODETYPE; tags[1].ti_Data = CODETYPE_PPC;
+        tags[2].ti_Tag = TASKTAG_NAME; tags[2].ti_Data = (ULONG)threadname;
+        tags[3].ti_Tag = TASKTAG_STACKSIZE; tags[3].ti_Data = 8192;
+        tags[4].ti_Tag = TASKTAG_PPC_ARG1; tags[4].ti_Data = (ULONG)thrparams;
+        tags[5].ti_Tag = TAG_END;
+        thrparams->threadID = (int)NewCreateTaskA(tags);
         if (thrparams->threadID)
         {
           success = 1;
@@ -1275,6 +1345,14 @@ static void __dyn_timeslice_showme(struct thread_param_block *thrparam)
 }
 #endif
 
+// We need to reset some static variables to their initial state before
+// restarting the crunchers (#3495)
+static void __resetStaticVars(void)
+{
+  BenchResetStaticVars();
+  CliResetStaticVars();
+}
+
 /* ----------------------------------------------------------------------- */
 
 static int GetMaxCrunchersPermitted( void )
@@ -1320,6 +1398,7 @@ int ClientRun( Client *client )
   int dontSleep=0, isPaused=0, wasPaused=0, timeMonoError = 0;
 
   ClientEventSyncPost( CLIEVENT_CLIENT_RUNSTARTED, 0, 0 );
+  __resetStaticVars();
 
   // =======================================
   // Notes:
@@ -1406,7 +1485,7 @@ int ClientRun( Client *client )
       numcrunchers = GetMaxCrunchersPermitted();
     }
 
-    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_OS2) || (CLIENT_OS==OS_BEOS)
+    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_BEOS)
     force_no_realthreads = 0; // must run with real threads because the
                               // main thread runs at normal priority
     #elif (CLIENT_OS == OS_NETWARE)
@@ -1490,10 +1569,10 @@ int ClientRun( Client *client )
     is_non_preemptive_os = 0;  /* assume this until we know better */
     #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_MACOS) || \
         (CLIENT_OS == OS_RISCOS) || (CLIENT_OS == OS_NETWARE) || \
-        (CLIENT_OS == OS_WIN32) /* win32 only if win32s */
+        (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* win32 only if win32s */
     {
       is_non_preemptive_os = 1; /* assume this until we know better */
-      #if (CLIENT_OS == OS_WIN32)                /* only if win32s */
+      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)       /* only if win32s */
       if (winGetVersion()>=400)
         is_non_preemptive_os = 0;
       #elif (CLIENT_OS == OS_NETWARE)

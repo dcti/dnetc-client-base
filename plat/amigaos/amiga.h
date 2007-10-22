@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amiga.h,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amiga.h,v 1.3 2007/10/22 16:48:30 jlawson Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -15,18 +15,33 @@
 #ifndef _AMIGA_H_
 #define _AMIGA_H_
 
+#ifdef __cplusplus
 extern "C" {
-   #define AFF_68060 (1L<<7)
+#endif
 
-   #ifdef __PPC__
+   #ifdef __amigaos4__
+      #define __BEGIN_DECLS
+      #define __END_DECLS
+      #define __P(p) p
+      #define NO_MIAMI
+   #endif
+
+   #if defined(__PPC__) && !(defined(__amigaos4__) || defined(__MORPHOS__))
+      #define __OS3PPC__
+   #endif
+
+   #ifdef __OS3PPC__
    #pragma pack(2)
    #endif
 
-   #include <exec/types.h>
+   #include <exec/exec.h>
    #include <exec/execbase.h>
-   #include <exec/libraries.h>
 
-   #ifdef __PPC__
+   #if !defined(AFF_68060)
+      #define AFF_68060 (1L<<7)
+   #endif
+
+   #ifdef __OS3PPC__
       #ifndef __POWERUP__
          #include <powerpc/powerpc.h>
          #include <powerpc/powerpc_protos.h>
@@ -51,6 +66,9 @@ extern "C" {
                  ({ULONG _tags[] = { tags }; PPCSetTaskAttrs((a0), (struct TagItem*)_tags);})
          #endif /* !NO_PPCINLINE_STDARG */
       #endif
+   #elif defined(__MORPHOS__)
+      #include <exec/tasks.h>
+      #include <emul/emulinterface.h>
    #endif
 
    #include <proto/exec.h>
@@ -59,12 +77,13 @@ extern "C" {
    #include <dos/dostags.h>
    #include <devices/timer.h>
 
-   #ifdef __PPC__
+   #ifdef __OS3PPC__
    #pragma pack()
    #endif
 
-   #include <sys/ioctl.h>
+   //#include <sys/ioctl.h>
    #include <sys/time.h>
+   #include <sys/socket.h>
    #include <stdio.h>
    #include <stdlib.h>
    #include <string.h>
@@ -73,7 +92,7 @@ extern "C" {
    #include <stdarg.h>
    #include <assert.h>
 
-   #ifdef __PPC__
+   #ifdef __OS3PPC__
       #undef SetSignal
       #undef AllocVec
       #undef FreeVec
@@ -92,8 +111,11 @@ extern "C" {
    #define DNETC_MSG_SHUTDOWN	0x02
    #define DNETC_MSG_PAUSE	0x04
    #define DNETC_MSG_UNPAUSE	0x08
+#ifdef __cplusplus
 }
+#endif
 
+#ifndef __amigaos4__
 struct	hostent {
 	char	*h_name;	/* official name of host */
 	char	**h_aliases;	/* alias list */
@@ -102,6 +124,7 @@ struct	hostent {
 	char	**h_addr_list;	/* list of addresses from name server */
 #define	h_addr	h_addr_list[0]	/* address, for backward compatiblity */
 };
+#endif
 
 struct ThreadArgsMsg {
    struct Message tp_ExecMessage;
@@ -149,10 +172,11 @@ void amigaSleep(unsigned int secs, unsigned int usecs);
 int amigaGetMonoClock(struct timeval *tp);
 
 // gui.c
+struct WBArg;
 BOOL amigaGUIInit(char *programname, struct WBArg *iconname);
 void amigaGUIDeinit(void);
 void amigaGUIOut(char *msg);
-#if !defined(__PPC__)
+#if !defined(__OS3PPC__)
 void amigaHandleGUI(struct timerequest *tr);
 #elif !defined(__POWERUP__)
 void amigaHandleGUI(struct timeval *tr);
@@ -167,9 +191,12 @@ int amigaUninstall(int quiet, const char *progname);
 /* unistd prototypes - we can't include unistd.h as the prototypes interfere with
 ** with the Amiga socket prototype macros
 */
+#ifndef __amigaos4__
 int isatty __P((int));
 int unlink __P((const char *));
 int access __P((const char *, int));
+int ftruncate(int file_descriptor, off_t length);
+#endif
 
 __END_DECLS
 

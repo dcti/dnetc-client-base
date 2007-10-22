@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.3 2003/11/01 15:00:08 mweiser Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.4 2007/10/22 16:48:25 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -22,7 +22,11 @@ return "@(#)$Id: core_ogr.cpp,v 1.3 2003/11/01 15:00:08 mweiser Exp $"; }
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
 
-#if defined(HAVE_OGR_CORES)
+#if (CLIENT_CPU == CPU_CELLBE)
+#include <libspe2.h>
+#endif
+
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 
 /* ======================================================================== */
 
@@ -30,16 +34,30 @@ return "@(#)$Id: core_ogr.cpp,v 1.3 2003/11/01 15:00:08 mweiser Exp $"; }
    note: we may have more prototypes here than cores in the client
    note2: if you need some 'cdecl' value define it in selcore.h to CDECL */
 
-
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+    #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
+    /* KOGE cores are faster. The 64-bit core is only enabled when compiling
+    ** the client with GARSP 6.0 cores (ANSI).
+    */
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
+    #endif
     #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
     extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
+    #endif
+    #if (CLIENT_CPU == CPU_CELLBE)
+    extern "C" CoreDispatchTable *spe_ogr_get_dispatch_table(void);
     #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
   #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
+  #endif
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_ev4(void);
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_ev4_64(void);
+  #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix_64(void);
   #endif
 #elif (CLIENT_CPU == CPU_68K)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_000(void);
@@ -50,16 +68,27 @@ return "@(#)$Id: core_ogr.cpp,v 1.3 2003/11/01 15:00:08 mweiser Exp $"; }
 #elif (CLIENT_CPU == CPU_X86)
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void); //A
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_nobsr(void); //B
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_gen(void);
+    #if defined(HAVE_I64)
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_mmx(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_mmx_amd(void);
+    #endif
 #elif (CLIENT_CPU == CPU_ARM)
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
-      extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm3(void);
+#elif (CLIENT_CPU == CPU_AMD64)
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
+#elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void); 
+#elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void); 
 #else
     extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
 #endif
 
 
 /* ======================================================================== */
-
 
 int InitializeCoreTable_ogr(int first_time)
 {
@@ -72,10 +101,21 @@ int InitializeCoreTable_ogr(int first_time)
       #if CLIENT_CPU == CPU_X86
         ogr_get_dispatch_table();
         ogr_get_dispatch_table_nobsr();
-      #elif CLIENT_CPU == CPU_POWERPC
+        ogr_get_dispatch_table_asm_gen();
+        #if defined(HAVE_I64)
+          ogr_get_dispatch_table_asm_mmx();
+          ogr_get_dispatch_table_asm_mmx_amd();
+        #endif
+      #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
         ogr_get_dispatch_table();
+        #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
+          ogr64_get_dispatch_table();
+        #endif
         #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
           vec_ogr_get_dispatch_table();
+        #endif
+        #if (CLIENT_CPU == CPU_CELLBE)
+          spe_ogr_get_dispatch_table();
         #endif
       #elif (CLIENT_CPU == CPU_68K)
         ogr_get_dispatch_table_000();
@@ -88,11 +128,28 @@ int InitializeCoreTable_ogr(int first_time)
         #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
            ogr_get_dispatch_table_cix();
         #endif
+        ogr_get_dispatch_table_ev4();
+        ogr64_get_dispatch_table();
+        ogr_get_dispatch_table_ev4_64();
+        #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
+        ogr_get_dispatch_table_cix_64();
+        #endif
       #elif (CLIENT_CPU == CPU_VAX)
         ogr_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_SPARC)
+        #if (SIZEOF_LONG == 8)
+          ogr64_get_dispatch_table
+        #else
+          ogr_get_dispatch_table();
+        #endif
+      #elif (CLIENT_CPU == CPU_AMD64)
+        //ogr_get_dispatch_table();
+        ogr64_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_S390)
         ogr_get_dispatch_table();
-      #elif (CLIENT_CPU == CPU_X86_64)
+      #elif (CLIENT_CPU == CPU_S390X)
+        ogr_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_I64)
         ogr_get_dispatch_table();
       #else
         #error FIXME! call all your *ogr_get_dispatch_table* functions here once
@@ -108,6 +165,7 @@ void DeinitializeCoreTable_ogr()
   /* ogr does not require any deinitialization */
 }
 
+
 /* ======================================================================== */
 
 const char **corenames_for_contest_ogr()
@@ -121,33 +179,61 @@ const char **corenames_for_contest_ogr()
     {
   /* ================================================================== */
   #if (CLIENT_CPU == CPU_X86)
-      "GARSP 5.13-A",
-      "GARSP 5.13-B",
-  #elif (CLIENT_CPU == CPU_X86_64)
-      "GARSP 5.13",
+      "GARSP 6.0-A",
+      "GARSP 6.0-B",
+      "GARSP 6.0-asm-rt1-gen",
+      #ifdef HAVE_I64
+      "GARSP 6.0-asm-rt1-mmx",
+      "GARSP 6.0-asm-rt1-mmx-amd",
+      #endif
+  #elif (CLIENT_CPU == CPU_AMD64)
+      "GARSP 6.0-64",
   #elif (CLIENT_CPU == CPU_ARM)
-      "GARSP 5.13 ARM 1",
-      "GARSP 5.13 ARM 2",
+      "GARSP 6.0 StrongARM",
+      "GARSP 6.0 ARM 2/3/6/7",
+      "GARSP 6.0 XScale",
   #elif (CLIENT_CPU == CPU_68K)
-      "GARSP 5.13 68000",
-      "GARSP 5.13 68020",
-      "GARSP 5.13 68030",
-      "GARSP 5.13 68040",
-      "GARSP 5.13 68060",
+      "GARSP 6.0 68000",
+      "GARSP 6.0 68020",
+      "GARSP 6.0 68030",
+      "GARSP 6.0 68040",
+      "GARSP 6.0 68060",
   #elif (CLIENT_CPU == CPU_ALPHA)
-      "GARSP 5.13",
+      "GARSP 6.0",
     #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
-      "GARSP 5.13-CIX",
+      "GARSP 6.0-CIX",
     #endif
-  #elif (CLIENT_CPU == CPU_POWERPC)
-      "GARSP 5.13 Scalar",
-      "GARSP 5.13 Vector",   /* altivec only */
+      "GARSP 6.0-EV4",
+      "GARSP 6.0-64",
+      "GARSP 6.0-EV4-64",
+    #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
+      "GARSP 6.0-CIX-64",
+    #endif
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+    #ifdef HAVE_KOGE_PPC_CORES
+      /* Optimized ASM cores */
+      "KOGE 2.0 Scalar",            /* KOGE : Kakace's Optimized Garsp Engine */
+      "KOGE 2.0 Hybrid",            /* altivec only */
+    #else
+      "GARSP 6.0 Scalar-32",
+      "GARSP 6.0 Hybrid",           /* altivec only */
+      #ifdef HAVE_I64
+      "GARSP 6.0 Scalar-64",        /* 64-bit core */
+      #endif
+    #endif
+    #if (CLIENT_CPU == CPU_CELLBE)
+      "Cell v1 SPE",
+    #endif
+  #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+      "GARSP 6.0-64",
   #elif (CLIENT_CPU == CPU_SPARC)
-      "GARSP 5.13",
+      "GARSP 6.0",
+  #elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
+      "GARSP 6.0-64",
   #elif (CLIENT_OS == OS_PS2LINUX)
-      "GARSP 5.13",
+      "GARSP 6.0",
   #else
-      "GARSP 5.13",
+      "GARSP 6.0",
   #endif
   /* ================================================================== */
       NULL
@@ -180,22 +266,35 @@ int apply_selcore_substitution_rules_ogr(int cindex)
 {
 # if (CLIENT_CPU == CPU_ALPHA)
   long det = GetProcessorType(1);
-  if (det <  11) cindex = 0;
+  if ((det <  11) && (cindex == 1)) cindex = 0;
+  if ((det <  11) && (cindex == 5)) cindex = 3;
 # elif (CLIENT_CPU == CPU_68K)
   long det = GetProcessorType(1);
   if (det == 68000) cindex = 0;
-# elif (CLIENT_CPU == CPU_POWERPC)
-  int have_vec = 0;
-
-# if defined(__VEC__) || defined(__ALTIVEC__)
-  /* OS+compiler support altivec */
+# elif (CLIENT_CPU == CPU_ARM)
   long det = GetProcessorType(1);
-  have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
+  int have_clz = (((det >> 12) & 0xf) != 0) &&
+                 (((det >> 12) & 0xf) != 7) &&
+                 (((det >> 16) & 0xf) >= 3);
+  if (!have_clz && (cindex == 2))  cindex = 0;
+# elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+  int feature = 0;
+  feature = GetProcessorFeatureFlags();
+  if ((feature & CPU_F_ALTIVEC) == 0 && cindex == 1)      /* PPC-vector */
+    cindex = 0;                                     /* force PPC-scalar */
+  if ((feature & CPU_F_64BITOPS) == 0 && cindex == 2)     /* PPC-64bit  */
+    cindex = 0;                                     /* force PPC-32bit  */
+# elif (CLIENT_CPU == CPU_X86)
+  if (cindex >= 3) /* ASM-MMX core requires 64-bit core modules and MMX */
+  {
+#  if !defined(HAVE_I64) /* no 64-bit support? */
+    cindex = 2; /* force ASM-Generic */
+#  else /* no MMX? */
+    if (!(GetProcessorFeatureFlags() & CPU_F_MMX))
+      cindex = 2;
+#  endif
+  }
 # endif
-
-  if (!have_vec && cindex == 1)     /* PPC-vector */
-    cindex = 0;                     /* force PPC-scalar */
-#endif
 
   return cindex;
 }
@@ -223,10 +322,12 @@ int selcoreGetPreselectedCoreForProject_ogr()
   #if (CLIENT_CPU == CPU_ALPHA)
     if (detected_type > 0)
     {
+    #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
       if (detected_type >= 11)
-        cindex = 1;
+        cindex = 5;
       else
-        cindex = 0;
+    #endif
+        cindex = -1;
     }
   // ===============================================================
   #elif (CLIENT_CPU == CPU_68K)
@@ -246,22 +347,40 @@ int selcoreGetPreselectedCoreForProject_ogr()
   // ===============================================================
   #elif (CLIENT_CPU == CPU_POWER)
     cindex = 0;                         /* only one OGR core on Power */
-  #elif (CLIENT_CPU == CPU_POWERPC)
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     if (detected_type > 0)
     {
       cindex = 0;                       /* PPC-scalar */
 
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-      if (( detected_type & (1L<<25) ) != 0) //altivec?
+      if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
+        cindex = 1;     // PPC-vector
+
+        #if 0 //------------- Yes, PPC-Vector is for any AltiVec capable CPU !
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
-          case 0x000C: cindex = 1; break; // 7400 (G4)   == PPC-vector
-          case 0x8000: cindex = 0; break; // 7450 (G4+)  == PPC-scalar
-          case 0x8001: cindex = 0; break; // 7455 (G4+)  == PPC-scalar
-          case 0x800C: cindex = 1; break; // 7410 (G4)   == PPC-vector
-          default:     cindex =-1; break; // no default
+          case 0x0039: // PPC 970
+          case 0x003C: // PPC 970FX
+          case 0x0044: // PPC 970MP
+          case 0x0070: // Cell Broadband Engine
+            #ifdef HAVE_KOGE_PPC_CORES
+              cindex = 1; break;      // PPC-vector
+            #else
+              cindex = -1; break;     // micro-bench
+            #endif
+          case 0x000C: // 7400
+          case 0x800C: // 7410
+          case 0x8000: // 7441/7450/7451
+          case 0x8001: // 7445/7455
+          case 0x8002: // 7447/7457
+          case 0x8003: // 7447A
+          case 0x8004: // 7448
+              cindex = 1; break;      // PPC-vector
+          default:
+              cindex =-1; break;      // default : micro-bench
         }
+        #endif //------------
       }
       #endif
     }
@@ -269,32 +388,43 @@ int selcoreGetPreselectedCoreForProject_ogr()
   #elif (CLIENT_CPU == CPU_X86)
       if (detected_type >= 0)
       {
+#ifdef HAVE_I64 // Need 64-bit support and MMX
+        if (detected_flags & CPU_F_MMX)
+        {
+          switch ( detected_type & 0xff ) // FIXME remove &0xff
+          {
+            case 0x05: cindex = 4; break; // K6/K6-2/K6-3 == asm-rt1-mmx-amd (E)
+            case 0x09: cindex = 4; break; // AMD K7/K8  == asm-rt1-mmx-amd (E)
+            // It depends on core, current AMD core is worse on these P4's
+            // case 0x0B: cindex = 4; break; // Pentium 4    == asm-rt1-mmx-amd (E) (#3988)
+            case 0x10: cindex = 4; break; // Cyrix Model5 == asm-rt1-mmx-amd (E) (Untested)
+            case 0x11: cindex = 4; break; // Cyrix Model6 == asm-rt1-mmx-amd (E)
+            default:   cindex = 3; break; // asm-rt1-mmx (D)
+          }
+        }
+        else
+#endif
         switch ( detected_type & 0xff ) // FIXME remove &0xff
         {
-          case 0x00: cindex = 1; break; // P5           == without BSR (B)
-          case 0x01: cindex = 1; break; // 386/486      == without BSR (B)
-          case 0x02: cindex = 0; break; // PII/PIII     == with BSR (A)
-          case 0x03: cindex = 0; break; // Cx6x86       == with BSR (A)
-          case 0x04: cindex = 1; break; // K5           == without BSR (B)
-          #if defined(__GNUC__) || defined(__WATCOMC__) || defined(__BORLANDC__)
-          case 0x05: cindex = 1; break; // K6/K6-2/K6-3 == without BSR (B)  #2228
-          #elif defined(_MSC_VER)
-          case 0x05: cindex = 0; break; // K6/K6-2/K6-3 == with BSR (A)  #2789
-          #else
-          #warning "FIXME: no OGR core autoselected on a K6 for your compiler"
-          #endif
-          case 0x06: cindex = 1; break; // Cyrix 486    == without BSR (B)
-          case 0x07: cindex = 0; break; // orig Celeron == with BSR (A)
-          case 0x08: cindex = 0; break; // PPro         == with BSR (A)
-          case 0x09: cindex = 0; break; // AMD K7       == with BSR (A)
-          case 0x0A: cindex = 1; break; // Centaur C6   == without BSR (B)
-          #if defined(__GNUC__) || defined(__ICC)
-          case 0x0B: cindex = 0; break; // Pentium 4    == with BSR (A)
-          #elif defined(_MSC_VER) || defined(__WATCOMC__) || defined(__BORLANDC__)
-          case 0x0B: cindex = 1; break; // Pentium 4    == without BSR (B)
-          #else
-          #warning "FIXME: no OGR core autoselected on a P4 for your compiler"
-          #endif
+          case 0x00: cindex = 2; break; // P5           == asm-rt1-gen (C)
+          case 0x01: cindex = 2; break; // 386/486      == asm-rt1-gen (C)
+          case 0x02: cindex = 2; break; // PII          == asm-rt1-gen (C)
+          case 0x03: cindex = 2; break; // Cyrix Model4 == asm-rt1-gen (C)
+          case 0x04: cindex = 2; break; // K5           == asm-rt1-gen (C)
+          case 0x05: cindex = 2; break; // K6/K6-2/K6-3 == asm-rt1-gen (C)
+          case 0x06: cindex = 2; break; // Cyrix 486    == asm-rt1-gen (C)
+          case 0x07: cindex = 2; break; // orig Celeron == asm-rt1-gen (C)
+          case 0x08: cindex = 2; break; // PPro         == asm-rt1-gen (C)
+          case 0x09: cindex = 2; break; // AMD K7/K8    == asm-rt1-gen (C)
+          case 0x0A: cindex = 2; break; // Centaur C6   == asm-rt1-gen (C)
+          case 0x0B: cindex = 2; break; // Pentium 4    == asm-rt1-gen (C)
+          case 0x0C: cindex = 2; break; // Via C3       == asm-rt1-gen (C)
+          case 0x0D: cindex = 2; break; // Pentium M    == asm-rt1-gen (C)
+          case 0x0E: cindex = 2; break; // Pentium III  == asm-rt1-gen (C)
+          case 0x0F: cindex = 0; break; // Via C3 Nehemiah == (A)
+          case 0x10: cindex = 2; break; // Cyrix Model5 == asm-rt1-gen (C)
+          case 0x11: cindex = 2; break; // Cyrix Model6 == asm-rt1-gen (C)
+          case 0x12: cindex = 2; break; // Intel Core 2 == asm-rt1-gen (C)
           default:   cindex =-1; break; // no default
         }
       }
@@ -333,17 +463,28 @@ int selcoreGetPreselectedCoreForProject_ogr()
 
 /* ---------------------------------------------------------------------- */
 
-int selcoreSelectCore_ogr(unsigned int threadindex,
-                          int *client_cpuP, struct selcore *selinfo)
+int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
+                struct selcore *selinfo, unsigned int contestid)
 {
   int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
   unit_func_union unit_func; /* declared in problem.h */
   int cruncher_is_asynchronous = 0; /* on a co-processor or similar */
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
-  int coresel = selcoreGetSelectedCoreForContest(OGR);
+  int coresel = selcoreGetSelectedCoreForContest(contestid);
+#if (CLIENT_CPU == CPU_CELLBE)
+  // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees 2
+  // processors), and although we should run 2 threads at a time, the way
+  // CPUs are detected precludes us from doing that.
+  static unsigned int PPE_count = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
 
+  // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs;
+  // the rest are scheduled on the SPEs.
+  if (threadindex >= PPE_count)
+    coresel = 2;
+#else
   DNETC_UNUSED_PARAM(threadindex);
+#endif
 
   if (coresel < 0)
     return -1;
@@ -352,14 +493,24 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
 
   /* ================================================================== */
 
-#if (CLIENT_CPU == CPU_POWERPC)
-# if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
-  if (coresel == 2)                           /* "PPC-vector" */
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+  #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
+  if (coresel == 1)                               /* PPC Vector/Hybrid */
     unit_func.ogr = vec_ogr_get_dispatch_table();
-# endif
+  #endif
+
+  #if (CLIENT_CPU == CPU_CELLBE)
+  if (coresel == 2)
+    unit_func.ogr = spe_ogr_get_dispatch_table();
+  #endif
+
+  #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
+  if (coresel == 2)
+    unit_func.ogr = ogr64_get_dispatch_table();   /* PPC Scalar-64 */
+  #endif
 
   if (!unit_func.ogr) {
-    unit_func.ogr = ogr_get_dispatch_table(); /* "PPC-scalar" */
+    unit_func.ogr = ogr_get_dispatch_table();     /* PPC Scalar-32 */
     coresel = 0;
   }
 #elif (CLIENT_CPU == CPU_68K)
@@ -387,26 +538,57 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
       unit_func.ogr = ogr_get_dispatch_table_cix();
     else
   #endif 
+    if (coresel == 2)
+      unit_func.ogr = ogr_get_dispatch_table_ev4();
+    else
+    if (coresel == 3)
+      unit_func.ogr = ogr64_get_dispatch_table();
+    else
+    if (coresel == 4)
+      unit_func.ogr = ogr_get_dispatch_table_ev4_64();
+    else
+  #if (CLIENT_OS != OS_VMS)       /* Include for other OSes */
+    if (coresel == 5)
+      unit_func.ogr = ogr_get_dispatch_table_cix_64();
+    else
+  #endif
       unit_func.ogr = ogr_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_X86)
-  if (coresel == 0) //A
-    unit_func.ogr = ogr_get_dispatch_table(); //A
-  else
-  {
+  if (coresel == 1) //B
     unit_func.ogr = ogr_get_dispatch_table_nobsr(); //B
-    coresel = 1;
-  }
-#elif (CLIENT_CPU == CPU_X86_64)
-  unit_func.ogr = ogr_get_dispatch_table();
+  else
+  if (coresel == 2) //C
+    unit_func.ogr = ogr_get_dispatch_table_asm_gen();
+  #if defined(HAVE_I64)
+  else
+  if (coresel == 3) //D
+    unit_func.ogr = ogr_get_dispatch_table_asm_mmx();
+  else
+  if (coresel == 4) //E
+    unit_func.ogr = ogr_get_dispatch_table_asm_mmx_amd();
+  #endif
+  else
+    unit_func.ogr = ogr_get_dispatch_table(); //A
+#elif (CLIENT_CPU == CPU_AMD64)
+  //unit_func.ogr = ogr_get_dispatch_table();
+  unit_func.ogr = ogr64_get_dispatch_table();
   coresel = 0;
 #elif (CLIENT_CPU == CPU_ARM)
   if (coresel == 0)
     unit_func.ogr = ogr_get_dispatch_table_arm1();
+  else if (coresel == 2)
+    unit_func.ogr = ogr_get_dispatch_table_arm3();
   else
   {
     unit_func.ogr = ogr_get_dispatch_table_arm2();
     coresel = 1;
   }
+#elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+  unit_func.ogr = ogr64_get_dispatch_table();
+  coresel = 0;
+#elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
+  unit_func.ogr = ogr64_get_dispatch_table();
+  coresel = 0;
 #else
   //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
   unit_func.ogr = ogr_get_dispatch_table();
@@ -417,7 +599,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
 
 
   if (coresel >= 0 && unit_func.gen &&
-     coresel < ((int)corecount_for_contest(OGR)) )
+     coresel < ((int)corecount_for_contest(contestid)) )
   {
     if (client_cpuP)
       *client_cpuP = client_cpu;
@@ -437,4 +619,63 @@ int selcoreSelectCore_ogr(unsigned int threadindex,
 
 /* ------------------------------------------------------------- */
 
-#endif // defined(HAVE_OGR_CORES)
+unsigned int estimate_nominal_rate_ogr()
+{
+  unsigned int rate = 0;  /* Unknown - Not available */
+
+  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+    static long detected_type = -123;
+    static int  cpu_count = 0;
+    static unsigned long detected_flags = 0;
+    static unsigned int  frequency = 0;
+    unsigned int noderate = 0;   /* nodes/s/MHz */
+
+    if (detected_type == -123) {
+      detected_type  = GetProcessorType(1);
+      detected_flags = GetProcessorFeatureFlags();
+      frequency      = GetProcessorFrequency();
+      cpu_count      = GetNumberOfDetectedProcessors();
+    }
+
+    if (detected_type > 0) {
+      switch (detected_type & 0xffff) { // only compare the low PVR bits
+        case 0x0001:      // 601
+          noderate = 5000; break;
+        case 0x0003:      // 603
+        case 0x0004:      // 604
+        case 0x0006:      // 603e
+        case 0x0007:      // 603r/603ev
+        case 0x0008:      // 740/750
+        case 0x0009:      // 604e
+        case 0x000A:      // 604ev
+        case 0x7000:      // 750FX
+          noderate = 12000; break;
+        case 0x000C:      // 7400
+        case 0x800C:      // 7410
+          noderate = (detected_flags & CPU_F_ALTIVEC) ? 14000: 13000; break;
+        case 0x8000:      // 7450
+        case 0x8001:      // 7455
+        case 0x8002:      // 7457/7447
+        case 0x8003:      // 7447A
+        case 0x8004:      // 7448
+          noderate = (detected_flags & CPU_F_ALTIVEC) ? 24000 : 17000; break;
+        case 0x0039:      // 970
+        case 0x003C:      // 970FX
+        case 0x0044:      // 970MP
+        case 0x0070:      // Cell Broadband Engine
+          noderate = (detected_flags & CPU_F_ALTIVEC) ? 16500 : 12500; break;
+      }
+
+      if (cpu_count > 0) {
+        /* Assume 70 GNodes per packet */
+        rate = (noderate * frequency * cpu_count) / 810000;  /* 810000 = 70E9 / 86400 */
+      }
+    }
+  #endif
+
+  return rate;
+}
+
+/* ------------------------------------------------------------- */
+
+#endif // defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)

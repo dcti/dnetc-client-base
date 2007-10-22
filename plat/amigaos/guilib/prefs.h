@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: prefs.h,v 1.2 2002/09/02 00:35:50 andreasb Exp $
+ * $Id: prefs.h,v 1.3 2007/10/22 16:48:30 jlawson Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -23,6 +23,10 @@
 #define FLAGTOBOOL(flags,flag) ((flags & flag) == flag)
 #define ISFLAGSET(flags,flag) (flags & flag)
 
+#ifdef __amigaos4__
+#pragma pack(2)
+#endif
+
 struct GUIPrefs {
    UWORD structsize;
    UWORD prefsver;
@@ -37,6 +41,10 @@ struct GUIPrefs {
    ULONG flags;
    ULONG flagsfreemask;
 };
+
+#ifdef __amigaos4__
+#pragma pack()
+#endif
 
 extern struct GUIPrefs Prefs;
 extern struct Window *PrefsWin;

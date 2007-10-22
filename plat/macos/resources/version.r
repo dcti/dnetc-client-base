@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * @(#)$Id: version.r,v 1.4 2003/11/01 14:20:15 mweiser Exp $
+ * @(#)$Id: version.r,v 1.5 2007/10/22 16:48:31 jlawson Exp $
 */
 
 #include "Types.r"

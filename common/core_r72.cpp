@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.5 2003/12/12 04:53:06 lightning Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.6 2007/10/22 16:48:25 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -21,6 +21,13 @@ return "@(#)$Id: core_r72.cpp,v 1.5 2003/12/12 04:53:06 lightning Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
+#if (CLIENT_CPU == CPU_CELLBE)
+#include <libspe2.h>
+#endif
+
+#if (CLIENT_OS == OS_MORPHOS)
+#define __ALTIVEC__ 1 /* crude hack till we have real gcc-altivec */
+#endif
 
 #if defined(HAVE_RC5_72_CORES)
 
@@ -43,13 +50,17 @@ extern "C" s32 CDECL rc5_72_unit_func_dg_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
-extern "C" s32 CDECL rc5_72_unit_func_sgp_3( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2( RC5_72UnitWork *, u32 *, void *);
-#elif (CLIENT_CPU == CPU_X86_64)
+extern "C" s32 CDECL rc5_72_unit_func_sgp_3( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_ma_4( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_mmx( RC5_72UnitWork *, u32 *, void *);
+#elif (CLIENT_CPU == CPU_AMD64)
 extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 rc5_72_unit_func_arm3( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
 extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_030_mh_1( RC5_72UnitWork *, u32 *, void *);
@@ -65,6 +76,11 @@ extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS970( RC5_72UnitWork *, u32 *, void *);
+# endif
+#elif (CLIENT_CPU == CPU_CELLBE)
+extern "C" s32 CDECL rc5_72_unit_func_cellv1_spe( RC5_72UnitWork *, u32 *, void *);
+# if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+extern "C" s32 CDECL rc5_72_unit_func_cellv1_ppe( RC5_72UnitWork *, u32 *, void *);
 # endif
 #elif (CLIENT_CPU == CPU_SPARC)
 extern "C" s32 CDECL rc5_72_unit_func_KKS_2 ( RC5_72UnitWork *, u32 *, void * );
@@ -109,21 +125,25 @@ const char **corenames_for_contest_rc572()
       "DG 3-pipe",
       "DG 3-pipe alt",
       "SS 2-pipe",
-      "SGP 3-pipe",
       "GO 2-pipe",
+      "SGP 3-pipe",
+      "MA 4-pipe",
+      "MMX 4-pipe",
       #else /* no nasm -> only ansi cores */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
       #endif
-  #elif (CLIENT_CPU == CPU_X86_64)
+  #elif (CLIENT_CPU == CPU_AMD64)
       "SNJL 3-pipe",
+      "KBE-64 3-pipe",
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
   #elif (CLIENT_CPU == CPU_ARM)
-      "ARM 1-pipe A",
-      "ARM 1-pipe B",
+      "StrongARM 1-pipe",
+      "ARM 2/3/6/7 1-pipe",
+      "XScale 1-pipe",
   #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
       "MH 1-pipe 68020/030",
       "MH 1-pipe 68000/040",
@@ -137,7 +157,12 @@ const char **corenames_for_contest_rc572()
       "KKS 7450",      /* gas and OSX format, AltiVec only */
       "MH 1-pipe",     /* gas, TOC and OSX format */
       "MH 1-pipe 604e",/* gas, TOC and OSX format */
+      #if 0     // Disabled (kakace)
       "KKS 970",       /* gas and OSX format, AltiVec only */
+      #endif
+  #elif (CLIENT_CPU == CPU_CELLBE)
+      "Cell v1 PPE",
+      "Cell v1 SPE",
   #elif (CLIENT_CPU == CPU_SPARC)
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -188,32 +213,48 @@ int apply_selcore_substitution_rules_rc572(int cindex)
 
 # if defined(__VEC__) || defined(__ALTIVEC__)
   /* OS+compiler support altivec */
-  long det = GetProcessorType(1);
-  have_vec = (det >= 0 && (det & 1L<<25)!=0); /* have altivec */
+  have_vec = GetProcessorFeatureFlags() & CPU_F_ALTIVEC;
 # endif
 
-# if (CLIENT_OS == OS_AMIGAOS) && defined(__POWERUP__)
-  /* PowerUp cannot use the KKS cores, since they modify gpr2 */
-  if ((cindex >= 1) && (cindex <= 4))
-    cindex = 5;			  /* MH 1-pipe */
-# else
   if (!have_vec && cindex == 3)   /* KKS 7400 */
     cindex = 1;                   /* KKS 2pipes */
   if (!have_vec && cindex == 4)   /* KKS 7450 */
     cindex = 2;                   /* KKS 604e */
   if (!have_vec && cindex == 7)   /* KKS 970 */
     cindex = 1;                   /* KKS 2pipes, see micro-bench in #3310 */
-# endif
+
 #elif (CLIENT_CPU == CPU_X86)
   {
     long det = GetProcessorType(1);
-    //int have_mmx = (det >= 0 && (det & 0x100)!=0);
+    //int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
     int have_3486 = (det >= 0 && (det & 0xff)==1);
 
     #if !defined(HAVE_NO_NASM)
       if (have_3486 && cindex >= 2)     /* dg-* cores use the bswap instr that's not available on 386 */
         cindex = 0;                     /* "SES 1-pipe" */
     #endif
+
+    if (!(((GetProcessorFeatureFlags() & CPU_F_MMX) 
+      && (GetProcessorFeatureFlags() & CPU_F_AMD_MMX_PLUS)) ||
+      ((GetProcessorFeatureFlags() & CPU_F_MMX) &&
+      (GetProcessorFeatureFlags() & CPU_F_SSE)))) {
+      if (cindex == 6) {  /* GO2 core requires extended MMX */
+        cindex = 1;      /* default core */
+      }
+    }
+
+    if (!((GetProcessorFeatureFlags() & CPU_F_SSE) && 
+          (GetProcessorFeatureFlags() & CPU_F_SSE2))) {
+      if (cindex == 8) {  /* MA4 core requires SSE2 */
+        cindex = 1;     /* default core */
+      }
+    }
+
+    if (!(GetProcessorFeatureFlags() & CPU_F_MMX)) {
+      if (cindex == 9) {  /* MMX core requires MMX */
+        cindex = 1;     /* default core */
+      }
+    }
 
   }
 #endif
@@ -281,6 +322,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
     {
       switch ( detected_type & 0xffff) // only compare the low PVR bits
       {
+        case 0x0001: cindex = 5; break; // 601            == MH 1-pipe
         case 0x0003: cindex = 5; break; // 603            == MH 1-pipe
         case 0x0004: cindex = 6; break; // 604            == MH 1-pipe 604e
         case 0x0006: cindex = 5; break; // 603e           == MH 1-pipe
@@ -288,20 +330,66 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x0008: cindex = 5; break; // 740/750 (G3)   == MH 1-pipe
         case 0x0009: cindex = 6; break; // 604e           == MH 1-pipe 604e
         case 0x000A: cindex = 6; break; // 604ev          == MH 1-pipe 604e
+        case 0x7000: cindex = 5; break; // 750FX          == MH 1-pipe
+        /* non-altivec defaults, if no OS support */
+        case 0x000C: cindex = 0; break; // 7400 (G4)      == MH 2-pipe
+        case 0x8000: cindex = 2; break; // 7450 (G4+)     == KKS 604e
+        case 0x8001: cindex = 2; break; // 7455 (G4+)     == KKS 604e
+        case 0x8002: cindex = 2; break; // 7447/7457 (G4+) == KKS 604e
+        case 0x8003: cindex = 2; break; // 7447A (G4+)    == KKS 604e
+        case 0x8004: cindex = 2; break; // 7448 (G4+)     == KKS 604e
+        case 0x800C: cindex = 0; break; // 7410 (G4)      == MH 2-pipe
+        case 0x0039: cindex = 1; break; // 970 (G5)       == KKS 2pipes
+        case 0x003C: cindex = 1; break; // 970FX (G5)     == KKS 2pipes
+        case 0x0044: cindex = 1; break; // 970MP (G5)     == KKS 2pipes
         default:     cindex =-1; break; // no default
       }
 
       #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
-      if (( detected_type & (1L<<25) ) != 0) //altivec?
+      // Note : KKS 7540 (AltiVec) is now set as default for any unknown CPU ID
+      // since new CPUs are likely to be improved G4/G5 class CPUs.
+      if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
         {
             case 0x000C: cindex = 3; break; // 7400 (G4)   == KKS 7400
             case 0x8000: cindex = 4; break; // 7450 (G4+)  == KKS 7450
             case 0x8001: cindex = 4; break; // 7455 (G4+)  == KKS 7450
+            case 0x8002: cindex = 4; break; // 7457/7447 (G4+)  == KKS 7450
+            case 0x8003: cindex = 4; break; // 7447A (G4+)  == KKS 7450
+            case 0x8004: cindex = 4; break; // 7448 (G4+)  == KKS 7450
             case 0x800C: cindex = 3; break; // 7410 (G4)   == KKS 7400
-            //case 0x0039: cindex = 10; break; // 970 (G5)   == KKS 970
-            default:     cindex =-1; break; // no default
+            #if 0       // Disabled (kakace)
+            case 0x0039: cindex = 7; break; // 970 (G5)    == KKS 970
+            case 0x003C: cindex = 7; break; // 970 FX
+            case 0x0044: cindex = 7; break; // 970 MP
+            #else
+            case 0x0039: cindex = 4; break; // Redirect G5 to KKS 7450
+            case 0x003C: cindex = 4; break; // Ditto (970FX)
+            case 0x0044: cindex = 4; break; // Ditto (970MP)
+            #endif
+            default:     cindex = 4; break; // KKS 7450
+        }
+      }
+      #endif
+    }
+  // ===============================================================
+  #elif (CLIENT_CPU == CPU_CELLBE)
+    if (detected_type > 0)
+    {
+      switch ( detected_type & 0xffff) // only compare the low PVR bits
+      {
+        case 0x0070: cindex = 1; break; // Cell BE        == Cell SPE
+        default:     cindex =-1; break; // no default
+      }
+
+      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+      if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
+      {
+        switch ( detected_type & 0xffff) // only compare the low PVR bits
+        {
+            case 0x0070: cindex = 0; break; // Cell BE
+            default:     cindex = 0; break; // KKS 7450
         }
       }
       #endif
@@ -309,26 +397,36 @@ int selcoreGetPreselectedCoreForProject_rc572()
   // ===============================================================
   #elif (CLIENT_CPU == CPU_X86)
   {
-    int have_mmx = ((detected_flags & CPU_F_MMX) == CPU_F_MMX);
+    int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
       if (detected_type >= 0)
       {
         #if !defined(HAVE_NO_NASM)
         switch (detected_type & 0xff) // FIXME remove &0xff
         {
-          case 0x00: cindex = (have_mmx?4   // P5 MMX     == DG 3-pipe alt (#3233)
+          case 0x00: cindex = (have_mmx?9   // P5 MMX     == MMX 4-pipe 
                                        :2); // P5         == DG 2-pipe
 		                 break;
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
-          case 0x02: cindex = 1; break; // PII/PIII       == SES 2-pipe
-          case 0x03: cindex = 2; break; // Cx6x86         == DG 2-pipe
-          case 0x04: cindex = 2; break; // K5             == DG 2-pipe
-          case 0x05: cindex = 5; break; // K6             == SS 2-pipe (#3293)
+          case 0x02: cindex = 1; break; // Pentium II     == SES 2-pipe
+          case 0x03: cindex = 7; break; // Cyrix Model 4  == SGP 3-pipe (#3665)
+          case 0x04: cindex = 7; break; // K5             == SGP 3-pipe
+          case 0x05: cindex = 9; break; // K6             == MMX 4-pipe (#3863)
           case 0x06: cindex = 0; break; // Cx486          == SES 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
-          case 0x08: cindex =-1; break; // PPro           == ?
-          case 0x09: cindex = 7; break; // GO-2           == GO 2-pipe
-          case 0x0A: cindex =-1; break; // Centaur C6     == ?
-          case 0x0B: cindex = 6; break; // Pentium 4      == SGP 3-pipe
+          case 0x08: cindex = 1; break; // PPro           == SES 2-pipe (#3708)
+          case 0x09: cindex = 6; break; // K7/K8          == GO 2-pipe
+          case 0x0A: cindex = 5; break; // Centaur C6     == SS 2-pipe (#3809)
+          case 0x0B: cindex = 6;        // Pentium 4      == GO 2-pipe (#3960, #3265)
+                     if ((detected_type & 0xFF00) == 0x100)  // Hack to avoid adding of new CPU type.
+                       cindex = 7;                           // Some older P4's needs SGP-3p (or even DG-3p)
+                     break;
+          case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
+          case 0x0D: cindex = 6; break; // Pentium M      == GO 2-pipe (#3870)
+          case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
+          case 0x0F: cindex = 7; break; // Via C3 Nehemiah == SGP 3-pipe (#3621)
+          case 0x10: cindex = 5; break; // Cyrix Model 5  == SS 2-pipe (#3580)
+          case 0x11: cindex = 4; break; // Cyrix Model 6  == DG 3-pipe alt (#3809)
+          case 0x12: cindex = 7; break; // Intel Core 2   == SGP 3-pipe (#3969)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -336,20 +434,39 @@ int selcoreGetPreselectedCoreForProject_rc572()
         {
           case 0x00: cindex = 2; break; // P5             == ANSI 1-pipe
           case 0x01: cindex = 2; break; // 386/486        == ANSI 1-pipe
-          case 0x02: cindex = 1; break; // PII/PIII       == ANSI 2-pipe
-          case 0x03: cindex = 2; break; // Cx6x86         == ANSI 1-pipe
+          case 0x02: cindex = 1; break; // PII            == ANSI 2-pipe
+          case 0x03: cindex = 2; break; // Cyrix Model 4  == ANSI 1-pipe
           case 0x04: cindex = 2; break; // K5             == ANSI 1-pipe
           case 0x05: cindex = 1; break; // K6             == ANSI 2-pipe
           case 0x06: cindex = 2; break; // Cx486          == ANSI 1-pipe
           case 0x07: cindex =-1; break; // orig Celeron   == unused?
           case 0x08: cindex =-1; break; // PPro           == ?
-          case 0x09: cindex = 0; break; // K7             == ANSI 4-pipe
+          case 0x09: cindex = 0; break; // K7/K8          == ANSI 4-pipe
           case 0x0A: cindex =-1; break; // Centaur C6     == ?
           case 0x0B: cindex = 0; break; // Pentium 4      == ANSI 4-pipe
+          case 0x0C: cindex =-1; break; // Via C3         == ?
+          case 0x0D: cindex =-1; break; // Pentium M      == ?  
+          case 0x0E: cindex =-1; break; // Pentium III    == ?
+          case 0x0F: cindex =-1; break; // Via C3 Nehemiah == ?
+          case 0x10: cindex =-1; break; // Cyrix Model 5  == ?
+          case 0x11: cindex =-1; break; // Cyrix Model 6  == ?
           default:   cindex =-1; break; // no default
         }
         #endif
       }
+  }
+  // ===============================================================
+  #elif (CLIENT_CPU == CPU_AMD64)
+  {
+    if (detected_type >= 0)
+    {
+      switch (detected_type & 0xff) // FIXME remove &0xff
+      {
+        case 0x09: cindex = 1; break; // K8               == KBE-64 3-pipe
+        case 0x0B: cindex = 1; break; // Pentium 4        == KBE-64 3-pipe
+        default:   cindex =-1; break; // no default
+      }
+    }
   }
   // ===============================================================
   #elif (CLIENT_CPU == CPU_ARM)
@@ -395,7 +512,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case  8: cindex = 4; break; // microSPARC       == AnBe 1-pipe
         case  9: cindex = 4; break; // microSPARC II    == AnBe 1-pipe
         case 10: cindex = 4; break; // TurboSPARC       == AnBe 1-pipe
-        case 11: cindex = 4; break; // hyperSPARC       == AnBe 1-pipe
+        case 11: cindex = 5; break; // hyperSPARC       == AnBe 2-pipe (#3797)
         case 12: cindex = 5; break; // SuperSPARC       == AnBe 2-pipe
         case 13: cindex = 5; break; // SuperSPARC SC    == AnBe 2-pipe
         case 14: cindex = 5; break; // SuperSPARC II    == AnBe 2-pipe
@@ -406,6 +523,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 19: cindex = 5; break; // UltraSPARC-IIi   == AnBe 2-pipe
         case 20: cindex = 5; break; // UltraSPARC-III   == AnBe 2-pipe
         case 21: cindex = 5; break; // UltraSPARC-IIIi  == AnBe 2-pipe
+        case 22: cindex = 5; break; // UltraSPARC-IV    == AnBe 2-pipe
+        case 23: cindex = 3; break; // SPARC64-IV       == KKS 2-pipe
+        case 24: cindex = 4; break; // UltraSPARC-T1    == AnBe 1-pipe
         default: cindex =-1; break; // no default
       }
     }
@@ -440,8 +560,19 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
   int coresel = selcoreGetSelectedCoreForContest(RC5_72);
+#if (CLIENT_CPU == CPU_CELLBE)
+  // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees 2
+  // processors), but it has been found that running 2 simultaneous threads
+  // degrades performance, so let's pretend there's only one PPE.
+  static unsigned int PPE_count = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
 
+  // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs
+  // (core 0); the rest are scheduled on the SPEs (core 1).
+  if (threadindex >= PPE_count)
+    coresel = 1;
+#else
   DNETC_UNUSED_PARAM(threadindex);
+#endif
 
   if (coresel < 0)
     return -1;
@@ -463,6 +594,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         break;
       case 1:
         unit_func.gen_72 = rc5_72_unit_func_arm2;
+        pipeline_count = 1;
+        break;
+      case 2:
+        unit_func.gen_72 = rc5_72_unit_func_arm3;
         pipeline_count = 1;
         break;
      // -----------
@@ -510,32 +645,44 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         pipeline_count = 2;
         break;
       case 6:
-        unit_func.gen_72 = rc5_72_unit_func_sgp_3;
-        pipeline_count = 3;
-        break;
-      case 7:
         unit_func.gen_72 = rc5_72_unit_func_go_2;
         pipeline_count = 2;
         break;
+      case 7:
+        unit_func.gen_72 = rc5_72_unit_func_sgp_3;
+        pipeline_count = 3;
+        break;
+      case 8:
+        unit_func.gen_72 = rc5_72_unit_func_ma_4;
+        pipeline_count = 4;
+        break;
+      case 9:
+        unit_func.gen_72 = rc5_72_unit_func_mmx;
+        pipeline_count = 4;
+        break;
      // -----------
-     #elif (CLIENT_CPU == CPU_X86_64)
+     #elif (CLIENT_CPU == CPU_AMD64)
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_snjl;
         pipeline_count = 3;
         break;
       case 1:
+        unit_func.gen_72 = rc5_72_unit_func_kbe;
+        pipeline_count = 3;
+        break;
+      case 2:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;
         pipeline_count = 4;
         break;
-      case 2:
+      case 3:
         unit_func.gen_72 = rc5_72_unit_func_ansi_2;
         pipeline_count = 2;
         break;
-      case 3:
+      case 4:
       default:
         unit_func.gen_72 = rc5_72_unit_func_ansi_1;
         pipeline_count = 1;
-        coresel = 3; // yes, we explicitly set coresel in the default case !
+        coresel = 4; // yes, we explicitly set coresel in the default case !
         break;
     // -----------
     #elif (CLIENT_CPU == CPU_POWERPC) && \
@@ -573,11 +720,25 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         pipeline_count = 1;
         break;
       #if defined(__VEC__) || defined(__ALTIVEC__)
+      #if 0     // Disabled (kakace)
       case 7:
           unit_func.gen_72 = rc5_72_unit_func_KKS970;
           pipeline_count = 4;
           break;
       #endif
+      #endif
+     // -----------
+    #elif (CLIENT_CPU == CPU_CELLBE)
+      #if defined(__VEC__) || defined(__ALTIVEC__)
+      case 0:
+        unit_func.gen_72 = rc5_72_unit_func_cellv1_ppe;
+        pipeline_count = 4;
+        break;
+      #endif
+      case 1:
+        unit_func.gen_72 = rc5_72_unit_func_cellv1_spe;
+        pipeline_count = 16;
+        break;
      // -----------
      #else /* the ansi cores */
       case 0:
@@ -642,6 +803,67 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
   }
 
   return -1; /* core selection failed */
+}
+
+/* ------------------------------------------------------------- */
+
+/*
+** Estimate the maximum number of work units that can be processed on a daily
+** basis.
+*/
+unsigned int estimate_nominal_rate_rc572()
+{
+  unsigned int rate = 0;   /* Unknown - Not available */
+
+  #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+    static long detected_type = -123;
+    static int  cpu_count = 0;
+    static unsigned long detected_flags = 0;
+    static unsigned int  frequency = 0;
+    unsigned int keyrate = 0;   /* keys/s/MHz */
+
+    if (detected_type == -123) {
+      detected_type  = GetProcessorType(1);
+      detected_flags = GetProcessorFeatureFlags();
+      frequency      = GetProcessorFrequency();
+      cpu_count      = GetNumberOfDetectedProcessors();
+    }
+
+    if (detected_type > 0) {
+      switch (detected_type & 0xffff) { // only compare the low PVR bits
+        case 0x0001:      // 601
+          keyrate = 1700; break;
+        case 0x0003:      // 603
+        case 0x0004:      // 604
+        case 0x0006:      // 603e
+        case 0x0007:      // 603r/603ev
+        case 0x0008:      // 740/750
+        case 0x0009:      // 604e
+        case 0x000A:      // 604ev
+        case 0x7000:      // 750FX
+          keyrate = 3250; break;
+        case 0x000C:      // 7400
+        case 0x800C:      // 7410
+          keyrate = (detected_flags & CPU_F_ALTIVEC) ? 9200: 3250; break;
+        case 0x8000:      // 7450
+        case 0x8001:      // 7455
+        case 0x8002:      // 7457/7447
+        case 0x8003:      // 7447A
+        case 0x8004:      // 7448
+          keyrate = (detected_flags & CPU_F_ALTIVEC) ? 10700 : 3500; break;
+        case 0x0039:      // 970
+        case 0x003C:      // 970FX
+        case 0x0044:      // 970MP
+        case 0x0070:      // Cell Broadband Engine
+          keyrate = (detected_flags & CPU_F_ALTIVEC) ? 7500 : 2450; break;
+      }
+
+      if (cpu_count > 0)
+        rate = (keyrate * frequency * cpu_count) / 49710;  /* 49710 = 2^32 / 86400 */
+    }
+  #endif
+
+  return rate;
 }
 
 /* ------------------------------------------------------------- */

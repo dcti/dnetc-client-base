@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_csc_cpp(void) {
-return "@(#)$Id: core_csc.cpp,v 1.3 2003/11/01 15:00:08 mweiser Exp $"; }
+return "@(#)$Id: core_csc.cpp,v 1.4 2007/10/22 16:48:25 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -131,7 +131,7 @@ int selcoreGetPreselectedCoreForProject_csc()
   // ===============================================================
   #if (CLIENT_CPU == CPU_X86)
   {
-    int have_mmx = ((detected_flags & CPU_F_MMX) == CPU_F_MMX);
+    int have_mmx = (GetProcessorFeatureFlags() & CPU_F_MMX);
       if (detected_type >= 0)
       {
         // this is only valid for nasm'd cores or GCC 2.95 and up
@@ -201,7 +201,7 @@ int selcoreSelectCore_csc(unsigned int threadindex,
                #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
                {               //6b-non-mmx isn't used (by default) on x86
                  long det = GetProcessorType(1 /* quietly */);
-                 if ((det >= 0 && (det & 0x100)!=0)) /* ismmx */
+                 if (GetProcessorFeatureFlags() & CPU_F_MMX) /* ismmx */
                    unit_func.gen = csc_unit_func_6b_mmx;
                }
                #endif

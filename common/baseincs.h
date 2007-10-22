@@ -1,11 +1,11 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* -*-C++-*-
  *
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.88 2003/11/01 14:20:12 mweiser Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.89 2007/10/22 16:48:23 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -44,6 +44,7 @@
   #if defined(__WATCOMC__)
     #include "os2defs.h"
     #include <direct.h>
+    #include <dos.h>
   #else
     #include "plat/os2/os2defs.h"
   #endif
@@ -70,9 +71,13 @@
   #ifndef QSV_NUMPROCESSORS       /* This is only defined in the SMP toolkit */
     #define QSV_NUMPROCESSORS     26
   #endif
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   #include "plat/amigaos/amiga.h"
+  #ifdef __amigaos4__
+  #include <unistd.h>
+  #else
   #include <sys/unistd.h>
+  #endif
   #include <fcntl.h>
 #elif (CLIENT_OS == OS_RISCOS)
   #include <unixlib/local.h>
@@ -99,7 +104,7 @@
   #include <unistd.h>
   #include <fcntl.h>
   #include <sys/time.h>
-#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #include <windows.h>
   #include <sys/timeb.h>
   #include <process.h>
@@ -167,6 +172,13 @@
   #include <fcntl.h> //O_... constants
   #include <netinet/in.h> //ntohl/htonl/ntohs/htons
   #include "plat/netware/netware.h" //for stuff in netware.cpp
+#elif (CLIENT_OS == OS_NETWARE6)
+  #include <sys/time.h>
+  #include <sys/times.h>
+  #include <sys/file.h>
+  #include <unistd.h>
+  #include <fcntl.h>
+  #include <sys/byteorder.h>
 #elif (CLIENT_OS == OS_SUNOS)
   #include <fcntl.h>
   #include <unistd.h>
@@ -200,6 +212,7 @@
   #include <sys/file.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
+  #include <sys/dir.h> /*scandir*/
   #undef NULL    /* some broken header unconditionally */
   #define NULL 0 /* defines NULL to be ((void *)0) */
   #if defined(_MIT_POSIX_THREADS)
@@ -220,10 +233,8 @@
   #include <unistd.h>
   #define fileno(f) ((f)->handle)
 #elif (CLIENT_OS == OS_MACOSX)
-  //rhapsody is mach 2.x based and altivec unsafe
   #include <sys/time.h>
   #include <sys/vmparam.h> //USRSTACK
-  #include <sys/exec.h>  //PS_STRINGS
   #include <sys/sysctl.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
@@ -282,6 +293,7 @@
   #include <machine/cpuconf.h>
   #include <sys/time.h>
   #include <fcntl.h> /* O_RDWR etc */
+  #include <machine/endian.h>
 #elif (CLIENT_OS == OS_NEXTSTEP)
   #include <mach/mach.h>  /* host_self, host_kernel_version */
   #include <libc.h>       /* access, geteuid, ... */

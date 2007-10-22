@@ -6,7 +6,7 @@
 */
 
 const char *next_sup_cpp(void) {
-return "@(#)$Id: next_sup.cpp,v 1.2 2003/09/12 23:41:00 mweiser Exp $"; }
+return "@(#)$Id: next_sup.cpp,v 1.3 2007/10/22 16:48:31 jlawson Exp $"; }
 
 #include "next_sup.h"
 #include <stdlib.h>   /* malloc */

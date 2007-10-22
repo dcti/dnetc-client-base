@@ -1,5 +1,5 @@
 ;
-; Copyright distributed.net 1998-2002 - All Rights Reserved
+; Copyright distributed.net 1998-2004 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.2 2003/11/01 14:20:15 mweiser Exp $
+; $Id: x86ident.asm,v 1.3 2007/10/22 16:48:30 jlawson Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:

@@ -32,11 +32,11 @@
 ;#	Clock cycles (inner loop) : 602
 ;#	Estimated keyrate : 3322.25 keys/s/MHz
 ;#
-;# $Id: r72-KKS2pipes.osx.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+;# $Id: r72-KKS2pipes.osx.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 ;#
 ;# $Log: r72-KKS2pipes.osx.s,v $
-;# Revision 1.2  2003/09/12 23:08:52  mweiser
-;# add new files from release-2-90xx
+;# Revision 1.3  2007/10/22 16:48:35  jlawson
+;# overwrite head with contents of release-2-90xx
 ;#
 ;# Revision 1.1.2.2  2003/04/03 23:25:19  mfeiri
 ;# Latest cores by kakace

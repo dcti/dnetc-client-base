@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.162 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.163 2007/10/22 16:48:24 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -45,9 +45,9 @@ return "@(#)$Id: cmdline.cpp,v 1.162 2003/11/01 14:20:13 mweiser Exp $"; }
   extern "C" int linux_uninstall(const char *basename, int quietly);
   extern "C" int linux_install(const char *basename, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
-#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
-  extern "C" int macosx_uninstall(const char *argv0, int quietly);
-  extern "C" int macosx_install(const char *argv0, int argc,
+#elif (CLIENT_OS == OS_MACOSX)
+  int macosx_uninstall(const char *argv0, int quietly);
+  int macosx_install(const char *argv0, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
 #endif
 /* -------------------------------------- */
@@ -426,20 +426,23 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           const char *pscmd = NULL;
           #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
               (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_MACOSX) || \
-              (CLIENT_OS == OS_PS2LINUX)
+              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX)
           pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
-	  #elif (CLIENT_OS == OS_NEXTSTEP)
-	  /* NeXTstep porduces spaces in process status columns like
-	   * 26513 p1 SW    0:01 -bash (bash)
-	   * 26542 p1 R N  32:52 ./dnetc */
+          #elif (CLIENT_OS == OS_MACOSX)
+          // Only grab the executable name to avoid troubles with white spaces
+          // in file paths.
+          pscmd = "ps acxw|awk '{print$1\" \"$5}' 2>/dev/null";
+          #elif (CLIENT_OS == OS_NEXTSTEP)
+          /* NeXTstep porduces spaces in process status columns like
+          * 26513 p1 SW    0:01 -bash (bash)
+          * 26542 p1 R N  32:52 ./dnetc */
           pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
           #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
                 (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
           pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
-	  #elif (CLIENT_OS == OS_DYNIX)
+          #elif (CLIENT_OS == OS_DYNIX)
           pscmd = "/bin/ps -ef -o pid -o comm 2>/dev/null";	/*svr4/posix*/
           #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
           pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
@@ -586,7 +589,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           }
           retcode = (kill_found < 0) ? 3 : 0;
         }
-        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32)
+        #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         {
           int rc, cmd = DNETC_WCMD_RESTART;
           const char *dowhat_descrip = "restarted";
@@ -625,7 +628,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             ConOutModal(scratch);
           }
         }
-        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_OS2)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || (CLIENT_OS == OS_OS2)
         {
           int rc, cmd = DNETC_MSG_RESTART;
           const char *dowhat_descrip = "restarted";
@@ -648,7 +651,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             dowhat_descrip = "unpaused";
           }
 
-          #if (CLIENT_OS == OS_AMIGAOS)
+          #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
           rc = amigaPutTriggerSigs(cmd); /* 0=notfound, 1=found+ok, -1=error */
           #elif (CLIENT_OS == OS_OS2)
           rc = os2CliSendSignal(cmd, argv[0]);
@@ -682,16 +685,16 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         retcode = 0;  
         if (0!=linux_install(utilGetAppName(), (argc-pos), &argv[pos], loop0_quiet))
           retcode = 3;           /* plat/linux/li_inst.c */
-        #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+        #elif (CLIENT_OS == OS_MACOSX)
         retcode = 0;  
         if (0!=macosx_install(argv[0], (argc-pos), &argv[pos], loop0_quiet))
           retcode = 3;           /* plat/macosx/c_install.c */
-        #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+        #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         win32CliInstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
         #elif (CLIENT_OS == OS_OS2)
         retcode = os2CliInstallClient(loop0_quiet, argv[0]) ? 3 : 0; /* os2inst.cpp */
-        #elif (CLIENT_OS == OS_AMIGAOS)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
         retcode = 0;  
         if (0!=amigaInstall(loop0_quiet, argv[0]))
           retcode = 3;           /* plat/amigaos/amigaInstall.c */
@@ -703,7 +706,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       {
         if (misc_call)
           continue;
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         int isinst = win32CliIsServiceInstalled();/*<0=err,0=no,>0=yes */
         if (isinst < 0 && !loop0_quiet)
           ConOutErr("Service manager error. Service could not be started.\n");
@@ -730,14 +733,14 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         retcode = 0;
         if (linux_uninstall(utilGetAppName(), loop0_quiet)!=0)
           retcode = 3;           /* plat/linux/li_inst.c */ 
-        #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+        #elif (CLIENT_OS == OS_MACOSX)
         retcode = 0;  
         if (macosx_uninstall(argv[0], loop0_quiet)!=0)
           retcode = 3;           /* plat/macosx/c_install.c */
-        #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+        #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         win32CliUninstallService(loop0_quiet); /*w32svc.cpp*/
         retcode = 0;
-        #elif (CLIENT_OS == OS_AMIGAOS)
+        #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
         retcode = 0;
         if (amigaUninstall(loop0_quiet, argv[0])!=0)
           retcode = 3;           /* plat/amigaos/amigaInstall.c */ 
@@ -788,7 +791,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           {          
             #if (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_DOS) || \
                 (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) || \
-                (CLIENT_OS == OS_WIN32)
+                (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
             //not really needed for netware (appname in argv[0] won't be anything
             //except what I tell it to be at link time.)
             strcpy( client->inifilename, argv[0] );
@@ -917,7 +920,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
               contest = DES;
           }
           
-          if (contest == OGR && (whichswitch & (4+8))!=0)
+          if ((contest == OGR || contest == OGR_P2) && (whichswitch & (4+8))!=0)
             invalid_value = 1;  /* no prefferedblocksize / timethresh */
           else if (op == NULL)
             missing_value = 1;
@@ -1036,7 +1039,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                     sprintf(scratch,"%d",n);
                   LogScreenRaw("%s work-unit-based %s threshold set to %s\n",
                      cname, ((apos==1)?("fetch"):("flush")), scratch );
-                  if (contest != OGR && client->timethreshold[contest] <= 0)
+                  if (contest != OGR && contest != OGR_P2 && client->timethreshold[contest] <= 0)
                     LogScreenRaw("%s time-based %s threshold cleared\n",
                      cname, ((apos==1)?("fetch"):("flush")) );
                 }
@@ -1711,18 +1714,48 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       else if ( strcmp( thisarg, "-benchmark"   ) == 0  ||
                 strcmp( thisarg, "-benchmark2"  ) == 0 ||
                 strcmp( thisarg, "-bench"  ) == 0 ||
-                strcmp( thisarg, "-test" ) == 0 )
+                strcmp( thisarg, "-test" ) == 0 ||
+                strcmp( thisarg, "-stress" ) == 0)
       {
         havemode = 1;
         if (argvalue)
         {
-          if (__arg2cname(argvalue,CONTEST_COUNT) < CONTEST_COUNT)
-            skip_next = 1;
-          
-          if (argvalue2)
+          int contest = __arg2cname(argvalue, CONTEST_COUNT);
+          if (contest >= CONTEST_COUNT || !IsProblemLoadPermitted(-1, contest))
           {
-            client->corenumtotestbench = atoi(argvalue2);
-            skip_next = 2;
+            sprintf(scratch, "Unknown contest \"%.30s\".\n", argvalue);
+            ConOutErr(scratch);
+            retcode = 3;
+          }
+          else
+          {
+            skip_next = 1;
+            if (argvalue2)
+            {
+              unsigned int corenum = atoi(argvalue2);
+              if (corecount_for_contest(contest) > corenum)
+              {
+                if (selcoreValidateCoreIndex(contest, corenum) >= 0)
+                {
+                  client->corenumtotestbench = corenum;
+                  skip_next = 2;
+                }
+                else
+                {
+                  sprintf(scratch, "Core #%d is not available on this machine.\n",
+                        corenum);
+                  ConOutErr(scratch);
+                  retcode = 3;
+                }
+              }
+              else
+              {
+                sprintf(scratch, "Core #%d doesn't exist for contest \"%.30s\".\n",
+                      corenum, argvalue);
+                ConOutErr(scratch);
+                retcode = 3;
+              }
+            }
           }
         }
       }
@@ -1827,7 +1860,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       else if ( strcmp( thisarg, "-benchmark" ) == 0  ||
                 strcmp( thisarg, "-bench" ) == 0 ||
                 strcmp( thisarg, "-benchmark2" ) == 0 ||
-                strcmp( thisarg, "-test" ) == 0 )
+                strcmp( thisarg, "-test" ) == 0 ||
+                strcmp( thisarg, "-stress") == 0)
       {
         int do_mode = MODEREQ_BENCHMARK;
         *inimissing = 0; // Don't need ini
@@ -1839,6 +1873,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           do_mode = MODEREQ_BENCHMARK_ALLCORE;
         else if (strcmp( thisarg, "-test"  ) == 0)
           do_mode = MODEREQ_TEST_ALLCORE;
+        else if (strcmp( thisarg, "-stress" ) == 0)
+          do_mode = MODEREQ_STRESS_ALLCORE;
 
         ModeReqClear(-1); //clear all - only do benchmark/test
         ModeReqSet( do_mode );
@@ -2071,7 +2107,7 @@ static int __finalize_level(const char *argv0,
     }
     else if ((ModeReqIsSet(-1)==0))
     {
-      #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)  
+      #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2)  
       if (*multiok > 0)  /* the default is 0 for win/os2 */
       {
         putenv("dnetc_multiok=1");

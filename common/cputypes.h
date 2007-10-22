@@ -1,4 +1,4 @@
-/* Hey, Emacs, this a -*-C-*- file !
+/* -*-C-*-
  *
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.88 2003/11/01 14:20:13 mweiser Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.89 2007/10/22 16:48:25 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -34,7 +34,9 @@
 #define CPU_S390        14
 #define CPU_S390X       15 /* was MASPAR (never used) */
 #define CPU_DESCRACKER  16 /* eff descracker */
-#define CPU_X86_64      17
+#define CPU_AMD64       17 /* official name */
+#define CPU_X86_64      CPU_AMD64 /* old GNU name before AMD announced AMD64 */
+#define CPU_CELLBE	18
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -61,7 +63,7 @@
 #define OS_NEXTSTEP     19
 #define OS_SCO          20
 #define OS_QNX          21 /* includes QNX Neutrino */
-/* #define OS_UNUSED_3  22 */ /* was OSF1 (never used), was NTO2 (QNX) */
+/* #define OS_UNUSED_3  22 */ /* was OSF1, was NTO2 (QNX) */
 /* #define OS_UNUSED_4  23 */ /* was MINIX (never used) */
 /* #define OS_UNUSED_5  24 */ /* was MACH10 (never used) */
 #define OS_AIX          25
@@ -84,12 +86,25 @@
 #define OS_DESCRACKER   42 /* eff des cracker */
 /* #define OS_MACOSX    43 */ /* obsolete, is now 27, was PS2LINUX */
 #define OS_PS2LINUX     44
+#define OS_MORPHOS      45
+#define OS_WIN64        46
+#define OS_NETWARE6     47
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
 
 /* determine current compiling platform */
-#if defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
+#if defined(_WIN64)
+  #if defined(_M_AMD64)
+    #define CLIENT_CPU     CPU_AMD64
+    #define CLIENT_OS      OS_WIN64
+    #define CLIENT_OS_NAME "Win64"
+  #elif defined(_M_IA64)
+    #define CLIENT_CPU     CPU_IA64
+    #define CLIENT_OS      OS_WIN64
+    #define CLIENT_OS_NAME "Win64"
+  #endif
+#elif defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
   #if defined(NTALPHA) || defined(_M_ALPHA)
     #define CLIENT_CPU     CPU_ALPHA
     #define CLIENT_OS      OS_WIN32
@@ -127,6 +142,10 @@
     #define CLIENT_OS      OS_NETWARE
     #define CLIENT_CPU     CPU_ALPHA
   #endif
+#elif defined(_NETWARE6_)
+  #define CLIENT_OS     OS_NETWARE6
+  #define CLIENT_CPU    CPU_X86
+  #define CLIENT_OS_NAME "NetWare 6.x"  
 #elif defined(__EMX__) || defined(__OS2__)
   #define CLIENT_OS_NAME   "OS/2"
   #define CLIENT_OS        OS_OS2
@@ -138,6 +157,9 @@
   #if defined(__ps2linux__)
     #define CLIENT_OS_NAME "PS2 Linux"
     #define CLIENT_OS      OS_PS2LINUX
+  #elif defined(__ps3__)
+    #define CLIENT_OS_NAME "PS3 Linux"
+    #define CLIENT_OS      OS_LINUX
   #else
     #define CLIENT_OS_NAME "Linux"
     #define CLIENT_OS      OS_LINUX
@@ -164,14 +186,16 @@
     #define CLIENT_CPU     CPU_ARM
   #elif defined(ASM_SPARC) || defined(__sparc__)
     #define CLIENT_CPU     CPU_SPARC
+  #elif defined(__PPU__) || defined(__SPU__)
+    #define CLIENT_CPU     CPU_CELLBE
   #elif defined(ASM_PPC)
     #define CLIENT_CPU     CPU_POWERPC
   #elif defined(ASM_68K)
     #define CLIENT_CPU     CPU_68K
   #elif defined(ASM_MIPS) || defined(__mips)
     #define CLIENT_CPU     CPU_MIPS
-  #elif defined(ASM_X86_64) || defined(__x86_64) || defined(__x86_64__) 
-    #define CLIENT_CPU     CPU_X86_64
+  #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
+    #define CLIENT_CPU     CPU_AMD64
   #endif
 #elif defined(__FreeBSD__)
   #ifndef __unix__ /* should already be defined */
@@ -187,6 +211,8 @@
     #define CLIENT_CPU     CPU_PPC
   #elif defined(__sparc__) || defined(__sparc_v9__) || defined(ASM_SPARC)
     #define CLIENT_CPU     CPU_SPARC
+  #elif defined(__amd64__) || defined(ASM_AMD64)
+    #define CLIENT_CPU     CPU_AMD64
   #endif
 #elif defined(__NetBSD__)
   #ifndef __unix__ /* should already be defined */
@@ -210,6 +236,8 @@
     #define CLIENT_CPU     CPU_POWERPC
   #elif defined(__sparc__) || defined(ASM_SPARC)
     #define CLIENT_CPU     CPU_SPARC
+  #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
+    #define CLIENT_CPU     CPU_AMD64
   #endif
 #elif defined(__OpenBSD__) || defined(openbsd)
   #ifndef __unix__ /* should already be defined */
@@ -225,6 +253,8 @@
     #define CLIENT_CPU     CPU_SPARC
   #elif defined(__m68k__) || defined(ASM_68K)
     #define CLIENT_CPU     CPU_68K
+  #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
+    #define CLIENT_CPU     CPU_AMD64
   #endif
 #elif defined(bsdi)
   #ifndef __unix__ /* should already be defined */
@@ -384,13 +414,6 @@
    #ifndef __unix__
    #define __unix__
    #endif
-   #if (__APPLE_CC__ < 795)
-     #define __RHAPSODY__
-     /* MACH 2.x based and AltiVec unsafe variants of MacOSX (MXS and others) */
-   #elif defined(__RHAPSODY__)
-     #undef __RHAPSODY__
-     /* MACH 3.x based versions of Mac OS X (min. Mac OS X DP4 or Darwin 1.0) */
-   #endif
    #if defined(__ppc__)
      #define CLIENT_CPU    CPU_POWERPC
    #elif defined(__i386__)
@@ -407,8 +430,12 @@
   #elif defined(__INTEL__)
     #define CLIENT_CPU     CPU_X86
   #endif
+#elif defined(__MORPHOS__)
+  #define CLIENT_OS_NAME   "MorphOS"
+  #define CLIENT_OS        OS_MORPHOS
+  #define CLIENT_CPU       CPU_POWERPC
 #elif defined(AMIGA)
-  #define CLIENT_OS_NAME   "Amiga OS"
+  #define CLIENT_OS_NAME   "AmigaOS"
   #define CLIENT_OS        OS_AMIGAOS
   #ifdef __PPC__
     #define CLIENT_CPU     CPU_POWERPC
@@ -492,6 +519,12 @@
   #include <process.h>
   typedef long THREADID;
   #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_NETWARE6)
+  #define HAVE_POSIX_THREADS
+  #define _POSIX_THREADS_SUPPORTED
+  #include <pthread.h>
+  typedef pthread_t THREADID;
+  #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_BEOS)
   #include <OS.h>
   typedef thread_id THREADID;
@@ -522,7 +555,7 @@
   /* ... but first thread is polled ... */
   #define OS_SUPPORTS_SMP
   typedef long THREADID;
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   typedef long THREADID;
   #define OS_SUPPORTS_SMP
 #elif defined(HAVE_POSIX_THREADS)
@@ -547,8 +580,6 @@
   #if (CLIENT_OS == OS_DGUX)
     #define PTHREAD_SCOPE_SYSTEM PTHREAD_SCOPE_GLOBAL
     #define pthread_sigmask(a,b,c)
-  #elif (CLIENT_OS == OS_MACOSX)
-    #define pthread_sigmask(a,b,c) /*no*/
   #elif (CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)
     #define pthread_sigmask(a,b,c) /*no*/
   #elif (CLIENT_OS == OS_AIX)
@@ -570,7 +601,9 @@
   #include <sys/wait.h>     /* wait() */
   #include <sys/time.h>     /* required for resource.h */
   #include <sys/resource.h> /* WIF*() macros */
+  #if (CLIENT_CPU != CPU_CELLBE)
   #include <sys/mman.h>     /* minherit() */
+  #endif
   #ifndef CORES_SUPPORT_SMP 
   #define CORES_SUPPORT_SMP /* no shared data, so cores become smp safe */
   #endif
@@ -609,30 +642,6 @@
     */
     #error "To build a proxy you must use a compiler that has intrinsic support for 'bool'"
     /* IT IS NOT SUFFICIENT TO 'typedef int bool'!! */
-  #elif !defined(true)
-    #define false ((bool)0)
-    #define true  (!false)
-  #endif
-#elif (CLIENT_OS != OS_MACOS) /* MacOS APIs (UniversalInterfaces) need bool */
-  /* puke before others have to deal with errant code */
-  /* IT IS NOT SUFFICIENT TO 'typedef int bool'!! */
- #if (!defined(HAVE_DES_CORES)) /* old DES cores use bool - so don't use them ;-) */
-  #undef true
-  #define true  bool_type_is_not_portable
-  #undef false
-  #define false bool_type_is_not_portable
-  #undef bool
-  #define bool  bool_type_is_not_portable
- #endif
-  #undef class
-  /* There is a reference to 'class' in the Win32 unknwn.h header, */
-  /* so don't break the class keyword in this case. */
-  /* Need to disable this for VC 5.0, since installation of recent */
-  /* platform SDK's (e.g. January 2000) puts the class back in unknwn.h */
-  /* Borland C++ 5.5 needs the class keyword in stdlib.h */
-  #if (!defined(_MSC_VER) || (_MSC_VER < 1100)) && \
-      (!defined(__BORLANDC__)  || ((__BORLANDC__ != 0x0550) && (__BORLANDC__ != 0x0551)))
-    #define class the_client_is_class_free /* phew! */
   #endif
 #endif
 
@@ -687,7 +696,7 @@ extern "C" {
       #endif
       #define SIZEOF_INT   1
       #ifndef SIZEOF_LONG
-        #if (ULONG_MAX > UINT_MAX)
+        #if (ULONG_MAX != UINT_MAX)
           #define SIZEOF_LONG  2
         #else
           #define SIZEOF_LONG  1
@@ -699,7 +708,7 @@ extern "C" {
       #endif
       #define SIZEOF_INT   2
       #ifndef SIZEOF_LONG
-        #if (ULONG_MAX > UINT_MAX)
+        #if (ULONG_MAX != UINT_MAX)
           #define SIZEOF_LONG  4
         #else
           #define SIZEOF_LONG  2
@@ -711,7 +720,7 @@ extern "C" {
       #endif
       #define SIZEOF_INT   4
       #ifndef SIZEOF_LONG
-        #if (ULONG_MAX > UINT_MAX)
+        #if (ULONG_MAX != UINT_MAX)
           #define SIZEOF_LONG  8
         #else
           #define SIZEOF_LONG  4
@@ -723,7 +732,7 @@ extern "C" {
       #endif
       #define SIZEOF_INT   8
       #ifndef SIZEOF_LONG
-        #if (ULONG_MAX > UINT_MAX)
+        #if (ULONG_MAX != UINT_MAX)
           #define SIZEOF_LONG  16
         #else
           #define SIZEOF_LONG  8

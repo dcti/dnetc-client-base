@@ -6,7 +6,7 @@
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
 */ 
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.18 2003/11/01 14:20:14 mweiser Exp $"; }
+return "@(#)$Id: probman.cpp,v 1.19 2007/10/22 16:48:27 jlawson Exp $"; }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class

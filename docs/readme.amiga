@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.12 2003/11/01 14:20:14 mweiser Exp $
+ Document revision $Id: readme.amiga,v 1.13 2007/10/22 16:48:28 jlawson Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -32,12 +32,19 @@
      - ClassAct or ReAction GUI classes are required in order to use the
        built-in GUI (will use shell output if not present).
 
-    There are three versions of the client: a 68k version (with cores
-    optimized for each CPU) and two PPC versions (WarpOS and PowerUp).
-    Choose the PPC version according to your preferred PPC kernel.
+    There are current four versions of the client: a 68k version (with
+    cores optimized for each CPU type of the 68k family) and three PowerPC
+    versions (AmigaOS 4, WarpOS and PowerUp).  Choose the PPC version
+    according to your installed system.
 
      The 68k version requires:
      - An 68000 or higher. An 040 or preferably 060 is HIGHLY recommended.
+
+     The OS4 PPC version requires:
+     - A 603e or higher PPC processor.
+     - AmigaOS 4.0 pre-release or newer.
+     - AltiVec cores require a G4 and kernel 51.12 or higher.
+     - The Roadshow TCP/IP stack supplied with OS4.
 
      The WarpOS PPC version requires:
      - A 603e or higher PPC processor. Tested on 603e and 604e.
@@ -50,7 +57,6 @@
      - Stack must be set to at least 200000 bytes.
      - Also works under WarpUp with PPCLibEmu 0.8a or higher (although
        you should really use the native WarpOS version instead, of course).
-     - This version is recommended for MorphOS users too.
 
  2.0  Getting started ------------------------------------------------
 
@@ -78,28 +84,27 @@
 
  3.0  Notes ----------------------------------------------------------
 
-    If you want to contribute to the Amiga RC5 Team Effort, visit the effort
+    If you want to contribute to the Distributed Amiga team, visit the effort
     homepage at http://distributed.amiga.org/, it contains all the necessary
     info along with extensive information on usage, configuration, trouble
     shooting etc. 
     
     IMPORTANT: the client's default distributed.net ID is rc5@distributed.net.
     Unless you change this your work is wasted effort.
-    The usage section on the Amiga effort pages contains all you need to
+    The usage section on the Distributed Amiga pages contains all you need to
     know to change this.
 
   3.1  Ensuring stack size is large enough ---------------------------
 
-    The 68k client always allocates its own 64K stack, which is enough for
-    the client to operate, so you should not need any special stack
-    settings in this.  Similarly with the WarpOS version, WarpOS programs
-    always get assigned a largish stack.  However, if you're using the
-    PowerUp version, you will need to set the stack to at least 200000
-    bytes, otherwise the client will exit telling you to increase the
-    stack size (instead of running with the potential for crashes to
-    happen).  Stack size can be increased by calling the stack command
-    before running the client or by adjusting the stack value in the
-    client's icon.
+    The 68k and OS4 clients always allocate their own suitably sized
+    stack, so you should not need any special stack settings for these.
+    Similarly with the WarpOS version, WarpOS programs always get
+    assigned a largish stack.  However, if you're using the PowerUp
+    version, you will need to set the stack to at least 200000 bytes,
+    otherwise the client will exit telling you to increase the stack size
+    (instead of running with the potential for crashes to happen).  Stack
+    size can be increased by calling the stack command before running the
+    client or by adjusting the stack value in the client's icon.
 
   3.2  Setting the time zone -----------------------------------------
 
@@ -175,6 +180,7 @@
     FETCH   - Fetch new packets for the client(s)
     FLUSH   - Flush the client(s) buffers
     RESTART - Restart the clients(s)
+    CLEAR   - Clear the console window
 
   4.3  Myzar - alternative front-end for the client ------------------
 
@@ -200,9 +206,9 @@
        - Stefan Smietanowski (for porting previous clients to the Amiga -
          some crucial parts of his code are used in this version)
        - Dirk Stoecker (laborious testing of PowerUp client betas)
-       - Thomas Tavoly (coordinator of the Amiga RC5 Team)
+       - Thomas Tavoly (coordinator of the Distributed Amiga team)
 
-    -- The whole Amiga RC5 Team
+    -- The whole Distributed Amiga team
        Without you there wouldn't be much of a point in doing the client, 
        so keep on cracking! Maybe YOU can find the key with the client.
 

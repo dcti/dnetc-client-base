@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.26 2003/11/01 14:20:13 mweiser Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.27 2007/10/22 16:48:25 jlawson Exp $"
 
 enum /* anonymous */
 {
@@ -52,6 +52,7 @@ enum /* anonymous */
   CONF_LOGTYPE                 , /* CONF_MENU_LOG */
   CONF_LOGNAME                 , /* CONF_MENU_LOG */
   CONF_LOGLIMIT                , /* CONF_MENU_LOG */
+  CONF_LOGROTATETIME           , /* CONF_MENU_LOG */
   CONF_MESSAGELEN              , /* CONF_MENU_LOG */
   CONF_SMTPSRVR                , /* CONF_MENU_LOG */
   CONF_SMTPFROM                , /* CONF_MENU_LOG */

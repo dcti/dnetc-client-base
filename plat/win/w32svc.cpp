@@ -7,7 +7,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.4 2003/11/01 14:20:15 mweiser Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.5 2007/10/22 16:48:32 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -1574,7 +1574,7 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
   return;
 }
 struct { int (*proc)(int, char **); } ntsvc = {0};
-static LPSERVICE_MAIN_FUNCTION _NTServiceMain(DWORD Argc, LPTSTR *Argv)
+static void WINAPI _NTServiceMain(DWORD Argc, LPTSTR *Argv)
 {
   TRACE_OUT((+1,"started _NTServiceMain(%d,{\"%s\",...})\n",Argc,Argv[0]));
 
@@ -1585,7 +1585,6 @@ static LPSERVICE_MAIN_FUNCTION _NTServiceMain(DWORD Argc, LPTSTR *Argv)
   ServiceCtrlHandler(SERVICE_CONTROL_INTERROGATE); /* set STOPPED */
 
   TRACE_OUT((-1,"ended _NTServiceMain\n" ));
-  return 0;
 }
 #endif
 

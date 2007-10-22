@@ -3,7 +3,7 @@
 @ Any other distribution or use of this source violates copyright.
 @
 @ Author: Peter Teichmann <dnet@peter-teichmann.de>
-@ $Id: r72arm1-gnu-elf.S,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+@ $Id: r72arm1-gnu-elf.S,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 
 #define	WORK	r0
 #define	L0	r2

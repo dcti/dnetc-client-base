@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.37 2003/11/01 14:20:12 mweiser Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.38 2007/10/22 16:48:24 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -49,11 +49,25 @@ static struct contestInfo
                   { /*"CSC",    "keys", */ CSC,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /*"OGR_NG", "nodes",*/ OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /*"RC5-72", "keys", */ RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+                  { /*"OGR-P2", "nodes",*/ OGR_P2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /* NULL,    NULL,   */ -1,      0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
 // obsolete projects may be omitted
-#if (CONTEST_COUNT != 6)
-  #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 6")
+#if (CONTEST_COUNT != 7)
+  #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 7")
 #endif
+
+/* ----------------------------------------------------------------------- */
+
+// Reset benchmark infos to allow for accurate results in case the client
+// gets restarted with new settings.
+void CliResetStaticVars(void)
+{
+  int contest;
+  for (contest = 0; contest < CONTEST_COUNT; contest++) {
+    conStats[contest].BestTime = 0;
+    conStats[contest].BestTimeWasForced = 0;
+  }
+}
 
 /* ----------------------------------------------------------------------- */
 

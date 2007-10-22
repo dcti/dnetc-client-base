@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __DISPHELP_H__
-#define __DISPHELP_H__ "@(#)$Id: disphelp.h,v 1.5 2003/11/01 14:20:13 mweiser Exp $"
+#define __DISPHELP_H__ "@(#)$Id: disphelp.h,v 1.6 2007/10/22 16:48:25 jlawson Exp $"
 
 /*
   full-screen, interactive (except for unix-ish platforms) help for 

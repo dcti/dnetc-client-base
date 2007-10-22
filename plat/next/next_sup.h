@@ -6,7 +6,7 @@
 */
 
 #ifndef __NEXT_SUP_H__
-#define __NEXT_SUP_H__  "@(#)$Id: next_sup.h,v 1.2 2003/09/12 23:41:00 mweiser Exp $"
+#define __NEXT_SUP_H__  "@(#)$Id: next_sup.h,v 1.3 2007/10/22 16:48:31 jlawson Exp $"
 
 #include <sys/types.h> /* size_t, off_t */
 #include <sys/wait.h>  /* union wait, WIFEXITED */

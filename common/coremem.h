@@ -12,7 +12,7 @@
 */
 
 #ifndef __COREMEM_H__
-#define __COREMEM_H__ "@(#)$Id: coremem.h,v 1.4 2003/11/01 14:20:13 mweiser Exp $"
+#define __COREMEM_H__ "@(#)$Id: coremem.h,v 1.5 2007/10/22 16:48:25 jlawson Exp $"
 
 #ifdef __cplusplus /* header may be included by cores */
 extern "C" {

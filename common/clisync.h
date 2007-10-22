@@ -1,4 +1,4 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* -*-C++-*-
  *
  * Copyright distributed.net 2001-2003 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -17,7 +17,7 @@
  * Fine-grained locking results in a very short time spent while holding a
  * lock, so there is a low probability of collision (finding a lock busy).
  *
- * 2003-08-29 Michael Weiser <michael@weiser.saale-net.de> cleanup:
+ * 2003-08-29 Michael Weiser <michael@weiser.dinsnail.net> cleanup:
  *
  * fastlock_t used to be a structure with one volatile element. The
  * element being declared volatile ensured that compiler optimisations
@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.5 2003/11/01 14:20:13 mweiser Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.6 2007/10/22 16:48:24 jlawson Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -182,7 +182,7 @@
     return 1;
   }
 
-#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_X86_64)
+#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
 
   typedef volatile long fastlock_t;
 
@@ -230,11 +230,13 @@
     while (fastlock_trylock(l) <= 0) {
 # if defined(__unix__)
       NonPolledUSleep(1);
+# elif (CLIENT_OS == OS_NETWARE6)
+      NonPolledUSleep(1);
 # elif (CLIENT_OS == OS_NETWARE)
       ThreadSwitchLowPriority();
 # elif (CLIENT_OS == OS_OS2)
       DosSleep(1);
-# elif (CLIENT_OS == OS_WIN32)
+# elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       Sleep(1);
 # else
 #  error "What's up Doc?"
@@ -279,7 +281,7 @@
     }
   }
 
-#elif (CLIENT_CPU == CPU_POWERPC) && defined(__GNUC__)
+#elif ((CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)) && defined(__GNUC__)
 
   /* based on
   ** http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/powerpc/include/lock.h?rev=1.4.2.1
@@ -321,7 +323,9 @@
 
   static inline void fastlock_lock(fastlock_t *l) {
     while (fastlock_trylock(l) <= 0) {
-# if (CLIENT_OS == OS_AMIGAOS) || (defined(__unix__))
+# if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+      NonPolledUSleep(1000);
+# elif defined(__unix__)
       NonPolledUSleep(1);
 # else
 #  error "What's up Doc?"
@@ -437,7 +441,9 @@
 
   static inline void fastlock_lock(fastlock_t *l) {
     while (fastlock_trylock(l) <= 0) {
-# if (CLIENT_OS == OS_AMIGAOS) || (defined(__unix__))
+# if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+      NonPolledUSleep(1000);
+# elif defined(__unix__)
       NonPolledUSleep(1);
 # else
 #  error "What's up Doc?"
@@ -496,7 +502,7 @@
                  : : "a" (l) : "memory", "cc" );
   }
 
-  static inline int fastlock_trylock(fastlock_t *lp) {
+  static inline int fastlock_trylock(fastlock_t *l) {
     unsigned long result, reg;
 
     asm volatile("        slr   %0,%0 \n" \

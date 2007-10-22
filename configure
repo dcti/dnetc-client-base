@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.293 2003/11/19 03:29:25 lightning Exp $
+# @(#)$Id: configure,v 1.294 2007/10/22 16:48:23 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -63,13 +63,16 @@ TARGET_YASM="yasm"     #<- set this to "" if you have no yasm
 TARGET_YASM_FMT="elf"
 TARGET_STRIP="strip"
 TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
-TARGET_IS_CROSSCOMPILE="" #
+TARGET_IS_CROSSCOMPILE=""
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
 TARGET_ADDNASMS=""
 TARGET_ADDYASMS=""
+TARGET_ADDPPUCORES=""
+TARGET_ADDSPUCORES=""
 TARGET_ADDOBJS=""
+TARGET_INTOBJS=""
 
 # Certain source files need to be compiled without optimization
 # to get a working client. *sigh* This flag will get set in the
@@ -100,7 +103,8 @@ OGR="ogr"
 # select the projects to include in the client
 HAVE_RC5_64="0"
 HAVE_RC5_72="1"
-HAVE_OGR="1"
+HAVE_OGR="0"
+HAVE_OGR_P2="1"
 HAVE_DES="0"
 HAVE_CSC="0"
 
@@ -117,8 +121,8 @@ add_sources() # $1=os, $2=arch, $3=custom
   # so that speed sensitive stuff can remain together at the 'bottom'
   if [ "$1" = "freebsd" -o "$1" = "netbsd" -o "$1" = "openbsd" \
     -o "$1" = "bsdos"   -o "$1" = "os2"    -o "$1" = "amigaos" \
-    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" \
-    -o "$1" = "digital-unix" ]; then
+    -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" -o "$1" = "uclibc" \
+    -o "$1" = "digital-unix" -o "$1" = "morphos" ]; then
     COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DLURK"
   fi
@@ -127,7 +131,7 @@ add_sources() # $1=os, $2=arch, $3=custom
 
   # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
   # so that speed sensitive stuff can remain together at the 'bottom'
-  if [ "$1" = "amigaos" ]; then
+  if [ "$1" = "amigaos" -o "$1" = "morphos" ]; then
     COMMON_SRCS="plat/amigaos/amVersion.c \
                  plat/amigaos/amSupport.c \
                  plat/amigaos/amMemory.c \
@@ -144,6 +148,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
       COMMON_SRCS="plat/linux/resolv.c ${COMMON_SRCS}"
     fi
+  elif [ "$1" = "uclibc" ]; then
+    COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
   elif [ "$1" = "riscos" ]; then
     COMMON_SRCS="plat/riscos/riscos_sup.cpp \
                  plat/riscos/riscos_x86.cpp \
@@ -159,8 +165,8 @@ add_sources() # $1=os, $2=arch, $3=custom
   elif [ "$1" = "os2" ]; then
     COMMON_SRCS="plat/os2/os2inst.cpp ${COMMON_SRCS}"
   elif [ "$1" = "macosx" ]; then
-    COMMON_SRCS="plat/macosx/c_install.c \
-                 plat/macosx/temperature.c \
+    COMMON_SRCS="plat/macosx/c_install.cpp \
+                 plat/macosx/temperature.cpp \
                  ${COMMON_SRCS}"
   elif [ "$1" = "digital-unix" ]; then
     COMMON_SRCS="plat/dunix/temperature.c \
@@ -193,7 +199,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
   # -- CSC -- (needs -DHAVE_CSC_CORES)
   CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp csc/csc-1k-i.cpp csc/csc-1k.cpp csc/csc-6b-i.cpp csc/csc-6b.cpp"
-  # -- OGR -- (needs -DHAVE_OGR_CORES) -------------------------
+  # -- OGR -- (needs -DHAVE_OGR_CORES or -DHAVE_OGR_PASS2) -----
   OGR_GENERAL_SRCS="$OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
   OGR_ANSI_SRCS="$OGR/ansi/ogr.cpp $OGR_GENERAL_SRCS"
 
@@ -205,6 +211,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDASMS="$TARGET_ADDASMS plat/x86/x86ident.S"
     else
       TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86ident.asm"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86features.asm"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86rdtsc.asm"
     fi
 
     # --------------- rc5-64 ----------------
@@ -248,7 +256,11 @@ add_sources() # $1=os, $2=arch, $3=custom
                          rc5-72/x86/r72-dg3.asm \
                          rc5-72/x86/r72-dg3a.asm \
                          rc5-72/x86/r72-ss2.asm \
-                         rc5-72/x86/r72-sgp3.asm"
+                         rc5-72/x86/r72-go2.asm \
+                         rc5-72/x86/r72-sgp3.asm \
+                         rc5-72/x86/r72-ma4.asm \
+                         rc5-72/x86/r72-mmx.asm"
+
       fi
     fi # HAVE_RC5_72
 
@@ -272,7 +284,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_DES
 
     # --------------- ogr ----------------
-    if [ "$HAVE_OGR" = "1" ]; then
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       if [ "$OGR" = "ogr2" ]; then
         # -- no special versions yet --
@@ -287,7 +299,12 @@ add_sources() # $1=os, $2=arch, $3=custom
         # -- nasm/ogr --
         #TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr.asm"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-a.cpp $OGR/x86/ogr-b.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-c.cpp $OGR/x86/ogr-d.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-e.cpp"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS"
+        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr-asm1-rt.asm"
+        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr-asm2-rt-mmx.asm"
+        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr-asm2-rt-mmx-amd.asm"
         ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       fi
     fi # HAVE_OGR
@@ -321,9 +338,15 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_64
 
     if [ "$HAVE_RC5_72" = "1" ]; then
-      # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
-      TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2.s \
-                      rc5-72/sparc/r72-anbe1.s rc5-72/sparc/r72-anbe2.s"
+      if [ "$2" = "sparc" ]; then
+        # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2.s \
+                        rc5-72/sparc/r72-anbe1.s rc5-72/sparc/r72-anbe2.s"
+      else
+        # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
+        TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/sparc/r72-kks2-64.s \
+                        rc5-72/sparc/r72-anbe1-64.s rc5-72/sparc/r72-anbe2-64.s"
+      fi
     fi # HAVE_RC5_72
 
     if [ "$HAVE_DES" = "1" ]; then
@@ -353,8 +376,14 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ADDSRCS="$TARGET_ADDSRCS $DESSPARC_SRCS_C"
       fi
     fi # HAVE_DES
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+      if [ "$2" = "sparc64" ]; then
+        DEFAULT_OGR="0"       # don't add the ansi core
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
+      fi # sparc64
+    fi # HAVE_OGR/P2
   #-----------------------------------------------------------------
-  elif [ "$2" = "mips" ]; then
+  elif [ "$2" = "mips" -o "$2" = "mips64" ]; then
     if [ "$HAVE_RC5_64" = "1" ]; then
       DEFAULT_RC5_64="0"
       if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
@@ -370,6 +399,12 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_72" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/mips/r72mips2.cpp"
     fi # HAVE_RC5_72
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+      if [ "$2" = "mips64" ]; then
+        DEFAULT_OGR="0"       # don't add the ansi core
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
+      fi # mips64
+    fi # HAVE_OGR/P2
   #-----------------------------------------------------------------
   elif [ "$2" = "hppa" ]; then
     if [ "$HAVE_RC5_64" = "1" ]; then
@@ -420,7 +455,7 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5-72/68k"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1" ]; then
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS"
       TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
@@ -444,10 +479,18 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
       TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
     fi # HAVE_RC5_64
-    if [ "$HAVE_OGR" = "1" ]; then
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
       # this is just an addition to the default ansi core
       # maybe this should be moved in to specific targets ?
+      DEFAULT_OGR="1"
+      if [ "$DEFAULT_OGR" = "0" ]; then
+        TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR_GENERAL_SRCS"
+      fi
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev4.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/ansi/ogr-64.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev4-64.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67-64.cpp"
     fi # HAVE_OGR
   #-----------------------------------------------------------------
   elif [ "$2" = "ppc" ]; then
@@ -482,7 +525,7 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
       elif [ "$TARGET_CC" = "xlC" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
-      elif [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
+      elif [ "${1}" = "macosx" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_APPLE_SRCS"
         if [ "X$3" = "X" ]; then #mach3+
           TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5ALTIVEC_SRCS"
@@ -504,19 +547,15 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/ppc/r72-KKS2pipes.toc.s \
                                         rc5-72/ppc/r72-KKS604e.toc.s"
       elif [ "${1}" = "macosx" ]; then
-        # macosx and macosxserver (apple cc) have their own asm cores
+        # macosx has its own asm cores
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.osx.s \
                                         rc5-72/ppc/r72-603e-mh-1-addi.osx.s \
                                         rc5-72/ppc/r72-604e-mh-1-addi.osx.s \
                                         rc5-72/ppc/r72-KKS2pipes.osx.s \
-                                        rc5-72/ppc/r72-KKS604e.osx.s"
-
-        # mach3+ ?
-        if [ "X$3" = "X" ]; then
-          TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.osx.s \
-                                          rc5-72/ppc/r72-KKS7450.osx.s \
-                                          rc5-72/ppc/r72-KKS970.osx.s"
-	fi
+                                        rc5-72/ppc/r72-KKS604e.osx.s \
+                                        rc5-72/ppc/r72-KKS7400.osx.s \
+                                        rc5-72/ppc/r72-KKS7450.osx.s"
+                                        # rc5-72/ppc/r72-KKS970.osx.s
       else
         # generic gas targets
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-ppc-mh-2.gas.s \
@@ -526,20 +565,36 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/ppc/r72-KKS604e.gas.s"
 
         if [ "X$3" = "Xaltivec" ] ; then
-          TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ppc/r72-KKS7400.gas.s \
+          TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/ppc/r72-KKS7400.gas.s \
                                           rc5-72/ppc/r72-KKS7450.gas.s"
+                                          # "rc5-72/ppc/r72-KKS970.osx.s"
         fi
       fi
     fi # HAVE_RC5_72
 
-    if [ "$HAVE_OGR" = "1" ]; then
-      #DEFAULT_OGR="1" # this is just an addition to default core
-      if [ "${1}" = "macosx" ]; then  #... and macosxserver (apple cc)
-        if [ "X$3" = "X" ]; then #mach3+
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+      DEFAULT_OGR="0"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
+
+        if [ "X$3" = "Xaltivec" ] ; then
           TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
         fi
-      elif [ "X$3" = "Xaltivec" ] ; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
+        if [ "$TARGET_CC" != "mwcc" ]; then   # CodeWarrior (MacOS)
+          # KOGE optimized cores
+          HAVE_KOGE_PPC_CORES="1"
+          if [ "$1" = "aix" ]; then
+          # aix uses toc cores
+              TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_scalar.toc.s"
+          else
+              TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_scalar.gas.s"
+              if [ "X$3" = "Xaltivec" ] ; then
+               TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_hybrid.gas.s"
+              fi
+          fi
+        if [ "$HAVE_KOGE_PPC_CORES" = "0" -a "${1}" = "macosx" ]; then
+          # add the 64-bit core to the ANSI cores
+          TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr-64.cpp"
+        fi
       fi
     fi # HAVE_OGR
   #-----------------------------------------------------------------
@@ -591,40 +646,50 @@ add_sources() # $1=os, $2=arch, $3=custom
       if [ "$1" = "riscos" ]; then
         if [ "$3" = "gccsdk" ]; then
           TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gccsdk.S \
-                                          rc5-72/arm/r72arm2-gccsdk.S"
+                                          rc5-72/arm/r72arm2-gccsdk.S \
+                                          rc5-72/arm/r72arm3-gccsdk.S"
         else
           echo Add rc5-72 asm cores for arm-riscos!
           exit 1
         fi
       elif [ "$1-$3" = "linux-elf" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
-                                        rc5-72/arm/r72arm2-gnu-elf.S"
+                                        rc5-72/arm/r72arm2-gnu-elf.S \
+                                        rc5-72/arm/r72arm3-gnu-elf.S"
       elif [ "$1" = "nto2" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu-elf.S \
-                                        rc5-72/arm/r72arm2-gnu-elf.S"
+                                        rc5-72/arm/r72arm2-gnu-elf.S \
+                                        rc5-72/arm/r72arm3-gnu-elf.S"
       else
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm/r72arm1-gnu.S \
-                                        rc5-72/arm/r72arm2-gnu.S"
+                                        rc5-72/arm/r72arm2-gnu.S \
+                                        rc5-72/arm/r72arm3-gnu.S"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = 1 ]; then
+    if [ "$HAVE_OGR" = 1 -o "$HAVE_OGR_P2" = "1" ]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/arm/ogr-arm.cpp"
+      DEFAULT_OGR="0"
       if [ "$1" = "riscos" ]; then
         if [ "$3" = "gccsdk" ]; then
           TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
-                                          ogr/arm/ogr_arm2-gccsdk.s"
+                                          ogr/arm/ogr_arm2-gccsdk.s \
+                                          ogr/arm/ogr_arm3-gccsdk.s"
         else
           echo Add ogr asm cores for arm-riscos!
           exit 1
         fi
       elif [ "$1-$3" = "linux-elf" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
-                                        ogr/arm/ogr_arm2-gnu-elf.S"
+                                        ogr/arm/ogr_arm2-gnu-elf.S \
+                                        ogr/arm/ogr_arm3-gnu-elf.S"
       elif [ "$1" = "nto2" ]; then
         TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
-                                        ogr/arm/ogr_arm2-gnu-elf.S"
+                                        ogr/arm/ogr_arm2-gnu-elf.S \
+                                        ogr/arm/ogr_arm3-gnu-elf.S"
       else
         TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu.S \
-                                        ogr/arm/ogr_arm2-gnu.S"
+                                        ogr/arm/ogr_arm2-gnu.S \
+                                        ogr/arm/ogr_arm3-gnu.S"
       fi
     fi # HAVE_OGR
   #-----------------------------------------------------------------
@@ -640,12 +705,15 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI4_SRCS"
     fi # HAVE_RC5_64
   #-----------------------------------------------------------------
-  elif [ "$2" = "x86_64" ]; then
+  elif [ "$2" = "amd64" ]; then
     if [ "X$TARGET_YASM" = "X" -o "X$TARGET_YASM_FMT" = "X" ]; then #no YASM
       echo You need YASM to build.
       exit 1
     else
-      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/x86_64/x86ident.asm"
+      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/amd64/x86ident.asm"
+      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/amd64/x86rdtsc.asm"
+      # the following 32-bit sources can be used unchanged as 64-bit.
+      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/x86/x86features.asm"
     fi
 
     # -------------- rc5-72 --------------
@@ -654,9 +722,51 @@ add_sources() # $1=os, $2=arch, $3=custom
         # -- yasm/rc5 --
         #DEFAULT_RC5_72="0"     # don't add the ansi cores
         TARGET_ADDYASMS="$TARGET_ADDYASMS \
-                         rc5-72/x86_64/r72-snjl.asm"
+                         rc5-72/amd64/r72-snjl.asm \
+                         rc5-72/amd64/r72-kbe.asm"
       fi
     fi # HAVE_RC5_72
+
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+      # add the 64-bit core to the ANSI cores
+      DEFAULT_OGR="0"       # don't add the ansi core
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
+    fi
+
+  #-----------------------------------------------------------------
+  elif [ "$2" = "cellbe" ]; then
+    # -------------- rc5-72 --------------
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      DEFAULT_RC5_72="0"     # don't add the ansi cores
+      TARGET_R72PPUWRAPPER="rc5-72/cellbe/r72-cell-ppe-wrapper.cpp"
+      TARGET_ADDR72PPUCORES="cellv1"
+      TARGET_R72SPUWRAPPER="rc5-72/cellbe/r72-cell-spe-wrapper.c"
+      TARGET_ADDR72SPUCORES="cellv1"
+    fi # HAVE_RC5_72
+
+    # -------------- ogr --------------
+    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+      DEFAULT_OGR="0"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
+
+      if [ "X$3" = "Xaltivec" ] ; then
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
+      fi
+      # KOGE optimized cores
+      HAVE_KOGE_PPC_CORES="1"
+      TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_scalar.gas.s"
+      if [ "X$3" = "Xaltivec" ] ; then
+        TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_hybrid.gas.s"
+      fi
+     if [ "$HAVE_KOGE_PPC_CORES" = "0" -a "${1}" = "macosx" ]; then
+        # add the 64-bit core to the ANSI cores
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr-64.cpp"
+      fi
+      TARGET_OGRPPUWRAPPER="ogr/cellbe/ogr-cell-ppe-wrapper.cpp"
+      TARGET_ADDOGRPPUCORES="cellv1"
+      TARGET_OGRSPUWRAPPER="ogr/cellbe/ogr-cell-spe-wrapper.c"
+      TARGET_ADDOGRSPUCORES="cellv1"
+    fi # HAVE_OGR
 
   #-----------------------------------------------------------------
   else
@@ -681,6 +791,14 @@ add_sources() # $1=os, $2=arch, $3=custom
 
   if [ "$HAVE_OGR" = "1" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+  fi
+  if [ "$HAVE_OGR_P2" = "1" ]; then
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_PASS2"
+    if [ "$HAVE_KOGE_PPC_CORES" = "1" ]; then
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_KOGE_PPC_CORES"
+    fi
+  fi
+  if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
     if [ "$DEFAULT_OGR" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
@@ -756,6 +874,8 @@ gcc_get_ver() {
     #gcc_v="Reading specs from blah\nConfigured with: blah\nThread model: blah\ngcc version 3.2"
     #gcc_v="NeXT Computer, Inc. version cc-437.2.6, gcc version 2.5.8"
     #gcc_v="Apple Computer, Inc. GCC version 1175, based on gcc version 3.1 20020420 (prerelease)"
+    #gcc_v="gcc version 3.3 20030304 (Apple Computer, Inc. build 1495)"
+    #gcc_v="gcc version 4.0.1 (Apple Computer, Inc. build 5247)"
 
     gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
     #echo "gccver_line=#$gccver_line#"
@@ -777,13 +897,13 @@ gcc_get_ver() {
         elif [ "$ver_word" = "version" -a "$lastwas" = "driver" ]; then
           lastwas="driver"
         elif [ "$ver_word" = "version" -a "$lastwas" = "GCC" ]; then
-          lastwas="AppleGCC" # captialized GCC indicates the Apple version
+          lastwas="AppleGCC" # capitalized GCC indicates the Apple version
         else
           lastwas="$ver_word"
         fi
       fi
     done
-    echo "ver_num=#$ver_num#"
+    #echo "ver_num=#$ver_num#"
     if [ "${ver_num}X" = "X" ]; then
       gccver=0
     else
@@ -828,8 +948,10 @@ generate_gcc_opts() {
                  -Wnested-externs" #-Wshadow shows std header errors
   OPTS_GCC272_WARN="$OPTS_GCC258_WARN -Wmissing-declarations"
   OPTS_GCC310_WARN="-W -Wall -Wpointer-arith -Wcast-align \
-                 -Wmissing-prototypes \
-                 -Wstrict-prototypes -Wconversion -Winline \
+                 -Wconversion -Winline \
+                 -Waggregate-return -Wcast-qual -Woverloaded-virtual"
+  OPTS_GCC400_WARN="-W -Wall -Wpointer-arith -Wcast-align \
+                 -Wconversion -Winline \
                  -Waggregate-return -Wcast-qual -Woverloaded-virtual"
   OPTS_GCC_BASE="-fcaller-saves -fomit-frame-pointer \
                  -fno-inline-functions"
@@ -843,10 +965,13 @@ generate_gcc_opts() {
   #WARNING WARNING: don't use 2.8.x at all.
   OPTS_295_PLUS="-fstrict-aliasing" #-fno-exceptions -fno-rtti
   OPTS_310_PLUS="-fstrict-aliasing -fno-exceptions -fno-rtti"
+  OPTS_400_PLUS="-fstrict-aliasing -fno-exceptions -fno-rtti"
+
   OPTS_GCC258="${OPTS_GCC258_WARN} ${OPTS_GCC_BASE} ${OPTS_258_PLUS}"
   OPTS_GCC272="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_272_PLUS}"
   OPTS_GCC295="${OPTS_GCC272_WARN} ${OPTS_GCC_BASE} ${OPTS_295_PLUS}"
   OPTS_GCC310="${OPTS_GCC310_WARN} ${OPTS_GCC_BASE} ${OPTS_310_PLUS}"
+  OPTS_GCC400="${OPTS_GCC400_WARN} ${OPTS_GCC_BASE} ${OPTS_400_PLUS}"
 
   #this is a list of which -O does what for 2.72.x - 2.95.2
   #(see <gccsrc>/gcc/toplev.c; grep for "optimize ")
@@ -885,6 +1010,8 @@ generate_gcc_opts() {
   opts272=""
   opts295=""
   opts310=""
+  opts330=""          # Will be equal to opts310 if left blank
+  opts400=""          # Will be equal to opts310 if left blank
   arch="internal-$1"  # do it this way to hide from "./configure list"
   case "$arch" in
 
@@ -986,6 +1113,11 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -DASM_PPC -funroll-loops"
         opts295="$OPTS_GCC295 -O3 -DASM_PPC -funroll-loops"
         opts310="$OPTS_GCC310 -O3 -DASM_PPC -funroll-loops"
+        if [ "${2}" = "macosx" ]; then
+          # All cores are asm-optimized : We don't need strong optimizations.
+          opts330="$OPTS_GCC310 -Os -DASM_PPC"
+          opts400="$OPTS_GCC400 -O2 -DASM_PPC"
+        fi
         ;;
 
     *internal-ppc603e)
@@ -1028,12 +1160,18 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -DASM_X86 -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
                  -malign-functions=5 -malign-loops=4 -funroll-loops"
-        opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
+	if [ "$2" = "macosx" ]; then
+	  # Apple's gcc is confused by '-mcpu=pentiumpro'
+          opts400="$OPTS_GCC400 -O2 -DASM_X86 -mtune=pentiumpro -fforce-addr \
                  -falign-functions=5 -falign-loops=4 -funroll-loops"
+	else
+          opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
+                 -falign-functions=5 -falign-loops=4 -funroll-loops"
+	fi
         ;;
 
-    *internal-x86_64)
-        opts310="$OPTS_GCC310 -O2 -DASM_X86_64 \
+    *internal-amd64)
+        opts310="$OPTS_GCC310 -O2 -DASM_AMD64 \
 	    -m64 -mfpmath=sse -mno-3dnow -mno-mmx -fforce-addr \
 	    -falign-functions=5 -falign-loops=4 -funroll-loops"
 	;;
@@ -1047,28 +1185,40 @@ generate_gcc_opts() {
   OPTS_GCC258_WARN=
   OPTS_GCC272_WARN=
   OPTS_GCC310_WARN=
+  OPTS_GCC400_WARN=
   OPTS_GCC_BASE=
   OPTS_272_PLUS=
   OPTS_295_PLUS=
   OPTS_310_PLUS=
+  OPTS_400_PLUS=
   OPTS_GCC272=
   OPTS_GCC295=
   OPTS_GCC310=
+  OPTS_GCC400=
 
   # ------
 
   gccopts="$opts295" # 2.96 and 3.0 are not recommended
-  if [ $gccver -ge 3010000 ]; then
-    gccopts="$opts310" # 3.1 and above
+
+  if [ -z "$opts330" ]; then
+     opts330="$opts310"
   fi
-  if [ $gccver -lt 2960000 ]; then
+  if [ -z "$opts400" ]; then
+     opts400="$opts310"
+  fi
+
+  if [ $gccver -ge 4000000 ]; then
+    gccopts="$opts400" # 4.0 and above
+  elif [ $gccver -ge 3030000 ]; then
+    gccopts="$opts330" # 3.3 and above
+  elif [ $gccver -ge 3010000 ]; then
+    gccopts="$opts310" # 3.1 and 3.2
+  elif [ $gccver -lt 2070200 ]; then
+    gccopts="$opts258"
+  elif [ $gccver -lt 2900000 ]; then
+    gccopts="$opts272"
+  else [ $gccver -lt 2960000 ]
     gccopts="$opts295"
-    if [ $gccver -lt 2900000 ]; then
-      gccopts="$opts272"
-      if [ $gccver -lt 2070200 ]; then
-        gccopts="$opts258"
-      fi
-    fi
   fi
   OPTS_GCC="$gccopts"
 }
@@ -1096,8 +1246,11 @@ OPTS_MIPSPRO_ABI_64="-64 -mips4 -r10000"
 OPTS_CC_MIPSPRO="-O3 -IPA -LNO:opt=1 -xansi -DMIPSpro"
 
 # Common across all MIPSpro compiles:
-OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DIRIX -DHAVE_POSIX_THREADS -DHAVE_OGR_CORES"
+OPTS_MIPSPRO_CCFLAGS="${OPTS_CC_MIPSPRO} -DIRIX -DHAVE_POSIX_THREADS"
 OPTS_MIPSPRO_DOCS="docs/readme._ix"
+  if [ "$HAVE_OGR" = "1" ]; then
+    OPTS_MIPSPRO_CCFLAGS="$OPTS_MIPSPRO_CCFLAGS -DHAVE_OGR_CORES"
+  fi
 
 # Common to a specific ABI:
 OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_32}"
@@ -1202,6 +1355,9 @@ COMMON_SRCS="common/minihttp.cpp \
 	     ${COMMON_SRCS}"
 TARGET_CCFLAGS="$TARGET_CCFLAGS -DXMLSERVE"
 fi
+if [ "$HAVE_RC5_72" = "1" ]; then
+  COMMON_SRCS="$COMMON_SRCS rc5-72/stress.cpp"
+fi # HAVE_RC5_72
 
 # **********************************************************************
 
@@ -1236,6 +1392,22 @@ case "$1" in
         TARGET_LIBS="-lthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "hpux" "88k"
+        ;;
+
+
+    *mvme88k)           # Motorola MVME 88k (Open BSD)
+        TARGET_CCFLAGS="-DASM_NONE -DSINGLE_CRUNCHER_ONLY"
+
+        TARGET_AS="gcc -c"
+        TARGET_CC="g++"
+        generate_gcc_opts "generic" "ansi"
+        TARGET_CCFLAGS="$OPTS_GCC $TARGET_CCFLAGS"
+
+        TARGET_LDFLAGS=""
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="mvme88k"
+        add_sources "ansi" "generic"
         ;;
 
 # Alpha ****************************************************************
@@ -1381,7 +1553,10 @@ case "$1" in
                         -I/home/cberry/play/riscoslib/OSLib \
                         -I/home/cberry/play/riscoslib/TCPIPLibs \
                         -J/home/cberry/play/riscoslib/CLib \
-                        -DCOMPAT_INET4 -D__riscos -DHAVE_OGR_CORES"
+                        -DCOMPAT_INET4 -D__riscos"
+        if [ "$HAVE_OGR" = "1" ]; then
+          TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+        fi
         TARGET_LIBS="-lcpplib /home/cberry/play/riscoslib/TCPIPLibs/unixlib.o \
                      /home/cberry/play/riscoslib/TCPIPLibs/inetlib.o \
                      /home/cberry/play/riscoslib/TCPIPLibs/socklib.o"
@@ -1452,24 +1627,22 @@ case "$1" in
 
     *mips-cc-n32)	# [lyndon]	Generic 32 bit client
        TARGET_CC="CC"
-       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} \
-                       -DCLIENT_OS_NAME=\"\\\"Irix (generic-n32)\\\"\""
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32}"
        TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_32}"
        TARGET_LIBS="-lpthread"
-       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
+       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} docs/readme.irix"
        TARGET_TARBALL="irix6.5-mips-n32"
        add_sources "irix" "mips"
        ;;
 
     *mips-cc-64)	# [lyndon]	Generic 64 bit client
        TARGET_CC="CC"
-       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} \
-                       -DCLIENT_OS_NAME=\"\\\"Irix (generic-64)\\\"\""
+       TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64}"
        TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
        TARGET_LIBS="-lpthread"
-       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} readme.irix"
+       TARGET_DOCFILES="${OPTS_MIPSPRO_DOCS} docs/readme.irix"
        TARGET_TARBALL="irix6.5-mips-64"
-       add_sources "irix" "mips"
+       add_sources "irix" "mips64"
        ;;
 
     *mips-cc-ip19)	# [lyndon]
@@ -1963,7 +2136,7 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"
         ;;
 
-    *sparc-solaris-cc-universal)   # [snikkel sparc 32/64 bit, sun cc]
+    *sparc-solaris-cc-32)   # [snikkel sparc 32bit client for 32/64bit machines, sun cc]
         TARGET_CC="CC"
         TARGET_LD="cc"
         TARGET_LDFLAGS="-mt"      
@@ -1971,8 +2144,21 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -mt -Dsolaris"
         TARGET_LIBS="-ldl -lc -lnsl -lsocket -lthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="solaris26-sparc"
+        TARGET_TARBALL="solaris26-sparc32"
         add_sources "solaris" "sparc" "cc"   
+        ;;
+
+    *sparc-solaris-cc-64)   # [snikkel sparc 64bit client, sun cc]
+        TARGET_CC="CC"
+        TARGET_LD="cc"
+        TARGET_LDFLAGS="-mt -xarch=v9"
+        TARGET_ASFLAGS="-xarch=v9"
+        OPTS_CC_SOLARIS="-fast -xtarget=generic64 -xarch=generic64 -DASM_SPARC"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -mt -Dsolaris"
+        TARGET_LIBS="-ldl -lc -lnsl -lsocket -lthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="solaris7-sparc64"   
+        add_sources "solaris" "sparc64" "cc"
         ;;
 
     *sparc-solaris-gcc-ultra-des)   # [ivo ultra] very fast DES -> hence obsolete
@@ -2021,6 +2207,7 @@ case "$1" in
         generate_gcc_opts "ppc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec"
         TARGET_LDFLAGS="-static"
+	TARGET_ASFLAGS="-maltivec"
         TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-ppc"
@@ -2040,23 +2227,15 @@ case "$1" in
         #add_sources "netbsd" "ppc" "altivec" # not yet AltiVec
         ;;
 
-    *ppc-macosxserver) # [mfeiri] (MACH 2.x based: MXS 1.x, Darwin 0.x, Rhapsody)
-        TARGET_CC="c++"
-        #generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="-O6"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="macosxserver-ppc"
-        add_sources "macosx" "ppc" "mach2"
-        ;;
-
-    *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOSXDP, Darwin 1.0)
-        #TARGET_CC="c++"
+    *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOS X, Darwin)
         generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic" # -force_cpusubtype_ALL 
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
-        TARGET_DOCFILES="docs/readme.macosx.rtf"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
-        add_sources "macosx" "ppc"
+        TARGET_ASFLAGS="-force_cpusubtype_ALL"
+        TARGET_GENMAN=""
+        add_sources "macosx" "ppc" "altivec"
         ;;
 
     *ppc-aix-xlc)
@@ -2076,6 +2255,8 @@ case "$1" in
         # so we have to use gas for cores
         TARGET_AS="gas"
         TARGET_CC="g++"
+ 	TARGET_LDFLAGS="$TARGET_LDFLAGS -static-libgcc "
+	TARGET_GENMAN=
         generate_gcc_opts "ppc" "aix"
 
         # gcc's < 3.2 used -mthreads
@@ -2086,6 +2267,7 @@ case "$1" in
 
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "aix" "ppc"
+	TARGET_TARBALL="aix-ppc"
         ;;
 
     *power-aix-gcc)
@@ -2129,6 +2311,26 @@ case "$1" in
         TARGET_GENMAN=
         TARGET_IS_CROSSCOMPILE=1
         add_sources "nto2" "ppc"
+        ;;
+
+    *cellbe-linux)		             # [snikkel]
+        TARGET_CC="ppu32-g++"
+        TARGET_AS="ppu32-as"
+        TARGET_LD="ppu32-g++"
+        TARGET_AR="ppu-ar"
+        TARGET_STRIP="ppu-strip"
+        TARGET_SPUCC="spu-gcc"
+        TARGET_SPUAS="spu-as"
+        TARGET_SPUSTRIP="spu-strip"
+        TARGET_PPUEMBEDSPU="ppu32-embedspu"
+        generate_gcc_opts "ppc" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec -DDYN_TIMESLICE"
+        TARGET_LDFLAGS="-static"
+	TARGET_ASFLAGS="-maltivec"
+        TARGET_LIBS="-lspe2 -lpthread -lrt"
+        TARGET_DOCFILES="docs/readme.cell"   #platform specific docfile
+        TARGET_TARBALL="linux-cellbe"
+        add_sources "linux" "cellbe" "altivec"
         ;;
 
 ###### SH4 platforms
@@ -2193,7 +2395,7 @@ case "$1" in
         fi
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_LIBS=""
+        TARGET_LIBS="-lrt"
         TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}"
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
@@ -2213,11 +2415,52 @@ case "$1" in
         esac
         ;;
 
+    *x86-netware6*)   # using LibC [jbgill]
+        TARGET_NASM_FMT="elf"
+        TARGET_CC="gcc"        #build on Linux with gcc cross compiler for netware       
+	TARGET_LD="gcc"
+	TARGET_AS="gcc -c"
+	TARGET_BINNAME_SUFFIX=".nlm"
+	TARGET_IS_CROSSCOMPILE=1
+	TARGET_STRIP="touch"
+	generate_gcc_opts "x86" "netware6"
+        TARGET_CCFLAGS="$OPTS_GCC -D_NETWARE6_ -D_POSIX_SOURCE -DNOTERMIOS"
+        TARGET_LIBS=""
+	TARGET_GENMAN=
+	TARGET_LDFLAGS="-Wl,--def-file,plat/netware/netware6.def"
+        TARGET_TARBALL="netware6-x86"
+        TARGET_DOCFILES="docs/readme.nw6"   #platform specific docfile
+        add_sources "netware6" "x86"
+        ;;
+
+    *x86-lx-uclibc*)                # using uClibc [pfeffi]
+        ### for testing the uClibc library www.uclibc.org
+        ### I've downloaded the root_fs_i386 from
+        ### http://www.kernel.org/pub/linux/libs/uclibc/root_fs_i386.bz2
+        ### chroot'ed into it and installed bc, cvs and nasm 
+        infer_arch_and_version "Linux"
+        TARGET_NASM_FMT="elf"
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "${inferred_arch}" "linux"
+#        TARGET_CCFLAGS="$OPTS_GCC -DBETA_PERIOD=2419200"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_LIBS=""
+        TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}-uclibc"
+        TARGET_DOCFILES="docs/readme.linux docs/readme.uclib"   #platform specific docfile
+        TARGET_USES_GNUMAKE="yes"
+        add_sources "uclibc" "x86"
+        ;;
+
     *freebsd*)              # FreeBSD (autoselect Alpha/x86 and aout/elf)
-                            # FreeBSD x86-elf >=2.2.4, cyp
+                            # FreeBSD x86-elf, bovine, snake, dbaker?
                             # FreeBSD x86-aout 2.x, snake (experimental)
-                            # FreeBSD sparc-elf 5.0, snake (experimental)
-                            # FreeBSD alpha-elf 4.x, snake (experimental)
+                            # FreeBSD sparc-elf 5.x, snake (experimental)
+                            # FreeBSD alpha-elf 4.x, snake
+                            # FreeBSD amd64-elf 5.x, snake
+        # note: include the major version number in the make target:
+        # use "configure freebsd5-x86" , "configure freebsd6-sparc" etc.
         infer_arch_and_version "FreeBSD"
         inferred_bf="elf"
         if [ $inferred_ver_major -lt 3 ]; then
@@ -2237,7 +2480,8 @@ case "$1" in
         # We don't really need the libc_r stuff anyway because the "threads"
         # are really rfork()'d children.    -cyp Feb/13/2000
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="freebsd-${inferred_arch}-${inferred_bf}"
+        #TARGET_TARBALL="freebsd-${inferred_arch}-${inferred_bf}"
+        TARGET_TARBALL="$1-${inferred_bf}"
         add_sources "freebsd" "${inferred_arch}"
         ;;
 
@@ -2265,7 +2509,7 @@ case "$1" in
         add_sources "netbsd" "x86"
         ;;
 
-    *x86-openbsd)	# snake
+    *x86-openbsd-aout)	# snake
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2273,6 +2517,17 @@ case "$1" in
         TARGET_NASM_FMT="aoutb"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="openbsd-x86-aout"
+        add_sources "openbsd" "x86"
+        ;;
+
+    *x86-openbsd-elf)	# snake
+        TARGET_CC="gcc"
+        generate_gcc_opts "x86" "openbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_NASM_FMT="elf"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="openbsd-x86-elf"
         add_sources "openbsd" "x86"
         ;;
 
@@ -2303,17 +2558,17 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
-    *x86-macosx)
+    *x86-macosx)                 # Mac OS X, Darwin
         generate_gcc_opts "x86" "macosx"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
 
-        # set empty to use ANSI cores and x86ident.S with Apple as
-        # doesn't need -force_cpusubtype_ALL like NeXT
+        # To use nasm's macho output, you will need a custom patch:
+        # http://sf.net/project/shownotes.php?release_id=337548
         TARGET_NASM_FMT="macho"
 
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="darwin-x86"
+        TARGET_TARBALL="macosx-x86"
         add_sources "macosx" "x86"
         ;;
 
@@ -2384,10 +2639,10 @@ case "$1" in
         add_sources "dynix" "x86"
         ;;
 
-###### AMD X86-64
+###### AMD 64
 
 
-    *x86_64-linux*)                # generic. works everywhere
+    *amd64-linux*)                # generic. works everywhere
         infer_arch_and_version "Linux"
         TARGET_YASM_FMT="elf"
         TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
@@ -2396,11 +2651,30 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_LIBS="-lstdc++"
-        TARGET_TARBALL="linux-${inferred_arch}-${TARGET_YASM_FMT}"
+        TARGET_TARBALL="linux-amd64-elf"
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
-        add_sources "linux" "x86_64" ""
+        add_sources "linux" "amd64" ""
+        ;;
 
+    *amd64-netbsd)                    # [snake], not tested yet
+        TARGET_CC="g++"
+        generate_gcc_opts "amd64" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-amd64-elf"
+        add_sources "netbsd" "amd64"
+        ;;
+
+    *amd64-openbsd)                    # [snake], working on it
+        TARGET_CC="g++"
+        generate_gcc_opts "amd64" "openbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="openbsd-amd64-elf"
+        add_sources "openbsd" "amd64"
         ;;
 
 ###### NeXT (x86, m68k, sparc, hppa)
@@ -2460,7 +2734,10 @@ case "$1" in
     *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, [snake]
         TARGET_CC="g++"
         TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
-                        -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
+                        -m68020-40 -DASM_68K -DLURK"
+          if [ "$HAVE_OGR" = "1" ]; then
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+          fi
         TARGET_LDFLAGS="-static"
         TARGET_ASFLAGS="$OPTS_GAS"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -2505,8 +2782,8 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LIBS=""
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390"
         add_sources "linux" "s390"
@@ -2516,9 +2793,9 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
         TARGET_LDFLAGS="-static"
-        TARGET_LIBS=""
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390-static"
         add_sources "linux" "s390"
@@ -2528,8 +2805,8 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame"
-        TARGET_LIBS=""
+        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390-z"
         add_sources "linux" "s390"
@@ -2539,9 +2816,9 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame"
+        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame -DHAVE_POSIX_THREADS"
         TARGET_LDFLAGS="-static"
-        TARGET_LIBS=""
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390-z-static"
         add_sources "linux" "s390"
@@ -2551,8 +2828,8 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390x" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LIBS=""
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390x"
         add_sources "linux" "s390x"
@@ -2562,9 +2839,9 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390x" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
         TARGET_LDFLAGS="-static"
-        TARGET_LIBS=""
+        TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-s390x-static"
         add_sources "linux" "s390x"
@@ -2588,6 +2865,7 @@ case "$1" in
         generate_gcc_opts "x86" "beos"
         TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar"
         TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lnet"
         TARGET_TARBALL="beos-x86"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
         add_sources "beos" "x86"
@@ -2598,6 +2876,7 @@ case "$1" in
         TARGET_CC="mwcc"
         TARGET_CCFLAGS="$OPTS_MWCC_PPC604"
         TARGET_STRIP="touch"
+        TARGET_LIBS="-lnet"
         TARGET_TARBALL="beos-ppc"
         TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
         add_sources "beos" "ppc"
@@ -2606,11 +2885,12 @@ case "$1" in
 ####### OS/2 (x86, emx)
 
     *x86-os2)          # [pfeffi] <pfeffi@distributed.net>
-        basename ()
-        {
-        export parm=$1
-        ksh -c 'echo ${parm##*/}'
-        }
+        # don't need this, have GNU basename installed ;-)
+        # basename ()
+        # {
+        # export parm=$1
+        # ksh -c 'echo ${parm##*/}'
+        # }
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "os2"
@@ -2649,6 +2929,22 @@ case "$1" in
         add_sources "amigaos" "68k"
         ;;
 
+    *ppc-amigaos)               # [oliver] <oliver@futaura.co.uk>
+        TARGET_AS="ppc-amigaos-gas"
+        TARGET_CC="ppc-amigaos-g++"
+        TARGET_ASFLAGS=""
+        generate_gcc_opts "ppc" "amigaos"
+        TARGET_CCFLAGS="$OPTS_GCC -I./ -I./plat/amigaos/guilib -mcrt=clib2-ts \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -DDYN_TIMESLICE -D__USE_INLINE__ -maltivec -mabi=altivec -mvrsave=yes"
+        TARGET_TARBALL="amigaos-ppc"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_STRIP="ppc-amigaos-strip -R.comment"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="os4 ${TARGET_BINNAME}_OS4"
+        add_sources "amigaos" "ppc" "altivec"
+        ;;
 
     *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
@@ -2685,6 +2981,26 @@ case "$1" in
         TARGET_ARCTYPE="amigaosgui"
         TARGET_MAKEARC="ppc ${TARGET_BINNAME}_pup"
         add_sources "amigaos" "ppc"
+        ;;
+
+    *ppc-morphos)               # [piru] <sintonen@iki.fi>
+        TARGET_AS="ppc-rom-as"
+        TARGET_CC="ppc-morphos-g++"
+        TARGET_ASFLAGS=""
+        generate_gcc_opts "ppc" "morphos"
+        TARGET_CCFLAGS="-xc++ $OPTS_GCC -noixemul -DNO_MIAMI -mmultiple -mstring \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -I./ -I./plat/amigaos/guilib/morphos/ -DDYN_TIMESLICE -fvec"
+        TARGET_LDFLAGS="-noixemul -fvec"
+        TARGET_TARBALL="morphos-ppc"
+        TARGET_DOCFILES="docs/readme.morphos"   #platform specific docfile
+        TARGET_STRIP="ppc-morphos-strip --remove-section .comment"
+        TARGET_BINNAME_SUFFIX=
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_mos"
+        add_sources "morphos" "ppc" "altivec"
+        SHELL="/bin/sh" # workaround for pkdsh missing SHELL var
         ;;
 
 ###### Unknown
@@ -2743,7 +3059,7 @@ fi
 if [ -z "$TARGET_NASM_FMT" ]; then
   TARGET_NASM_FMT="elf"
 fi
-TARGET_NASMFLAGS="-f $TARGET_NASM_FMT" # -i rc5/x86/ -i des/x86/ -i csc/x86/"
+TARGET_NASMFLAGS="-O5 -f $TARGET_NASM_FMT" # -i rc5/x86/ -i des/x86/ -i csc/x86/"
 if [ "$TARGET_NASM_FMT" = "elf" ]; then
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__ELF__"
 elif [ "$TARGET_NASM_FMT" = "obj" ]; then
@@ -2864,6 +3180,83 @@ if [ -n "${TARGET_ADDSRCS}" ]; then
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
   done
 fi
+if [ -n "${TARGET_ADDR72PPUCORES}" ]; then
+  echo "Scanning PPE core dependencies..."
+#  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ppucore"
+  for target in ${TARGET_ADDR72PPUCORES}; do
+      TARGETCORE="rc5-72/cellbe/r72-$target-ppe.s"
+      TARGETOBJECT=output/`basename $TARGETCORE .s`.o
+      echo "  ${TARGETCORE} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72ppucore ${TARGETCORE} ${TARGETOBJECT}"
+      TARGETOBJECT=output/r72-$target-ppe-wrapper.o
+      echo "  ${TARGET_R72PPUWRAPPER} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72ppuwrapper $target ${TARGETOBJECT}"
+  done
+fi
+if [ -n "${TARGET_ADDOGRPPUCORES}" ]; then
+  for target in ${TARGET_ADDOGRPPUCORES}; do
+      TARGETOBJECT=output/ogr-$target-ppe-wrapper.o
+      echo "  ${TARGET_OGRPPUWRAPPER} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrppuwrapper $target ${TARGETOBJECT}"
+  done
+fi
+if [ -n "${TARGET_ADDR72SPUCORES}" ]; then
+  echo "Scanning SPE core dependencies..."
+#  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spucore"
+  for target in ${TARGET_ADDR72SPUCORES}; do
+      TARGETCORE="rc5-72/cellbe/r72-$target-spe.s"
+      TARGETCOREOBJECT=output/`basename $TARGETCORE .s`.o
+      echo "  ${TARGETCORE} -> ${TARGETCOREOBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETCOREOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spucore ${TARGETCORE} ${TARGETCOREOBJECT}"
+      TARGETWRAPPEROBJECT=output/r72-$target-spe-wrapper.o
+      echo "  ${TARGET_R72SPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETWRAPPEROBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spuwrapper $target ${TARGETWRAPPEROBJECT}"
+      TARGETMERGEDOBJECT=output/r72-$target-spe-merged.o
+      echo "  ${TARGETCOREOBJECT},${TARGETWRAPPEROBJECT} -> ${TARGETMERGEDOBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETMERGEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spumerge $target ${TARGETMERGEDOBJECT}"
+      TARGETEMBEDOBJECT=output/r72-$target-spe-embed.o
+      echo "  ${TARGETMERGEDOBJECT} -> ${TARGETEMBEDOBJECT}"
+      TARGETFUNCTION="rc5_72_unit_func_$target""_spe_wrapper"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETEMBEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spuembed $target ${TARGETEMBEDOBJECT}"
+      TARGETOBJECT=output/r72-$target-spe.a
+      echo "  ${TARGETEMBEDOBJECT} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spuar ${TARGETEMBEDOBJECT} ${TARGETOBJECT}"
+  done
+fi
+if [ -n "${TARGET_ADDOGRSPUCORES}" ]; then
+  for target in ${TARGET_ADDOGRSPUCORES}; do
+      TARGETCORE="ogr/cellbe/ogr-$target-spe.s"
+      TARGETCOREOBJECT=output/`basename $TARGETCORE .s`.o
+      echo "  ${TARGETCORE} -> ${TARGETCOREOBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETCOREOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspucore ${TARGETCORE} ${TARGETCOREOBJECT}"
+      TARGETWRAPPEROBJECT=output/ogr-$target-spe-wrapper.o
+      echo "  ${TARGET_OGRSPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETWRAPPEROBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspuwrapper $target ${TARGETWRAPPEROBJECT}"
+      TARGETMERGEDOBJECT=output/ogr-$target-spe-merged.o
+      echo "  ${TARGETCOREOBJECT},${TARGETWRAPPEROBJECT} -> ${TARGETMERGEDOBJECT}"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETMERGEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspumerge $target ${TARGETMERGEDOBJECT}"
+      TARGETEMBEDOBJECT=output/ogr-$target-spe-embed.o
+      echo "  ${TARGETMERGEDOBJECT} -> ${TARGETEMBEDOBJECT}"
+      TARGETFUNCTION="ogr_cycle_$target""_spe_wrapper"
+      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETEMBEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspuembed $target ${TARGETEMBEDOBJECT}"
+      TARGETOBJECT=output/ogr-$target-spe.a
+      echo "  ${TARGETEMBEDOBJECT} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspuar ${TARGETEMBEDOBJECT} ${TARGETOBJECT}"
+  done
+fi
 
 #
 # Generate the targets for supplementary resource files.
@@ -2907,9 +3300,17 @@ echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
 echo "YASM = ${TARGET_YASM}" >> Makefile
 echo "YASMFLAGS = ${TARGET_YASMFLAGS}" >> Makefile
+if [ "${BUILDNAME}" = "cellbe-linux" ]; then
+  echo "SPUCC = ${TARGET_SPUCC}" >> Makefile
+  echo "SPUAS = ${TARGET_SPUAS}" >> Makefile
+  echo "SPUSTRIP = ${TARGET_SPUSTRIP}" >> Makefile
+  echo "PPUEMBEDSPU = ${TARGET_PPUEMBEDSPU}" >> Makefile
+  echo "AR = ${TARGET_AR}" >> Makefile
+fi
 echo "STRIP = ${TARGET_STRIP}" >> Makefile
 echo "ALLOBJS = ${TARGET_ALLOBJS}" >> Makefile
 echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
+echo "INTOBJS = ${TARGET_INTOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
 if [ "$TARGET_USES_GNUMAKE" = "yes" ]; then
@@ -3027,7 +3428,7 @@ echo "" >> Makefile
 #  Clean, Superclean, Distclean, and Ident targets.
 #
 echo "clean:" >> Makefile
-echo "	rm -f \${ALLOBJS} \${ADDOBJS}" >> Makefile
+echo "	rm -f \${ALLOBJS} \${ADDOBJS} \${INTOBJS}" >> Makefile
 if [ "$BUILDNAME" = "x86-os2" ]; then
   echo "	rm -f output/dnetc.res" >> Makefile
 fi
@@ -3081,6 +3482,34 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "yasm" ]; then
       TARGETTYP="$target"
+    elif [ "${target}" = "r72ppucore" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "r72ppuwrapper" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "r72spucore" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "r72spuwrapper" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "r72spumerge" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "r72spuembed" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "r72spuar" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrppucore" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrppuwrapper" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspucore" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspuwrapper" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspumerge" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspuembed" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "ogrspuar" ]; then
+      TARGETTYP="$target"
     # ------------------------------------
     elif [ "${TARGETSRC}X" = "X" ]; then
       TARGETSRC="$target"
@@ -3127,7 +3556,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       fi
       #----------------
       CCFLAGS_SELECT="\${CCFLAGS}"
-      if [ "$target" = "output/ev67.o" ]; then
+      if [ "$target" = "output/ev67.o" -o "$target" = "output/ev67-64.o" ]; then
         if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
           if [ "$TARGET_CC" = "g++" ] ; then
             CCFLAGS_SELECT="${CCFLAGS_SELECT} -mcpu=ev67"
@@ -3138,11 +3567,28 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           # works for NetBSD/FreeBSD and probably also OpenBSD
           CCFLAGS_SELECT="-Wa,-mev6 ${CCFLAGS_SELECT}"
         fi
+      elif [ "$target" = "output/ev4.o" -o "$target" = "output/ev4-64.o" ]; then
+        if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
+          if [ "$TARGET_CC" = "g++" ] ; then
+            CCFLAGS_SELECT="${CCFLAGS_SELECT} -mcpu=ev4"
+          else
+            CCFLAGS_SELECT="${CCFLAGS_SELECT} -march=ev4"
+          fi
+        else
+          # works for NetBSD/FreeBSD and probably also OpenBSD
+          CCFLAGS_SELECT="-Wa,-mev4 ${CCFLAGS_SELECT}"
+        fi
+      elif [ "${BUILDNAME}" = "ppc-macosx" ]; then
+        if [ "$target" = "output/ogr-64.o" ]; then
+          CCFLAGS_SELECT="${CCFLAGS_SELECT} -mpowerpc64 -mtune=G5 -O2 -falign-functions=32 -falign-jumps=32 -falign-jumps-max-skip=16 -frename-registers --param max-gcse-passes=5"
+        else
+          CCFLAGS_SELECT="${CCFLAGS_SELECT} -mcpu=powerpc"
+        fi
       elif [ "${BUILDNAME}" = "aix-powerandppc" ]; then
         if [ "$target" = "output/problem.o" ]; then 
           CCFLAGS_SELECT="\${POWERFLAGS}" 
         fi
-        if [ "$target" = "output/ogr.o" ]; then
+        if [ "$target" = "output/ogr-ppc.o" ]; then
           # default is to compile for a POWERPC based CPU,
           # we have to add POWER here
           echo "output/ogr_power.o:    ${TARGETSRC} ${deplist}" >> Makefile
@@ -3157,7 +3603,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
         elif [ "$target" != "${target%%lintilla*}" ]; then
           CCFLAGS_SELECT="\${PPC604FLAGS}"
         fi
-        if [ "$target" = "output/ogr.o" ]; then
+        if [ "$target" = "output/ogr-ppc.o" ]; then
           # default is to compile for a POWERPC based CPU, 
           # we have to add POWER here
           echo "output/ogr_power.o:    ${TARGETSRC} ${deplist}" >> Makefile
@@ -3213,6 +3659,102 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
+    elif [ "${TARGETTYP}" = "r72ppucore" ]; then
+      echo "$target:	${TARGETSRC}" >> Makefile
+      echo "	\${AS} \${ASFLAGS} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "r72ppuwrapper" ]; then
+      WRAPPERTARGET="output/r72-${TARGETSRC}-ppe-wrapper.o"
+      echo "$target:    ${TARGET_R72PPUWRAPPER} rc5-72/cellbe/r72-cell.h" >> Makefile
+      echo "	\${CC} -c \${CCFLAGS} -DCORE_NAME=${TARGETSRC} ${TARGET_R72PPUWRAPPER} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "r72spucore" ]; then
+      echo "$target:    ${TARGETSRC}" >> Makefile
+      echo "	\${SPUAS} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "r72spuwrapper" ]; then
+      CORE="${TARGETSRC}"
+      echo "$target:    $TARGET_R72SPUWRAPPER rc5-72/cellbe/r72-cell.h" >> Makefile
+      echo "	\${SPUCC} -c -Dlinux -DCORE_NAME=$CORE -Os \${HPATHS} $TARGET_R72SPUWRAPPER -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "r72spumerge" ]; then
+      CORE="${TARGETSRC}"
+      WRAPPERTARGET="output/r72-$CORE-spe-wrapper.o"
+      CORETARGET="output/r72-$CORE-spe.o";
+      echo "$target:    $WRAPPERTARGET $CORETARGET" >> Makefile
+      echo "	\${SPUCC} $WRAPPERTARGET $CORETARGET -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "r72spuembed" ]; then
+      CORE="${TARGETSRC}"
+      MERGETARGET="output/r72-$CORE-spe-merged.o"
+      COREFUNCTION="rc5_72_unit_func_$CORE""_spe_wrapper"
+      echo "$target:    $MERGETARGET" >> Makefile
+      echo "	\${SPUSTRIP} $MERGETARGET" >> Makefile
+      echo "	\${PPUEMBEDSPU} -m32 $COREFUNCTION $MERGETARGET $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "r72spuar" ]; then
+      echo "$target:    ${TARGETSRC}" >> Makefile
+      echo "	\${AR} -qcs $target ${TARGETSRC}" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrppuwrapper" ]; then
+      WRAPPERTARGET="output/ogr-${TARGETSRC}-ppe-wrapper.o"
+      echo "$target:    ${TARGET_OGRPPUWRAPPER} ogr/cellbe/ogr-cell.h ogr/ansi/ogr.h ogr/ansi/ogr.cpp" >> Makefile
+      echo "	\${CC} -c \${CCFLAGS} -DCORE_NAME=${TARGETSRC} ${TARGET_OGRPPUWRAPPER} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspucore" ]; then
+      echo "$target:    ${TARGETSRC}" >> Makefile
+      echo "	\${SPUAS} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspuwrapper" ]; then
+      CORE="${TARGETSRC}"
+      echo "$target:    $TARGET_OGRSPUWRAPPER ogr/cellbe/ogr-cell.h ogr/ansi/ogr.h" >> Makefile
+      echo "	\${SPUCC} -c -Dlinux -DCORE_NAME=$CORE -Os \${HPATHS} $TARGET_OGRSPUWRAPPER -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspumerge" ]; then
+      CORE="${TARGETSRC}"
+      WRAPPERTARGET="output/ogr-$CORE-spe-wrapper.o"
+      CORETARGET="output/ogr-$CORE-spe.o";
+      echo "$target:    $WRAPPERTARGET $CORETARGET" >> Makefile
+      echo "	\${SPUCC} $WRAPPERTARGET $CORETARGET -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspuembed" ]; then
+      CORE="${TARGETSRC}"
+      MERGETARGET="output/ogr-$CORE-spe-merged.o"
+      COREFUNCTION="ogr_cycle_$CORE""_spe_wrapper"
+      echo "$target:    $MERGETARGET" >> Makefile
+      echo "	\${SPUSTRIP} $MERGETARGET" >> Makefile
+      echo "	\${PPUEMBEDSPU} -m32 $COREFUNCTION $MERGETARGET $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ogrspuar" ]; then
+      echo "$target:    ${TARGETSRC}" >> Makefile
+      echo "	\${AR} -qcs $target ${TARGETSRC}" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
     else
       echo "Unknown target type ${TARGETTYP}"
       exit 1
@@ -3222,11 +3764,15 @@ fi
 
 if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   echo "Generating Makefile 68k multi-core OGR dependency targets..."
-  TARGETSRC="$OGR/ansi/ogr.cpp"
+  TARGETSRC="$OGR/68k/ogr-68k.cpp"
   TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
-    echo "output/ogr${targetext}.o:	${TARGETSRC} ${TARGET_HDEPS}" >> Makefile
+    deplist=""
+    for dep in $TARGET_HDEPS; do
+      deplist="$deplist $dep"
+    done
+    echo "output/ogr${targetext}.o:	${TARGETSRC} $deplist" >> Makefile
     echo "	\$(CC) \$(CCFLAGS) -DOGR_GET_DISPATCH_TABLE_FXN=ogr_get_dispatch_table_${targetext} \\" >>Makefile
 
     # fake 68060 optimisation with gcc < 2.95 - easiest way for now
@@ -3246,7 +3792,7 @@ if [ "$TARGET_OGR_MULTI" = "68k" ]; then
       echo "		-Dmc68${targetext} \\" >> Makefile
     fi
 
-    echo "		-c -o output/ogr${targetext}.o $OGR/ansi/ogr.cpp" >> Makefile
+    echo "		-c -o output/ogr${targetext}.o ${TARGETSRC}" >> Makefile
     echo "" >> Makefile
   done
 fi

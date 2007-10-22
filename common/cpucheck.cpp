@@ -10,12 +10,13 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.117 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.118 2007/10/22 16:48:25 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
 #include "cpucheck.h"  //just to keep the prototypes in sync.
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
+#include "sleepdef.h"  //usleep
 
 #if (CLIENT_OS == OS_DEC_UNIX)
 #  include <unistd.h>
@@ -27,8 +28,9 @@ return "@(#)$Id: cpucheck.cpp,v 1.117 2003/11/01 14:20:13 mweiser Exp $"; }
 #  include <Multiprocessing.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
-#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+#elif (CLIENT_OS == OS_MACOSX)
 #  include <mach/mach.h>
+#  include <mach/machine.h>
 #  include <IOKit/IOKitLib.h>
 #elif (CLIENT_OS == OS_DYNIX)
 #  include <sys/tmp_ctl.h>
@@ -36,7 +38,17 @@ return "@(#)$Id: cpucheck.cpp,v 1.117 2003/11/01 14:20:13 mweiser Exp $"; }
 #  include <string.h>
 #  include <sys/types.h>
 #  include <sys/processor.h>
+#elif (CLIENT_OS == OS_NETWARE6)
+#include <nks/plat.h>
+#elif (CLIENT_OS == OS_MORPHOS)
+#  include <exec/resident.h>
+#  include <exec/system.h>
 #endif
+
+#if (CLIENT_CPU == CPU_CELLBE)
+#include <libspe2.h>
+#endif
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -53,6 +65,33 @@ return "@(#)$Id: cpucheck.cpp,v 1.117 2003/11/01 14:20:13 mweiser Exp $"; }
    if we have an ID but no name:       return ID, set cpuname to ""
                                                    -  cyp April/03/1999
 */
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+  #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+    extern "C" u32 x86ident( void ) asm ("x86ident");
+    extern "C" u32 x86features( void ) asm ("x86features");
+    extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
+  #else
+    #if defined(__WATCOMC__)
+      // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
+      // must be declared as "cdecl" to allow compiler save necessary registers.
+      extern "C" u32 __cdecl x86ident( void );
+      extern "C" u32 __cdecl x86features( void );
+      extern "C" ui64 __cdecl x86rdtsc( void );
+    #else
+      extern "C" u32 x86ident( void );
+      extern "C" u32 x86features( void );
+      extern "C" ui64 x86rdtsc( void );
+    #endif
+    extern "C" u32 x86ident_haveioperm; /* default is zero */
+  #endif
+#endif
+
+
+#if (CLIENT_CPU == CPU_AMD64)
+#define x86ident()    0       // TODO
+#define x86features()  0
+#define x86htcount()  0
+#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -72,7 +111,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       //if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
     }
-    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+    #elif (CLIENT_OS == OS_MACOSX)
     {
       unsigned int    count;
       struct host_basic_info  info;
@@ -102,7 +141,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       get_system_info(&the_info);
       cpucount = the_info.cpu_count;
     }
-    #elif (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
       SYSTEM_INFO systeminfo;
       GetSystemInfo(&systeminfo);
@@ -114,6 +153,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     {
       cpucount = GetNumberOfRegisteredProcessors();
     }
+    #elif (CLIENT_OS == OS_NETWARE6)
+    {
+      cpucount = NXGetCpuCount();
+    }
     #elif (CLIENT_OS == OS_OS2)
     {
       int rc = (int) DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS,
@@ -121,7 +164,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (rc != 0 || cpucount < 1)
         cpucount = -1;
     }
-    #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && \
+           (CLIENT_CPU != CPU_CELLBE)
     {
       #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
         cpucount = 1;
@@ -135,7 +179,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         {
           buffer[sizeof(buffer) - 1] = '\0';
           #if (CLIENT_CPU == CPU_X86      || \
-               CLIENT_CPU == CPU_X86_64   || \
+               CLIENT_CPU == CPU_AMD64    || \
                CLIENT_CPU == CPU_POWERPC  || \
                CLIENT_CPU == CPU_S390     || \
                CLIENT_CPU == CPU_S390X    || \
@@ -195,6 +239,15 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       }
       #endif // (CLIENT_CPU == CPU_ARM)
     }
+    #elif (CLIENT_CPU == CPU_CELLBE)
+    {
+      // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees
+      // 2 processors), but it has been found that running 2 simultaneous
+      // threads degrades performance, so let's pretend there's only one
+      // PPE. Then add the number of usable SPEs.
+      cpucount = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1) +
+                 spe_cpu_info_get(SPE_COUNT_USABLE_SPES, -1);
+    }
     #elif (CLIENT_OS == OS_IRIX)
     {
       cpucount = (int)prctl( PR_MAXPPROCS, 0, 0);
@@ -223,7 +276,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (MPLibraryIsLoaded())
         cpucount = MPProcessors();
     }
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     {
       cpucount = 1;
     }
@@ -254,6 +307,20 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   }
 
   return cpucount;
+}
+
+/* ---------------------------------------------------------------------- */
+
+int GetNumberOfLogicalProcessors ( void )
+{ 
+  return GetNumberOfDetectedProcessors();
+}
+
+/* ---------------------------------------------------------------------- */
+
+int GetNumberOfPhysicalProcessors ( void )
+{
+  return GetNumberOfDetectedProcessors();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -408,7 +475,7 @@ static long __GetRawProcessorID(const char **cpuname)
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_POWERPC)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
 
 /* note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit) */
 # define NONPVR(x) ((1L << 16) + (x))
@@ -422,34 +489,44 @@ static long __GetRawProcessorID(const char **cpuname)
   static char namebuf[30];
 
   /* note: "PowerPC" will be prepended to the name
-  ** note: always use PVR IDs http://e-www.motorola.com/collateral/PPCPVR.pdf */
+  ** note: always use PVR IDs :
+  ** http://www.freescale.com/files/archives/doc/support_info/PPCPVR.pdf
+  */
   struct { long rid;
            const char *name; }
     cpuridtable[] = {
-      {    0x0001, "601"               },
-      {    0x0003, "603"               },
-      {    0x0004, "604"               },
-      {    0x0006, "603e"              },
-      {    0x0007, "603r/603ev"        }, //ev=0x0007, r=0x1007
-      {    0x0008, "740/750 (G3)"      },
-      {    0x0009, "604e"              },
-      {    0x000A, "604ev"             },
-      {    0x000C, "7400 (G4)"         },
-      {    0x0020, "403G/403GC/403GCX" },
-      {    0x0039, "970 (G5)"          },
-      {    0x0050, "821"               },
-      {    0x0080, "860"               },
-      {    0x0081, "8240"              },
-      {    0x4011, "405GP"             },
-      {    0x8000, "7450 (G4)"         },
-      {    0x8001, "7455 (G4)"         },
-      {    0x8002, "7457 (G4)"         },
-      {    0x800C, "7410 (G4)"         },
-      { NONPVR(1), "620"               }, //not PVR based
-      { NONPVR(2), "630"               }, //not PVR based
-      { NONPVR(3), "A35"               }, //not PVR based
-      { NONPVR(4), "RS64II"            }, //not PVR based
-      { NONPVR(5), "RS64III"           }, //not PVR based
+      {    0x0001, "601"                 },
+      {    0x0003, "603"                 },
+      {    0x0004, "604"                 },
+      {    0x0006, "603e"                },
+      {    0x0007, "603r/603ev"          }, //ev=0x0007, r=0x1007
+      {    0x0008, "740/750 (G3)"        },
+      {    0x0009, "604e"                },
+      {    0x000A, "604ev"               },
+      {    0x000C, "7400 (G4)"           },
+      {    0x0020, "403G/403GC/403GCX"   },
+      {    0x0039, "970 (G5)"            },
+      {    0x003C, "970FX (G5)"          }, // XServe G5. See bug #3675
+      {    0x0044, "970MP (G5)"          }, // Dual core
+      {    0x0050, "821"                 },
+      {    0x0070, "Cell Broadband Engine" },
+      {    0x0080, "860"                 },
+      {    0x0081, "8240"                },
+      {    0x4011, "405GP"               },
+      {    0x7000, "750FX"               },
+      {    0x8000, "7441/7450/7451 (G4)" },
+      {    0x8001, "7445/7455 (G4)"      },
+      {    0x8002, "7447/7457 (G4)"      },
+      {    0x8003, "7447A (G4)"          },
+      {    0x8004, "7448 (G4)"           },
+      {    0x800C, "7410 (G4)"           },
+      { NONPVR(1), "620"                 }, //not PVR based
+      { NONPVR(2), "630"                 }, //not PVR based
+      { NONPVR(3), "A35"                 }, //not PVR based
+      { NONPVR(4), "RS64II"              }, //not PVR based
+      { NONPVR(5), "RS64III"             }, //not PVR based
+      {    0x0800, "POWER_4"             }, //not PVR based
+      {    0x2000, "POWER_5"             }, //not PVR based
     };
 
   #if (CLIENT_OS == OS_AIX)
@@ -466,7 +543,9 @@ static long __GetRawProcessorID(const char **cpuname)
           { POWER_630,     NONPVR(2) },
           { POWER_A35,     NONPVR(3) },
           { POWER_RS64II,  NONPVR(4) },
-          { POWER_RS64III, NONPVR(5) }};
+          { POWER_RS64III, NONPVR(5) },
+          { POWER_4,            2048 }, 
+          { POWER_5,            8192 }};
 
       /* assume failed */
       detectedtype = -1L;
@@ -506,58 +585,40 @@ static long __GetRawProcessorID(const char **cpuname)
       if (result == 0x0111) /* gestaltCPUG47455 = 0x0111 */
         result = 0x08101L; /* Apples ID makes sense but we prefer pure PVR */
       detectedtype = result - 0x100L; // PVR!!
-
-      /* AltiVec software support and hardware support/exsitence */
-      if (Gestalt( gestaltSystemVersion, &result ) == noErr)
-      {   
-        if (result >= 860) /* Mac OS 8.6 and above? */
-        {
-          if ( Gestalt(gestaltPowerPCProcessorFeatures, &result) == noErr)
-          {
-            if (((1 << gestaltPowerPCHasVectorInstructions) & result)!=0)
-              isaltivec = 1;
-          }
-        }
-      }
     }
   }
-  #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+  #elif (CLIENT_OS == OS_MACOSX)
   if (detectedtype == -2L)
   {
     // We prefer raw PVR values over the IDs provided by host_info()
     CFDataRef value = NULL;
-    io_object_t device = NULL;
-    io_iterator_t objectIterator = NULL;
+    io_object_t device;
+    io_iterator_t objectIterator;
     CFMutableDictionaryRef properties = NULL;
+    mach_port_t master_port;
     detectedtype = -1L;
 
     // In I/O Registry Search for "IOPlatformDevice" devices
-    if (kIOReturnSuccess == IOServiceGetMatchingServices(kIOMasterPortDefault, IOServiceMatching("IOPlatformDevice"), &objectIterator)) {
+    if (kIOReturnSuccess == IOMasterPort(MACH_PORT_NULL, &master_port)) {
+      if (kIOReturnSuccess == IOServiceGetMatchingServices(master_port, IOServiceMatching("IOPlatformDevice"), &objectIterator)) {
         // Test the results for a certain property entry, in this case we look for a "cpu-version" field
         while ((device = IOIteratorNext(objectIterator))) {
-            if (kIOReturnSuccess == IORegistryEntryCreateCFProperties(device, &properties, kCFAllocatorDefault, kNilOptions)) {
-                if(CFDictionaryGetValueIfPresent(properties, CFSTR("cpu-version"), (const void **)&value)) {
-                    CFDataGetBytes(value, CFRangeMake(0,4/*CFDataGetLength((void *)value)*/ ), (UInt8 *)&detectedtype);
-                    //printf("PVR Hi:%04x Lo:%04x\n",(detectedtype>>16)&0xffff,detectedtype&0xffff);
-                    detectedtype = (detectedtype>>16)&0xffff;
-                }
-                CFRelease(properties);
+          if (kIOReturnSuccess == IORegistryEntryCreateCFProperties(device, &properties, kCFAllocatorDefault, kNilOptions)) {
+            if(CFDictionaryGetValueIfPresent(properties, CFSTR("cpu-version"), (const void **)&value)) {
+              CFDataGetBytes(value, CFRangeMake(0,4/*CFDataGetLength((void *)value)*/ ), (UInt8 *)&detectedtype);
+              //printf("PVR Hi:%04x Lo:%04x\n",(detectedtype>>16)&0xffff,detectedtype&0xffff);
+              detectedtype = (detectedtype>>16)&0xffff;
             }
-            IOObjectRelease(device);
+            CFRelease(properties);
+          }
+          IOObjectRelease(device);
         }
         IOObjectRelease(objectIterator);
-    }
-    
-    // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check for
-    int mib[2], hasVectorUnit; mib[0] = CTL_HW; mib[1] = HW_VECTORUNIT;
-    size_t len = sizeof(hasVectorUnit);
-    if (sysctl( mib, 2, &hasVectorUnit, &len, NULL, 0 ) == 0)
-    {
-      if (hasVectorUnit != 0)
-        isaltivec = 1;
+      }
+      mach_port_deallocate(mach_task_self(), master_port);
     }
   }
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (detectedtype == -2L)
   {
     SYSTEM_INFO si;
@@ -601,34 +662,58 @@ static long __GetRawProcessorID(const char **cpuname)
            { "603ev",           0x0007  },
            { "603r",            0x0007  },
            { "740/750",         0x0008  },
+           { "745/755",         0x0008  },
            { "750",             0x0008  },
            { "750CX",           0x0008  },
-           { "750FX",           0x0008  },
+           { "750CXe",          0x0008  }, /* >= 2.6.11 */
+           { "750FX",           0x0008  }, /* PVR coreid is actually 0x7000 */
+           { "750GX",           0x0008  }, /* PVR coreid is actually 0x7000 */
            { "750P",            0x0008  },
            { "604e",            0x0009  },
            { "604r",            0x000A  }, /* >= 2.3.99 */
            { "604ev",           0x000A  }, /* < 2.3.34 */
            { "604ev5",          0x000A  }, /* >= 2.3.34 */
            { "7400",            0x000C  },
+           { "7400 (1.1)",      0x000C  },
            { "403G",            0x0020  },
            { "403GC",           0x0020  },
            { "403GCX",          0x0020  },
            { "821",             0x0050  },
            { "860",             0x0080  },
            { "8240",            0x0081  },
+           { "82xx",            0x0081  },
+           { "8280",            0x0082  },
            { "405GP",           0x4011  },
+           { "7441",            0x8000  },
            { "7450",            0x8000  },
+           { "7451",            0x8000  },
+           { "7445",            0x8001  },
            { "7455",            0x8001  },
-           { "7410",            0x800C  }
+           { "7447",            0x8002  },
+           { "7457",            0x8002  },
+           { "7447/7457",       0x8002  },
+           { "7410",            0x800C  },
+           { "7447A",           0x8003  },
+           { "7448",            0x8004  },
+           { "PPC970",          0x0039  },
+           { "PPC970FX",        0x003C  },
+           { "PPC970MP",        0x0044  },
+           { "Cell Broadband Engine", 0x0070  }
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
           {
             unsigned int l = strlen( sigs[n].sig );
-            if ((!p[l] || isspace(p[l]) || p[l]==',') && memcmp( p, sigs[n].sig, l)==0)
+            if (memcmp( p, sigs[n].sig, l)==0 && (!p[l] || isspace(p[l]) || p[l]==','))
             {
               detectedtype = (long)sigs[n].rid;
-              if (detectedtype == 0x000C || detectedtype & 0x8000) /* 7400, 7410, 7450, 7455 (G4) */
+              /* 7400, 7410, 7450, 7455 (G4), 970, 970FX (G5),Cell */
+              if (detectedtype == 0x000C ||
+                  detectedtype == 0x0039 ||
+                  detectedtype == 0x003C ||
+                  detectedtype == 0x0044 ||
+                  detectedtype == 0x0070 ||
+                  detectedtype & 0x8000)
               {
                 if (memcmp( &p[l], ", altivec supported", 19)==0)
                   isaltivec = 1;
@@ -679,7 +764,28 @@ static long __GetRawProcessorID(const char **cpuname)
   #elif (CLIENT_OS == OS_AMIGAOS)  // AmigaOS PPC
   if (detectedtype == -2L)
   {
-    #ifndef __POWERUP__
+    #if defined(__amigaos4__)
+    /* AmigaOS 4.x */
+    ULONG cpu;
+    IExec->GetCPUInfoTags(GCIT_Model, &cpu, TAG_DONE);
+    switch (cpu)
+    {
+       case CPUTYPE_PPC603E:        detectedtype = 0x0006; break;
+       case CPUTYPE_PPC604E:        detectedtype = 0x0009; break;
+       case CPUTYPE_PPC750CXE:
+       case CPUTYPE_PPC750FX:
+       case CPUTYPE_PPC750GX:       detectedtype = 0x0008; break;
+       case CPUTYPE_PPC7410:        detectedtype = 0x800C; break;
+       case CPUTYPE_PPC74XX_VGER:   detectedtype = 0x8000; break;
+       case CPUTYPE_PPC74XX_APOLLO: detectedtype = 0x8001; break;
+       default: // some PPC processor that we don't know about
+                // set the tag (so that the user can tell us), but return 0
+       sprintf(namebuf, "OS4:0x%lx", cpu );
+       detectedname = (const char *)&namebuf[0];
+       detectedtype = 0;
+       break;
+    }
+    #elif !defined(__POWERUP__)
     /* WarpOS */
     struct TagItem cputags[2] = { {GETINFO_CPU, 0}, {TAG_END,0} };
     GetInfo(cputags);
@@ -713,6 +819,9 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x000C:   // 7400 (G4)
       case 0x8000:   // 7450 (G4)
       case 0x8001:   // 7455 (G4)
+      case 0x8002:   // 7447/7457 (G4)
+      case 0x8003:   // 7447A (G4)
+      case 0x8004:   // 7448 (G4)
       case 0x800C:   // 7410 (G4)
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
@@ -724,6 +833,41 @@ static long __GetRawProcessorID(const char **cpuname)
     }
     #endif
   }
+  #elif (CLIENT_OS == OS_MORPHOS)  // MorphOS
+  if (detectedtype == -2L)
+  {
+    /* MorphOS */
+    ULONG cpu = 0;
+    NewGetSystemAttrsA(&cpu, sizeof(cpu), SYSTEMINFOTYPE_PPC_CPUVERSION, NULL);
+
+    switch (cpu)
+    {
+      case 0x0003:   // 603
+      case 0x0004:   // 604
+      case 0x0006:   // 603e
+      case 0x0007:   // 603r/603ev
+      case 0x0008:   // 740/750 (G3)
+      case 0x0009:   // 604e
+      case 0x000A:   // 604ev
+      case 0x000C:   // 7400 (G4)
+      case 0x8000:   // 7450 (G4)
+      case 0x8001:   // 7455 (G4)
+      case 0x8002:   // 7457/7447 (G4)
+      case 0x8003:   // 7447A (G4)
+      case 0x8004:   // 7448 (G4)
+      case 0x800C:   // 7410 (G4)
+      case 0x0039:   // 970 (G5)
+      case 0x003C:   // 970FX (G5)
+      case 0x0044:   // 970MP (G5)
+      detectedtype = cpu; break;
+      default: // some PPC processor that we don't know about
+               // set the tag (so that the user can tell us), but return 0
+      sprintf(namebuf, "MOS:0x%lx", cpu );
+      detectedname = (const char *)&namebuf[0];
+      detectedtype = 0;
+      break;
+    }
+  }
   #endif
   
   if (detectedtype > 0 && detectedname == NULL) {
@@ -732,7 +876,9 @@ static long __GetRawProcessorID(const char **cpuname)
 
     for (n = 0; n < (sizeof(cpuridtable)/sizeof(cpuridtable[0])); n++) {
       if (cpuridtable[n].rid == detectedtype) {
-        strcpy(namebuf, "PowerPC ");
+        if (detectedtype != 0x0070) { /* without Cell */
+          strcpy(namebuf, "PowerPC ");
+        }
         strcat(namebuf, cpuridtable[n].name);
         detectedname = (const char *)&namebuf[0];
         break;
@@ -753,6 +899,8 @@ static long __GetRawProcessorID(const char **cpuname)
 
 # undef NONPVR
 #endif /* (CLIENT_CPU == CPU_POWERPC) */
+
+/* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_POWER)
 static long __GetRawProcessorID(const char **cpuname) {
@@ -827,7 +975,7 @@ static long __GetRawProcessorID(const char **cpuname) {
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_X86_64)
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
 static u32 __os_x86ident_fixup(u32 x86ident_result)
 {
   #if (CLIENT_OS == OS_LINUX)
@@ -892,19 +1040,6 @@ static u32 __os_x86ident_fixup(u32 x86ident_result)
   return x86ident_result;
 }  
 
-#if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
-  extern "C" u32 x86ident( void ) asm ("x86ident");
-#else
-#if defined(__WATCOMC__)
-  // x86ident() can destroy all registers except ebx/esi/edi/ebp =>
-  // must be declared as "cdecl" to allow compiler save necessary registers.
-  extern "C" u32 __cdecl x86ident( void );
-#else
-  extern "C" u32 x86ident( void );
-#endif
-  extern "C" u32 x86ident_haveioperm; /* default is zero */
-#endif
-
 // whattoret 0:detectedtype, 'c':simpleid, 'f':featureflags
 long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 {
@@ -963,6 +1098,15 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       vendorname = ""; /* nothing */
       cpuidbmask = 0xfff0;
     }
+    else if ( vendorid == 0x534E /* 'SN' NOTE! */) /* "Geode by NSC" */
+    {
+      static struct cpuxref natsemi_xref[]={
+          {  0x0540, CPU_F_I586,    0x10, "Geode"     },
+         {  0x0000, 0,               -1, NULL        }
+          }; internalxref = &natsemi_xref[0];
+      vendorname = "National";
+      cpuidbmask = 0x0ff0;
+    }
     else if ( vendorid == 0x4D54 /* 'MT' NOTE! */) /* "GenuineTMx86" */
     {
       static struct cpuxref transmeta_xref[]={
@@ -973,16 +1117,24 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       vendorname = "Transmeta";
       cpuidbmask = 0x0ff0;
     }
+    else if ( vendorid == 0x6953 /* 'iS' */) /* "SiS SiS SiS " */
+    { 
+      static struct cpuxref sis_xref[]={
+          {  0x0000, 0,               -1, NULL        }  
+          }; internalxref = &sis_xref[0];
+      vendorname = "SiS";
+      cpuidbmask = 0x0ff0;
+    }
     else if ( vendorid == 0x7943 /* 'yC' */ ) /* CyrixInstead */
     {
       static struct cpuxref cyrixxref[]={
           {  0x0400, CPU_F_I486,       6, "486SLC/DLC/SR/DR" },
           {  0x0410, CPU_F_I486,       6, "486S/Se/S2/DX/DX2" },
-          {  0x0440, CPU_F_I486,       0, "GX/MediaGX" },
-          {  0x0490, CPU_F_I486,       0, "5x86"      },
-          {  0x0520, CPU_F_I586,       3, "6x86/MI"   },
-          {  0x0540, CPU_F_I586,       0, "GXm"       },
-          {  0x0600, CPU_F_I686MMX,    9, "6x86MX/MII"},
+          {  0x0440, CPU_F_I586,       3, "GX/MediaGX" },
+          {  0x0490, CPU_F_I586,       3, "5x86"      },
+          {  0x0520, CPU_F_I586,    0x10, "6x86/MI"   },
+          {  0x0540, CPU_F_I586,    0x10, "GX/GXm"       },
+          {  0x0600, CPU_F_I586,    0x11, "6x86MX/MII"},
           /* The VIA Cyrix III is CentaurHauls */
           {  0x0000, 0,               -1, NULL        }
           }; internalxref = &cyrixxref[0]; 
@@ -1001,12 +1153,16 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x6543 /* 'eC' */ ) /* "CentaurHauls" */
     {
       static struct cpuxref centaurxref[]={
-          {  0x0540, CPU_F_I586MMX, 0x0A, "C6" }, /* has its own id */
-          {  0x0580, CPU_F_I586MMX, 0x0A, "C2" }, /* uses RG Cx re-pair */
-          {  0x0590, CPU_F_I586MMX, 0x0A, "C3" },
+          {  0x0540, CPU_F_I586, 0x0A, "C6" }, /* has its own id */
+          {  0x0580, CPU_F_I586, 0x0A, "C2" }, /* uses RG Cx re-pair */
+          {  0x0590, CPU_F_I586, 0x0A, "C3" },
           /* I'm not sure about the following two: are they I586 or I686 ? so do it the safe way */
-          {  0x0660, CPU_F_I586MMX, 0x09, "Samuel (Cyrix III)" }, /* THIS IS NOT A P6 !!! */
-          {  0x0670, CPU_F_I586MMX, 0x0A, "C3" },
+          {  0x0650, CPU_F_I586, 0x0C, "6x86MX/MII" },
+          {  0x0660, CPU_F_I586, 0x0C, "C3 (Samuel)" }, /* THIS IS NOT A P6 !!! */
+          {  0x0670, CPU_F_I586, 0x0C, "C3 (Samuel 2/3 or Ezra)" },
+          {  0x0680, CPU_F_I586, 0x0C, "C3 (Ezra-T)" },
+          {  0x0690, CPU_F_I586, 0x0F, "C3 (C5 Nehemiah)" },
+          {  0x06A0, CPU_F_I586, 0x0A, "C7 (Ester)" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &centaurxref[0];
       vendorname = "Centaur/IDT";
@@ -1046,7 +1202,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     else if ( vendorid == 0x7541 /* 'uA' */ ) // "AuthenticAMD"
     {
       /* see "AMD Processor Recognition Application Note" available at
-         http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/20734.pdf */
+         http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/20734.pdf 
+         also http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf */
       static struct cpuxref amdxref[]={
           {  0x0400, CPU_F_I486,       0, "486"      },
           {  0x0430, CPU_F_I486,       0, "486DX2"   },
@@ -1059,25 +1216,185 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0510, CPU_F_I586,       4, "K5 PR120 or PR133" },
           {  0x0520, CPU_F_I586,       4, "K5 PR166" },
           {  0x0530, CPU_F_I586,       4, "K5 PR200" },
-          {  0x0560, CPU_F_I586MMX,    5, "K6"       },
-          {  0x0570, CPU_F_I586MMX,    5, "K6"       },
-          {  0x0580, CPU_F_I586MMX,    5, "K6-2"     },
-          {  0x0590, CPU_F_I586MMX,    5, "K6-3"     },
-          {  0x05D0, CPU_F_I586MMX,    5, "K6-2+/K6-3+" },
-          {  0x0610, CPU_F_I686MMX,    9, "K7 (Athlon)"            }, // slot A
-          {  0x0620, CPU_F_I686MMX,    9, "K7-2 (Athlon)"          }, // slot A
-          {  0x0630, CPU_F_I686MMX,    9, "K7-3 (Duron)"           }, // 64K L2
-          {  0x0640, CPU_F_I686MMX,    9, "K7-4 (Athlon Thunderbird)" }, // 256K L2
-          {  0x0660, CPU_F_I686MMX,    9, "K7-6 (Athlon XP/MP/-4)" }, // Palomino core, 256K L2
-          {  0x0670, CPU_F_I686MMX,    9, "K7-7 (Duron)"           }, // Morgan core = Palomino core w/ 64K L2
-          {  0x0680, CPU_F_I686MMX,    9, "K7-8 (Athlon XP)"       }, // Thoroughbred core
-          {  0x06A0, CPU_F_I686MMX,    9, "K7-10 (Athlon XP)"      }, // Barton core
+          {  0x0560, CPU_F_I586,       5, "K6"       },
+          {  0x0570, CPU_F_I586,       5, "K6"       },
+          {  0x0580, CPU_F_I586,       5, "K6-2"     },
+          {  0x0590, CPU_F_I586,       5, "K6-3"     },
+          {  0x05D0, CPU_F_I586,       5, "K6-2+/K6-3+" },
+          {  0x0610, CPU_F_I686,       9, "K7 (Athlon)"            }, // slot A
+          {  0x0620, CPU_F_I686,       9, "K7-2 (Athlon)"          }, // slot A
+          {  0x0630, CPU_F_I686,       9, "K7-3 (Duron)"           }, // 64K L2
+          {  0x0640, CPU_F_I686,       9, "K7-4 (Athlon Thunderbird)" }, // 256K L2
+          {  0x0660, CPU_F_I686,       9, "K7-6 (Athlon XP/MP/4 or Duron)" }, // Palomino core, 256K L2
+          {  0x0670, CPU_F_I686,       9, "K7-7 (Duron)"           }, // Morgan core = Palomino core w/ 64K L2
+          {  0x0680, CPU_F_I686,       9, "K7-8 (Athlon XP/MP or Duron)" }, // Thoroughbred or Applebred core
+          {  0x06A0, CPU_F_I686,       9, "K7-10 (Athlon XP/MP/XP-M)" }, // Barton core
+          {  0x0F10, CPU_F_I686,       9, "K8-1 (Opteron 2xx)" },
+          {  0x1F10, CPU_F_I686,       9, "K8-1" },
+          {  0x2F10, CPU_F_I686,       9, "K8-1" },
+          {  0x3F10, CPU_F_I686,       9, "K8-1" },
+          {  0x4F10, CPU_F_I686,       9, "K8-1" },
+          {  0x5F10, CPU_F_I686,       9, "K8-1" },
+          {  0x6F10, CPU_F_I686,       9, "K8-1" },
+          {  0x7F10, CPU_F_I686,       9, "K8-1" },
+          {  0x8F10, CPU_F_I686,       9, "K8-1" },
+          {  0x9F10, CPU_F_I686,       9, "K8-1" },
+          {  0xAF10, CPU_F_I686,       9, "K8-1" },
+          {  0xBF10, CPU_F_I686,       9, "K8-1" },
+          {  0xCF10, CPU_F_I686,       9, "K8-1" },
+          {  0xDF10, CPU_F_I686,       9, "K8-1" },
+          {  0xEF10, CPU_F_I686,       9, "K8-1 (Opteron 2xx)" },
+          {  0xFF10, CPU_F_I686,       9, "K8-1" },
+          {  0x0F30, CPU_F_I686,       9, "K8-3 (Athlon64 X2)" },
+          {  0x1F30, CPU_F_I686,       9, "K8-3 (Athlon64 X2)" },
+          {  0x2F30, CPU_F_I686,       9, "K8-3" },
+          {  0x3F30, CPU_F_I686,       9, "K8-3" },
+          {  0x4F30, CPU_F_I686,       9, "K8-3" },
+          {  0x5F30, CPU_F_I686,       9, "K8-3" },
+          {  0x6F30, CPU_F_I686,       9, "K8-3" },
+          {  0x7F30, CPU_F_I686,       9, "K8-3" },
+          {  0x8F30, CPU_F_I686,       9, "K8-3" },
+          {  0x9F30, CPU_F_I686,       9, "K8-3" },
+          {  0xAF30, CPU_F_I686,       9, "K8-3" },
+          {  0xBF30, CPU_F_I686,       9, "K8-3" },
+          {  0xCF30, CPU_F_I686,       9, "K8-3" },
+          {  0xDF30, CPU_F_I686,       9, "K8-3" },
+          {  0xEF30, CPU_F_I686,       9, "K8-3" },
+          {  0xFF30, CPU_F_I686,       9, "K8-3" },
+          {  0x0F40, CPU_F_I686,       9, "K8-4" },
+          {  0x1F40, CPU_F_I686,       9, "K8-4" },
+          {  0x2F40, CPU_F_I686,       9, "K8-4" },
+          {  0x3F40, CPU_F_I686,       9, "K8-4" },
+          {  0x4F40, CPU_F_I686,       9, "K8-4" },
+          {  0x5F40, CPU_F_I686,       9, "K8-4" },
+          {  0x6F40, CPU_F_I686,       9, "K8-4" },
+          {  0x7F40, CPU_F_I686,       9, "K8-4" },
+          {  0x8F40, CPU_F_I686,       9, "K8-4" },
+          {  0x9F40, CPU_F_I686,       9, "K8-4" },
+          {  0xAF40, CPU_F_I686,       9, "K8-4" },
+          {  0xBF40, CPU_F_I686,       9, "K8-4" },
+          {  0xCF40, CPU_F_I686,       9, "K8-4" },
+          {  0xDF40, CPU_F_I686,       9, "K8-4" },
+          {  0xEF40, CPU_F_I686,       9, "K8-4" },
+          {  0xFF40, CPU_F_I686,       9, "K8-4" },
+          {  0x0F50, CPU_F_I686,       9, "K8-5" },
+          {  0x1F50, CPU_F_I686,       9, "K8-5" },
+          {  0x2F50, CPU_F_I686,       9, "K8-5" },
+          {  0x3F50, CPU_F_I686,       9, "K8-5" },
+          {  0x4F50, CPU_F_I686,       9, "K8-5" },
+          {  0x5F50, CPU_F_I686,       9, "K8-5" },
+          {  0x6F50, CPU_F_I686,       9, "K8-5" },
+          {  0x7F50, CPU_F_I686,       9, "K8-5" },
+          {  0x8F50, CPU_F_I686,       9, "K8-5" },
+          {  0x9F50, CPU_F_I686,       9, "K8-5" },
+          {  0xAF50, CPU_F_I686,       9, "K8-5" },
+          {  0xBF50, CPU_F_I686,       9, "K8-5" },
+          {  0xCF50, CPU_F_I686,       9, "K8-5" },
+          {  0xDF50, CPU_F_I686,       9, "K8-5" },
+          {  0xEF50, CPU_F_I686,       9, "K8-5" },
+          {  0xFF50, CPU_F_I686,       9, "K8-5" },
+          {  0x0F70, CPU_F_I686,       9, "K8-7" },
+          {  0x1F70, CPU_F_I686,       9, "K8-7" },
+          {  0x2F70, CPU_F_I686,       9, "K8-7" },
+          {  0x3F70, CPU_F_I686,       9, "K8-7" },
+          {  0x4F70, CPU_F_I686,       9, "K8-7" },
+          {  0x5F70, CPU_F_I686,       9, "K8-7" },
+          {  0x6F70, CPU_F_I686,       9, "K8-7" },
+          {  0x7F70, CPU_F_I686,       9, "K8-7" },
+          {  0x8F70, CPU_F_I686,       9, "K8-7" },
+          {  0x9F70, CPU_F_I686,       9, "K8-7" },
+          {  0xAF70, CPU_F_I686,       9, "K8-7" },
+          {  0xBF70, CPU_F_I686,       9, "K8-7" },
+          {  0xCF70, CPU_F_I686,       9, "K8-7" },
+          {  0xDF70, CPU_F_I686,       9, "K8-7" },
+          {  0xEF70, CPU_F_I686,       9, "K8-7" },
+          {  0xFF70, CPU_F_I686,       9, "K8-7" },
+          {  0x0F80, CPU_F_I686,       9, "K8-8" },
+          {  0x1F80, CPU_F_I686,       9, "K8-8" },
+          {  0x2F80, CPU_F_I686,       9, "K8-8" },
+          {  0x3F80, CPU_F_I686,       9, "K8-8" },
+          {  0x4F80, CPU_F_I686,       9, "K8-8" },
+          {  0x5F80, CPU_F_I686,       9, "K8-8 (Turion64 X2)" },
+          {  0x6F80, CPU_F_I686,       9, "K8-8" },
+          {  0x7F80, CPU_F_I686,       9, "K8-8" },
+          {  0x8F80, CPU_F_I686,       9, "K8-8" },
+          {  0x9F80, CPU_F_I686,       9, "K8-8" },
+          {  0xAF80, CPU_F_I686,       9, "K8-8" },
+          {  0xBF80, CPU_F_I686,       9, "K8-8" },
+          {  0xCF80, CPU_F_I686,       9, "K8-8" },
+          {  0xDF80, CPU_F_I686,       9, "K8-8" },
+          {  0xEF80, CPU_F_I686,       9, "K8-8" },
+          {  0xFF80, CPU_F_I686,       9, "K8-8" },
+          {  0x0FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x1FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x2FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x3FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x4FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x5FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x6FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x7FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x8FB0, CPU_F_I686,       9, "K8-11" },
+          {  0x9FB0, CPU_F_I686,       9, "K8-11" },
+          {  0xAFB0, CPU_F_I686,       9, "K8-11" },
+          {  0xBFB0, CPU_F_I686,       9, "K8-11" },
+          {  0xCFB0, CPU_F_I686,       9, "K8-11" },
+          {  0xDFB0, CPU_F_I686,       9, "K8-11" },
+          {  0xEFB0, CPU_F_I686,       9, "K8-11" },
+          {  0xFFB0, CPU_F_I686,       9, "K8-11" },
+          {  0x0FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x1FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x2FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x3FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x4FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x5FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x6FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x7FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x8FC0, CPU_F_I686,       9, "K8-12" },
+          {  0x9FC0, CPU_F_I686,       9, "K8-12" },
+          {  0xAFC0, CPU_F_I686,       9, "K8-12" },
+          {  0xBFC0, CPU_F_I686,       9, "K8-12" },
+          {  0xCFC0, CPU_F_I686,       9, "K8-12" },
+          {  0xDFC0, CPU_F_I686,       9, "K8-12" },
+          {  0xEFC0, CPU_F_I686,       9, "K8-12" },
+          {  0xFFC0, CPU_F_I686,       9, "K8-12" },
+          {  0x0FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x1FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x2FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x3FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x4FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x5FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x6FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x7FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x8FE0, CPU_F_I686,       9, "K8-13" },
+          {  0x9FE0, CPU_F_I686,       9, "K8-13" },
+          {  0xAFE0, CPU_F_I686,       9, "K8-13" },
+          {  0xBFE0, CPU_F_I686,       9, "K8-13" },
+          {  0xCFE0, CPU_F_I686,       9, "K8-13" },
+          {  0xDFE0, CPU_F_I686,       9, "K8-13" },
+          {  0xEFE0, CPU_F_I686,       9, "K8-13" },
+          {  0xFFE0, CPU_F_I686,       9, "K8-13" },
+          {  0x0FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x1FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x2FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x3FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x4FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x5FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x6FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x7FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x8FF0, CPU_F_I686,       9, "K8-15" },
+          {  0x9FF0, CPU_F_I686,       9, "K8-15" },
+          {  0xAFF0, CPU_F_I686,       9, "K8-15" },
+          {  0xBFF0, CPU_F_I686,       9, "K8-15" },
+          {  0xCFF0, CPU_F_I686,       9, "K8-15" },
+          {  0xDFF0, CPU_F_I686,       9, "K8-15" },
+          {  0xEFF0, CPU_F_I686,       9, "K8-15" },
+          {  0xFFF0, CPU_F_I686,       9, "K8-15" },
           {  0x0000, 0,               -1, NULL       }
           }; internalxref = &amdxref[0];
       vendorname = "AMD";
       if (cpuid == 0x0400)          /* no such AMD ident */
         vendorname = "Intel/AMD";  /* identifies AMD or Intel 486 */
-      cpuidbmask = 0x0ff0;
+      cpuidbmask = 0xfff0;
     }
     else if ( vendorid == 0x6547 /* 'eG' */ ) // "GenuineIntel"
     {
@@ -1103,57 +1420,79 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           {  0x0520, CPU_F_I586,       0, "Pentium" },
           {  0x0530, CPU_F_I586,       0, "Pentium Overdrive" },
           {  0x0545, CPU_F_I586,       0, "Pentium (buggy-MMX)" }, /* MMX core crash - #2204 */
-          {  0x0540, CPU_F_I586MMX,    0, "Pentium MMX" },
+          {  0x0540, CPU_F_I586,       0, "Pentium MMX" },
           {  0x0570, CPU_F_I586,       0, "Pentium" },
-          {  0x0580, CPU_F_I586MMX,    0, "Pentium MMX" },
+          {  0x0580, CPU_F_I586,       0, "Pentium MMX" },
           {  0x0600, CPU_F_I686,       8, "Pentium Pro A-step" },
           {  0x0610, CPU_F_I686,       8, "Pentium Pro" },
-          {  0x0630, CPU_F_I686MMX,    2, "Pentium II" }, /* Klamath (0.35um/512KB) */
+          {  0x0630, CPU_F_I686,       2, "Pentium II" }, /* Klamath (0.35um/512KB) */
           /* the following CPUs may have brand bits generated by x86ident */
           /* PII:  650: Deschutes A80522 (0.28um) */
           /* PII:  650: Tonga [Mobile] (0.25um) */
           /* Cely: 650: Covington (no On-Die L2 Cache) */
-          {  0x0650, CPU_F_I686MMX,    2, "Pentium II" },
-          {  0x1650, CPU_F_I686MMX,    2, "Celeron (Covington)" },
-          {  0x4650, CPU_F_I686MMX,    2, "Pentium II Xeon" },
+          {  0x0650, CPU_F_I686,    2, "Pentium II" },
+          {  0x1650, CPU_F_I686,    2, "Celeron (Covington)" },
+          {  0x4650, CPU_F_I686,    2, "Pentium II Xeon" },
           /* Cely: 660: Dixon [Mobile] (128 [Cely] or 256 [PII] KB On-Die) */
           /* Cely: 660: Mendocino A80523 (0.25um, 128 KB On-Die L2 Cache) */
-          {  0x0660, CPU_F_I686MMX,    2, "Pentium II" },
-          {  0x1660, CPU_F_I686MMX,    2, "Celeron-A (Mendocino/Dixon)" },
-        //{  0x0670, CPU_F_I686MMX,    2, "Pentium III" }, /* Katmai (0.25um/0.18um), 512KB, KNI */
-          {  0x0670, CPU_F_I686MMX,    2, "Pentium III (Katmai)" },
-/* !!! */ {  0x0670, CPU_F_I686MMX,    2, "Pentium III Xeon" },
+          {  0x0660, CPU_F_I686,    2, "Pentium II" },
+          {  0x1660, CPU_F_I686,    2, "Celeron-A (Mendocino/Dixon)" },
+        //{  0x0670, CPU_F_I686, 0x0E, "Pentium III" }, /* Katmai (0.25um/0.18um), 512KB, KNI */
+          {  0x0670, CPU_F_I686, 0x0E, "Pentium III (Katmai)" },
+/* !!! */ {  0x0670, CPU_F_I686, 0x0E, "Pentium III Xeon" },
           /* the following CPUs have brand bits from Intel */
-        //{  0x0680, CPU_F_I686MMX,    2, "Pentium III" },
-          {  0x1680, CPU_F_I686MMX,    2, "Celeron" },
-          {  0x2680, CPU_F_I686MMX,    2, "Pentium III" },
-/* !!! */ {  0x2680, CPU_F_I686MMX,    2, "Mobile Pentium III" },
-          {  0x3680, CPU_F_I686MMX,    2, "Pentium III Xeon" },
-          {  0x0690, CPU_F_I686MMX,    2, "Pentium III (Timna)" }, /* Timna:6547:0692 */
-          {  0x6690, CPU_F_I686MMX, 0x0B, "Pentium M" }, /* brand id 0x16 ? */ /* #3323 */
-        //{  0x06A0, CPU_F_I686MMX,    2, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
-          {  0x36A0, CPU_F_I686MMX,    2, "Pentium III Xeon" },
-        //{  0x06B0, CPU_F_I686MMX,    2, "Pentium III" }, /* Tualatin:6547:46B1 */
-          {  0x16B0, CPU_F_I686MMX,    2, "Celeron (Tualatin)" },
-          {  0x26B0, CPU_F_I686MMX,    2, "Pentium III (Tualatin)" },
-          {  0x36B0, CPU_F_I686MMX,    2, "Celeron (Tualatin)" },
-          {  0x46B0, CPU_F_I686MMX,    2, "Pentium III (Tualatin)" },
-          {  0x66B0, CPU_F_I686MMX,    2, "Mobile Pentium III-M" },
-          {  0x0700, CPU_F_I686MMX,    5, "Itanium" }, /* 6547:0701. #5 == RG RISC-rotate II */
-        //{  0x0F00, CPU_F_I686MMX, 0x0B, "Pentium 4" }, /* 1.3 - 1.5GHz P4  (0.18u) */
-        //{  0x0F10, CPU_F_I686MMX, 0x0B, "Pentium 4" }, /* 1.4 - 2.0GHz P4  (0.18u) */
-        //{  0x0F20, CPU_F_I686MMX, 0x0B, "Pentium 4" }, /* >=2.0GHz P4-512k (0.13u) */
-          {  0x8F00, CPU_F_I686MMX, 0x0B, "Pentium 4" },
-          {  0xEF00, CPU_F_I686MMX, 0x0B, "Xeon" },
-          {  0x8F10, CPU_F_I686MMX, 0x0B, "Pentium 4" },
-          {  0xAF10, CPU_F_I686MMX, 0x0B, "Celeron 4" },
-          {  0xBF10, CPU_F_I686MMX, 0x0B, "Xeon MP" },
-          {  0xEF10, CPU_F_I686MMX, 0x0B, "Xeon" },
-          {  0x9F20, CPU_F_I686MMX, 0x0B, "Pentium 4 (Northwood)" },
-          {  0xAF20, CPU_F_I686MMX, 0x0B, "Celeron 4 (Northwood)" },
-          {  0xBF20, CPU_F_I686MMX, 0x0B, "Xeon" },
-          {  0xEF20, CPU_F_I686MMX, 0x0B, "Mobile Pentium 4-M" },
-          {  0xFF20, CPU_F_I686MMX, 0x0B, "Mobile Celeron 4" },
+          {  0x0680, CPU_F_I686, 0x0E, "Celeron (Xbox)" },
+          {  0x1680, CPU_F_I686, 0x0E, "Celeron" },
+          {  0x2680, CPU_F_I686, 0x0E, "Pentium III" },
+/* !!! */ {  0x2680, CPU_F_I686, 0x0E, "Mobile Pentium III" },
+          {  0x3680, CPU_F_I686, 0x0E, "Pentium III Xeon" },
+          {  0x0690, CPU_F_I686, 0x0E, "Pentium III (Timna)" }, /* Timna:6547:0692 */
+          {  0x2690, CPU_F_I686, 0x0E, "Celeron M" },
+          {  0x6690, CPU_F_I686, 0x0D, "Pentium M" }, /* 0.13 um 0.5 or 1MB L2, brand id 0x16 ? */ /* #3323 */
+        //{  0x06A0, CPU_F_I686, 0x0E, "Pentium III" }, //0.18 um w/ 1/2MB on-die L2
+          {  0x36A0, CPU_F_I686, 0x0E, "Pentium III Xeon" },
+        //{  0x06B0, CPU_F_I686, 0x0E, "Pentium III" }, /* Tualatin:6547:46B1 */
+          {  0x16B0, CPU_F_I686, 0x0E, "Celeron (Tualatin)" },
+          {  0x26B0, CPU_F_I686, 0x0E, "Pentium III (Tualatin)" },
+          {  0x36B0, CPU_F_I686, 0x0E, "Celeron (Tualatin)" },
+          {  0x46B0, CPU_F_I686, 0x0E, "Pentium III (Tualatin)" },
+          {  0x66B0, CPU_F_I686, 0x0E, "Mobile Pentium III-M" },
+          {  0x26D0, CPU_F_I686, 0x0D, "Celeron M ULV" },
+          {  0x66D0, CPU_F_I686, 0x0D, "Pentium M" }, /* 0.09 um 0.5 or 2MB L2 (#3745) */
+          {  0x06E0, CPU_F_I686, 0x0D, "Core" }, /* (#3939) */
+          {  0x06F0, CPU_F_I686, 0x12, "Core 2" }, /* (#3969) */
+          {  0x36A0, CPU_F_I686, 0x0E, "Pentium III Xeon" },
+          {  0x0700, CPU_F_I686,    5, "Itanium" }, /* 6547:0701. #5 == RG RISC-rotate II */
+        //{  0x0F00, CPU_F_I686, 0x0B, "Pentium 4" }, /* 1.3 - 1.5GHz P4  (0.18u) */
+        //{  0x0F10, CPU_F_I686, 0x0B, "Pentium 4" }, /* 1.4 - 2.0GHz P4  (0.18u) */
+        //{  0x0F20, CPU_F_I686, 0x0B, "Pentium 4" }, /* >=2.0GHz P4-512k (0.13u) */
+        //{  0x0F30, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
+        //{  0x0F40, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
+          {  0x0F60, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.065u) */
+          {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
+          {  0xEF00, CPU_F_I686, 0x0B, "Xeon (Foster)" },
+          {  0x8F10, CPU_F_I686, 0x0B+0x100, "Pentium 4 (Willamette)" }, /* hack: different rules for OGR and RC5-72 */
+          {  0xAF10, CPU_F_I686, 0x0B, "Celeron 4 (Willamette)" },
+          {  0xBF10, CPU_F_I686, 0x0B, "Xeon MP (Foster)" },
+          {  0xEF10, CPU_F_I686, 0x0B, "Xeon (Foster)" },
+          {  0x8F20, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" }, /* (#3799) */
+          {  0x9F20, CPU_F_I686, 0x0B+0x100, "Pentium 4 (Northwood)" }, /* hack: different rules for OGR and RC5-72 (#4009) */
+          {  0xAF20, CPU_F_I686, 0x0B, "Celeron 4 (Northwood)" },
+          {  0xBF20, CPU_F_I686, 0x0B, "Xeon (Prestonia)" },
+          {  0xCF20, CPU_F_I686, 0x0B, "Xeon MP (Prestonia)" }, /* (#3696) */
+          {  0xEF20, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Northwood)" },
+          {  0xFF20, CPU_F_I686, 0x0B, "Mobile Celeron 4 (Northwood)" },
+          {  0x0F30, CPU_F_I686, 0x0B, "Pentium 4 (0.09u)" }, /* (#3627) */
+          {  0x9F30, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" },
+          {  0xAF30, CPU_F_I686, 0x0B, "Celeron D (Prescott)" },
+          {  0xBF30, CPU_F_I686, 0x0B, "Xeon (Nocona)" },
+          {  0xEF30, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Prescott)" },
+          {  0x0F40, CPU_F_I686, 0x0B, "Pentium 4/4-M/D/Celeron D/Xeon" }, /* (#3807, #3864, #3868) unsupported brand id */
+          {  0x9F40, CPU_F_I686, 0x0B, "Pentium 4 (Prescott)" },
+          {  0xAF40, CPU_F_I686, 0x0B, "Celeron D (Prescott)" },
+          {  0xBF40, CPU_F_I686, 0x0B, "Xeon (Nocona)" },
+          {  0xEF40, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Prescott)" },
+          {  0x0F60, CPU_F_I686, 0x0B, "Pentium 4/4-M/D/Celeron D/Xeon" },
           {  0x0000, 0,               -1, NULL }
           }; internalxref = &intelxref[0];
       vendorname = "Intel"; 
@@ -1174,10 +1513,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
           simpleid     = internalxref[pos].simpleid;
           featureflags = internalxref[pos].cpufeatures;
           detectedtype = dettype;
-          // HACK!!!
-          if ((featureflags & CPU_F_MMX) == CPU_F_MMX)
-            simpleid |= 0x100;
-          // KCAH !!!
           if ( internalxref[pos].cpuname )
           {
             strcpy( namebuf, vendorname );
@@ -1240,8 +1575,8 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x41560200, 0xfffffff0, 0, 1, 1, "ARM 620" },
     { 0x41007000, 0xfffffff0, 0, 1, 1, "ARM 700" },
     { 0x41007100, 0xfffffff0, 0, 1, 1, "ARM 710" },
-    { 0x41007500, 0xffffffff, 0, 1, 1, "ARM 7500" },	// 7500/FEL are "artificial" ids
-    { 0x410F7500, 0xffffffff, 0, 1, 1, "ARM 7500FEL" },	// created by IOMD detection
+    { 0x41007500, 0xffffffff, 0, 1, 1, "ARM 7500" },  // 7500/FEL are "artificial" ids
+    { 0x410F7500, 0xffffffff, 0, 1, 1, "ARM 7500FEL" },  // created by IOMD detection
     { 0x41047100, 0xfffffff0, 0, 1, 1, "ARM 7100" },
     { 0x41807100, 0xfffffff0, 0, 1, 1, "ARM 710T" },
     { 0x41807200, 0xfffffff0, 0, 1, 1, "ARM 720T" },
@@ -1265,10 +1600,10 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x4401a110, 0xfffffff0, 1, 0, 0, "Digital StrongARM 1100" },
     // Intel
     { 0x6901b110, 0xfffffff0, 1, 0, 0, "Intel StrongARM 1110" },
-    { 0x69052120, 0xffffe3f0, 1, 0, 0, "Intel PXA210" },
-    { 0x69052100, 0xffffe3f0, 1, 0, 0, "Intel PXA250/255" },
-    { 0x69052000, 0xffffe3f0, 1, 0, 0, "Intel 80200" },
-    { 0x69052C30, 0xffffe3f0, 1, 0, 0, "Intel IOP321" },
+    { 0x69052120, 0xffffe3f0, 1, 2, 2, "Intel PXA210" },
+    { 0x69052100, 0xffffe3f0, 1, 2, 2, "Intel PXA250/255" },
+    { 0x69052000, 0xffffe3f0, 1, 2, 2, "Intel 80200" },
+    { 0x69052C30, 0xffffe3f0, 1, 2, 2, "Intel IOP321" },
     { 0x00000000, 0x00000000, -1, -1, -1, "" }
   };
 
@@ -1414,8 +1749,8 @@ static long __GetRawProcessorID(const char **cpuname )
       {
         if (ids[n].id == 0)
         {
-	  detectedname = namebuf;
-	  detectedtype = 0;
+          detectedname = namebuf;
+          detectedtype = 0;
         }
         else
         {
@@ -1663,9 +1998,8 @@ static long __GetRawProcessorID(const char **cpuname)
   return detectedtype;
 #elif (CLIENT_OS == OS_SOLARIS)
   FILE *prtconf;
-  char buf[256], name[256], *work_s, *work_t;
-  int i, n, foundcpu = 0;
-  processor_info_t *infop;
+  char buf[256], name[256], c_name[256], *work_s, *work_t;
+  int i, foundcpu = 0;
 
   /* DON'T RENUMBER */
   static struct { int rid; const char *raw_name, *name; } cpuridtable[] =
@@ -1698,24 +2032,39 @@ static long __GetRawProcessorID(const char **cpuname)
   {19, "UltraSPARC-IIi", "UltraSPARC-IIi"},
   {20, "UltraSPARC-III", "UltraSPARC-III"},
   {20, "UltraSPARC-III+", "UltraSPARC-III"},  /* UltraSPARC-III Cu */
-  {21, "UltraSPARC-IIIi", "UltraSPARC-IIIi"}
+  {21, "UltraSPARC-IIIi", "UltraSPARC-IIIi"}, /* .13u */
+  {21, "UltraSPARC-IIIi+", "UltraSPARC-IIIi+"}, /* unconfirmed, .09u, adds cache? */
+  {22, "UltraSPARC-IV", "UltraSPARC-IV"},
+  {22, "UltraSPARC-IV+", "UltraSPARC-IV+"}, /* unconfirmed, .09u adds 2MB L2 cache, external L3 doubled to 32MB */
+  {23, "SPARC64-IV", "SPARC64-IV"},
+  {24, "UltraSPARC-T1", "UltraSPARC-T1"}
   };
 
   detectedtype = -1L;  /* detection supported, but failed */
 
   /* parse the prtconf output looking for the cpu name */
   strncpy (name, "", 256);
+  strncpy (c_name, "", 256);
   /* 'prtconf -vp' outputs the detailed device node list from openboot ROM */
-  if ((prtconf = popen ("/usr/sbin/prtconf -vp", "r")) != NULL) {	
+  if ((prtconf = popen ("/usr/sbin/prtconf -vp", "r")) != NULL) {
     while (fgets(buf, 256, prtconf) != NULL) {
       if (strstr (buf, "Node") != NULL) {  /* if new device node, clear name */
+        if (foundcpu) {
+          if (strlen (name) != 0) { /* we found a cpu name */
+            break;
+          } else if (strlen (c_name) != 0) { /* we found a cpu name in the 
+                                                compatible field */
+            strncpy (name, c_name, 256);
+            break;
+          } else {
+            foundcpu = 0;
+          }
+        }
         strncpy (name, "", 256);
+        strncpy (c_name, "", 256);
       }
       if (strstr (buf, "'cpu'") != NULL) {  /* if device is cpu */
         foundcpu = 1;
-        if (strlen (name) != 0) {  /* if we have device name already */
-          break;
-        }
       }
       if ((work_s = strstr (buf, "name:")) != NULL) {  /* if value is 
                                                           device name */
@@ -1725,9 +2074,17 @@ static long __GetRawProcessorID(const char **cpuname)
           work_t = strstr (work_s, "'");
           *(work_t) = '\0';
           strncpy (name, work_s, 256);
-          if (foundcpu == 1) {  /* if we know device is cpu */
-            break;
-          }
+        }
+      }
+      if ((work_s = strstr (buf, "compatible:")) != NULL) {  /* if value is
+                                                          device name held
+                                                          in compatible field */
+        /* extract cpu name, format: "name:  '<manufacturer>,<cpu name>' */
+        if ((work_s = strstr (buf, ",")) != NULL) {
+          work_s++;  
+          work_t = strstr (work_s, "'");
+          *(work_t) = '\0';
+          strncpy (c_name, work_s, 256);
         }
       }
     }
@@ -1746,18 +2103,10 @@ static long __GetRawProcessorID(const char **cpuname)
 
   /* Detected SuperSPARC, **special case** */
   if ((detectedtype == 12) || (detectedtype == 13)) {
-    n = GetNumberOfDetectedProcessors ();
-    for (i = 0; i < n; i++) {
-      if (p_online (i, P_STATUS) == P_ONLINE) {
-        break;
-      }
-    }
-    if (processor_info (i, infop) == 0) {
-      if (infop->pi_clock >= 75) {  /* If cpu speed is 75Mhz or more, then
-                                       we have a SuperSPARC II */
-        detectedtype += 2;          /* table must not be renumbered */
-        detectedname = cpuridtable[detectedtype].name;
-      }
+    if (GetProcessorFrequency() >= 75) {  
+    /* If cpu speed is 75Mhz or more, then we have a SuperSPARC II */
+      detectedtype += 2;          /* table must not be renumbered */
+      detectedname = cpuridtable[detectedtype].name;
     }
   }
 
@@ -1931,11 +2280,11 @@ long GetProcessorType(int quietly)
   // only successful detection / detection of a new unknown cpu type gets logged to file
   long retval = -1L;
   const char *apd = "Automatic processor type detection ";
-  #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
+  #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K)   || \
       (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
-      (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_X86_64) || \
-      (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC) || \
-      (CLIENT_CPU == CPU_ARM)
+      (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
+      (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
+      (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -1982,10 +2331,11 @@ long GetProcessorType(int quietly)
 long GetProcessorID()
 {
   long retval = -1L;
-  #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
+  #if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K)   || \
       (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
-      (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_ARM) || \
-      (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC)
+      (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
+      (CLIENT_CPU == CPU_ARM)     || (CLIENT_CPU == CPU_MIPS)  || \
+      (CLIENT_CPU == CPU_SPARC)
   {
     long rawid = __GetRawProcessorID(NULL);
     if (rawid < 0)
@@ -2006,14 +2356,249 @@ long GetProcessorID()
 }
 #endif
 
+//Return the frequency in MHz, or 0.
+unsigned int GetProcessorFrequency()
+{
+  unsigned int freq = 0;   /* Unknown */
+
+  #if (CLIENT_OS == OS_MACOSX)
+    int mib[2] = {CTL_HW, HW_CPU_FREQ};
+    unsigned long frequency;
+    size_t len = sizeof(frequency);
+    if (sysctl(mib, 2, &frequency, &len, NULL, 0) == 0) {
+      if (frequency != 0)
+        freq = (frequency + 500000) / 1000000;
+    }
+  #elif (CLIENT_OS == OS_SOLARIS)
+    int i, n;
+    processor_info_t infop;
+    n = GetNumberOfDetectedProcessors ();
+    for (i = 0; i < n; i++) {
+      if (p_online (i, P_STATUS) == P_ONLINE) {
+        break;
+      }
+    }
+    if (processor_info (i, &infop) == 0) {
+      freq = infop.pi_clock;
+    }      
+  #elif (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
+    #if defined(__amigaos4__)
+      uint64 freqhz;
+      IExec->GetCPUInfoTags(GCIT_ProcessorSpeed, &freqhz, TAG_DONE);
+      if (freqhz != 0)
+        freq = (freqhz + 500000) / 1000000;
+    #elif !defined(__POWERUP__)
+      struct TagItem cputags[2] = { {GETINFO_CPUCLOCK, 0}, {TAG_END,0} };
+      GetInfo(cputags);
+      if (cputags[0].ti_Data != 0)
+        freq = (cputags[0].ti_Data + 500000) / 1000000;
+    #else
+      freq = PPCGetAttr(PPCINFOTAG_CPUCLOCK);
+    #endif
+  #elif (CLIENT_OS == OS_MORPHOS)
+    UQUAD freqhz;
+    if (NewGetSystemAttrsA(&freqhz, sizeof(freqhz),
+                           SYSTEMINFOTYPE_PPC_CPUCLOCK, NULL))
+    {
+      freq = (freqhz + 500000) / 1000000;
+    }
+  #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+    struct timeval tv1, tv2, elapsed_time;
+    ui64 calltime = x86rdtsc();
+    sleep(0);
+    calltime = x86rdtsc() - calltime;
+    
+    CliGetMonotonicClock(&tv1); 
+    ui64 prevtime = x86rdtsc();
+    sleep(1);
+    ui64 newtime = x86rdtsc();
+    CliGetMonotonicClock(&tv2);
+    CliTimerDiff(&elapsed_time,&tv1,&tv2);
+
+    freq = (unsigned int)((newtime - prevtime - calltime) / (elapsed_time.tv_usec + elapsed_time.tv_sec * 1000000));
+    if (freq != 0)
+    {
+      if (freq < 250) {
+        unsigned int nearest25, nearest30, nearest33;
+        if ((freq - ((unsigned int)(freq / 25) * 25)) < 
+          (unsigned int)abs(freq - (((unsigned int)(freq / 25) + 1) * 25)))
+        {
+          nearest25 = (unsigned int)(freq / 25) * 25;
+        } else {
+          nearest25 = ((unsigned int)(freq / 25) + 1) * 25;
+        }
+        if ((freq - ((unsigned int)(freq / 30) * 30)) < 
+          (unsigned int)abs(freq - (((unsigned int)(freq / 30) + 1) * 30)))
+        {
+          nearest30 = (unsigned int)(freq / 30) * 30;
+        } else {
+          nearest30 = ((unsigned int)(freq / 30) + 1) * 30;
+        }
+        if ((freq - ((unsigned int)(freq / (100.0/3.0)) * (100.0/3.0))) < 
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / (100.0/3.0)) + 1) * (100.0/3.0)))))
+        {
+          nearest33 = (unsigned int)((unsigned int)(freq / (100.0/3.0)) * (100.0/3.0));
+        } else {
+          nearest33 = (unsigned int)(((unsigned int)(freq / (100.0/3.0)) + 1) * (100.0/3.0));
+        }
+        if (abs(freq - nearest25) < abs(freq - nearest30))
+        {
+          if (abs(freq - nearest25) < abs(freq - nearest33))
+          {
+            freq = nearest25;
+          } else {
+            freq = nearest33;
+          }
+        } 
+        else if (abs(freq - nearest30) < abs(freq - nearest33))
+        {
+          freq = nearest30;
+        } else {
+          freq = nearest33;
+        }
+      } else {
+        unsigned int nearest50, nearest66, nearest166;
+        if ((freq - ((unsigned int)(freq / (50.0)) * (50.0))) <
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / (50.0)) + 1) * (50.0)))))
+        {
+          nearest50 = (unsigned int)((unsigned int)(freq / (50.0)) * (50.0)); 
+        } else {
+          nearest50 = (unsigned int)(((unsigned int)(freq / (50.0)) + 1) * (50.0));
+        }
+        if ((freq - ((unsigned int)(freq / (200.0/3.0)) * (200.0/3.0))) < 
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / (200.0/3.0)) + 1) * (200.0/3.0)))))
+        {
+          nearest66 = (unsigned int)((unsigned int)(freq / (200.0/3.0)) * (200.0/3.0));
+        } else {
+          nearest66 = (unsigned int)(((unsigned int)(freq / (200.0/3.0)) + 1) * (200.0/3.0));
+        }
+        if ((freq - ((unsigned int)(freq / (500.0/3.0)) * (500.0/3.0))) < 
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / (500.0/3.0)) + 1) * (500.0/3.0)))))
+        {
+          nearest166 = (unsigned int)((unsigned int)(freq / (500.0/3.0)) * (500.0/3.0));
+        } else {
+          nearest166 = (unsigned int)(((unsigned int)(freq / (500.0/3.0)) + 1) * (500.0/3.0));
+        }
+        if (abs(freq - nearest50) < abs(freq - nearest66))
+        {
+          if (abs(freq - nearest50) < abs(freq - nearest166))
+          {
+            freq = nearest50;
+          } else {
+            freq = nearest166;
+          }
+        } 
+        else if (abs(freq - nearest66) < abs(freq - nearest166))
+        {
+          freq = nearest66;
+        } else {
+          freq = nearest166;
+        }
+      }
+    }
+  #elif  (CLIENT_OS == OS_LINUX) && \
+        ((CLIENT_CPU == CPU_POWERPPC) || (CLIENT_CPU == CPU_CELLBE))
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+    if ( cpuinfo )
+    {
+      char buffer[256];
+      while(fgets(buffer, sizeof(buffer), cpuinfo))
+      {
+        buffer[sizeof(buffer) - 1] = '\0';
+        if (strncmp(buffer, "clock\t\t: ", 9) == 0)
+        {
+          freq = (unsigned int)strtod(buffer+9, NULL);
+          break;
+        }
+      }
+      fclose(cpuinfo);
+    }
+  #endif
+
+  return freq;
+}
+
 //get a set of supported processor features
 //cores may get disabled due to missing features
 unsigned long GetProcessorFeatureFlags()
 {
-  #if (CLIENT_CPU == CPU_X86)
-  return __GetRawProcessorID(NULL, 'f');
+  #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+    return (__GetRawProcessorID(NULL, 'f')) | (x86features());
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+    unsigned long ppc_features = 0;
+    #if (CLIENT_OS == OS_MACOS)
+      /* AltiVec software support and hardware support/exsitence */
+      if (Gestalt( gestaltSystemVersion, &result ) == noErr) {   
+        if (result >= 860) /* Mac OS 8.6 and above? */ {
+          if (Gestalt(gestaltPowerPCProcessorFeatures, &result) == noErr) {
+            if ( ((1 << gestaltPowerPCHasVectorInstructions) & result) != 0)
+              ppc_features |= CPU_F_ALTIVEC;
+          }
+        }
+      }
+    #elif (CLIENT_OS == OS_MACOSX)
+      // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check
+      // for
+      int mib[2] = {CTL_HW, HW_VECTORUNIT};
+      const char *sysname = "hw.cpusubtype";
+      int hasVectorUnit, cpuSubType;
+      size_t len = sizeof(hasVectorUnit);
+      if (sysctl( mib, 2, &hasVectorUnit, &len, NULL, 0 ) == 0) {
+        if (hasVectorUnit != 0)
+          ppc_features |= CPU_F_ALTIVEC;
+      }
+
+      len = sizeof(cpuSubType);
+      if (sysctlbyname( sysname, &cpuSubType, &len, NULL, 0 ) == 0) {
+        if (cpuSubType == CPU_SUBTYPE_POWERPC_970)
+          ppc_features |= CPU_F_64BITOPS;
+      }
+    #elif (CLIENT_OS == OS_LINUX)
+      // Can someone write something better ?
+      long type = __GetRawProcessorID(NULL);
+      if ( (type & (1L << 25)) != 0)
+        ppc_features |= CPU_F_ALTIVEC;
+      if ( (type & 0xFFFF) == 0x0070) {     /* Cell Broadband Engine */
+        ppc_features |= CPU_F_64BITOPS;
+        ppc_features |= CPU_F_SYNERGISTIC;
+      }
+    #elif (CLIENT_OS == OS_AMIGAOS)  // AmigaOS PPC
+      #if defined(__amigaos4__)
+        /* AmigaOS 4.x */
+        ULONG vec;
+        char *extensions;
+        IExec->GetCPUInfoTags(GCIT_VectorUnit, &vec, GCIT_Extensions, &extensions, TAG_DONE);
+
+        if ((vec == VECTORTYPE_ALTIVEC) &&
+            (extensions && strstr(extensions,"altivec")) &&
+            ((SysBase->LibNode.lib_Version == 51 && SysBase->LibNode.lib_Revision >= 12) || SysBase->LibNode.lib_Version > 51))
+        {
+           ppc_features |= CPU_F_ALTIVEC;
+        }
+      #endif
+    #elif (CLIENT_OS == OS_MORPHOS)  // MorphOS
+      /* Altivec support was added in MorphOS 1.5 */
+      struct Resident *m_res = FindResident("MorphOS");
+      if (m_res && (m_res->rt_Flags & RTF_EXTENDED) &&
+            ((m_res->rt_Version == 1 && m_res->rt_Revision >= 5) ||
+            m_res->rt_Version > 1))
+      {
+        if ((SysBase->LibNode.lib_Version == 50 && SysBase->LibNode.lib_Revision >= 60)
+          || SysBase->LibNode.lib_Version > 50)
+      {
+        ULONG avf = 0;
+        NewGetSystemAttrsA(&avf, sizeof(avf), SYSTEMINFOTYPE_PPC_ALTIVEC, NULL);
+        if (avf)
+        {
+          ppc_features |= CPU_F_ALTIVEC;
+        }
+      }
+    }
+    #endif
+    return ppc_features;
+
   #else
-  return 0;
+    return 0;
   #endif
 }
 
@@ -2027,18 +2612,18 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
 {
   const char *maxcpu_s, *foundcpu_s, *cpuid_s;
 
-#if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K) || \
+#if (CLIENT_CPU == CPU_ALPHA)   || (CLIENT_CPU == CPU_68K)   || \
     (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
-    (CLIENT_CPU == CPU_X86)     || (CLIENT_CPU == CPU_X86_64) || \
-    (CLIENT_CPU == CPU_MIPS)    || (CLIENT_CPU == CPU_SPARC) || \
-    (CLIENT_CPU == CPU_ARM)
+    (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
+    (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
+    (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)
   long rawid = __GetRawProcessorID(&cpuid_s);
   if (rawid < 0)
     cpuid_s = ((rawid==-1)?("?\n\t(identification failed)"):
               ("none\n\t(client does not support identification)"));
   else
   {
-    static char namebuf[60];
+    static char namebuf[200];
     if (cpuid_s == NULL) cpuid_s = "*unknown*";
     if (*cpuid_s =='\0') cpuid_s = "???";
   #if (CLIENT_CPU == CPU_ARM)
@@ -2050,13 +2635,46 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     if (riscos_count_cpus() == 2)
       strcat(strcat(namebuf,"\n\t+ "),riscos_x86_determine_name());
     #endif
-  #elif (CLIENT_CPU == CPU_X86)
+  #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+    long features;
     namebuf[0] = '\0';
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%04x:%04x" */
       sprintf( namebuf, "%04X:%04X\n\tname: ",(int)((rawid>>16)&0xffff),(int)(rawid&0xffff));
     strcat( namebuf, cpuid_s ); /* always valid */
+    strcat( namebuf, "\n\tfeatures: " );
+    features = GetProcessorFeatureFlags();
+    if (features & CPU_F_MMX) {
+      strcat( namebuf, "MMX " );
+    }
+    if (features & CPU_F_CYRIX_MMX_PLUS) {
+      strcat( namebuf, "Cyrix_MMX+ " );
+    }
+    if (features & CPU_F_AMD_MMX_PLUS) {   
+      strcat( namebuf, "AMD_MMX+ " );   
+    }
+    if (features & CPU_F_3DNOW) {   
+      strcat( namebuf, "3DNOW " );   
+    }
+    if (features & CPU_F_3DNOW_PLUS) {   
+      strcat( namebuf, "3DNOW+ " );   
+    }
+    if (features & CPU_F_SSE) {   
+      strcat( namebuf, "SSE " );   
+    }
+    if (features & CPU_F_SSE2) {   
+      strcat( namebuf, "SSE2 " );   
+    }
+    if (features & CPU_F_SSE3) {   
+      strcat( namebuf, "SSE3 " );   
+    }
+    if (features & CPU_F_AMD64) {
+      strcat( namebuf, "AMD64 " );
+    }
+    if (features & CPU_F_EM64T) {
+      strcat( namebuf, "EM64T " );
+    }
   #else
-    sprintf(namebuf, "%ld\n\tname: %s\n", rawid, cpuid_s );
+    sprintf(namebuf, "%ld\n\tname: %s", rawid, cpuid_s );
   #endif
     cpuid_s = ((const char *)(&namebuf[0]));
   }    
@@ -2106,11 +2724,13 @@ void DisplayProcessorInformation(void)
 {
   const char *scpuid, *smaxscpus, *sfoundcpus;
   GetProcessorInformationStrings( &scpuid, &smaxscpus, &sfoundcpus );
+  unsigned int clockmhz = GetProcessorFrequency();
 
   LogRaw("Automatic processor identification tag: %s\n"
+    "Estimated processor clock speed (0 if unknown): %u MHz\n"
     "Number of processors detected by this client: %s\n"
     "Number of processors supported by this client: %s\n",
-    scpuid, sfoundcpus, smaxscpus );
+    scpuid, clockmhz, sfoundcpus, smaxscpus );
   return;
 }
 

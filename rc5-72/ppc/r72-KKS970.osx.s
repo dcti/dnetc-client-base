@@ -47,11 +47,17 @@
 ;# adding extra latencies (stalls) to the VSIU instruction pattern, the keyrate
 ;# would be near 16 MKeys/s when running at 2 GHz.
 ;#
-;# $Id: r72-KKS970.osx.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+;# $Id: r72-KKS970.osx.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 ;#
 ;# $Log: r72-KKS970.osx.s,v $
-;# Revision 1.2  2003/09/12 23:08:52  mweiser
-;# add new files from release-2-90xx
+;# Revision 1.3  2007/10/22 16:48:36  jlawson
+;# overwrite head with contents of release-2-90xx
+;#
+;# Revision 1.1.2.3  2004/03/04 17:42:58  piru
+;# Fixed to build with GNU assembler.
+;#
+;# Revision 1.1.2.2  2004/01/08 20:37:38  oliver
+;# Should compile also with GNU assembler now.
 ;#
 ;# Revision 1.1.2.1  2003/07/16 00:38:04  mfeiri
 ;# Add KKS 970
@@ -64,6 +70,8 @@
 		.text
 		.align	4
 		.globl	_rc5_72_unit_func_KKS970
+		.globl	rc5_72_unit_func_KKS970
+		.globl	.rc5_72_unit_func_KKS970
 
 
 ;# Register aliases (gas support)
@@ -134,6 +142,7 @@
 ;.set	v30,30
 ;.set	v31,31
 
+;.set	VRsave,0x100
 
 ;# Result values (see ccoreio.h)
 
@@ -168,9 +177,9 @@
 .set lo16_P,	(P & 0xFFFF)
 .set hi16_Q,	(Q >> 16)
 .set lo16_Q,	(Q & 0xFFFF)
-.set hi16_P2Q,	((P+2*Q) >> 16)
+.set hi16_P2Q,	(((P+2*Q) >> 16) & 0xFFFF)
 .set lo16_P2Q,	((P+2*Q) & 0xFFFF)
-.set hi16_P3Q,	((P+3*Q) >> 16)
+.set hi16_P3Q,	(((P+3*Q) >> 16) & 0xFFFF)
 .set lo16_P3Q,	((P+3*Q) & 0xFFFF)
 
 
@@ -305,6 +314,8 @@
 ;#						void * /* memblk (r5) */)
 
 _rc5_72_unit_func_KKS970:
+rc5_72_unit_func_KKS970:
+.rc5_72_unit_func_KKS970:
 
 		;# Allocate the stack frame
 		mr		r5,r1				;# Caller's stack pointer

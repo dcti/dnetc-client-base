@@ -7,7 +7,7 @@
  * RISC OS assembler support functions
 */
 #ifndef __RISCOS_ASM_H__
-#define __RISCOS_ASM_H__ "@(#)$Id: riscos_asm.h,v 1.4 2003/11/01 15:07:10 mweiser Exp $"
+#define __RISCOS_ASM_H__ "@(#)$Id: riscos_asm.h,v 1.5 2007/10/22 16:48:31 jlawson Exp $"
 
 #ifdef __cplusplus
 extern "C" {

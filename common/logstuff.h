@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.16 2003/11/01 14:20:13 mweiser Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.17 2007/10/22 16:48:26 jlawson Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file
@@ -59,7 +59,7 @@ extern const char *LogGetCurrentLogFilename(char *buffer, unsigned int len);
 //init/deinit prototypes
 void DeinitializeLogging(void);
 void InitializeLogging( int noscreen, int nopercent, int nopercbaton,
-                        const char *logfilename, 
+                        const char *logfilename, int rotateUTC,
                         const char *logfiletype, const char *logfilelimit, 
                         long mailmsglen, const char *smtpsrvr, 
                         unsigned int smtpport, const char *smtpfrom, 

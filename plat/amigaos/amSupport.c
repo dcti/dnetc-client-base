@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.4 2003/11/01 14:20:15 mweiser Exp $
+ * $Id: amSupport.c,v 1.5 2007/10/22 16:48:30 jlawson Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -23,26 +23,47 @@
 #endif
 
 #include "amiga.h"
-#include "sleepdef.h"
 #include "modereq.h"
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack(2)
 #endif
+
+#if __MORPHOS__
+#define USE_RESETHANDLER 1
+#endif
+
+#if USE_RESETHANDLER
+#include <exec/io.h>
+#include <devices/keyboard.h>
+#include <devices/timer.h>
+#endif
+
 
 #include <workbench/startup.h>
 #include <proto/locale.h>
 #include <proto/timer.h>
+#ifndef NO_GUI
 #include "proto/dnetcgui.h"
+#endif
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack()
 #endif
 
-#ifndef __PPC__
-unsigned long __stack = 65536L;
-static struct MsgPort *TriggerPort;
+#ifndef __OS3PPC__
+
+#if defined(__amigaos4__)
+char *__stack_string = "$STACK:200000";
+#elif defined(__MORPHOS__)
+unsigned long __stack = 200000L;
 #else
+unsigned long __stack = 65536L;
+#endif
+static struct MsgPort *TriggerPort;
+
+#else
+
 #ifdef CHANGE_MIRROR_TASK_PRI
 static LONG Old68kMirrorPri; /* Used to restore shell priority on exit */
 #endif
@@ -52,6 +73,7 @@ static void *TriggerPort;
 #else
 static struct MsgPortPPC *TriggerPort;
 #endif
+
 #endif
 
 struct TriggerMessage
@@ -63,38 +85,201 @@ struct TriggerMessage
 extern BOOL GlobalTimerInit(VOID);
 extern VOID GlobalTimerDeinit(VOID);
 extern VOID CloseTimer(VOID);
-struct Device *OpenTimer(BOOL isthread);
+struct Library *OpenTimer(BOOL isthread);
 extern struct Library *SocketBase;
+#ifdef __amigaos4__
+extern struct Interface *ISocket;
+#endif
 
+#ifndef __MORPHOS__
 const char *amigaGetOSVersion(void)
 {
-   static const char *osver[11] = { "2.0","2.0x","2.1","3.0","3.1","3.2","3.3","3.4","3.5","3.9","4.0" };
+   static const char *osver[] = { "2.0","2.0x","2.1","3.0","3.1","3.2","3.3","3.4","3.5","3.9","3.9","3.9","3.9","3.9","4.0pre","4.0pre","4.0" };
    int ver = SysBase->LibNode.lib_Version;
-   if (ver >= 40) {   // Detect OS 3.5/3.9
+   #ifndef __amigaos4__
+   if (ver >= 40 && ver < 50) {   // Detect OS 3.5/3.9
       struct Library *VersionBase;
       if ((VersionBase = OpenLibrary("version.library",0))) {
          ver = VersionBase->lib_Version;
          CloseLibrary(VersionBase);
       }
    }
-   ver -= 36;
-   if (ver > (46-36)) ver = (44-36);
-   return osver[ver];
+   #endif
+   #ifdef __POWERUP__
+   if (FindResident("MorphOS") && ver > 45) ver = 45;
+   #endif
+   if (ver < 36) ver = 36;
+   else if (ver > 51) ver = 51;
+   return osver[ver-36];
 }
+#endif
+
+#if USE_RESETHANDLER
+
+struct rhdata
+{
+  struct ExecBase   *SysBase;
+  struct Task       *Self;
+  struct MsgPort    *msgport;
+  struct IOStdReq   *ioreq;
+  struct timerequest timereq;
+  struct Interrupt   is;
+  int                handleradded;
+  int                rebooting;
+  int                timing;
+};
+
+static struct rhdata _rhdata, *rhdata = &_rhdata;
+
+
+static void native_resethandler(struct rhdata *rhdata)
+{
+  struct ExecBase *SysBase = rhdata->SysBase;
+
+  /* Indicate we're rebooting... */
+  rhdata->rebooting = TRUE;
+
+  /* Ask ourself to terminate. */
+  Signal(rhdata->Self, SIGBREAKF_CTRL_C);
+}
+
+#ifdef __MORPHOS__
+static void gate_resethandler(void)
+{
+  struct rhdata *rhdata = (struct rhdata *) REG_A1;
+  native_resethandler(rhdata);
+}
+static struct EmulLibEntry rhgate  = {TRAP_LIBNR, 0, gate_resethandler};
+#define resethandler_code  &rhgate
+
+#else
+
+#error "TODO: You must implement resethandler_code for your OS"
+
+#endif
+
+static void rem_resethandler(void);
+
+static int add_resethandler(void)
+{
+  int ok = FALSE;
+
+  bzero(rhdata, sizeof(*rhdata));
+  rhdata->SysBase = SysBase;
+  rhdata->Self    = FindTask(NULL);
+  rhdata->msgport = CreateMsgPort();
+  if (rhdata->msgport)
+  {
+    rhdata->ioreq = (struct IOStdReq *) CreateIORequest(rhdata->msgport, sizeof(struct IOStdReq));
+    if (rhdata->ioreq)
+    {
+      if (OpenDevice("keyboard.device", 0, (struct IORequest *) rhdata->ioreq, 0) == 0)
+      {
+        rhdata->is.is_Node.ln_Type = NT_INTERRUPT;
+        rhdata->is.is_Node.ln_Pri  = 64;
+        rhdata->is.is_Node.ln_Name = "distributed.net client";
+        rhdata->is.is_Data         = (APTR) rhdata;
+        rhdata->is.is_Code         = (void (*)(void)) resethandler_code;
+
+        rhdata->ioreq->io_Command = KBD_ADDRESETHANDLER;
+        rhdata->ioreq->io_Data    = (APTR) &rhdata->is;
+        DoIO((struct IORequest *) rhdata->ioreq);
+
+        rhdata->handleradded = TRUE;
+
+        ok = TRUE;
+      }
+    }
+  }
+
+  if (!ok)
+  {
+    rem_resethandler();
+  }
+
+  return ok;
+}
+
+static void rem_resethandler(void)
+{
+  if (rhdata->ioreq)
+  {
+    if (rhdata->handleradded)
+    {
+      if (rhdata->rebooting)
+      {
+        rhdata->timereq.tr_node.io_Message.mn_Node.ln_Type = NT_REPLYMSG;
+        rhdata->timereq.tr_node.io_Message.mn_Node.ln_Pri  = 0;
+        rhdata->timereq.tr_node.io_Message.mn_ReplyPort    = rhdata->msgport;
+        rhdata->timereq.tr_node.io_Message.mn_Length       = sizeof(rhdata->timereq);
+
+        if (OpenDevice(TIMERNAME, UNIT_VBLANK, &rhdata->timereq.tr_node, 0) == 0)
+        {
+          rhdata->timereq.tr_node.io_Command = TR_ADDREQUEST;
+          rhdata->timereq.tr_time.tv_secs    = 3;
+          rhdata->timereq.tr_time.tv_micro   = 0;
+
+          SendIO(&rhdata->timereq.tr_node);
+          rhdata->timing = TRUE;
+        }
+
+        return;
+      }
+
+      rhdata->handleradded = FALSE;
+
+      rhdata->ioreq->io_Command = KBD_REMRESETHANDLER;
+      rhdata->ioreq->io_Data    = (APTR) &rhdata->is;
+      DoIO((struct IORequest *) rhdata->ioreq);
+
+      CloseDevice((struct IORequest *) rhdata->ioreq);
+    }
+
+    DeleteIORequest((struct IORequest *) rhdata->ioreq); rhdata->ioreq = NULL;
+  }
+
+  if (rhdata->msgport)
+  {
+    DeleteMsgPort(rhdata->msgport); rhdata->msgport = NULL;
+  }
+}
+
+static void finish_resethandler(void)
+{
+  if (rhdata->rebooting)
+  {
+    if (rhdata->timing)
+    {
+      /* Wait until 3 seconds has passed allowing disk buffers to flush. */
+      WaitIO(&rhdata->timereq.tr_node);
+      CloseDevice(&rhdata->timereq.tr_node);
+    }
+
+    /* Tell system it's ok to reboot now. */
+    rhdata->ioreq->io_Command = KBD_RESETHANDLERDONE;
+    rhdata->ioreq->io_Data    = (APTR) &rhdata->is;
+    DoIO((struct IORequest *) rhdata->ioreq);
+
+    rhdata->rebooting = FALSE;
+    rem_resethandler();
+  }
+}
+
+
+#endif
 
 int amigaInit(int *argc, char **argv[])
 {
    int done = TRUE;
 
-   #ifndef __POWERUP__
+   #if !defined(__POWERUP__) && !defined(__amigaos4__) && !defined(__MORPHOS__)
    if (!MemInit()) return FALSE;
    #endif
 
-   #ifdef __PPC__
+   #ifdef __OS3PPC__
    /*
    ** PPC
    */
-   //SetProgramName("dnetc_ppc");
 
    /* Set the priority of the PPC 68k mirror main task */
    #ifdef CHANGE_MIRROR_TASK_PRI
@@ -159,15 +344,14 @@ int amigaInit(int *argc, char **argv[])
 
    #else
    /*
-   ** 68K
+   ** 68K / OS4 / MorphOS
    */
-   //SetProgramName("dnetc_68k");
 
    struct MsgPort *portexists;
-   Forbid();
-   portexists = FindPort("dnetc");
-   Permit();
 
+   Forbid();
+
+   portexists = FindPort("dnetc");
    if (!portexists) {
       if ((TriggerPort = CreateMsgPort())) {
          TriggerPort->mp_Node.ln_Name = "dnetc";
@@ -179,26 +363,20 @@ int amigaInit(int *argc, char **argv[])
       }
    }
 
-   /*if (done) {
-      if ((SysInfoBase = OpenLibrary("SysInfo.library",0))) {
-         SysInfo = InitSysInfo();
-      }
-   }*/
+   Permit();
    #endif
 
    if (!TimerBase && done) done = GlobalTimerInit();
 
    if (!done) amigaExit();
 
-   #ifndef NOGUI
+   #ifndef NO_GUI
    /* Workbench startup */
    if (done && *argc == 0) {
       struct WBStartup *wbs = (struct WBStartup *)*argv;
       struct WBArg *arg = wbs->sm_ArgList;
-      static char /*cmdname[256],*/ *newargv[1] = { (char *)arg->wa_Name };
-
-      //NameFromLock(wbs->sm_ArgList->wa_Lock,cmdname,256);
-      //AddPart(cmdname,wbs->sm_ArgList->wa_Name,256);
+      static char *newargv[1];
+      newargv[0] = (char *)arg->wa_Name;
 
       *argc = 1;
       *argv = newargv;
@@ -209,10 +387,16 @@ int amigaInit(int *argc, char **argv[])
       }
 
       if (!(amigaGUIInit((char *)wbs->sm_ArgList->wa_Name,arg))) {
-         if (!(amigaOpenNewConsole("CON:////distributed.net client/CLOSE/WAIT"))) {
+         if (!(amigaOpenNewConsole("CON://630/300/distributed.net client/CLOSE/WAIT"))) {
             done = FALSE;
          }
       }
+   }
+   #endif
+
+   #if USE_RESETHANDLER
+   if (done) {
+      add_resethandler();
    }
    #endif
 
@@ -221,15 +405,23 @@ int amigaInit(int *argc, char **argv[])
 
 void amigaExit(void)
 {
-   #ifndef NOGUI
+   #if USE_RESETHANDLER
+   rem_resethandler();
+   #endif
+
+   #ifndef NO_GUI
    amigaCloseNewConsole();
    amigaGUIDeinit();
    #endif
 
-   GlobalTimerDeinit();
+   #ifdef __amigaos4__
+   if (ILocale) DropInterface((struct Interface *)ILocale);
+   if (ISocket) DropInterface((struct Interface *)ISocket);
+   #endif
    CloseLibrary((struct Library *)LocaleBase);
-   CloseLibrary(SocketBase); // ensure something hasn't left this open
-   #ifdef __PPC__
+   CloseLibrary((struct Library *)SocketBase);
+
+   #ifdef __OS3PPC__
    /*
    ** PPC
    */
@@ -241,7 +433,7 @@ void amigaExit(void)
    ** PowerUp
    */
    if (TriggerPort) {
-      while (!PPCDeletePort(TriggerPort)) usleep(250000);
+      while (!PPCDeletePort(TriggerPort)) amigaSleep(0,250000);
    }
    CloseLibrary(PPCLibBase);
    #else
@@ -255,16 +447,18 @@ void amigaExit(void)
    #endif
    #else
    /*
-   ** 68K
+   ** 68K / OS4 / MorphOS
    */
-   /*if (SysInfoBase) {
-      if (SysInfo) FreeSysInfo(SysInfo);
-      CloseLibrary(SysInfoBase);
-   }*/
    if (TriggerPort) {
       RemPort(TriggerPort);
       DeleteMsgPort(TriggerPort);
    }
+   #endif
+
+   GlobalTimerDeinit();
+
+   #if USE_RESETHANDLER
+   finish_resethandler();
    #endif
 }
 
@@ -286,13 +480,13 @@ ULONG amigaGetTriggerSigs(void)
 
    if ( sigr & SIGBREAKF_CTRL_C ) trigs |= DNETC_MSG_SHUTDOWN;
 
-   #ifndef NOGUI
+   #ifndef NO_GUI
    if ( DnetcBase && ModeReqIsSet(-1) ) trigs |= dnetcguiHandleMsgs(sigr);
    #endif
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    /*
-   ** 68K
+   ** 68K / OS4 / MorphOS
    */
    if ( TriggerPort && sigr & 1L << TriggerPort->mp_SigBit ) {
       struct TriggerMessage *msg;
@@ -332,9 +526,9 @@ int amigaPutTriggerSigs(ULONG trigs)
 {
    int done = -1;
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    /*
-   ** 68K
+   ** 68K / OS4 / MorphOS
    */
    struct TriggerMessage msg;
    if ((msg.tm_ExecMsg.mn_ReplyPort = CreateMsgPort())) {
@@ -358,8 +552,7 @@ int amigaPutTriggerSigs(ULONG trigs)
       }
       DeleteMsgPort(msg.tm_ExecMsg.mn_ReplyPort);
    }
-   #else
-   #ifndef __POWERUP__
+   #elif !defined(__POWERUP__)
    /*
    ** WarpOS
    */
@@ -398,20 +591,20 @@ int amigaPutTriggerSigs(ULONG trigs)
                   PPCWaitPort(replyport);
                   PPCGetMessage(replyport);
                   done = 1;
-	       }
-	    }
+               }
+            }
             PPCReleasePort(port);
-	 }
+         }
          PPCDeleteMessage(msg);
       }
       PPCDeletePort(replyport);
    }
    #endif
-   #endif
 
    return(done);
 }
 
+#if !defined(__amigaos4__) && !defined(__MORPHOS__)
 extern unsigned long *__stdfiledes;	// libnix internal
 
 int ftruncate(int fd, int newsize)
@@ -420,8 +613,9 @@ int ftruncate(int fd, int newsize)
    if (result != -1) return 0;
    return(result);
 }
+#endif
 
-#if defined(__PPC__) && defined(__POWERUP__)
+#if defined(__OS3PPC__) && defined(__POWERUP__)
 /*
 ** libnix for PowerUp has broken strncpy().  Was causing NetResolve to trash
 ** addresses, confrwv.cpp to crash, and probably heaps of other problems!
@@ -479,6 +673,8 @@ int chmod(const char *name, mode_t mode)
 /*
 ** libnix for PowerUp has a broken isatty() - writes to 0x100000!
 */
+extern unsigned long *__stdfiledes;	// libnix internal
+
 asm(".section	\".text\"\n\t.align 2\n\t.globl __isatty\n\t.type\t __isatty,@function\n__isatty:\n");
 int __isatty(int d)
 {
@@ -629,4 +825,53 @@ void __exitcommandline(void)
 ADD2INIT(__nocommandline,-40);
 ADD2EXIT(__exitcommandline,-40);
 
-#endif /* defined(__PPC__) && defined(__POWERUP__) */
+#endif /* defined(__OS3PPC__) && defined(__POWERUP__) */
+
+#ifdef __MORPHOS__
+
+/*
+** libnix for MorphOS is missing ftruncate()
+*/
+
+extern unsigned long *__stdfiledes;	// libnix internal
+
+int ftruncate(int fd, int newsize)
+{
+   int result = SetFileSize(__stdfiledes[fd],newsize,OFFSET_BEGINNING);
+   if (result != -1) return 0;
+   return(result);
+}
+
+/*
+** libnix for MorphOS is missing chmod()
+*/
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dos/dosextens.h>
+
+__BEGIN_DECLS
+extern void __seterrno(void);
+extern char *__amigapath(const char *path);
+__END_DECLS
+
+int chmod(const char *name, mode_t mode)
+{ int ret;
+
+  if((name=__amigapath(name))==NULL)
+    return -1;
+
+  if ((ret=~(SetProtection((STRPTR)name,((mode&S_IRUSR?0:FIBF_READ)|
+                                         (mode&S_IWUSR?0:FIBF_WRITE|FIBF_DELETE)|
+                                         (mode&S_IXUSR?0:FIBF_EXECUTE)|
+                                         (mode&S_IRGRP?FIBF_GRP_READ:0)|
+                                         (mode&S_IWGRP?FIBF_GRP_WRITE|FIBF_GRP_DELETE:0)|
+                                         (mode&S_IXGRP?FIBF_GRP_EXECUTE:0)|
+                                         (mode&S_IROTH?FIBF_OTR_READ:0)|
+                                         (mode&S_IWOTH?FIBF_OTR_WRITE|FIBF_OTR_DELETE:0)|
+                                         (mode&S_IXOTH?FIBF_OTR_EXECUTE:0))))))
+    __seterrno();
+                              
+  return ret;
+}
+
+#endif /* __MORPHOS__ */

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.35 2003/11/01 14:20:13 mweiser Exp $"
+#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.36 2007/10/22 16:48:25 jlawson Exp $"
 
 // ConIsScreen() returns non-zero if console represents the screen
 // also returns 0 if the console is not initialized.

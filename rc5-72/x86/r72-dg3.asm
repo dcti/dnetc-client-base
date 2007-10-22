@@ -3,7 +3,14 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.5 2003/11/01 14:20:15 mweiser Exp $
+; $Id: r72-dg3.asm,v 1.6 2007/10/22 16:48:36 jlawson Exp $
+
+; Modified by Alexey <alexey.kovalev@intel.com>
+; Performance impromevements for P4 2.667Ghz:
+; History:
+; - initial performance: 3,803,443 keys/sec
+; - "lea shiftreg, [A1 + B1]" in KEYSETUP_BLOCK was replaced with add's and 
+;     moved to top of macro: 4,371,251 keys/sec = +15% improvement
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -46,10 +53,13 @@ defwork work_P_1
 defwork work_C_0
 defwork work_C_1
 defwork work_iterations
+defwork RC5_72UnitWork
+defwork iterations
 defwork save_ebx
 defwork save_esi
 defwork save_edi
 defwork save_ebp
+defwork save_esp
 
 %define RC5_72UnitWork_plainhi  eax+0
 %define RC5_72UnitWork_plainlo  eax+4
@@ -63,8 +73,8 @@ defwork save_ebp
 %define RC5_72UnitWork_CMCmid   eax+36
 %define RC5_72UnitWork_CMClo    eax+40
 
-%define RC5_72UnitWork          esp+work_size+4
-%define iterations              esp+work_size+8
+%define p_RC5_72UnitWork          esp+work_size+4
+%define p_iterations              esp+work_size+8
 
 %define S1(N)                   [work_s1+((N)*4)]
 %define S2(N)                   [work_s2+((N)*4)]
@@ -122,16 +132,20 @@ defwork save_ebp
 
 
 %macro KEYSETUP_BLOCK 3
-        rol     A1, 3
+
+	mov	shiftreg, B1
+	add     B1, L1(%3)
+        
+	rol     A1, 3	
         rol     A2, 3
         rol     A3, 3
 
-        lea     shiftreg, [A1 + B1]
-        add     B1, L1(%3)
+        add	shiftreg, A1
         mov     S1(%2), A1
 
         add     B1, A1
-        rol     B1, shiftcount
+        rol     B1, shiftcount 
+	
 %ifidn %1,S
         add     A1, S1(%2+1)
 %else
@@ -174,62 +188,72 @@ defwork save_ebp
 %endmacro
 
 %macro ENCRYPTION_BLOCK 1
-        mov     shiftreg, B1
-        xor     A1, B1
-        xor     A2, B2
-
+        xor     A1, B1	
+        mov     shiftreg, B1	
         rol     A1, shiftcount
-        mov     shiftreg, B2
         add     A1, S1(2*%1)
-
-        xor     A3, B3
+	
+        xor     A2, B2	
+	mov     shiftreg, B2	
         rol     A2, shiftcount
-        mov     shiftreg, B3
-
         add     A2, S2(2*%1)
+	        
+        xor     A3, B3		
+	mov     shiftreg, B3	
         rol     A3, shiftcount
-        mov     shiftreg, A1
+	add     A3, S3(2*%1)
+	
+        xor     B1, A1	
+        mov     shiftreg, A1	
+	rol     B1, shiftcount	
+	add     B1, S1(2*%1+1)
 
-        add     A3, S3(2*%1)
-        xor     B1, A1
-        xor     B2, A2
-
-        rol     B1, shiftcount
-        mov     shiftreg, A2
-        add     B1, S1(2*%1+1)
-
-        xor     B3, A3
-        rol     B2, shiftcount
-        mov     shiftreg, A3
-
+        xor     B2, A2	
+	mov     shiftreg, A2
+	rol     B2, shiftcount
         add     B2, S2(2*%1+1)
+		
+        xor     B3, A3
+        mov     shiftreg, A3
         rol     B3, shiftcount
-
         add     B3, S3(2*%1+1)
+
 %endmacro
 
 
 align 16
 startseg:
 rc5_72_unit_func_dg_3:
-rc5_72_unit_func_dg_3_:
 _rc5_72_unit_func_dg_3:
 
+	mov	ecx, esp
         sub     esp, work_size
-        mov     eax, [RC5_72UnitWork]
+        mov     eax, [p_RC5_72UnitWork]
+        mov     edx, [p_iterations]
+	and	esp, byte -64
+;
+; 2007-08-13 stream: don't ask me how this magic constant works - may be
+; variables in work area are placed better in P4 cache lines. It's necessary
+; for older P4's (e.g. Williamette) and has no effect on newer (e.g. "0.09u").
+;
+	sub	esp, byte 0+28
 
         mov     [save_ebp], ebp
         mov     [save_ebx], ebx
         mov     [save_esi], esi
-
+	mov	[save_esp], ecx
         mov     [save_edi], edi
+
+	mov	esi, edx	; == "mov esi, [iterations]" from below
+	mov	[iterations], edx
+	mov	[RC5_72UnitWork], eax
+
         mov     edx, [RC5_72UnitWork_plainlo]
         mov     edi, [RC5_72UnitWork_plainhi]
 
         mov     ebx, [RC5_72UnitWork_cipherlo]
         mov     ecx, [RC5_72UnitWork_cipherhi]
-        mov     esi, [iterations]
-
+        
         mov     [work_P_0], edx
         mov     [work_P_1], edi
         mov     edx, [RC5_72UnitWork_L0hi]
@@ -593,7 +617,7 @@ test_key_3:
 
 k7align 16
 inc_key:
-        cmp     dl, 0xFD
+        cmp     dl, 0xFB
         mov     ecx, [RC5_72UnitWork_L0mid]
         mov     ebx, [RC5_72UnitWork_L0lo]
 
@@ -708,6 +732,6 @@ finished:
 
         mov     edi, [save_edi]
         mov     ebp, [save_ebp]
-        add     esp, work_size
+        mov     esp, [save_esp]
 
         ret

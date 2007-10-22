@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amTime.c,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amTime.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -40,7 +40,7 @@
 
 #include "amiga.h"
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack(2)
 #endif
 
@@ -50,18 +50,27 @@
 #include <devices/timer.h>
 #include <stdlib.h>
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack()
 #endif
 
-#if (defined(__PPC__)) && (defined(__POWERUP__))
+#if defined(__OS3PPC__) && defined(__POWERUP__)
 #include <powerup/ppclib/time.h>
 #endif
 
 static int GMTOffset = -9999;
-struct Device *TimerBase = NULL;
 
-#ifdef __PPC__
+#ifdef __MORPHOS__
+#define TIMERBASETYPE  struct Library *
+#define LOCALEBASETYPE struct Library *
+#else
+#define TIMERBASETYPE  struct Device *
+#define LOCALEBASETYPE struct LocaleBase *
+#endif
+
+TIMERBASETYPE TimerBase = NULL;
+
+#ifdef __OS3PPC__
 
 #ifdef USE_PPCSYSTIME
 static struct timeval BaseTime;
@@ -71,7 +80,14 @@ static struct timeval BaseTime;
 static void *TimerObj = NULL;
 #endif
 
-#endif /* __PPC__ */
+#endif /* __OS3PPC__ */
+
+#ifdef __amigaos4__
+struct LocaleBase *LocaleBase = NULL;
+struct LocaleIFace *ILocale = NULL;
+struct TimerIFace *ITimer = NULL;
+#define DST_NONE 0
+#endif
 
 /* allocated on a per task basis */
 struct TimerResources
@@ -81,20 +97,35 @@ struct TimerResources
    BOOL                tr_TimerDevOpen;
    BOOL                tr_IsThread;
 
-   #if defined(__PPC__) && defined(__POWERUP__) && defined(USE_PPCDELAY)
+   #if defined(__OS3PPC__) && defined(__POWERUP__) && defined(USE_PPCDELAY)
    ULONG               tr_DelaySig;
    #endif
 };
 
-static int GetGMTOffset(void);
-
+#ifndef NO_GUI
 extern struct Library *DnetcBase;
+#endif
+
+/* Local prototypes */
+static int GetGMTOffset(void);
+TIMERBASETYPE OpenTimer(BOOL isthread);
+VOID CloseTimer(VOID);
+BOOL GlobalTimerInit(VOID);
+VOID GlobalTimerDeinit(VOID);
+#if !defined(__OS3PPC__)
+/* 68K / OS4 / MorphOS */
+static struct timerequest *amigaSleepAsync(struct TimerResources *res, unsigned int secs, unsigned int usecs);
+#elif defined(__POWERUP__)
+/* PowerUp */
+static void *amigaSleepAsync(unsigned int ticks, ULONG sigmask);
+#endif
+/********************/
 
 VOID CloseTimer(VOID)
 {
    struct TimerResources *res;
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    struct Task *task = FindTask(NULL);
    res = (struct TimerResources *)task->tc_UserData;
    #elif !defined(__POWERUP__)
@@ -105,7 +136,7 @@ VOID CloseTimer(VOID)
    #endif
 
    if (res) {
-      #if defined(__PPC__) && defined(__POWERUP__) && defined(USE_PPCDELAY)
+      #if defined(__OS3PPC__) && defined(__POWERUP__) && defined(USE_PPCDELAY)
       if (res->tr_DelaySig != (ULONG)-1) PPCFreeSignal(res->tr_DelaySig);
       #endif
 
@@ -116,7 +147,7 @@ VOID CloseTimer(VOID)
       if (res->tr_TimePort) DeleteMsgPort(res->tr_TimePort);
       FreeVec(res);
 
-      #ifndef __PPC__
+      #ifndef __OS3PPC__
       task->tc_UserData = NULL;
       #elif !defined(__POWERUP__)
       task->tp_Task.tc_UserData = NULL;
@@ -126,13 +157,14 @@ VOID CloseTimer(VOID)
    }
 }
 
-struct Device *OpenTimer(BOOL isthread)
+
+TIMERBASETYPE OpenTimer(BOOL isthread)
 {
-   struct Device *timerbase = NULL;
+   TIMERBASETYPE timerbase = NULL;
    struct TimerResources *res;
 
    if ((res = (struct TimerResources *)AllocVec(sizeof(struct TimerResources),MEMF_CLEAR|MEMF_PUBLIC))) {
-      #ifndef __PPC__
+      #ifndef __OS3PPC__
       (FindTask(NULL))->tc_UserData = (APTR)res;
       #elif !defined(__POWERUP__)
       (FindTaskPPC(NULL))->tp_Task.tc_UserData = (APTR)res;
@@ -142,14 +174,14 @@ struct Device *OpenTimer(BOOL isthread)
 
       if ((res->tr_TimePort = CreateMsgPort())) {
          if ((res->tr_TimeReq = (struct timerequest *)CreateIORequest(res->tr_TimePort,sizeof(struct timerequest)))) {
-            if (!OpenDevice((unsigned char *)"timer.device",UNIT_VBLANK,(struct IORequest *)res->tr_TimeReq,0)) {
+            if (!OpenDevice("timer.device",UNIT_VBLANK,(struct IORequest *)res->tr_TimeReq,0)) {
                res->tr_TimerDevOpen = TRUE;
-               timerbase = res->tr_TimeReq->tr_node.io_Device;
+               timerbase = (TIMERBASETYPE) res->tr_TimeReq->tr_node.io_Device;
 	    }
          }
       }
 
-      #if defined(__PPC__) && defined(__POWERUP__) && defined(USE_PPCDELAY)
+      #if defined(__OS3PPC__) && defined(__POWERUP__) && defined(USE_PPCDELAY)
       res->tr_DelaySig = (ULONG)-1;
       if (timerbase) {
          res->tr_DelaySig = PPCAllocSignal((ULONG)-1);
@@ -169,7 +201,11 @@ VOID GlobalTimerDeinit(VOID)
 {
    CloseTimer();
 
-   #if defined(__PPC__) && defined(__POWERUP__)
+   #ifdef __amigaos4__
+   if (ITimer) DropInterface((struct Interface *)ITimer);
+   #endif
+
+   #if defined(__OS3PPC__) && defined(__POWERUP__)
    #if defined(USE_PPCTIMER) || defined (USE_PPCSYSTIME)
    if (TimerObj) PPCDeleteTimerObject(TimerObj);
    #endif
@@ -183,8 +219,15 @@ BOOL GlobalTimerInit(VOID)
    GMTOffset = GetGMTOffset();
 
    done = ((TimerBase = OpenTimer(FALSE)) != NULL);
+   #ifdef __amigaos4__
+   if (done) {
+      if (!(ITimer = (struct TimerIFace *)GetInterface( (struct Library *)TimerBase, "main", 1L, NULL ))) {
+         done = FALSE;
+      }
+   }
+   #endif
 
-   #ifdef __PPC__
+   #ifdef __OS3PPC__
    #ifdef __POWERUP__
    /*
    ** PowerUp
@@ -221,7 +264,7 @@ BOOL GlobalTimerInit(VOID)
    #endif
 
    #endif
-   #endif /* __PPC__ */
+   #endif /* __OS3PPC__ */
 
    if (!done) {
       GlobalTimerDeinit();
@@ -230,23 +273,24 @@ BOOL GlobalTimerInit(VOID)
    return(done);
 }
 
-#ifndef NOGUI
-#if !defined(__PPC__)
-/* 68K */
-struct timerequest *amigaSleepAsync(struct TimerResources *res, unsigned int secs, unsigned int usecs)
+#ifndef NO_GUI
+#if !defined(__OS3PPC__)
+/* 68K / OS4 / MorphOS */
+static struct timerequest *amigaSleepAsync(struct TimerResources *res, unsigned int secs, unsigned int usecs)
 {
    res->tr_TimeReq->tr_node.io_Command = TR_ADDREQUEST;
+   {
    struct timeval *tv = &res->tr_TimeReq->tr_time;
    tv->tv_secs = secs + (usecs / 1000000);
    tv->tv_micro = usecs % 1000000;
+   }
    SendIO((struct IORequest *)res->tr_TimeReq);
 
    return(res->tr_TimeReq);
 }
-#endif
-#if defined(__POWERUP__)
+#elif defined(__POWERUP__)
 /* PowerUp */
-void *amigaSleepAsync(unsigned int ticks, ULONG sigmask)
+static void *amigaSleepAsync(unsigned int ticks, ULONG sigmask)
 {
    struct TagItem tags[4];
 
@@ -258,14 +302,14 @@ void *amigaSleepAsync(unsigned int ticks, ULONG sigmask)
    return PPCCreateTimerObject(tags);
 }
 #endif
-#endif
+#endif /* NO_GUI */
 
 void amigaSleep(unsigned int secs, unsigned int usecs)
 {
-#ifndef NOGUI
+#ifndef NO_GUI
    struct TimerResources *res;
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    res = (struct TimerResources *)(FindTask(NULL))->tc_UserData;
    #elif !defined(__POWERUP__)
    res = (struct TimerResources *)(FindTaskPPC(NULL))->tp_Task.tc_UserData;
@@ -278,7 +322,7 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
    #endif
 
    if (!res->tr_IsThread && DnetcBase) {
-      #if !defined(__PPC__)
+      #if !defined(__OS3PPC__)
       amigaHandleGUI(amigaSleepAsync(res,secs,usecs));
       #elif defined(__POWERUP__)
       if (ticks > 0) {
@@ -298,14 +342,14 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
    }
 #endif
 
-#if !defined(__PPC__) || !defined(USE_PPCDELAY)
+#if !defined(__OS3PPC__) || !defined(USE_PPCDELAY)
    /*
-   ** 68K 
+   ** 68K / OS4 / MorphOS
    */
-  #ifdef NOGUI
+  #ifdef NO_GUI
    struct TimerResources *res;
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    res = (struct TimerResources *)(FindTask(NULL))->tc_UserData;
    #elif !defined(__POWERUP__)
    res = (struct TimerResources *)(FindTaskPPC(NULL))->tp_Task.tc_UserData;
@@ -314,12 +358,13 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
    #endif
   #endif
    res->tr_TimeReq->tr_node.io_Command = TR_ADDREQUEST;
+   {
    struct timeval *tv = &res->tr_TimeReq->tr_time;
    tv->tv_secs = secs + (usecs / 1000000);
    tv->tv_micro = usecs % 1000000;
+   }
    DoIO((struct IORequest *)res->tr_TimeReq);
-#else
-#ifndef __POWERUP__
+#elif !defined(__POWERUP__)
    /*
    ** WarpOS 
    */
@@ -333,7 +378,7 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
    /*
    ** PowerUp 
    */
-  #ifdef NOGUI
+  #ifdef NO_GUI
    struct TimerResources *res = (struct TimerResources *)PPCGetTaskAttr(PPCTASKTAG_EXTUSERDATA);
   #endif
 
@@ -347,7 +392,6 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
       Delay(0);
    }
 #endif
-#endif
 }
 
 static int GetGMTOffset(void)
@@ -355,7 +399,17 @@ static int GetGMTOffset(void)
    struct Locale *locale;
    int gmtoffset = 0;
 
-   if (!LocaleBase) LocaleBase = (struct LocaleBase *)OpenLibrary("locale.library",38L);
+   if (!LocaleBase) {
+      LocaleBase = (LOCALEBASETYPE)OpenLibrary("locale.library",38L);
+      #ifdef __amigaos4__
+      if (LocaleBase) {
+         if (!(ILocale = (struct LocaleIFace *)GetInterface( (struct Library *)LocaleBase, "main", 1L, NULL ))) {
+            CloseLibrary((struct Library *)LocaleBase);
+            LocaleBase = NULL;
+	 }
+      }
+      #endif
+   }
 
    if (LocaleBase) {
       if ((locale = OpenLocale(NULL))) {
@@ -368,9 +422,9 @@ static int GetGMTOffset(void)
 
 int gettimeofday(struct timeval *tp, struct timezone *tzp)
 {
-#if !defined(__PPC__) || !defined(USE_PPCSYSTIME)
+#if !defined(__OS3PPC__) || !defined(USE_PPCSYSTIME)
    /*
-   ** 68K 
+   ** 68K / OS4
    */
    if (tp) {
       /* This check required as C++ class init code calls this routine */
@@ -379,8 +433,7 @@ int gettimeofday(struct timeval *tp, struct timezone *tzp)
       /* add the offset from UNIX to AmigaOS time system */
       tp->tv_sec += 2922 * 24 * 3600 + 60 * GMTOffset;
    }
-#else
-#ifndef __POWERUP__
+#elif !defined(__POWERUP__)
    /*
    ** WarpOS
    */
@@ -412,7 +465,6 @@ int gettimeofday(struct timeval *tp, struct timezone *tzp)
       }
    }
 #endif
-#endif
 
    if (tzp) {
       tzp->tz_minuteswest = -GMTOffset;
@@ -429,19 +481,27 @@ int gettimeofday(struct timeval *tp, struct timezone *tzp)
 */
 int amigaGetMonoClock(struct timeval *tp)
 {
-//   printf("GetMonoClock()\n");
    if (tp) {
-#if !defined(__PPC__) || !defined(USE_PPCTIMER)
+#ifdef __MORPHOS__
       /*
-      ** 68K
+      ** MorphOS
       */
-      struct EClockVal ec;
+      UQUAD cpuclock;
+      ULONG cpufreq = ReadCPUClock(&cpuclock);
+      tp->tv_sec  = cpuclock / cpufreq;
+      tp->tv_usec = (cpuclock % cpufreq) * 1000000 / cpufreq;
+#elif !defined(__OS3PPC__) || !defined(USE_PPCTIMER)
+      /*
+      ** 68K / OS4
+      */
+      union {
+         struct EClockVal   ec;
+         unsigned long long etime;
+      };
       ULONG efreq = ReadEClock(&ec);
-      unsigned long long *etime = (unsigned long long *)&ec;
-      tp->tv_sec = *etime / efreq;
-      tp->tv_usec = (*etime % efreq) * 1000000 / efreq;
-#else
-#ifndef __POWERUP__
+      tp->tv_sec = etime / efreq;
+      tp->tv_usec = (etime % efreq) * 1000000 / efreq;
+#elif !defined(__POWERUP__)
       /*
       ** WarpOS
       */
@@ -458,12 +518,12 @@ int amigaGetMonoClock(struct timeval *tp)
       tp->tv_sec = ppctime / tickspersec;
       tp->tv_usec = (ppctime % tickspersec) * 1000000 / tickspersec;   
 #endif
-#endif
    }
 
    return 0;
 }
 
+#if !defined(__amigaos4__) && !defined(__MORPHOS__)
 /*
 ** libnix mktime() has broken leap year handling, so use this instead
 */
@@ -520,3 +580,4 @@ time_t mktime(struct tm *tm)
 
    return(t);
 }
+#endif

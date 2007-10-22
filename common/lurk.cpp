@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.63 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.64 2007/10/22 16:48:26 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -244,16 +244,16 @@ int LurkCheckIfConnectRequested(void) //yes/no
 /* ================================================================== */
 
 
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-    (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-    (CLIENT_OS == OS_BSDOS) || \
-    ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
+#if (CLIENT_OS == OS_LINUX)    || (CLIENT_OS == OS_FREEBSD)  || \
+    (CLIENT_OS == OS_OPENBSD)  || (CLIENT_OS == OS_NETBSD)   || \
+    (CLIENT_OS == OS_BSDOS)    || (CLIENT_OS == OS_MACOSX)   || \
     (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX) || \
     (CLIENT_OS == OS_VMS)
 #include <sys/types.h>
   #if (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_VMS)
   #define _SOCKADDR_LEN
   #endif
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
@@ -285,7 +285,7 @@ static int isonline = -1; /* 0=no, 1=yes, -1=don't know yet */
 #include <string.h>
 static HINSTANCE hWinsockInst = NULL;
 
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
 #include <windows.h>
 #include <string.h>
@@ -314,7 +314,6 @@ static HRASCONN hRasDialConnHandle = NULL; /* conn we opened with RasDial */
   #include <io.h>
   #include <dos.h>             // sleep
   #include <process.h>
-  #define soclose(s) close(s)     
 #else //IBM distributed OS/2 developers toolkit
   #include <process.h>
   #include <types.h>
@@ -349,18 +348,25 @@ struct ifact
 } DNETC_PACKED;
 #include "pack0.h"
 
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
 #include "baseincs.h"
 #include "sleepdef.h"
 #include "triggers.h"
+#include <sys/socket.h>
 #include <net/if.h>
 #include <fcntl.h>
-#include <proto/miami.h>
 #include "plat/amigaos/amiga.h"
+#ifndef NO_MIAMI
+#include <proto/miami.h>
+#endif
 #define _KERNEL
 #include <sys/socket.h>
 #undef _KERNEL
+#ifndef __amigaos4__
 #include <proto/socket.h>
+#else
+#include <proto/bsdsocket.h>
+#endif
 #include <sys/ioctl.h>
 #define inet_ntoa(addr) Inet_NtoA(addr.s_addr)
 #define ioctl(a,b,c) IoctlSocket(a,b,(char *)c)
@@ -375,7 +381,7 @@ int LurkGetCapabilityFlags(void)
 
   TRACE_OUT((+1,"Lurk::GetCapabilityFlags() (lurker.islurkstarted?=%d)\n",lurker.islurkstarted));
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   {
     static int caps = -1;
     if (caps == -1)
@@ -468,14 +474,13 @@ int LurkGetCapabilityFlags(void)
     }
     what |= caps;
   }
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
-      (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-      (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OS2) || \
-      ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX) || \
-      (CLIENT_OS == OS_VMS)
+#elif (CLIENT_OS == OS_LINUX)    || (CLIENT_OS == OS_FREEBSD)  || \
+      (CLIENT_OS == OS_OPENBSD)  || (CLIENT_OS == OS_NETBSD)   || \
+      (CLIENT_OS == OS_BSDOS)    || (CLIENT_OS == OS_OS2)      || \
+      (CLIENT_OS == OS_MACOSX)   || (CLIENT_OS == OS_PS2LINUX) || \
+      (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_VMS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYSCRIPT | CONNECT_IFACEMASK);
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   what = (CONNECT_LURK | CONNECT_LURKONLY | CONNECT_DODBYPROFILE | CONNECT_IFACEMASK);
 #endif
 
@@ -488,7 +493,7 @@ int LurkGetCapabilityFlags(void)
 
 const char **LurkGetConnectionProfileList(void)
 {
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     static const char *firstentry = ""; //the first entry is blank, ie use default
     static RASENTRYNAME rasentries[10];
     static const char *configptrs[(sizeof(rasentries)/sizeof(rasentries[0]))+2];
@@ -528,13 +533,27 @@ const char **LurkGetConnectionProfileList(void)
       configptrs[index] = NULL;
       return (const char **)(&configptrs[0]);
     }
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)) && !defined(NO_MIAMI)
     static const char *firstentry = ""; //the first entry is blank, ie use default
     static char namestorage[8][IFNAMSIZ];
     static const char *configptrs[10];
     struct Library *MiamiBase;
+    #ifdef __amigaos4__
+    struct MiamiIFace *IMiami;
+    #endif
     configptrs[0] = NULL;
-    if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
+    MiamiBase = OpenLibrary((unsigned char *)"miami.library",11);
+    #ifdef __amigaos4__
+    if (MiamiBase)
+    {
+       if (!(IMiami = (struct MiamiIFace *)GetInterface( MiamiBase, "main", 1L, NULL )))
+       {
+          CloseLibrary(MiamiBase);
+          MiamiBase = NULL;
+       }
+    }
+    #endif
+    if (MiamiBase)
     {
       struct if_nameindex *name,*nameindex;
       if ((nameindex = if_nameindex())) {
@@ -552,6 +571,9 @@ const char **LurkGetConnectionProfileList(void)
         configptrs[cnt] = NULL;
         if_freenameindex(nameindex);
       }
+      #ifdef __amigaos4__
+      DropInterface((struct Interface *)IMiami);
+      #endif
       CloseLibrary(MiamiBase);
     }
     return configptrs;
@@ -580,7 +602,7 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
       if (lurkmode && (flags & (CONNECT_LURK|CONNECT_LURKONLY))==0)
       {              //only happens if user used -lurk on the command line
         lurkmode = 0;
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         //LogScreen( "Dial-up must be installed for lurk/lurkonly/dialing\n" );
         dialwhenneeded = 0; //if we can't support lurk, we can't support dod either
         #elif (CLIENT_OS == OS_WIN16)
@@ -593,7 +615,7 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
       if (dialwhenneeded && (flags & (CONNECT_DOD))==0)
       {               //should never happen since dod is not a cmdline option
         dialwhenneeded = 0;
-        #if (CLIENT_OS == OS_WIN32)
+        #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
         LogScreen( "Dial-up-Networking must be installed for demand dialing\n" );
         #elif (CLIENT_OS == OS_WIN16)
         LogScreen("Demand dialing is only supported with Trumpet Winsock.\n");
@@ -677,7 +699,7 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
             {
               memcpy( tempname, "lan", 3 );
             }
-            #elif (CLIENT_OS == OS_WIN32) //convert 'sl*' names to 'ppp*'
+            #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) //convert 'sl*' names to 'ppp*'
             if ( memcmp( tempname, "sl", 2 )==0 &&
                 (isdigit(tempname[2]) || tempname[2] == '*'))
             {
@@ -791,11 +813,10 @@ static int __MatchMask( const char *ifrname,  int is_dialup_dev_for_sure,
       || (strcmp(wildmask,"ppp*")==0
       #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
         (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-        ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-        (CLIENT_OS == OS_VMS)
+        (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_VMS)
       || strcmp(wildmask,"dun*")==0 
       || strcmp(wildmask,"tun*")==0
-      #elif (CLIENT_OS == OS_AMIGAOS)
+      #elif ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)) && !defined(NO_MIAMI)
       || strcmp(wildmask,"mi*")==0  // required for Miami (not MiamiDx or Genesis)
       #endif
       || strcmp(wildmask,"sl*")==0);
@@ -936,7 +957,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
     TRACE_OUT((-1,"winsock.dll is loaded. returning 1\n"));
     return 1;
   }
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
   #ifdef LURK_MULTIDEV_TRACK
    /* init tracking */
@@ -1366,16 +1387,16 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
 #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
       (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_AMIGAOS) || \
-      ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
+      (CLIENT_OS == OS_MORPHOS)|| \
+      (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_VMS) || \
       ((CLIENT_OS == OS_OS2) && defined(__EMX__)) || \
-      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX) || \
-      (CLIENT_OS == OS_VMS)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
    struct ifconf ifc;
    struct ifreq *ifr;
    int n, foundif = 0;
    char *p;
 
-   #if (CLIENT_OS == OS_AMIGAOS)
+   #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
    // not being able to access the socket lib means tcp/ip is unavailable,
    // implying that we must actually be offline
    if (!amigaOpenSocketLib()) {
@@ -1476,10 +1497,10 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
          } /* if __MatchMask */
        } /* for (n = 0, ... ) */
        #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
-             (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_NETBSD) || \
-             ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-             (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_DEC_UNIX) || \
-             (CLIENT_OS == OS_VMS)
+             (CLIENT_OS == OS_BSDOS)   || (CLIENT_OS == OS_NETBSD)  || \
+             (CLIENT_OS == OS_MACOSX)  || (CLIENT_OS == OS_VMS)     || \
+             (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || \
+             (CLIENT_OS == OS_DEC_UNIX)
        /* Calculate size of ifreq - _SIZEOF_ADDR_IFREQ used by FreeBSD */
        #ifdef _SIZEOF_ADDR_IFREQ
        #define SIZEOF_ADDR_IFREQ(sa,ifr) (_SIZEOF_ADDR_IFREQ(*ifr))
@@ -1510,15 +1531,29 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
              strncpy(devname,ifr->ifr_name,sizeof(devname));
              devname[sizeof(devname)-1] = '\0';
              ioctl (fd, SIOCGIFFLAGS, ifr); // get iface flags
-             #if (CLIENT_OS == OS_AMIGAOS)
+             #if ((CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)) && !defined(NO_MIAMI)
              if (strcmp(ifr->ifr_name,"mi0") == 0) // IFF_UP is always set for mi0
              {
                struct Library *MiamiBase;
-               if ((MiamiBase = OpenLibrary((unsigned char *)"miami.library",11)))
+               MiamiBase = OpenLibrary((unsigned char *)"miami.library",11);
+               #ifdef __amigaos4__
+               if (MiamiBase)
+               {
+                 struct MiamiIFace *IMiami;
+                 if ((IMiami = (struct MiamiIFace *)GetInterface( MiamiBase, "main", 1L, NULL )))
+                 {
+                   isup = MiamiIsOnline("mi0");
+                   DropInterface((struct Interface *)IMiami);
+                   CloseLibrary(MiamiBase);
+                 }
+               }
+               #else
+               if (MiamiBase)
                {
                  isup = MiamiIsOnline("mi0");
                  CloseLibrary(MiamiBase);
                }
+               #endif
              }
              else if ((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK)) == IFF_UP)
              #else
@@ -1562,7 +1597,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
      close (fd);
    }
 
-   #if (CLIENT_OS == OS_AMIGAOS)
+   #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
    amigaCloseSocketLib(foundif != 0);
    #endif
 
@@ -1665,7 +1700,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
   lurker.dohangupcontrol = 1;  // we should also control hangup
   return 0;
 
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
   if ((LurkGetCapabilityFlags() & CONNECT_DODBYPROFILE) != 0) /* have ras */
   {
@@ -1763,7 +1798,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
   TRACE_OUT((-1,"DialIfNeeded() => -1\n"));
   return -1;
 
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif ((CLIENT_OS == OS_AMIGAOS) && !defined(__amigaos4__)) || (CLIENT_OS == OS_MORPHOS)
 
   if (strlen(lurker.conf.connprofile) > 0)
     LogScreen("Attempting to put '%s' online...\n",lurker.conf.connprofile);
@@ -1789,12 +1824,11 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
   TRACE_OUT((-1,"DialIfNeeded() => 0\n"));
   return 0;
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
-     (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
-     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-     ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-     (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX) || \
-     (CLIENT_OS == OS_VMS)
+#elif (CLIENT_OS == OS_LINUX)   || (CLIENT_OS == OS_OS2)      || \
+     (CLIENT_OS == OS_FREEBSD)  || (CLIENT_OS == OS_OPENBSD)  || \
+     (CLIENT_OS == OS_NETBSD)   || (CLIENT_OS == OS_BSDOS)    || \
+     (CLIENT_OS == OS_MACOSX)   || (CLIENT_OS == OS_VMS)      || \
+     (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
   lurker.dohangupcontrol = 0;
   if (lurker.conf.connstartcmd[0] == 0)  /* we don't do dialup */
   {
@@ -1865,7 +1899,7 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
   lurker.dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 
   TRACE_OUT((0,"HUP-stage-01\n"));
   if (isconnected)
@@ -1943,7 +1977,7 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
   lurker.dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif ((CLIENT_OS == OS_AMIGAOS) && !defined(__amigaos4__)) || (CLIENT_OS == OS_MORPHOS)
 
   if (isconnected)
   {
@@ -1968,12 +2002,11 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
   lurker.dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_OS2) || \
-      (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
-      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_BSDOS) || \
-      ((CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)) || \
-      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX) || \
-      (CLIENT_OS == OS_VMS)
+#elif (CLIENT_OS == OS_LINUX)    || (CLIENT_OS == OS_OS2)     || \
+      (CLIENT_OS == OS_FREEBSD)  || (CLIENT_OS == OS_OPENBSD) || \
+      (CLIENT_OS == OS_NETBSD)   || (CLIENT_OS == OS_BSDOS)   || \
+      (CLIENT_OS == OS_MACOSX)   || (CLIENT_OS == OS_VMS)     || \
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX)
 
   if (isconnected)
   {

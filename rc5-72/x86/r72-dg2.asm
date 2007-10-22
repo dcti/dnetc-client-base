@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.15 2003/11/01 14:20:15 mweiser Exp $
+; $Id: r72-dg2.asm,v 1.16 2007/10/22 16:48:36 jlawson Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -203,7 +203,6 @@ defwork save_ebp
 align 16
 startseg:
 rc5_72_unit_func_dg_2:
-rc5_72_unit_func_dg_2_:
 _rc5_72_unit_func_dg_2:
 
 	mov	[esp-4], ebp

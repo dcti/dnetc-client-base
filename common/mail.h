@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __MAIL_H__
-#define __MAIL_H__ "@(#)$Id: mail.h,v 1.20 2003/11/01 14:20:13 mweiser Exp $"
+#define __MAIL_H__ "@(#)$Id: mail.h,v 1.21 2007/10/22 16:48:26 jlawson Exp $"
 
 extern void * smtp_construct_message( unsigned long sendthresh, 
                                    const char *smtphost, unsigned int smtpport,

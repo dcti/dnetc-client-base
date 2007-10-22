@@ -5,43 +5,45 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.16 2003/11/01 14:20:13 mweiser Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.17 2007/10/22 16:48:25 jlawson Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
 #define CPU_F_MASK              (0x0000ffffL)
 
-#if (CLIENT_CPU == CPU_X86)
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
   #define CPU_F_I386            (0x00000001L)
   #define CPU_F_I486            (0x00000002L | CPU_F_I386)
   #define CPU_F_I586            (0x00000004L | CPU_F_I486)
   #define CPU_F_I686            (0x00000008L | CPU_F_I586)
   #define CPU_F_MMX             (0x00000100L)
-// CPU_F_SSE, CPU_F_SSE2, ...
-  #define CPU_F_I586MMX         (CPU_F_I586  | CPU_F_MMX)
-  #define CPU_F_I686MMX         (CPU_F_I686  | CPU_F_MMX)
+  #define CPU_F_CYRIX_MMX_PLUS  (0x00000200L)
+  #define CPU_F_AMD_MMX_PLUS    (0x00000400L)
+  #define CPU_F_3DNOW           (0x00000800L)
+  #define CPU_F_3DNOW_PLUS      (0x00001000L)
+  #define CPU_F_SSE             (0x00002000L)
+  #define CPU_F_SSE2            (0x00004000L)
+  #define CPU_F_SSE3            (0x00008000L)
+  #define CPU_F_HYPERTHREAD     (0x00010000L)	/* supported and enabled */
+  #define CPU_F_AMD64           (0x00020000L)
+  #define CPU_F_EM64T           (0x00040000L)
 #endif
 
-
-// cpu feature flags (use by selcore.cpp)
-
-#define CPU_F_MASK              (0x0000ffffL)
-
-#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_X86_64)
-  #define CPU_F_I386            (0x00000001L)
-  #define CPU_F_I486            (0x00000002L | CPU_F_I386)
-  #define CPU_F_I586            (0x00000004L | CPU_F_I486)
-  #define CPU_F_I686            (0x00000008L | CPU_F_I586)
-  #define CPU_F_MMX             (0x00000100L)
-// CPU_F_SSE, CPU_F_SSE2, ...
-  #define CPU_F_I586MMX         (CPU_F_I586  | CPU_F_MMX)
-  #define CPU_F_I686MMX         (CPU_F_I686  | CPU_F_MMX)
+#if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+  #define CPU_F_ALTIVEC         (0x00000001L)
+  #define CPU_F_64BITOPS        (0x00000002L)
+  #define CPU_F_SYNERGISTIC     (0x00000004L)
 #endif
-
 
 //return number of processors detected (by the hardware/from the OS)
 //returns -1 if detection is not supported.
 int GetNumberOfDetectedProcessors( void );
+
+//currently returns GetNumberOfDetectedProcessors()
+int GetNumberOfLogicalProcessors ( void );
+
+//if hyperthreading supported and enabled returns number of physical cpus
+int GetNumberOfPhysicalProcessors ( void );
 
 //get (simplified) cpu ident by hardware detection
 long GetProcessorType(int quietly);
@@ -61,5 +63,8 @@ void GetProcessorInformationStrings( const char ** scpuid,
 //Wrapper for GetProcessorInformationStrings()
 //(used to be a client class function for access to the log functions)
 void DisplayProcessorInformation( void );
+
+//Return the CPU frequency (in MHz)
+unsigned int GetProcessorFrequency();
 
 #endif /* __CPUCHECK_H__ */

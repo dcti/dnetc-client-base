@@ -3,7 +3,7 @@
 | Any other distribution or use of this source violates copyright.
 
 | $VER: MC68060 reentrant RC5 core 17-Dec-2002
-| $Id: r72-060-mh.ns.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+| $Id: r72-060-mh.ns.s,v 1.3 2007/10/22 16:48:33 jlawson Exp $
 
 |
 | MC680x0 RC5 key checking function
@@ -14,7 +14,7 @@
 | Written by John Girvin <girv@girvnet.org.uk>
 | Adapted to 72-bit by Malcolm Howell <coreblimey@rottingscorpion.com>
 | Adapted to funny NeXTstep assembler syntax
-|  by Michael Weiser <michael@weiser.saale-net.de>
+|  by Michael Weiser <michael@weiser.dinsnail.net>
 |
 | TODO: further optimisation may be possible
 |

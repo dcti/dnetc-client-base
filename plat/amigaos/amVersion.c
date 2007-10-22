@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amVersion.c,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amVersion.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $
  *
  * ----------------------------------------------------------------------
  * AmigaOS version string/tag
@@ -34,6 +34,8 @@
     #error "An AmigaOS machine with a different CPU ? Can't be right!"
     #endif // (CLIENT_CPU == CPU_68K)
   #endif // __SASC
-#endif // (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_MORPHOS)
+  const char *versionstring = "\0$VER: dnetc " CLIENT_VERSIONSTRING " (" __AMIGADATE__ ")";
+#endif // (CLIENT_OS == OS_MORPHOS)
 
 #endif // _AMIGA_VERSION_C

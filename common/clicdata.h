@@ -13,7 +13,7 @@
  * ----------------------------------------------------------------------
 */ 
 #ifndef __CLICDATA_H__
-#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.27 2003/11/01 14:20:12 mweiser Exp $"
+#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.28 2007/10/22 16:48:24 jlawson Exp $"
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
@@ -61,6 +61,9 @@ int CliGetContestWorkUnitSpeed( int contestid, int do_force, int *was_forced );
 // sets a possible new value for best time; returns true
 // if this speed was a new record
 int CliSetContestWorkUnitSpeed( int contestid, unsigned int sec);
+
+// Reset static variables
+void CliResetStaticVars(void);
 
 #endif /* __CLICDATA_H__ */
 

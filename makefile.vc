@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.87 2003/12/12 04:53:06 lightning Exp $
+# $Id: makefile.vc,v 1.88 2007/10/22 16:48:23 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -13,13 +13,14 @@ DESSRCPATH = des
 OGRSRCPATH = ogr
 CSCSRCPATH = csc
 PLATSRCPATH = plat/win
-# EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
+
 
 #HAVE_RC5_64_CORES=1
 HAVE_RC5_72_CORES=1
 #HAVE_DES_CORES=1
 #HAVE_CSC_CORES=1
-HAVE_OGR_CORES=1
+#HAVE_OGR_CORES=1
+HAVE_OGR_PASS2=1
 
 # --------------------------------------------
 
@@ -36,13 +37,22 @@ CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 OPTS_CC_CPU = 
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+#EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
+#EXECOMPRESSOR2 =
+EXECOMPRESSOR = pec2.exe
+EXECOMPRESSOR2 = /NoBackup /CodeIntegrityCheck:Y /StripDebug:Y /WinModuleLoader:Y
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+OPTS_CC_CPU =
+OPTS_M_PLAT = AMD64
+CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
 
 !ifdef DEBUG
 OPTS_CC_DEBUG = -MTd -Zi -DDEBUG -Od
-OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
+#OPTS_LINK_DEBUG = /debug /pdb:none /pdbtype:consolidate
+OPTS_LINK_DEBUG = /debug /pdb:dnetc.pdb
 !else
 OPTS_CC_DEBUG = -MT -DNDEBUG
 OPTS_LINK_DEBUG = /release
@@ -75,20 +85,29 @@ OPTS_LINK_DEBUG = /release
 # -Ox == -Og -Oi -Ot -Oy -Ob1 -Gs
 
 OPTS_MSVC = -nologo -D__WIN32__ \
-            -W4 -WX -MT -GR- -GX- -GA -GF -GM -Gy \
+            -W4 -WX -GR- -GX- -GA -GF -GM -Gy \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG)
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
             ## *** SOMETHING IS BROKEN IF YOU NEED MORE
 	    ## *** THAN advapi+user32+kernel32+gdi32 ***
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
-OPTS_LINK = /nologo /incremental:no /warn:1 \
+OPTS_LINK = /nologo /incremental:no \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+OPTS_MSVC = $(OPTS_MSVC:-GM=)
+OPTS_MSVC = $(OPTS_MSVC:-WX=)
+!else
+OPTS_LINK = $(OPTS_LINK) /warn:1 
+!endif
+
+
 # --------------------------------------------
 
-all: $(BASENAME).exe
+all: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr
 
 # --------------------------------------------
 
@@ -138,6 +157,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/selcore.obj    \
         $(OUTPUTPATH)/selftest.obj   \
         $(OUTPUTPATH)/setprio.obj    \
+        $(OUTPUTPATH)/stress.obj     \
         $(OUTPUTPATH)/triggers.obj   \
         $(OUTPUTPATH)/util.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(COMMONPATH) -DLURK
@@ -167,6 +187,11 @@ PLAT_OBJS =                          \
 !if "$(PROCESSOR_ARCHITECTURE)" == "x86"
 # PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/w32x86.obj
 !endif
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/strcmpi.obj
+!endif
+
+
 OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) 
 
 # --------------------------------------------
@@ -178,6 +203,11 @@ SCR_OBJS =                           \
         $(OUTPUTPATH)/w32ini.obj     \
         $(OUTPUTPATH)/w32util.obj
 
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+SCR_OBJS = $(SCR_OBJS) $(OUTPUTPATH)/strcmpi.obj
+!endif
+
+
 CUI_OBJS =                           \
         $(OUTPUTPATH)/w32cuis.obj
 
@@ -186,7 +216,12 @@ CUI_OBJS =                           \
 !if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 CHIP_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
-CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
+CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj       \
+            $(OUTPUTPATH)/x86rdtsc.obj       \
+            $(OUTPUTPATH)/x86features.obj    \
+            $(OUTPUTPATH)/x86htcount.obj
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+####CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
 !endif
 
 # --------------------------------- RC5-64 -------------------------
@@ -196,6 +231,7 @@ RC5_64_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 RC5_64_OBJS =                        \
         $(OUTPUTPATH)/rc5-alpha-nt.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_64_CORES
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_64_OBJS =                        \
         $(OUTPUTPATH)/brf-p5.obj     \
@@ -209,13 +245,22 @@ RC5_64_OBJS =                        \
         $(OUTPUTPATH)/hb-k7.obj      \
         $(OUTPUTPATH)/ak-p7.obj	
 OPTS_MSVC = $(OPTS_MSVC) -DSMC -DHAVE_RC5_64_CORES
+!else
+!error No RC5-64 cores for this architecture.
 !endif
 
 # --------------------------------- RC5-72 -------------------------
 
 !ifndef HAVE_RC5_72_CORES
 RC5_72_OBJS =
-!else
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+RC5_72_OBJS = \
+        $(OUTPUTPATH)/r72-snjl.obj \
+        $(OUTPUTPATH)/r72ansi1.obj \
+        $(OUTPUTPATH)/r72ansi2.obj \
+        $(OUTPUTPATH)/r72ansi4.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-ses1.obj   \
         $(OUTPUTPATH)/r72-ses2.obj   \
@@ -223,9 +268,13 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-dg3.obj    \
         $(OUTPUTPATH)/r72-dg3a.obj   \
         $(OUTPUTPATH)/r72-ss2.obj    \
+        $(OUTPUTPATH)/r72-go2.obj    \
         $(OUTPUTPATH)/r72-sgp3.obj   \
-        $(OUTPUTPATH)/r72-go2.obj
+        $(OUTPUTPATH)/r72-ma4.obj    \
+        $(OUTPUTPATH)/r72-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+!else
+!error No RC5-72 cores for this architecture.
 !endif
 
 # --------------------------------- DES ----------------------------
@@ -254,6 +303,8 @@ DES_OBJS =                                   \
         $(OUTPUTPATH)/sboxes-kwan4.obj       \
 #       $(OUTPUTPATH)/sboxes-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN 
+!else
+!error No DES cores for this architecture.
 !endif
 
 # --------------------------------- CSC ----------------------------
@@ -279,25 +330,49 @@ CSC_OBJS =                           \
          $(OUTPUTPATH)/csc-comm.obj  \
          $(OUTPUTPATH)/csc-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES
+!else
+!error No CSC cores for this architecture.
 !endif
 
 # --------------------------------- OGR ----------------------------
 
-!ifndef HAVE_OGR_CORES
+!if !defined(HAVE_OGR_CORES) && !defined(HAVE_OGR_PASS2)
 OGR_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr.obj        \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+OGR_OBJS =                           \
+        $(OUTPUTPATH)/ogr.obj      \
+        $(OUTPUTPATH)/ogr_dat.obj    \
+        $(OUTPUTPATH)/ogr_sup.obj
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr-a.obj      \
         $(OUTPUTPATH)/ogr-b.obj      \
+        $(OUTPUTPATH)/ogr-c.obj      \
+        $(OUTPUTPATH)/ogr-d.obj      \
+        $(OUTPUTPATH)/ogr-e.obj      \
+        $(OUTPUTPATH)/ogr-asm1-rt.obj\
+        $(OUTPUTPATH)/ogr-asm2-rt-mmx.obj\
+        $(OUTPUTPATH)/ogr-asm2-rt-mmx-amd.obj\
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH) -DHAVE_OGR_CORES
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
+!else
+!error No OGR cores for this architecture.
+!endif
+
+
+!ifdef HAVE_OGR_CORES
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
+!endif
+!ifdef HAVE_OGR_PASS2
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_PASS2
 !endif
 
 # --------------------------------------------
@@ -324,6 +399,18 @@ $(VC_CHECK):
 {$(CSCSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+
+{$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+{$(RC572SRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
+        yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(RC572SRCPATH:/=\)\amd64\ $(**:/=\)
+
+{$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
+        yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS $(**:/=\)
+
+
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
@@ -345,12 +432,15 @@ $(VC_CHECK):
         nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(OGRSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
+        nasmw -O5 -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(OGRSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 !endif
+
+{$(RC572SRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
@@ -375,15 +465,25 @@ $(RES_FILE):    $(RC_FILE)
 
 # --------------------------------------------
 
-$(BASENAME).scr $(BASENAME).com $(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(SCR_OBJS) $(CUI_OBJS) $(RES_FILE)
 # the screensaver's 4.0 tag will be adjusted to 3.10 by the _client_ if running on a 3.x platform
+$(BASENAME).scr: $(VC_CHECK) $(SCR_OBJS) $(RES_FILE)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,4.00 /OUT:$(BASENAME).scr $(OPTS_LIBS) $(SCR_OBJS) $(RES_FILE) 
+!if defined(EXECOMPRESSOR) && !defined(DEBUG)
+        $(EXECOMPRESSOR) $(BASENAME).scr $(EXECOMPRESSOR2)
+!endif
+
+
+$(BASENAME).com: $(VC_CHECK) $(CUI_OBJS) 
         link $(OPTS_LINK) /SUBSYSTEM:CONSOLE,3.10 /OUT:$(BASENAME).com /NODEFAULTLIB $(OPTS_LIBS) $(CUI_OBJS)
+#!if defined(EXECOMPRESSOR) && !defined(DEBUG)
+#        $(EXECOMPRESSOR) $(BASENAME).com $(EXECOMPRESSOR2)
+#!endif
+
+
+$(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
         link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
-!ifdef EXECOMPRESSOR
-        $(EXECOMPRESSOR) $(BASENAME).scr
-        $(EXECOMPRESSOR) $(BASENAME).com
-        $(EXECOMPRESSOR) $(BASENAME).exe
+!if defined(EXECOMPRESSOR) && !defined(DEBUG)
+        $(EXECOMPRESSOR) $(BASENAME).exe $(EXECOMPRESSOR2)
 !endif
 
 # --------------------------------------------
@@ -398,8 +498,11 @@ rebuild: clean all
 
 # --------------------------------------------
 
-makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr docs/readme.1st docs/readme.w32 docs/dnetc.txt docs/CHANGES.txt
+makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr docs/readme.1st docs/readme.win32.html docs/dnetc.txt docs/CHANGES.txt
 	zip dnetcXXX-win32-x86.zip $**
-
-
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win64-amd64.zip
+!else
+	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86.zip
+!endif
 

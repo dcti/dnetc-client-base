@@ -1,4 +1,4 @@
-/* Hey, Emacs, this a -*-C++-*- file !
+/* -*-C++-*-
  *
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
@@ -30,11 +30,11 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.39 2003/11/01 14:20:14 mweiser Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.40 2007/10/22 16:48:28 jlawson Exp $"
 
 #include "cputypes.h"
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>
   #ifdef sleep
@@ -86,7 +86,7 @@
     //CLK_TCK is defined as sysconf(_SC_CLK_TCK) in limits.h and 
     //is 100 (10ms) for non-realtime processes, machine dependant otherwise
   #endif /* _irix5_ */
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   extern "C" {
   #ifdef sleep
   #undef sleep
@@ -131,7 +131,7 @@
   #include <sys/time.h>
   #define _xsleep(_secs,_usecs) {struct timeval tv__={(_secs),(_usecs)};select(0,NULL,NULL,NULL,&tv__);}
   #undef usleep
-  #define usleep(x) _xsleep(0,(x))
+  #define usleep(x) _xsleep(((x)/1000000),((x)%1000000))
   #undef sleep
   #define sleep(x) _xsleep((x),0)
 #elif (CLIENT_OS == OS_QNX) && !(defined(__QNXNTO__))

@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.74 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.75 2007/10/22 16:48:25 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -45,7 +45,7 @@ static const char *helpbody[] =
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",
   "-unpause           unpause all active clients",
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   "-install           install the client as a service",
   "-uninstall         uninstall the client previously -installed",
   "-svcstart          start a previously -installed client-as-service",
@@ -58,7 +58,7 @@ static const char *helpbody[] =
   "                   all [...options...] that follow '-install' serve",
   "                   as parameters for the installed client.",
   "-uninstall         remove the client from /etc[/rc.d]/init.d/",
-#elif (CLIENT_OS == OS_AMIGAOS)
+#elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   "-install           install the client in the WBStartup drawer",
   "-uninstall         remove the client from the WBStartup drawer",
 #elif (CLIENT_OS == OS_MACOSX)
@@ -155,9 +155,8 @@ void GenerateManPage( void )
   const char *appname = utilGetAppName();
   FILE *manp;
 
-  strncpy(buffer,appname,sizeof(buffer));
-  buffer[sizeof(buffer)-1] = '\0';
-  strcpy( buffer, buffer );
+  strncpy(buffer,appname,sizeof(buffer)-2);
+  buffer[sizeof(buffer)-2-1] = '\0';
   strcat( buffer, ".1" );
 
   manp = fopen(buffer,"w");

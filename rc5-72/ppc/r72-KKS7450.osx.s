@@ -37,11 +37,11 @@
 ;#	Estimated keyrate : 10695.2 keys/s/MHz
 ;#	Benchmark : 10687.8 keys/s/MHz (374 clock cycles)
 ;#
-;# $Id: r72-KKS7450.osx.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+;# $Id: r72-KKS7450.osx.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 ;#
 ;# $Log: r72-KKS7450.osx.s,v $
-;# Revision 1.2  2003/09/12 23:08:52  mweiser
-;# add new files from release-2-90xx
+;# Revision 1.3  2007/10/22 16:48:36  jlawson
+;# overwrite head with contents of release-2-90xx
 ;#
 ;# Revision 1.1.2.2  2003/04/03 23:25:57  mfeiri
 ;# Latest cores by kakace

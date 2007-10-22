@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <dnet@peter-teichmann.de>
-; $Id: ogr_arm1-gccsdk.s,v 1.2 2003/09/12 23:37:12 mweiser Exp $
+; $Id: ogr_arm1-gccsdk.s,v 1.3 2007/10/22 16:48:29 jlawson Exp $
 ;
 ; Stack:
 ; int *pnodes
@@ -59,12 +59,6 @@ CORE_S_SUCCESS	EQU	2
 
 	AREA	|C$$CODE|, CODE, READONLY
 	ALIGN	32
-OGR
-	DCD	  0,   1,   3,   6,  11,  17,  25,  34,  44,  55
-	DCD	 72,  85, 106, 127, 151, 177, 199, 216, 246, 283
-	DCD	333, 356, 372, 425, 480, 492, 553, 585, 623
-choose
-	DCD	ogr_choose_dat+3
 firstblank
 	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 	DCB	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
@@ -122,7 +116,6 @@ loop_start
 	sub	r10, r4, r5		; limit=oState->max-...
 	cmp	r10, r3			; 
 	movgt	r10, r3			; limit=limit<oState->half_length ? ...
-
 	b	increment_nodes
 
 depth_gt_halfdepth
@@ -159,27 +152,27 @@ increment_nodes
 
 stay
 	ldr	r9, [r1, #10*4]		; comp0=lev->comp0
-	mov	r7, #0
+	mov	r2, #0
 	cmp	r9, #0xfffffffe
 	bcs	firstblank_31_32
 
 	adr	r6, firstblank
 	cmp	r9, #0xffff0000
 	movcs	r9, r9, lsl#16
-	addcs	r7, r7, #16
+	addcs	r2, r2, #16
 	cmp	r9, #0xff000000
 	movcs	r9, r9, lsl#8
 	ldrb	r9, [r6, r9, lsr#24]
-	addcs	r7, r7, #8
-	add	r7, r7, r9		; s=LOOKUP_FIRSTBLANK(comp0)
+	addcs	r2, r2, #8
+	add	r2, r2, r9		; s=LOOKUP_FIRSTBLANK(comp0)
 
-	add	r8, r8, r7
+	add	r8, r8, r2
 	str	r8, [r1, #16*4]
 	cmp	r8, r10
 	bgt	up			; if ((lev->cnt2+=s)>limit) goto up
 
-	add	pc, pc, r7, lsl#7
-	mov	r0, r0			; NOP
+	add	pc, pc, r2, lsl#7
+	%	1*4
 
 ; COMP_LEFT_LIST_RIGHT macro, must be always 32 instructions=128 bytes
 ; because of the method to jump to them!
@@ -228,10 +221,17 @@ stay
 	stmia	r1, {r2-r6}
 
 	b	firstblank_32_back
-	mov	r0, r0			; NOP
+	%	1*4
 	MEND
 
-	%	128
+OGR
+	DCD	  0,   1,   3,   6,  11,  17,  25,  34,  44,  55
+	DCD	 72,  85, 106, 127, 151, 177, 199, 216, 246, 283
+	DCD	333, 356, 372, 425, 480, 492, 553, 585, 623
+choose
+	DCD	ogr_choose_dat+3
+	%	2*4
+
 	COMP_LEFT_LIST_RIGHT 1
 	COMP_LEFT_LIST_RIGHT 2
 	COMP_LEFT_LIST_RIGHT 3
@@ -264,7 +264,27 @@ stay
 	COMP_LEFT_LIST_RIGHT 30
 	COMP_LEFT_LIST_RIGHT 31
 
+firstblank_31_32
+	add	r8, r8, #32
+	str	r8, [r1, #16*4]
+	cmp	r8, r10
+	bgt	up			; if ((lev->cnt2+=32)>limit) goto up
 
+	ldr	r6, [r1, #44]
+	ldr	r5, [r1, #48]
+	ldr	r4, [r1, #52]
+	ldr	r3, [r1, #56]
+	str	r6, [r1, #40]
+	str	r5, [r1, #44]
+	str	r4, [r1, #48]
+	str	r3, [r1, #52]
+	str	r2, [r1, #56]
+	ldmia	r1, {r3-r6}
+	stmia	r1, {r2-r6}		; COMP_LEFT_LIST_RIGHT_32(lev)
+
+	cmp	r9, #0xffffffff
+	beq	stay			; if (comp0==0xffffffff) goto stay
+	
 firstblank_32_back
 	cmp	r14, r11
 	beq	new_ruler
@@ -274,7 +294,7 @@ firstblank_32_back
 	sub	r9, r8, r9		; bitindex=lev->cnt2-lev->cnt1
 
 	; Start COPY_LIST_SET_BIT_COPY_DIST_COMP
-	ldmia	r1, {r2, r3, r4, r5, r6}
+;	ldmia	r1, {r2, r3, r4, r5, r6}
 	cmp	r9, #32
 	bgt	bitoflist_notfirstword
 	orr	r2, r2, r7, ror r9
@@ -351,36 +371,6 @@ bitoflist_notfirstword
 	orrle	r6, r6, r7, ror r9
 	b	bit_is_set
 
-firstblank_31_32
-	add	r8, r8, #32
-	str	r8, [r1, #16*4]
-	cmp	r8, r10
-	bgt	up			; if ((lev->cnt2+=32)>limit) goto up
-
-	ldr	r5, [r1, #44]
-	ldr	r6, [r1, #48]
-	str	r5, [r1, #40]
-	ldr	r5, [r1, #52]
-	str	r6, [r1, #44]
-	ldr	r6, [r1, #56]
-	str	r5, [r1, #48]
-	ldr	r5, [r1, #12]
-	str	r6, [r1, #52]
-	ldr	r6, [r1, #8]
-	str	r5, [r1, #16]
-	ldr	r5, [r1, #4]
-	str	r6, [r1, #12]
-	ldr	r6, [r1, #0]
-	str	r5, [r1, #8]
-	str	r6, [r1, #4]
-	str	r7, [r1, #56]
-	str	r7, [r1, #0]		; COMP_LEFT_LIST_RIGHT_32(lev)
-
-	cmp	r9, #0xffffffff
-	beq	stay			; if (comp0==0xffffffff) goto stay
-	
-	b	firstblank_32_back
-
 up
 	sub	r1, r1, #72		; lev--
 	sub	r14, r14, #1		; depth--
@@ -421,10 +411,25 @@ loop_break
 
 ;-----------------------------------------------------------------------------
 
-	EXPORT	ogr_get_dispatch_table_arm1
-ogr_get_dispatch_table_arm1
+;	EXPORT	ogr_get_dispatch_table_arm1
+;ogr_get_dispatch_table_arm1
+;	stmdb	r13!, {r4, r14}
+;	bl	ogr_get_dispatch_table
+;	ldr	r4, pdispatch_table
+;	ldmia	r0!,{r1-r3}
+;	ldr	r3, pogr_cycle
+;	stmia	r4!,{r1-r3}
+;	ldmia	r0!,{r1-r3}
+;	stmia	r4!,{r1-r3}
+;	sub	r0, r4, #24
+;	ldmia	r13!, {r4, pc}
+
+;-----------------------------------------------------------------------------
+
+	EXPORT	ogr_p2_get_dispatch_table_arm1
+ogr_p2_get_dispatch_table_arm1
 	stmdb	r13!, {r4, r14}
-	bl	ogr_get_dispatch_table
+	bl	ogr_p2_get_dispatch_table
 	ldr	r4, pdispatch_table
 	ldmia	r0!,{r1-r3}
 	ldr	r3, pogr_cycle
@@ -433,6 +438,8 @@ ogr_get_dispatch_table_arm1
 	stmia	r4!,{r1-r3}
 	sub	r0, r4, #24
 	ldmia	r13!, {r4, pc}
+
+;-----------------------------------------------------------------------------
 
 pdispatch_table
 	DCD	dispatch_table
@@ -444,6 +451,6 @@ pogr_cycle
 	AREA	|C$$DATA|, DATA
 	ALIGN	32
 dispatch_table
-	%	24
+	%	36
 
 	END

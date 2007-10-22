@@ -7,7 +7,7 @@
  * Specify 'build_dependancies' as argument 
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.10 2003/11/01 14:20:14 mweiser Exp $
+ * $Id: testplat.cpp,v 1.11 2007/10/22 16:48:28 jlawson Exp $
 */ 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -72,11 +72,12 @@ static int is_trace_checked(const char *filename)
 }
 
 static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
-                                        const char **include_dirs )
+                                        const char **include_dirs,
+                                        unsigned int count )
 {
   char linebuf[512], pathbuf[64], foundbuf[64];
   char *p, *r;
-  unsigned int l, count = 0;
+  unsigned int l;
   FILE *file = fopen( cppname, "r" );
 
   //fprintf(stderr,"cppname='%s', file=%p\n",cppname,file);
@@ -131,7 +132,7 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
                 {
                   int namelen = strlen(origbuf);
                   if (namelen > 2 && strcmp(&origbuf[namelen-2],".h")!=0)
-                    count += build_dependancies( origbuf, include_dirs );
+                    count = build_dependancies( origbuf, include_dirs, count );
                   break;
                 }         
                 if (!include_dirs)
@@ -228,7 +229,7 @@ int main(int argc, char *argv[])
     //fprintf(stderr,"%s 1\n", argv[2] );
     idirs = get_include_dirs(argc,argv);
     //fprintf(stderr,"%s 2\n", argv[2] );
-    build_dependancies( argv[2], idirs );    
+    build_dependancies( argv[2], idirs, 0 );    
     //fprintf(stderr,"%s 3\n", argv[2] );
     if (idirs) 
       free((void *)idirs);

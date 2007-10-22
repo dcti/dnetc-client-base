@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: gentests72.cpp,v 1.9 2003/11/01 14:20:15 mweiser Exp $
+ * $Id: gentests72.cpp,v 1.10 2007/10/22 16:48:33 jlawson Exp $
 */
 /**************************************************************************/
 /*                                                                        */
@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 typedef unsigned long int WORD; /* should be 32 bit = 4 bytes   */
-#define w 32			/* Word size in bits		*/
-#define r 12			/* number of rounds 		*/
+#define w 32			/* Word size in bits */
+#define r 12			/* number of rounds */
 #define b 9			/* Number of Bytes in key  */
 //#define c 4			/* Number of words in key */
 #define c 3			/* Number of words in key -- upper(b/u), where u=bytes/word */
@@ -135,23 +135,27 @@ int main ()
          key[6]=Random( ) & 0x000000FF;
          key[7]=Random( ) & 0x000000FF;
          key[8]=Random( ) & 0x000000FF;
-	 switch (testcase) {
-	     case 7 :key[1] = 0x00;
-	     case 6 :key[2] = 0x00;
-	     case 5 :key[3] = 0x00;
-	     case 4 :key[4] = 0x00;
-	     case 3 :key[5] = 0x00;
-	     case 2 :key[6] = 0x00; comment = "increment"; break;
-       case 22:
-       case 23:
-       case 24:
-       case 25:
-           key[7] = 0;
-           key[8] = testcase - 22;
-           comment = "aggressive";
-           break;
-       case 30: key[7] = 0; key[8] = 42; comment = "dummy"; break;
-	 }
+         switch (testcase) {
+            case 7 :key[1] = 0x00;
+            case 6 :key[2] = 0x00;
+            case 5 :key[3] = 0x00;
+            case 4 :key[4] = 0x00;
+            case 3 :key[5] = 0x00;
+            case 2 :key[6] = 0x00; comment = "increment"; break;
+
+            case 20:
+            case 21:
+            case 22:
+            case 23:
+               key[7] = 0;
+               key[8] = testcase - 20;
+               comment = "aggressive";
+               break;
+
+            case 24: key[7] = 0x01; key[8] = 0x00; break;
+            case 25: key[7] = 0x01; key[8] = 0x01; break;
+            case 30: key[7] = 0; key[8] = 42; comment = "dummy"; break;
+         }
          iv[0]=Random( ) & 0xFFFFFFFF;
          iv[1]=Random( ) & 0xFFFFFFFF;
          bigcipher[0]= Random( ) & 0xFFFFFFFF;
@@ -184,6 +188,8 @@ int main ()
               expected_result = 0;
               comment = "no success";
               break;
+          case 24:
+          case 25:
           case 26:
           case 27:
           case 28:
@@ -208,7 +214,7 @@ int main ()
       // Print the pipeline and comment stuff
       printf(" // ");
       key_lo = (key[5]<<24) + (key[6]<<16) + (key[7]<<8) + key[8];
-      startkey_lo = (key_lo & 0xffff0000L) - 0x00010000;
+      startkey_lo = (key_lo & 0xffff0000L) - (testcase>1 && testcase<=6) ? 0x00010000 : 0;
       for (j = 1; j <= 4; ++j)
         printf("%d", (key_lo - startkey_lo)%j);
       if (comment)

@@ -5,7 +5,7 @@
  *
 */ 
 const char *convdes_cpp(void) {
-return "@(#)$Id: convdes.cpp,v 1.16 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: convdes.cpp,v 1.17 2007/10/22 16:48:25 jlawson Exp $"; }
 
 /* DES convertion routines */
 

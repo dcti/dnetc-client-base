@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.94 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.95 2007/10/22 16:48:25 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -34,7 +34,6 @@ static const char *OPTSECT_CPU      = "processor-usage";
 static const char *OPTSECT_TRIGGERS = "triggers";
 static const char *OPTSECT_DISPLAY  = "display";
 
-static const char *DEFAULT_EXITFLAGFILENAME = "exitrc5"EXTN_SEP"now";
 #define OLD_PREFERREDBLOCKSIZE_DEFAULT 30 /* for converting old .inis */
 
 /* ------------------------------------------------------------------------ */
@@ -746,6 +745,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
                multiplier -= (PREFERREDBLOCKSIZE_MIN-1);
                break;
              case OGR:
+             case OGR_P2:
                multiplier = 1;
                break;
           }
@@ -1263,14 +1263,15 @@ int ConfigRead(Client *client)
   GetPrivateProfileStringB( OPTSECT_LOG, "mail-log-dest", client->smtpdest, client->smtpdest, sizeof(client->smtpdest), fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "log-file", client->logname, client->logname, sizeof(client->logname), fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "log-file-type", client->logfiletype, client->logfiletype, sizeof(client->logfiletype), fn );
+  client->logrotateUTC = GetPrivateProfileIntB( OPTSECT_LOG, "log-rotate-UTC", client->logrotateUTC, fn );
   GetPrivateProfileStringB( OPTSECT_LOG, "log-file-limit", client->logfilelimit, client->logfilelimit, sizeof(client->logfilelimit), fn );
 
   /* -------------------------------- */
 
   client->noupdatefromfile = (!GetPrivateProfileIntB( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn ));
   client->nodiskbuffers = GetPrivateProfileIntB( OPTSECT_BUFFERS, "buffer-only-in-memory", client->nodiskbuffers , fn );
-  GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, client->in_buffer_basename, sizeof(client->in_buffer_basename), fn );
-  GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
+  GetPrivateProfileStringB( OPTSECT_BUFFERS, "buffer-file-basename", BUFFER_DEFAULT_IN_BASENAME, client->in_buffer_basename, sizeof(client->in_buffer_basename), fn );
+  GetPrivateProfileStringB( OPTSECT_BUFFERS, "output-file-basename", BUFFER_DEFAULT_OUT_BASENAME, client->out_buffer_basename, sizeof(client->out_buffer_basename), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, client->remote_update_dir, sizeof(client->remote_update_dir), fn );
   GetPrivateProfileStringB( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, client->checkpoint_file, sizeof(client->checkpoint_file), fn );
   client->connectoften = GetPrivateProfileIntB( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften , fn );
@@ -1421,12 +1422,12 @@ int ConfigWrite(Client *client)
   
     /* --- CONF_MENU_BUFF -- */
     __XSetProfileInt( OPTSECT_BUFFERS, "buffer-only-in-memory", (client->nodiskbuffers)?(1):(0), fn, 0, 'y' );
-    __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, NULL );
-    __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, NULL );
+    __XSetProfileStr( OPTSECT_BUFFERS, "buffer-file-basename", client->in_buffer_basename, fn, BUFFER_DEFAULT_IN_BASENAME );
+    __XSetProfileStr( OPTSECT_BUFFERS, "output-file-basename", client->out_buffer_basename, fn, BUFFER_DEFAULT_OUT_BASENAME );
     __XSetProfileStr( OPTSECT_BUFFERS, "checkpoint-filename", client->checkpoint_file, fn, NULL );
     __XSetProfileInt( OPTSECT_BUFFERS, "allow-update-from-altbuffer", !(client->noupdatefromfile), fn, 1, 'y' );
     __XSetProfileStr( OPTSECT_BUFFERS, "alternate-buffer-directory", client->remote_update_dir, fn, NULL );
-    __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 0, 0 );
+    __XSetProfileInt( OPTSECT_BUFFERS, "frequent-threshold-checks", client->connectoften, fn, 4, 0 );
     __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-interval", &(client->max_buffupd_interval), 0, fn, 0 );
     __readwrite_minutes( OPTSECT_BUFFERS,"threshold-check-retry-interval", &(client->max_buffupd_retry_interval), 0, fn, 0 );
 
@@ -1536,7 +1537,7 @@ int ConfigWrite(Client *client)
     if ((client->logfiletype[0] && strcmp(client->logfiletype,"none")!=0) ||
       GetPrivateProfileStringB(OPTSECT_LOG,"log-file-type","",buffer,2,fn))
       WritePrivateProfileStringB( OPTSECT_LOG,"log-file-type", client->logfiletype, fn );
-
+    __XSetProfileInt( OPTSECT_LOG, "log-rotate-UTC", client->logrotateUTC, fn, 0, 'n');
   } /* if (Write(id)) */
 
   TRACE_OUT((-1,"WriteConfig() =>%d\n", rc));

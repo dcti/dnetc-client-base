@@ -37,11 +37,11 @@
 #	Estimated keyrate : 10695.2 keys/s/MHz
 #	Benchmark : 10687.8 keys/s/MHz (374 clock cycles)
 #
-# $Id: r72-KKS7450.gas.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+# $Id: r72-KKS7450.gas.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 #
 # $Log: r72-KKS7450.gas.s,v $
-# Revision 1.2  2003/09/12 23:08:52  mweiser
-# add new files from release-2-90xx
+# Revision 1.3  2007/10/22 16:48:36  jlawson
+# overwrite head with contents of release-2-90xx
 #
 # Revision 1.1.2.3  2003/04/05 09:56:15  oliver
 # Latest gas compliant version of kakace's updated cores

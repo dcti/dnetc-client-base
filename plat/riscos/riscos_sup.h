@@ -5,7 +5,7 @@
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.h,v 1.5 2003/11/01 15:07:10 mweiser Exp $
+ * $Id: riscos_sup.h,v 1.6 2007/10/22 16:48:31 jlawson Exp $
 */
 #ifndef __RISCOS_SUP_H__
 #define __RISCOS_SUP_H__

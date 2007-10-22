@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amNetwork.c,v 1.2 2002/09/02 00:35:49 andreasb Exp $
+ * $Id: amNetwork.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -14,24 +14,33 @@
 */
 
 #include "amiga.h"
+#include <sys/socket.h>
 #include <net/if.h>
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack(2)
 #endif
 
+#ifdef __amigaos4__
+#include <proto/bsdsocket.h>
+#else
 #include <proto/socket.h>
+#endif
+
+#ifndef NO_MIAMI
 #include <proto/miami.h>
+#endif
+
 #include <proto/rexxsyslib.h>
 
-#ifdef __PPC__
+#ifdef __OS3PPC__
 #pragma pack()
 #endif
 
 static int __CheckOnlineStatus(void);
 BOOL GenesisIsOnline(LONG flags);
 
-#ifdef __PPC__
+#ifdef __PPC__ /* MorphOS too! */
 #define GenesisIsOnline(cmd) \
 	LP1(0x78, BOOL, GenesisIsOnline, LONG, cmd, d0, \
 	, GenesisBase, IF_CACHEFLUSHALL, NULL, 0, IF_CACHEFLUSHALL, NULL, 0)
@@ -41,12 +50,24 @@ BOOL GenesisIsOnline(LONG flags);
 	, GenesisBase)
 #endif
 
+#ifndef __amigaos4__
 #define PREVENT_SOCKETLIB_DISKIO
+#endif
 
 struct Library *SocketBase = NULL;
+#ifndef NO_MIAMI
 struct Library *MiamiBase = NULL;
+#ifdef __amigaos4__
+struct MiamiIFace *IMiami = NULL;
+#endif
+#endif
 struct Library *GenesisBase = NULL;
 static struct Library *TSocketBase = NULL;
+
+#ifdef __amigaos4__
+struct SocketIFace *ISocket = NULL;
+int h_errno = 0;
+#endif
 
 static int SocketRefCnt = 0;
 
@@ -62,12 +83,11 @@ BOOL amigaOpenSocketLib(void)
       BOOL libnotinmem = FALSE;
 
       #ifdef PREVENT_SOCKETLIB_DISKIO
-      #ifndef __PPC__
+      #ifndef __OS3PPC__
       Forbid();
       libnotinmem = (FindName(&SysBase->LibList,"bsdsocket.library") == NULL);
       Permit();
-      #else
-      #ifdef __POWERUP__
+      #elif defined(__POWERUP__)
       /* disable for now - may have something to do with stability problems */
       //libnotinmem = (PPCFindNameSync(&SysBase->LibList,"bsdsocket.library") == NULL);
       #else
@@ -75,11 +95,20 @@ BOOL amigaOpenSocketLib(void)
       libnotinmem = (FindNamePPC(&SysBase->LibList,"bsdsocket.library") == NULL);
       User(skey);
       #endif
-      #endif
-      #endif
+      #endif /* PREVENT_SOCKETLIB_DISKIO */
 
-      if (libnotinmem || !(SocketBase = OpenLibrary((unsigned char *)"bsdsocket.library",4UL)))
+      if (libnotinmem || !(SocketBase = OpenLibrary("bsdsocket.library",4UL)))
          success = FALSE;
+
+      #ifdef __amigaos4__
+      if (success) {
+         if (!(ISocket = (struct SocketIFace *)GetInterface( SocketBase, "main", 1L, NULL ))) {
+            CloseLibrary(SocketBase);
+            SocketBase = NULL;
+            success = FALSE;
+	 }
+      }
+      #endif
    }
 
    if (success) SocketRefCnt++;
@@ -94,6 +123,10 @@ void amigaCloseSocketLib(BOOL delayedclose)
 {
    if (SocketRefCnt > 0) {
       if ((--SocketRefCnt == 0) && !delayedclose) {
+         #ifdef __amigaos4__
+         DropInterface((struct Interface *)ISocket);
+         ISocket = NULL;
+         #endif
          CloseLibrary(SocketBase);
          SocketBase = NULL;
       }
@@ -111,13 +144,29 @@ int amigaNetworkingInit(BOOL notlurking)
    int success = 1;
 
    // used to detect whether TermiteTCP is in use
+   #ifndef __amigaos4__
    TSocketBase = OpenLibrary("tsocket.library",0UL);
+   #endif
 
    if (notlurking) {
+      #ifndef NO_MIAMI
       MiamiBase = OpenLibrary((unsigned char *)"miami.library",11UL);
-      if (!MiamiBase) {
-         GenesisBase = OpenLibrary((unsigned char *)"genesis.library",0UL);
+      #ifdef __amigaos4__
+      if (MiamiBase) {
+         if (!(IMiami = (struct MiamiIFace *)GetInterface( MiamiBase, "main", 1L, NULL ))) {
+            CloseLibrary(MiamiBase);
+            MiamiBase = NULL;
+	 }
       }
+      #else
+      if (!MiamiBase) {
+         GenesisBase = OpenLibrary("genesis.library",0UL);
+      }
+      #endif
+      #elif !defined(__amigaos4__)
+      GenesisBase = OpenLibrary("genesis.library",0UL);
+      #endif
+
       success = __CheckOnlineStatus();
    }
 
@@ -136,10 +185,16 @@ void amigaNetworkingDeinit(void)
       CloseLibrary(GenesisBase);
       GenesisBase = NULL;
    }
+#ifndef NO_MIAMI
    if (MiamiBase) {
+      #ifdef __amigaos4__
+      DropInterface((struct Interface *)IMiami);
+      IMiami = NULL;
+      #endif
       CloseLibrary(MiamiBase);
       MiamiBase = NULL;
    }
+#endif
    if (TSocketBase) {
       CloseLibrary(TSocketBase);
       TSocketBase = NULL;
@@ -171,6 +226,7 @@ static int __CheckOnlineStatus(void)
 {
    int online;
 
+   #ifndef NO_MIAMI
    if (MiamiBase) {
       online = MiamiIsOnline(NULL);
       if (!online) {
@@ -188,10 +244,14 @@ static int __CheckOnlineStatus(void)
          }
       }
    }
-   else if (GenesisBase) {
+   else
+   #elif !defined(__amigaos4__)
+   if (GenesisBase) {
       online = GenesisIsOnline(NULL);
    }
-   else {
+   else
+   #endif
+   {
       online = 1;  // assume online (lurking, or no Miami / Genesis)
    }
 
@@ -205,6 +265,7 @@ static int __CheckOnlineStatus(void)
 */
 int amigaOnOffline(int online, char *ifacename)
 {
+   #if !defined(NO_MIAMI) || !defined(__amigaos4__)
    struct RxsLib *RexxSysBase;
    struct MsgPort *arexxreply,*port;
    struct RexxMsg *arexxmsg;
@@ -212,20 +273,29 @@ int amigaOnOffline(int online, char *ifacename)
    char cmdbuf[64];
  
    Forbid();
+
+   #ifndef NO_MIAMI
    port = FindPort("MIAMI.1");
+   #ifndef __amigaos4__
    if (!port) {
       port = FindPort("GENESIS");
       genesis = 1;
    }
+   #endif
+   #elif !defined(__amigaos4__)
+   port = FindPort("GENESIS");
+   genesis = 1;
+   #endif
+
    Permit();
  
    if (port) {
-      if ((RexxSysBase = (struct RxsLib *)OpenLibrary((unsigned char *)"rexxsyslib.library",0))) {
+      if ((RexxSysBase = (struct RxsLib *)OpenLibrary("rexxsyslib.library",0))) {
          if ((arexxreply = CreateMsgPort())) {
             if ((arexxmsg = CreateRexxMsg(arexxreply,NULL,NULL))) {
                arexxmsg->rm_Action = RXCOMM;
                sprintf(cmdbuf,"%s%s%s", online ? "ONLINE" : "OFFLINE", (strlen(ifacename) > 0 && strcmp(ifacename,"mi0") != 0) ? " " : "", ifacename);
-               if ((arexxmsg->rm_Args[0] = (char *)CreateArgstring((unsigned char *)cmdbuf,strlen(cmdbuf)))) {
+               if ((arexxmsg->rm_Args[0] = (char *)CreateArgstring(cmdbuf,strlen(cmdbuf)))) {
                   Forbid();
                   if ((port = FindPort((genesis ? "GENESIS" : "MIAMI.1")))) {
                      PutMsg(port,(struct Message *)arexxmsg);
@@ -252,4 +322,7 @@ int amigaOnOffline(int online, char *ifacename)
    }
 
    return(success);
+   #else
+   return 0;
+   #endif
 }

@@ -15,7 +15,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi_2_bo1_cpp (void) {
-return "@(#)$Id: rc5ansi_2-bo1.cpp,v 1.5 2003/11/01 14:20:15 mweiser Exp $"; }
+return "@(#)$Id: rc5ansi_2-bo1.cpp,v 1.6 2007/10/22 16:48:32 jlawson Exp $"; }
 #endif
 
 #define PIPELINE_COUNT = 2

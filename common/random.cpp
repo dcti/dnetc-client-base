@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------
 
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.7 2003/11/01 14:20:14 mweiser Exp $"; }
+return "@(#)$Id: random.cpp,v 1.8 2007/10/22 16:48:27 jlawson Exp $"; }
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */

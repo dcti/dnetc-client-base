@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE library SYSTEM "library.dtd">
+<library name="dnetcgui" basename="DnetcBase" openname="dnetcgui.library">
+	<include>dnetcgui.h</include>
+	<interface name="main" version="1.0" struct="DnetcIFace" prefix="_Dnetc_" asmprefix="IDnetc" global="IDnetc">
+		<method name="Obtain" result="ULONG"/>
+		<method name="Release" result="ULONG"/>
+		<method name="Expunge" result="void" status="unimplemented"/>
+		<method name="Clone" result="struct Interface *" status="unimplemented"/>
+		<method name="dnetcguiOpen" result="ULONG">
+			<arg name="cpu" type="ULONG"/>
+			<arg name="programname" type="UBYTE *"/>
+			<arg name="iconname" type="struct WBArg *"/>
+			<arg name="vstring" type="const char *"/>
+		</method>
+		<method name="dnetcguiClose" result="BOOL">
+			<arg name="params" type="struct ClientGUIParams *"/>
+		</method>
+		<method name="dnetcguiHandleMsgs" result="ULONG">
+			<arg name="signals" type="ULONG"/>
+		</method>
+		<method name="dnetcguiConsoleOut" result="ULONG">
+			<arg name="cpu" type="ULONG"/>
+			<arg name="output" type="UBYTE *"/>
+			<arg name="overwrite" type="BOOL"/>
+		</method>
+	</interface>
+</library>

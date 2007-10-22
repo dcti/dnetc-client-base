@@ -15,7 +15,7 @@
 ** mdup(). The stream object used/created by these functions is a MEMFILE *. 
 */
 const char *memfile_cpp(void) {
-return "@(#)$Id: memfile.cpp,v 1.7 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: memfile.cpp,v 1.8 2007/10/22 16:48:26 jlawson Exp $"; }
 
 #include <stdio.h>
 #include <string.h>

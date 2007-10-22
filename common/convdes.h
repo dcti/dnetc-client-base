@@ -10,7 +10,7 @@
  * ---------------------------------------------------------------
 */ 
 #ifndef __CONVDES_H__
-#define __CONVDES_H__ "@(#)$Id: convdes.h,v 1.11 2003/11/01 14:20:13 mweiser Exp $"
+#define __CONVDES_H__ "@(#)$Id: convdes.h,v 1.12 2007/10/22 16:48:25 jlawson Exp $"
 
 // odd_parity[n] = (n & 0xFE) | b
 // b set so that odd_parity[n] has an odd number of bits

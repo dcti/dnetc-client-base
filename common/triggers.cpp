@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.33 2003/11/01 14:20:14 mweiser Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.34 2007/10/22 16:48:28 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -48,7 +48,7 @@ return "@(#)$Id: triggers.cpp,v 1.33 2003/11/01 14:20:14 mweiser Exp $"; }
 #define TRIGPAUSEBY_SRCBATTERY 0x20 /* pause due to running on battery */
 #define TRIGPAUSEBY_CPUTEMP    0x40 /* cpu temperature guard */
 
-#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 # define CLISIGHANDLER_IS_SPECIAL 1
 #endif
 
@@ -268,14 +268,14 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 {
   DNETC_UNUSED_PARAM(unmangle_it);
 
-  #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
+  #if ((CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16))
   /* these two are frequently used 16bit apps that aren't visible (?)
      to utilGetPIDList so they are searched for by window class name,
      which is a unique identifier so we can find/tack them on to the
      end of the pauseplist in __init. (They used to be hardcoded in
      the days before utilGetPIDList)
   */
-  if (winGetVersion() >= 400 && winGetVersion() <2000) /* win9x only */
+  if (winGetVersion() >= 400 && winGetVersion() < 2000) /* win9x only */
   {
     static const char *app2wclass[] = { "scandisk",  "#ScanDskWDlgClass",
                                         "scandiskw", "#ScanDskWDlgClass",
@@ -315,7 +315,7 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
       TRACE_OUT((-1,"x2: mangle: '%s'\n",name));
     }
   } /* win9x? */
-  #endif /* ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) */
+  #endif /* ((CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)) */
 
   return name;
 }
@@ -332,7 +332,7 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #include <machine/apm_bios.h>
 #elif (CLIENT_OS == OS_MACOS)
 #include <Power.h>
-#elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+#elif (CLIENT_OS == OS_MACOSX)
 #include <IOKit/IOKitLib.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <IOKit/pwr_mgt/IOPM.h>
@@ -344,7 +344,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 {
   if (trigstatics.pause_if_no_mains_power)
   {
-    #if (CLIENT_OS == OS_WIN32)
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     static FARPROC getsps = ((FARPROC)-1);
     if (getsps == ((FARPROC)-1))
     {
@@ -370,7 +370,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU != CPU_POWERPC)
+    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86)
     {
       static long time_last = 0;
       long time_now = (time(0)/60); /* not more than once per minute */
@@ -456,9 +456,60 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
           TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
           trigstatics.pause_if_no_mains_power = 0;
         }
-      }
-    } /* #if (linux & !cpu_ppc) */
-    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_POWERPC)
+        // Hang on, don't disable yet, let's try acpi first. STAN
+        else
+        {
+          // first check if the relevant directory can be opened
+          int dirfd = open( "/proc/acpi/ac_adapter/", O_DIRECTORY );
+          close(dirfd);
+          if ( dirfd == -1 )
+            {
+              //nope, oh well we tried
+              TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+              trigstatics.pause_if_no_mains_power = 0;
+            }
+          else
+            {
+              // now check if it has subirectories (should have 1 per PSU)
+              int dircount,i;
+              struct direct **files;
+              dircount = scandir("/proc/acpi/ac_adapter/", &files, NULL, NULL);
+              if (dircount != 3) 
+                // assumptions : 3 = 1 actual subdir + . + ..
+                // less subdirs = acpi not set up
+                // more then 3 = more then 1 PSU, so not a laptop, so who cares anyway
+                {
+                  TRACE_OUT((0,"sps: further pause_if_no_mains_power checks now disabled\n"));
+                  trigstatics.pause_if_no_mains_power = 0; 
+                }
+              else
+                {
+                  // ok now let's check what the lonely PSU says 
+                  for (i=1;i<dircount+1;++i)
+                    {
+                      if ((strcmp(files[i-1]->d_name, ".") != 0) && (strcmp(files[i-1]->d_name, "..") != 0))
+                        {
+                          char acpi_path[256];
+                          snprintf(acpi_path,sizeof(acpi_path),"/proc/acpi/ac_adapter/%s/state",files[i-1]->d_name);
+                          char bufferb[40];
+                          int readsz = -1;
+                          int state = open(acpi_path, O_RDONLY );
+                          readsz = read(state, bufferb, sizeof(bufferb));
+                          close(state);
+                          if(strstr(bufferb,"on-line")) {
+                            return 0; // we are not on battery 
+                          } else {   
+                              return 1; // yes we are on battery
+                          }
+                        }
+                    }
+                } 
+            } 
+        }
+      } 
+    } /* #if (linux & cpu_x86) */
+
+    #elif (CLIENT_OS == OS_LINUX) && ((CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE))
     {
       static long time_last = 0;
       long time_now = (time(0)/60); /* not more than once per minute */
@@ -477,7 +528,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
             if (strstr(buffer, "AC Power") == buffer)
             {
               if (sscanf(buffer, "AC Power               : %d",
-			 &ac_status) == 1)
+                         &ac_status) == 1)
               {
                 disableme = 0;
                 break;
@@ -528,11 +579,11 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         {
           TRACE_OUT((+1,"APM check\n"));
           TRACE_OUT((0,"aiop->ai_major = %d\n", info.ai_major));
-	    		TRACE_OUT((0,"aiop->ai_minor = %d\n", info.ai_minor));
-		    	TRACE_OUT((0,"aiop->ai_acline = %d\n",  info.ai_acline));
-			    TRACE_OUT((0,"aiop->ai_batt_stat = %d\n", info.ai_batt_stat));
-    			TRACE_OUT((0,"aiop->ai_batt_life = %d\n", info.ai_batt_life));
-	    		TRACE_OUT((0,"aiop->ai_status = %d\n", info.ai_status));
+          TRACE_OUT((0,"aiop->ai_minor = %d\n", info.ai_minor));
+          TRACE_OUT((0,"aiop->ai_acline = %d\n",  info.ai_acline));
+          TRACE_OUT((0,"aiop->ai_batt_stat = %d\n", info.ai_batt_stat));
+          TRACE_OUT((0,"aiop->ai_batt_life = %d\n", info.ai_batt_life));
+          TRACE_OUT((0,"aiop->ai_status = %d\n", info.ai_status));
           TRACE_OUT((-1,"conclusion: AC line state: %s\n", ((info.ai_acline==0)?
                  ("offline"):((info.ai_acline==1)?("online"):("unknown"))) ));
         }
@@ -546,10 +597,10 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       if (disableme)
       {
         /* possible causes for a disable are
-	** EPERM: no permission to open /dev/apm) or
-	** ENXIO: apm device not configured, or disabled [kern default],
-	** or (for ioctl()) real<->pmode transition or bios error.
-       	*/
+        ** EPERM: no permission to open /dev/apm) or
+        ** ENXIO: apm device not configured, or disabled [kern default],
+        ** or (for ioctl()) real<->pmode transition or bios error.
+        */
         TRACE_OUT((0,"pause_if_no_mains_power check error: %s\n", strerror(errno)));
         TRACE_OUT((0,"disabling further pause_if_no_mains_power checks\n"));
         trigstatics.pause_if_no_mains_power = 0;
@@ -595,7 +646,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     }
     // We seem to have no PowerManager, so disable battery checking.
     trigstatics.pause_if_no_mains_power = 0;
-    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+    #elif (CLIENT_OS == OS_MACOSX)
     mach_port_t master;
     /* Initialize the connection to IOKit */
     if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess )
@@ -632,8 +683,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 
 // -----------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY)
-extern "C" s32 macosx_cputemp();
+#if (CLIENT_OS == OS_MACOSX)
+s32 macosx_cputemp();
 #elif (CLIENT_OS == OS_DEC_UNIX)
 extern "C" int dunix_cputemp();
 #endif
@@ -655,7 +706,7 @@ static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     #if (CLIENT_OS == OS_MACOS)
       cputemp = macosCPUTemp();
       cputemp = cputemp * 100 + 15;     // Convert to fixed-point format
-    #elif (CLIENT_OS == OS_MACOSX) && !defined(__RHAPSODY__)
+    #elif (CLIENT_OS == OS_MACOSX)
       cputemp = macosx_cputemp();
     #elif (CLIENT_OS == OS_DEC_UNIX)
       if ((cputemp = dunix_cputemp()) < 0) {
@@ -694,7 +745,7 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
    necessary */
 //  if (_kernel_escape_seen())
 //      RaiseExitRequestTrigger();
-  #elif (CLIENT_OS == OS_AMIGAOS)
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   ULONG trigs;
   if ( (trigs = amigaGetTriggerSigs()) )  // checks for ^C and other sigs
   {
@@ -712,7 +763,7 @@ static void __PollDrivenBreakCheck(int io_cycle_allowed)
     nwCliCheckForUserBreak(); //in nwccons.cpp
   #elif (CLIENT_OS == OS_WIN16) /* always thread safe */
     w32ConOut("");    /* benign call to keep ^C handling alive */
-  #elif (CLIENT_OS == OS_WIN32)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (io_cycle_allowed)
     w32ConOut("");    /* benign call to keep ^C handling alive */
   #elif (CLIENT_OS == OS_DOS)
@@ -787,7 +838,7 @@ int CheckPauseRequestTrigger(void)
     const char *custom_now_inactive = "";
     const char *app_now_active = "";
 
-    #if (CLIENT_OS==OS_WIN32) || (CLIENT_OS==OS_WIN16)
+    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     {
       custom_now_active = "(defrag running)";
       custom_now_inactive = "(defrag no longer running)";
@@ -980,8 +1031,12 @@ int CheckPauseRequestTrigger(void)
 
 // =======================================================================
 
-#if (CLIENT_OS == OS_AMIGAOS)
+#if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+#ifdef __amigaos4__
+extern "C" void __check_abort(void)
+#else
 extern "C" void __chkabort(void)
+#endif
 {
   /* Disable SAS/C / GCC CTRL-C handing */
   return;
@@ -999,7 +1054,7 @@ static void __init_signal_handlers( int doingmodes )
 
 // -----------------------------------------------------------------------
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 BOOL WINAPI CliSignalHandler(DWORD dwCtrlType)
 {
   if ( dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_CLOSE_EVENT ||
@@ -1086,6 +1141,24 @@ extern "C" void CliSignalHandler( int sig )
 }
 #endif //ifndef CLISIGHANDLER_IS_SPECIAL
 
+#if (CLIENT_OS == OS_OS2) && defined(__WATCOMC__)
+#include "dosqss.h"
+void pascal __far16 MoreOS2Signals(USHORT sigArg, USHORT sigNumber)
+{
+  // Ack signal
+  DosSetSigHandler(MoreOS2Signals, NULL, NULL, SIGA_ACKNOWLEDGE, sigNumber);
+  if (sigNumber == SIG_PFLG_A) /* signals connected to user signal "A" */
+  {
+    switch (sigArg)
+    {
+      case DNETC_MSG_PAUSE:   RaisePauseRequestTrigger(); break;
+      case DNETC_MSG_UNPAUSE: ClearPauseRequestTrigger(); break;
+      case DNETC_MSG_RESTART: RaiseRestartRequestTrigger(); break;
+    }
+  }
+}
+#endif
+
 // -----------------------------------------------------------------------
 
 #if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) || \
@@ -1128,7 +1201,7 @@ int TriggersSetThreadSigMask(void)
 
   #if defined(_POSIX_THREADS_SUPPORTED) /* must be first */
     #if ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
-       || (CLIENT_OS == OS_DGUX) || (CLIENT_OS == OS_MACOSX)
+       || (CLIENT_OS == OS_DGUX)
     /* nothing - no pthread_sigmask() and no alternative */
     #else
     pthread_sigmask(SIG_BLOCK, &signals_to_block, NULL);
@@ -1194,6 +1267,10 @@ static void __init_signal_handlers( int doingmodes )
       SETSIGNAL( TRIGGER_UNPAUSE_SIGNAL, CliSignalHandler );  //continue
     #endif
   #endif /* defined(__unix__) && defined(TRIGGER_PAUSE_SIGNAL) */
+  #if (CLIENT_OS == OS_OS2) && defined(__WATCOMC__)
+    // Pause/unpause in plain OS/2 works thru "user signal" */
+    DosSetSigHandler(MoreOS2Signals, NULL, NULL, SIGA_ACCEPT, SIG_PFLG_A);
+  #endif
   #if defined(SIGQUIT)
   SETSIGNAL( SIGQUIT, CliSignalHandler );  //shutdown
   #endif
@@ -1395,7 +1472,7 @@ static void _init_pauseplist( const char *plist )
       }
     }
   }
-  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+  #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   /*
   sorry about this piece of OS-specific uglyness. These were
   pause triggers before the days of utilGetPidlist(), and are now

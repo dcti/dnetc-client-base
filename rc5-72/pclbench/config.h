@@ -1,4 +1,4 @@
-/* $Id: config.h,v 1.2 2003/09/12 23:08:52 mweiser Exp $ */
+/* $Id: config.h,v 1.3 2007/10/22 16:48:35 jlawson Exp $ */
 
 // define exactly one of these:
 

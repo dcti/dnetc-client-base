@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.64 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.65 2007/10/22 16:48:24 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -221,14 +221,14 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
       len = strlen(label);
       {
         unsigned int maxlen = len;
-        if (maxlen > 75)
-          len = maxlen = 75;
-        else if (maxlen > 50)
-          maxlen = 75;
-        else if (maxlen > 25)
-          maxlen = 50;
+        if (maxlen > 72)
+          len = maxlen = 72;
+        else if (maxlen > 48)
+          maxlen = 72;
+        else if (maxlen > 24)
+          maxlen = 48;
         else
-          maxlen = 25;
+          maxlen = 24;
         for (;len < maxlen; len++)
           label[len] = ' ';
         len = maxlen;
@@ -239,7 +239,7 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
       if (ecd->linepos != 0)
       {
         if (ecd->cont_i != cont_i ||
-            (ecd->linepos + len) > 78)
+            (ecd->linepos + len) > 72)
         {
           need_pre_lf = 1;
           ecd->linepos = 0;
@@ -250,9 +250,9 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
       if (ecd->linepos == 0)
       {
         if (ecd->cont_i != cont_i)
-          sprintf(contnamepad, "%-3.3s:", CliGetContestNameFromID(cont_i));
+          sprintf(contnamepad, "%-6.6s:", CliGetContestNameFromID(cont_i));
         else
-          strcpy(contnamepad,"    ");
+          strcpy(contnamepad,"       ");
       }
 
       LogScreenRaw( "%s%s%s", ((need_pre_lf)?("\n"):("")),
@@ -448,6 +448,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_LOGTYPE].choicemax=(int)((sizeof(logtypes)/sizeof(logtypes[0]))-1);
   conf_options[CONF_LOGNAME].thevariable=&(client->logname[0]);
   conf_options[CONF_LOGLIMIT].thevariable=&logkblimit[0];
+  conf_options[CONF_LOGROTATETIME].thevariable=&(client->logrotateUTC);
   conf_options[CONF_MESSAGELEN].thevariable=&(client->messagelen);
   conf_options[CONF_SMTPSRVR].thevariable=&(client->smtpsrvr[0]);
   conf_options[CONF_SMTPFROM].thevariable=&(client->smtpfrom[0]);
@@ -671,6 +672,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       conf_options[CONF_LOGLIMIT].disabledtext=
                   ((logtype != LOGFILETYPE_NONE &&
                     logtype != LOGFILETYPE_NOLIMIT) ? (NULL) :
+                  ("n/a [inappropriate for log type]"));
+      conf_options[CONF_LOGROTATETIME].disabledtext=
+                  ((logtype == LOGFILETYPE_ROTATE) ? (NULL) :
                   ("n/a [inappropriate for log type]"));
       conf_options[CONF_SMTPSRVR].disabledtext=
       conf_options[CONF_SMTPDEST].disabledtext=
@@ -899,7 +903,8 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               )
               {
                 descr = (const char *)conf_options[menuoption].thevariable;
-                if (!*descr)
+                if (((conf_options[menuoption].index==CONF_INBUFFERBASENAME)
+                  || (conf_options[menuoption].index==CONF_OUTBUFFERBASENAME)) && (!*descr))
                   descr = (const char *)conf_options[menuoption].defaultsetting;
               }
               else if (conf_options[menuoption].type==CONF_TYPE_PASSWORD)
@@ -1117,6 +1122,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
           )
           {
             strcpy(parm, (char *)conf_options[editthis].thevariable);
+            if (((conf_options[editthis].index==CONF_INBUFFERBASENAME)
+              || (conf_options[editthis].index==CONF_OUTBUFFERBASENAME)) && (!*parm))
+                  strcpy(parm, (const char *)conf_options[editthis].defaultsetting);
             p = (const char *)(conf_options[editthis].defaultsetting);
           }
           else if (conf_options[editthis].type==CONF_TYPE_PASSWORD)

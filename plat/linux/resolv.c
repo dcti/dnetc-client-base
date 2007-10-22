@@ -13,7 +13,7 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.4 2003/11/01 14:20:15 mweiser Exp $
+ * $Id: resolv.c,v 1.5 2007/10/22 16:48:30 jlawson Exp $
  *
  * The functions exported from here will first check if a bypass
  * (described below) has been provided.

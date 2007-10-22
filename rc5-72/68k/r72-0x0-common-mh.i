@@ -4,7 +4,7 @@
 	; Any other distribution or use of this source violates copyright.
 
         ; $VER: MC680x0 RC5 core common definitions 04-Feb-2001
-	; $Id: r72-0x0-common-mh.i,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+	; $Id: r72-0x0-common-mh.i,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 
         ; MC680x0 RC5 core common definitions
         ; for distributed.net RC5-64 clients.

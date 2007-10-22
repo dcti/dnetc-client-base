@@ -1,0 +1,11 @@
+Module LIBC.NLM
+Description "Distributed.net client"
+Copyright "Copyright 1997-2004 distributed.net"
+Version 0,0,0
+ScreenName "DNETC"
+StackSize 98304
+XDCData plat/netware/netware6.xdc
+FLAG_ON 4194338
+Debug
+Import @../opensource/ndk/imports/netware.imp
+Import @../opensource/ndk/imports/libc.imp

@@ -1,0 +1,373 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Win32 Distributed.net Readme</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style type="text/css">
+<!--
+a:link {
+  color:	#036; 
+  background-color: 	transparent; 
+}
+a:hover {
+  color:	#630; 
+  background-color: 	transparent; 
+}
+body {
+  background-color:	#eee;
+  color:	#000;
+  margin:		0;
+}
+.contentcontainer {
+  float:	left;
+  padding:	0;
+  width:	90%;
+  BORDER-LEFT: #999999 59px solid;
+  margin-top: 0px;
+}
+.content {
+  color:	#000;
+  background-color:	transparent;
+  margin-top:		0;
+  padding-left:	40px;
+  font:	14px/14px helvetica, sans-serif;
+  line-height:	16px;
+}
+h1 {
+  background-color:	#333;
+  color:	#eee;
+  width:	100%;
+  margin:		0px;
+  height:		46px;
+  font-family: helvetica, Arial, sans-serif;
+  font-weight: normal;
+  font-size: 36px;
+  letter-spacing: 0.1em
+}
+h2 {
+  background-color:	#bbb;
+  border:	solid 1px #333;
+  padding:	2px 0 3px 3px;
+  color:	#000;
+  font:	bold 15px/17px verdana, sans-serif;
+}
+-->
+</style>
+</head>
+
+<body>
+<h1> distributed.net</h1>
+<div class="contentcontainer"> 
+<div class="content"> 
+<p>&nbsp;</p>
+
+<h2>Welcome to the distributed.net client</h2>
+<p>This document covers information specific to the client for Win32. 
+  Refer to other enclosed documentation or browse the online FAQ at 
+  <a href="http://www.distributed.net/FAQ">http://www.distributed.net/FAQ</a> 
+  for non-platform-specific documentation.</p>
+<ul>
+  <li><a href="#started">Getting Started</a> 
+    <ul>
+      <li><a href="#service">Using the client as a Win9x/WinNT/2000/XP service</a></li>
+      <li><a href="#multiplexor">Using the screensaver multiplexor</a></li>
+
+    </ul>
+  </li>
+  <li><a href="#notes">Win32 client specific notes</a></li>
+  <li><a href="#faq">Win32 client specific FAQ</a></li>
+</ul>
+
+<a name="started"></a>
+<h2>Getting started</h2>
+<p> Just unpack the client in a directory of your choice and fire it up.</p>
+
+<p> If you have never run the client before, it will initiate the menu-driven 
+  configuration. Save and quit when done, the configuration file will 
+  be saved in the same directory as the client. Then, simply restart 
+  the client. From that point on it will use the saved configuration.</p>
+<p>The configuration options are fairly self-explanatory and can be run
+  at any time by starting the client with the '-config' option.
+  A list of command line options is available by starting the client 
+  with '-help'.</p>
+<p>A detailed guide to the various configuration options is available 
+  online at <a href="http://www.distributed.net/FAQ">http://www.distributed.net/FAQ/</a></p>
+<a name="service" class="h3replace"></a>
+
+<h3>Running the client as a Win9x/WinNT/2000/XP Service</h3>
+<p>A Win9x/WinNT/2000/XP service is a process that starts running when the 
+computer is powered up, and does not stop until the computer is powered
+down. Unlike normal processes, services will continue to run even when
+a user logs out.</p>
+
+<p>Obviously, a service does not have access to remote file and disk resources 
+  that require a user to log in first. (This restriction can be nullified 
+  on NT - see FAQ <a href="#serviceremote">below</a>)</p>
+
+<p> To install the client as a service, run the client with the -install
+  switch. This will cause it to register itself with the service handler,
+  which will in turn automatically start the client the next time the
+  computer is powered up. To deinstall a client previously installed as
+  a service, start it with the -uninstall switch.
+</p>
+
+<a name="multiplexor"></a>
+<h3>The screensaver multiplexor</h3>
+<p>Under normal circumstances, having a client running continuously in the 
+  background is usually preferred since it continues to use the idle processor 
+  cycles even when a machine is actively in use. For instance, when typing 
+  a letter, the machine is really mostly idle, waiting for keystrokes, and 
+  the client can use that time.</p>
+<p>However, in some environments, utilizing *any* cpu time while a user is 
+  actively trying to use the machine may be a problem. The distributed.net 
+  screen saver multiplexor addresses that issue. When activated by the system, 
+  it will launch a client in the background and _another_ screen saver of 
+  your choice in the foreground. If a client is already found to be running 
+  when the screen saver is activated by the system, it will not be started 
+  a second time.</p>
+<p>Note that the screen saver and the client are different executables. The 
+  screen saver multiplexor (*.scr) is of little use without a client (*.exe).</p>
+<p>Not only does this permit an installation where use of any cpu time 
+  is a problem, it also resolves two other issues that a client-as-a-screensaver 
+  cannot: a) it does not requires storage of client buffers and/or configuration 
+  file in the windows (or windows/system) directory and b) it allows 
+  a user to continue to use his/her preferred screensaver.</p>
+
+			
+
+Installation involves...
+<ol>             
+  <li>simply copying the *.scr file included with the client distribution 
+      to one of the following locations: on Win9x: your \WINDOWS\ or \WINDOWS\SYSTEM\ 
+      directory on WinNT/2000/XP: your \WINNT\ or \WINNT\SYSTEM32\ directory</li>
+  <li>Once you have copied it, go to the Display properties in the Control 
+      Panel and select the distributed.net screen saver as the active screen saver.</li>
+  <li>Clicking on the &quot;Settings...&quot; button opens the multiplexors 
+      configuration dialog. Select the client you wish the multiplexor 
+      to run in the background and select the screensaver you wish to run
+      in the foreground</li>
+  <li>If the client had been previously configured, there is nothing 
+      else you need do. Otherwise click on the &quot;Configure&quot; button 
+      to configure the client.</li>
+
+</ol>
+
+<a name="notes"></a>
+<h2>Notes</h2>
+<p>The client distribution includes a separate CUI wrapper that communicates 
+  with the GUI client over pipes. Older clients can be started in native CUI 
+  mode either by renaming the .exe to .com, or by using a patch utility to 
+  change the executable's subsystem type to CUI.</p>
+<p>The win32 CLI client consolidates the rc5des.exe (normal CUI client), rc5desh.exe 
+  (hidden client) and rc5dessvc.exe (service mode client) in one executable. 
+  It no longer runs as a native console session (CUI), but emulates a "console" 
+  in a GUI window.</p>
+
+<ul>
+  <li>the client can be started "hidden";</li>
+  <li>conagent is not loaded which cuts down the overhead; </li>
+
+  <li>the client is more efficient;</li>
+  <li>the client is not susceptible to misconfigured "DOS" settings</li>
+  <li>the client can be shutdown with "close" and will shutdown the 
+      client can be shutdown with "close" and will shutdown</li>
+  <li>it gets rid of the "DOS box" and persistant icon on taskbar;</li>
+  <li>the client can be minimized to the systray;</li>
+  <li>most importantly, the client uses exactly the same source code 
+      base as all the other clients on all the other platforms. This enhances 
+      the client's stability since the chances that a bug will remain 
+      undetected for long are greatly reduced.</li>
+
+  <li>The client is capable of asyncronously executing client
+      "modes", ie -fetch, -flush, -update and so on. Clicking with 
+      right mouse button on the client window will bring up a "mode" menu.</li>
+</ul>
+		  
+<p>It is no longer mandatory to have winsock.dll/wsock32.dll installed.</p>
+
+<a name="faq"></a>
+<h2>FAQ</h2>
+<p><strong><strong>Q:</strong></strong> What are the changes in this version of the client?<br>
+<strong>A:</strong> They are listed in the file CHANGES.txt, included 
+  with this client distribution.</p>
+
+<p><strong><strong>Q:</strong></strong> Where can I find other utilities 
+  and add-ons for the client?<br>
+<strong>A:</strong> You can get an asortment of open source add on utilities 
+  from the web site. As always, user contribution will be much appreciated. 
+  See <a href="http://www.distributed.net/download/addon.php">http://www.distributed.net/download/addon.php</a></p>
+
+<p><strong><strong>Q:</strong></strong> Is it possible to start the client 
+  as a service and yet keep it visible on the desktop or taskbar?<br>
+<strong>A:</strong> Services are not supposed to be interactive. There is a special 
+  category of interactive 
+  services, but they are rare (like kernel debuggers), and NT only. Some 'interactive' 
+  functionality may be achieved by enabling logging to file and by using the 
+  client's command line -shutdown, -restart, -pause and -unpause options. 
+  An attempt to force a client installed as an NT service to &quot;interact 
+  with [the] desktop&quot; will not work as expected.</p>
+
+<p><strong>Q:</strong> How do I check that the client is in fact running 
+  hidden/as a service? <br>
+<strong>A:</strong> On NT, service status can be determined in the 
+  service manager and the task manager will show the client taking up 
+  lots of cpu time. Win9x does not have a service manager or a task 
+  manager, so you will need to either enable logging or use 'wintop' 
+  or similar utility. (wintop for Windows 9x is available from the 'kerneltoys' 
+  pack or at <a href="http://www.distributed.net/download/addon.php">http://www.distributed.net/download/addon.php</a>)</p> 
+
+<p><strong>Q:</strong> What are the client's service keys/ID?<br> 
+<strong>A:</strong> If you use NT, it will be in the service manager. The client's service ID 
+  (shortname) is &quot;dnetc&quot; for v2.80xx and later, and &quot;rc5desnt&quot; 
+  or &quot;bovrc5nt&quot; for pre-2.80xx clients. On Win9x (Win9x doesn't 
+  have a service manager), the client is registered with the registry 
+  as &quot;distributed.net client&quot; (or &quot;bovwin32&quot; in 
+  very old versions) under HKEY_LOCAL_MACHINE in \Software\Microsoft\Windows\CurrentVersion\RunService</p>
+
+<a name="serviceremote"></a>
+<p><strong>Q:</strong> How do I stop the service from the command line? <br>
+<strong>A:</strong> Run the client with '-shutdown' or, on NT, 'net 
+  stop SERVICEID' (see previous question for service ID)</p>
+
+<p><strong>Q:</strong> When installed as a service, the client cannot 
+  access files on remote drives (network shares). How come? <br>
+<strong>A:</strong> When installed as a service, the client is (on NT, by default) not 
+  running in a user's context (there isn't a user logged in). Under 
+  Win9x, where security is virtually non-existant, the client *could* 
+  theoretically access network shares /once/ a user has logged in, but 
+  that is obviously not a good idea :). On NT, the service can be configured 
+  from the service manager to start in a context other than the default 
+  &quot;Local System&quot;: Control Panel -&gt; services -&gt; properties 
+  on service. there's a radio button to change between local system 
+  and another account. Also if the machine is a backup domain controller, all control panel 
+  choices for service userids/passwords, other than localuser, are grayed 
+  out whenever the machine doesn't have a connection to the primary 
+  domain controller.</p>
+
+<p><strong>Q:</strong> On NT, trying to -install as service from 'AT' fails, but
+  works fine otherwise. Whats up with that?<br>
+<strong>A:</strong> AT runs by default in a non-desktop context, and 
+  the client's &quot;have a valid shell&quot; check fails. The solution 
+  is to check 'interact with desktop' in the scheduler config and install 
+  the service with &quot;-quiet -install&quot;.</p>
+
+<p><strong>Q:</strong> I run the client from the Startup menu of Windows (it fires up 
+  alone every time I log into Windows). I want it to be minimized when 
+  it starts... How do I do that?<br>
+
+<strong>A:</strong> The way you would for any application: 
+<ol>
+  <li>highlight the name in the menu</li>
+  <li>right-click. A menu will pop up menu.</li>
+  <li>select &quot;Properties&quot; (last option on the menu that 
+      appears)</li>
+  <li>change to the &quot;Shortcut&quot; tab in the &quot;Properties&quot; 
+      dialog</li>
+
+  <li>in the &quot;Run:&quot; dropdown menu (second from the bottom), 
+      change &quot;Normal Window&quot; to &quot;Minimized&quot;
+      -&gt; click &quot;OK&quot;</li>
+</ol>
+
+<p> <strong>Q:</strong> I want to run the client and XYZ simultaneously, but 
+  XYZ destroys my crunch rate. What can I do?<br>
+
+<strong>A:</strong> Some applications behave poorly with idle priority, cycle-stealing 
+  applications like dnetc. Some applications unintentionally waste CPU when 
+  they are minimized or waiting for something to happen. Other applications 
+  wait for other processes to stop utilizing CPU before doing cleanup or background 
+  activities. For cases like these, you can try configuring dnetc to pause itself when 
+  that application is running.  You may also try contacting the application's vendor to 
+  find out if there are any updates that improve its use of idle CPU.</p>
+
+<p><strong>Q:</strong> I want to run the client as a screen saver. How do I do this?<br>
+<strong>A:</strong> The client includes a screensaver multiplexor. When 
+  activated, it will launch a client in the background and _another_ screen 
+  saver of your choice in the foreground.<a href="#multiplexor">This is explained 
+  here.</a></p>
+
+<p><strong>Q:</strong> I want to run the client at a higher priority 
+  than zero/idle. This functionality was removed in some past version, 
+  but I *really*, *really* need it or my other XXX program will simply 
+  hog the CPU. What can I do?<br>
+
+<strong>A:</strong> The support for this never actually was removed. However, 
+7  be *very* careful. Windows' thread scheduling/priority 
+  assignment is brain dead beyond belief. Read the text in the config screen 
+  before you fiddle with the priority setting!</p>
+
+<p><strong>Q:</strong> My client's window shows characters in a weird 
+  font. Is the client trying to access a font not on my system? <br>
+<strong>A:</strong> No. The client never loads fonts by name. It loads by 
+  type/family, that is, only fonts of fixed-pitch (every 'character' has the 
+  same width). The advantage is of course that the client need not know what 
+  fonts are installed. The disadvantage is that if there is _no_ font at all 
+  that fits the bill, GDI uses the first font that matches the other specified 
+  attributes, ie font height/width etc. As a rule, the client's display will 
+  be fine as long as at least the standard Windows fonts are available. </p>
+
+<p><strong>Q:</strong> What is the 'Dialup interfaces' option I see 
+  in the config?<br> 
+
+<strong>A:</strong> Dial-up detection was previously 
+  available only the RAS (Remote Access Service) API. The Win32 client is 
+  capable of detecting 'UP' state on 
+  *non-RAS* devices such as ISDN adapters that are not RAS capable or 
+  AOL's proprietary modem adapter which appears as a network cards and 
+  not as a modems. The 'Dialup interfaces' list then allows you to mask 
+  or mask-out those devices you do not want the client to 'see'. Windows 
+  has no consistant naming scheme for network adapters: What appears 
+  as &quot;PPP Adapter NdisWan'n'&quot; on NT, appears as &quot;'i' 
+  Ethernet Adapter&quot; on Windows9x and the numbering sequence ('n' 
+  and 'i') isn't uniform either. To simplify this, the client refers 
+  to all dialup adapters as &quot;ppp[0-9]&quot; and all non-dialup 
+  devices as &quot;eth[0-9]&quot;. Generally speaking, if you were happy 
+  with the way lurk worked before, you probably do need the 'Dialup 
+  interfaces' option now.</p>
+
+<p> *NOTE*: If you are running WinGate (NAT) proxy on the same machine
+  that the client is on, and wish the client to go online only if
+  a connection is already open, then you CANNOT use RAS - you must
+  tell the client to use the 'Dialup Interfaces' (specify 'ppp*').</p>
+
+<p><strong>Q:</strong> Can I share my win32 client's buffers with non-win32 clients?
+  [&quot;sharing&quot; is simultaneous access via file-sharing, but 
+  also manual transfer of the buffer files from one machine to another]<br>
+<strong>A: </strong>Yes. It is however a good idea to ensure that 
+  clients sharing buffers all have the same version number.  Read the 
+  <a href="http://www.distributed.net/FAQ/">general FAQ</a> for specifics. 
+  You may want to read the faq entry on 
+  <a href="http://n0cgi.distributed.net/faq/index.cgi?file=48">sharing buffers over a network,</a>
+  as well as <a href="http://n0cgi.distributed.net/faq/index.cgi?file=59">"sneaker netting".</a>
+
+<p><strong>Q:</strong> I have trouble minimizing the client. It sits 
+  on the taskbar for several seconds before finally moving to the tray.<br> 
+<strong>A:</strong> Norton Systemworks 2001 by default, runs 
+  a tray icon manager for their software(Norton System Doctor, &gt; 
+  Norton Anti-Virus, etc etc). I turned off the tray icon manager and 
+  rebooted, and the client then minimizes to the systray with no lag.</p>
+
+<p><strong>Q:</strong> I have trouble using the client in conjunction 
+  with MS-proxy, and keep getting HTTP error: '407 Proxy authentication 
+  required' <br>
+<strong>A:</strong> The problem is that MS Proxy is usually configured to requre NTLM 
+  (NT Domain) authentication. So far only IE is capable of this. Solution 
+  is to install &quot;Winsock-proxy&quot; client from MS Proxy Setup. 
+  It works at socket level so any application can use it transparently. 
+  You may need assistance from your system administrator. </p>
+
+<p><strong>Q:</strong> How do I completely remove the this client from 
+  my system?<br>
+<strong>A:</strong> If the client was installed via the MSI installer, you should first
+  try using "Add/Remove Programs"  in the control panel. If it were not, then you should 
+  run the client with the '-uninstall' switch 
+  to ensure that it is not installed as a service. Then, simply delete 
+  all files in the client's directory.</p>
+
+<p>&nbsp;</p>         
+	
+</div>
+</div>
+
+</body>
+</html>

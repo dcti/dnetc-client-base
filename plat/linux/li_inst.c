@@ -6,7 +6,7 @@
  * -install and -uninstall support for Linux (maybe all SysV style init?)
  *
  * Created Aug 23 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: li_inst.c,v 1.4 2003/11/01 14:20:15 mweiser Exp $
+ * $Id: li_inst.c,v 1.5 2007/10/22 16:48:30 jlawson Exp $
  *
 */
 #define __NO_STRING_INLINES /* work around bugs in glibc bits/string2.h */

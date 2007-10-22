@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_altivec_4_cpp(void) {
-return "@(#)$Id: r72-altivec-4.cpp,v 1.2 2003/09/12 23:08:52 mweiser Exp $"; }
+return "@(#)$Id: r72-altivec-4.cpp,v 1.3 2007/10/22 16:48:36 jlawson Exp $"; }
 
 #include "ccoreio.h"
 #include "../ansi/rotate.h"

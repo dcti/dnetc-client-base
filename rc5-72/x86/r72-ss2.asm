@@ -4,7 +4,7 @@
 ;
 ; Author: Ianos Gnatiuc <ssianky@hotmail.com>
 ; based on r72-dg2 and r72ansi2 cores
-; $Id: r72-ss2.asm,v 1.2 2003/09/12 23:37:12 mweiser Exp $
+; $Id: r72-ss2.asm,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]

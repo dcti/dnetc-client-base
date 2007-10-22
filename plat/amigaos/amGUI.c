@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amGUI.c,v 1.4 2003/11/01 14:20:15 mweiser Exp $
+ * $Id: amGUI.c,v 1.5 2007/10/22 16:48:30 jlawson Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */
 
-#ifndef NOGUI
+#ifndef NO_GUI
 
 #include "amiga.h"
 #include "cputypes.h"
@@ -28,6 +28,9 @@
 #include "proto/dnetcgui.h"
 
 struct Library *DnetcBase;
+#ifdef __amigaos4__
+struct DnetcIFace *IDnetc;
+#endif
 
 static ULONG GUISigMask;
 
@@ -189,7 +192,7 @@ static void __amigaDoInfoUpdates(void)
 }
 #endif
 
-#if !defined(__PPC__)
+#if !defined(__OS3PPC__)
 void amigaHandleGUI(struct timerequest *tr)
 #elif !defined(__POWERUP__)
 void amigaHandleGUI(struct timeval *tv)
@@ -203,7 +206,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
 {
    BOOL done = FALSE;
 
-   #ifndef __PPC__
+   #ifndef __OS3PPC__
    struct MsgPort *tport;
    ULONG waitsigs,timesig;
 
@@ -228,12 +231,12 @@ void amigaHandleGUI(void *timer, ULONG timesig)
 
       ULONG sigr;
 
-      #ifndef __PPC__
+      #ifndef __OS3PPC__
       sigr = Wait(waitsigs);
-
       if (sigr & timesig) {
+         sigr &= ~timesig;
          done = TRUE;
-         GetMsg(tport);
+         WaitIO((struct IORequest *)tr);
       }
       #elif defined(__POWERUP__)
       PPCWait(timesig);
@@ -268,10 +271,26 @@ void amigaHandleGUI(void *timer, ULONG timesig)
          if ( cmds & DNETC_MSG_CONFIG )
             ModeReqSet(MODEREQ_CONFIG | MODEREQ_CONFRESTART);
 
-         #ifndef __PPC__
+         #ifndef __OS3PPC__
          if (cmds && !done && tr) {
             AbortIO((struct IORequest *)tr);
             WaitIO((struct IORequest *)tr);
+            /*
+             * Important: WaitIO() might not clear the signal, so do it manually.
+             * Previously with this missing and with GetMsg() used to clear the
+             * message from the port, it could easily lead into not clearing up
+             * timereq (message not yet in port, but signal set -> GetMsg() doing
+             * nothing). This again lead into sending the same timereq again, while
+             * it was already active. And this is deadly.
+             *
+             * Relevant quote from the exec.doc/WaitIO:
+             *"   WARNING
+             *       If this IORequest was "Quick" or otherwise finished BEFORE this
+             *       call, this function drops though immediately, with no call to
+             *       Wait(). A side effect is that the signal bit related the port may
+             *       remain set. Expect this."
+             */
+            SetSignal(0, timesig);
             done = TRUE;
 	 }
          #elif defined(__POWERUP__)
@@ -286,7 +305,7 @@ void amigaHandleGUI(void *timer, ULONG timesig)
 
       //if (!ModeReqIsSet(-1)) __amigaDoInfoUpdates();
 
-      #if defined(__PPC__) && !defined(__POWERUP__)
+      #if defined(__OS3PPC__) && !defined(__POWERUP__)
       if (sigr && !done) {
          GetSysTimePPC(&tvnow);
          if (CmpTimePPC(&tvnow,&tvend) == 1) {
@@ -335,7 +354,9 @@ void amigaGUIOut(char *msg)
       else {
          prevnewline = FALSE;
       }
-      dnetcguiConsoleOut(CLIENT_CPU,msg,overwrite);
+
+      dnetcguiConsoleOut(CLIENT_CPU,(UBYTE *)msg,overwrite);
+
       msg += len + (c ? 1 : 0);
       overwrite = FALSE;
    }
@@ -346,10 +367,18 @@ BOOL amigaGUIInit(char *programname, struct WBArg *iconname)
    BOOL guiopen = FALSE;
 
    if ((DnetcBase = OpenLibrary("dnetcgui.library",1))) {
-      if ((GUISigMask = dnetcguiOpen(((CLIENT_CPU == CPU_POWERPC) ? DNETCGUI_PPC : DNETCGUI_68K),programname,iconname,CliGetFullVersionDescriptor()))) {
+      #ifdef __amigaos4__
+      if (!(IDnetc = (struct DnetcIFace *)GetInterface( DnetcBase, "main", 1L, NULL ))) {
+         goto fail;
+      }
+      #endif
+      if ((GUISigMask = dnetcguiOpen(((CLIENT_CPU == CPU_POWERPC) ? DNETCGUI_PPC : DNETCGUI_68K),(UBYTE *)programname,iconname,CliGetFullVersionDescriptor()))) {
          guiopen = TRUE;
       }
       else {
+#ifdef __amigaos4__
+fail:
+#endif
          CloseLibrary(DnetcBase);
          DnetcBase = NULL;
       }
@@ -362,9 +391,13 @@ void amigaGUIDeinit(void)
 {
    if (DnetcBase) {
       dnetcguiClose(NULL);
+      #ifdef __amigaos4__
+      DropInterface((struct Interface *)IDnetc);
+      IDnetc = NULL;
+      #endif
       CloseLibrary(DnetcBase);
       DnetcBase = NULL;
    }
 }
 
-#endif /* NOGUI */
+#endif /* NO_GUI */

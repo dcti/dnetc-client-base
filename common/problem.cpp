@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.180 2003/11/01 14:20:14 mweiser Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.181 2007/10/22 16:48:27 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -43,12 +43,20 @@ return "@(#)$Id: problem.cpp,v 1.180 2003/11/01 14:20:14 mweiser Exp $"; }
   #include <stddef.h> /* offsetof */
 #endif
 
+#if (CLIENT_OS == OS_MORPHOS)
+  #define SAVE_CLIENT_OS_CONTEXT    APTR *__ehptr = (APTR *) (((IPTR) FindTask(NULL)->tc_ETask) + 130); *__ehptr = MyEmulHandle;
+  #define RESTORE_CLIENT_OS_CONTEXT *__ehptr = NULL;
+#else
+  #define SAVE_CLIENT_OS_CONTEXT
+  #define RESTORE_CLIENT_OS_CONTEXT
+#endif
+
 /* ------------------------------------------------------------------- */
 
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
 #ifndef MINIMUM_ITERATIONS
-#define MINIMUM_ITERATIONS 24
+#define MINIMUM_ITERATIONS 48
 /*
    MINIMUM_ITERATIONS determines minimum number of iterations that will
    be requested, as well as the boundary on which number of iterations will
@@ -455,6 +463,7 @@ static void __IncrementKey(u32 *keyhi, u32 *keymid, u32 *keylo, u32 iters, int c
       *keylo = *keylo + iters;
       if (*keylo < iters) *keyhi = *keyhi + 1; /* Account for carry */
       break;
+    case OGR_P2:
     case OGR:
       /* This should never be called for OGR */
       break;
@@ -512,6 +521,27 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       return contestid;
     }
     #endif
+    #if defined(HAVE_OGR_PASS2)
+    case OGR_P2:
+    {
+      //24/2-22-32-21-5-1-12
+      //25/6-9-30-14-10-11
+      work->ogr_p2.workstub.stub.marks = 25;    //24;
+      work->ogr_p2.workstub.worklength = 6;     //7;
+      work->ogr_p2.workstub.stub.length = 6;    //7;
+      work->ogr_p2.workstub.stub.diffs[0] = 6;  //2;
+      work->ogr_p2.workstub.stub.diffs[1] = 9;  //22;
+      work->ogr_p2.workstub.stub.diffs[2] = 30;  //32;
+      work->ogr_p2.workstub.stub.diffs[3] = 14; //21;
+      work->ogr_p2.workstub.stub.diffs[4] = 10;  //5;
+      work->ogr_p2.workstub.stub.diffs[5] = 11;  //1;
+      work->ogr_p2.workstub.stub.diffs[6] = 0;  //12;
+      work->ogr_p2.nodes.lo = 0;
+      work->ogr_p2.nodes.hi = 0;
+      work->ogr_p2.minpos = 0;
+      return contestid;
+    }
+    #endif
     #if defined(HAVE_OGR_CORES)
     case OGR:
     {
@@ -529,6 +559,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->ogr.workstub.stub.diffs[6] = 0;  //12;
       work->ogr.nodes.lo = 0;
       work->ogr.nodes.hi = 0;
+      work->ogr.iterations = 0;
       return contestid;
     }
     #endif
@@ -750,9 +781,9 @@ static int __InternalLoadState( InternalProblem *thisprob,
   {
     /* may also be overridden in go_mt */
     #if (CLIENT_OS == OS_RISCOS)
-    if (riscos_check_taskwindow() && thisprob->pub_data.client_cpu!=CPU_X86)
+    if (riscos_check_taskwindow() && thisprob->pub_data.client_cpu != CPU_X86)
       thisprob->pub_data.cruncher_is_time_constrained = 1;
-    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     if (winGetVersion() < 400)
       thisprob->pub_data.cruncher_is_time_constrained = 1;
     #elif (CLIENT_OS == OS_MACOS)
@@ -921,6 +952,51 @@ static int __InternalLoadState( InternalProblem *thisprob,
     }
   #endif
 
+  #if defined(HAVE_OGR_PASS2)
+  case OGR_P2:
+  {
+    int r;
+    thisprob->priv_data.contestwork.ogr_p2 = work->ogr_p2;
+    if (thisprob->priv_data.contestwork.ogr_p2.nodes.hi != 0 || thisprob->priv_data.contestwork.ogr_p2.nodes.lo != 0)
+    {
+      if (thisprob->pub_data.client_cpu != expected_cputype || thisprob->pub_data.coresel != expected_corenum ||
+          CLIENT_OS != expected_os || CLIENT_VERSION != expected_build)
+      {
+        thisprob->pub_data.was_reset = 1;
+        thisprob->priv_data.contestwork.ogr_p2.workstub.worklength = thisprob->priv_data.contestwork.ogr_p2.workstub.stub.length;
+        thisprob->priv_data.contestwork.ogr_p2.nodes.hi = thisprob->priv_data.contestwork.ogr_p2.nodes.lo = 0;
+      }
+    }
+
+    r = (thisprob->pub_data.unit_func.ogr)->init();
+    if (r == CORE_S_OK)
+    {
+      r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr_p2.workstub,
+                      sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE,
+                      thisprob->priv_data.contestwork.ogr_p2.minpos);
+    }
+    if (r != CORE_S_OK)
+    {
+      /* if it got here, then the stub is truly bad or init failed and
+      ** it is ok to discard the stub (and let the network recycle it)
+      */
+      const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
+      const char *msg = "Internal error";
+      if      (r == CORE_E_MEMORY) msg = "CORE_E_MEMORY: Insufficient memory";
+      else if (r == CORE_E_STUB)   msg = "CORE_E_STUB: Invalid initial ruler";
+      else if (r == CORE_E_FORMAT) msg = "CORE_E_FORMAT: Format or range error";
+      Log("%s load failure: %s\nStub discarded.\n", contname, msg );
+      return -1;
+    }
+    if (thisprob->priv_data.contestwork.ogr_p2.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr_p2.workstub.stub.length)
+    {
+      thisprob->pub_data.startkeys.hi = thisprob->priv_data.contestwork.ogr_p2.nodes.hi;
+      thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.ogr_p2.nodes.lo;
+      thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
+    }
+    break;
+  }
+  #endif
   #if defined(HAVE_OGR_CORES)
   case OGR:
   {
@@ -941,17 +1017,19 @@ static int __InternalLoadState( InternalProblem *thisprob,
     if (r == CORE_S_OK)
     {
       r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr.workstub,
-                      sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE);
+                      sizeof(WorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE, 0);
     }
     if (r != CORE_S_OK)
     {
       /* if it got here, then the stub is truly bad or init failed and
       ** it is ok to discard the stub (and let the network recycle it)
       */
-      const char *msg = "Unknown error";
-      if      (r == CORE_E_MEMORY)  msg = "CORE_E_MEMORY: Insufficient memory";
-      else if (r == CORE_E_FORMAT)  msg = "CORE_E_FORMAT: Format or range error";
-      Log("OGR load failure: %s\nStub discarded.\n", msg );
+      const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
+      const char *msg = "Internal error";
+      if      (r == CORE_E_MEMORY) msg = "CORE_E_MEMORY: Insufficient memory";
+      else if (r == CORE_E_STUB)   msg = "CORE_E_STUB: Invalid initial ruler";
+      else if (r == CORE_E_FORMAT) msg = "CORE_E_FORMAT: Format or range error";
+      Log("%s load failure: %s\nStub discarded.\n", contname, msg );
       return -1;
     }
     if (thisprob->priv_data.contestwork.ogr.workstub.worklength > (u32)thisprob->priv_data.contestwork.ogr.workstub.stub.length)
@@ -1075,6 +1153,36 @@ int ProblemRetrieveState( void *__thisprob,
                   sizeof(ContestWork));
           break;
         }
+        #if defined(HAVE_OGR_PASS2)
+        case OGR_P2:
+        {
+          (thisprob->pub_data.unit_func.ogr)->getresult(
+                       thisprob->priv_data.core_membuffer,
+                       &thisprob->priv_data.contestwork.ogr_p2.workstub,
+                       sizeof(WorkStub));
+          memcpy( (void *)work,
+                  (void *)&thisprob->priv_data.contestwork,
+                  sizeof(ContestWork));
+
+          /* is the stub invalid? */
+          if (thisprob->priv_data.last_resultcode == RESULT_NOTHING &&
+              work->ogr_p2.nodes.hi == 0 && work->ogr_p2.nodes.lo == 0)
+          {
+            #if defined(STUB_E_GOLOMB) /* newer ansi core */
+            if (!thisprob->pub_data.was_truncated)
+            {
+              unsigned int r = work->ogr_p2.workstub.worklength;
+              const char *reason = "STUB_E_*: Undefined core error";
+              if      (r == STUB_E_MARKS)  reason = "STUB_E_MARKS: Stub is not supported by this client";
+              else if (r == STUB_E_GOLOMB) reason = "STUB_E_GOLOMB: Stub is not golomb";
+              else if (r == STUB_E_LIMIT)  reason = "STUB_E_LIMIT: Stub is obsolete";
+              thisprob->pub_data.was_truncated = reason;
+            }
+            #endif
+          }
+          break;
+        }
+        #endif
         #if defined(HAVE_OGR_CORES)
         case OGR:
         {
@@ -1498,6 +1606,79 @@ static int Run_OGR( InternalProblem *thisprob, /* already validated */
  return -1;
 }
 
+static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
+                    u32 *iterationsP, int *resultcode)
+{
+#if !defined(HAVE_OGR_PASS2)
+  thisprob = thisprob;
+  iterationsP = iterationsP;
+#else
+  int r, nodes;
+
+  nodes = (int)(*iterationsP);
+  r = (thisprob->pub_data.unit_func.ogr)->cycle(
+                          thisprob->priv_data.core_membuffer,
+                          &nodes,
+                          thisprob->pub_data.cruncher_is_time_constrained);
+  /*
+   * We'll calculate and return true number of core iterations for timesling.
+   * This number may be NOT equal to number of actually processed OGR nodes,
+   * which is returned in 'nodes'. See ogr.cpp for details about node caching.
+   *
+   * Following code based on kakace' rules:
+   *   a) if cruncher_is_time_constrained is true, core MUST exit after
+   *      processing exactly requested number of iterations; returned number
+   *      of nodes is ignored due to node caching.
+   *   b) if cruncher_is_time_constrained is false, core MUST NOT cache nodes
+   *      and value in 'nodes' MUST be true number of iterations done.
+   * If core failed to follow these rules due to coding errors or optimization,
+   * things may became unpredictable.
+   */
+  if (!thisprob->pub_data.cruncher_is_time_constrained)
+    *iterationsP = (u32)nodes; /* with t.c., iter. count not changed */
+
+  u32 newnodeslo = thisprob->priv_data.contestwork.ogr_p2.nodes.lo + nodes;
+  if (newnodeslo < thisprob->priv_data.contestwork.ogr_p2.nodes.lo) {
+    thisprob->priv_data.contestwork.ogr_p2.nodes.hi++;
+  }
+  thisprob->priv_data.contestwork.ogr_p2.nodes.lo = newnodeslo;
+
+  switch (r)
+  {
+    case CORE_S_OK:
+    {
+      r = (thisprob->pub_data.unit_func.ogr)->destroy(thisprob->priv_data.core_membuffer);
+      if (r == CORE_S_OK)
+      {
+        *resultcode = RESULT_NOTHING;
+        return RESULT_NOTHING;
+      }
+      break;
+    }
+    case CORE_S_CONTINUE:
+    {
+      *resultcode = RESULT_WORKING;
+      return RESULT_WORKING;
+    }
+    case CORE_S_SUCCESS:
+    {
+      if ((thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr_p2.workstub, sizeof(WorkStub)) == CORE_S_OK)
+      {
+        //Log("OGR-P2 Success!\n");
+        thisprob->priv_data.contestwork.ogr_p2.workstub.stub.length =
+                  (u16)(thisprob->priv_data.contestwork.ogr_p2.workstub.worklength);
+        *resultcode = RESULT_FOUND;
+        return RESULT_FOUND;
+      }
+      break;
+    }
+  }
+  /* Something bad happened */
+#endif
+ *resultcode = -1; /* this will cause the problem to be discarded */
+ return -1;
+}
+
 /* ------------------------------------------------------------- */
 
 static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
@@ -1514,14 +1695,16 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
   /* a brace to ensure 'keystocheck' is not referenced in the common part */
   {
     u32 keystocheck = *keyscheckedP;
+
     // don't allow a too large of a keystocheck be used ie (>(iter-keysdone))
     // (technically not necessary, but may save some wasted time)
-    // FIXME: RETHINK - is this correct and/or useful?
-    if (thisprob->priv_data.contestwork.bigcrypto.keysdone.hi == thisprob->priv_data.contestwork.bigcrypto.iterations.hi)
+    if ((thisprob->priv_data.contestwork.bigcrypto.iterations.hi -
+         thisprob->priv_data.contestwork.bigcrypto.keysdone.hi <= 1) &&
+        (thisprob->priv_data.contestwork.bigcrypto.keysdone.lo +
+         keystocheck < keystocheck))
     {
-      u32 todo = thisprob->priv_data.contestwork.bigcrypto.iterations.lo-thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
-      if (todo < keystocheck)
-        keystocheck = todo;
+      keystocheck = thisprob->priv_data.contestwork.bigcrypto.iterations.lo -
+                    thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
     }
 
     if (keystocheck < MINIMUM_ITERATIONS)
@@ -1544,7 +1727,12 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
       //we _do_ need to care that the keystocheck and starting key are aligned.
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
+
+      SAVE_CLIENT_OS_CONTEXT
+
       rescode = (*(thisprob->pub_data.unit_func.gen_72))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
+
+      RESTORE_CLIENT_OS_CONTEXT
 
       if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
       {
@@ -1924,6 +2112,9 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
       case DES:
         retcode = Run_DES( core_prob, &iterations, &last_resultcode );
         break;
+      case OGR_P2:
+        retcode = Run_OGR_P2( core_prob, &iterations, &last_resultcode );
+        break;
       case OGR:
         retcode = Run_OGR( core_prob, &iterations, &last_resultcode );
         break;
@@ -2023,7 +2214,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
      process in a taskwindow is preemptively scheduled. At least as
      fas as I know and observed.
   */
-  if (contest_i == OGR /* && prob_index >= 0 */) /* crunchers only */
+  if (contest_i == OGR || contest_i == OGR_P2 /* && prob_index >= 0 */) /* crunchers only */
   {
     #if (CLIENT_CPU == CPU_68K)
     return 0;
@@ -2046,7 +2237,7 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
           case 0x04:  // K5
           case 0x06:  // Cyrix 486
           case 0x0A:  // Centaur C6
-          #elif (CLIENT_CPU == CPU_POWERPC)
+          #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
           case 0x01:  // PPC 601
           #endif
                     should_not_do = +1;
@@ -2100,6 +2291,14 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
     case CSC:
     {
       #ifdef HAVE_CSC_CORES
+      return 1;
+      #else
+      return 0;
+      #endif
+    }
+    case OGR_P2:
+    {
+      #if defined (HAVE_OGR_PASS2)
       return 1;
       #else
       return 0;
@@ -2492,6 +2691,16 @@ static unsigned int __compute_permille(unsigned int cont_i,
     }
     break;
 #endif
+#ifdef HAVE_OGR_PASS2
+    case OGR_P2:
+    if (work->ogr_p2.workstub.worklength > (u32)work->ogr_p2.workstub.stub.length)
+    {
+      // This is just a quick&dirty calculation that resembles progress.
+      permille = work->ogr_p2.workstub.stub.diffs[work->ogr_p2.workstub.stub.length]*10
+                +work->ogr_p2.workstub.stub.diffs[work->ogr_p2.workstub.stub.length+1]/10;
+    }
+    break;
+#endif
 #ifdef HAVE_OGR_CORES
     case OGR:
     if (work->ogr.workstub.worklength > (u32)work->ogr.workstub.stub.length)
@@ -2575,6 +2784,20 @@ int WorkGetSWUCount( const ContestWork *work,
       }
       break;
 #endif
+#ifdef HAVE_OGR_PASS2
+      case OGR_P2:
+      {
+        if (swucount && rescode != RESULT_WORKING)
+        {
+          u32 lo, tcountlo = work->ogr_p2.nodes.lo + 5000000ul;
+          u32 hi, tcounthi = work->ogr_p2.nodes.hi + (tcountlo<work->ogr_p2.nodes.lo ? 1 : 0);
+          /* ogr stats unit is Gnodes */
+          __u64div( tcounthi, tcountlo, 0, 1000000000ul, 0, &hi, 0, &lo);
+          units = (unsigned int)(hi * 100)+(lo / 10000000ul);
+        }
+      } /* OGR-P2 */
+      break;
+#endif
 #ifdef HAVE_OGR_CORES
       case OGR:
       {
@@ -2588,7 +2811,7 @@ int WorkGetSWUCount( const ContestWork *work,
         }
       } /* OGR */
       break;
-#endif /* HAVE_OGR_CORES */
+#endif
 #ifdef HAVE_CRYPTO_V2
       case RC5_72:
       {
@@ -2637,8 +2860,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
                              work.bigcrypto.iterations.hi == 0;
 #endif
 // FIXME: hmmm is this correct ??????
-      info->stats_units_are_integer = (contestid != OGR);
-      info->show_exact_iterations_done = (contestid == OGR);
+      info->stats_units_are_integer = (contestid != OGR && contestid != OGR_P2);
+      info->show_exact_iterations_done = (contestid == OGR || contestid == OGR_P2);
 
       if (flags & (P_INFO_E_TIME | P_INFO_RATE | P_INFO_RATEBUF))
       {
@@ -2770,6 +2993,51 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
             } /* case: crypto */
             break;
   #endif /* HAVE_CRYPTO_V1 */
+  #ifdef HAVE_OGR_PASS2
+            case OGR_P2:
+            {
+              dcounthi = work.ogr_p2.nodes.hi;
+              dcountlo = work.ogr_p2.nodes.lo;
+              if (rescode == RESULT_NOTHING || rescode == RESULT_FOUND)
+              {
+                tcounthi = dcounthi;
+                tcountlo = dcountlo;
+              }
+              /* current = donecount - startpos */
+              ccountlo = dcountlo - thisprob->pub_data.startkeys.lo;
+              ccounthi = dcounthi - thisprob->pub_data.startkeys.hi;
+              if (ccountlo > dcountlo)
+                ccounthi--;
+
+              if (flags & P_INFO_SIGBUF)
+              {
+                ogr_stubstr_r( &work.ogr_p2.workstub.stub, info->sigbuf, sizeof(info->sigbuf), 0);
+              }
+              if (flags & P_INFO_CWPBUF)
+              {
+                ogr_stubstr_r( &work.ogr_p2.workstub.stub, info->cwpbuf, sizeof(info->sigbuf), work.ogr_p2.workstub.worklength);
+              }
+              if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
+              {
+                u32 nodeshi, nodeslo;
+                /* ogr stats unit is Gnodes, rounded to 0.01 Gnodes */
+                nodeslo = tcountlo + 5000000ul;
+                nodeshi = tcounthi + (nodeslo<tcountlo ? 1 : 0);
+                __u64div( nodeshi, nodeslo, 0, 1000000000ul, 0, &hi, 0, &lo);
+                info->swucount = (hi * 100)+(lo / 10000000ul);
+              }
+              if (flags & P_INFO_EXACT_PE)
+              {
+                if (flags & P_INFO_C_PERMIL)
+                  info->c_permille = 0;
+                if (flags & P_INFO_S_PERMIL)
+                  info->s_permille = 0;
+                /* do not do inexact permille calculation for OGR */
+                flags &= ~(P_INFO_C_PERMIL | P_INFO_S_PERMIL);
+              }
+            } /* OGR-P2 */
+            break;
+  #endif
   #ifdef HAVE_OGR_CORES
             case OGR:
             {
@@ -2814,7 +3082,7 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               }
             } /* OGR */
             break;
-  #endif /* HAVE_OGR_CORES */
+  #endif
   #ifdef HAVE_CRYPTO_V2
             case RC5_72:
             {
@@ -2935,6 +3203,7 @@ int ProjectSetSpeed(int projectid, u32 speedhi, u32 speedlo)
       wusizehi = 0;
       wusizelo = 1UL<<28;
       break;
+    case OGR_P2:
     case OGR:
       /* unknown */
       wusizehi = wusizelo = 0;

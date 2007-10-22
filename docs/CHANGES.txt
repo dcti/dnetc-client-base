@@ -20,12 +20,151 @@ Version bump guide:
   |              proxies will be a accompanied by 'client contest' change.
   `------------- Denotes a client rewrite.
 
+Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
+
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.17 2003/11/01 14:20:14 mweiser Exp $
+Version change log: $Id: CHANGES.txt,v 1.18 2007/10/22 16:48:28 jlawson Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9015-504  imp: cellbe: Tidy up cores for public source release
+            fix: x86: broken -stress on intel macosx (#4021)
+
+2.9015-503  imp: cellbe: Slightly faster SPE OGR core
+            fix: linux: Working fix for the race condition alluded to in the
+                        changelog for v2.9015-502
+            imp: x86: Faster OGR MMX cores (1-3%, depending on CPU)
+            chg: x86: OGR core selection for P4 (updated cores)
+
+2.9015-502  new: cellbe: Added SPE OGR cores
+            fix: linux: Fix race condition in heavily multithreaded
+                        scenarios causing the first cruncher to randomly
+                        stop running until client is restarted.
+            chg: x86: SGP-3 is default RC5-72 core for older P4's (#4009)
+            imp: x86: A little faster and stable speed of DG-3 and SGP-3 cores.
+
+2.9014-501  new: cellbe: New platform, PlayStation 3/Cell BE
+
+2.9013-500  imp: x86: Faster RC5-72 GO-2 core (#3265)
+            chg: x86: GO-2 core is now the default selection for P4
+            chg: x86: OGR core selection for P4 (#3988 and others)
+            chg: all: default work precedence is now OGR-P2,RC5-72
+            chg: all: default buffer level checking set to 4
+
+2.9013-499  imp: x86: Faster OGR MMX cores (1-3%, depending on CPU)
+
+2.9013-498  new: x86: Added new AMD optimized OGR core, selected for AMD CPUs
+            new: x86: Detect Intel Core 1/2 (#3939, #3969)
+            new: x86: Detect 65um Intel Netburst (#3972)
+            new: x86: Detect Via C7 (#3962)
+            chg: x86: P4 naming (#3862)
+            chg: x86: AMD K8/Opteron Naming (#3912, #3967)
+            chg: x86: K6 core selection (#3968)
+            imp: solaris: Retrieve newer chip names
+
+2.9012-497  new: x86: Added new MMX assembly OGR core, selected for MMX CPUs
+            fix: ogr: some platforms reported incorrect node counts if restarted
+            imp: ppc: Recognize PPC970MP (G5 dual core)
+            fix: macosx: StartupItems permissions fixed (#3942)
+            imp: linux: support battery-mode execution via ACPI(#3314)
+
+2.9011-496  new: x86: Added new assembly OGR core and selected as default
+            fix: x86: Correct RC5 core count speed factor for mmx (#3770)
+            fix: x86: Properly detect National Geode (#3852)
+            new: x86-64: Added new KBE-64 core and selected as default for K8/P4
+            chg: x86: pre-selection for AMD K6 (#3863)
+            chg: x86: pre-selection for Pentium M (#3870)
+            chg: x86: OGR pre-selection for C3 (#3885)
+            new: x86: detect Athlon 64 X2 (#3889)
+
+2.9010-495  fix: x86: Fixed cores dg3, sgp3 and snjl.
+            new: all: Added a stress-test ("-stress") for RC5-72 cores
+            imp: macosx: Revised temperature monitoring for G5
+            new: x86: Added new cores ma4 (#3415) and mmx (#3770)
+            imp: x86: Speed improvements for dg3 (#3601) and go2 (#3265) cores
+            fix: win32: Prevent possible console mode recursion loop (#3846)
+            imp: ppc: Now recognize PPC 7448
+            fix: win32: Eliminate random crash on NT service shutdown (#3159)
+            new: all: Display detected CPU clockspeed on "-cpuinfo"
+            imp: ppc: Select vector cores as defaults whenever possible.
+
+2.9009-494  chg: all: Major clean up in the OGR core base
+            imp: ppc: Modified KOGE cores - should be faster in most cases
+            new: solaris: 64-bit sparc client with faster 64-bit OGR
+            imp: alpha: Added EV4 and EV67-specific 64-bit cores
+            fix: x86: ogr core preselection for Pentium 4 & M (#3742, #3744)
+            imp: x86: Pentium/Celeron M & Pentium 4 Prescott detection (#3745)
+            new: amigaos: AltiVec cores enabled for OS4
+            new: netware: New port for Netware LibC (Netware 5.1 and up)
+            fix: x86: Cyrix core selection (#3809)
+            imp: x86: K8 and P4 detection (#3799, #3807, #3814)
+
+2.9008-493  new: ppc: Enabled KOGE cores for all PPC targets, except AIX
+            new: macosx: ASM-optimized GARSP-5 cores (KOGE Scalar/Hybrid)
+            fix: all: Fixed an issue with -runbuffers (= -runoffline -n -1)
+                      that caused the client to wait for ever.
+
+2.9008-492  imp: ppc: Faster GARSP Vector core
+            imp: all: Added an option to rotate log files at local time or UTC
+                      time (#2613)
+            fix: all: Made week number ISO 8601 compliant (#3336)
+            imp: all: Display which cruncher load/save/complete work (#2954)
+            imp: all: Log more error messages (#3611)
+            imp: macosx: Made the buffer threshold limits hw-dependant (#3626)
+            fix: ppc: Select core #5 on PPC 601 (#3685)
+            fix: macosx: Now recognize PPC 750FX (#3675)
+            fix: macosx: No longer read the TAU on G4/G5.
+            imp: solaris: Identify SPARC64-IV/US-IV (#3693)
+            fix: all: Fixed the ideal completion time inaccuracy (#3495)
+            fix: some: OGR crunchers no longer busy-wait (#3618)
+            fix: all: Refuse unknown contest/core specified with -bench*/-test
+            fix: all: Added an exponential backoff of the retry timer for
+                      server connections/remote buffers (#3648)
+            imp: all: Client no longer exit when no OGR-P2 work is available
+                      (#3680, #3691)
+            fix: all: Memory buffers are now preserved on restart (#2833)
+            imp: all: Increased the maximum size of memory buffers.
+            new: win64: native AMD64 port
+            fix: macosx: Fixed broken logic in temperature sensor detection.
+                      Re-enable TAU reading on 7400/7410 (#3699)
+
+2.9008-491  chg: all: Disabled OGR (Phase 1) contest
+            fix: all: Client didn't stop as instructed (#3672)
+            fix: macosx: Fixed an issue caused by white spaces in file paths.
+            imp: macosx: Reworked the Startup Items implementation.
+            imp: macosx: Display CPU temp. upon startup (if enabled/available)
+            imp: all: Reworked the activity display in test mode (OGR-P2)
+            imp: ppc: Select GARSP 5.1x Scalar by default on PPC 74x7/G5
+            imp: ppc: Faster OGR-P2 cores.
+            imp: amigaos: Allow crunchers to shutdown on exit when other user
+                          tasks are monopolizing cpu time
+            imp: macosx: Added PowerPC 970FX recognition (#3675)
+
+2.9008-490  new: all: Enable OGR-24 and OGR-25 Phase 2 (finalization)
+            new: amigaos: native OS4 port
+
+2.9007-489  new: x86: new rc5-72 cores (#3265, #3398)
+            fix: ppc: now detects 745/755 (G3) cpu under linux
+            chg: x86: core preselection (#3477, #3580, #3602, #3621, #3625)
+            imp: x86: cpu identification (#3593, #3627)
+            chg: x86-linux: new build style using uClibc
+
+2.9007-488  fix: macosx: Undefined symbol issue (10.1.5, #3578)
+            imp: all: Force partial work to be restarted when fetched from a
+                      shared buffer by a different user.
+            imp: macosx: somewhat fix the "Pause if running" option (#3566)
+            new: morphos: MorphOS pre-release
+            fix: all: Trashed OGR buffers (bug introduced in 2.9007-487)
+            fix: all: Fixed checkpoint file problem introduced by the user
+                      check.
+
+2.9007-487  fix: amigaos: 68k: fixed a race condition adding public port
+            fix: amigaos: fixed a race quitting the cruncher thread
+            new: MorphOS port
+            new: morphos: added resethandler, client will quit before reset
+            fix: amigaos: fixed timer.device exit crash
+            fix: all: fixed a busy loop that could occur with OGR (#2726)
 
 2.9007-486  imp: nextstep: include assembler cores on x86
             imp: nextstep: fix console handling for config menu
@@ -36,6 +175,7 @@ Version change log: $Id: CHANGES.txt,v 1.17 2003/11/01 14:20:14 mweiser Exp $
             chg: x86: made Pentium M preselection like Pentium 4 (#3323)
             imp: aix: include assembler cores on ppc
             fix: aix: smp: threads now get correctly spread over all cpus
+            chg: macosx: KKS 970 core temporarily disabled (useless)
 
 2.9006-485  new: decunix: cpu temperature detection
             new: macosx: use AppleCPUthermo to read CPU temperature (#3315)

@@ -9,7 +9,7 @@
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *probmem_cpp(void) {
-return "@(#)$Id: coremem.cpp,v 1.4 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: coremem.cpp,v 1.5 2007/10/22 16:48:25 jlawson Exp $"; }
 
 //#define TRACE
 

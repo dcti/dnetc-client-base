@@ -1,4 +1,4 @@
-; Copyright distributed.net 1997-2003 - All Rights Reserved
+; Copyright distributed.net 1997-2004 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
@@ -7,7 +7,7 @@
 ;     Jeff Lawson <bovine@distributed.net>
 ;
 ; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
-; $Id: r72-snjl.asm,v 1.2 2003/11/01 14:20:15 mweiser Exp $
+; $Id: r72-snjl.asm,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 
 [SECTION .text]
 BITS 64
@@ -48,6 +48,10 @@ defwork work_C_1
 defwork work_iterations
 defwork save_rbx,2
 defwork save_rbp,2
+%ifdef _WINDOWS
+defwork save_rsi,2
+defwork save_rdi,2
+%endif
 defwork save_r12,2
 defwork save_r13,2
 defwork save_r14,2
@@ -189,19 +193,31 @@ rc5_72_unit_func_snjl_:
 _rc5_72_unit_func_snjl:
 
         sub     rsp, work_size
-	mov	[RC5_72UnitWork],rdi ; 1st argument is passed in rdi
-	mov	[iterations],rsi ; 2nd argument is passwd in rsi
-	
-        mov     rax, rdi	; rax points to RC5_72UnitWork
 
-	;; rbp, rbx, and r12 thru r15 must be preserved!
+%ifdef _WINDOWS
+        mov     [RC5_72UnitWork],rcx ; 1st argument is passed in rcx
+        mov     [iterations],rdx ; 2nd argument is passwd in rdx
+        mov     rax, rcx	; rax points to RC5_72UnitWork
+
+        ;; Windows requires that rsi and rdi also be preserved by callee!
+        mov     [save_rsi], rsi
+        mov     [save_rdi], rdi
+        mov     rsi,rdx         ; rsi points to iterations
+%else
+        ;; Linux, FreeBSD, and other UNIX platforms
+        mov     [RC5_72UnitWork],rdi ; 1st argument is passed in rdi
+        mov     [iterations],rsi ; 2nd argument is passwd in rsi
+        mov     rax, rdi	; rax points to RC5_72UnitWork
+%endif
+
+        ;; rbp, rbx, and r12 thru r15 must be preserved by callee!
         mov     [save_rbp], rbp
         mov     [save_rbx], rbx
         mov     [save_r12], r12
         mov     [save_r13], r13
         mov     [save_r14], r14
         mov     [save_r15], r15
-	
+
         mov     edx, [RC5_72UnitWork_plainlo]
         mov     edi, [RC5_72UnitWork_plainhi]
 
@@ -573,7 +589,7 @@ test_key_3:
 
 align 16
 inc_key:
-        cmp     dl, 0xFD
+        cmp     dl, 0xFB
         mov     ecx, [RC5_72UnitWork_L0mid]
         mov     ebx, [RC5_72UnitWork_L0lo]
 
@@ -684,14 +700,20 @@ finished_found:
 finished:
         inc     eax
 
-	;; rbp, rbx, and r12 thru r15 must be restored
+%ifdef _WINDOWS
+        ;; Windows requires that rsi and rdi also be restored.
+        mov     rsi, [save_rsi]
+        mov     rdi, [save_rdi]
+%endif
+        ;; rbp, rbx, and r12 thru r15 must be restored
         mov     rbp, [save_rbp]
         mov     rbx, [save_rbx]
         mov     r12, [save_r12]
         mov     r13, [save_r13]
         mov     r14, [save_r14]
         mov     r15, [save_r15]
-	
+
+
         add     rsp, work_size
 
         ret

@@ -11,39 +11,49 @@
  * A test main() is at the end of this file.
  *
  * Currently we try 3 different sources:
- *   - host_processor_info(), which uses a CPUs builtin Thermal Assist Unit
- *   - AppleCPUThermo, an IOKit Object that provides "temp-monitor" from a dedicated sensor 
- *     near the CPU
- *   - IOHWSensor, an IOKit Object that provides "temp-sensor" data from a dedicated sensor
+ *   - host_processor_info(), which uses CPUs built-in Thermal Assist Unit
+ *   - AppleCPUThermo, an IOKit Object that provides "temp-monitor" from a
+ *     dedicated sensor near the CPU (PowerMac MDD and XServe only)
+ *   - IOHWSensor, an IOKit Object that provides "temp-sensor" data from a
+ *     dedicated sensor
+ *
+ * NOTES: Apple uses various sensors in its models
+ *
+ *  Computer     | Chipset                | Accuracy | Resolution
+ *  -------------+------------------------+----------+-----------
+ *  PowerPC G3   | Built-in TAU           | +/- 16.0 |     4
+ *  PowerMac MDD | Dallas DS1775          |  +/- 2.0 |     0.0625
+ *  XServe       | Dallas DS1775 (?)      |          |
+ *  PowerMac G5  | Analog Devices AD7417  |  +/- 1.0 |     0.25
+ *  AluBook 15"  | Analog Devices ADT7460 |  +/- 1.0 |   N/A
+ *  AluBook 17"  | Analog Devices ADM1031 |  +/- 1.0 |     0.25
  *
  * FIXES:
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.c,v 1.2 2003/09/12 23:37:12 mweiser Exp $
+ *  $Id: temperature.cpp,v 1.2 2007/10/22 16:48:31 jlawson Exp $
  */
 
 #include <string.h>
 #include <stdio.h>
 
-/* for _readTAU() */
 #include <mach/mach.h>
 #include <mach/mach_error.h>
-
-/* for IOKit Objects */
 #include <IOKit/IOKitLib.h>
 #include <CoreFoundation/CFNumber.h>
+#include "logstuff.h"
+#include "cpucheck.h"
+
+SInt32 macosx_cputemp(void);
+
+typedef struct {
+  const char *location;   /* Location string ("CPU TOPSIDE", etc) */
+  SInt32      divisor;    /* Scale */
+} SensorInfos;
 
 
-#ifdef __cplusplus /* to ensure gcc -lang switches don't mess this up */
-extern "C" {
-#endif
-    SInt32 macosx_cputemp(void);
-#ifdef __cplusplus
-}
-#endif
-
-SInt32 _readTAU(void) {
+static SInt32 _readTAU(void) {
 
     SInt32                 cputemp = -1;
     kern_return_t          ret;
@@ -79,22 +89,23 @@ SInt32 _readTAU(void) {
 
 /*
 ** className := IO Class name (AppleCPUThermo / IOHWSensor)
-** location  := The string to be matched by the "location" key, or NULL to match all instances
-**              of the given IO Class.
+** sensors   := Sensor(s) informations. If NULL, the function matches any
+**              location and the temperature returned is converted to the
+**              fixed point format but not scaled.
 ** dataKey   := Key that provides the raw temperature value.
 ** Returns the largest raw temperature value.
 */
 
-static SInt32 _readTemperature(const char *className, const char *location, CFStringRef dataKey) 
+static SInt32 _readTemperature(const char *className, SensorInfos *sensors, CFStringRef dataKey) 
 {
-  SInt32 temp, temperature = -1;
+  SInt32 temp, divisor = 1, temperature = -1;
   char strbuf[64];
   CFNumberRef number = NULL;
   CFStringRef string = NULL;
-  io_object_t handle = NULL; 
-  io_iterator_t objectIterator = NULL;
+  io_object_t handle;
+  io_iterator_t objectIterator;
   CFMutableDictionaryRef properties = NULL;
-  mach_port_t master_port = NULL;
+  mach_port_t master_port;
 
   /* Bug #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2,
   ** so we obtain the default port the old way */
@@ -114,15 +125,20 @@ static SInt32 _readTemperature(const char *className, const char *location, CFSt
           ** Check whether the "location" key matches the string pointed to by location.
           ** If the IO Class doesn't have a "location" key, location must be NULL.
           */
-          if(location == NULL) {
+          if(sensors == NULL) {
             matched = 1;      /* match all instances */
           }
-          else if (CFDictionaryGetValueIfPresent(properties, CFSTR("location"), (const void **)&string)) {
+          else if (CFDictionaryGetValueIfPresent(properties, CFSTR("location"), (const void **) &string)) {
             if (CFStringGetTypeID() == CFGetTypeID(string) 
                   && CFStringGetCString(string, strbuf, sizeof(strbuf), CFStringGetSystemEncoding())) {
-						
-              if (strncmp(strbuf, location, strlen(location)) == 0)
-                matched = 1;
+              SensorInfos *p;
+              for (p = sensors; p->location != NULL; p++) {
+                if (strcmp(strbuf, p->location) == 0) {
+                  matched = 1;
+                  divisor = p->divisor;   /* Scale */
+                  break;
+                }
+              }
             }
           }
 				
@@ -130,10 +146,11 @@ static SInt32 _readTemperature(const char *className, const char *location, CFSt
           ** Obtain raw temperature data. When multiple instances are matched, we remember the
           ** largest temperature value.
           */
-          if(matched && CFDictionaryGetValueIfPresent(properties, dataKey, (const void **)&number)) {
+          if(matched && CFDictionaryGetValueIfPresent(properties, dataKey, (const void **) &number)) {
             if (CFNumberGetTypeID() == CFGetTypeID(number) 
                       && CFNumberGetValue(number, kCFNumberSInt32Type, &temp)) {
 						
+              temp = (temp * 100) / divisor;
               if (temp > temperature)	
                 temperature = temp;
             }
@@ -151,6 +168,7 @@ static SInt32 _readTemperature(const char *className, const char *location, CFSt
   return temperature;         /* -1 := Error / No sensor */
 }
 
+
 /*
 ** PowerMac MDD and XServe
 */
@@ -160,51 +178,79 @@ static SInt32 _readAppleCPUThermo(void)
     SInt32 k = -1;
     
     if ( (rawT = _readTemperature("AppleCPUThermo", NULL, CFSTR("temperature"))) >= 0)
-      k = (rawT * 100) / 256 + 27315;
+      k = rawT / 256 + 27315;
     
     return k;    /* Temperature (* 100, in kelvin) or -1 (error / no sensor) */
 }
 
+
 /*
-** PowerBook Alu 12" and 17"
+** PowerBook Alu (12", 15" and 17"), PowerMac G5 and iMacG5
 */
+
+static SensorInfos _sensors[] = {
+  {"CPU/INTREPID BOTTOMSIDE", 65536},     // AluBook 15"
+  {"CPU BOTTOMSIDE",          65536},     // AluBook 15" and 17"
+  {"CPU TOPSIDE",             65536},     // AluBook 12"
+  {"CPU A AD7417 AD1",           10},     // PowerMac G5
+  {"CPU B AD7417 AD1",           10},     // PowerMac G5 (2nd CPU)
+  {"CPU T-Diode",                10},     // iMac G5
+  {NULL,                          1}      // LAST ENTRY
+};
+
 static SInt32 _readIOHWSensor(void)
 {
     SInt32 rawT;
     SInt32 k = -1;
     
-    if ( (rawT = _readTemperature("IOHWSensor", "CPU BOTTOMSIDE", CFSTR("current-value"))) >= 0)
-      k = (rawT * 100) / 65536 + 27315;
+    if ( (rawT = _readTemperature("IOHWSensor", _sensors, CFSTR("current-value"))) >= 0)
+      k = rawT + 27315;
     
     return k;    /* Temperature (* 100, in kelvin) or -1 (error / no sensor) */
 }
 
 
 SInt32 macosx_cputemp(void) {
-
-    static int source = -1;									/* No source defined */
+    static int source = -1;                 /* No source defined */
     SInt32 temp = -1;
+    long CPUid = 0;
     
     switch (source) {
         case 0:
             break;
         case 1:
-            return _readTAU();              /* G3, old G4 */
+            return _readTAU();              /* G3 */
         case 2:
             return _readAppleCPUThermo();   /* PowerMac MDD, XServe */
         case 3:
-            return _readIOHWSensor();       /* PowerBook Alu 12" and 17" */
+            return _readIOHWSensor();       /* PowerBook Alu, PowerMac G5*/
             
         default:
-            temp = _readTAU();
-            if (temp >= 0) {source = 1; break;}
+            CPUid = GetProcessorType(-1);
+            if ((GetProcessorFeatureFlags() & CPU_F_ALTIVEC) == 0
+                || CPUid == 0x000C || CPUid == 0x800C) {
+                /*
+                ** Don't read the TAU if AltiVec units are detected
+                ** (CPU = G4+ or G5) since this unit is disabled and we'd
+                ** get random values.
+                */
+                temp = _readTAU();
+                if (temp >= 0) {source = 1; break;}
+            }
+
             temp = _readAppleCPUThermo();
             if (temp >= 0) {source = 2; break;}
             temp = _readIOHWSensor();
             if (temp >= 0) {source = 3; break;}
+    }
 
-						/* No temperature support */
-            source = 0;
+    if (source > 0) {
+      float k = temp / 100.0;
+      Log("Current CPU temperature : %5.2fK (%2.2fC)\n", k, k-273.15);
+    }
+    else {
+      Log("Temperature monitoring disabled (no sensor found)\n");
+      source = 0;
     }
 
     return temp;

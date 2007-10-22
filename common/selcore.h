@@ -5,11 +5,11 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.18 2003/11/01 14:20:14 mweiser Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.19 2007/10/22 16:48:28 jlawson Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 #include "ogr.h"
 #endif
 
@@ -25,7 +25,7 @@ extern "C" {
 typedef s32 gen_func( RC5UnitWork *, u32 *, void * );
 typedef u32 CDECL rc5_func( RC5UnitWork *, u32 );
 typedef u32 des_func( RC5UnitWork *, u32 *, char * );
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 typedef CoreDispatchTable *ogr_func;
 #endif
 typedef s32 CDECL gen_72_func( RC5_72UnitWork *, u32 *, void * );
@@ -43,7 +43,7 @@ typedef union
   #endif
 
   /* OGR */
-  #if defined(HAVE_OGR_CORES)
+  #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   CoreDispatchTable *ogr;
   #endif
 
@@ -83,6 +83,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid );
 const char *selcoreGetDisplayName( unsigned int cont_i, int index );
 const char **corenames_for_contest( unsigned int cont_i );
 unsigned int corecount_for_contest( unsigned int cont_i );
+unsigned int nominal_rate_for_contest( unsigned int cont_i);
 
 /* conf calls these */
 int selcoreValidateCoreIndex( unsigned int cont_i, int index );
@@ -96,6 +97,7 @@ void selcoreEnumerateWide( int (*enumcoresproc)(
 /* benchmark/test each core - return < 0 on error, 0 = not supported, > 0=ok */
 long selcoreBenchmark( unsigned int cont_i, unsigned int secs, int corenum );
 long selcoreSelfTest( unsigned int cont_i, int corenum );
+long selcoreStressTest( unsigned int cont_i, int corenum );
 
 /* ClientMain() calls these */
 int InitializeCoreTable( int *coretypes );
@@ -137,6 +139,9 @@ int selcoreGetPreselectedCoreForProject_rc572();
 
 int selcoreSelectCore_rc572( unsigned int threadindex,
                              int *client_cpuP, struct selcore *selinfo );
+
+unsigned int estimate_nominal_rate_rc572();
+
 #endif
 #ifdef HAVE_CSC_CORES
 int InitializeCoreTable_csc(int first_time);
@@ -166,7 +171,7 @@ int selcoreGetPreselectedCoreForProject_des();
 int selcoreSelectCore_des(unsigned int threadindex,
                           int *client_cpuP, struct selcore *selinfo );
 #endif
-#ifdef HAVE_OGR_CORES
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 int InitializeCoreTable_ogr(int first_time);
 
 void DeinitializeCoreTable_ogr();
@@ -177,10 +182,12 @@ int apply_selcore_substitution_rules_ogr(int cindex);
 
 int selcoreGetPreselectedCoreForProject_ogr();
 
-int selcoreSelectCore_ogr( unsigned int threadindex,
-                           int *client_cpuP, struct selcore *selinfo );
-#endif
+int selcoreSelectCore_ogr( unsigned int threadindex, int *client_cpuP,
+                           struct selcore *selinfo, unsigned int contestid );
 
+unsigned int estimate_nominal_rate_ogr();
+
+#endif
 
 
 /* ---------------------------------------------------------------------- */

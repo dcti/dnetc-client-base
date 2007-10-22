@@ -13,11 +13,11 @@
 	| Converted from Amiga Devpac assembler notation to GAS
 	| notation by Oliver Roberts <oliver@futaura.co.uk>
 	|
-	| $Id: r72-0x0-common-mh.gas.i,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+	| $Id: r72-0x0-common-mh.gas.i,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 	|
 	| $Log: r72-0x0-common-mh.gas.i,v $
-	| Revision 1.2  2003/09/12 23:08:52  mweiser
-	| add new files from release-2-90xx
+	| Revision 1.3  2007/10/22 16:48:35  jlawson
+	| overwrite head with contents of release-2-90xx
 	|
 	| Revision 1.1.2.1  2003/04/03 22:18:21  oliver
 	| gcc/gas compilable versions of all the 68k optimized cores

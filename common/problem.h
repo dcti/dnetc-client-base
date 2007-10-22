@@ -8,13 +8,13 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.96 2003/11/01 14:20:14 mweiser Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.97 2007/10/22 16:48:27 jlawson Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
 #include "projdata.h" /* RC5, DES, ..., CONTEST_COUNT */
 #include "selcore.h"
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 #include "ogr.h"      /* OGR core stuff */
 #endif
 
@@ -26,9 +26,10 @@ enum {
   OGR, // http://members.aol.com/golomb20/
   CSC, // http://www.cie-signaux.fr/security/index.htm
   OGR_NEXTGEN_SOMEDAY,
-  RC5_72 // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
+  RC5_72, // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
+  OGR_P2
 };
-#define CONTEST_COUNT       6  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72 */
+#define CONTEST_COUNT       7  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72,OGR_P2 */
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -65,7 +66,10 @@ enum {
      #define CORE_MEM_ALIGNMENT 4
   #endif
 #endif
-#if defined(HAVE_OGR_CORES)
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+  #if defined(HAVE_OGR_PASS2)
+     #define HAVE_OGR_FINALIZE
+  #endif
   #if MAX_MEM_REQUIRED_BY_CORE < OGR_PROBLEM_SIZE
      #undef MAX_MEM_REQUIRED_BY_CORE
      #define MAX_MEM_REQUIRED_BY_CORE OGR_PROBLEM_SIZE
@@ -120,7 +124,16 @@ typedef union
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
-  } DNETC_PACKED ogr;                     /* 36 bytes */
+    u32    iterations;
+  } DNETC_PACKED ogr;                     /* 40 bytes */
+  #endif
+  #if defined(HAVE_OGR_PASS2)
+  struct { // OGR-P2 : Should overlap with the corresponding OGR members for safety reasons !
+    struct WorkStub workstub;             // stub to work on (28 bytes)
+    struct {u32 hi,lo;} nodes;            // nodes completed
+    u32    minpos;
+    struct {u32 hi,lo;} ticket;           // OGR-P2 addition : opaque ticket
+  } DNETC_PACKED ogr_p2;                  /* 48 bytes */
   #endif
   struct {
     char unused[80];
@@ -128,7 +141,7 @@ typedef union
 //  #if 0
 //    PROJECT_NOT_HANDLED("in ContestWork");
 //  #endif
-} DNETC_PACKED ContestWork;
+} DNETC_PACKED ContestWork;               // 80 bytes
 
 typedef struct
 {
@@ -142,7 +155,7 @@ typedef struct
   u32  core;       /* core used to process the packet */
 } DNETC_PACKED WorkRecord;
 
-#include "pack1.h"
+#include "pack0.h"
 
 /* ---------------------------------------------------------------------- */
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.58 2003/11/01 14:20:12 mweiser Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.59 2007/10/22 16:48:23 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -24,10 +24,19 @@ return "@(#)$Id: bench.cpp,v 1.58 2003/11/01 14:20:12 mweiser Exp $"; }
 
 #define TBENCHMARK_CALIBRATION 0x80
 
-#if (CONTEST_COUNT != 6)
-  #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 6")
+#if (CONTEST_COUNT != 7)
+  #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
 #endif
-unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0};
+unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0,0};
+
+/* -------------------------------------------------------------------- */
+
+void BenchResetStaticVars(void)
+{
+  int contest;
+  for (contest = 0; contest < CONTEST_COUNT; contest++)
+    bestrate_tab[contest] = 0;
+}
 
 /* -------------------------------------------------------------------- */
 
@@ -106,7 +115,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */
     tslice = 0; /* zero means 'use calibrated value' */
   }
-  #elif (CLIENT_OS == OS_WIN16 || CLIENT_OS == OS_WIN32 /* win32s */) 
+  #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
   if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
     numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
   else if (winGetVersion() < 400) /* win16 or win32s */
@@ -218,7 +227,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
             if (newtslice > tslice)
               thisprob->pub_data.tslice = tslice = newtslice;
           }
-          #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) /* win32s */
+          #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
           w32Yield(); /* pump waiting messages */
           #elif (CLIENT_OS == OS_MACOS)
           macosSmartYield(6);
@@ -257,7 +266,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           }
           if (ratehi)
             ratelo = 0x0fffffff;
-          if (ratelo > tslice || contestid == OGR)
+          if (ratelo > tslice || contestid == OGR || contestid == OGR_P2)
             tslice = thisprob->pub_data.tslice = ratelo;
         }
         run = ProblemRun(thisprob);

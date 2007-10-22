@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.151 2003/11/01 14:20:13 mweiser Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.152 2007/10/22 16:48:24 jlawson Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -21,12 +21,7 @@
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
 #define NO_OUTBUFFER_THRESHOLDS /* no longer have outthresholds */
-
-struct membuffstruct 
-{ 
-  unsigned long count; 
-  WorkRecord *buff[500];
-};
+#define DEFAULT_EXITFLAGFILENAME "exitdnet"EXTN_SEP"now"
 
 // ------------------
 
@@ -40,6 +35,7 @@ typedef struct
   char inifilename[MINCLIENTOPTSTRLEN*2];
   u32  last_buffupd_time; /* monotonic. goes with max_buffupd_[retry_]interval */
   int  last_buffupd_failed_time;
+  int  buffupd_retry_delay;
   int  net_update_status;
   int  remote_update_status;
   int project_state[PROJECT_COUNT]; /* do NOT save states received from proxy to disk! */
@@ -54,7 +50,6 @@ typedef struct
 
   /* -- buffers -- */
   int  nodiskbuffers;
-  struct { struct membuffstruct in, out; } membufftable[CONTEST_COUNT];
   char in_buffer_basename[MINCLIENTOPTSTRLEN*2];
   char out_buffer_basename[MINCLIENTOPTSTRLEN*2];
   char checkpoint_file[MINCLIENTOPTSTRLEN*2];
@@ -103,6 +98,7 @@ typedef struct
   char logfiletype[MINCLIENTOPTSTRLEN]; /* "none", "no limit", "rotate", "restart", "fifo" */
   char logfilelimit[MINCLIENTOPTSTRLEN]; /* "nnn K|M|days" etc */
   int  messagelen;
+  int  logrotateUTC;                    /* true = UTC, false = local time */
   char smtpsrvr[MINCLIENTOPTSTRLEN];
   char smtpfrom[MINCLIENTOPTSTRLEN];
   char smtpdest[MINCLIENTOPTSTRLEN];

@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.38 2003/11/01 14:20:12 mweiser Exp $"; }
+return "@(#)$Id: buffbase.cpp,v 1.39 2007/10/22 16:48:23 jlawson Exp $"; }
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -27,6 +27,20 @@ return "@(#)$Id: buffbase.cpp,v 1.38 2003/11/01 14:20:12 mweiser Exp $"; }
 #include "clitime.h"  // CliClock(), CliTimer()
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffbase.h" //ourselves
+
+struct membuffstruct 
+{ 
+  unsigned long count; 
+  unsigned long maxcount;
+  WorkRecord **buff;
+};
+
+static struct {
+  struct membuffstruct in, out;
+} membufftable[CONTEST_COUNT];
+
+#define MEMBUFF_COUNT_MAX 20000   // 20000 records
+#define MEMBUFF_STEPS       200   // 200 records
 
 /* --------------------------------------------------------------------- */
 
@@ -98,14 +112,22 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
   int retcode = -1;
   WorkRecord *dest;
 
-  if (membuff->count == 0)
+  if (membuff->count == membuff->maxcount && membuff->maxcount < MEMBUFF_COUNT_MAX)
   {
     unsigned int i;
-    for (i = 0; i < (sizeof(membuff->buff)/sizeof(membuff->buff[0])); i++)
-      membuff->buff[i]=NULL;
+    unsigned long newmax = membuff->maxcount + MEMBUFF_STEPS;
+    void *resizedbuff;
+    resizedbuff = realloc(membuff->buff, newmax * sizeof(void *));
+    if (resizedbuff != NULL)
+    {
+      membuff->buff = (WorkRecord **) resizedbuff;
+      membuff->maxcount = newmax;
+      for (i = membuff->count; i < membuff->maxcount; i++)
+        membuff->buff[i]=NULL;
+    }
   }
 
-  if (membuff->count < (sizeof(membuff->buff)/sizeof(membuff->buff[0])))
+  if (membuff->count < membuff->maxcount)
   {
     dest = (WorkRecord *)malloc(sizeof(WorkRecord));
     if (dest != NULL)
@@ -241,7 +263,7 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
   else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND &&
            workstate != RESULT_NOTHING)
   {
-    LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
+    Log("Discarded packet with unrecognized workstate %ld.\n",workstate);
   }
   else if (__CheckBuffLimits( client ))
   {
@@ -272,9 +294,9 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
     }
     else
     {
-      membuff = &(client->membufftable[tmp_contest].in);
+      membuff = &(membufftable[tmp_contest].in);
       if (tmp_use_out_file)
-        membuff = &(client->membufftable[tmp_contest].out);
+        membuff = &(membufftable[tmp_contest].out);
       tmp_retcode = BufferPutMemRecord( membuff, data, &count );
                /* returns <0 on ioerr, >0 if norecs */
     }
@@ -326,9 +348,9 @@ long GetBufferRecord( Client *client, WorkRecord* data,
     }
     else
     {
-      membuff = &(client->membufftable[contest].in);
+      membuff = &(membufftable[contest].in);
       if (use_out_file)
-        membuff = &(client->membufftable[contest].out);
+        membuff = &(membufftable[contest].out);
                  /* returns <0 on ioerr, >0 if norecs */
       retcode = BufferGetMemRecord( membuff, data, &count );
     }
@@ -337,11 +359,11 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       if (retcode == -123 ) /* corrupted */
       {
         // corrupted - packet invalid, discard it.
-        LogScreen( "Block integrity check failed. Block discarded.\n");
+        Log( "Block integrity check failed. Block discarded.\n");
       }
       else if (retcode < 0) /* io error */
       {
-        LogScreen("Buffer seek/read error. Partial packet discarded.\n");
+        Log("Buffer seek/read error. Partial packet discarded.\n");
         break; /* return -1; */
       }
       else if( retcode > 0 ) // no recs
@@ -353,12 +375,12 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       tmp_contest = (unsigned int)data->contest;
       if (!(tmp_contest < CONTEST_COUNT))
       {
-        LogScreen("Discarded packet from unknown contest.\n");
+        Log("Discarded packet from unknown contest.\n");
       }
       else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND &&
               workstate != RESULT_NOTHING)
       {
-        LogScreen("Discarded packet with unrecognized workstate %ld.\n",workstate);
+        Log("Discarded packet with unrecognized workstate %ld.\n",workstate);
       }
       else if (tmp_contest != contest ||
                (use_out_file && workstate == RESULT_WORKING) ||
@@ -385,9 +407,9 @@ long GetBufferRecord( Client *client, WorkRecord* data,
         }
         else
         {
-          membuff = &(client->membufftable[tmp_contest].in);
+          membuff = &(membufftable[tmp_contest].in);
           if (tmp_use_out_file)
-            membuff = &(client->membufftable[tmp_contest].out);
+            membuff = &(membufftable[tmp_contest].out);
                  /* returns <0 on ioerr, >0 if norecs */
           tmp_retcode = BufferPutMemRecord( membuff, data, NULL );
         }
@@ -414,6 +436,31 @@ long GetBufferRecord( Client *client, WorkRecord* data,
 
 /* --------------------------------------------------------------------- */
 
+static unsigned long __get_threshold_limit(unsigned int contest)
+{
+  static unsigned int nominal_rate = 0;
+
+  if (nominal_rate == 0) {
+    /* Allow for 14 days of work */
+    unsigned int rate;
+    rate = nominal_rate_for_contest(contest) * 14;
+    if (rate == 0)
+      rate = 1000;
+    else {
+      /* A bit of rounding */
+      if (rate < 100)
+        rate = 10 * ((rate + 5) / 10);
+      else if (rate < 1000)
+        rate = 50 * ((rate + 25) / 50);
+      else
+        rate = 100 * ((rate + 50) / 100);
+    }
+    nominal_rate = rate;
+  }
+
+  return nominal_rate;
+}
+
 int BufferAssertIsBufferFull( Client *client, unsigned int contest )
 {
   int isfull = 0;
@@ -430,16 +477,16 @@ int BufferAssertIsBufferFull( Client *client, unsigned int contest )
       if (BufferCountFileRecords( filename, contest, &reccount, NULL ) != 0)
         isfull = 1;
       else
-        isfull = (reccount >= 1000); /* yes, hardcoded. */
+        isfull = (reccount >= __get_threshold_limit(contest));
       /* This function should be the only place where maxlimit is checked */
     }
     else
     {
-      struct membuffstruct *membuff = &(client->membufftable[contest].in);
+      struct membuffstruct *membuff = &(membufftable[contest].in);
       if ( BufferCountMemRecords( membuff, contest, &reccount, NULL ) != 0)
         isfull = 1;
       else
-        isfull=(reccount >= (sizeof(membuff->buff)/sizeof(membuff->buff[0])));
+        isfull = (membuff->maxcount >= MEMBUFF_COUNT_MAX);
     }
   }
   return isfull;
@@ -474,9 +521,9 @@ long GetBufferCount( Client *client, unsigned int contest,
     }
     else
     {
-      membuff = &(client->membufftable[contest].in);
+      membuff = &(membufftable[contest].in);
       if (use_out_file)
-        membuff = &(client->membufftable[contest].out);
+        membuff = &(membufftable[contest].out);
       retcode = BufferCountMemRecords( membuff, contest, &reccount, swu_countP );
     }
     if (retcode == 0 && swu_countP)
@@ -591,6 +638,9 @@ unsigned long BufferReComputeUnitsToFetch(Client *client, unsigned int contest)
     {
       /* get threshold in *stats units* */
       unsigned int swuthresh = ClientGetInThreshold( client, contest, 1 /* force */ );
+      unsigned int maxthresh = __get_threshold_limit(contest) * 100;
+      if (swuthresh > maxthresh)
+        swuthresh = maxthresh;
       if (swucount == 0)
         swucount = packets*100; /* >= 1.00 stats units per packet */
       if (swucount < swuthresh)
@@ -961,6 +1011,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   int dofetch, doflush, didfetch, didflush, dontfetch, dontflush, didnews;
   unsigned int i; 
   char loaderflags_map[CONTEST_COUNT];
+  struct timeval tv;
   const char *ffmsg = "--fetch and --flush services are not available.\n";
   int check_flags, updatefailflags, updatemodeflags, net_state_shown = 0;
   int fill_even_if_not_totally_empty = (client->connectoften || interactive);
@@ -971,6 +1022,13 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
 
   TRACE_BUFFUPD((+1, "BufferUpdate: req_flags = %d, interactive = %d\n", req_flags, interactive));
   
+  if (client->last_buffupd_failed_time != 0 && CliClock(&tv) == 0) {
+    if (!tv.tv_sec)
+      tv.tv_sec++;
+    if (client->last_buffupd_failed_time + client->buffupd_retry_delay > tv.tv_sec)
+      return 0;   /* Retry delay not elapsed : did nothing */
+  }  
+
   /* -------------------------------------- */
 
   updatefailflags = updatemodeflags = 0;
@@ -1147,18 +1205,26 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
     req_flags |= BUFFERUPDATE_FLUSH;
   if (didfetch)
     req_flags |= BUFFERUPDATE_FETCH;
-  {
-    struct timeval tv;
-    if (CliClock(&tv) == 0)
-    {
-      if (!tv.tv_sec) tv.tv_sec++;
-      if (didfetch || didflush || didnews)
-        client->last_buffupd_time = tv.tv_sec;
-      else
-        client->last_buffupd_failed_time = tv.tv_sec;
-    }  
+
+  if (CliClock(&tv) == 0) {
+    if (!tv.tv_sec)
+      tv.tv_sec++;
     if (didfetch || didflush || didnews)
-      client->last_buffupd_failed_time = 0; /* forget previous failures */
+      client->last_buffupd_time = tv.tv_sec;
+    else {
+      client->last_buffupd_failed_time = tv.tv_sec;
+      // Setup the retry delay (exponential backoff, see bug #3648)
+      if (client->buffupd_retry_delay < 30)
+        client->buffupd_retry_delay = 30;     /* start with a 30s delay */
+      else if (client->buffupd_retry_delay <= 1800)
+        client->buffupd_retry_delay *= 2;
+      else
+        client->buffupd_retry_delay = 3600;   /* Max : 1 hour */
+    }
+  }  
+  if (didfetch || didflush || didnews) {
+    client->last_buffupd_failed_time = 0; /* forget previous failures */
+    client->buffupd_retry_delay = 0;
   }
 
   /* -------------------------------------- */

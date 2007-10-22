@@ -1,0 +1,87 @@
+distributed.net client for the unix family
+ document revision $Id: readme.cell,v 1.2 2007/10/22 16:48:28 jlawson Exp $
+
+ Welcome to the distributed.net client.
+
+ This document covers information specific to the Linux client for the Cell
+ processor. Refer to other enclosed documentation or browse the online FAQ
+ at <http://faq.distributed.net/> for non-platform-specific documentation.
+
+    1.0  Getting started
+    2.0  PS3/Cell BE specific notes
+
+ 1.0  Getting started ------------------------------------------------
+ 
+    This client runs under the Linux operating system. If you haven't done  
+    so already, you will need to install Linux on your PlayStation 3. The
+    procedure for installing alternative operating systems is documented
+    by Sony at <http://www.playstation.com/ps3-openplatform/>.
+    You'll need a Linux distribution for the PowerPC architecture, with a
+    reasonably recent kernel offering support for the Cell processor. At the 
+    present time, only the Fedora Core 6 distribution with kernel 2.6.16
+    has been tested, and we recommend its use.
+
+    Just unpack/unzip/untar the client in a directory of your choice and 
+    fire it up.
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done.
+
+    Then, simply restart the client. From that point on it will use the 
+    saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help' or '--help'.
+
+    A complete step-by-step guide to running your first client is 
+    available at <http://www.distributed.net/docs/tutor_clients.php>
+
+ 2.0  PS3/Cell BE specific notes ------------------------------------
+
+    The PlayStation 3's processor, Cell, was designed by the STI
+    (Sony/Toshiba/IBM) joint venture. It is composed of a PowerPC main
+    processor (PPE) and up to 8 co-processors, called Synergistic Processing
+    Elements or SPEs, all clocked at 3.2 GHz. As shipped in the
+    PlayStation 3, Cell has one of its SPEs disabled, so that only 7 SPEs
+    are accessible to most games. Moreover, when running an alternative
+    operating system such as Linux, the hypervisor reserves one of the SPEs,
+    so only 6 SPEs are accessible to applications running under Linux. Note
+    that this issue is specific to the PlayStation 3; blade servers using
+    Cell processors should have all 8 SPEs available.   
+
+    We ship optimized cores for the RC5-72 and OGR projects. For RC5-72,
+    there are two cores available, "Cell v1 PPE" and "Cell v1 SPE". These
+    run on the main processor (PPE) and co-processors (SPEs) respectively.
+    As for OGR, there are three cores available, the two KOGE cores from
+    the PowerPC client port, which run on the PPE, and a new core, "Cell
+    v1 SPE", which runs on the SPEs. Automatic core selection should
+    select the fastest core for the PPE, namely "KOGE 2.0 Hybrid".
+
+    As the current client architecture doesn't support separate core choices
+    for different processors, a temporary workaround has been implemented   
+    whereby the first cruncher will use the core selected in the config
+    file, and further crunchers will always use the "Cell v1 SPE" core.
+    Under this scheme, it is possible to use any combination of PPE and SPE
+    cores on single-processor Cell hardware as follows:
+
+        a) 1 PPE core and n SPE cores (n > 0): select the "Cell v1 PPE" core
+           and run n+1 crunchers simultaneously;          
+        b) 1 PPE core and no SPE core: select the "Cell v1 PPE" core and run 
+           a single cruncher;
+        c) No PPE core and n SPE cores (n > 0): select the "Cell v1 SPE"
+           core and run n crunchers simultaneously.
+
+    Note that although Linux reports 2 CPUs per Cell, this is due to the PPE
+    being a 2-way simultaneous multi-threading (SMT) design, roughly similar
+    to the Hyperthreading technology used in Intel's Pentium 4 CPUs. This
+    means the operating system sees each CPU as 2 distinct CPUs, but
+    physically these CPUs share the majority of execution resources and
+    generally cannot perform at twice the rate of a single CPU. Moreover,
+    since our cores already exploit all available PPE execution resources in
+    a single cruncher, while relying on precise instruction scheduling, it
+    has been observed that running multiple PPE crunchers simultaneously on
+    the same physical PPE has a negative effect on performance. Therefore,
+    in conjunction with the workaround above for SPE cores, running multiple
+    PPE crunchers in a single Cell is disabled in this client.

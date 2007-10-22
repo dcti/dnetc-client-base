@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.89 2003/11/01 14:20:14 mweiser Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.90 2007/10/22 16:48:26 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -135,14 +135,15 @@ static struct {
   long threshold;
   unsigned int till_completion;
 } buffer_counts[CONTEST_COUNT] = {
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 },
-  { { { 0, 0 }, { 0, 0 } }, 0, 0 }
-  #if (CONTEST_COUNT != 6)
-    #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 6")
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* RC5 */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* DES */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* OGR */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* CSC */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* OGR_NEXTGEN_SOMEDAY */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* RC5_72 */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 }      /* OGR_P2 */
+  #if (CONTEST_COUNT != 7)
+    #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
   #endif
 };
 
@@ -157,7 +158,7 @@ int ProbfillGetBufferCounts( unsigned int contest, int is_out_type,
     if (threshold)
       *threshold = buffer_counts[contest].threshold;
     if (thresh_in_swu)
-      *thresh_in_swu = (contest != OGR);
+      *thresh_in_swu = (contest != OGR && contest != OGR_P2);
     if (till_completion)
       *till_completion = buffer_counts[contest].till_completion;
     if (is_out_type)
@@ -214,6 +215,7 @@ unsigned int ClientGetInThreshold(Client *client,
 
   // OGR time threshold NYI
   client->timethreshold[OGR] = 0;
+  client->timethreshold[OGR_P2] = 0;
 
   if (contestid >= CONTEST_COUNT)
   {
@@ -427,6 +429,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
       wrdata.os         = FILEENTRY_OS;
       wrdata.build      = FILEENTRY_BUILD;
       wrdata.core       = FILEENTRY_CORE(thisprob->pub_data.coresel);
+      strncpy( wrdata.id, client->id , sizeof(wrdata.id));
+      wrdata.id[sizeof(wrdata.id)-1]=0;
 
       if (finito)
       {
@@ -439,8 +443,6 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         wrdata.cpu     = CLIENT_CPU;
         wrdata.build   = CLIENT_VERSION;
         wrdata.core    = FILEENTRY_CORE(thisprob->pub_data.coresel);
-        strncpy( wrdata.id, client->id , sizeof(wrdata.id));
-        wrdata.id[sizeof(wrdata.id)-1]=0;
         ClientEventSyncPost( CLIEVENT_PROBLEM_FINISHED, &prob_i, sizeof(prob_i) );
       }
 
@@ -489,7 +491,17 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
                                            P_INFO_SIGBUF   | P_INFO_RATEBUF  | P_INFO_TCOUNT   |
                                            P_INFO_CCOUNT   | P_INFO_DCOUNT   | P_INFO_EXACT_PE ) != -1)
       {
+        char info_name[32];
         tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
+
+        if (load_problem_count > 1) {
+          char core = (char)('a' + prob_i);
+          if (core > 'z')
+            core = (char)('A' + (prob_i - ('z' - 'a')));
+          sprintf(info_name, "%s #%c", info.name, core);
+        }
+        else
+          strcpy(info_name, info.name);
 
         if (finito && !discarded && !info.is_test_packet)
           CliAddContestInfoSummaryData(cont_i,info.ccounthi,info.ccountlo,&tv,info.swucount);
@@ -500,9 +512,8 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
           {
             //[....] Discarded CSC 12345678:ABCDEF00 4*2^28
             //       (project disabled/closed)
-            Log("%s: %s %s%c(%s)\n", info.name, action_msg, info.sigbuf,
-                                     ((strlen(reason_msg)>10)?('\n'):(' ')),
-                                     reason_msg );
+            Log("%s: %s %s%c(%s)\n", info_name, action_msg, info.sigbuf,
+                       ((strlen(reason_msg)>10)?('\n'):(' ')), reason_msg );
           }
           else
           {
@@ -533,11 +544,11 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
             //       1.23:45:67:89 - [987,654,321 nodes/s]
             //[....] OGR: 25/1-2-4-5-8-10 [12,345,578,910 nodes]
             Log("%s: %s %s (%s)\n%s - [%s/s]\n",
-              info.name, action_msg, info.sigbuf, dcountbuf,
+              info_name, action_msg, info.sigbuf, dcountbuf,
               CliGetTimeString( &tv, 2 ), info.rate.ratebuf );
             if (finito && info.show_exact_iterations_done)
             {
-              Log("%s: %s [%s]\n", info.name, info.sigbuf,
+              Log("%s: %s [%s]\n", info_name, info.sigbuf,
                   ProblemComputeRate(cont_i, 0, 0, info.tcounthi, info.tcountlo,
                                      0, 0, dcountbuf, sizeof(dcountbuf)));
             }
@@ -633,6 +644,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
     int update_on_current_contest_exhaust_flag = (client->connectoften & 4);
     long bufcount;
     int may_do_random_blocks, random_project = -1, proj_i;
+    struct timeval tv;
 
     may_do_random_blocks = 0;
     for (proj_i = 0; proj_i < PROJECT_COUNT; ++proj_i)
@@ -647,6 +659,21 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
         break;
       }
     }
+
+    if (!may_do_random_blocks && client->last_buffupd_failed_time != 0
+                              && CliClock(&tv) == 0)
+    {
+      // If no random work is allowed and if buffer updates are temporarily
+      // disabled (retry delay not elapsed), then exit early to prevent the
+      // client from doing unecessary file I/O operations until updates are
+      // enabled.
+      if (!tv.tv_sec)
+        tv.tv_sec++;
+      if (client->last_buffupd_failed_time + client->buffupd_retry_delay > tv.tv_sec) {
+        *load_needed = NOLOAD_NORANDOM;
+        return 0;   /* Retry delay not elapsed : did nothing */
+      }
+    }  
 
     retry_due_to_failed_loadstate = 0;
     bufcount = __loadapacket( client, &wrdata, 1, prob_i,
@@ -704,10 +731,17 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       else
       {
         *loaded_for_contest = (unsigned int)(wrdata.contest);
-        expected_cpu   = wrdata.cpu;
-        expected_core  = wrdata.core;
-        expected_os    = wrdata.os;
-        expected_build = wrdata.build;
+        // If a user gets a packet already started by another user,
+        // force a restart to occur (may happen when the input buffer
+        // is shared).
+        if (strcmp(wrdata.id, "rc5@distributed.net") == 0
+            || strncmp(wrdata.id, client->id, sizeof(wrdata.id)-1) == 0)
+        {
+          expected_cpu   = wrdata.cpu;
+          expected_core  = wrdata.core;
+          expected_os    = wrdata.os;
+          expected_build = wrdata.build;
+        }
         work = &wrdata.work;
 
         /* if the total number of packets in buffers is less than the number
@@ -763,7 +797,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
 
             *loaded_for_contest = thisprob->pub_data.contest;
             if (thisprob->pub_data.was_reset)
-              extramsg="\nPacket was from a different core/client cpu/os/build.";
+              extramsg="\nPacket was from a different user/core/client cpu/os/build.";
             else if (info.s_permille > 0 && info.s_permille < 1000)
             {
               sprintf(perdone, " (%u.%u0%% done)", (info.s_permille/10), (info.s_permille%10));
@@ -778,9 +812,19 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
               extramsg = perdone;
             }
 
-            Log("%s: Loaded %s%s%s\n",
-                 info.name, ((thisprob->pub_data.is_random)?("random "):("")),
-                 info.sigbuf, extramsg );
+            if (load_problem_count > 1) {
+              char core = (char)('a' + prob_i);
+              if (core > 'z')
+                core = (char)('A' + (prob_i - ('z' - 'a')));
+              Log("%s #%c: Loaded %s%s%s\n", info.name, core,
+                      ((thisprob->pub_data.is_random)?("random "):("")),
+                      info.sigbuf, extramsg );
+            }
+            else {
+              Log("%s: Loaded %s%s%s\n", info.name,
+                      ((thisprob->pub_data.is_random)?("random "):("")),
+                      info.sigbuf, extramsg );
+            }
           } /* if (thisprob->GetProblemInfo(...) != -1) */
         } /* if (load_problem_count <= COMBINEMSG_THRESHOLD) */
       } /* if (LoadState(...) != -1) */
@@ -973,8 +1017,11 @@ unsigned int LoadSaveProblems(Client *client,
 
     if (load_needed && mode!=PROBFILL_UNLOADALL && mode!=PROBFILL_RESIZETABLE)
     {
-      if (client->blockcount>0 &&
-          totalBlocksDone>=((unsigned long)(client->blockcount)))
+      // Bug #3672 (all clients running at least 2 cores).
+      // Take the number of still active crunchers into account to determine
+      // whether we can load another problem.
+      if (client->blockcount>0 && 
+          totalBlocksDone+load_problem_count-empty_problems>=((unsigned long)(client->blockcount)))
       {
         ; //nothing
       }
@@ -1019,7 +1066,7 @@ unsigned int LoadSaveProblems(Client *client,
       // close checkpoint file immediately after saving the problems to disk
       CheckpointAction( client, CHECKPOINT_CLOSE, 0 );
     }
-    else /* no disk buffers */
+    else if (!CheckRestartRequestTrigger()) /* no disk buffers */
     {
       TRACE_BUFFUPD((0, "BufferUpdate: reason = LoadSaveProblem && unload all && membuffers\n"));
       BufferUpdate(client,BUFFERUPDATE_FLUSH,0);
@@ -1066,21 +1113,20 @@ unsigned int LoadSaveProblems(Client *client,
        still at work, bump the limit.
        -------------------------------------------------------------
       */
-      int limitsexceeded = 0;
-      if (client->blockcount < 0 && norandom_count >= load_problem_count)
-        limitsexceeded = 1;
-      if (client->blockcount > 0 &&
-         (totalBlocksDone >= (unsigned long)(client->blockcount)))
+      if (client->blockcount < 0 || (client->blockcount > 0
+                  && totalBlocksDone >= (unsigned long)(client->blockcount)))
       {
         if (empty_problems >= load_problem_count)
-          limitsexceeded = 1;
-        else
-          client->blockcount = ((u32)(totalBlocksDone))+1;
-      }
-      if (limitsexceeded)
-      {
-        Log( "Shutdown - packet limit exceeded.\n" );
-        RaiseExitRequestTrigger();
+        {
+          Log( "Shutdown - packet limit exceeded.\n" );
+          RaiseExitRequestTrigger();
+        }
+        // Bug #3672 (all clients running at least 2 cores).
+        // The following two lines prevent the client from stopping as
+        // instructed by option "-n" when running at least two crunchers
+        // simultaneously.
+        //else
+        //  client->blockcount = ((u32)(totalBlocksDone))+1;
       }
     }
 

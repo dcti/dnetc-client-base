@@ -7,7 +7,7 @@
 ; Written in a dark and stormy night (Jan 16, 1998) by
 ; Cyrus Patel <cyp@fb14.uni-mainz.de>
 ;
-; $Id: x86ident.asm,v 1.5 2003/11/01 14:20:15 mweiser Exp $
+; $Id: x86ident.asm,v 1.6 2007/10/22 16:48:32 jlawson Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -25,12 +25,14 @@
 ;                    [bxBXdxDXcxCX]
 ;                     GenuineIntel = 'eG' = 0x6547
 ;                     GenuineTMx86 = 'MT' = 0x4D54 <-- NOTE!
+;                     Geode by NSC = 'SN' = 0x534E <-- NOTE!
 ;                     AuthenticAMD = 'uA' = 0x7541
 ;                     CyrixInstead = 'yC' = 0x7943
 ;                     NexGenDriven = 'eN' = 0x654E
 ;                     CentaurHauls = 'eC' = 0x6543
 ;                     UMC UMC UMC  = 'MU' = 0x4D55
 ;                     RiseRiseRise = 'iR' = 0x6952
+;                     SiS SiS SiS  = 'iS' = 0x6953
 ;            loword = bits 12..15 for identification extensions
 ;                     bits 11...0 for family/model/stepping per CPUID
 ;                                 or 0x0300 for 386, 0x0400 for 486
@@ -70,7 +72,11 @@ x86ident:       mov     eax,[__savident]
                 jz      _ge386
                 ret
 
-_ge386:         ; an interrupt could change the AC bit, so loop 'n'
+_ge386:         ; preserve registers that our caller expects to be unchanged.
+                ; this includes ebp, esi, edi, and ebx (but we only use ebx).
+                push ebx
+
+                ; an interrupt could change the AC bit, so loop 'n'
                 ; times, incrementing a state counter for each state
                 pushfd                  ; save flags from damage
                 xor     edx,edx         ; our counter and state
@@ -194,8 +200,7 @@ _in486sx:       mov     eax, 65470420h  ; Intel 486SX (no fpu)
 
                 ; -----------------------------------------------------
 
-_ge586:         push    ebx             ; cpuid trashes ebx
-                xor     eax, eax        ; cpuid function zero
+_ge586:         xor     eax, eax        ; cpuid function zero
                 cpuid                   ; => eax=maxlevels,ebx:ecx:edx=vendor
                 push    eax             ; save maxlevels
                 and     al, 0f0h        ; clear stepping
@@ -207,7 +212,6 @@ _ge586:         push    ebx             ; cpuid trashes ebx
                 mov     ecx, 6C65746Eh  ; GenuineI[ntel]
                 mov     eax, 1          ; maxlevel is one
 _ne586a:        mov     edx, ebx        ; this is now our vendor id (in DX)
-                pop     ebx             ; restore ebx
 
 ; 0123456789|ABCDEFGHIJKLMNOPQRSTUVWXYZ|abcdefghijklmnopqrstuvwxyz|
 ; 3        3|4              5          |6              7          |
@@ -216,8 +220,13 @@ _ne586a:        mov     edx, ebx        ; this is now our vendor id (in DX)
                 cmp     ecx,3638784Dh   ; '68xM' as in GenuineT[Mx86]
                 jnz     _neTM           ; not a Transmeta chip
                 mov     edx,38784D54h   ; '8xMT' as in Genuine[TMx8]6
+_neTM:          cmp     ecx,43534E20h   ; 'CSN ' as in Geode by[ NSC]
+                jnz     _neNS           ; not a National Semi chip
+                mov     edx,2043534Eh   ; ' CSN' as in Geode by [NSC ]
 
-_neTM:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
+                                        ; assume it is an Intel otherwise
+
+_neNS:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
                 shl     eax,16          ; move it up
                 mov     ax,400h         ; assume 486
                 or      edx,edx         ; max cpuid level is zero?
@@ -226,34 +235,67 @@ _neTM:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
                 push    edx             ; save max level
                 push    eax             ; save maker code
                 mov     eax, 1          ; family/model/stepping/features
-                push    ebx             ; cpuid trashes ebx
                 xor     ebx,ebx         ; assume no brand ID
                 cpuid                   ; => ax=type/family/model/stepping
                 mov     edx,ebx         ; copy brand ID
-                pop     ebx             ; restore ebx
                 and     ax,0fffh        ; drop the type flags
                 mov     cx,ax           ; save family/model/stepping bits
                 pop     eax             ; restore maker code
                 mov     ax,cx           ; add family/model/stepping bits
-                pop     ecx             ; restore max level 
                                         ; edx has feature bits
+
+                ;For AMD K8 and above we need the brand bits
+                mov     ecx,eax         ; copy our combined id
+                shr     ecx,16          ; get vendor id in cx
+                cmp     cx, 7541h       ; AMD?
+                pop     ecx             ; restore max level (was edx)
+                jnz     _intelbrand     ; exit if not
+
+                mov     cx, ax          ; get family/model/stepping bits
+                and     cx,0f00h        ; mask only family
+                cmp     cx,0f00h        ; less than K8?
+                jnz     near _end       ; neither brand nor cache bits needed
+                or      dl,dl           ; have 8bit brand?
+                jz      _twelvebit      ; check for 12bit brand
+                shr     dl,1
+                and     dl,0f0h         ; 'Brand' msn->brand msn
+                or      ah,dl           ; 0/fam/mod/step -> brand/fam/mod/step
+                jmp     _end
+
+_twelvebit:     push    eax             ; save family/model/stepping
+                mov     eax,80000000h   ; see if extended cpuid is supported
+                cpuid
+                cmp     eax,80000000h
+                pop     eax             ; restore family/model/stepping (in case we branch)
+                push    eax             ; save family/model/stepping again
+                jbe     near _end       ; exit if not supported
+
+                mov     eax,80000001h   ; extended cpuid
+                cpuid
+                pop     eax             ; restore family/model/stepping
+                and     ebx,00000fffh   ; mask brand bits
+                or      ebx,ebx         ; have 12bit brand?
+                jz      _end            ; exit if not
+                shl     bh,4            ; get msn (most significant nibble)
+                or      ah,bh           ; 0/fam/mod/step -> brand/fam/mod/step
+                jmp     _end
 
                 ;On a PII and above we take extra steps to differentiate
                 ;between a Celeron/Covington, PII, Celeron-A/Mendocino, Xeon.
                 ;we need to do this since cache size may be important
                 ;for some cores. On a P4, we have the 'Brand' bits
-                cmp     ecx,2           ; max cpuid level >= 2?
+_intelbrand:    cmp     ecx,2           ; max cpuid level >= 2?
                 jb      _end            ; can't be a PII+ if not
                 mov     ecx,eax         ; copy our combined id
                 shr     ecx,16          ; get vendor id in cx
                 cmp     cx, 6547h       ; 'Ge'nuineIntel?
-                jnz     _end            ; exit it not
+                jnz     _end            ; exit if not
                 mov     cx, ax          ; get family/model/stepping bits
                 and     cx,0ff0h        ; mask only family/model
                 cmp     cx,620h         ; less than PII?
                 jb      _end            ; neither brand nor cache bits needed
                 or      dl,dl           ; have brand bits?
-                jnz     _brand          ; continue if so
+                jnz     _gotbrand       ; continue if so
                 cmp     cx,650h         ; Celeron/PII/Xeon (Covington)?
                 jb      _end            ; proceed if so
                 cmp     cx,660h         ; Celeron-A/PII/Xeon (Mendocino/Dixon)?
@@ -267,20 +309,22 @@ _neTM:          xchg    edx,eax         ; make edx=maxlevel,eax=vendor id
                 mov     cl,dl           ; 0x40=no cache,1=128,2=256,...
                 cmp     cl,40h          ; ...,3=512,4=1024,5=2048
                 mov     dl,0x01         ; assume its a plain Celeron
-                jz      _brand          ; go brand if no L2
+                jz      _gotbrand       ; go brand if no L2
                 cmp     cl,41h          ; has 128K L2?
-                jz      _brand          ; its a Celeron-A if so
+                jz      _gotbrand       ; its a Celeron-A if so
                 mov     dl,0x04         ; assume its a Xeon
                 cmp     cl,44h          ; has 1MB L2?
-                jz      _brand          ; its a Xeon if so
+                jz      _gotbrand       ; its a Xeon if so
                 cmp     cl,45h          ; has 2MB L2?
                 jnz     _end            ; go exit if not
-_brand:         shl     dl,4            ; 'Brand' lsn->brand msn
+_gotbrand:      shl     dl,4            ; 'Brand' lsn->brand msn
                 or      ah,dl           ; 0/fam/mod/step -> brand/fam/mod/step
-                or      dl,dl           ; did we have brand bits?
-                jnz     _end            ; exit if so
+                jmp     _end
 
 _end:           mov     [__savident],eax; save it for next time
+
+                ; restore the registers we saved before.
+                pop     ebx
                 ret
 
 ;----------------------------------------------------------------------
@@ -355,7 +399,7 @@ _cx486:         ; -----------------------------------------------------
                 jnz     _cxeval        ; don't need DIR1 if not
                 getCCR  CX86_DIR1      ; read DIR1
                 mov     ch, al         ; save it
-                jmp     short _cxeval  ; go evaluate
+                jmp     _cxeval        ; go evaluate
 
 _cx486s:        getCCR  CX86_CCR2      ; get the CCR2 value 
                 mov     cl, al         ; save ccr2

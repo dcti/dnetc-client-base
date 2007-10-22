@@ -8,11 +8,11 @@
 ;
 ; Based in part on "Lintilla" core for RC5-64 by Dan Oetting
 ;
-; $Id: r72-603e-mh-1-addi.osx.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+; $Id: r72-603e-mh-1-addi.osx.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 ;
 ; $Log: r72-603e-mh-1-addi.osx.s,v $
-; Revision 1.2  2003/09/12 23:08:52  mweiser
-; add new files from release-2-90xx
+; Revision 1.3  2007/10/22 16:48:35  jlawson
+; overwrite head with contents of release-2-90xx
 ;
 ; Revision 1.1.2.2  2003/05/09 12:34:14  mfeiri
 ; Fixed various issues that Apples gas couldnt handle

@@ -18,7 +18,7 @@
 
 #if (!defined(lint) && defined(__showids__))
 const char *rc5ansi2_rg_cpp (void) {
-return "@(#)$Id: 2-rg.c,v 1.11 2003/11/01 14:20:15 mweiser Exp $"; }
+return "@(#)$Id: 2-rg.c,v 1.12 2007/10/22 16:48:32 jlawson Exp $"; }
 #endif
 
 #include "cputypes.h"

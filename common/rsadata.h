@@ -6,7 +6,7 @@
 //
 
 #ifndef __RSADATA_H__
-#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.14 2003/11/01 14:20:14 mweiser Exp $"
+#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.15 2007/10/22 16:48:27 jlawson Exp $"
 
 // RC5-56:
 // Contest identifier: RC5-32/12/7 

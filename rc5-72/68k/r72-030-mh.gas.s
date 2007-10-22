@@ -12,11 +12,11 @@
 | Converted from Amiga Devpac assembler notation to GAS notation
 | by Oliver Roberts <oliver@futaura.co.uk>
 |
-| $Id: r72-030-mh.gas.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+| $Id: r72-030-mh.gas.s,v 1.3 2007/10/22 16:48:33 jlawson Exp $
 |
 | $Log: r72-030-mh.gas.s,v $
-| Revision 1.2  2003/09/12 23:08:52  mweiser
-| add new files from release-2-90xx
+| Revision 1.3  2007/10/22 16:48:33  jlawson
+| overwrite head with contents of release-2-90xx
 |
 | Revision 1.1.2.3  2003/04/04 19:45:54  snake
 | make the assembler cores link with both, elf and a.out (eg. with or with underscore prepend to the main symbols), thanx to Oliver Roberts

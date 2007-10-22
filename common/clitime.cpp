@@ -14,19 +14,17 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.58 2003/11/01 14:20:13 mweiser Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.59 2007/10/22 16:48:24 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
 #include "clitime.h"    /* keep the prototypes in sync */
 #include "unused.h"     /* DNETC_UNUSED_* */
+#include "clisync.h"
 
-#if (CLIENT_OS == OS_WIN32) && (CLIENT_CPU == CPU_ALPHA)
-extern "C" int _AcquireSpinLockCount(long *, int);
-extern "C" void _ReleaseSpinLock(long *);
-#pragma intrinsic(_AcquireSpinLockCount, _ReleaseSpinLock)
+#if (CLIENT_OS == OS_NETWARE6)
+#include <nks/time.h>
 #endif
-
 
 #if defined(__unix__)
  #if !((CLIENT_OS == OS_QNX ) && !(defined(__QNXNTO__)))
@@ -47,7 +45,7 @@ extern "C" void _ReleaseSpinLock(long *);
 
 int InitializeTimers(void)
 {
-  #if (CLIENT_OS != OS_AMIGAOS)
+  #if (CLIENT_OS != OS_AMIGAOS) && (CLIENT_OS != OS_MORPHOS)
   CliIsTimeZoneInvalid(); /* go assume TZ=GMT if invalid timezone */
   tzset();                /* set correct timezone for everyone else */
   #endif
@@ -78,7 +76,7 @@ static int __GetTimeOfDay( struct timeval *tv )
       tv->tv_sec = tb.time;
       tv->tv_usec = tb.millitm*1000;
     }
-    #elif (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
       unsigned __int64 now, epoch;
       unsigned long ell;
@@ -159,7 +157,7 @@ static int __GetMinutesWest(void)
   /* ANSI rules :) - 'timezone' doesn't reflect 'daylight' state. */
   /* ie utctime-localtime == timezone-(daylight*3600) */
   minwest = (int)(((long)timezone)/60L);
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   TIME_ZONE_INFORMATION TZInfo;
   if (GetTimeZoneInformation(&TZInfo) == 0xFFFFFFFFL)
     return 0;
@@ -376,6 +374,19 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
       tv->tv_usec = (time_t)(now % 1000000LL); /* microseconds < 1 second */
     }
+    #elif (CLIENT_OS == OS_NETWARE6)
+    {
+      NXTime_t now;
+      static unsigned int ctr;
+      ctr++;
+      if ( ctr&0xc0000000 !=0 ) {
+        ctr=0;
+        usleep(1);
+      }
+      NXGetTime(NX_SINCE_1970, NX_USECONDS, &now);
+      tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
+      tv->tv_usec = (time_t)(now % 1000000LL); /* microseconds < 1 second */
+    }
     #elif (CLIENT_OS == OS_NETWARE)
     {
       /* atomic_xchg()/MPKYieldThread() are stubbed/emulated in nwmpk.c */
@@ -426,7 +437,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       //tv->tv_usec = ((ticks % 1000) + (adj % 1000)) * 1000UL;
       //tv->tv_sec = (time_t)((ticks/1000)+(adj/1000)+(wrap_ctr*4294967UL));
     }
-    #elif (CLIENT_OS == OS_WIN32)
+    #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
       #if 0 /* too many failures to be useful */
       static int using_qff = -1;
@@ -491,86 +502,47 @@ int CliGetMonotonicClock( struct timeval *tv )
       #endif
       /* if (using_qff == 0) */
       {
-        /* '-benchmark rc5' in keys/sec with disabled ThreadUserTime(): */
-        /* using spinlocks: 1,386,849.10 | using critical section: 994,861.48 */
-        static long splbuf[4] = {0,0,0,0}; /* 64bit*2 */
-        static DWORD lastticks = 0, wrap_count = 0;
-        DWORD ticks, l_wrap_count; long *spllp;
-        char *splcp = (char *)&splbuf[0];
+        static DWORD lastticks = 0, wrap_count = (DWORD)-1L;
+        static fastlock_t mutex;
+        DWORD ticks, l_wrap_count;
 
-        int lacquired = 0, locktries = 0;
-        splcp += ((64/8) - (((unsigned long)splcp) & ((64/8)-1)));
-        spllp = (long *)splcp; /* long * to 64bit-aligned spinlock space */
-        while (!lacquired)
-        {
-          #if (CLIENT_CPU == CPU_ALPHA)
-          lacquired = _AcquireSpinLockCount(spllp, 0x0f); /* VC6 intrinsic */
-          locktries += 0x0f;
-          #else
-          if (InterlockedExchange(spllp,1)==0) /* spl must be 32bit-aligned */
-            lacquired = 1;
-          #endif
-          if (!lacquired && ((++locktries)&0x0f)==0)
-            Sleep(0);
+        if (wrap_count == (DWORD)-1L) {
+          fastlock_init(&mutex);
+          wrap_count = 0;
         }
+        fastlock_lock(&mutex);
+
         ticks = GetTickCount(); /* millisecs elapsed since OS start */
         l_wrap_count = wrap_count;
         if (ticks < lastticks)
           wrap_count = ++l_wrap_count;
         lastticks = ticks;
-        #if (CLIENT_CPU == CPU_ALPHA)
-        _ReleaseSpinLock(spllp);  /* VC6 intrinsic */
-        #else
-        *spllp = 0;
-        #endif
+
+        fastlock_unlock(&mutex);
         __clks2tv( 1000, ticks, l_wrap_count, tv );
       }
     }
     #elif (CLIENT_OS == OS_OS2)
     {
-      static long splbuf[2] = {0,0}; /* space for 32bit alignment */
-      char *splptr = (char *)&splbuf[0];
+      static fastlock_t mutex;
+      static ULONG wrap_count = (ULONG)-1L, lastticks = 0;
       ULONG ticks, l_wrap_count = 0;
-      int gotit = 0, lacquired = 0;
+      bool gotit = false;
 
-      splptr += (sizeof(long)-(((unsigned long)splptr) & (sizeof(long)-1)));
-      while (!lacquired)
-      {
-        #if defined(__GNUC__)
-        /* gcc is sometimes too clever */
-        struct __fool_gcc_volatile { unsigned long a[100]; };
-        /* note: no 'lock' prefix even on SMP since xchg is always atomic */
-        __asm__ __volatile__(
-                   "movl $1,%0\n\t"
-                   "xchgl %0,%1\n\t"
-                   "xorl $1,%0\n\t"
-                   : "=r"(lacquired)
-                   : "m"(*((struct __fool_gcc_volatile *)(splptr)))
-                   : "memory");
-        #elif defined(__WATCOMC__)
-        _asm mov edx, splptr
-        _asm mov eax, 1
-        _asm xchg eax,[edx]
-        _asm xor eax, 1
-        _asm mov lacquired,eax
-        #else
-        #error whats up doc?
-        #endif
-        if (!lacquired)
-          DosSleep(1);
+      if (wrap_count == (ULONG)-1L) {
+        fastlock_init(&mutex);
+        wrap_count = 0;
       }
-      if (!DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks)))
-      {
-        static ULONG wrap_count = 0, lastticks = 0;
+      fastlock_lock(&mutex);
+      if (!DosQuerySysInfo(QSV_MS_COUNT, QSV_MS_COUNT, &ticks, sizeof(ticks))) {
         l_wrap_count = wrap_count;
         if (ticks < lastticks)
           wrap_count = ++l_wrap_count;
         lastticks = ticks;
-        gotit = 1;
+        gotit = true;
       }
-      *((long *)splptr) = 0;
-      if (!gotit)
-        return -1;
+      fastlock_unlock(&mutex);
+      if (!gotit) return -1;
       __clks2tv( 1000, ticks, l_wrap_count, tv );
     }
     #elif defined(CTL_KERN) && defined(KERN_BOOTTIME) /* *BSD */
@@ -607,61 +579,115 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) /*only RTlinux has clock_gettime/gethrtime*/
     {
-      /* this is computationally expensive, but we don't have a choice.
-         /proc/uptime is buggy even in the newest kernel (2.4-test2):
-         it wraps at jiffies/HZ, ie ~497 days on a 32bit cpu (and the
-         fact that that hasn't been noticed in 5 years is a pretty good
-         indication that no linux box ever runs more than 497 days :)
-      */
-      #ifdef HAVE_KTHREADS
-      int fd = -1;
-      #else
-      static int fd = -1;
-      #endif
-      int rc = -1;
-      if (fd == -1)
-        fd = open("/proc/uptime",O_RDONLY);
-      if (fd != -1)
+      static int supports_clock_gettime = -1;
+      if (supports_clock_gettime == -1)
       {
-        if (lseek( fd, 0, SEEK_SET)==0)
+        FILE* fp = fopen("/proc/sys/kernel/osrelease","r");
+
+        if (fp)
         {
-          char buffer[128];
-          int len = read( fd, buffer, sizeof(buffer));
-          if (len >= 1 && len < ((int)(sizeof(buffer)-1)) )
+          int major, minor;
+
+          if (fscanf(fp, "%d.%d", &major, &minor) == 2)
           {
-            unsigned long tt = 0, t2 = 0, t1 = 0;
-            register char *p = buffer;
-            buffer[len-1] = '\0';
-            while (t1>=tt && *p >= '0' && *p <='9')
+            /* clock_gettime is supported in Linux 2.6 and beyond */
+            if (major > 2 || (major == 2 && minor >= 6))
+              supports_clock_gettime = 1;
+            else
+              supports_clock_gettime = 0;
+          }
+          else
+          {
+            fclose(fp);
+            return -1; /* failed reading file */
+          }
+
+          fclose(fp);
+        }
+        else
+        {
+          return -1; /* failed opening file */
+        }
+      }
+
+      if (supports_clock_gettime)
+      {
+        struct timespec ts;
+        if (clock_gettime(CLOCK_MONOTONIC, &ts))
+          return -1;
+        tv->tv_sec = ts.tv_sec;
+        tv->tv_usec = ts.tv_nsec / 1000;
+      }
+      else
+      {
+        /* this is computationally expensive, but we don't have a choice.
+           /proc/uptime is buggy even in the newest kernel (2.4-test2):
+           it wraps at jiffies/HZ, ie ~497 days on a 32bit cpu (and the
+           fact that that hasn't been noticed in 5 years is a pretty good
+           indication that no linux box ever runs more than 497 days :)
+        */
+        int rc = -1;
+        #ifdef HAVE_KTHREADS
+        int fd = open("/proc/uptime",O_RDONLY);
+        #else
+        static int fd = -1, pid = -1;
+        /* The file descriptor is inherited by fork(), so all crunchers
+           share it; however, after fork()ing, there's no way to lock
+           access to file to ensure a single process is reading it at any
+           given time. The solution is reopening the file for each child
+           process, but how do we know we're the child not the parent?
+           This is why we store the pid of the process who originally
+           opened the file; if it differs from ours, open a new file and
+           update the pid.
+        */
+        if (fd == -1 || (getpid() != -1 && getpid() != pid))
+        {
+          fd = open("/proc/uptime",O_RDONLY);
+          pid = getpid();
+        }
+        #endif
+        if (fd != -1)
+        {
+          if (lseek( fd, 0, SEEK_SET)==0)
+          {
+            char buffer[128];
+            int len = read( fd, buffer, sizeof(buffer));
+            if (len >= 1 && len < ((int)(sizeof(buffer)-1)) )
             {
-              tt = t1;
-              t1 = (t1*10)+((*p++)-'0');
-	    }
-            if (*p++ == '.')
-            {
-              tt=0;
-              while (t2>=tt && *p >= '0' && *p <='9')
+              unsigned long tt = 0, t2 = 0, t1 = 0;
+              register char *p = buffer;
+              buffer[len-1] = '\0';
+              while (t1>=tt && *p >= '0' && *p <='9')
               {
-                tt = t2;
-                t2 = (t2*10)+((*p++)-'0');
-	      }
-              if (*p++ == ' ')
+                tt = t1;
+                t1 = (t1*10)+((*p++)-'0');
+              }
+              if (*p++ == '.')
               {
-                tv->tv_usec = (long)(10000UL * t2);
-                tv->tv_sec = (time_t)t1;
-                //printf("\rt=%d.%06d\n",tv->tv_sec,tv->tv_usec);
-                rc = 0;
+                tt=0;
+                while (t2>=tt && *p >= '0' && *p <='9')
+                {
+                  tt = t2;
+                  t2 = (t2*10)+((*p++)-'0');
+                }
+                if (*p++ == ' ')
+                {
+                  tv->tv_usec = (long)(10000UL * t2);
+                  tv->tv_sec = (time_t)t1;
+                  //printf("\rt=%d.%06d\n",tv->tv_sec,tv->tv_usec);
+                  rc = 0;
+                }
               }
             }
-          }
-        } /* lseek */
-        #ifdef HAVE_KTHREADS
-        close(fd);
-        #endif
-      } /* open */
-      return rc;
+          } /* lseek */
+          #ifdef HAVE_KTHREADS
+          close(fd);
+          #endif
+        } /* open */
+        return rc;
+      }
     }
-    #elif (CLIENT_OS == OS_AMIGAOS)
+    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     {
       if (amigaGetMonoClock(tv) != 0)
         return -1;
@@ -768,6 +794,9 @@ int CliGetThreadUserTime( struct timeval *tv )
     tv->tv_usec = tInfo.user_time % 1000000;
   }
   return 0;
+#elif (CLIENT_CPU == CPU_CELLBE)
+  DNETC_UNUSED_PARAM(tv);
+  return -1;
 #elif defined(HAVE_GETRUSAGE) && defined(THREADS_HAVE_OWN_ACCOUNTING)
   if (tv)
   {
@@ -779,7 +808,7 @@ int CliGetThreadUserTime( struct timeval *tv )
     //printf("\rgetrusage(%d) => %d.%02d\n", getpid(), tv->tv_sec, tv->tv_usec/10000 );
   }
   return 0;
-#elif (CLIENT_OS == OS_WIN32)
+#elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   static int is_supp = -1;
   FILETIME ct,et,kt,ut;
   if (is_supp == 0)
@@ -895,12 +924,12 @@ int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struc
 int CliIsTimeZoneInvalid(void)
 {
   #if ((CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN16) || \
-       (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32))
+       (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64))
   static int needfixup = -1;
   if (needfixup == -1)
   {
     needfixup = 0;
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if (winGetVersion() < 400)
     #endif
     if (!getenv("TZ"))

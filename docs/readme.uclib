@@ -1,0 +1,15 @@
+$Id: readme.uclib,v 1.2 2007/10/22 16:48:28 jlawson Exp $
+
+Additional information for Linux/uClibc clients.
+================================================
+
+Beginning with v2.9007-489 we use a new build style using 
+static uClibc instead of glibc.
+
+This client does not need the 'host' command.
+We hope, this will fix the various resolver problems which occured in the 
+past with incompatible libc/glibc library versions.
+
+
+If you find bugs, report them at
+http://www.distributed.net/bugs/

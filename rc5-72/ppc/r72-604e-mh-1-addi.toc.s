@@ -11,17 +11,20 @@
 # Based in part on "Lintilla" core for RC5-64 by Dan Oetting
 #
 # modified for coff and TOC on AIX by
-#  Michael Weiser <michael@weiser.saale-net.de>
+#  Michael Weiser <michael@weiser.dinsnail.net>
 #
 # see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12069 for an
 # explanation why we need the TOC entries for AIX and maybe other
 # architectures
 #
-# $Id: r72-604e-mh-1-addi.toc.s,v 1.2 2003/09/12 23:08:52 mweiser Exp $
+# $Id: r72-604e-mh-1-addi.toc.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 #
 # $Log: r72-604e-mh-1-addi.toc.s,v $
-# Revision 1.2  2003/09/12 23:08:52  mweiser
-# add new files from release-2-90xx
+# Revision 1.3  2007/10/22 16:48:35  jlawson
+# overwrite head with contents of release-2-90xx
+#
+# Revision 1.1.2.2  2004/05/15 08:31:09  mweiser
+# new email address
 #
 # Revision 1.1.2.1  2003/09/12 13:13:17  mweiser
 # add TOC versions of PowerPC cores for AIX and undo changes to mh-2 for

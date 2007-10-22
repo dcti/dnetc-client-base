@@ -6,7 +6,7 @@
 */
 
 #ifndef __PATHWORK_H__
-#define __PATHWORK_H__ "@(#)$Id: pathwork.h,v 1.9 2003/11/01 14:20:14 mweiser Exp $"
+#define __PATHWORK_H__ "@(#)$Id: pathwork.h,v 1.10 2007/10/22 16:48:26 jlawson Exp $"
 
 /* -------------------------------------------------------------------
  * Get the working directory previously initialized with 
