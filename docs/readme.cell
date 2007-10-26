@@ -1,5 +1,5 @@
 distributed.net client for the unix family
- document revision $Id: readme.cell,v 1.1.2.3 2007/08/20 15:39:00 decio Exp $
+ document revision $Id: readme.cell,v 1.1.2.4 2007/10/26 05:19:57 jlawson Exp $
 
  Welcome to the distributed.net client.
 
@@ -9,6 +9,7 @@ distributed.net client for the unix family
 
     1.0  Getting started
     2.0  PS3/Cell BE specific notes
+    3.0  Troubleshooting and Known issues
 
  1.0  Getting started ------------------------------------------------
  
@@ -85,3 +86,20 @@ distributed.net client for the unix family
     the same physical PPE has a negative effect on performance. Therefore,
     in conjunction with the workaround above for SPE cores, running multiple
     PPE crunchers in a single Cell is disabled in this client.
+
+ 2.0  Troubleshooting and Known issues ------------------------------
+
+    Some CellBE Linux distributions (such as Ubuntu Linux) may receive
+    errors such as:
+        "spu_create(): Function not implemented" 
+        "spu_create(): no such file or directory"
+
+    To have the spu_create() system call working, the spufs kernel
+    module must be loaded and the filesystem of the same name must be
+    mounted.  This can be done with the following steps:
+
+        echo "none /spu spufs gid=spu 0 0" >> /etc/fstab
+        mkdir /spu
+        mount /spu
+
+
