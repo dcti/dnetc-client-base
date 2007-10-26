@@ -1,5 +1,5 @@
 distributed.net client for the unix family
- document revision $Id: readme.cell,v 1.1.2.4 2007/10/26 05:19:57 jlawson Exp $
+ document revision $Id: readme.cell,v 1.1.2.5 2007/10/26 05:32:09 jlawson Exp $
 
  Welcome to the distributed.net client.
 
@@ -98,7 +98,7 @@ distributed.net client for the unix family
     module must be loaded and the filesystem of the same name must be
     mounted.  This can be done with the following steps:
 
-        echo "none /spu spufs gid=spu 0 0" >> /etc/fstab
+        echo "none /spu spufs defaults 0 0" >> /etc/fstab
         mkdir /spu
         mount /spu
 
