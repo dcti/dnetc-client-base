@@ -1,7 +1,7 @@
 
  distributed.net client for OS/2 3.0 or above
- Released by Knut Pfefferkorn <pfeffi@distributed.net>
- Document revision $Id: readme.os2,v 1.7 2002/11/03 15:10:48 pfeffi Exp $
+ Released by Roman Trunov <stream@distributed.net>
+ Document revision $Id: readme.os2,v 1.8 2007/11/04 06:12:30 jlawson Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -17,12 +17,13 @@
  1.0  Getting started ------------------------------------------------
 
    Beginning with v2.8008.459, the distributed.net client for OS/2
-   requires the EMX runtime libraries.
+   may require the EMX runtime libraries. It depends from which compiler
+   was used by porter (client can be compiled with either GCC or Watcom).
 
    1.1  EMX runtime library requirements -----------------------------
 
-    You MUST have the EMX runtime libraries installed on your machine
-    in order to run version 2.8008.459 and higher. The easiest way to
+    To run EMX-based client (compiled by GCC), you MUST have the EMX
+    runtime libraries installed on your machine. The easiest way to
     check if you have this installed already is to open an OS/2 command
     prompt and run EMXREV. The output should say the following (higher
     numbers are OK, lower ones mean that you should update to a newer
