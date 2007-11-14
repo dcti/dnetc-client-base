@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.115 2007/08/23 06:33:16 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.116 2007/11/14 07:40:42 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1469,7 +1469,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         //{  0x0F30, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
         //{  0x0F40, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
           {  0x0F60, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.065u) */
-          {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
+          {  0x8F00, CPU_F_I686, 0x0B+0x100, "Pentium 4 (Willamette)" }, /* hack: different rules for OGR and RC5-72 */
           {  0xEF00, CPU_F_I686, 0x0B, "Xeon (Foster)" },
           {  0x8F10, CPU_F_I686, 0x0B+0x100, "Pentium 4 (Willamette)" }, /* hack: different rules for OGR and RC5-72 */
           {  0xAF10, CPU_F_I686, 0x0B, "Celeron 4 (Willamette)" },
