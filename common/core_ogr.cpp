@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.56 2007/11/07 17:03:43 jlawson Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.57 2007/11/19 13:41:57 stream Exp $"; }
 
 //#define TRACE
 
@@ -405,6 +405,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
             case 0x09: cindex = 4; break; // AMD K7/K8  == asm-rt1-mmx-amd (E)
             // It depends on core, current AMD core is worse on these P4's
             // case 0x0B: cindex = 4; break; // Pentium 4    == asm-rt1-mmx-amd (E) (#3988)
+            case 0x0D: cindex = 4; break; // Pentium M    == asm-rt1-mmx-amd (E) (#4031)
             case 0x10: cindex = 4; break; // Cyrix Model5 == asm-rt1-mmx-amd (E) (Untested)
             case 0x11: cindex = 4; break; // Cyrix Model6 == asm-rt1-mmx-amd (E)
             default:   cindex = 3; break; // asm-rt1-mmx (D)
