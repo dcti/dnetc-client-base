@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogr_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.1.2.2 2007/09/18 07:14:21 decio Exp $"; }
+return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.1.2.3 2008/01/04 10:09:40 stream Exp $"; }
 
 #ifndef CORE_NAME
 #error CORE_NAME undefined.
@@ -245,6 +245,10 @@ extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
 
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
+  // Check size of structures, these offsets must match assembly
+  STATIC_ASSERT(sizeof(struct Level) == 80);
+  STATIC_ASSERT(sizeof(struct State) == 2448);
+  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2464);
   DNETC_UNUSED_PARAM(with_time_constraints);
 
   static spe_context_ptr_t context;

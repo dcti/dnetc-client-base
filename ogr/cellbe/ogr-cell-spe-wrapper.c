@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.1.2.1 2007/08/20 15:39:00 decio Exp $"; }
+return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.1.2.2 2008/01/04 10:09:40 stream Exp $"; }
 
 #ifndef CORE_NAME
 #error CORE_NAME not defined
@@ -33,6 +33,11 @@ CellOGRCoreArgs myCellOGRCoreArgs __attribute__((aligned (128)));
 
 int main(unsigned long long speid, addr64 argp, addr64 envp)
 {
+  // Check size of structures, these offsets must match assembly
+  STATIC_ASSERT(sizeof(struct Level) == 80);
+  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2464);
+  STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 32);
+
   // Fetch arguments from main memory
   mfc_get(&myCellOGRCoreArgs, argp.a32[1], sizeof(CellOGRCoreArgs), 31, 0, 0);
   mfc_write_tag_mask(1<<31);
