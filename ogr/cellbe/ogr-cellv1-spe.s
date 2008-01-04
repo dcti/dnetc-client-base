@@ -3,7 +3,7 @@
 # Any other distribution or use of this source violates copyright.
 #
 # Author: Decio Luiz Gazzoni Filho <decio@distributed.net>
-# $Id: ogr-cellv1-spe.s,v 1.1.2.3 2007/09/18 07:14:21 decio Exp $
+# $Id: ogr-cellv1-spe.s,v 1.1.2.4 2008/01/04 10:08:45 stream Exp $
 
 	#################################################################
 	# Hackers: see the comments right above the .text section for a #
@@ -205,8 +205,8 @@
 	# shuffling.
 	.lcomm	Levels,		 30*SIZEOF_LEVEL_QUAD
 
-	# Temporary variable for the found_one() function.
-	.lcomm	diffs_data,	 ((1024 - BITMAP_LENGTH) + 31) / 32
+	# Temporary array for the found_one() function (16-bytes elements used)
+	.lcomm	diffs_data,	 (((1024 - BITMAP_LENGTH) + 31) / 32) * 16
 
 
 
