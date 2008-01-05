@@ -9,7 +9,7 @@
  *
 */
 const char *threadcd_cpp(void) {
-return "@(#)$Id: threadcd.cpp,v 1.17.4.2 2004/06/27 21:48:07 jlawson Exp $"; }
+return "@(#)$Id: threadcd.cpp,v 1.17.4.3 2008/01/05 02:50:39 jlawson Exp $"; }
 
 #include <stdio.h>      //NULL
 #include "threadcd.h"   //includes implementation and porting notes.
@@ -126,7 +126,7 @@ THREADID CliCreateThread( register void (*proc)(void *), void *param )
        char thread_name[32];
        long be_priority = B_LOW_PRIORITY;
 
-       sprintf(thread_name, "RC5DES#%d ", ++threadindex );
+       sprintf(thread_name, "DNETC#%d ", ++threadindex );
        cliThreadID = spawn_thread((long (*)(void *))shellproc,
                              thread_name, be_priority, shellparam );
        if (cliThreadID < B_NO_ERROR || resume_thread(cliThreadID)!=B_NO_ERROR)
