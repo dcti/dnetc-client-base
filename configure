@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.168 2007/11/12 08:32:37 thsv Exp $
+# @(#)$Id: configure,v 1.288.2.169 2008/01/28 22:15:02 teichp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -669,28 +669,28 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_OGR" = 1 -o "$HAVE_OGR_P2" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/arm/ogr-arm.cpp"
       DEFAULT_OGR="0"
-      if [ "$1" = "riscos" ]; then
-        if [ "$3" = "gccsdk" ]; then
-          TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
-                                          ogr/arm/ogr_arm2-gccsdk.s \
-                                          ogr/arm/ogr_arm3-gccsdk.s"
-        else
-          echo Add ogr asm cores for arm-riscos!
-          exit 1
-        fi
-      elif [ "$1-$3" = "linux-elf" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
-                                        ogr/arm/ogr_arm2-gnu-elf.S \
-                                        ogr/arm/ogr_arm3-gnu-elf.S"
-      elif [ "$1" = "nto2" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
-                                        ogr/arm/ogr_arm2-gnu-elf.S \
-                                        ogr/arm/ogr_arm3-gnu-elf.S"
-      else
-        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu.S \
-                                        ogr/arm/ogr_arm2-gnu.S \
-                                        ogr/arm/ogr_arm3-gnu.S"
-      fi
+#      if [ "$1" = "riscos" ]; then
+#        if [ "$3" = "gccsdk" ]; then
+#          TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gccsdk.s \
+#                                          ogr/arm/ogr_arm2-gccsdk.s \
+#                                          ogr/arm/ogr_arm3-gccsdk.s"
+#        else
+#          echo Add ogr asm cores for arm-riscos!
+#          exit 1
+#        fi
+#      elif [ "$1-$3" = "linux-elf" ]; then
+#        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
+#                                        ogr/arm/ogr_arm2-gnu-elf.S \
+#                                        ogr/arm/ogr_arm3-gnu-elf.S"
+#      elif [ "$1" = "nto2" ]; then
+#        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu-elf.S \
+#                                        ogr/arm/ogr_arm2-gnu-elf.S \
+#                                        ogr/arm/ogr_arm3-gnu-elf.S"
+#      else
+#        TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogr_arm1-gnu.S \
+#                                        ogr/arm/ogr_arm2-gnu.S \
+#                                        ogr/arm/ogr_arm3-gnu.S"
+#      fi
     fi # HAVE_OGR
   #-----------------------------------------------------------------
   elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "vax" \
@@ -1076,8 +1076,13 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -DARM -DASM_ARM -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
                  -fschedule-insns -fschedule-insns2"
-        opts310="$OPTS_GCC310 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
+        if [ "${2}" = "eabi" ]; then
+            opts310="$OPTS_GCC310 -O2 -march=armv4t -mtune=arm920t -DARM -DASM_ARM \
                  -fschedule-insns -fschedule-insns2"
+        else
+            opts310="$OPTS_GCC310 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
+                 -fschedule-insns -fschedule-insns2"
+        fi
         ;;
 
     *internal-sparc)  # (sparc/v7 [SS1/2/IPX]) (v8 [supersparc] is below)
@@ -1505,6 +1510,17 @@ case "$1" in
         TARGET_LIBS="-lpthread"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-arm-elf"
+        add_sources "linux" "arm" "elf"
+        ;;
+
+    *arm-linux-eabi)     # teichp
+        TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        generate_gcc_opts "arm" "eabi"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-arm-eabi"
         add_sources "linux" "arm" "elf"
         ;;
 
