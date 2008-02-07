@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.6 2007/10/22 16:48:24 jlawson Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.7 2008/02/07 10:24:03 kakace Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -718,6 +718,19 @@
 # define fastlock_lock    mutex_lock
 # define fastlock_unlock  mutex_unlock
 # define fastlock_trylock mutex_trylock
+
+#elif defined(linux)
+
+#define __LINUX_SPINLOCK_TYPES_H
+#include <asm/spinlock_types.h>
+#undef __LINUX_SPINLOCK_TYPES_H
+#include <asm/spinlock.h>
+
+#define fastlock_t            raw_spinlock_t
+#define fastlock_init(l)      *(l) = (raw_spinlock_t)__RAW_SPIN_LOCK_UNLOCKED
+#define fastlock_lock         __raw_spin_lock
+#define fastlock_unlock       __raw_spin_unlock
+#define fastlock_trylock      __raw_spin_trylock
 
 #else
   /* can't do atomic operations on mips ISA < 2 without kernel support */

@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.118 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.119 2008/02/07 10:24:03 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1469,7 +1469,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         //{  0x0F30, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
         //{  0x0F40, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.09u) */
           {  0x0F60, CPU_F_I686, 0x0B, "Pentium 4" }, /* (0.065u) */
-          {  0x8F00, CPU_F_I686, 0x0B, "Pentium 4 (Willamette)" },
+          {  0x8F00, CPU_F_I686, 0x0B+0x100, "Pentium 4 (Willamette)" }, /* hack: different rules for OGR and RC5-72 */
           {  0xEF00, CPU_F_I686, 0x0B, "Xeon (Foster)" },
           {  0x8F10, CPU_F_I686, 0x0B+0x100, "Pentium 4 (Willamette)" }, /* hack: different rules for OGR and RC5-72 */
           {  0xAF10, CPU_F_I686, 0x0B, "Celeron 4 (Willamette)" },
@@ -1564,7 +1564,7 @@ static long __GetRawProcessorID(const char **cpuname )
   static struct {
     unsigned int id, mask;
     signed int rc5, r72, ogr;
-    char *name;
+    const char *name;
   } ids[] = {
     // ARM
     { 0x41560200, 0xfffffff0, 2, 1, 1, "ARM 2" },
@@ -1600,10 +1600,13 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x4401a110, 0xfffffff0, 1, 0, 0, "Digital StrongARM 1100" },
     // Intel
     { 0x6901b110, 0xfffffff0, 1, 0, 0, "Intel StrongARM 1110" },
-    { 0x69052120, 0xffffe3f0, 1, 2, 2, "Intel PXA210" },
-    { 0x69052100, 0xffffe3f0, 1, 2, 2, "Intel PXA250/255" },
-    { 0x69052000, 0xffffe3f0, 1, 2, 2, "Intel 80200" },
-    { 0x69052C30, 0xffffe3f0, 1, 2, 2, "Intel IOP321" },
+    { 0x69052120, 0xfffff3f0, 1, 2, 2, "Intel PXA210" },
+    { 0x69052100, 0xfffff7f0, 1, 2, 2, "Intel PXA250" },
+    { 0x69052d00, 0xfffffff0, 1, 2, 2, "Intel PXA255" },
+    { 0x69054110, 0xfffffff0, 1, 2, 2, "Intel PXA270" },
+    { 0x69052000, 0xfffffff0, 1, 2, 2, "Intel 80200" },
+    { 0x69052e20, 0xffffffe0, 1, 2, 2, "Intel 80219" },
+    { 0x69052420, 0xffffffe0, 1, 2, 2, "Intel IOP321" },
     { 0x00000000, 0x00000000, -1, -1, -1, "" }
   };
 
@@ -1618,10 +1621,14 @@ static long __GetRawProcessorID(const char **cpuname )
   {
     char buffer[256];
     unsigned int i, n, o;
+    unsigned int id_temp, id_bits;
     FILE *cpuinfo;
 
     namebuf[0]='\0';
     o=0;
+    id_temp=0;
+    id_bits=0;
+    
     if ((cpuinfo = fopen( "/proc/cpuinfo", "r")) != NULL)
     {
       while (fgets(buffer, sizeof(buffer), cpuinfo))
@@ -1638,13 +1645,74 @@ static long __GetRawProcessorID(const char **cpuname )
           for (i=0; i<n; i++)
             namebuf[i]=tolower(buffer[i+o]);
           namebuf[n]='\0';
-          break;
+          o=0;
+        }
+        if (memcmp(buffer, "CPU implementer\t: 0x", 20) == 0)
+        {
+          sscanf(&buffer[20], "%x", &n);
+          id_bits|=0xff000000;
+          id_temp|=(n&0xff)<<24;
+        }
+        if (memcmp(buffer, "CPU variant\t: 0x", 16) == 0)
+        {
+          sscanf(&buffer[16], "%x", &n);
+          id_bits|=0x00f00000;
+          id_temp|=(n&0xf)<<20;
+        }
+        if (memcmp(buffer, "CPU part\t: 0x", 13) == 0)
+        {
+          sscanf(&buffer[13], "%x", &n);
+          id_bits|=0x0000fff0;
+          id_temp|=(n&0xfff)<<4;
+        }
+        if (memcmp(buffer, "CPU revision\t: ", 15) == 0)
+        {
+          sscanf(&buffer[15], "%d", &n);
+          id_bits|=0x0000000f;
+          id_temp|=n&0xf;
+        }
+        if (memcmp(buffer, "CPU architecture: ", 18) == 0)
+        {
+          n=0;
+          if (buffer[18] == '4')
+          {
+            if (buffer[19] == 'T')
+              n=2;
+            else
+              n=1;
+          }
+          if (buffer[18] == '5')
+          {
+            if (buffer[19] == 'T')
+            {
+              if (buffer[20] == 'E')
+              {
+                if (buffer[21] == 'J')
+                  n=6;
+                else
+                  n=5;
+              }
+              else
+                n=4;
+            }
+            else
+              n=3;
+          }
+          if (buffer[18] == '6')
+            n=7;
+
+          id_bits|=0x000f0000;
+          id_temp|=(n&0xf)<<16;
         }
       }
       fclose(cpuinfo);
     }
-
-    if (namebuf[0])
+    
+    if (id_bits == 0xffffffff)
+    {
+      detectedtype=id_temp;
+    }
+    else if (namebuf[0])
     {
       static struct { const char *sig;  int id; } sigs[] ={
                     { "arm2",           0x41560200},
@@ -1674,10 +1742,12 @@ static long __GetRawProcessorID(const char **cpuname )
                     { "strongarm-1100", 0x4401a110},
                     { "strongarm-1110", 0x6901b110},
                     { "80200",          0x69052000},
-                    { "iop321",         0x69052c30},
+                    { "80219",          0x69052e30},
+                    { "iop321",         0x69052430},
                     { "pxa210",         0x69052120},
                     { "pxa250",         0x69052100},
-                    { "pxa255",         0x69052100},
+                    { "pxa255",         0x69052d00},
+                    { "pxa270",         0x69054110},
                     { "",               0x00000000}
                     };
 
@@ -1749,6 +1819,10 @@ static long __GetRawProcessorID(const char **cpuname )
       {
         if (ids[n].id == 0)
         {
+          char tempbuf[sizeof(namebuf)];
+          
+          strncpy(tempbuf, namebuf, sizeof(tempbuf));
+          snprintf(namebuf, sizeof(namebuf), "%s,\nid 0x%08x", tempbuf, detectedtype);
           detectedname = namebuf;
           detectedtype = 0;
         }

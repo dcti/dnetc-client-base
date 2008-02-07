@@ -23,11 +23,13 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.18 2007/10/22 16:48:28 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.19 2008/02/07 10:23:25 kakace Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9015-505  fix: cellbe: Memory corruption in OGR core (#4036)
+
 2.9015-504  imp: cellbe: Tidy up cores for public source release
             fix: x86: broken -stress on intel macosx (#4021)
 
