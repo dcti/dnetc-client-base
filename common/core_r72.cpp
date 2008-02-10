@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.6 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.7 2008/02/10 00:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -66,7 +66,7 @@ extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *)
 extern "C" s32 CDECL rc5_72_unit_func_030_mh_1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_040_mh_1( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_POWERPC) && \
-      (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
+      (CLIENT_OS != OS_WIN32)
 extern "C" s32 CDECL rc5_72_unit_func_ppc_mh_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_mh603e_addi( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_mh604e_addi( RC5_72UnitWork *, u32 *, void *);
@@ -148,8 +148,7 @@ const char **corenames_for_contest_rc572()
       "MH 1-pipe 68020/030",
       "MH 1-pipe 68000/040",
       "MH 2-pipe 68060",
-  #elif (CLIENT_CPU == CPU_POWERPC) && \
-        (CLIENT_OS != OS_WIN32 || CLIENT_OS != OS_MACOS)
+  #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
       "MH 2-pipe",     /* gas, TOC and OSX formats */
       "KKS 2-pipe",    /* gas, TOC and OSX formats */
       "KKS 604e",      /* gas, TOC and OSX format */
@@ -685,8 +684,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         coresel = 4; // yes, we explicitly set coresel in the default case !
         break;
     // -----------
-    #elif (CLIENT_CPU == CPU_POWERPC) && \
-          (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_MACOS)
+    #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
       case 0:
           unit_func.gen_72 = rc5_72_unit_func_ppc_mh_2;
           pipeline_count = 2;
@@ -786,7 +784,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
 
   /* ================================================================== */
 
-  if (coresel >= 0 && unit_func.gen &&
+  if (coresel >= 0 && unit_func.gen_72 &&
       coresel < ((int)corecount_for_contest(RC5_72)) )
   {
     if (client_cpuP)

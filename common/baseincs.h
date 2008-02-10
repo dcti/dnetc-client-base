@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.89 2007/10/22 16:48:23 jlawson Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.90 2008/02/10 00:24:30 kakace Exp $"
 
 #include "cputypes.h"
 
@@ -224,14 +224,6 @@
   #elif defined(__ELF__) && !defined(_LINUX_SCHED_H)
     #include <sched.h>
   #endif
-#elif (CLIENT_OS == OS_MACOS)
-  #include "client_defs.h"
-  #include <Gestalt.h>
-  #define CLOCK_MONOTONIC 3
-  extern "C" void tzset(void);
-  extern "C" int clock_gettime(int clktype, struct timespec *tsp);
-  #include <unistd.h>
-  #define fileno(f) ((f)->handle)
 #elif (CLIENT_OS == OS_MACOSX)
   #include <sys/time.h>
   #include <sys/vmparam.h> //USRSTACK

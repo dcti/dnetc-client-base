@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.60 2008/02/07 10:24:03 kakace Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.61 2008/02/10 00:24:29 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -943,9 +943,6 @@ int CliIsTimeZoneInvalid(void)
     }
   }
   return needfixup;
-  #elif (CLIENT_OS == OS_MACOS)
-  #warning I should make use of this sometime in the future!
-  return 0;
   #else
   return 0;
   #endif

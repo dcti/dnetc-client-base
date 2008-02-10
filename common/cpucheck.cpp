@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.119 2008/02/07 10:24:03 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.120 2008/02/10 00:24:29 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -23,9 +23,6 @@ return "@(#)$Id: cpucheck.cpp,v 1.119 2008/02/07 10:24:03 kakace Exp $"; }
 #  include <sys/sysinfo.h>
 #  include <machine/hal_sysinfo.h>
 #  include <machine/cpuconf.h>
-#elif (CLIENT_OS == OS_MACOS)
-#  include <Gestalt.h>
-#  include <Multiprocessing.h>
 #elif (CLIENT_OS == OS_AIX)
 #  include <sys/systemcfg.h>
 #elif (CLIENT_OS == OS_MACOSX)
@@ -270,12 +267,6 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
     {
       cpucount = _syspage_ptr->num_cpu;
     }
-    #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-    {
-      cpucount = 1;
-      if (MPLibraryIsLoaded())
-        cpucount = MPProcessors();
-    }
     #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     {
       cpucount = 1;
@@ -358,26 +349,34 @@ static long __GetRawProcessorID(const char **cpuname)
     else
       detectedtype = 68000L; // 68000
   }
-  #elif (CLIENT_OS == OS_MACOS)
+  #elif (CLIENT_OS == OS_NEXTSTEP)
   if (detectedtype == -2)
   {
-    long result;
-    // Note: gestaltProcessorType is used so that if the 68K client is run on
-    // on PPC machine for test purposes, it will get the type of the 68K
-    // emulator. Also, gestaltNativeCPUType is not present in early versions of
-    // System 7. (For more info, see Gestalt.h)
-    detectedtype = -1L;
-    if (Gestalt(gestaltProcessorType, &result) == noErr)
+    struct host_basic_info info;
+    unsigned int count = HOST_BASIC_INFO_COUNT;
+
+    if (host_info(host_self(), HOST_BASIC_INFO,
+                  (host_info_t)&info, &count) == KERN_SUCCESS &&
+        info.cpu_type == CPU_TYPE_MC680x0)
     {
-      switch(result)
+      switch (info.cpu_subtype)
       {
-        case gestalt68000: detectedtype = 68000L;  break;
-        case gestalt68010: detectedtype = 68010L;  break;
-        case gestalt68020: detectedtype = 68020L;  break;
-        case gestalt68030: detectedtype = 68030L;  break;
-        case gestalt68040: detectedtype = 68040L;  break;
-        default:           detectedtype = -1L;     break;
+          /* MC68030_ONLY shouldn't be returned since it's only used
+          ** to mark 68030-only executables in the mach-o
+          ** fileformat */
+        case CPU_SUBTYPE_MC68030_ONLY:
+        case CPU_SUBTYPE_MC68030:      detectedtype = 68030L; break;
+        case CPU_SUBTYPE_MC68040:      detectedtype = 68040L; break;
+
+          /* black hardware from NeXT only had 680[34]0 processors so
+          ** there are no defines for the others *shrug* */
+        default:                       detectedtype = -1;     break;
       }
+    } else {
+      /* something went really wrong here if cpu_type doesn't match -
+      ** can we be compiled for NeXTstep on 68k but run on something
+      ** else? */
+      detectedtype = -1;
     }
   }
   #elif (CLIENT_OS == OS_NEXTSTEP)
@@ -566,25 +565,6 @@ static long __GetRawProcessorID(const char **cpuname)
       /* just signal that we've got a Power CPU here */
       detectedtype = (1 << 24);
       detectedname = "Power";
-    }
-  }
-  #elif (CLIENT_OS == OS_MACOS)
-  if (detectedtype == -2L)
-  {
-    // Note: need to use gestaltNativeCPUtype in order to get the correct
-    // value for G3 upgrade cards in a 601 machine.
-    // PVR is a hardware value from the cpu and is available on every 
-    // PPC CPU on every PPC Based OS.
-    long result;
-    detectedtype = -1;
-    if (Gestalt(gestaltNativeCPUtype, &result) == noErr)
-    {
-      /* Fix Gestalt IDs to match pure PVR values */
-      if (result == gestaltCPUG47450) /* gestaltCPUG47450 = 0x0110 */
-        result = 0x8100L; /* Apples ID makes sense but we prefer pure PVR */
-      if (result == 0x0111) /* gestaltCPUG47455 = 0x0111 */
-        result = 0x08101L; /* Apples ID makes sense but we prefer pure PVR */
-      detectedtype = result - 0x100L; // PVR!!
     }
   }
   #elif (CLIENT_OS == OS_MACOSX)
@@ -2600,17 +2580,7 @@ unsigned long GetProcessorFeatureFlags()
     return (__GetRawProcessorID(NULL, 'f')) | (x86features());
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     unsigned long ppc_features = 0;
-    #if (CLIENT_OS == OS_MACOS)
-      /* AltiVec software support and hardware support/exsitence */
-      if (Gestalt( gestaltSystemVersion, &result ) == noErr) {   
-        if (result >= 860) /* Mac OS 8.6 and above? */ {
-          if (Gestalt(gestaltPowerPCProcessorFeatures, &result) == noErr) {
-            if ( ((1 << gestaltPowerPCHasVectorInstructions) & result) != 0)
-              ppc_features |= CPU_F_ALTIVEC;
-          }
-        }
-      }
-    #elif (CLIENT_OS == OS_MACOSX)
+    #if (CLIENT_OS == OS_MACOSX)
       // AltiVec support now has a proper sysctl value HW_VECTORUNIT to check
       // for
       int mib[2] = {CTL_HW, HW_VECTORUNIT};

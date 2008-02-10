@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.38 2007/10/22 16:48:24 jlawson Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.39 2008/02/10 00:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -43,17 +43,13 @@ static struct contestInfo
   unsigned int UnitsDone;
   unsigned int BestTime;  /* in seconds */
   int BestTimeWasForced;
-} conStats[] = {  { /*"RC5",    "keys", */ RC5,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { /*"DES",    "keys", */ DES,     2, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { /*"OGR",    "nodes",*/ OGR,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { /*"CSC",    "keys", */ CSC,     1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
-                  { /*"OGR_NG", "nodes",*/ OGR_NEXTGEN_SOMEDAY,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
+} conStats[] = {  { /*"OGR_NG", "nodes",*/ OGR_NG,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /*"RC5-72", "keys", */ RC5_72,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /*"OGR-P2", "nodes",*/ OGR_P2,  1, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 },
                   { /* NULL,    NULL,   */ -1,      0, 0, {0,0}, {0,0}, {0,0}, 0, 0, 0 }  };
 // obsolete projects may be omitted
-#if (CONTEST_COUNT != 7)
-  #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 7")
+#if (CONTEST_COUNT != 3)
+  #error PROJECT_NOT_HANDLED("conStats[]: static initializer expects CONTEST_COUNT == 3")
 #endif
 
 /* ----------------------------------------------------------------------- */

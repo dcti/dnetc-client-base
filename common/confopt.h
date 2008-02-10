@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.27 2007/10/22 16:48:25 jlawson Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.28 2008/02/10 00:24:30 kakace Exp $"
 
 enum /* anonymous */
 {
@@ -25,7 +25,7 @@ enum /* anonymous */
   CONF_CRUNCHMETER             , /* CONF_MENU_MISC */
   CONF_COMPLETIONSOUNDON       , /* CONF_MENU_MISC */
 
-  CONF_MENU_BUFF_PLACEHOLDER   , /* 15 */
+  CONF_MENU_BUFF_PLACEHOLDER   , /* 14 */
   CONF_NODISK                  , /* CONF_MENU_BUFF */
   CONF_INBUFFERBASENAME        , /* CONF_MENU_BUFF */
   CONF_OUTBUFFERBASENAME       , /* CONF_MENU_BUFF */
@@ -39,16 +39,15 @@ enum /* anonymous */
   CONF_FREQUENT                , /* CONF_MENU_BUFF */
   CONF_FREQUENT_FREQUENCY      , /* CONF_MENU_BUFF */
   CONF_FREQUENT_RETRY_FREQUENCY, /* CONF_MENU_BUFF */
-  CONF_PREFERREDBLOCKSIZE      , /* CONF_MENU_BUFF */
   CONF_THRESHOLDI              , /* CONF_MENU_BUFF */
   CONF_THRESHOLDT              , /* CONF_MENU_BUFF */
 
-  CONF_MENU_PERF_PLACEHOLDER   , /* 30 */
+  CONF_MENU_PERF_PLACEHOLDER   , /* 29 */
   CONF_CPUTYPE                 , /* CONF_MENU_PERF */
   CONF_NUMCPU                  , /* CONF_MENU_PERF 0 ... */
   CONF_NICENESS                , /* CONF_MENU_PERF priority */
 
-  CONF_MENU_LOG_PLACEHOLDER    , /* 34 */
+  CONF_MENU_LOG_PLACEHOLDER    , /* 33 */
   CONF_LOGTYPE                 , /* CONF_MENU_LOG */
   CONF_LOGNAME                 , /* CONF_MENU_LOG */
   CONF_LOGLIMIT                , /* CONF_MENU_LOG */

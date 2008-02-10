@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.163 2007/10/22 16:48:24 jlawson Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.164 2008/02/10 00:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -869,7 +869,6 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       else if ( strcmp( thisarg, "-" ) == 0 )
         ; //nothing
       else if ( strcmp( thisarg, "-c" ) == 0 ||
-                strcmp( thisarg, "-blsize" ) == 0 ||
                 strcmp( thisarg, "-b" ) == 0 ||
                 strcmp( thisarg, "-b2" ) == 0 ||
                 strcmp( thisarg, "-bin" ) == 0 ||
@@ -885,13 +884,10 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           // whichswitch: 0 = core, 1 = in, 2 = out, 
           //              4 = time_in, 8=preferred blksize
           int n = 0, whichswitch = 0;
-          int contest_defaulted = 0;
           unsigned int contest;
           const char *op;
 
-          if (strcmp(thisarg,"-blsize")==0)
-            whichswitch = 8;
-          else if (strcmp(thisarg,"-bin")==0 || strcmp( thisarg, "-bin2")==0)
+          if (strcmp(thisarg,"-bin")==0 || strcmp( thisarg, "-bin2")==0)
             whichswitch = 1;
           else if (strcmp(thisarg,"-bout")==0 || strcmp(thisarg,"-bout2")==0)
             whichswitch = 2;
@@ -912,15 +908,9 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           {
 // TODO?: acidblood/trashover
             contest = RC5_72;
-            if ((whichswitch & 8)!=0)   //-blsize without contest means both
-              contest_defaulted = 1; //RC5 and DES
-            else if (strcmp( thisarg, "-bin2")==0 ||
-                     strcmp( thisarg, "-bout2")==0 ||
-                     strcmp( thisarg, "-b2")==0)
-              contest = DES;
           }
           
-          if ((contest == OGR || contest == OGR_P2) && (whichswitch & (4+8))!=0)
+          if ((contest == OGR_NG || contest == OGR_P2) && (whichswitch & (4+8))!=0)
             invalid_value = 1;  /* no prefferedblocksize / timethresh */
           else if (op == NULL)
             missing_value = 1;
@@ -935,21 +925,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           else if (run_level == 0)
           {
             *inimissing = 0; // Don't complain if the inifile is missing
-            if ((whichswitch & 8)!=0) /* -blsize */
-            {
-              if (n > PREFERREDBLOCKSIZE_MAX || 
-                 (n > 0 && n < PREFERREDBLOCKSIZE_MIN))
-                invalid_value = 1;
-              else 
-              {
-                if (n < 0) 
-                  n = 0; // default
-                client->preferred_blocksize[contest] = n;
-                if (contest_defaulted)
-                  client->preferred_blocksize[DES] = n;
-              }    
-            }
-            else if ((whichswitch & 4)!=0) /* time based threshold */
+            if ((whichswitch & 4)!=0) /* time based threshold */
             {
               if (n > (24*14)) /* two weeks */
                 invalid_value = 1;
@@ -992,25 +968,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           else /* if (logging_is_initialized) */
           {
             const char *cname = CliGetContestNameFromID(contest);
-            if ((whichswitch & 8)!=0) /* -blsize */
-            {
-              strcpy(scratch,"(auto/other)");
-              n = client->preferred_blocksize[contest];
-              if (n >= PREFERREDBLOCKSIZE_MIN)
-                sprintf(scratch, "2^%d", n);
-              LogScreenRaw("%s preferred packet size set to %s\n",
-                  cname, scratch );
-              if (contest_defaulted)
-              {
-                strcpy(scratch,"(auto/other)");
-                n = client->preferred_blocksize[DES];
-                if (n >= PREFERREDBLOCKSIZE_MIN)
-                  sprintf(scratch, "2^%d", n);
-                LogScreenRaw("DES preferred packet size set to %s\n",
-                   scratch );
-              }     
-            }
-            else if ((whichswitch & 4)!=0)
+            if ((whichswitch & 4)!=0)
             {
               strcpy(scratch,"(auto/work-unit-based)");
               n = client->timethreshold[contest];
@@ -1039,7 +997,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                     sprintf(scratch,"%d",n);
                   LogScreenRaw("%s work-unit-based %s threshold set to %s\n",
                      cname, ((apos==1)?("fetch"):("flush")), scratch );
-                  if (contest != OGR && contest != OGR_P2 && client->timethreshold[contest] <= 0)
+                  if (contest != OGR_P2 && contest != OGR_NG && client->timethreshold[contest] <= 0)
                     LogScreenRaw("%s time-based %s threshold cleared\n",
                      cname, ((apos==1)?("fetch"):("flush")) );
                 }

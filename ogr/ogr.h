@@ -3,7 +3,8 @@
  * one-and-only ogr.h. If custom 'ogr.h's should ever become necessary, 
  * they can be (conditionally) included from here.
  *
- * $Id: ogr.h,v 1.7 2002/09/02 00:35:46 andreasb Exp $
+ * $Id: ogr.h,v 1.8 2008/02/10 00:25:49 kakace Exp $
 */ 
-#include "ansi/ogr.h"
- 
+
+#include "ansi/ogrp2.h"
+#include "ansi/ogr-ng.h"

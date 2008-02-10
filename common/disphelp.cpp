@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.75 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.76 2008/02/10 00:24:29 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -83,7 +83,6 @@ static const char *helpbody[] =
   "-inbase <fname>    input buffer basename (ie without 'extension'/suffix)",
   "-outbase <fname>   output buffer basename (ie without 'extension'/suffix)",
   "-ckpoint <fname>   set the name of the checkpoint file",
-  "-blsize [prj] <n>  set preferred packet size (2^n keys/packet)",
   "-bin <prj> <n>     set fetch buffer threshold to <n> work units",
   #if !defined(NO_OUTBUFFER_THRESHOLDS)
   "-bout [prj] <n>    set flush buffer threshold to <n> work units",

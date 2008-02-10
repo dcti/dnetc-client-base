@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.65 2007/10/22 16:48:24 jlawson Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.66 2008/02/10 00:24:29 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -45,10 +45,6 @@ static int __is_opt_available_for_project(unsigned int projectid, int menuoption
   if (menuoption == CONF_THRESHOLDT &&
       (flags & PROJECTFLAG_TIME_THRESHOLD) == 0)
     return 0;     /* project has no time thresholds */
-
-  if (menuoption == CONF_PREFERREDBLOCKSIZE &&
-      (flags & PROJECTFLAG_PREFERRED_BLOCKSIZE) == 0)
-    return 0;     /* project has no preferred blocksize */
 
   return 1;       /* no restrictions found */
 }
@@ -402,13 +398,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_FREQUENT_RETRY_FREQUENCY].thevariable=&(client->max_buffupd_retry_interval);
   for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
   {
-    preferred_blocksize[cont_i] = client->preferred_blocksize[cont_i];
-    if (preferred_blocksize[cont_i] < 1)
-      preferred_blocksize[cont_i] = -1; /* (auto) */
-    else if (preferred_blocksize[cont_i] < PREFERREDBLOCKSIZE_MIN)
-      preferred_blocksize[cont_i] = PREFERREDBLOCKSIZE_MIN;
-    else if (preferred_blocksize[cont_i] > PREFERREDBLOCKSIZE_MAX)
-      preferred_blocksize[cont_i] = PREFERREDBLOCKSIZE_DEFAULT; /*yes, default*/
     inthreshold[cont_i] = client->inthreshold[cont_i];
     if (inthreshold[cont_i] < 1)
       inthreshold[cont_i] = 0;
@@ -416,7 +405,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     outthreshold[cont_i] = client->outthreshold[cont_i];
     #endif
   }
-  conf_options[CONF_PREFERREDBLOCKSIZE].thevariable=&(preferred_blocksize[0]);
   conf_options[CONF_THRESHOLDI].thevariable=&(inthreshold[0]);
   conf_options[CONF_THRESHOLDT].thevariable=&(client->timethreshold[0]);
 
@@ -610,8 +598,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   ((client->watchcputempthresh)?(NULL):("n/a"));
-      #if (CLIENT_OS != OS_MACOS) && (CLIENT_OS != OS_MACOSX) && \
-          (CLIENT_OS != OS_DEC_UNIX)
+      #if (CLIENT_OS != OS_MACOSX) && (CLIENT_OS != OS_DEC_UNIX)
       conf_options[CONF_PAUSEIFCPUTEMPHIGH].disabledtext=
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   "n/a [only supported on MacOS/PPC]";
@@ -641,8 +628,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
                   ((client->offlinemode && noremotedir) ? na : NULL );
       conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
                   ((client->offlinemode && noremotedir) ? na : NULL );
-      conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext=
-                  (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDI].disabledtext=
                   (client->offlinemode && noremotedir ? na : NULL );
       conf_options[CONF_THRESHOLDT].disabledtext=
@@ -654,9 +639,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
       if (!client->connectoften)
         conf_options[CONF_FREQUENT_RETRY_FREQUENCY].disabledtext=
                     "n/a [need additional buffer level checking]";
-      if (__count_projects_having_flag(PROJECTFLAG_PREFERRED_BLOCKSIZE) == 0)
-        conf_options[CONF_PREFERREDBLOCKSIZE].disabledtext=
-                     "n/a [not needed by a supported project]";
       if (__count_projects_having_flag(PROJECTFLAG_TIME_THRESHOLD) == 0)
         conf_options[CONF_THRESHOLDT].disabledtext=
                      "n/a [not needed by a supported project]";
@@ -1486,7 +1468,6 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       if (preferred_blocksize[cont_i] < 1) /* "auto" */
         preferred_blocksize[cont_i] = 0;
-      client->preferred_blocksize[cont_i] = preferred_blocksize[cont_i];
       if (inthreshold[cont_i] < 1) /* "auto" */
         inthreshold[cont_i] = 0;
       client->inthreshold[cont_i] = inthreshold[cont_i];

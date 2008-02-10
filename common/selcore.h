@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.19 2007/10/22 16:48:28 jlawson Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.20 2008/02/10 00:24:30 kakace Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -22,9 +22,6 @@ extern "C" {
 #endif
 
 // Definitions of core prototypes for each project.
-typedef s32 gen_func( RC5UnitWork *, u32 *, void * );
-typedef u32 CDECL rc5_func( RC5UnitWork *, u32 );
-typedef u32 des_func( RC5UnitWork *, u32 *, char * );
 #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 typedef CoreDispatchTable *ogr_func;
 #endif
@@ -33,15 +30,6 @@ typedef s32 CDECL gen_72_func( RC5_72UnitWork *, u32 *, void * );
 
 typedef union
 {
-  /* generic prototype: RC5-64, DES, CSC */
-  s32 (*gen)( RC5UnitWork *, u32 *iterations, void *memblk );
-
-  /* old style: RC5-64, DES */
-  u32 CDECL (*rc5)( RC5UnitWork *, u32 iterations );
-  #if defined(HAVE_DES_CORES)
-  u32 (*des)( RC5UnitWork *, u32 *iterations, char *membuf );
-  #endif
-
   /* OGR */
   #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   CoreDispatchTable *ogr;
@@ -112,20 +100,6 @@ int DeinitializeCoreTable( void );
  * argument.
  */
 
-#ifdef HAVE_RC5_64_CORES
-int InitializeCoreTable_rc564(int first_time);
-
-void DeinitializeCoreTable_rc564();
-
-const char **corenames_for_contest_rc564();
-
-int apply_selcore_substitution_rules_rc564(int cindex);
-
-int selcoreGetPreselectedCoreForProject_rc564();
-
-int selcoreSelectCore_rc564( unsigned int threadindex,
-                             int *client_cpuP, struct selcore *selinfo );
-#endif
 #ifdef HAVE_RC5_72_CORES
 int InitializeCoreTable_rc572(int first_time);
 
@@ -143,35 +117,7 @@ int selcoreSelectCore_rc572( unsigned int threadindex,
 unsigned int estimate_nominal_rate_rc572();
 
 #endif
-#ifdef HAVE_CSC_CORES
-int InitializeCoreTable_csc(int first_time);
-
-void DeinitializeCoreTable_csc();
-
-const char **corenames_for_contest_csc();
-
-int apply_selcore_substitution_rules_csc(int cindex);
-
-int selcoreGetPreselectedCoreForProject_csc();
-
-int selcoreSelectCore_csc( unsigned int threadindex,
-                           int *client_cpuP, struct selcore *selinfo );
-#endif
-#ifdef HAVE_DES_CORES
-int InitializeCoreTable_des(int first_time);
-
-void DeinitializeCoreTable_des();
-
-const char **corenames_for_contest_des();
-
-int apply_selcore_substitution_rules_des(int cindex);
-
-int selcoreGetPreselectedCoreForProject_des();
-
-int selcoreSelectCore_des(unsigned int threadindex,
-                          int *client_cpuP, struct selcore *selinfo );
-#endif
-#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+#if defined(HAVE_OGR_PASS2)
 int InitializeCoreTable_ogr(int first_time);
 
 void DeinitializeCoreTable_ogr();
@@ -188,7 +134,20 @@ int selcoreSelectCore_ogr( unsigned int threadindex, int *client_cpuP,
 unsigned int estimate_nominal_rate_ogr();
 
 #endif
+#if defined(HAVE_OGR_CORES)
+int InitializeCoreTable_ogr_ng(int first_time);
 
+void DeinitializeCoreTable_ogr_ng();
+
+const char **corenames_for_contest_ogr_ng();
+
+int apply_selcore_substitution_rules_ogr_ng(int cindex);
+
+int selcoreGetPreselectedCoreForProject_ogr_ng();
+
+int selcoreSelectCore_ogr_ng( unsigned int threadindex, int *client_cpuP,
+                           struct selcore *selinfo, unsigned int contestid );
+#endif
 
 /* ---------------------------------------------------------------------- */
 

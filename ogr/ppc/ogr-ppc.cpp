@@ -5,7 +5,7 @@
 */
 
 const char *ogr_ppc_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.6 2007/10/22 16:48:30 jlawson Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.7 2008/02/10 00:26:19 kakace Exp $"; }
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
 
@@ -132,8 +132,8 @@ return "@(#)$Id: ogr-ppc.cpp,v 1.6 2007/10/22 16:48:30 jlawson Exp $"; }
 
   #include "ansi/ogr.cpp"
 
-  #if !defined(BITMAPS_LENGTH) || (BITMAPS_LENGTH != 160)
-  #error BITMAPS_LENGTH must be 160 !!!
+  #if !defined(OGR_BITMAPS_LENGTH) || (OGR_BITMAPS_LENGTH != 160)
+  #error OGR_BITMAPS_LENGTH must be 160 !!!
   #endif
 
   /*

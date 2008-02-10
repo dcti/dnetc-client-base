@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.5 2007/10/22 16:48:28 jlawson Exp $
+ * $Id: ogr.cpp,v 1.6 2008/02/10 00:26:53 kakace Exp $
  */
 #include <string.h>   /* memset */
 
@@ -157,7 +157,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-#include "ogr.h"
+#include "ogrp2.h"
 
 #if defined(__cplusplus)
 extern "C" {
@@ -637,7 +637,7 @@ static int init_load_choose(void)
 FOUND_ONE_DECL(const struct State *oState)
 {
   register int i, j;
-  u32 diffs[((1024 - BITMAPS_LENGTH) + 31) / 32];
+  u32 diffs[((1024 - OGR_BITMAPS_LENGTH) + 31) / 32];
   register int max = oState->max;
   register int maxdepth = oState->maxdepth;
   const struct Level *levels = &oState->Levels[0];
@@ -650,12 +650,12 @@ FOUND_ONE_DECL(const struct State *oState)
 
     for (j = 0; j < i; j++) {
       register int diff = marks_i - levels[j].mark;
-      if (diff <= BITMAPS_LENGTH)
+      if (diff <= OGR_BITMAPS_LENGTH)
         break;
 
       if (diff+diff <= max) {       /* Principle #1 */
         register u32 mask = 1 << (diff & 31);
-        diff = (diff >> 5) - (BITMAPS_LENGTH / 32);
+        diff = (diff >> 5) - (OGR_BITMAPS_LENGTH / 32);
         if ((diffs[diff] & mask) != 0)
           return CORE_S_CONTINUE;   /* Distance already taken = not Golomb */
 

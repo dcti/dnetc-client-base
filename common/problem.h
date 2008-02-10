@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.97 2007/10/22 16:48:27 jlawson Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.98 2008/02/10 00:24:29 kakace Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -25,19 +25,15 @@ enum {
   DES, // http://www.rsa.com/rsalabs/des3/index.html
   OGR, // http://members.aol.com/golomb20/
   CSC, // http://www.cie-signaux.fr/security/index.htm
-  OGR_NEXTGEN_SOMEDAY,
+  OGR_NG,
   RC5_72, // http://www.rsasecurity.com/rsalabs/challenges/secretkey/
   OGR_P2
 };
-#define CONTEST_COUNT       7  /* RC5,DES,OGR,CSC,OGR_NEXTGEN,RC5_72,OGR_P2 */
+#define CONTEST_COUNT       7  /* RC5,DES,OGR,CSC,OGR_NG,RC5_72,OGR_P2 */
 #endif
 
 /* ---------------------------------------------------------------------- */
 
-#if defined(HAVE_RC5_64_CORES) || defined(HAVE_DES_CORES) \
-    || defined(HAVE_CSC_CORES)
-  #define HAVE_CRYPTO_V1
-#endif
 #if defined(HAVE_RC5_72_CORES)
   #define HAVE_CRYPTO_V2
 #endif
@@ -49,30 +45,13 @@ enum {
 // Problem->core_membuffer should be aligned to 2^CORE_MEM_ALIGNMENT
 #define CORE_MEM_ALIGNMENT 3
 
-#if defined(HAVE_DES_CORES) && defined(MMX_BITSLICER)
-  #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
-     #undef MAX_MEM_REQUIRED_BY_CORE
-     #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
-  #endif
-#endif
-#if defined(HAVE_CSC_CORES)
-  #if MAX_MEM_REQUIRED_BY_CORE < (17*1024)
-     #undef MAX_MEM_REQUIRED_BY_CORE
-     #define MAX_MEM_REQUIRED_BY_CORE (17*1024)
-  #endif
-  // CSC membuffer should be aligned to a 16-byte boundary
-  #if CORE_MEM_ALIGNMENT < 4
-     #undef CORE_MEM_ALIGNMENT
-     #define CORE_MEM_ALIGNMENT 4
-  #endif
-#endif
 #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
   #if defined(HAVE_OGR_PASS2)
      #define HAVE_OGR_FINALIZE
   #endif
-  #if MAX_MEM_REQUIRED_BY_CORE < OGR_PROBLEM_SIZE
+  #if MAX_MEM_REQUIRED_BY_CORE < OGRNG_PROBLEM_SIZE
      #undef MAX_MEM_REQUIRED_BY_CORE
-     #define MAX_MEM_REQUIRED_BY_CORE OGR_PROBLEM_SIZE
+     #define MAX_MEM_REQUIRED_BY_CORE OGRNG_PROBLEM_SIZE
   #endif
   // OGR membuffer should be aligned to a 8-byte boundary
   // (essential for non-x86 CPUs)
@@ -98,16 +77,6 @@ enum {
 
 typedef union
 {
-  #if defined(HAVE_CRYPTO_V1)  // used by RC5, DES, CSC
-  struct {
-    struct {u32 hi,lo;} key;              // starting key
-    struct {u32 hi,lo;} iv;               // initialization vector
-    struct {u32 hi,lo;} plain;            // plaintext we're searching for
-    struct {u32 hi,lo;} cypher;           // cyphertext
-    struct {u32 hi,lo;} keysdone;         // iterations done (also current position in block)
-    struct {u32 hi,lo;} iterations;       // iterations to do
-  } DNETC_PACKED crypto;                  /* 48 bytes */
-  #endif
   #if defined(HAVE_CRYPTO_V2)
   struct {
     struct {u32 hi,mid,lo;} key;          // starting key
@@ -124,11 +93,12 @@ typedef union
   struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
-    u32    iterations;
-  } DNETC_PACKED ogr;                     /* 40 bytes */
+    u32    stopdepth;
+    struct {u32 hi,lo;} ticket;           // OGR-NG opaque ticket
+  } DNETC_PACKED ogr;                     /* 48 bytes */
   #endif
   #if defined(HAVE_OGR_PASS2)
-  struct { // OGR-P2 : Should overlap with the corresponding OGR members for safety reasons !
+  struct {
     struct WorkStub workstub;             // stub to work on (28 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
     u32    minpos;

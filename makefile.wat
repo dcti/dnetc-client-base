@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.43 2007/10/22 16:48:23 jlawson Exp $
+## $Id: makefile.wat,v 1.44 2008/02/10 00:25:29 kakace Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -45,10 +45,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\probfill.obj    &
             output\checkpt.obj     &
             output\coremem.obj     &
-            output\core_rc5.obj    &
             output\core_r72.obj    &
-            output\core_des.obj    &
-            output\core_csc.obj    &
             output\core_ogr.obj    &
             output\random.obj      &
             output\clicdata.obj    &
@@ -89,50 +86,15 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %POSTLINKTGTS= # targets to make after linking (bind etc)
 
 #---
-%cscstd_LINKOBJS = output\csc-1k-i.obj output\csc-1k.obj &
-                   output\csc-6b-i.obj output\csc-6b.obj &
-                   output\convcsc.obj output\csc-common.obj &
-                   output\csc-mmx.obj
-%cscstd_DEFALL   = -DHAVE_CSC_CORES -Icsc
-%cscstd_SYMALIAS = 
-#---
 %ogrstd_LINKOBJS = output\ogr-a.obj output\ogr-b.obj output\ogr_dat.obj output\ogr_sup.obj
 %ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr
 %ogrstd_SYMALIAS = #
-#---
-%desstd_LINKOBJS = output\des-x86.obj output\convdes.obj &
-                   output\p1bdespro.obj output\bdeslow.obj
-%desstd_DEFALL   = -DHAVE_DES_CORES /DBRYD 
-%desstd_SYMALIAS = #
-#---
-%rc564std_LINKOBJS = output\rg-486.obj output\rg-k5.obj output\brf-p5.obj &
-                   output\rg-k6.obj output\rg-p6.obj  output\rg-6x86.obj &
-                   output\hb-k7.obj output\jp-mmx.obj output\ak-p7.obj
-%rc564std_DEFALL   = /DHAVE_RC5_64_CORES
-%rc564std_SYMALIAS = #
-#---
-%rc564smc_LINKOBJS = output\brf-smc.obj
-%rc564smc_DEFALL   = /DSMC
-#---
-#%rc564mmxamd_LINKOBJS = output\rc5mmx-k6-2.obj
-#%rc564mmxamd_DEFALL   = /DMMX_RC5_AMD
-#%rc564mmxamd_SYMALIAS = #
 #---
 %rc572std_LINKOBJS = output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj &
                    output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj &
                    output\r72-go2.obj output\r72-sgp3.obj
 %rc572std_DEFALL   = /DHAVE_RC5_72_CORES
 %rc572std_SYMALIAS = #
-#---
-%desmmx_LINKOBJS = output\des-slice-meggs.obj output\deseval-mmx.obj
-%desmmx_DEFALL   = /DMEGGS /DMMX_BITSLICER #/DBITSLICER_WITH_LESS_BITS
-%desmmx_SYMALIAS = #
-#---
-%des_mt_LINKOBJS = output\p2bdespro.obj output\bbdeslow.obj &
-                   output\des-slice.obj output\deseval.obj &
-                   output\sboxes-kwan4.obj
-%des_mt_DEFALL   = /DKWAN 
-%des_mt_SYMALIAS = #
 #---
 
 #-----------------------------------------------------------------------
@@ -311,88 +273,14 @@ debug : .symbolic
 
 #-----------------------------------------------------------------------
 
-declare_for_csc : .symbolic
-  @set COREOBJS = $(%cscstd_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%cscstd_DEFALL) $(%DEFALL) 
-  @set SYMALIAS = $(%cscstd_SYMALIAS) $(%SYMALIAS) 
-
 declare_for_ogr : .symbolic
   @set COREOBJS = $(%ogrstd_LINKOBJS) $(%COREOBJS)
   @set DEFALL   = $(%ogrstd_DEFALL) $(%DEFALL) 
   @set SYMALIAS = $(%ogrstd_SYMALIAS) $(%SYMALIAS) 
 
-declare_for_des : .symbolic
-  @set COREOBJS = $(%desstd_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%desstd_DEFALL) $(%DEFALL) 
-  @set SYMALIAS = $(%desstd_SYMALIAS) $(%SYMALIAS) 
-
-declare_for_desmt : .symbolic
-  @set COREOBJS = $(%des_mt_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%des_mt_DEFALL) $(%DEFALL) 
-  @set SYMALIAS = $(%des_mt_SYMALIAS) $(%SYMALIAS) 
-
-declare_for_desmmx : .symbolic
-  @set COREOBJS = $(%desmmx_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%desmmx_DEFALL) $(%DEFALL) 
-  @set SYMALIAS = $(%desmmx_SYMALIAS) $(%SYMALIAS) 
-
-declare_for_rc5_64 : .symbolic
-  @set COREOBJS = $(%rc564std_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%rc564std_DEFALL) $(%DEFALL) 
-
-declare_for_rc5_64smc : .symbolic
-  @set COREOBJS = $(%rc564smc_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%rc564smc_DEFALL) $(%DEFALL) 
-
-declare_for_rc5_64mmxamd : .symbolic
-  @set COREOBJS = $(%rc564mmxamd_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%rc564mmxamd_DEFALL) $(%DEFALL) 
-
 declare_for_rc5_72 : .symbolic
   @set COREOBJS = $(%rc572std_LINKOBJS) $(%COREOBJS)
   @set DEFALL   = $(%rc572std_DEFALL) $(%DEFALL) 
-
-#-----------------------------------------------------------------------
-
-output\rg-486.obj : rc5\x86\rg-486.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\rg-k5.obj : rc5\x86\rg-k5.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\rg-k6.obj : rc5\x86\rg-k6.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\brf-p5.obj : rc5\x86\brf-p5.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\rg-p6.obj : rc5\x86\rg-p6.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\ak-p7.obj : rc5\x86\ak-p7.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\rg-6x86.obj : rc5\x86\rg-6x86.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\hb-k7.obj : rc5\x86\hb-k7.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@
-  @set isused=1
-
-output\jp-mmx.obj : rc5\x86\jp-mmx.asm $(%dependall) 
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\brf-smc.obj : rc5\x86\brf-smc.asm $(%dependall)
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
 
 # ----------------------------------------------------------------
 output\x86ident.obj : plat\x86\x86ident.asm $(%dependall)
@@ -490,19 +378,7 @@ output\selcore.obj : common\selcore.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\core_rc5.obj : common\core_rc5.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
 output\core_r72.obj : common\core_r72.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\core_des.obj : common\core_des.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-output\core_csc.obj : common\core_csc.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
@@ -598,143 +474,6 @@ output\logstuff.obj : common\logstuff.cpp $(%dependall) .AUTODEPEND
   #with /wcd=7 to suppress "&array" may not produce intended result" warning
   #would otherwise require 'va_list *x=((va_list *)(&(__va_list[0])))'
   *$(%CCPP) $(%CFLAGS) /wcd=7 $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-# ----------------------------------------------------------------
-
-output\des-slice-meggs.obj : des\des-slice-meggs.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\deseval-mmx.obj : des\x86\deseval-mmx.asm $(%dependall) 
-  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-#output\des-mmx.obj : des\x86\des-mmx.asm $(%dependall) 
-#  *$(%CCASM) $(%AFLAGS) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-#  @set isused=1
-
-output\des-slice.obj : des\des-slice.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\x86-slic.obj : des\x86-slic.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\deseval.obj : des\deseval.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\sboxes-kwan4.obj : des\sboxes-kwan4.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\sboxes-k.obj : des\sboxes-k.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\sboxes-kwan3.obj : des\sboxes-kwan3.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\p1bdespro.obj : des\x86\p1bdespro.asm $(%dependall)
-  @if "$(%TASMEXE)"=="" @set x=$[*.obj
-  @if "$(%TASMEXE)"=="" @if not exist $(%x) @%write con File not found: $(%x) 
-  @if "$(%TASMEXE)"=="" @if not exist $(%x) @%quit
-  @if "$(%TASMEXE)"=="" copy $(%x) $^@ >nul: 
-  @if "$(%TASMEXE)"=="" wtouch $^@
-  @if "$(%TASMEXE)"=="" @echo Updated $^@ from $(%x)
-  @if not "$(%TASMEXE)"=="" $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\p2bdespro.obj : des\x86\p2bdespro.asm $(%dependall)
-  @if "$(%TASMEXE)"=="" @set x=$[*.obj
-  @if "$(%TASMEXE)"=="" @if not exist $(%x) @echo $(%x) not found
-  @if "$(%TASMEXE)"=="" @if not exist $(%x) @%quit
-  @if "$(%TASMEXE)"=="" copy $(%x) $^@ >nul: 
-  @if "$(%TASMEXE)"=="" wtouch $^@
-  @if "$(%TASMEXE)"=="" @echo Updated $^@ from $(%x)
-  @if not "$(%TASMEXE)"=="" $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\bdeslow.obj : des\x86\bdeslow.asm $(%dependall)
-  @if "$(%TASMEXE)"=="" @set x=$[*.obj
-  @if "$(%TASMEXE)"=="" @if not exist $(%x) @echo $(%x) not found
-  @if "$(%TASMEXE)"=="" @if not exist $(%x) @%quit
-  @if "$(%TASMEXE)"=="" copy $(%x) $^@ >nul: 
-  @if "$(%TASMEXE)"=="" wtouch $^@
-  @if "$(%TASMEXE)"=="" @echo Updated $^@ from $(%x)
-  @if not "$(%TASMEXE)"=="" $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\bbdeslow.obj : des\x86\bbdeslow.asm $(%dependall)
-  @if "$(%TASMEXE)"=="" @set x=$[*.obj
-  @if "$(%TASMEXE)"=="" @if not exist $(%x) @echo $(%x) not found
-  @if "$(%TASMEXE)"=="" @if not exist $(%x) @%quit
-  @if "$(%TASMEXE)"=="" copy $(%x) $^@ >nul: 
-  @if "$(%TASMEXE)"=="" wtouch $^@
-  @if "$(%TASMEXE)"=="" @echo Updated $^@ from $(%x)
-  @if not "$(%TASMEXE)"=="" $(%TASMEXE) $(%TFLAGS) /i$[: $[@,$^@
-  @set isused=1
-
-output\des-x86.obj : des\x86\des-x86.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
-
-output\convdes.obj : common\convdes.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
-
-# ----------------------------------------------------------------
-
-output\convcsc.obj : csc\x86\convcsc.asm $(%dependall) .AUTODEPEND
-  @if exist $[*.obj copy $[*.obj $^@ >nul: 
-  @if exist $[*.obj wtouch $^@
-  @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\csc-mmx.obj : csc\x86\mmx\csc-mmx.asm $(%dependall) .AUTODEPEND
-  @if exist $[*.obj copy $[*.obj $^@ >nul: 
-  @if exist $[*.obj wtouch $^@
-  @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[:..\ $[@
-  @set isused=1
-
-output\csc-common.obj : csc\x86\csc-common.asm $(%dependall) .AUTODEPEND
-  @if exist $[*.obj copy $[*.obj $^@ >nul: 
-  @if exist $[*.obj wtouch $^@
-  @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\csc-1k.obj : csc\x86\csc-1k.asm $(%dependall) .AUTODEPEND
-  @if exist $[*.obj copy $[*.obj $^@ >nul: 
-  @if exist $[*.obj wtouch $^@
-  @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -l $[*.lst -i $[: $[@ 
-  @set isused=1
-
-output\csc-1k-i.obj : csc\x86\csc-1k-i.asm $(%dependall) .AUTODEPEND
-  @if exist $[*.obj copy $[*.obj $^@ >nul: 
-  @if exist $[*.obj wtouch $^@
-  @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\csc-6b.obj : csc\x86\csc-6b.asm $(%dependall) .AUTODEPEND
-  @if exist $[*.obj copy $[*.obj $^@ >nul: 
-  @if exist $[*.obj wtouch $^@
-  @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
-  @set isused=1
-
-output\csc-6b-i.obj : csc\x86\csc-6b-i.asm $(%dependall) .AUTODEPEND
-  @if exist $[*.obj copy $[*.obj $^@ >nul: 
-  @if exist $[*.obj wtouch $^@
-  @if exist $[*.obj @echo Updated $^@ from $[*.obj
-  @if not exist $[*.obj $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
   @set isused=1
 
 # ----------------------------------------------------------------
@@ -1134,14 +873,8 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @if $(%got_tcpnet).==1. @set CFLAGS=$(%CFLAGS) -DHAVE_WATT32
      @if $(%got_tcpnet).==1. @set STACKSIZE=210K
      
-#    @%make declare_for_rc5_64
-#    @%make declare_for_rc5_64smc
      @%make declare_for_rc5_72
-##   @%make declare_for_des
-##   @%make declare_for_desmt
-##   @%make declare_for_desmmx
      @%make declare_for_ogr
-#    @%make declare_for_csc
      @%make platform
      #-------------------------
      @if not $(%PMODEW_PATH).==. @-$(%PMODEW_PATH)\pmwlite.exe /C4 /S$(%PMODEW_PATH)\pmodew.exe $(%BINNAME)
@@ -1167,13 +900,8 @@ os2: .symbolic                                       # OS/2
      @set LINKOBJS  = output\os2inst.obj output\lurk.obj $(%LINKOBJS)
      @if not $(%watcom).==. @set include=$(%include);$(%WATCOM)\h;$(%WATCOM)\os2
      #@if not $(%watcom).==. @set LIBPATH=$(%watcom)\lib386 $(%watcom)\lib386\os2
-#    @%make declare_for_rc5_64
      @%make declare_for_rc5_72
-##   @%make declare_for_des
-##   @%make declare_for_desmt
-##   @%make declare_for_desmmx
      @%make declare_for_ogr
-#    @%make declare_for_csc
      @%make platform
 
 w16: .symbolic
@@ -1206,14 +934,8 @@ win16: .symbolic                                       # Windows/16
      @set READMETXT = docs\readme.w16
      @set BINNAME   = $(BASENAME).exe
      @set EXTRABIN  = $(BASENAME).scr
-#    @%make declare_for_rc5_64
-#    @%make declare_for_rc5_64smc
      @%make declare_for_rc5_72
-##   @%make declare_for_des
-##   @%make declare_for_desmt
-##   @%make declare_for_desmmx
      @%make declare_for_ogr
-#    @%make declare_for_csc
      @%make platform
      #---------------------------
      @if exist $(BASENAME).rex @del $(BASENAME).rex
@@ -1255,14 +977,8 @@ win32: .symbolic                               # win32
      @set READMETXT = docs\readme.w32
      @set BINNAME   = $(BASENAME).exe
      @set EXTRABIN  = $(BASENAME).com $(BASENAME).scr
-#    @%make declare_for_rc5_64
-#    @%make declare_for_rc5_64smc
      @%make declare_for_rc5_72
-##   @%make declare_for_des
-##   @%make declare_for_desmt
-##   @%make declare_for_desmmx
      @%make declare_for_ogr
-#    @%make declare_for_csc
      @%make platform
      #---------------------------------
      @wrc -31 -bt=nt -q &
@@ -1306,14 +1022,8 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
      @set COPYRIGHT = 'Copyright 1997-2002 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
-#    @%make declare_for_rc5_64
-#    @%make declare_for_rc5_64smc
      @%make declare_for_rc5_72
-##   @%make declare_for_des
-##   @%make declare_for_desmt
-##   @%make declare_for_desmmx
      @%make declare_for_ogr
-#    @%make declare_for_csc
      @%make platform
      #
      @if exist $(NLMDUMPEXE) @$(NLMDUMPEXE) *$(BASENAME).nlm /b:$(BASENAME).map 

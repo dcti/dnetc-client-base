@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.295 2008/02/07 10:23:44 kakace Exp $
+# @(#)$Id: configure,v 1.296 2008/02/10 00:25:28 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -98,22 +98,16 @@ TARGET_ARCTYPE="tgzdir"  # "tgz", "zip", "zipflat", "lha" or "tgzdir"
 # Select here, which OGR sources to use. Do not mention 'ogr' or 'ogr2' 
 # anywhere. Always use $OGR.
 OGR="ogr"
-#OGR="ogr2"
 
 # select the projects to include in the client
-HAVE_RC5_64="0"
 HAVE_RC5_72="1"
-HAVE_OGR="0"
+HAVE_OGR="1"
 HAVE_OGR_P2="1"
-HAVE_DES="0"
-HAVE_CSC="0"
 
 # define these to "0" in add_sources() if you add your own list of cores + options
-DEFAULT_RC5_64="1"
 DEFAULT_RC5_72="1"
-DEFAULT_OGR="1"
-DEFAULT_DES="1"
-DEFAULT_CSC="1"
+DEFAULT_OGR="1"         # 1 = compile generic ANSI core(s)
+DEFAULT_OGRNG="1"       # 1 = compile generic ANSI core(s)
 
 add_sources() # $1=os, $2=arch, $3=custom
 {
@@ -181,27 +175,17 @@ add_sources() # $1=os, $2=arch, $3=custom
 
   # only generic/ansi cores are declared here. 
   # arch specific ones are declared in each arch specific section.
-  #-- RC5-64 -- (needs -DHAVE_RC5_64_CORES) ----------------------
-  RC5_64_ANSI4_SRCS="rc5/ansi/rc5ansi_4-rg.cpp" # 4 pipeline
-  RC5_64_ANSI2_SRCS="rc5/ansi/rc5ansi_2-rg.cpp" # 2 pipeline
-  RC5_64_ANSI1_SRCS="rc5/ansi/rc5ansi_1-rg.cpp" # 1 pipeline
   #-- RC5-72 -- (needs -DHAVE_RC5_72_CORES) ----------------------
   RC5_72_ANSI1_SRCS="rc5-72/ansi/r72ansi1.cpp" # 1 pipeline
   RC5_72_ANSI2_SRCS="rc5-72/ansi/r72ansi2.cpp" # 2 pipeline
   RC5_72_ANSI4_SRCS="rc5-72/ansi/r72ansi4.cpp" # 4 pipeline
   RC5_72_ANSI_SRCS="$RC5_72_ANSI1_SRCS $RC5_72_ANSI2_SRCS $RC5_72_ANSI4_SRCS"
-  # -- DES -- (needs -DHAVE_DES_CORES) -------------------------
-  KWAN_SLICE_SRCS1="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan.cpp"
-  KWAN_SLICE_SRCS2="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan2.cpp"
-  KWAN_SLICE_SRCS3="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan3.cpp"
-  KWAN_SLICE_SRCS4="des/deseval.cpp des/des-slice.cpp des/sboxes-kwan4.cpp"
-  MEGGS_SLICE_SRCS1="des/deseval-meggs2.cpp des/des-slice-meggs.cpp"
-  MEGGS_SLICE_SRCS2="des/deseval-meggs3.cpp des/des-slice-meggs.cpp"
-  # -- CSC -- (needs -DHAVE_CSC_CORES)
-  CSC_ANSI_SRCS="csc/convcsc.cpp csc/csc-common.cpp csc/csc-1k-i.cpp csc/csc-1k.cpp csc/csc-6b-i.cpp csc/csc-6b.cpp"
-  # -- OGR -- (needs -DHAVE_OGR_CORES or -DHAVE_OGR_PASS2) -----
-  OGR_GENERAL_SRCS="$OGR/ansi/ogr_sup.cpp $OGR/ansi/ogr_dat.cpp"
+  # -- OGR-P2 -- (needs -DHAVE_OGR_PASS2) -----
+  OGR_GENERAL_SRCS="$OGR/ansi/ogr_dat.cpp"
   OGR_ANSI_SRCS="$OGR/ansi/ogr.cpp $OGR_GENERAL_SRCS"
+  # -- OGR-NG -- (needs -DHAVE_OGR_CORES) -----
+  OGRNG_GENERAL_SRCS="$OGR/ansi/ogrng_dat.cpp $OGR/ansi/ogrng_init.cpp"
+  OGRNG_ANSI_SRCS="$OGR/ansi/ogr-ng.cpp $OGRNG_GENERAL_SRCS"
 
   # -------------------------------------------------------------------
 
@@ -214,35 +198,6 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86features.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86rdtsc.asm"
     fi
-
-    # --------------- rc5-64 ----------------
-    if [ "$HAVE_RC5_64" = "1" ]; then
-      DEFAULT_RC5_64="0"
-      if [ "$1-$3" = "linux-" -o "$1" = "freebsd" -o "$1" = "netbsd" \
-        -o "$1" = "openbsd" -o "bsdos" ]; then # has SMC
-        # -- rc5 smc --
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DSMC"
-        #obsolete linux: TARGET_LDFLAGS="$TARGET_LDFLAGS -static -Xlinker -omagic"
-        #obsolete linux: -Xlinker -omagic implies -static
-      fi
-      if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
-        # -- non-nasm/rc5 --
-        TARGET_HDIRS="$TARGET_HDIRS ./rc5"
-        TARGET_ADDSRCS="$TARGET_ADDSRCS \
-                        rc5/x86/rg-486.cpp     rc5/x86/rg-smc.cpp \
-                        rc5/x86/rg-k5.cpp      rc5/x86/brf-p5.cpp \
-                        rc5/x86/rg-k6.cpp      rc5/x86/rg-p6.cpp  \
-                        rc5/x86/rg-6x86.cpp"
-      else
-        # -- nasm/rc5 --
-        TARGET_ADDNASMS="$TARGET_ADDNASMS \
-                         rc5/x86/rg-486.asm    rc5/x86/brf-smc.asm \
-                         rc5/x86/rg-k5.asm     rc5/x86/brf-p5.asm \
-                         rc5/x86/rg-k6.asm     rc5/x86/rg-p6.asm \
-                         rc5/x86/rg-6x86.asm   rc5/x86/ak-p7.asm \
-                         rc5/x86/jp-mmx.asm    rc5/x86/hb-k7.asm"
-      fi
-    fi # HAVE_RC5_64
 
     # -------------- rc5-72 --------------
     if [ "$HAVE_RC5_72" = "1" ]; then
@@ -264,32 +219,15 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
 
-    # --------------- des ----------------
-    if [ "$HAVE_DES" = "1" ]; then
-      DEFAULT_DES="0"
-      TARGET_ADDASMS="$TARGET_ADDASMS des/x86/bdeslow.S des/x86/p1bdespro.S"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS des/x86/des-x86.cpp"
-      # -- des mt --
-      TARGET_ADDASMS="$TARGET_ADDASMS des/x86/bbdeslow.S des/x86/p2bdespro.S"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $KWAN_SLICE_SRCS4"
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
-      if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
-        TARGET_CCFLAGS="$TARGET_CCFLAGS"
-      else
-        # -- des mmx --
-        TARGET_ADDSRCS="$TARGET_ADDSRCS des/des-slice-meggs.cpp"
-        TARGET_ADDNASMS="$TARGET_ADDNASMS des/x86/deseval-mmx.asm"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DMMX_BITSLICER -DMEGGS"
-      fi
-    fi # HAVE_DES
+    # --------------- ogr-ng ----------------
+    if [ "$HAVE_OGR" = "1"]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    fi
 
-    # --------------- ogr ----------------
-    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    # --------------- ogr-p2 ----------------
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
-      if [ "$OGR" = "ogr2" ]; then
-        # -- no special versions yet --
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-      elif [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
+      if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
         # -- non-nasm/ogr --
         #TARGET_ADDASMS="$TARGET_ADDASMS $OGR/x86/ogr.S"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogr-a.cpp $OGR/x86/ogr-b.cpp"
@@ -307,36 +245,10 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogr-asm2-rt-mmx-amd.asm"
         ##TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
       fi
-    fi # HAVE_OGR
+    fi # HAVE_OGR_P2
 
-    # --------------- csc ----------------
-    if [ "$HAVE_CSC" = "1" ]; then
-      DEFAULT_CSC="0"
-      if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
-      else
-        TARGET_NASM="$TARGET_NASM -i csc/x86/" # HACK HACK HACK
-        TARGET_ADDNASMS="$TARGET_ADDNASMS \
-                        csc/x86/convcsc.asm csc/x86/csc-1k-i.asm \
-                        csc/x86/csc-1k.asm  csc/x86/csc-6b-i.asm \
-                        csc/x86/csc-6b.asm  csc/x86/csc-comm.asm \
-                        csc/x86/mmx/csc-mmx.asm"
-      fi
-    fi # HAVE_CSC
   #-----------------------------------------------------------------
   elif [ "$2" = "sparc" -o "$2" = "sparc64" ]; then
-    if [ "$HAVE_RC5_64" = "1" ]; then
-      if [ "$1" = "solaris" -o "$1" = "sunos" -o "$1" = "linux" ]; then
-        # DEFAULT_RC5_64="1" # just an addition to the default ansi core
-        # add the rc5-ultra-crunch core
-        if [ "$3" = "cc" ]; then # use a gcc -S generated .s file for sun cc
-          TARGET_ADDASMS="$TARGET_ADDASMS rc5/ultra/rc5-ultra-crunch.s"
-        else
-          TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ultra/rc5-ultra-crunch.cpp"
-        fi
-      fi
-    fi # HAVE_RC5_64
-
     if [ "$HAVE_RC5_72" = "1" ]; then
       if [ "$2" = "sparc" ]; then
         # DEFAULT_RC5_72="1" # just an addition to the default ansi cores
@@ -349,91 +261,31 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
 
-    if [ "$HAVE_DES" = "1" ]; then
-      DEFAULT_DES="0"
-      if [ "X$3" = "Xultra" ]; then
-        DESULTRA_SRCS_C="des/ultrasparc/des-slice-ultrasparc.cpp \
-                         des/ultrasparc/simple.c \
-                         des/ultrasparc/des_ultra_crunch.c \
-                         des/ultrasparc/kwan_from_to.c \
-                         des/ultrasparc/do_all.c \
-                         des/ultrasparc/do_all_fancy.c \
-                         des/ultrasparc/do_s1.c \
-                         des/ultrasparc/do_s1_s3.c \
-                         des/ultrasparc/do_s2.c \
-                         des/ultrasparc/do_s3.c \
-                         des/ultrasparc/do_s4.c \
-                         des/ultrasparc/do_s5.c \
-                         des/ultrasparc/do_s6.c \
-                         des/ultrasparc/do_s7.c \
-                         des/ultrasparc/do_s8.c"
-        DESULTRA_SRCS_ASM="des/ultrasparc/des-slice-ultrasparc.cpp \
-                         des/ultrasparc/des_ultra_crunch.c"
-        TARGET_ADDASMS="des/ultrasparc/simple.handopt.s"
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $DESULTRA_SRCS_ASM"
-      else
-        DESSPARC_SRCS_C="des/des-slice.cpp des/deseval.cpp"
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $DESSPARC_SRCS_C"
-      fi
-    fi # HAVE_DES
-    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    if [ "$HAVE_OGR" = "1"]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    fi
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       if [ "$2" = "sparc64" ]; then
         DEFAULT_OGR="0"       # don't add the ansi core
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
       fi # sparc64
-    fi # HAVE_OGR/P2
+    fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
   elif [ "$2" = "mips" -o "$2" = "mips64" ]; then
-    if [ "$HAVE_RC5_64" = "1" ]; then
-      DEFAULT_RC5_64="0"
-      if [ "$TARGET_CC" = "CC" -o "$1" = "netbsd" ]; then # mips-crunch doesn't compile with IRIX CC
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
-      elif [ "$3" = "ps2" ]; then      #For PS2 Linux [jt(jt@distributed.net)]
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
-        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
-      else                             # gcc targets. mips-crunch.cpp is faster
-                                       # except for NetBSD, ansi is 2% faster
-        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/mips/mips-crunch.cpp"
-      fi
-    fi # HAVE_RC5_64
     if [ "$HAVE_RC5_72" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/mips/r72mips2.cpp"
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    if [ "$HAVE_OGR" = "1"]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    fi
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       if [ "$2" = "mips64" ]; then
         DEFAULT_OGR="0"       # don't add the ansi core
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
       fi # mips64
-    fi # HAVE_OGR/P2
-  #-----------------------------------------------------------------
-  elif [ "$2" = "hppa" ]; then
-    if [ "$HAVE_RC5_64" = "1" ]; then
-      if [ "$TARGET_CC" = "CC" ]; then
-        DEFAULT_RC5_64="0"
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/parisc/parisc.s"
-      else
-      : # use DEFAULT_RC5_64
-      fi
-    fi # HAVE_RC5_64
+    fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
   elif [ "$2" = "68k" ]; then
-    if [ "$HAVE_RC5_64" = "1" ]; then
-      DEFAULT_RC5_64="0"
-      if [ "$1" = "amigaos" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.s \
-                                        rc5/68k/rc5-020_030-jg.s \
-                                        rc5/68k/rc5-060-re-jg.s \
-                                        rc5/68k/rc5-0x0-common-jg.s"
-      elif [ "$1" = "next" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5/ansi/rc5ansi1-b2.cpp"
-      else
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/68k/rc5-000_010-re-jg.gcc.s \
-                                        rc5/68k/rc5-020_030-jg.gcc.s \
-                                        rc5/68k/rc5-060-re-jg.gcc.s \
-                                        rc5/68k/rc5-0x0-common-jg.gcc.s"
-        TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5/68k"
-      fi
-    fi # HAVE_RC5_64
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="0"
       if [ "$1" = "amigaos" ]; then
@@ -455,31 +307,23 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5-72/68k"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    if [ "$HAVE_OGR" = "1"]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    fi
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS"
       TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogr000.o output/ogr020.o \
                                       output/ogr030.o output/ogr040.o \
                                       output/ogr060.o"
       TARGET_OGR_MULTI="68k"
-    fi # HAVE_OGR
-    if [ "$HAVE_DES" = "1" ]; then
-      DEFAULT_DES="0"
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $SLICE_SRCS3"
-    fi # HAVE_DES
+    fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
   elif [ "$2" = "alpha" ]; then
-    if [ "$HAVE_RC5_64" = "1" ]; then
-      DEFAULT_RC5_64="0"
-      if [ "$1" = "digital-unix" ]; then
-        TARGET_ADDSRCS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer-osf.s"
-      else
-        TARGET_ADDASMS="${TARGET_ADDASMS} rc5/alpha/axp-bmeyer.s"
-      fi
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} rc5/alpha/axp-bmeyer.cpp"
-    fi # HAVE_RC5_64
-    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    if [ "$HAVE_OGR" = "1"]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    fi
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       # this is just an addition to the default ansi core
       # maybe this should be moved in to specific targets ?
       DEFAULT_OGR="1"
@@ -491,50 +335,9 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/ansi/ogr-64.cpp"
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev4-64.cpp"
       TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67-64.cpp"
-    fi # HAVE_OGR
+    fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
   elif [ "$2" = "ppc" ]; then
-    XLC_LINTILLA_ASMS="rc5/ppc/crunch_lintilla.ppcxlc.s \
-        rc5/ppc/crunch_allitnil.ppcxlc.s"
-    RC5PPC_SRCS="rc5/ppc/crunch_lintilla.ppcgas.s \
-        rc5/ppc/crunch_lintilla_604e.ppcgas.s \
-        rc5/ppc/crunch_allitnil.ppcgas.s \
-        rc5/ppc/rc5_unit_func_lintilla.cpp \
-        rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
-        rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5PPC_MWCC_SRCS="rc5/ppc/crunch_lintilla.ppcmpw.s \
-        rc5/ppc/crunch_lintilla_604e.ppcmpw.s \
-        rc5/ppc/crunch_allitnil.ppcmpw.s \
-        rc5/ppc/rc5_unit_func_lintilla.cpp \
-        rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
-        rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5PPC_APPLE_SRCS="rc5/ppc/crunch_lintilla.ppcosx.s \
-        rc5/ppc/crunch_lintilla_604e.ppcosx.s \
-        rc5/ppc/crunch_allitnil.ppcosx.s \
-        rc5/ppc/rc5_unit_func_lintilla.cpp \
-        rc5/ppc/rc5_unit_func_lintilla_604e.cpp \
-        rc5/ppc/rc5_unit_func_allitnil.cpp"
-    RC5ALTIVEC_SRCS="rc5/ppc/crunch_vec.ppcosx.s \
-        rc5/ppc/crunch_vec_7450.ppcosx.s \
-        rc5/ppc/rc5_unit_func_vec.cpp \
-        rc5/ppc/rc5_unit_func_vec_7450.cpp"
-
-    if [ "$HAVE_RC5_64" = "1" ]; then
-      DEFAULT_RC5_64="0"
-      if [ "$TARGET_CC" = "mwcc" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_MWCC_SRCS"
-      elif [ "$TARGET_CC" = "xlC" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS $XLC_LINTILLA_ASMS"
-      elif [ "${1}" = "macosx" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_APPLE_SRCS"
-        if [ "X$3" = "X" ]; then #mach3+
-          TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5ALTIVEC_SRCS"
-        fi
-      else
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5PPC_SRCS"
-      fi
-    fi # HAVE_RC5_64
-
     # Metrowerks doesn't have assembler cores, so we leave the defaults
     if [ "$HAVE_RC5_72" = "1" -a "$TARGET_CC" != "mwcc" ]; then
       DEFAULT_RC5_72="0"
@@ -572,7 +375,11 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
 
-    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    if [ "$HAVE_OGR" = "1"]; then
+      DEFAULT_OGRNG="0"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
+    fi
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
 
@@ -596,51 +403,9 @@ add_sources() # $1=os, $2=arch, $3=custom
           TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr-64.cpp"
         fi
       fi
-    fi # HAVE_OGR
+    fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
   elif [ "$2" = "arm" ]; then
-    if [ "$HAVE_RC5_64" = 1 ]; then
-      DEFAULT_RC5_64="0"
-      if [ "$1" = "riscos" ]; then
-        if [ "$3" = "gccsdk" ]; then
-          TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gccsdk.s \
-                                          rc5/arm/rc5-arm-2-gccsdk.s \
-                                          rc5/arm/rc5-arm-3-gccsdk.s"
-        else
-          TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1.s \
-                                          rc5/arm/rc5-arm-2.s \
-                                          rc5/arm/rc5-arm-3.s"
-        fi
-      elif [ "$1-$3" = "linux-elf" ]; then
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu-elf.s \
-                                        rc5/arm/rc5-arm-2-gnu-elf.s \
-                                        rc5/arm/rc5-arm-3-gnu-elf.s"
-      else
-        TARGET_ADDASMS="$TARGET_ADDASMS rc5/arm/rc5-arm-1-gnu.s \
-                                        rc5/arm/rc5-arm-2-gnu.s \
-                                        rc5/arm/rc5-arm-3-gnu.s "
-      fi
-    fi # HAVE_RC5_64
-    if [ "$HAVE_DES" = 1 ]; then
-      DEFAULT_DES="0"
-      if [ "$1" = "riscos" ]; then
-        if [ "$3" = "gccsdk" ]; then
-          echo Add des asm cores for arm-riscos-gccsdk!
-          exit 1
-        else
-          TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-arm.s \
-                                          des/arm/des-slice-sa.s"
-        fi
-      elif [ "$1-$3" = "linux-elf" ]; then
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
-        TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu-elf.s \
-                                        des/arm/des-slice-arm-gnu-elf.s"
-      else
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN"
-        TARGET_ADDASMS="$TARGET_ADDASMS des/arm/des-slice-sa-gnu.s \
-                                        des/arm/des-slice-arm-gnu.s"
-      fi
-    fi # HAVE_DES
     if [ "$HAVE_RC5_72" = 1 ]; then
       DEFAULT_RC5_72="0"
       if [ "$1" = "riscos" ]; then
@@ -666,7 +431,10 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/arm/r72arm3-gnu.S"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = 1 -o "$HAVE_OGR_P2" = "1" ]; then
+    if [ "$HAVE_OGR" = "1"]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    fi
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/arm/ogr-arm.cpp"
       DEFAULT_OGR="0"
 #      if [ "$1" = "riscos" ]; then
@@ -691,19 +459,12 @@ add_sources() # $1=os, $2=arch, $3=custom
 #                                        ogr/arm/ogr_arm2-gnu.S \
 #                                        ogr/arm/ogr_arm3-gnu.S"
 #      fi
-    fi # HAVE_OGR
+    fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
   elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "vax" \
       -o "$2" = "s390" -o "$2" = "s390x" -o "$2" = "generic" \
       -o "$2" = "power" ]; then
     : # pure ansi targets. (2 pipeline RC5 core) ==> DEFAULT
-  #-----------------------------------------------------------------
-  elif [ "$2" = "ia64" ]; then
-    if [ "$HAVE_RC5_64" = "1" ]; then
-      DEFAULT_RC5_64="0"
-      # pure ansi target. (4 pipeline RC5 core)
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI4_SRCS"
-    fi # HAVE_RC5_64
   #-----------------------------------------------------------------
   elif [ "$2" = "amd64" ]; then
     if [ "X$TARGET_YASM" = "X" -o "X$TARGET_YASM_FMT" = "X" ]; then #no YASM
@@ -727,7 +488,11 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
 
-    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    if [ "$HAVE_OGR" = "1"]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    fi
+
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       # add the 64-bit core to the ANSI cores
       DEFAULT_OGR="0"       # don't add the ansi core
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
@@ -745,7 +510,11 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
 
     # -------------- ogr --------------
-    if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    if [ "$HAVE_OGR" = "1"]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    fi
+
+    if [ "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
 
@@ -766,7 +535,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDOGRPPUCORES="cellv1"
       TARGET_OGRSPUWRAPPER="ogr/cellbe/ogr-cell-spe-wrapper.c"
       TARGET_ADDOGRSPUCORES="cellv1"
-    fi # HAVE_OGR
+    fi # HAVE_OGR_P2
 
   #-----------------------------------------------------------------
   else
@@ -774,13 +543,6 @@ add_sources() # $1=os, $2=arch, $3=custom
   fi
 
   # DEFAULT handling and adding of -DHAVE_XXX_CORES
-
-  if [ "$HAVE_RC5_64" = "1" ]; then
-    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_64_CORES"
-    if [ "$DEFAULT_RC5_64" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $RC5_64_ANSI2_SRCS"
-    fi
-  fi
 
   if [ "$HAVE_RC5_72" = "1" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_72_CORES"
@@ -799,26 +561,13 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi
   fi
   if [ "$HAVE_OGR" = "1" -o "$HAVE_OGR_P2" = "1" ]; then
+    TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr_sup.cpp"
     TARGET_HDIRS="$TARGET_HDIRS ./$OGR"
+    if [ "$DEFAULT_OGRNG" = "1" ]; then
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_ANSI_SRCS"
+    fi
     if [ "$DEFAULT_OGR" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_ANSI_SRCS"
-    fi
-  fi
-
-  if [ "$HAVE_DES" = "1" ]; then
-    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_DES_CORES"
-    TARGET_ADDSRCS="$TARGET_ADDSRCS common/convdes.cpp"
-    if [ "$DEFAULT_DES" = "1" ]; then :
-      TARGET_CCFLAGS="$TARGET_CCFLAGS -DKWAN -DMEGGS"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $MEGGS_SLICE_SRCS2"
-    fi
-  fi
-
-  if [ "$HAVE_CSC" = "1" ]; then
-    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_CSC_CORES"
-    TARGET_HDIRS="$TARGET_HDIRS ./csc"
-    if [ "$DEFAULT_CSC" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $CSC_ANSI_SRCS"
     fi
   fi
 }
@@ -1297,47 +1046,45 @@ OPTS_WATCOMCC="-DASM_X86 -Osax -4 -mf"
 #
 # ---- speed sensitive things come last ----
 COMMON_SRCS="\
-	     common/iniread.cpp  \
-	     common/buffbase.cpp \
-	     common/mail.cpp     \
-	     common/random.cpp   \
-	     common/clicdata.cpp \
-	     common/clitime.cpp  \
-	     common/disphelp.cpp \
-	     common/clievent.cpp \
-	     common/cpucheck.cpp \
-	     common/pathwork.cpp \
-	     common/cliident.cpp \
-	     common/logstuff.cpp \
-	     common/triggers.cpp \
-	     common/coremem.cpp  \
-	     common/selcore.cpp  \
-	     common/core_rc5.cpp  \
-	     common/core_des.cpp  \
-	     common/core_csc.cpp  \
-	     common/core_ogr.cpp  \
-	     common/core_r72.cpp  \
-	     common/cmdline.cpp  \
-	     common/selftest.cpp \
-	     common/pollsys.cpp  \
-	     common/setprio.cpp  \
-	     common/console.cpp  \
-	     common/modereq.cpp  \
-	     common/confmenu.cpp \
-	     common/confrwv.cpp  \
-	     common/confopt.cpp  \
-	     common/checkpt.cpp  \
-	     common/util.cpp     \
-	     common/base64.cpp   \
-	     common/netbase.cpp  \
-	     common/netconn.cpp  \
-	     common/client.cpp   \
-	     common/projdata.cpp \
-	                         \
-	     common/bench.cpp    \
-	     common/probman.cpp  \
-	     common/probfill.cpp \
-	     common/clirun.cpp   \
+	     common/iniread.cpp     \
+	     common/buffbase.cpp    \
+	     common/mail.cpp        \
+	     common/random.cpp      \
+	     common/clicdata.cpp    \
+	     common/clitime.cpp     \
+	     common/disphelp.cpp    \
+	     common/clievent.cpp    \
+	     common/cpucheck.cpp    \
+	     common/pathwork.cpp    \
+	     common/cliident.cpp    \
+	     common/logstuff.cpp    \
+	     common/triggers.cpp    \
+	     common/coremem.cpp     \
+	     common/selcore.cpp     \
+	     common/core_ogr.cpp    \
+        common/core_ogr_ng.cpp \
+	     common/core_r72.cpp    \
+	     common/cmdline.cpp     \
+	     common/selftest.cpp    \
+	     common/pollsys.cpp     \
+	     common/setprio.cpp     \
+	     common/console.cpp     \
+	     common/modereq.cpp     \
+	     common/confmenu.cpp    \
+	     common/confrwv.cpp     \
+	     common/confopt.cpp     \
+	     common/checkpt.cpp     \
+	     common/util.cpp        \
+	     common/base64.cpp      \
+	     common/netbase.cpp     \
+	     common/netconn.cpp     \
+	     common/client.cpp      \
+	     common/projdata.cpp    \
+                               \
+	     common/bench.cpp       \
+	     common/probman.cpp     \
+	     common/probfill.cpp    \
+	     common/clirun.cpp      \
 	     common/problem.cpp" #speed sensitive things come last
 
 # conditional addition if files are present
@@ -1565,7 +1312,7 @@ case "$1" in
             -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
         TARGET_AS="armasm"
         TARGET_ASFLAGS="-apcs 3/26bit"
-        TARGET_CCFLAGS="-Icommon -Irc5/arm -Ides -I$OGR -Iplat/riscos \
+        TARGET_CCFLAGS="-Icommon -I$OGR -Iplat/riscos \
                         -I/home/cberry/play/riscoslib/OSLib \
                         -I/home/cberry/play/riscoslib/TCPIPLibs \
                         -J/home/cberry/play/riscoslib/CLib \
@@ -3540,7 +3287,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       deplist=""
       for dep in $TARGET_HDEPS; do
         if [ $dep = "$OGR/ogr.h" ]; then
-          dep="$OGR/ansi/ogr.h"
+          dep="$OGR/ansi/ogrp2.h $OGR/ansi/ogr-ng.h $OGR/ansi/ogr-interface.h"
           has_ogr_h=1
         elif [ $dep = "common/ccoreio.h" ]; then
           has_ccoreio_h=1
@@ -3567,7 +3314,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           deplist="$deplist common/ccoreio.h"
         fi
         if [ $has_ogr_h -eq 0 ]; then
-          deplist="$deplist $OGR/ansi/ogr.h"
+          deplist="$deplist $OGR/ansi/ogrp2.h $OGR/ansi/ogr-ng.h $OGR/ansi/ogr-interface.h"
         fi
       fi
       #----------------

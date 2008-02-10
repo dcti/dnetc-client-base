@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.29 2007/10/22 16:48:24 jlawson Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.30 2008/02/10 00:24:29 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -42,7 +42,6 @@ return "@(#)$Id: cliident.cpp,v 1.29 2007/10/22 16:48:24 jlawson Exp $"; }
 #include "confopt.h"
 #include "confrwv.h"
 #include "console.h"
-#include "convdes.h"
 #include "cpucheck.h"
 #include "disphelp.h"
 #include "iniread.h"
@@ -104,7 +103,6 @@ static const char *h_ident_table[] =
   (const char *)__CONFOPT_H__,
   (const char *)__CONFRWV_H__,
   (const char *)__CONSOLE_H__,
-//(const char *)__CONVDES_H__,
   (const char *)__CPUCHECK_H__,
   (const char *)__CPUTYPES_H__,
   (const char *)__DISPHELP_H__,
@@ -223,7 +221,6 @@ static const char * (*ident_table[])(void) =
   confopt_cpp,
   confrwv_cpp,
   console_cpp,
-//convdes_cpp,
   cpucheck_cpp,
   disphelp_cpp,
   iniread_cpp,

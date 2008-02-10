@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.115 2007/10/22 16:48:27 jlawson Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.116 2008/02/10 00:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -36,25 +36,13 @@ const char **corenames_for_contest( unsigned int cont_i )
 {
   switch (cont_i)
     {
-#ifdef HAVE_RC5_64_CORES
-    case RC5:
-      return corenames_for_contest_rc564();
-#endif
 #ifdef HAVE_RC5_72_CORES
     case RC5_72:
       return corenames_for_contest_rc572();
 #endif
-#ifdef HAVE_CSC_CORES
-    case CSC:
-      return corenames_for_contest_csc();
-#endif
-#ifdef HAVE_DES_CORES
-    case DES:
-      return corenames_for_contest_des();
-#endif
 #ifdef HAVE_OGR_CORES
-    case OGR:
-      return corenames_for_contest_ogr();
+    case OGR_NG:
+      return corenames_for_contest_ogr_ng();
 #endif
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
@@ -89,25 +77,13 @@ int apply_selcore_substitution_rules(unsigned int contestid, int cindex)
 {
   switch (contestid)
     {
-#ifdef HAVE_RC5_64_CORES
-    case RC5:
-      return apply_selcore_substitution_rules_rc564(cindex);
-#endif
 #ifdef HAVE_RC5_72_CORES
     case RC5_72:
       return apply_selcore_substitution_rules_rc572(cindex);
 #endif
-#ifdef HAVE_CSC_CORES
-    case CSC:
-      return apply_selcore_substitution_rules_csc(cindex);
-#endif
-#ifdef HAVE_DES_CORES
-    case DES:
-      return apply_selcore_substitution_rules_des(cindex);
-#endif
 #ifdef HAVE_OGR_CORES
-    case OGR:
-      return apply_selcore_substitution_rules_ogr(cindex);
+    case OGR_NG:
+      return apply_selcore_substitution_rules_ogr_ng(cindex);
 #endif
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
@@ -144,8 +120,8 @@ unsigned int nominal_rate_for_contest( unsigned int cont_i)
       return estimate_nominal_rate_rc572();
 #endif
 #ifdef HAVE_OGR_CORES
-    case OGR:
-      return estimate_nominal_rate_ogr();
+    case OGR_NG:
+      return 0;
 #endif
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
@@ -258,20 +234,14 @@ int DeinitializeCoreTable( void )  /* ClientMain calls this */
   }
 
 
-  #ifdef HAVE_RC5_64_CORES
-  DeinitializeCoreTable_rc564();
-  #endif
   #ifdef HAVE_RC5_72_CORES
   DeinitializeCoreTable_rc572();
   #endif
-  #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+  #if defined(HAVE_OGR_CORES)
+  DeinitializeCoreTable_ogr_ng();
+  #endif
+  #if defined(HAVE_OGR_PASS2)
   DeinitializeCoreTable_ogr();
-  #endif
-  #ifdef HAVE_DES_CORES
-  DeinitializeCoreTable_des();
-  #endif
-  #ifdef HAVE_CSC_CORES
-  DeinitializeCoreTable_csc();
   #endif
 
   selcore_initlev--;
@@ -319,22 +289,15 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 #endif
 
 
-  #ifdef HAVE_RC5_64_CORES
-  if (InitializeCoreTable_rc564(first_time) < 0) return -1;
-  #endif
   #ifdef HAVE_RC5_72_CORES
   if (InitializeCoreTable_rc572(first_time) < 0) return -1;
   #endif
-  #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+  #if defined(HAVE_OGR_CORES)
+  if (InitializeCoreTable_ogr_ng(first_time) < 0) return -1;
+  #endif
+  #if defined(HAVE_OGR_PASS2)
   if (InitializeCoreTable_ogr(first_time) < 0) return -1;
   #endif
-  #ifdef HAVE_DES_CORES
-  if (InitializeCoreTable_des(first_time) < 0) return -1;
-  #endif
-  #ifdef HAVE_CSC_CORES
-  if (InitializeCoreTable_csc(first_time) < 0) return -1;
-  #endif
-
 
 
   if (first_time) /* we only want to do this once */
@@ -474,25 +437,13 @@ int selcoreGetPreselectedCoreForProject(unsigned int projectid)
 {
   switch (projectid)
     {
-#ifdef HAVE_RC5_64_CORES
-    case RC5:
-      return selcoreGetPreselectedCoreForProject_rc564();
-#endif
 #ifdef HAVE_RC5_72_CORES
     case RC5_72:
       return selcoreGetPreselectedCoreForProject_rc572();
 #endif
-#ifdef HAVE_CSC_CORES
-    case CSC:
-      return selcoreGetPreselectedCoreForProject_csc();
-#endif
-#ifdef HAVE_DES_CORES
-    case DES:
-      return selcoreGetPreselectedCoreForProject_des();
-#endif
 #ifdef HAVE_OGR_CORES
-    case OGR:
-      return selcoreGetPreselectedCoreForProject_ogr();
+    case OGR_NG:
+      return selcoreGetPreselectedCoreForProject_ogr_ng();
 #endif
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
@@ -637,29 +588,17 @@ int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
 {
   switch (contestid)
     {
-#ifdef HAVE_RC5_64_CORES
-    case RC5:
-      return selcoreSelectCore_rc564( threadindex, client_cpuP, selinfo );
-#endif
 #ifdef HAVE_RC5_72_CORES
     case RC5_72:
       return selcoreSelectCore_rc572( threadindex, client_cpuP, selinfo );
-#endif
-#ifdef HAVE_CSC_CORES
-    case CSC:
-      return selcoreSelectCore_csc( threadindex, client_cpuP, selinfo );
-#endif
-#ifdef HAVE_DES_CORES
-    case DES:
-      return selcoreSelectCore_des( threadindex, client_cpuP, selinfo );
 #endif
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
       return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo, contestid );
 #endif
 #ifdef HAVE_OGR_CORES
-    case OGR:
-      return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo, contestid );
+    case OGR_NG:
+      return selcoreSelectCore_ogr_ng( threadindex, client_cpuP, selinfo, contestid );
 #endif
     default:
       return -1; /* core selection failed */

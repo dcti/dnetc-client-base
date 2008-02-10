@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.64 2007/10/22 16:48:26 jlawson Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.65 2008/02/10 00:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -81,7 +81,7 @@ static struct __lurker
   #error "CLIENT_OS isn't defined yet. cputypes.h must be #included before lurk.h"
   #endif
 
-  #if (CLIENT_OS != OS_WIN16) && (CLIENT_OS != OS_MACOS)
+  #if (CLIENT_OS != OS_WIN16)
   #define LURK_MULTIDEV_TRACK
   char conndevices[64*32];
   char dummy_pad[1]; 
@@ -265,20 +265,6 @@ int LurkCheckIfConnectRequested(void) //yes/no
 #include <unistd.h>
 #include <ctype.h>
 
-#elif (CLIENT_OS == OS_MACOS)
-
-#include <ctype.h>
-#include <Gestalt.h>
-#include <Files.h>
-#include <OpenTransportProviders.h>
-
-EndpointRef fEndPoint = kOTInvalidEndpointRef;
-
-#ifdef LURK_LISTENER
-static pascal void __OTListener(void *context, OTEventCode code, OTResult result, void *cookie);
-static int isonline = -1; /* 0=no, 1=yes, -1=don't know yet */
-#endif
-
 #elif (CLIENT_OS == OS_WIN16)
 
 #include <windows.h>
@@ -439,40 +425,6 @@ int LurkGetCapabilityFlags(void)
       if (i != 0) /* 1==login on demand, 2=login/logout on demand */
         what |= CONNECT_DODBYPROFILE;
     }
-  }
-#elif (CLIENT_OS == OS_MACOS)
-  {
-    static int caps = -1;
-    if (caps == -1)
-    {
-      long response;
-      //OpenTransport/Remote Access PPP must be present
-      Gestalt(gestaltOpenTptRemoteAccess, &response);
-      if (response & (1 << gestaltOpenTptPPPPresent))
-      {
-        InitOpenTransport();
-        fEndPoint = OTOpenEndpoint(OTCreateConfiguration(kPPPControlName),0, nil, &response);  
-        if ((response == kOTNoError) && (fEndPoint != kOTInvalidEndpointRef))
-        {
-          int canlurk = 1; 
-          #ifdef LURK_LISTENER
-          canlurk = 0;
-          if( fEndPoint->InstallNotifier((OTNotifyProcPtr)__OTListener,nil) == kOTNoError) 
-          {
-            OTSetAsynchronous(fEndPoint);
-            if(OTIoctl(fEndPoint, I_OTGetMiscellaneousEvents, (void*)1) == kOTNoError )
-            {
-              canlurk = 1; /* OT Listener is now installed */
-            }
-          }
-          #endif
-          if (canlurk)
-             what = (CONNECT_LURK | CONNECT_LURKONLY );  
-        }
-      }
-      caps = what;
-    }
-    what |= caps;
   }
 #elif (CLIENT_OS == OS_LINUX)    || (CLIENT_OS == OS_FREEBSD)  || \
       (CLIENT_OS == OS_OPENBSD)  || (CLIENT_OS == OS_NETBSD)   || \
@@ -767,8 +719,7 @@ int LurkStart(int nonetworking,struct dialup_conf *params)
 
 /* ---------------------------------------------------------- */
 
-#if (!((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) && !defined(__EMX__) || \
-      (CLIENT_OS == OS_MACOS)))
+#if (!((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_OS2) && !defined(__EMX__)))
 /* needed by all except win16 and non-emx-os/2 and macos*/
 static int __MatchMask( const char *ifrname,  int is_dialup_dev_for_sure,
                         int mask_include_all, int mask_default_only, 
@@ -1605,43 +1556,6 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
    {
      TRACE_OUT((-1,"Lurk::InternalIsConnected() => 1\n"));
      return 1;
-   }
-
-#elif (CLIENT_OS == OS_MACOS)
-
-   #ifdef LURK_LISTENER /* using an asychronous listen callback */
-   if (isonline != -1)  /* already determined yes or no? */
-     return isonline;   /* return the state if so */
-   isonline = 0;        /* the callback hasn't been called yet */
-   /* fallthrough */    /* so get initial state manually below */
-   #endif
-
-   TOptMgmt cmd;
-   TOption* option;
-   UInt8 buf[128];
-   cmd.opt.buf = buf;
-   cmd.opt.len = sizeof(TOptionHeader);
-   cmd.opt.maxlen = sizeof buf;
-   cmd.flags = T_CURRENT;
-   option = (TOption *) buf;
-   option->level = COM_PPP;
-   option->name = CC_OPT_GETMISCINFO;
-   option->status = 0;
-   option->len = sizeof(TOptionHeader);
-
-   OTOptionManagement(fEndPoint, &cmd, &cmd);
-   option = (TOption *) cmd.opt.buf;
-
-   if ((option->status == T_SUCCESS) || (option->status == T_READONLY))
-   {
-     CCMiscInfo *info = (CCMiscInfo *) &option->value[0];
-     if (info->connectionStatus == kPPPConnectionStatusConnected)
-     {
-       #ifdef LURK_LISTENER
-       isonline=1;
-       #endif
-       return 1;
-     }
    }
 
 #else

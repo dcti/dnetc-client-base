@@ -3,7 +3,7 @@
 # Any other distribution or use of this source violates copyright.
 #
 # Author: Decio Luiz Gazzoni Filho <decio@distributed.net>
-# $Id: ogr-cellv1-spe.s,v 1.2 2007/10/22 16:48:29 jlawson Exp $
+# $Id: ogr-cellv1-spe.s,v 1.3 2008/02/10 00:26:36 kakace Exp $
 
 	#################################################################
 	# Hackers: see the comments right above the .text section for a #
@@ -53,7 +53,7 @@
 	#   int half_depth2;
 	#   int startdepth;
 	#   int depth;
-	#   struct Level Levels[MAXDEPTH];
+	#   struct Level Levels[OGR_MAXDEPTH];
 	#   int node_offset;
 	# };
 
@@ -1416,8 +1416,8 @@ loop_0_i:
 	lqx		$diff, $levels, $j
 	sf		$diff, $diff, $marks_i
 
-	# if (diff <= BITMAPS_LENGTH)
-	cgti		$temp1, $diff, BITMAP_LENGTH
+	# if (diff <= OGR_BITMAPS_LENGTH)
+	cgti		$temp1, $diff, OGR_BITMAP_LENGTH
 	#   break;
 	brz		$temp1, inc_i
 
@@ -1431,9 +1431,9 @@ loop_0_i:
 	andi		$temp2, $diff, 31
 	shl		$mask, $temp1, $temp2
 
-	# diff = (diff >> 5) - (BITMAPS_LENGTH / 32);
+	# diff = (diff >> 5) - (OGR_BITMAPS_LENGTH / 32);
 	rotmi		$diff, $diff, -5
-	ai		$diff, $diff, -(BITMAP_LENGTH/32)
+	ai		$diff, $diff, -(OGR_BITMAP_LENGTH/32)
 
 	# if ((diffs[diff] & mask) != 0)
 	shli		$temp1, $diff, 4

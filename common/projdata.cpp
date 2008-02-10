@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.5 2007/10/22 16:48:27 jlawson Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.6 2008/02/10 00:24:30 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"
@@ -24,16 +24,12 @@ static const struct ProjectInfo_t
 // obsolete projects may be omitted
 {
 //  ProjectID             Name      filext ini sect. unit
-  { RC5,                  "RC5",    "rc5", "rc5",    "keys",  1 },
-  { DES,                  "DES",    "des", "des",    "keys",  2 },
-  { OGR,                  "OGR",    "ogr", "ogr",    "nodes", 1 },
-  { CSC,                  "CSC",    "csc", "csc",    "keys",  1 },
-  { OGR_NEXTGEN_SOMEDAY,  "OGR_NG", "og2", "ogr_ng", "nodes", 1 },
-  { RC5_72,               "RC5-72", "r72", "rc5-72", "keys",  1 },
-  { OGR_P2,               "OGR-P2", "ogf", "ogr-p2", "nodes", 1 },
+  { OGR_NG, "OGR-NG", "og2", "ogr-ng", "nodes", 1 },
+  { RC5_72, "RC5-72", "r72", "rc5-72", "keys",  1 },
+  { OGR_P2, "OGR-P2", "ogf", "ogr-p2", "nodes", 1 },
   { -1,                   NULL,     NULL,  NULL,     NULL,    0 }
-#if (PROJECT_COUNT != 7)
-  #error PROJECT_NOT_HANDLED("ProjectInfo[]: static initializer was last updated for PROJECT_COUNT == 7")
+#if (PROJECT_COUNT != 3)
+  #error PROJECT_NOT_HANDLED("ProjectInfo[]: static initializer was last updated for PROJECT_COUNT == 3")
 #endif
 };
 
@@ -55,25 +51,10 @@ static const struct ProjectInfo_t *__internalGetProjectInfoVector( int projectid
    PROJECT_OK | (list of flags for projectid) otherwise */
 u32 ProjectGetFlags(int projectid)
 {
-  #if defined(HAVE_RC5_64_CORES)
-    #define PROJECT_OK_RC5_64 PROJECT_OK
-  #else
-    #define PROJECT_OK_RC5_64 PROJECT_UNSUPPORTED
-  #endif
-  #if defined(HAVE_DES_CORES)
-    #define PROJECT_OK_DES PROJECT_OK
-  #else
-    #define PROJECT_OK_DES PROJECT_UNSUPPORTED
-  #endif
   #if defined(HAVE_OGR_CORES)
-    #define PROJECT_OK_OGR PROJECT_OK
+    #define PROJECT_OK_OGR_NG PROJECT_OK
   #else
-    #define PROJECT_OK_OGR PROJECT_UNSUPPORTED
-  #endif
-  #if defined(HAVE_CSC_CORES)
-    #define PROJECT_OK_CSC PROJECT_OK
-  #else
-    #define PROJECT_OK_CSC PROJECT_UNSUPPORTED
+    #define PROJECT_OK_OGR_NG PROJECT_UNSUPPORTED
   #endif
   #if defined(HAVE_RC5_72_CORES)
     #define PROJECT_OK_RC5_72 PROJECT_OK
@@ -86,24 +67,13 @@ u32 ProjectGetFlags(int projectid)
     #define PROJECT_OK_OGR_P2 PROJECT_UNSUPPORTED
   #endif
   static const u32 projectflags[PROJECT_COUNT] = {
-    /* RC5    */ PROJECT_OK_RC5_64
-        | PROJECTFLAG_TIME_THRESHOLD | PROJECTFLAG_PREFERRED_BLOCKSIZE
-        | PROJECTFLAG_RANDOM_BLOCKS,
-    /* DES    */ PROJECT_OK_DES
-        | PROJECTFLAG_TIME_THRESHOLD | PROJECTFLAG_PREFERRED_BLOCKSIZE,
-    /* OGR    */ PROJECT_OK_OGR,
-    /* CSC    */ PROJECT_OK_CSC
-        | PROJECTFLAG_TIME_THRESHOLD | PROJECTFLAG_PREFERRED_BLOCKSIZE,
-    /* OGR_NG */ PROJECT_UNSUPPORTED,
+    /* OGR_NG */ PROJECT_OK_OGR_NG,
     /* RC5_72 */ PROJECT_OK_RC5_72
         | PROJECTFLAG_TIME_THRESHOLD /* not yet! | PROJECTFLAG_PREFERRED_BLOCKSIZE */
         | PROJECTFLAG_RANDOM_BLOCKS,
     /* OGR_P2 */ PROJECT_OK_OGR_P2,
   };
-  #undef PROJECT_OK_RC5_64
-  #undef PROJECT_OK_DES
-  #undef PROJECT_OK_OGR
-  #undef PROJECT_OK_CSC
+  #undef PROJECT_OK_OGR_NG
   #undef PROJECT_OK_RC5_72
   #undef PROJECT_OK_OGR_P2
 

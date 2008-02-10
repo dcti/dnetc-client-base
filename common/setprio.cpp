@@ -11,7 +11,7 @@
  * ------------------------------------------------------------------
 */
 const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.63 2007/10/22 16:48:28 jlawson Exp $"; }
+return "@(#)$Id: setprio.cpp,v 1.64 2008/02/10 00:24:29 kakace Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc
@@ -130,17 +130,6 @@ static int __SetPriority( unsigned int prio, int set_for_thread )
     //Sleep(1);
 
     SetThreadPriority( our_thrid, threadprio );
-  }
-  #elif (CLIENT_OS == OS_MACOS)
-  {
-    if ( set_for_thread )
-    {
-      // nothing
-    }
-    else
-    {
-      // nothing
-    }
   }
   #elif (CLIENT_OS == OS_WIN16)
   {

@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.40 2007/10/22 16:48:28 jlawson Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.41 2008/02/10 00:24:30 kakace Exp $"
 
 #include "cputypes.h"
 
@@ -61,9 +61,6 @@
   #endif
   #define sleep(x) DosSleep(1000*(x))
   #define usleep(x) DosSleep((x)/1000)
-#elif (CLIENT_OS == OS_MACOS)
-  #define sleep(x) macosTickSleep((x) * 60L)
-  #define usleep(x) macosTickSleep(((x) * 3 + 25000) / 50000)
 #elif (CLIENT_OS == OS_NETWARE)
   //emulated in platforms/netware/...
   extern "C" void usleep(unsigned long);

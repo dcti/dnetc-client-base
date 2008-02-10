@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.78 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: console.cpp,v 1.79 2008/02/10 00:24:29 kakace Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -116,12 +116,6 @@ int InitializeConsole(int *runhidden,int doingmodes)
     retcode = w32InitializeConsole(constatics.runhidden,doingmodes);
     #elif (CLIENT_OS == OS_NETWARE)
     retcode = nwCliInitializeConsole(constatics.runhidden,doingmodes);
-    #elif (CLIENT_OS == OS_MACOS)
-     #ifndef MAC_FBA // because I might need -config I cannot run the MacOS CLI
-     // client truly detached but rather hide the screenoutput in the console
-     retcode = macosInitializeConsole(constatics.runhidden,doingmodes);
-     *runhidden = 0;
-     #endif
     #elif (CLIENT_OS == OS_OS2)
      #if defined(OS2_PM)
      retcode = os2CliInitializeConsole(constatics.runhidden,doingmodes);
@@ -166,8 +160,6 @@ int ConIsGUI(void)
   #elif (CLIENT_OS == OS_RISCOS)
   extern int guiriscos;
   return (guiriscos!=0);
-  #elif (CLIENT_OS == OS_MACOS) && !defined(MAC_FBA)
-  return 1;
   #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   return amigaConIsGUI();
   #else
@@ -214,8 +206,6 @@ int ConOut(const char *msg)
       w32ConOut(msg);
     #elif (CLIENT_OS == OS_OS2 && defined(OS2_PM))
       os2conout(msg);
-    #elif (CLIENT_OS == OS_MACOS)
-      macosConOut(msg);
     #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
       amigaConOut(msg);
     #else
@@ -311,10 +301,6 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
       #if (CLIENT_OS == OS_RISCOS)
       {
           ch = _kernel_osrdch();
-      }
-      #elif (CLIENT_OS == OS_MACOS)
-      {
-        ch = macosConGetCh();
       }
       #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       {
@@ -886,7 +872,7 @@ int ConClear(void)
       #endif
     #elif (CLIENT_OS == OS_DOS)
       return dosCliConClear();
-    #elif (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_MACOS)
+    #elif (CLIENT_OS == OS_NETWARE)
       clrscr();
       return 0;
     #elif (CLIENT_OS == OS_RISCOS)

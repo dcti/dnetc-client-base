@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.255 2008/02/07 10:24:03 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.256 2008/02/10 00:24:29 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -93,24 +93,6 @@ static const char *GetBuildOrEnvDescription(void)
     speshul = " (SFT III MSE)";
   sprintf(buffer, "NetWare%s %u.%u%c", speshul, major, minor, revision );
   return buffer;
-#elif (CLIENT_OS == OS_MACOS)
-  const char *osname = "Mac OS";
-  long osversion;
-  if ( Gestalt( gestaltAUXVersion, &osversion ) != noErr)
-    osversion = 0;
-  if (osversion != 0)
-    osname = "A/UX";
-  else if ( Gestalt( gestaltSystemVersion, &osversion ) != noErr)
-    osversion = 0;
-  if ((osversion & 0xffff) != 0)
-  {
-    static char buffer[40];
-    sprintf( buffer, "%s %d.%d%c%d", osname,
-      (int)((osversion&0xff00)>>8), (int)((osversion&0x00f0)>>4),
-      (((osversion & 0x000f) == 0)?(0):('.')), (int)((osversion&0x000f)) );
-    return buffer;
-  }
-  return "";
 #elif (CLIENT_OS == OS_AMIGAOS)
   static char buffer[40];
   #ifdef __OS3PPC__
@@ -243,24 +225,6 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
                     "Copyright 1997-2007, distributed.net\n");
-#if defined HAVE_RC5_64_CORES
-      #if (CLIENT_CPU == CPU_68K)
-      LogScreenRaw( "RC5 68K assembly by John Girvin\n");
-      #endif
-      #if (CLIENT_CPU == CPU_POWERPC)
-      LogScreenRaw( "RC5 PowerPC and AltiVec assembly by Dan Oetting\n"
-                    "Enhancements for 604e CPUs by Roberto Ragusa\n");
-      #endif
-      #if (CLIENT_CPU == CPU_ALPHA) && (CLIENT_OS == OS_WIN32)
-      LogScreenRaw( "RC5 Alpha assembly by Mike Marcelais\n");
-      #endif
-      #if (CLIENT_CPU == CPU_ARM)
-      LogScreenRaw( "RC5 ARM assembly by Steve Lee\n");
-      #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
-      LogScreenRaw( "RISCOS/PC Card support by Dominic Plunkett\n");
-      #endif
-      #endif
-#endif
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
         #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
@@ -299,28 +263,12 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
         #endif
       #endif
 #endif
-#if defined(HAVE_DES_CORES)
-      #if defined(KWAN) && defined(MEGGS)
-      LogScreenRaw( "DES bitslice driver Copyright 1997-1998, Andrew Meggs\n"
-                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
-      #elif defined(KWAN) && defined(DWORZ)
-      LogScreenRaw( "DES bitslice driver Copyright 1999, Christoph Dworzak\n"
-                    "DES sboxes routines Copyright 1997-1998, Matthew Kwan\n" );
-      #elif defined(KWAN)
-      LogScreenRaw( "DES search routines Copyright 1997-1998, Matthew Kwan\n" );
-      #endif
-      #if (CLIENT_CPU == CPU_X86)
-      LogScreenRaw( "DES search routines Copyright 1997-1998, Svend Olaf Mikkelsen\n");
-      #endif
-#endif
       #if (CLIENT_OS == OS_DOS)
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
       #endif
 
       LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
-      #if (!CLIENT_OS == OS_MACOS)
       LogScreenRaw( "Start the client with '-help' for a list of valid command line options.\n" );
-      #endif
       LogScreenRaw( "\n" );
     }
     else if ( level == 1 || level == 2 )
@@ -541,17 +489,7 @@ static int ClientMain( int argc, char *argv[] )
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_MACOS)
-int main( void )
-{
-  char *argv[2];
-  ((const char **)argv)[0] = utilGetAppName();
-  argv[1] = (char *)0;
-  macosInitialize();
-  ClientMain(1,argv);
-  return 0;
-}
-#elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
+#if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 //if you get compile or link errors it is probably because you compiled with
 //STRICT, which is a no-no when using cpp (think 'overloaded')
 #define WIN32_LEAN_AND_MEAN

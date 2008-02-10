@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.152 2007/10/22 16:48:24 jlawson Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.153 2008/02/10 00:24:29 kakace Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -14,9 +14,6 @@
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
 
-#define PREFERREDBLOCKSIZE_DEFAULT       31  /* was 30, now 31 */
-#define PREFERREDBLOCKSIZE_MIN           28
-#define PREFERREDBLOCKSIZE_MAX           33
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
@@ -29,7 +26,6 @@ typedef struct
 {
   /* non-user-configurable */
   int  nonewblocks;
-  int  rc564closed;
   int  stopiniio;
   u32  scheduledupdatetime;
   char inifilename[MINCLIENTOPTSTRLEN*2];
@@ -38,7 +34,7 @@ typedef struct
   int  buffupd_retry_delay;
   int  net_update_status;
   int  remote_update_status;
-  int project_state[PROJECT_COUNT]; /* do NOT save states received from proxy to disk! */
+  int  project_state[PROJECT_COUNT]; /* do NOT save states received from proxy to disk! */
 
   /* -- general -- */
   char id[MINCLIENTOPTSTRLEN];
@@ -76,7 +72,6 @@ typedef struct
   #if (!defined(NO_OUTBUFFER_THRESHOLDS))
   int outthreshold[CONTEST_COUNT];
   #endif
-  int preferred_blocksize[CONTEST_COUNT];
   int project_order_map[PROJECT_COUNT];
 
   /* -- perf -- */

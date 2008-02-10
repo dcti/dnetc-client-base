@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.59 2007/10/22 16:48:23 jlawson Exp $"; }
+return "@(#)$Id: bench.cpp,v 1.60 2008/02/10 00:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -24,10 +24,10 @@ return "@(#)$Id: bench.cpp,v 1.59 2007/10/22 16:48:23 jlawson Exp $"; }
 
 #define TBENCHMARK_CALIBRATION 0x80
 
-#if (CONTEST_COUNT != 7)
-  #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
+#if (CONTEST_COUNT != 3)
+  #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 3")
 #endif
-unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0,0};
+unsigned long bestrate_tab[CONTEST_COUNT] = {0,0,0};
 
 /* -------------------------------------------------------------------- */
 
@@ -107,14 +107,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     non_preemptive_os.yps = 1000/10; /* 10 ms minimum yield rate */ 
     tslice = 0; /* zero means 'use calibrated value' */
   }  
-  #elif (CLIENT_OS == OS_MACOS)
-  if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
-    numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
-  else
-  {    
-    non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */
-    tslice = 0; /* zero means 'use calibrated value' */
-  }
   #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
   if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
     numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
@@ -229,8 +221,6 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           }
           #if (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
           w32Yield(); /* pump waiting messages */
-          #elif (CLIENT_OS == OS_MACOS)
-          macosSmartYield(6);
           #elif (CLIENT_OS == OS_RISCOS)
           riscos_upcall_6();
           #elif (CLIENT_OS == OS_NETWARE)
@@ -266,7 +256,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           }
           if (ratehi)
             ratelo = 0x0fffffff;
-          if (ratelo > tslice || contestid == OGR || contestid == OGR_P2)
+          if (ratelo > tslice || contestid == OGR_NG || contestid == OGR_P2)
             tslice = thisprob->pub_data.tslice = ratelo;
         }
         run = ProblemRun(thisprob);

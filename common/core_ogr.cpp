@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.4 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.5 2008/02/10 00:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -26,7 +26,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.4 2007/10/22 16:48:25 jlawson Exp $"; }
 #include <libspe2.h>
 #endif
 
-#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+#if defined(HAVE_OGR_PASS2)
 
 /* ======================================================================== */
 
@@ -598,7 +598,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   /* ================================================================== */
 
 
-  if (coresel >= 0 && unit_func.gen &&
+  if (coresel >= 0 && unit_func.ogr &&
      coresel < ((int)corecount_for_contest(contestid)) )
   {
     if (client_cpuP)
@@ -678,4 +678,4 @@ unsigned int estimate_nominal_rate_ogr()
 
 /* ------------------------------------------------------------- */
 
-#endif // defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+#endif // defined(HAVE_OGR_PASS2)

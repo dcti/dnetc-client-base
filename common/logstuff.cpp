@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.56 2007/10/22 16:48:26 jlawson Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.57 2008/02/10 00:24:29 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -940,7 +940,7 @@ static int __do_crunchometer( int event_disp_format,
     else if (logstatics.crunchmeter == 3) /* rate */
       disp_format = DISPFORMAT_RATE;
     else if (logstatics.crunchmeter < 0 &&
-     (prob_count[OGR] > 0 || prob_count[OGR_P2] > 0 || load_problem_count >= sizeof(pbuf)))
+     (prob_count[OGR_P2] > 0 || prob_count[OGR_NG] > 0 || load_problem_count >= sizeof(pbuf)))
       disp_format = DISPFORMAT_COUNT; //or DISPFORMAT_RATE for rate;
     /* anything else is percent */
   }

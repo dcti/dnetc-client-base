@@ -15,12 +15,12 @@
 ** mdup(). The stream object used/created by these functions is a MEMFILE *. 
 */
 const char *memfile_cpp(void) {
-return "@(#)$Id: memfile.cpp,v 1.8 2007/10/22 16:48:26 jlawson Exp $"; }
+return "@(#)$Id: memfile.cpp,v 1.9 2008/02/10 00:24:29 kakace Exp $"; }
 
 #include <stdio.h>
 #include <string.h>
-#if (CLIENT_OS != OS_MACOS)
-#include <malloc.h>
+#if (CLIENT_OS != OS_MACOSX)
+  #include <malloc.h>
 #endif
 #if (CLIENT_OS == OS_VMS)
   #include <stdlib.h>     /* malloc, free, etc. */

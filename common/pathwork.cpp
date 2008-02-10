@@ -24,7 +24,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.24 2007/10/22 16:48:26 jlawson Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.25 2008/02/10 00:24:30 kakace Exp $"; }
 
 // #define TRACE
 
@@ -52,9 +52,7 @@ unsigned int GetFilenameBaseOffset( const char *fullpath )
   char *slash;
   if ( !fullpath )
     return 0;
-  #if (CLIENT_OS == OS_MACOS)
-    slash = strrchr( fullpath, ':' );
-  #elif (CLIENT_OS == OS_VMS)
+  #if (CLIENT_OS == OS_VMS)
     slash = strrchr( fullpath, ':' );
     char *slash2 = strrchr( fullpath, '$' );
     if (slash2 > slash) slash = slash2;
@@ -149,14 +147,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
   if ( apppath == NULL ) apppath = "";
 
   __cwd_buffer[0] = '\0';
-  #if (CLIENT_OS == OS_MACOS)
-  {
-    strcpy( __cwd_buffer, inipath );
-    char *slash = strrchr(__cwd_buffer, ':');
-    if (slash != NULL) *(slash+1) = 0;   //<peterd> On the Mac, the current
-    else __cwd_buffer[0] = 0; // directory is always the apps directory at startup.
-  }
-  #elif (CLIENT_OS == OS_VMS)
+  #if (CLIENT_OS == OS_VMS)
   {
     strcpy( __cwd_buffer, inipath );
     char *slash, *bracket, *dirend;
@@ -332,7 +323,7 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
 
 static int __is_filename_absolute(const char *fname)
 {
-  #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_VMS)
+  #if (CLIENT_OS == OS_VMS)
   return (*fname == ':');
   #elif (CLIENT_OS == OS_RISCOS)
   return (*fname == '.');
@@ -436,7 +427,7 @@ const char *GetFullPathForFilenameAndDir( const char *fname, const char *dir )
   if ( strlen( __path_buffer ) > GetFilenameBaseOffset( __path_buffer ) )
   {
     /* dirname is not terminated with a directory separator - so add one */
-    #if (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_VMS)
+    #if (CLIENT_OS == OS_VMS)
       strcat( __path_buffer, ":" );
     #elif (CLIENT_OS == OS_RISCOS)
       strcat( __path_buffer, "." );

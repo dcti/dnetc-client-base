@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.7 2008/02/07 10:24:03 kakace Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.8 2008/02/10 00:24:30 kakace Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -331,80 +331,6 @@
 #  error "What's up Doc?"
 # endif
     }
-  }
-
-#elif (CLIENT_CPU == CPU_POWERPC) && (defined(__MWERKS__) || defined(__MRC__))
-
-  /* based on
-  ** http://cvsweb.netbsd.org/bsdweb.cgi/syssrc/sys/arch/powerpc/include/lock.h?rev=1.4.2.1
-  ** approved by Dan Oetting */
-
-  typedef volatile int fastlock_t;
-
-  static inline void fastlock_init(fastlock_t *l) {
-    *l = 0;
-  }
-
-  static inline void fastlock_unlock(fastlock_t *l) {
-    asm { sync }
-    *l = 0;
-  }
-
-  static inline int fastlock_trylock(fastlock_t *l) {
-    int dummy;
-    register int *dummyp = &dummy, old, locked = 1;
-
-    asm {
-      @1:     lwarx   old,0,l
-              cmpwi   old,0     /* unlocked */
-              bne     @2
-              stwcx.  locked,0,l
-              bne-    @1
-      @2:     stwcx.  locked,0,dummyp
-              isync
-    }
-
-    if (old == 0) /* old state was 0? */
-      return 1;   /* then success */
-
-    return 0;
-  }
-
-# if (CLIENT_OS == OS_MACOS)
-#  include <Multiprocessing.h>
-# endif
-
-  static inline void fastlock_lock(fastlock_t *l) {
-# if (CLIENT_OS == OS_MACOS)
-    int need_mp_sleep = -1; /* unknown */
-
-    while (fastlock_trylock(l) <= 0)
-    {
-#  warning "Busy spin because using MPTaskIsPreemptive() would break MP 1.x support"
-      /* the only way we could get here is if we are
-      ** running on an MP system and the lock is being
-      ** held on another cpu, so we could actually
-      ** busy spin until the lock was released. But
-      ** we'll play nice...
-
-      if (need_mp_sleep == -1) // first time through
-      {
-        need_mp_sleep = 0;
-        if (MPLibraryIsLoaded())
-        {
-          if (MPTaskIsPreemptive(kInvalidID)) // self
-            need_mp_sleep = +1;
-        }
-      }
-      if (need_mp_sleep)
-        MPYield();
-      else
-        macosSmartYield(6); // shouldn't be needed, but doesn't hurt
-      */
-    }
-# else
-#  error "What's up Doc?"
-# endif
   }
 
 #elif (CLIENT_CPU == CPU_68K) && defined(__GNUC__)

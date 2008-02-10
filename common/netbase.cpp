@@ -63,7 +63,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.9 2007/10/22 16:48:26 jlawson Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.10 2008/02/10 00:24:30 kakace Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -179,7 +179,6 @@ return "@(#)$Id: netbase.cpp,v 1.9 2007/10/22 16:48:26 jlawson Exp $"; }
 
 // added OS_OPENBSD. grub 20020321
 #if (defined(__GLIBC__) && (__GLIBC__ >= 2)) \
-    || (CLIENT_OS == OS_MACOS) \
     || (CLIENT_OS == OS_OPENBSD) \
     || (CLIENT_OS == OS_NETBSD) \
     || ((CLIENT_OS == OS_QNX) && (defined(__QNXNTO__))) \
@@ -1043,9 +1042,7 @@ static int __bsd_quick_disco_look(SOCKET fd, int fdr_is_ready)
   if (rc > 0)
   {
     char ch = 0;
-    #if (CLIENT_OS == OS_MACOS) /* broken gusi */
-      ch = 1; /* msg_peek removes 1 byte from the queue */
-    #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if (winGetVersion() < 400) /* broken 16bit winsock.dll */
       ch = 1; /* msg_peek removes 1 byte from the queue */
     #endif
@@ -2268,13 +2265,6 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
           {
             that_address = 0; that_port = 0;
           }
-          #elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_68K)
-          /* The MacTCP implementation of getpeername() in GUSI (up to 2.1.9)
-           * is buggy. My investigation shows that inserting a sleep() might
-           * help but I prefer to just skip getpeername() because it is simply
-           * not a must-have feature.
-           */
-          that_address = 0; that_port = 0;
           #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
           /* The TermiteTCP implementation of getpeername() is buggy, causing
            * the system to bomb out.  So, don't use it if TermiteTCP is the stack

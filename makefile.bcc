@@ -12,24 +12,18 @@
 # (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
 # A list of all mirrors is at http://www.kernel.org/mirrors/
 #
-# $Id: makefile.bcc,v 1.38 2007/10/22 16:48:23 jlawson Exp $
+# $Id: makefile.bcc,v 1.39 2008/02/10 00:25:29 kakace Exp $
 
 BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
-DESPATH = des
-RC564PATH = rc5
 RC572PATH = rc5-72
-CSCPATH = csc
 OGRPATH = ogr
 CHIPSRCPATH = plat\x86
 PLATSRCPATH = plat\win
 #DEBUG=1
 
-#HAVE_RC5_64_CORES=1
 HAVE_RC5_72_CORES=1
-#HAVE_DES_CORES=1
-#HAVE_CSC_CORES=1
 HAVE_OGR_CORES=1
 
 # -------------------------------------------------------------------
@@ -94,10 +88,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/coremem.obj    \
-        $(OUTPUTPATH)/core_rc5.obj   \
         $(OUTPUTPATH)/core_r72.obj   \
-        $(OUTPUTPATH)/core_des.obj   \
-        $(OUTPUTPATH)/core_csc.obj   \
         $(OUTPUTPATH)/core_ogr.obj   \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
@@ -161,25 +152,6 @@ CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj       \
             $(OUTPUTPATH)/x86htcount.obj
 
 
-# --------------------------------- RC5-64 -------------------------
-
-!ifndef HAVE_RC5_64_CORES
-RC5_64_OBJS =
-!else
-RC5_64_OBJS =                        \
-        $(OUTPUTPATH)/brf-p5.obj     \
-        $(OUTPUTPATH)/rg-k5.obj      \
-        $(OUTPUTPATH)/rg-k6.obj      \
-        $(OUTPUTPATH)/rg-p6.obj      \
-        $(OUTPUTPATH)/jp-mmx.obj     \
-        $(OUTPUTPATH)/rg-486.obj     \
-        $(OUTPUTPATH)/rg-6x86.obj    \
-        $(OUTPUTPATH)/hb-k7.obj      \
-        $(OUTPUTPATH)/ak-p7.obj      \
-        $(OUTPUTPATH)/brf-smc.obj
-BCCOPTS = $(BCCOPTS) -DSMC -DHAVE_RC5_64_CORES
-!endif
-
 # --------------------------------- RC5-72 -------------------------
 
 !ifndef HAVE_RC5_72_CORES
@@ -196,46 +168,6 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-sgp3.obj
 
 BCCOPTS = $(BCCOPTS) -DHAVE_RC5_72_CORES
-!endif
-
-# --------------------------------- DES ----------------------------
-
-# untested!
-!ifndef HAVE_DES_CORES
-DES_OBJS =
-!else
-!message WARNING! DES unsupported and untested!
-DES_OBJS =                                   \
-        $(OUTPUTPATH)/convdes.obj            \
-        $(OUTPUTPATH)/bbdeslow.obj           \
-        $(OUTPUTPATH)/bdeslow.obj            \
-        $(OUTPUTPATH)/des-slice.obj          \
-        $(OUTPUTPATH)/des-slice-meggs.obj    \
-        $(OUTPUTPATH)/des-x86.obj            \
-        $(OUTPUTPATH)/deseval.obj            \
-#       $(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
-        $(OUTPUTPATH)/deseval-mmx.obj        \
-        $(OUTPUTPATH)/p1bdespro.obj          \
-        $(OUTPUTPATH)/p2bdespro.obj          \
-        $(OUTPUTPATH)/sboxes-kwan4.obj       \
-#       $(OUTPUTPATH)/sboxes-mmx.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN -I$(DESPATH) 
-!endif
-
-# --------------------------------- CSC ----------------------------
-
-!ifndef HAVE_CSC_CORES
-CSC_OBJS =
-!else
-CSC_OBJS =                           \
-         $(OUTPUTPATH)/convcsc.obj   \
-         $(OUTPUTPATH)/csc-1k.obj    \
-         $(OUTPUTPATH)/csc-1k-i.obj  \
-         $(OUTPUTPATH)/csc-6b.obj    \
-         $(OUTPUTPATH)/csc-6b-i.obj  \
-         $(OUTPUTPATH)/csc-comm.obj  \
-         $(OUTPUTPATH)/csc-mmx.obj
-BCCOPTS = $(BCCOPTS) -DHAVE_CSC_CORES -I$(CSCPATH) 
 !endif
 
 # --------------------------------- OGR ----------------------------
@@ -255,8 +187,8 @@ BCCOPTS = $(BCCOPTS) -DHAVE_OGR_CORES -I$(OGRPATH)
 
 .autodepend
 .suffixes: .asm .c .cpp # the order in which files are looked for
-.path.asm = $(RC564PATH)\x86;$(DESPATH)\x86;$(CSCPATH)\x86;$(CSCPATH)\x86\mmx;$(OGRPATH)\x86;$(RC572PATH)\x86;$(CHIPSRCPATH)
-.path.cpp = $(COMMONPATH);$(DESPATH);$(OGRPATH)\x86;$(OGRPATH)\ansi;$(RC572PATH)\ansi;$(PLATSRCPATH)
+.path.asm = $(OGRPATH)\x86;$(RC572PATH)\x86;$(CHIPSRCPATH)
+.path.cpp = $(COMMONPATH);$(OGRPATH)\x86;$(OGRPATH)\ansi;$(RC572PATH)\ansi;$(PLATSRCPATH)
 .path.c   = $(PLATSRCPATH)
 .path.obj = $(OUTPUTPATH)
 
@@ -328,7 +260,7 @@ $(DEF_FILE):
 # --------------------------------------------
 
 $(BASENAME).exe:   $(BCC_CHECK) $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
-                   $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(CSC_OBJS) $(OGR_OBJS) \
+                   $(RC5_72_OBJS) $(OGR_OBJS) \
                    $(DEF_FILE) $(RES_FILE)
 !ifndef WHICHSRC
         @if     exist $(COMMONPATH:/=\)\buffpriv.cpp $(MAKE_CMD) -DWHICHSRC=0
@@ -336,7 +268,7 @@ $(BASENAME).exe:   $(BCC_CHECK) $(COMMON_OBJS) $(PLAT_OBJS) $(CHIP_OBJS) \
 !else
         $(ILINK32) $(TLINKOPTS) /aa /V3.10 c0w32.obj \
                    $(COMMON_OBJS:/=\) $(PLAT_OBJS:/=\) $(CHIP_OBJS:/=\) \
-                   $(RC5_64_OBJS:/=\) $(RC5_72_OBJS:/=\) $(DES_OBJS:/=\) $(CSC_OBJS:/=\) $(OGR_OBJS:/=\), \
+                   $(RC5_72_OBJS:/=\) $(OGR_OBJS:/=\), \
                    $(BASENAME:/=\).exe,,$(MT_LIBS),$(DEF_FILE:/=\),$(RES_FILE:/=\)
         #actually this call to UPX doesn't work, ought to try PKLITE32 sometime 
         @if exist $(UPXW) \

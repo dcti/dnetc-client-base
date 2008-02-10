@@ -46,15 +46,15 @@ $   cxx/standard=ms/prefix=all -
        buffupd.cpp,checkpt.cpp,clicdata.cpp,client.cpp, -
        clievent.cpp,cliident.cpp,clirun.cpp,clitime.cpp, -
        cmdline.cpp,confmenu.cpp,confopt.cpp,confrwv.cpp, -
-       console.cpp,convdes.cpp,coremem.cpp,core_csc.cpp, -
-       core_des.cpp,core_ogr.cpp,core_r72.cpp,core_rc5.cpp, -
+       console.cpp,coremem.cpp, -
+       core_ogr.cpp,core_r72.cpp, -
        cpucheck.cpp,disphelp.cpp,iniread.cpp,logstuff.cpp, -
        lurk.cpp,mail.cpp,memfile.cpp,modereq.cpp,netbase.cpp, -
        netconn.cpp,ogr.cpp,ogr_dat.cpp,ogr_sup.cpp,pathwork.cpp, -
        pollsys.cpp,probfill.cpp,problem.cpp,probman.cpp, -
        projdata.cpp,random.cpp,r72ansi1.cpp,r72ansi2.cpp, -
        r72ansi4.cpp,r72-ref.cpp,scram.cpp,selcore.cpp, -
-       selftest.cpp,setprio.cpp,threadcd.cpp,triggers.cpp, -
+       selftest.cpp,setprio.cpp,triggers.cpp, -
        util.cpp
 $!
 $! Link Modules
@@ -66,15 +66,15 @@ $   cxxlink/executable='appdir''execname -
        buffupd.obj,checkpt.obj,clicdata.obj,client.obj, -
        clievent.obj,cliident.obj,clirun.obj,clitime.obj, -
        cmdline.obj,confmenu.obj,confopt.obj,confrwv.obj, -
-       console.obj,convdes.obj,coremem.obj,core_csc.obj, -
-       core_des.obj,core_ogr.obj,core_r72.obj,core_rc5.obj, -
+       console.obj,coremem.obj, -
+       core_ogr.obj,core_r72.obj, -
        cpucheck.obj,disphelp.obj,iniread.obj,logstuff.obj, -
        lurk.obj,mail.obj,memfile.obj,modereq.obj,netbase.obj, -
        netconn.obj,ogr.obj,ogr_dat.obj,ogr_sup.obj,pathwork.obj, -
        pollsys.obj,probfill.obj,problem.obj,probman.obj, -
        projdata.obj,random.obj,r72ansi1.obj,r72ansi2.obj, -
        r72ansi4.obj,r72-ref.obj,scram.obj,selcore.obj, -
-       selftest.obj,setprio.obj,threadcd.obj,triggers.obj, -
+       selftest.obj,setprio.obj,triggers.obj, -
        util.obj
 $!
 $! Purge old file versions

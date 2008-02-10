@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.95 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.96 2008/02/10 00:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -54,10 +54,11 @@ static void ConfigReadUniversalNews( Client *client, const char *fn )
 {
   if (!fn) fn = GetFullPathForFilename( client->inifilename );
   //client->rc564closed is necessary to supress generation of randoms
-  client->rc564closed = GetPrivateProfileIntB(__getprojsectname(RC5), "closed", 0, fn );
   client->scheduledupdatetime = GetPrivateProfileIntB(OPTSECT_NET,"scheduledupdatetime", 0, fn);
   return;  
 }
+
+
 //ConfigWriteServerNews() may *only* be called from buffer update 
 //(otherwise the ini will end up with data that is not authoritative)
 void ConfigWriteUniversalNews( Client *client )
@@ -68,21 +69,6 @@ void ConfigWriteUniversalNews( Client *client )
     if ( access( fn, 0 ) == 0 ) /* we also do not write these settings */
     {                           /* if the .ini doesn't already exist */
       int did_write = 0;
-
-      /* rc5 closed? */
-      {
-        const char *rc5_sect = __getprojsectname(RC5);
-        int rc564closed = 0;
-        if (GetPrivateProfileIntB(rc5_sect, "closed", 0, fn ))
-          rc564closed = 1;
-        if (client->rc564closed)
-          client->rc564closed = 1;
-        if (rc564closed != client->rc564closed)
-        {
-          WritePrivateProfileStringB(rc5_sect,"closed",(client->rc564closed)?("yes"):(NULL), fn );
-          did_write = 1;
-        }
-      }            
 
       /* got a new scheduled update time? */
       if (client->scheduledupdatetime != GetPrivateProfileIntB(OPTSECT_NET,"scheduledupdatetime", 0, fn))
@@ -648,39 +634,6 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
 
   /* ----------------- project options ----------------- */
 
-  /* we no longer save the random prefix in the .ini (all done elsewhere) */
-  WritePrivateProfileStringB( __getprojsectname(RC5), "randomprefix", NULL, fn );
-
-  #if (CLIENT_CPU != CPU_ALPHA) && (CLIENT_CPU != CPU_68K) && (CLIENT_CPU != CPU_ARM)
-  /* don't have RC5 cputype->coretype mapping for Alpha or m68k or arm */
-  if (!GetPrivateProfileStringB( __getprojsectname(RC5), "core", "", buffer, sizeof(buffer), fn ))
-  {
-    if ((i = GetPrivateProfileIntB(OPTION_SECTION, "cputype", -1, fn ))!=-1)
-    {
-      client->coretypes[RC5] = i;
-      modfail += (!_WritePrivateProfile_sINT( __getprojsectname(RC5), "core", i, fn));
-      TRACE_OUT((0,"remapped rc5 core (%d)\n", modfail));
-    }
-  }
-  #endif
-
-  /* PREFERRED-BLOCKSIZE MUST COME BEFORE THRESHOLDS */
-  if (!GetPrivateProfileStringB( __getprojsectname(RC5), "preferred-blocksize", "", buffer, sizeof(buffer), fn )
-   && !GetPrivateProfileStringB( __getprojsectname(DES), "preferred-blocksize", "", buffer, sizeof(buffer), fn ))
-  {
-    if ((i = GetPrivateProfileIntB(OPTION_SECTION, "preferredblocksize", -1, fn ))!=-1)
-    {
-      if (i >= PREFERREDBLOCKSIZE_MIN &&
-          i <= PREFERREDBLOCKSIZE_MAX &&
-          i != OLD_PREFERREDBLOCKSIZE_DEFAULT) /* 30 */
-      {
-        client->preferred_blocksize[RC5] = i;
-        client->preferred_blocksize[DES] = i;
-        modfail += (!_WritePrivateProfile_sINT( __getprojsectname(RC5), "preferred-blocksize", i, fn));
-        modfail += (!_WritePrivateProfile_sINT( __getprojsectname(DES), "preferred-blocksize", i, fn));
-      }
-    }
-  }
   TRACE_OUT((0,"remapping 5 (%d)\n", modfail));
   {
     int thresholdsdone = 0;
@@ -712,40 +665,15 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
           WritePrivateProfileStringB( cont_sect, "fetch-threshold", NULL, fn );
           WritePrivateProfileStringB( cont_sect, "flush-threshold", NULL, fn );
         }
-        else if ((cont_i == RC5) && /* pre-2.8000 */
-          GetPrivateProfileStringB( OPTION_SECTION, "threshold", "", buffer, sizeof(buffer), fn ))
-        {
-          if ((i = atoi( buffer )) > 0)
-          {
-            oldstyle_inout[0] = i;
-            if ((p = strchr( buffer, ':' )) != NULL)
-              oldstyle_inout[1] = atoi( p+1 );
-          }
-          /* deleted at end of function */
-        }
+
         if (oldstyle_inout[0] > 0)
         {
           int multiplier = 1;
           switch (cont_i)
           {
-// TODO: acidblood/trashover
              case RC5_72:
-// OK!
-             case RC5:
-             case DES:
-             case CSC:
-               multiplier = GetPrivateProfileIntB( cont_sect,
-                            "preferred-blocksize", OLD_PREFERREDBLOCKSIZE_DEFAULT, fn );
-               if ( multiplier < 1)
-                 multiplier = OLD_PREFERREDBLOCKSIZE_DEFAULT;
-               else if ( multiplier < PREFERREDBLOCKSIZE_MIN)
-                 multiplier = PREFERREDBLOCKSIZE_MIN;
-               else if (multiplier > PREFERREDBLOCKSIZE_MAX)
-                 multiplier = OLD_PREFERREDBLOCKSIZE_DEFAULT;
-               multiplier -= (PREFERREDBLOCKSIZE_MIN-1);
-               break;
-             case OGR:
              case OGR_P2:
+             case OGR_NG:
                multiplier = 1;
                break;
           }
@@ -1018,19 +946,6 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       modfail += (!_WritePrivateProfile_sINT( OPTSECT_MISC, "run-work-limit", i, fn));
     }
   }
-  if (!GetPrivateProfileStringB( OPTSECT_MISC, "project-priority", "", buffer, sizeof(buffer), fn ))
-  {
-    if (GetPrivateProfileIntB( OPTION_SECTION, "processdes", sizeof(buffer), fn ) == 0 )
-    {
-      int mapbuffer[PROJECT_COUNT], statebuffer[PROJECT_COUNT];
-      projectmap_build( mapbuffer, NULL, NULL );
-      memset(statebuffer, 0, sizeof(statebuffer));
-      client->project_state[DES] |= PROJECTSTATE_USER_DISABLED;
-      statebuffer[DES] |= PROJECTSTATE_USER_DISABLED;
-      modfail += (!WritePrivateProfileStringB( OPTSECT_MISC, "project-priority", 
-                        projectmap_expand(mapbuffer, statebuffer), fn ));
-    }
-  }
   /* ----------------- OPTSECT_DISPLAY ----------------- */
   TRACE_OUT((0,"remapping 10 (%d)\n", modfail));
 
@@ -1292,13 +1207,6 @@ int ConfigRead(Client *client)
       client->coretypes[cont_i] =
          GetPrivateProfileIntB(cont_name, "core",
                        client->coretypes[cont_i],fn);
-      if (proj_flags & PROJECTFLAG_PREFERRED_BLOCKSIZE)
-      {
-        /* note that the default preferred_blocksize is now <=0 (auto) */
-        client->preferred_blocksize[cont_i] =
-           GetPrivateProfileIntB(cont_name, "preferred-blocksize",
-                         client->preferred_blocksize[cont_i], fn );
-      }
 
       client->inthreshold[cont_i] =
            GetPrivateProfileIntB(cont_name, "fetch-workunit-threshold",
@@ -1482,16 +1390,6 @@ int ConfigWrite(Client *client)
           __XSetProfileInt( p, "fetch-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
         }
         __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
-        if (proj_flags & PROJECTFLAG_PREFERRED_BLOCKSIZE)
-        {
-          // FIXME? why do we do this check first?
-          if (client->preferred_blocksize[cont_i] > 0 ||
-              GetPrivateProfileStringB(p,"preferred-blocksize","",buffer,2,fn))
-          {
-            __XSetProfileInt( p, "preferred-blocksize",
-              client->preferred_blocksize[cont_i], fn, 0, 0 );
-          }
-        }
       }
     }
 

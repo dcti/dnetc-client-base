@@ -17,7 +17,7 @@
 
 /* have to comment out to allow for including from arch-specific files
 const char *ogr64_cpp(void) {
-return "@(#)$Id: ogr-64.cpp,v 1.2 2007/10/22 16:48:28 jlawson Exp $"; }
+return "@(#)$Id: ogr-64.cpp,v 1.3 2008/02/10 00:26:53 kakace Exp $"; }
 */
 
 #include <stddef.h>
@@ -272,6 +272,6 @@ return "@(#)$Id: ogr-64.cpp,v 1.2 2007/10/22 16:48:28 jlawson Exp $"; }
 
 #include "ansi/ogr.cpp"
 
-#if !defined(BITMAPS_LENGTH) || (BITMAPS_LENGTH != 160)
-#error BITMAPS_LENGTH must be 160 !!!
+#if !defined(OGR_BITMAPS_LENGTH) || (OGR_BITMAPS_LENGTH != 160)
+#error OGR_BITMAPS_LENGTH must be 160 !!!
 #endif

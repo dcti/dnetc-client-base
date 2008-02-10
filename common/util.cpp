@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.32 2007/10/22 16:48:28 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.33 2008/02/10 00:24:30 kakace Exp $"; }
 
 //#define TRACE
 
@@ -371,11 +371,11 @@ const char *projectmap_expand( const int *map, const int *state_vec )
 // string or default ==> project order map + project state vec
 const int* projectmap_build( int* buf, int* state, const char *strtomap )
 {
-  #if (CONTEST_COUNT != 7)
-    #error PROJECT_NOT_HANDLED("static default load order map expects CONTEST_COUNT == 7")
+  #if (CONTEST_COUNT != 3)
+    #error PROJECT_NOT_HANDLED("static default load order map expects CONTEST_COUNT == 3")
   #endif
   // you must add _every_ project, obsoletes may come last
-  static const int default_map[PROJECT_COUNT] = { DES,CSC,OGR,OGR_NEXTGEN_SOMEDAY,OGR_P2,RC5,RC5_72 };
+  static const int default_map[PROJECT_COUNT] = { OGR_NG, OGR_P2, RC5_72 };
   static int default_map_checked = -1;
   static int map[PROJECT_COUNT];
   unsigned int map_pos, i;
@@ -985,18 +985,6 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
             pidlist[num_found] = (long)nlmHandle;
           num_found++;
         }
-      }
-    }
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #elif (CLIENT_OS == OS_MACOS)
-    {
-      long lowLongOfPSN = macosFindProc( procname );
-      num_found = 0;
-      if (lowLongOfPSN)
-      {
-        if (pidlist)
-          pidlist[num_found] = lowLongOfPSN;
-        num_found++;
       }
     }
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++

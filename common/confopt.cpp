@@ -4,14 +4,14 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.54 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.55 2008/02/10 00:24:29 kakace Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
 #include "cputypes.h" // CLIENT_OS
 #include "pathwork.h" // EXTN_SEP
 #include "baseincs.h" // NULL
-#include "client.h"   // PREFERREDBLOCKSIZE_MIN etc
+#include "client.h"
 #include "util.h"     // projectmap_expand()
 #include "confopt.h"  // ourselves
 
@@ -143,9 +143,6 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "and/or by window class. To specify a window title, prefix it with '*', for\n"
   "example, \"*Backup Exec\". Prefix class names with '#'. Searching by window\n"
   "title and/or class name is exact, ie sensitive to case and name length.\n"
-  #elif (CLIENT_OS == OS_MACOS)
-  "The name of a process must match its name in the application menu on the far\n"
-  "right. For example 'QuickTime Player|Disk First Aid'.\n"
   #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
   "The name of a process is case sensitive and must match the internal task name\n"
   "exactly. For example 'DiskSalv|Quake'.\n"
@@ -160,7 +157,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "If this option is enabled, the client will pause itself if it finds that\n"
   "the temperature of a processor exceeds the threshold specified in the\n"
   "\"Processor temperature thresholds\" option.\n"
-  #if ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX))
+  #if (CLIENT_OS == OS_MACOSX)
   "\n"
   "Processor temperature checking is only supported under Mac OS with certain\n"
   "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU),\n"
@@ -191,7 +188,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "Illegal values, for instance a 'low' that is not less or equal than 'high',\n"
   "will render the pair invalid and cause temperature threshold checking to\n"
   "be silently disabled.\n"
-  #if ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_MACOSX))
+  #if (CLIENT_OS == OS_MACOSX)
   "\n"
   "Processor temperature checking is only supported under Mac OS with certain\n"
   "PowerPC G3 or G4 processors (those featuring a Thermal Assist Unit, TAU),\n"
@@ -216,7 +213,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
       ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)))
   "This option is ignored if power management is disabled or not configured or\n"
   "if /dev/apm cannot be opened for reading (may require superuser privileges).\n"
-  #elif (CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOSX)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOSX)
   "This option is ignored if power source detection is not supported by the\n"
   "the operating system or hardware architecture.\n"
   #else
@@ -394,9 +391,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "name - for instance, \"XYZ:0\" tells your client not to work on, or request\n"
   "work for, the XYZ project.\n"
   #if (defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2))   \
-    && ((CLIENT_OS == OS_MACOS) || (CLIENT_OS == OS_NETWARE) \
-  /*|| (CLIENT_OS == OS_RISCOS)*/ || (CLIENT_OS == OS_WIN16))
-  "Note : OGR-P2 is automatically disabled for non-preemptive operating\n"
+    && ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16))
+  "Note : OGR is automatically disabled for non-preemptive operating\n"
   "environments running on low(er)-end hardware. For details, see\n"
   "http://www.distributed.net/faq/cache/188.html\n"
   #endif
@@ -472,25 +468,6 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "until it succeeds.\n"
   /*)*/,CONF_MENU_BUFF,CONF_TYPE_TIMESTR,NULL,NULL,0,0,NULL,NULL
 },   
-{ 
-  CONF_PREFERREDBLOCKSIZE      , /* CONF_MENU_BUFF */
-  CFGTXT("Preferred packet size (2^X keys/packet)"), "-1 (auto)",
-  /* CFGTXT( */
-  "When fetching key-based packets from a server, the client will request\n"
-  "packets with the size you specify in this option. Packet sizes are\n"
-  "specified as powers of 2.\n"
-  "The minimum and maximum packet sizes are " _TEXTIFY(PREFERREDBLOCKSIZE_MIN) " and " _TEXTIFY(PREFERREDBLOCKSIZE_MAX) " respectively,\n"
-  "and specifying '-1' permits the client to use internal defaults.\n"
-  "Note : the number you specify is the *preferred* size. Although the\n"
-  "keyserver will do its best to serve that size, there is no guarantee that\n"
-  "it will always do so.\n"
-  #if (PREFERREDBLOCKSIZE_MAX > 31)
-  "*Warning*: clients older than v2.7106 do not know how to deal with packets\n"
-  "larger than 2^31 keys. Do not share buffers with such a client if you set\n"
-  "the preferred packet size to a value greater than 31.\n"
-  #endif
-  /*)*/,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,PREFERREDBLOCKSIZE_MIN,PREFERREDBLOCKSIZE_MAX,NULL,NULL
-},
 { 
   CONF_THRESHOLDI              , /* CONF_MENU_BUFF */
   CFGTXT("Fetch work threshold"), "0 (default size or determine from time threshold)",

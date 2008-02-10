@@ -1,25 +1,19 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.88 2007/10/22 16:48:23 jlawson Exp $
+# $Id: makefile.vc,v 1.89 2008/02/10 00:25:28 kakace Exp $
 #
 
 BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
-RC564SRCPATH = rc5
 RC572SRCPATH = rc5-72
-DESSRCPATH = des
 OGRSRCPATH = ogr
-CSCSRCPATH = csc
 PLATSRCPATH = plat/win
 
 
-#HAVE_RC5_64_CORES=1
 HAVE_RC5_72_CORES=1
-#HAVE_DES_CORES=1
-#HAVE_CSC_CORES=1
-#HAVE_OGR_CORES=1
+HAVE_OGR_CORES=1
 HAVE_OGR_PASS2=1
 
 # --------------------------------------------
@@ -133,10 +127,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/coremem.obj    \
-        $(OUTPUTPATH)/core_rc5.obj   \
-        $(OUTPUTPATH)/core_des.obj   \
         $(OUTPUTPATH)/core_r72.obj   \
-        $(OUTPUTPATH)/core_csc.obj   \
         $(OUTPUTPATH)/core_ogr.obj   \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
@@ -224,31 +215,6 @@ CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj       \
 ####CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
 !endif
 
-# --------------------------------- RC5-64 -------------------------
-
-!ifndef HAVE_RC5_64_CORES
-RC5_64_OBJS =
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
-RC5_64_OBJS =                        \
-        $(OUTPUTPATH)/rc5-alpha-nt.obj
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_64_CORES
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
-RC5_64_OBJS =                        \
-        $(OUTPUTPATH)/brf-p5.obj     \
-        $(OUTPUTPATH)/rg-k5.obj      \
-        $(OUTPUTPATH)/rg-k6.obj      \
-        $(OUTPUTPATH)/rg-p6.obj      \
-        $(OUTPUTPATH)/jp-mmx.obj     \
-        $(OUTPUTPATH)/rg-486.obj     \
-        $(OUTPUTPATH)/brf-smc.obj    \
-        $(OUTPUTPATH)/rg-6x86.obj    \
-        $(OUTPUTPATH)/hb-k7.obj      \
-        $(OUTPUTPATH)/ak-p7.obj	
-OPTS_MSVC = $(OPTS_MSVC) -DSMC -DHAVE_RC5_64_CORES
-!else
-!error No RC5-64 cores for this architecture.
-!endif
-
 # --------------------------------- RC5-72 -------------------------
 
 !ifndef HAVE_RC5_72_CORES
@@ -275,63 +241,6 @@ RC5_72_OBJS =                        \
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !else
 !error No RC5-72 cores for this architecture.
-!endif
-
-# --------------------------------- DES ----------------------------
-
-!ifndef HAVE_DES_CORES
-DES_OBJS =
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
-DES_OBJS =                                   \
-        $(OUTPUTPATH)/convdes.obj            \
-        $(OUTPUTPATH)/des-slice-dworz.obj    \
-        $(OUTPUTPATH)/deseval-dworz3.obj
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DKWAN -DDWORZ
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
-DES_OBJS =                                   \
-        $(OUTPUTPATH)/convdes.obj            \
-        $(OUTPUTPATH)/bbdeslow.obj           \
-        $(OUTPUTPATH)/bdeslow.obj            \
-        $(OUTPUTPATH)/des-slice.obj          \
-        $(OUTPUTPATH)/des-slice-meggs.obj    \
-        $(OUTPUTPATH)/des-x86.obj            \
-        $(OUTPUTPATH)/deseval.obj            \
-#       $(OUTPUTPATH)/deseval-meggs3-mmx.gcc \
-        $(OUTPUTPATH)/deseval-mmx.obj        \
-        $(OUTPUTPATH)/p1bdespro.obj          \
-        $(OUTPUTPATH)/p2bdespro.obj          \
-        $(OUTPUTPATH)/sboxes-kwan4.obj       \
-#       $(OUTPUTPATH)/sboxes-mmx.obj
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_DES_CORES -DMMX_BITSLICER -DMEGGS -DKWAN 
-!else
-!error No DES cores for this architecture.
-!endif
-
-# --------------------------------- CSC ----------------------------
-
-!ifndef HAVE_CSC_CORES
-CSC_OBJS =
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
-CSC_OBJS =                           \
-        $(OUTPUTPATH)/convcsc.obj    \
-        $(OUTPUTPATH)/csc-1k.obj     \
-        $(OUTPUTPATH)/csc-1k-i.obj   \
-        $(OUTPUTPATH)/csc-6b.obj     \
-        $(OUTPUTPATH)/csc-6b-i.obj   \
-        $(OUTPUTPATH)/csc-common.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(CSCSRCPATH) -DHAVE_CSC_CORES
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
-CSC_OBJS =                           \
-         $(OUTPUTPATH)/convcsc.obj   \
-         $(OUTPUTPATH)/csc-1k.obj    \
-         $(OUTPUTPATH)/csc-1k-i.obj  \
-         $(OUTPUTPATH)/csc-6b.obj    \
-         $(OUTPUTPATH)/csc-6b-i.obj  \
-         $(OUTPUTPATH)/csc-comm.obj  \
-         $(OUTPUTPATH)/csc-mmx.obj
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_CSC_CORES
-!else
-!error No CSC cores for this architecture.
 !endif
 
 # --------------------------------- OGR ----------------------------
@@ -419,18 +328,6 @@ $(VC_CHECK):
 {$(RC572SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(RC572SRCPATH:/=\)\x86\ $(**:/=\)
 
-{$(RC564SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(RC564SRCPATH:/=\)\x86\ $(**:/=\)
-
-#{$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-#        tasm32 /t /m /ml /i$(DESSRCPATH:/=\)\x86 $(**:/=\), $(@:/=\)
-
-{$(DESSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(DESSRCPATH:/=\)\x86\ $(**:/=\)
-
-{$(CSCSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(CSCSRCPATH:/=\)\x86\ $(**:/=\)
-
 {$(OGRSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -O5 -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
 
@@ -444,9 +341,6 @@ $(VC_CHECK):
 
 {$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
-
-{$(DESSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
-        cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(OGRSRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -Ox $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
@@ -480,8 +374,8 @@ $(BASENAME).com: $(VC_CHECK) $(CUI_OBJS)
 #!endif
 
 
-$(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
-        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_64_OBJS) $(RC5_72_OBJS) $(DES_OBJS) $(OGR_OBJS) $(CSC_OBJS) $(RES_FILE)
+$(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_72_OBJS)$(OGR_OBJS) $(RES_FILE)
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_72_OBJS) $(OGR_OBJS)$(RES_FILE)
 !if defined(EXECOMPRESSOR) && !defined(DEBUG)
         $(EXECOMPRESSOR) $(BASENAME).exe $(EXECOMPRESSOR2)
 !endif

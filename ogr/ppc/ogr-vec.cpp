@@ -9,7 +9,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.6 2007/10/22 16:48:30 jlawson Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.7 2008/02/10 00:26:19 kakace Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
 
@@ -313,8 +313,8 @@ return "@(#)$Id: ogr-vec.cpp,v 1.6 2007/10/22 16:48:30 jlawson Exp $"; }
 
   #include "ansi/ogr.cpp"
 
-  #if !defined(BITMAPS_LENGTH) || (BITMAPS_LENGTH != 160)
-  #error BITMAPS_LENGTH must be 160 !!!
+  #if !defined(OGR_BITMAPS_LENGTH) || (OGR_BITMAPS_LENGTH != 160)
+  #error OGR_BITMAPS_LENGTH must be 160 !!!
   #endif
 
 
