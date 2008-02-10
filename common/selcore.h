@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.20 2008/02/10 00:24:30 kakace Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.21 2008/02/10 18:12:47 kakace Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -102,49 +102,32 @@ int DeinitializeCoreTable( void );
 
 #ifdef HAVE_RC5_72_CORES
 int InitializeCoreTable_rc572(int first_time);
-
 void DeinitializeCoreTable_rc572();
-
 const char **corenames_for_contest_rc572();
-
 int apply_selcore_substitution_rules_rc572(int cindex);
-
 int selcoreGetPreselectedCoreForProject_rc572();
-
 int selcoreSelectCore_rc572( unsigned int threadindex,
                              int *client_cpuP, struct selcore *selinfo );
-
 unsigned int estimate_nominal_rate_rc572();
 
 #endif
 #if defined(HAVE_OGR_PASS2)
 int InitializeCoreTable_ogr(int first_time);
-
 void DeinitializeCoreTable_ogr();
-
 const char **corenames_for_contest_ogr();
-
 int apply_selcore_substitution_rules_ogr(int cindex);
-
 int selcoreGetPreselectedCoreForProject_ogr();
-
 int selcoreSelectCore_ogr( unsigned int threadindex, int *client_cpuP,
                            struct selcore *selinfo, unsigned int contestid );
-
 unsigned int estimate_nominal_rate_ogr();
 
 #endif
 #if defined(HAVE_OGR_CORES)
 int InitializeCoreTable_ogr_ng(int first_time);
-
 void DeinitializeCoreTable_ogr_ng();
-
 const char **corenames_for_contest_ogr_ng();
-
 int apply_selcore_substitution_rules_ogr_ng(int cindex);
-
 int selcoreGetPreselectedCoreForProject_ogr_ng();
-
 int selcoreSelectCore_ogr_ng( unsigned int threadindex, int *client_cpuP,
                            struct selcore *selinfo, unsigned int contestid );
 #endif

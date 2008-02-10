@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.256 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.257 2008/02/10 18:12:47 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -455,6 +455,9 @@ static int ClientMain( int argc, char *argv[] )
                   }
                   TRACE_OUT((0,"deinit coretable\n"));
                   DeinitializeCoreTable();
+                }
+                else {
+                  ConOutErr( "Unable to initialize cores.");
                 }
                 BufferDeinitialize(client);
               }

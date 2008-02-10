@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr-ng.cpp,v 1.1 2008/02/10 00:07:41 kakace Exp $
+ * $Id: ogr-ng.cpp,v 1.2 2008/02/10 18:12:27 kakace Exp $
  */
 #include <string.h>   /* memset */
 
@@ -28,10 +28,11 @@
 
 /* -- various optimization option defaults ------------------------------- */
 
-/* ogr_cycle() method selection.
-   OGROPT_ALTERNATE_CYCLE == 0 - Default (GARSP) ogr_cycle().
-   OGROPT_ALTERNATE_CYCLE == 1 - Fully customized ogr_cycle(). Implementors must
-                                 provide all necessary macros.
+/* ogr_cycle_256() method selection.
+   OGROPT_ALTERNATE_CYCLE == 0 - Default (FLEGE) ogr_cycle_256().
+   OGROPT_ALTERNATE_CYCLE == 1 - Fully customized ogr_cycle_256(). Implementors
+                                 must still provide all necessary macros for
+                                 use in ogr_create().
 */
 #ifndef OGROPT_ALTERNATE_CYCLE
 #define OGROPT_ALTERNATE_CYCLE 0    /* 0 (FLEGE) or 1 */
@@ -43,9 +44,8 @@
 
    OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 0 -> default COMP_LEFT_LIST_RIGHT
    OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1 -> Implementors may provide
-      platform-specific or assembly versions of the bitmap manipulation macros
-      that correspond to the OGROPT_ALTERNATE_CYCLE setting. Missing macros
-      are still defined to reasonable defaults.
+      platform-specific or assembly versions of the bitmap manipulation macros.
+      Missing macros are still defined to defaults.
 */
 #ifndef OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT
 #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0   /* 0 (no opt) or 1 */
@@ -147,7 +147,7 @@ static int found_one(const struct OgrNgState *oState);
 
 
 #ifndef OGR_NG_GET_DISPATCH_TABLE_FXN
-  #define OGR_NG_GET_DISPATCH_TABLE_FXN ogr_ng_get_dispatch_table
+  #define OGR_NG_GET_DISPATCH_TABLE_FXN ogrng_get_dispatch_table
 #endif
 extern CoreDispatchTable * OGR_NG_GET_DISPATCH_TABLE_FXN (void);
 
@@ -515,6 +515,10 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
     return CORE_E_FORMAT;
   }  
 
+  if (0 == ogr_check_cache(oState->maxdepth)) {
+    return CORE_E_CORRUPTED;
+  }
+
 
   /* 
   ** Mid-segment reduction (one or two segments)
@@ -780,7 +784,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
   if (workstub->worklength > STUB_MAX) {
     workstub->worklength = STUB_MAX;
   }
-  return (ogr_check_cache(oState->maxdepth)) ? CORE_S_OK : CORE_E_INTERNAL;
+  return (ogr_check_cache(oState->maxdepth)) ? CORE_S_OK : CORE_E_CORRUPTED;
 }
 
 
@@ -790,7 +794,7 @@ static int ogr_destroy(void *state)
 {
   struct OgrNgState *oState = (struct OgrNgState*) state;
 
-  return (ogr_check_cache(oState->maxdepth)) ? CORE_S_OK : CORE_E_INTERNAL;
+  return (ogr_check_cache(oState->maxdepth)) ? CORE_S_OK : CORE_E_CORRUPTED;
 }
 
 

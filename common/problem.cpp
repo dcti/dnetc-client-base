@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.182 2008/02/10 00:24:30 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.183 2008/02/10 18:12:47 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -804,10 +804,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       ** it is ok to discard the stub (and let the network recycle it)
       */
       const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
-      const char *msg = "Internal error";
-      if      (r == CORE_E_MEMORY) msg = "CORE_E_MEMORY: Insufficient memory";
-      else if (r == CORE_E_STUB)   msg = "CORE_E_STUB: Invalid initial ruler";
-      else if (r == CORE_E_FORMAT) msg = "CORE_E_FORMAT: Format or range error";
+      const char *msg = ogr_errormsg(r);
       Log("%s load failure: %s\nStub discarded.\n", contname, msg );
       return -1;
     }
@@ -849,10 +846,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       ** it is ok to discard the stub (and let the network recycle it)
       */
       const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
-      const char *msg = "Internal error";
-      if      (r == CORE_E_MEMORY) msg = "CORE_E_MEMORY: Insufficient memory";
-      else if (r == CORE_E_STUB)   msg = "CORE_E_STUB: Invalid initial ruler";
-      else if (r == CORE_E_FORMAT) msg = "CORE_E_FORMAT: Format or range error";
+      const char *msg = ogr_errormsg(r);
       Log("%s load failure: %s\nStub discarded.\n", contname, msg );
       return -1;
     }
@@ -984,23 +978,6 @@ int ProblemRetrieveState( void *__thisprob,
           memcpy( (void *)work,
                   (void *)&thisprob->priv_data.contestwork,
                   sizeof(ContestWork));
-
-          /* is the stub invalid? */
-          if (thisprob->priv_data.last_resultcode == RESULT_NOTHING &&
-              work->ogr_p2.nodes.hi == 0 && work->ogr_p2.nodes.lo == 0)
-          {
-            #if defined(STUB_E_GOLOMB) /* newer ansi core */
-            if (!thisprob->pub_data.was_truncated)
-            {
-              unsigned int r = work->ogr_p2.workstub.worklength;
-              const char *reason = "STUB_E_*: Undefined core error";
-              if      (r == STUB_E_MARKS)  reason = "STUB_E_MARKS: Stub is not supported by this client";
-              else if (r == STUB_E_GOLOMB) reason = "STUB_E_GOLOMB: Stub is not golomb";
-              else if (r == STUB_E_LIMIT)  reason = "STUB_E_LIMIT: Stub is obsolete";
-              thisprob->pub_data.was_truncated = reason;
-            }
-            #endif
-          }
           break;
         }
         #endif
@@ -1014,23 +991,6 @@ int ProblemRetrieveState( void *__thisprob,
           memcpy( (void *)work,
                   (void *)&thisprob->priv_data.contestwork,
                   sizeof(ContestWork));
-
-          /* is the stub invalid? */
-          if (thisprob->priv_data.last_resultcode == RESULT_NOTHING &&
-              work->ogr.nodes.hi == 0 && work->ogr.nodes.lo == 0)
-          {
-            #if defined(STUB_E_GOLOMB) /* newer ansi core */
-            if (!thisprob->pub_data.was_truncated)
-            {
-              unsigned int r = work->ogr.workstub.worklength;
-              const char *reason = "STUB_E_*: Undefined core error";
-              if      (r == STUB_E_MARKS)  reason = "STUB_E_MARKS: Stub is not supported by this client";
-              else if (r == STUB_E_GOLOMB) reason = "STUB_E_GOLOMB: Stub is not golomb";
-              else if (r == STUB_E_LIMIT)  reason = "STUB_E_LIMIT: Stub is obsolete";
-              thisprob->pub_data.was_truncated = reason;
-            }
-            #endif
-          }
           break;
         }
         #endif
@@ -1119,7 +1079,9 @@ static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
     }
     case CORE_S_SUCCESS:
     {
-      if ((thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr_p2.workstub, sizeof(WorkStub)) == CORE_S_OK)
+      r = (thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer,
+                              &thisprob->priv_data.contestwork.ogr.workstub, sizeof(WorkStub));
+      if (r == CORE_S_OK)
       {
         //Log("OGR-P2 Success!\n");
         thisprob->priv_data.contestwork.ogr_p2.workstub.stub.length =
@@ -1131,6 +1093,11 @@ static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
     }
   }
   /* Something bad happened */
+  if (r < 0) {
+    const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
+    const char* msg = ogr_errormsg(r);
+    Log("%s load failure: %s\nStub discarded.\n", contname, msg );
+  }
 #endif
  *resultcode = -1; /* this will cause the problem to be discarded */
  return -1;
@@ -1194,7 +1161,9 @@ static int Run_OGR_NG( InternalProblem *thisprob, /* already validated */
     }
     case CORE_S_SUCCESS:
     {
-      if ((thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer, &thisprob->priv_data.contestwork.ogr.workstub, sizeof(WorkStub)) == CORE_S_OK)
+      r = (thisprob->pub_data.unit_func.ogr)->getresult(thisprob->priv_data.core_membuffer,
+                              &thisprob->priv_data.contestwork.ogr.workstub, sizeof(WorkStub));
+      if (r == CORE_S_OK)
       {
         //Log("OGR-P2 Success!\n");
         thisprob->priv_data.contestwork.ogr.workstub.stub.length =
@@ -1206,6 +1175,11 @@ static int Run_OGR_NG( InternalProblem *thisprob, /* already validated */
     }
   }
   /* Something bad happened */
+  if (r < 0) {
+    const char *contname = CliGetContestNameFromID(thisprob->pub_data.contest);
+    const char* msg = ogr_errormsg(r);
+    Log("%s load failure: %s\nStub discarded.\n", contname, msg );
+  }
 #endif
  *resultcode = -1; /* this will cause the problem to be discarded */
  return -1;

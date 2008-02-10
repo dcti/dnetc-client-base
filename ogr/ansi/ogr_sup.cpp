@@ -5,7 +5,7 @@
  *
  * OGR support routines and data.
  *
- * $Id: ogr_sup.cpp,v 1.5 2007/10/22 16:48:29 jlawson Exp $
+ * $Id: ogr_sup.cpp,v 1.6 2008/02/10 18:12:27 kakace Exp $
 */
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +17,20 @@ unsigned long ogr_nodecount(const struct Stub *stub)
 {
   DNETC_UNUSED_PARAM(stub);
   return 1;
+}
+
+const char* ogr_errormsg(int errorcode)
+{
+   switch(errorcode) {
+      case CORE_E_MEMORY:    return "CORE_E_MEMORY: Insufficient memory";
+      case CORE_E_STUB:      return "CORE_E_STUB: Invalid initial ruler";
+      case CORE_E_FORMAT:    return "CORE_E_FORMAT: Format or range error";
+      case CORE_E_INTERNAL:  return "CORE_E_INTERNAL: Bogus core";
+      case CORE_E_CORRUPTED: return "CORE_E_CORRUPTED: Core damaged";
+      default:
+        break;
+   }
+   return "unknown error";
 }
 
 const char *ogr_stubstr_r(const struct Stub *stub,

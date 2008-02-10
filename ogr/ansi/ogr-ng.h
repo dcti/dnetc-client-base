@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_NG_H__
-#define __OGR_NG_H__ "@(#)$Id: ogr-ng.h,v 1.1 2008/02/10 00:07:40 kakace Exp $"
+#define __OGR_NG_H__ "@(#)$Id: ogr-ng.h,v 1.2 2008/02/10 18:12:27 kakace Exp $"
 
 #include "ogr-interface.h"
 
@@ -76,7 +76,6 @@ struct choose_datas {
     VECTOR compV0, compV1;
     int mark;
     int limit;
-    U comp0, list0, dist0;    /* list0 shall be the fourth word */
   };
 #endif
 
@@ -89,7 +88,7 @@ struct choose_datas {
 ** cruncher is going to get used :(
 */
 #define OGRNG_LEVEL_SIZE_SCALAR (((((OGRNG_BITMAPS_LENGTH+63)/64)*3*8)+(OGR_INT_SIZE*2)+8)&(-8))
-#define OGRNG_LEVEL_SIZE_VECTOR (((16*6)+(4*3)+(OGR_INT_SIZE*2)+15)&(-16))
+#define OGRNG_LEVEL_SIZE_VECTOR (((16*6)+(OGR_INT_SIZE*2)+15)&(-16))
 
 #define OGRNG_LEVEL_SIZE (OGRNG_LEVEL_SIZE_SCALAR > OGRNG_LEVEL_SIZE_VECTOR ? \
           OGRNG_LEVEL_SIZE_SCALAR : OGRNG_LEVEL_SIZE_VECTOR)
@@ -118,9 +117,9 @@ struct OgrNgState {
 */
 extern struct choose_datas precomp_limits[OGR_NG_MAX - OGR_NG_MIN + 1];
 
-int ogr_init_choose(void);
-int ogr_cleanup_choose(void);
-int ogr_check_cache(int nMarks);
+int  ogr_init_choose(void);
+void ogr_cleanup_choose(void);
+int  ogr_check_cache(int nMarks);
 
 
 #endif /* __OGR_NG_H__ */

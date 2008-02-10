@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_INTERFACE_H__
-#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.1 2008/02/10 00:07:41 kakace Exp $"
+#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.2 2008/02/10 18:12:27 kakace Exp $"
 
 #include <limits.h>
 
@@ -29,13 +29,14 @@
  * Those starting with CORE_S are success codes, and those starting
  * with CORE_E are error codes.
  */
-#define CORE_S_OK       0
-#define CORE_S_CONTINUE 1
-#define CORE_S_SUCCESS  2
-#define CORE_E_MEMORY   (-1)
-#define CORE_E_STUB     (-2)
-#define CORE_E_FORMAT   (-3)
-#define CORE_E_INTERNAL (-4)
+#define CORE_S_OK          0
+#define CORE_S_CONTINUE    1
+#define CORE_S_SUCCESS     2
+#define CORE_E_MEMORY    (-1)
+#define CORE_E_STUB      (-2)
+#define CORE_E_FORMAT    (-3)
+#define CORE_E_INTERNAL  (-4)
+#define CORE_E_CORRUPTED (-5)
 
 #ifndef __SUNPRO_CC
   #include "pack1.h"
@@ -158,6 +159,7 @@ unsigned long ogr_nodecount(const struct Stub *);
 const char *ogr_stubstr_r(const struct Stub *stub, char *buffer,
                           unsigned int bufflen, int worklength);
 const char *ogr_stubstr(const struct Stub *stub);
+const char *ogr_errormsg(int errorcode);
 
 #endif /* __OGR_INTERFACE_H__ */
 
