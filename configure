@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.170 2008/02/06 22:57:36 teichp Exp $
+# @(#)$Id: configure,v 1.288.2.171 2008/02/12 15:44:25 teichp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -667,7 +667,10 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
     if [ "$HAVE_OGR" = 1 -o "$HAVE_OGR_P2" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/arm/ogr-arm.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS
+                                      $OGR/arm/ogr-arm1.cpp \
+                                      $OGR/arm/ogr-arm2.cpp \
+                                      $OGR/arm/ogr-arm3.cpp"
       DEFAULT_OGR="0"
 #      if [ "$1" = "riscos" ]; then
 #        if [ "$3" = "gccsdk" ]; then
@@ -1077,7 +1080,7 @@ generate_gcc_opts() {
         opts295="$OPTS_GCC295 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
                  -fschedule-insns -fschedule-insns2"
         if [ "${2}" = "eabi" ]; then
-            opts310="$OPTS_GCC310 -O2 -march=armv4t -mtune=arm920t -DARM -DASM_ARM \
+            opts310="$OPTS_GCC310 -O2 -march=armv4t -mtune=xscale -DARM -DASM_ARM \
                  -fschedule-insns -fschedule-insns2"
         else
             opts310="$OPTS_GCC310 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \

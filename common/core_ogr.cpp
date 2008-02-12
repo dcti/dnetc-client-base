@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.58 2008/01/28 22:14:28 teichp Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.59 2008/02/12 15:45:22 teichp Exp $"; }
 
 //#define TRACE
 
@@ -74,10 +74,9 @@ return "@(#)$Id: core_ogr.cpp,v 1.1.2.58 2008/01/28 22:14:28 teichp Exp $"; }
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_asm_mmx_amd(void);
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
-//    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
-//    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
-//    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm3(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm1(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm2(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table_arm3(void);
 #elif (CLIENT_CPU == CPU_AMD64)
     extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
@@ -196,10 +195,9 @@ const char **corenames_for_contest_ogr()
   #elif (CLIENT_CPU == CPU_AMD64)
       "GARSP 6.0-64",
   #elif (CLIENT_CPU == CPU_ARM)
-/*      "GARSP 6.0 StrongARM",
+      "GARSP 6.0 StrongARM",
       "GARSP 6.0 ARM 2/3/6/7",
-      "GARSP 6.0 XScale",*/
-      "GARSP 6.0 ansi",
+      "GARSP 6.0 XScale",
   #elif (CLIENT_CPU == CPU_68K)
       "GARSP 6.0 68000",
       "GARSP 6.0 68020",
@@ -282,11 +280,11 @@ int apply_selcore_substitution_rules_ogr(int cindex)
   long det = GetProcessorType(1);
   if (det == 68000) cindex = 0;
 # elif (CLIENT_CPU == CPU_ARM)
-/*  long det = GetProcessorType(1);
+  long det = GetProcessorType(1);
   int have_clz = (((det >> 12) & 0xf) != 0) &&
                  (((det >> 12) & 0xf) != 7) &&
                  (((det >> 16) & 0xf) >= 3);
-  if (!have_clz && (cindex == 2))  cindex = 0;*/
+  if (!have_clz && (cindex == 2))  cindex = 0;
 # elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
   int feature = 0;
   feature = GetProcessorFeatureFlags();
@@ -585,19 +583,15 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   unit_func.ogr = ogr64_get_dispatch_table();
   coresel = 0;
 #elif (CLIENT_CPU == CPU_ARM)
-/*  if (coresel == 0)
-    unit_func.ogr = ogr_get_dispatch_table_arm1();
+  if (coresel == 1)
+    unit_func.ogr = ogr_get_dispatch_table_arm2();
   else if (coresel == 2)
     unit_func.ogr = ogr_get_dispatch_table_arm3();
-  else if (coresel == 3)
-    unit_func.ogr = ogr_get_dispatch_table();
   else
   {
-    unit_func.ogr = ogr_get_dispatch_table_arm2();
-    coresel = 1;
-  }*/
-  unit_func.ogr = ogr_get_dispatch_table();
-  coresel = 0;
+    unit_func.ogr = ogr_get_dispatch_table_arm1();
+    coresel = 0;
+  }
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
   unit_func.ogr = ogr64_get_dispatch_table();
   coresel = 0;
