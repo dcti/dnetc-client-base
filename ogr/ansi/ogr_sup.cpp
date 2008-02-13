@@ -5,19 +5,13 @@
  *
  * OGR support routines and data.
  *
- * $Id: ogr_sup.cpp,v 1.6 2008/02/10 18:12:27 kakace Exp $
+ * $Id: ogr_sup.cpp,v 1.7 2008/02/13 22:06:53 kakace Exp $
 */
 #include <stdio.h>
 #include <string.h>
 
 #include "unused.h"     /* DNETC_UNUSED_* */
 #include "ogr.h"
-
-unsigned long ogr_nodecount(const struct Stub *stub)
-{
-  DNETC_UNUSED_PARAM(stub);
-  return 1;
-}
 
 const char* ogr_errormsg(int errorcode)
 {

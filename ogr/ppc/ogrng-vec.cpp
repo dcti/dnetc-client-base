@@ -9,9 +9,13 @@
 */
 
 const char *ogrng_vec_cpp(void) {
-return "@(#)$Id: ogrng-vec.cpp,v 1.1 2008/02/10 18:10:43 kakace Exp $"; }
+return "@(#)$Id: ogrng-vec.cpp,v 1.2 2008/02/13 22:07:37 kakace Exp $"; }
 
 #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
+
+#define HAVE_FLEGE_PPC_CORES
+#warning HAVE_FLEGE_PPC_CORES is hard coded (temporary setting)
+
 
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM     2 /* 0-2 - '100% asm'      */
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT   1 /* 0/1 - ** MUST BE 1 ** */
@@ -51,55 +55,59 @@ return "@(#)$Id: ogrng-vec.cpp,v 1.1 2008/02/10 18:10:43 kakace Exp $"; }
 
 
   /* define the local variables used for the top recursion state */
-  #define SETUP_TOP_STATE(lev)                            \
-    v8_t vecShift[32];                                    \
-    U comp0, dist0;                                       \
-    v32_t compV0, compV1;                                 \
-    v32_t listV0, listV1;                                 \
-    v32_t distV0, distV1;                                 \
-    v32_t V_ZERO = vec_splat_u32(0);                      \
-    v32_t V_ONES = vec_splat_s32(-1);                     \
-    v32_t newbit = vec_splat_u32(1);                      \
-    listV0 = lev->listV0.v;                               \
-    listV1 = lev->listV1.v;                               \
-    distV0 = lev->distV0.v;                               \
-    distV1 = lev->distV1.v;                               \
-    compV0 = lev->compV0.v;                               \
-    compV1 = lev->compV1.v;                               \
-    dist0 = lev->distV0.u[0];                             \
-    comp0 = lev->compV0.u[0];                             \
-    { /* Initialize vecShift[] */                         \
-      vector unsigned char val = vec_splat_u8(0);         \
-      vector unsigned char one = vec_splat_u8(1);         \
-      int i;                                              \
-      for (i = 0; i < 32; i++) {                          \
-        vecShift[i] = val;                                \
-        val = vec_add(val, one);                          \
-      }                                                   \
+  #define SETUP_TOP_STATE(lev)                           \
+    v8_t vecShift[32];                                   \
+    U comp0, dist0;                                      \
+    v32_t compV0, compV1;                                \
+    v32_t listV0, listV1;                                \
+    v32_t distV0, distV1;                                \
+    v32_t V_ZERO = vec_splat_u32(0);                     \
+    v32_t V_ONES = vec_splat_s32(-1);                    \
+    v32_t newbit = V_ZERO;                               \
+    listV0 = lev->listV0.v;                              \
+    listV1 = lev->listV1.v;                              \
+    distV0 = lev->distV0.v;                              \
+    distV1 = lev->distV1.v;                              \
+    compV0 = lev->compV0.v;                              \
+    compV1 = lev->compV1.v;                              \
+    dist0 = lev->distV0.u[0];                            \
+    comp0 = lev->compV0.u[0];                            \
+    { /* Initialize vecShift[] */                        \
+      vector unsigned char val = vec_splat_u8(0);        \
+      vector unsigned char one = vec_splat_u8(1);        \
+      int i;                                             \
+      for (i = 0; i < 32; i++) {                         \
+        vecShift[i] = val;                               \
+        val = vec_add(val, one);                         \
+      }                                                  \
+    }                                                    \
+    if (depth < oState->maxdepthm1) {                    \
+      newbit = vec_splat_u32(1);                         \
     }
+
           
   /* shift the list to add or extend the first mark */
-  #define COMP_LEFT_LIST_RIGHT(lev, s)                    \
-  {                                                       \
-    v32_t shift_l = (v32_t) vecShift[s];                  \
-    v32_t shift_r = vec_sub(V_ZERO, shift_l);             \
-    v32_t mask_l  = vec_sr(V_ONES, shift_l);              \
-    v32_t mask_r  = vec_sl(V_ONES, shift_l);              \
-    v32_t temp1, temp2;                                   \
-    temp1 = vec_sld(compV0, compV1, 4);                   \
-    temp2 = vec_sld(listV0, listV1, 12);                  \
-    temp1 = vec_sel(temp1, compV0, mask_l);               \
-    temp2 = vec_sel(temp2, listV1, mask_r);               \
-    compV0 = vec_rl(temp1, shift_l);                      \
-    listV1 = vec_rl(temp2, shift_r);                      \
-    lev->compV0.v = compV0;                               \
-    temp2 = vec_sld(newbit, listV0, 12);                  \
-    temp1 = vec_slo(compV1, (v8_t) shift_l);              \
-    temp2 = vec_sel(temp2, listV0, mask_r);               \
-    compV1 = vec_sll(temp1, (v8_t) shift_l);              \
-    listV0 = vec_rl(temp2, shift_r);                      \
-    newbit = V_ZERO;                                      \
-    comp0 = lev->compV0.u[0];                             \
+  #define COMP_LEFT_LIST_RIGHT(lev, s)                   \
+  {                                                      \
+    v32_t shift_l = (v32_t) vecShift[s];                 \
+    v32_t shift_r = vec_sub(V_ZERO, shift_l);            \
+    v32_t mask_l  = vec_sr(V_ONES, shift_l);             \
+    v32_t mask_r  = vec_sl(V_ONES, shift_l);             \
+    v32_t temp1, temp2;                                  \
+    temp1 = vec_sld(compV0, compV1, 4);                  \
+    temp2 = vec_sld(listV0, listV1, 12);                 \
+    temp1 = vec_sel(temp1, compV0, mask_l);              \
+    temp2 = vec_sel(temp2, listV1, mask_r);              \
+    compV0 = vec_rl(temp1, shift_l);                     \
+    listV1 = vec_rl(temp2, shift_r);                     \
+    lev->compV0.v = compV0;                              \
+    temp2 = vec_sld(newbit, listV0, 12);                 \
+    temp1 = vec_slo(compV1, (v8_t) shift_l);             \
+    temp2 = vec_sel(temp2, listV0, mask_r);              \
+    compV1 = vec_sll(temp1, (v8_t) shift_l);             \
+    listV0 = vec_rl(temp2, shift_r);                     \
+    newbit = V_ZERO;                                     \
+    comp0 = lev->compV0.u[0];                            \
   }
 
   /*
@@ -162,23 +170,29 @@ return "@(#)$Id: ogrng-vec.cpp,v 1.1 2008/02/10 18:10:43 kakace Exp $"; }
   */
   #if defined(HAVE_FLEGE_PPC_CORES) && (OGROPT_ALTERNATE_CYCLE == 1)
 
-    #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
-      #error FLEGE core is not time-constrained
-    #endif
-
     #ifdef __cplusplus
     extern "C" {
     #endif
-    int cycle_ppc_hybrid_256(struct OgrNgState *state, int *pnodes, const u16 *choose);
+    int cycle_ppc_hybrid_256(struct OgrState *state, int *pnodes,
+                             const u16 *choose, const void* pShift);
     #ifdef __cplusplus
     }
     #endif
 
-    static int ogr_cycle_256(struct OgrNgState *oState, int *pnodes,
-                             const u16* pchoose, int with_time_constraints)
+    static int ogr_cycle_256(struct OgrState *oState, int *pnodes,
+                             const u16* pchoose)
     {
-      with_time_constraints = with_time_constraints;
-      return cycle_ppc_hybrid_256(oState, pnodes, pchoose);
+      v8_t vecShift[32];
+      vector unsigned char val = vec_splat_u8(0);
+      vector unsigned char one = vec_splat_u8(1);
+      int i;
+
+      for (i = 0; i < 32; i++) {
+        vecShift[i] = val;
+        val = vec_add(val, one);
+      }
+
+      return cycle_ppc_hybrid_256(oState, pnodes, pchoose, vecShift);
     }
   #endif
 

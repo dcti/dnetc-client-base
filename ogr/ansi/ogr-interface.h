@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_INTERFACE_H__
-#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.2 2008/02/10 18:12:27 kakace Exp $"
+#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.3 2008/02/13 22:06:53 kakace Exp $"
 
 #include <limits.h>
 
@@ -44,6 +44,7 @@
   #undef DNETC_PACKED
   #define DNETC_PACKED
 #endif
+
 /*
  * Dispatch table structure. A pointer to one of these should be returned
  * from an exported function in the module.
@@ -94,50 +95,17 @@ typedef struct {
    * Clean up state structure.
    */
   int (*destroy)(void *state);
-
-  /*
-   * Clean up anything allocated in init().
-   * FIXME : It turns out this function is never called !
-   */
-  int (*cleanup)(void);
-
-  /*
-   * Get value of cached nodes (node_offset field) - offset of this field
-   * in state structure is different for 32- and 64-bit OGR.
-   */
-  int (*getnodeoffset)(void *state);
-
 } DNETC_PACKED CoreDispatchTable;
-
-/* ===================================================================== */
-
-/* specifies the number of ruler diffs can be represented.
-** Warning: increasing this will cause all structures based
-** on workunit_t in packets.h to change, possibly breaking
-** network and buffer structure operations.
-*/
-#define STUB_MAX 10
-
-struct Stub {           /* size is 24 */
-  u16 marks;            /* N-mark ruler to which this stub applies */
-  u16 length;           /* number of valid elements in the stub[] array */
-  u16 diffs[STUB_MAX];  /* first <length> differences in ruler */
-} DNETC_PACKED;
-
-struct WorkStub {       /* size is 28 */
-  struct Stub stub;     /* stub we're working on */
-  u32 worklength;       /* depth of current state */
-} DNETC_PACKED;
 
 #ifndef __SUNPRO_CC
   #include "pack0.h"
 #else
   #undef DNETC_PACKED
+  #define DNETC_PACKED
 #endif
 
 
-#define OGR_MAXDEPTH 30
-
+/* ===================================================================== */
 
 #if defined(OGROPT_OGR_CYCLE_ALTIVEC) && (defined(__VEC__) || defined (__ALTIVEC__))
    /* Vector (PPC/AltiVec) implementation
@@ -155,7 +123,6 @@ struct WorkStub {       /* size is 28 */
 /*
 ** ogr_sup.cpp
 */
-unsigned long ogr_nodecount(const struct Stub *);
 const char *ogr_stubstr_r(const struct Stub *stub, char *buffer,
                           unsigned int bufflen, int worklength);
 const char *ogr_stubstr(const struct Stub *stub);

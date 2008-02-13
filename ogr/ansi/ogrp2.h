@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGRP2_H__
-#define __OGRP2_H__ "@(#)$Id: ogrp2.h,v 1.1 2008/02/10 00:07:41 kakace Exp $"
+#define __OGRP2_H__ "@(#)$Id: ogrp2.h,v 1.2 2008/02/13 22:06:53 kakace Exp $"
 
 #include "ogr-interface.h"
 
@@ -28,6 +28,40 @@
 
 
 /* ===================================================================== */
+
+/* specifies the number of ruler diffs can be represented.
+** Warning: increasing this will cause all structures based
+** on workunit_t in packets.h to change, possibly breaking
+** network and buffer structure operations.
+*/
+#define STUB_MAX 10
+#define MAXDEPTH 26
+
+#ifndef __SUNPRO_CC
+  #include "pack1.h"
+#else
+  #undef DNETC_PACKED
+  #define DNETC_PACKED
+#endif
+
+struct Stub {           /* size is 24 */
+  u16 marks;            /* N-mark ruler to which this stub applies */
+  u16 length;           /* number of valid elements in the stub[] array */
+  u16 diffs[STUB_MAX];  /* first <length> differences in ruler */
+} DNETC_PACKED;
+
+struct WorkStub {       /* size is 28 */
+  struct Stub stub;     /* stub we're working on */
+  u32 worklength;       /* depth of current state */
+} DNETC_PACKED;
+
+#ifndef __SUNPRO_CC
+  #include "pack0.h"
+#else
+  #undef DNETC_PACKED
+#endif
+
+
 
 #ifndef OGROPT_OGR_CYCLE_ALTIVEC
 /*
@@ -73,11 +107,11 @@ struct State {
   int half_depth2;          /* half of maxdepth, adjusted for 2nd mark */
   int startdepth;
   int depth;
-  struct Level Levels[OGR_MAXDEPTH];
+  struct Level Levels[MAXDEPTH];
   int node_offset;          /* node count cache for non-preemptive OS */
 };
 
-#define OGR_PROBLEM_SIZE (((8*OGR_INT_SIZE+15)&(-16))+(OGR_LEVEL_SIZE*OGR_MAXDEPTH))
+#define OGR_PROBLEM_SIZE (((8*OGR_INT_SIZE+15)&(-16))+(OGR_LEVEL_SIZE*MAXDEPTH))
                          /* sizeof(struct State) */
 
 #endif /* __OGRP2_H__ */

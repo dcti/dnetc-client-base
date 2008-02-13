@@ -88,25 +88,25 @@
     ** Initialize top state
     ** compA and distA must be 32-bit
     */
-    #define SETUP_TOP_STATE(lev)    \
-      U compA, compB, compC, compD; \
-      U listA, listB, listC, listD; \
-      U distA, distB, distC, distD; \
-      u32 comp0, dist0;             \
-      U newbit = 1;                 \
-      compA = lev->comp[0];         \
-      compB = lev->comp[1];         \
-      compC = lev->comp[2];         \
-      compD = lev->comp[3];         \
-      listA = lev->list[0];         \
-      listB = lev->list[1];         \
-      listC = lev->list[2];         \
-      listD = lev->list[3];         \
-      distA = lev->dist[0];         \
-      distB = lev->dist[1];         \
-      distC = lev->dist[2];         \
-      distD = lev->dist[3];         \
-      comp0 = (u32) (compA >> 32);  \
+    #define SETUP_TOP_STATE(lev)                      \
+      U compA, compB, compC, compD;                   \
+      U listA, listB, listC, listD;                   \
+      U distA, distB, distC, distD;                   \
+      u32 comp0, dist0;                               \
+      U newbit = (depth < oState->maxdepthm1) ? 1 : 0;\
+      compA = lev->comp[0];                           \
+      compB = lev->comp[1];                           \
+      compC = lev->comp[2];                           \
+      compD = lev->comp[3];                           \
+      listA = lev->list[0];                           \
+      listB = lev->list[1];                           \
+      listC = lev->list[2];                           \
+      listD = lev->list[3];                           \
+      distA = lev->dist[0];                           \
+      distB = lev->dist[1];                           \
+      distC = lev->dist[2];                           \
+      distD = lev->dist[3];                           \
+      comp0 = (u32) (compA >> 32);                    \
       dist0 = (u32) (distA >> 32);
 
     /*
@@ -210,7 +210,7 @@
     #define SETUP_TOP_STATE(lev)                \
       u32 comp0 = (u32) (lev->comp[0] >> 32);   \
       u32 dist0 = (u32) (lev->dist[0] >> 32);   \
-      U newbit = 1;
+      U newbit = (depth < oState->maxdepthm1) ? 1 : 0;
 
     /*
     ** Shift COMP and LIST bitmaps
@@ -254,7 +254,7 @@
     ** compA and distA are 32-bit values
     */
     #define PUSH_LEVEL_UPDATE_STATE(lev) {            \
-      struct OgrNgLevel *lev2 = lev + 1;              \
+      struct OgrLevel *lev2 = lev + 1;                \
       U temp;                                         \
       temp = (lev2->list[0] = lev->list[0]);          \
       temp = (lev2->dist[0] = lev->dist[0] | temp);   \

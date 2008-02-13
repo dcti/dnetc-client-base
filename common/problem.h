@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.98 2008/02/10 00:24:29 kakace Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.99 2008/02/13 22:07:15 kakace Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -91,11 +91,10 @@ typedef union
   #endif
   #if defined(HAVE_OGR_CORES)
   struct {
-    struct WorkStub workstub;             // stub to work on (28 bytes)
+    struct OgrWorkStub workstub;          // stub to work on (64 bytes)
     struct {u32 hi,lo;} nodes;            // nodes completed
-    u32    stopdepth;
     struct {u32 hi,lo;} ticket;           // OGR-NG opaque ticket
-  } DNETC_PACKED ogr;                     /* 48 bytes */
+  } DNETC_PACKED ogr_ng;                  /* 80 bytes */
   #endif
   #if defined(HAVE_OGR_PASS2)
   struct {

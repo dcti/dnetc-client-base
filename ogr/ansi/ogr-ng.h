@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_NG_H__
-#define __OGR_NG_H__ "@(#)$Id: ogr-ng.h,v 1.2 2008/02/10 18:12:27 kakace Exp $"
+#define __OGR_NG_H__ "@(#)$Id: ogr-ng.h,v 1.3 2008/02/13 22:06:53 kakace Exp $"
 
 #include "ogr-interface.h"
 
@@ -51,18 +51,57 @@ struct choose_datas {
 };
 
 
+#define OGR_MAX_MARKS 28      /* NEVER EVER INCREASE THIS VALUE */
+#define OGR_STUB_MAX  28      /* DITTO */
+
+#define OGR_MAXDEPTH  (OGR_MAX_MARKS+1)
 #define OGR_NG_MIN    21      /* OGR-21 (test cases) */
 #define OGR_NG_MAX    27      /* Max set to OGR-27 */
-#define OGR_MAX_MARKS 32      /* DON'T CHANGE THIS. EVER ! */
 
 
 /* ===================================================================== */
+
+#ifndef __SUNPRO_CC
+  #include "pack1.h"
+#else
+  #undef DNETC_PACKED
+  #define DNETC_PACKED
+#endif
+
+/* Specifies the number of ruler diffs can be represented.
+** For OGR-NG, this structure is large enough to record every marks. Also note
+** that it can be seen as a derivative from the Stub structure (i.e., an
+** OgrStub object IS a Stub object).
+*/
+
+struct OgrStub {           /* size is 60 */
+  u16 marks;               /* N-mark ruler to which this stub applies */
+  u16 length;              /* number of valid elements in the diffs[] array */
+  u16 diffs[OGR_STUB_MAX]; /* first <length> differences in ruler */
+} DNETC_PACKED;
+
+
+/* CAUTION : assert sizeof(OgrWorkStub) <= 64
+** Otherwise, the ContestWork structure will break the 80 bytes limit !
+*/
+struct OgrWorkStub {       /* size is 64 */
+  struct OgrStub stub;     /* stub we're working on */
+  u16 worklength;          /* depth of current state */
+  u16 stopdepth;           /* Final depth */
+} DNETC_PACKED;
+
+#ifndef __SUNPRO_CC
+  #include "pack0.h"
+#else
+  #undef DNETC_PACKED
+#endif
+
 
 #ifndef OGROPT_OGR_CYCLE_ALTIVEC
 /*
 ** Standard (32-bit scalar) implementation
 */
-  struct OgrNgLevel {
+  struct OgrLevel {
     U list[OGRNG_BITMAPS_WORDS];
     U dist[OGRNG_BITMAPS_WORDS];
     U comp[OGRNG_BITMAPS_WORDS];
@@ -70,7 +109,7 @@ struct choose_datas {
     int limit;
   };
 #else   
-  struct OgrNgLevel {
+  struct OgrLevel {
     VECTOR listV0, listV1;
     VECTOR distV0, distV1;
     VECTOR compV0, compV1;
@@ -94,21 +133,19 @@ struct choose_datas {
           OGRNG_LEVEL_SIZE_SCALAR : OGRNG_LEVEL_SIZE_VECTOR)
 
 
-struct OgrNgState {
+struct OgrState {
   int max;                  /* maximum length of ruler */
   int maxdepth;             /* maximum number of marks in ruler */
   int maxdepthm1;           /* maxdepth-1 */
-  int half_length;          /* half of max */
   int half_depth;           /* half of maxdepth */
   int half_depth2;          /* half of maxdepth, adjusted for 2nd mark */
   int startdepth;           /* Initial depth */
   int stopdepth;            /* May be lower than startdepth */
   int depth;                /* Current depth */
-  int node_offset;          /* node count cache for non-preemptive OS */
-  struct OgrNgLevel Levels[OGR_MAXDEPTH];
+  struct OgrLevel Levels[OGR_MAXDEPTH];
 };
 
-#define OGRNG_PROBLEM_SIZE (((10*OGR_INT_SIZE+15)&(-16))+(OGRNG_LEVEL_SIZE*OGR_MAXDEPTH))
+#define OGRNG_PROBLEM_SIZE (((9*OGR_INT_SIZE+15)&(-16))+(OGRNG_LEVEL_SIZE*OGR_MAXDEPTH))
                          /* sizeof(struct State) */
 
 

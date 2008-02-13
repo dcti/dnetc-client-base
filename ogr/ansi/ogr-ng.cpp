@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr-ng.cpp,v 1.2 2008/02/10 18:12:27 kakace Exp $
+ * $Id: ogr-ng.cpp,v 1.3 2008/02/13 22:06:53 kakace Exp $
  */
 #include <string.h>   /* memset */
 
@@ -50,30 +50,6 @@
 #ifndef OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT
 #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0   /* 0 (no opt) or 1 */
 #endif
-
-
-/* OGROPT_IGNORE_TIME_CONSTRAINT_ARG: By default, ogr_cycle() treats the 
-   nodes_to_do argument as a hint rather than a precise number. This is a 
-   BadThing(TM) in non-preemptive or real-time environments that are running 
-   the cruncher in time contraints, so ogr_cycle() also gets passed a 
-   'with_time_constraints' argument that tells the it whether such an 
-   environment is present or not.
-   However, on most platforms this will never be true, and under those 
-   circumstances, testing the 'with_time_constraints' flag is an uneccessary
-   waste of time. OGROPT_IGNORE_TIME_CONSTRAINT_ARG serves to disable the
-   test. 
-*/
-#define OGROPT_IGNORE_TIME_CONSTRAINT_ARG
-#if defined(macintosh) || defined(__riscos)         \
-    || defined(__NETWARE__) || defined(NETWARE)     \
-    || defined(__WINDOWS386__) /* 16bit windows */  \
-    || (defined(ASM_X86) && defined(GENERATE_ASM))
-    /* ASM_X86: the ogr core used by all x86 platforms is a hand optimized */
-    /* .S/.asm version of this core - If we're compiling for asm_x86 then */
-    /* we're either generating an .S for later optimization, or compiling */
-    /* for comparison with an existing .S */
-  #undef OGROPT_IGNORE_TIME_CONSTRAINT_ARG
-#endif  
 
 
 /* Some cpus benefit from having the top of the main ogr_cycle() loop being
@@ -139,13 +115,20 @@ int OGR[] = {
 static int ogr_init(void);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
-static int ogr_cleanup(void);
 static int ogr_cycle_entry(void *state, int *pnodes, int with_time_constraints);
 static int ogr_create(void *input, int inputlen, void *state, int statelen,
                       int maxlen);
-static int found_one(const struct OgrNgState *oState);
+static int found_one(const struct OgrState *oState);
 
+/* The work horse...
+** If you need to optimize something, here is the only one.
+*/
+static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoose);
 
+/* Define this macro so that it expands to a different name for each core.
+** The rule is to write one *.cpp file for each core, which define this macro
+** and include "ogr-ng.cpp".
+*/
 #ifndef OGR_NG_GET_DISPATCH_TABLE_FXN
   #define OGR_NG_GET_DISPATCH_TABLE_FXN ogrng_get_dispatch_table
 #endif
@@ -158,8 +141,8 @@ extern CoreDispatchTable * OGR_NG_GET_DISPATCH_TABLE_FXN (void);
   ** instead of calling the following functions directly, unless you
   ** want unpredictable results...
   */
-  static void __dump(const struct OgrNgLevel *lev, int depth);
-  static void __dump_ruler(const struct OgrNgState *oState, int depth);
+  static void __dump(const struct OgrLevel *lev, int depth);
+  static void __dump_ruler(const struct OgrState *oState, int depth);
 
   /*
   ** Debugging macros
@@ -212,18 +195,31 @@ extern CoreDispatchTable * OGR_NG_GET_DISPATCH_TABLE_FXN (void);
 
 /*
 ** OGROPT_ALTERNATE_CYCLE == 0
-** Initialize top state
+** Initialize top state.
+** The macro shall at least define "comp0", "dist0" and "newbit". It can also
+** define private datas used by the other macros.
+** "newbit" acts as a flag to indicate whether we shall place a new mark on
+** the ruler (newbit = 1), or move the last mark toward the right edge of the
+** ruler (newbit = 0). The engine usually exits when "newbit == 1". The only
+** exception occurs when a ruler is found.
 */
 #if !defined(SETUP_TOP_STATE)
- #define SETUP_TOP_STATE(lev)  \
-   U comp0 = lev->comp[0];     \
-   U dist0 = lev->dist[0];     \
-   int newbit = 1;
+ #define SETUP_TOP_STATE(lev)                         \
+   U comp0 = lev->comp[0];                            \
+   U dist0;                                           \
+   int newbit = (depth < oState->maxdepthm1) ? 1 : 0;
+
+
 #endif
 
 /*
 ** OGROPT_ALTERNATE_CYCLE == 0
-** Shift COMP and LIST bitmaps
+** Shift COMP and LIST bitmaps.
+** This macro implements two multi-precision shifts : a left shift (for the
+** COMP bitmap), and a right shift (for the LIST bitmap). Note that the value
+** of "newbit" is shifted in the LIST bitmap. On exit, the value of "newbit"
+** shall be zero, and the value of "comp0" shall be reset to the leftmost
+** word of the COMP bitmap.
 */
 #if !defined(COMP_LEFT_LIST_RIGHT)
  #define COMP_LEFT_LIST_RIGHT(lev, s) {            \
@@ -267,7 +263,8 @@ extern CoreDispatchTable * OGR_NG_GET_DISPATCH_TABLE_FXN (void);
 
 /*
 ** OGROPT_ALTERNATE_CYCLE == 0
-** Shift COMP and LIST bitmaps by 32
+** Shift COMP and LIST bitmaps by 32.
+** This macro implements a specialization of the preceeding macro.
 */
 #if !defined(COMP_LEFT_LIST_RIGHT_32)
  #define COMP_LEFT_LIST_RIGHT_32(lev)  \
@@ -291,10 +288,21 @@ extern CoreDispatchTable * OGR_NG_GET_DISPATCH_TABLE_FXN (void);
    newbit = 0;
 #endif
 
+/*
+** OGROPT_ALTERNATE_CYCLE == 0
+** Update the COMP, DIST and LIST bitmaps.
+** In pseudo-code :
+**   LIST[lev+1] = LIST[lev]
+**   DIST[lev+1] = (DIST[lev] | LIST[lev+1])
+**   COMP[lev+1] = (COMP[lev] | DIST[lev+1])
+**   newbit = 1;
+** Note that "dist0" and "comp0" shall be updated to the new values of the
+** leftmost words of the corresponding bitmaps.
+*/
 #if !defined(PUSH_LEVEL_UPDATE_STATE)
  #define PUSH_LEVEL_UPDATE_STATE(lev) {            \
    U temp1, temp2;                                 \
-   struct OgrNgLevel *lev2 = lev + 1;              \
+   struct OgrLevel *lev2 = lev + 1;                \
    temp1 = (lev2->list[0] = lev->list[0]);         \
    temp2 = (lev2->list[1] = lev->list[1]);         \
    dist0 = (lev2->dist[0] = lev->dist[0] | temp1); \
@@ -327,6 +335,7 @@ extern CoreDispatchTable * OGR_NG_GET_DISPATCH_TABLE_FXN (void);
 /*
 ** OGROPT_ALTERNATE_CYCLE == 0
 ** Pop level state (all bitmaps).
+** Reload the state of the specified level. "newbit" shall be reset to zero.
 */
 #if !defined(POP_LEVEL)
  #define POP_LEVEL(lev)  \
@@ -416,21 +425,18 @@ extern CoreDispatchTable * OGR_NG_GET_DISPATCH_TABLE_FXN (void);
 ** found_one() - Assert the ruler is Golomb.
 ** This function is *REALLY* seldom used and it has no impact at all on
 ** benchmarks or runtime node rates.
-** However, some compilers may choose to inline this function into ogr_cycle()
-** thus causing a noticeable slow down. The fix is then to prevent the
-** compiler from inlining this function, *NOT* to optimize it.
 **
 ** NOTE : Principle #1 states that we don't have to track distances larger
 **    than half the length of the ruler.
 */
 
-static int found_one(const struct OgrNgState *oState)
+static int found_one(const struct OgrState *oState)
 {
   register int i, j;
   u32 diffs[((1024 - OGRNG_BITMAPS_LENGTH) + 31) / 32];
   register int max = oState->max;
   register int maxdepth = oState->maxdepth;
-  const struct OgrNgLevel *levels = &oState->Levels[0];
+  const struct OgrLevel *levels = &oState->Levels[0];
 
   for (i = max >> (5+1); i >= 0; --i)
     diffs[i] = 0;
@@ -488,17 +494,17 @@ static int ogr_init(void)
 static int ogr_create(void *input, int inputlen, void *state, int statelen,
                       int stopDepth)
 {
-  struct OgrNgState *oState;
-  struct WorkStub *workstub = (struct WorkStub *)input;
+  struct OgrState *oState;
+  struct OgrWorkStub *workstub = (struct OgrWorkStub *)input;
   int    midseg_size;
 
 
-  if (input == NULL || inputlen != sizeof(struct WorkStub)
-                    || (size_t)statelen < sizeof(struct OgrNgState)) {
+  if (input == NULL || inputlen != sizeof(struct OgrWorkStub)
+                    || (size_t)statelen < sizeof(struct OgrState)) {
     return CORE_E_INTERNAL;
   }
 
-  if ( (oState = (struct OgrNgState *)state) == NULL) {
+  if ( (oState = (struct OgrState *)state) == NULL) {
     return CORE_E_MEMORY;
   }
 
@@ -506,7 +512,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
     return CORE_E_STUB;
   }
 
-  memset(oState, 0, sizeof(struct OgrNgState));
+  memset(oState, 0, sizeof(struct OgrState));
   oState->maxdepth   = workstub->stub.marks;
   oState->maxdepthm1 = oState->maxdepth-1;
   oState->max        = OGR[oState->maxdepthm1];
@@ -527,9 +533,10 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
   oState->half_depth  = (oState->maxdepthm1 - midseg_size) / 2;
   oState->half_depth2 = oState->half_depth + midseg_size;
 
+
   {
     int n, limit;
-    struct OgrNgLevel *lev = &oState->Levels[1];
+    struct OgrLevel *lev = &oState->Levels[1];
     int mark = 0;
     int depth = 1;
     u16* pchoose = precomp_limits[oState->maxdepth - OGR_NG_MIN].choose_array;
@@ -539,7 +546,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
     if (n < workstub->stub.length) {
       n = workstub->stub.length;
     }
-    if (n > STUB_MAX) {
+    if (n >= OGR_STUB_MAX) {
       return CORE_E_FORMAT;
     }
 
@@ -567,27 +574,14 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
         COMP_LEFT_LIST_RIGHT(lev, s);
       }
 
-      PUSH_LEVEL_UPDATE_STATE(lev);
       lev->mark = mark;
+
+      PUSH_LEVEL_UPDATE_STATE(lev);
       lev++;
       depth++;
 
-      /* Compute the maximum position for the current mark */
-      limit = choose(dist0 >> ttmDISTBITS, depth);
-      if (depth > oState->half_depth && depth <= oState->half_depth2) {
-        int temp = oState->max - 1 - oState->Levels[oState->half_depth].mark;
-
-        if (depth < oState->half_depth2) {
-          /* Here's why LOOKUP_FIRSTBLANK(0xffffffff) must be equal to 33 ! */
-          temp -= LOOKUP_FIRSTBLANK(dist0);
-        }
-
-        if (limit > temp) {
-          limit = temp;
-        }
-      }
-
       /* Setup the next level */
+      limit = choose(dist0 >> ttmDISTBITS, depth);
       lev->limit = limit;
       lev->mark  = mark;
     }
@@ -602,47 +596,20 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
 
 
 /* ----------------------------------------------------------------------- */
-/* WARNING : Buffers cannot store every marks of the ruler being checked. The
-**  STUB_MAX macro determines how many "diffs" are stored and retrieved when
-**  the core restarts a stub.
-**  As a result, the core shall not be interrupted without care : if it's
-**  interrupted beyond the mark that can be stored in the buffers, then the
-**  node count becomes inacurate. This bug caused troubles on clients running
-**  on non-preemptive OS and on clients using cores designed for such OSes.
-**  The OGROPT_IGNORE_TIME_CONSTRAINTS_ARG macro should be defined whenever
-**  possible. The sole purpose of the "with_time_constraints" argument is to
-**  ensure responsiveness on non-preemptive OSes, especially on slow machines.
-**
-**  The fix makes use of a checkpoint to remember the node count upto the last
-**  mark that can be recorded in the buffers. This node count is returned to
-**  the caller, even if the core is interrupted beyond that mark. Thus, the
-**  total node count maintained by the caller is kept in sync despite the
-**  limitations of the buffers.
-**  The number of extra nodes checked (beyond that mark) is stored into the
-**  State data structure and it is used as the initial node count in case the
-**  core is not interrupted (thus avoiding unecessary overhead).
-*/
 
+/* Note : pchoose points to a large array of pre-computed limits. The datas
+** are organized as in : u16 pchoose[ ][1 << CHOOSE_DIST_BITS]
+*/
 #if (OGROPT_ALTERNATE_CYCLE == 0)
-static int ogr_cycle_256(struct OgrNgState *oState, int *pnodes,
-                         const u16* pchoose, int with_time_constraints)
+static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoose)
 {
-  int depth = oState->depth + 1;
-  struct OgrNgLevel *lev = &oState->Levels[depth];
-  int nodes = 0;
+  struct OgrLevel *lev = &oState->Levels[oState->depth];
+  int depth      = oState->depth;
+  int nodes      = *pnodes;
   int halfdepth  = oState->half_depth;
   int halfdepth2 = oState->half_depth2;
 
-  #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
-    int checkpoint = 0;
-    int checkpoint_depth = (1+STUB_MAX);
-    *pnodes += oState->node_offset; /* force core to do some work */
-    nodes = oState->node_offset;
-    oState->node_offset = 0;
-  #endif
-
   SETUP_TOP_STATE(lev);
-  nodes++;
 
   do {
     int limit = lev->limit;
@@ -670,23 +637,26 @@ static int ogr_cycle_256(struct OgrNgState *oState, int *pnodes,
 
       lev->mark = mark;
       if (depth == oState->maxdepthm1) {
-        goto exit;
+        goto exit;         /* Ruler found */
       }
 
+      /* Update the bitmaps for the next level */
       PUSH_LEVEL_UPDATE_STATE(lev);
       lev++;
       depth++;
       
-      /* Compute the maximum position for the current mark */
+      /* Compute the maximum position for the next level */
       limit = choose(dist0 >> ttmDISTBITS, depth);
-      lev->limit = limit;
-      if (depth <= halfdepth) {
-        if (nodes >= *pnodes) {
-          lev->mark = mark;
-          goto exit;
-        }
-      }
-      else if (depth <= halfdepth2) {
+
+      /* For rulers with an even number of marks, this part can be simplified
+      ** into :
+      ** if (depth == halfdepth2) {
+      **   int temp = oState->max - 1 - mark;
+      **   if (limit > temp)
+      **     limit = temp;
+      ** }
+      */
+      if (depth > halfdepth && depth <= halfdepth2) {
         int temp = oState->max - 1 - oState->Levels[halfdepth].mark;
 
         if (depth < halfdepth2) {
@@ -694,24 +664,15 @@ static int ogr_cycle_256(struct OgrNgState *oState, int *pnodes,
         }
 
         if (limit > temp) {
-          lev->limit = limit = temp;
+          limit = temp;
         }
       }
+      lev->limit = limit;
 
-      if (with_time_constraints) { /* if (...) is optimized away if unused */
-        #if !defined(OGROPT_IGNORE_TIME_CONSTRAINT_ARG)
-        if (depth <= checkpoint_depth)
-          checkpoint = nodes;
-
-        if (nodes >= *pnodes) {
-          oState->node_offset = nodes - checkpoint;
-          lev->mark = mark;
-          nodes = checkpoint;
-          goto exit;
-        }  
-        #endif  
+      if (--nodes <= 0) {
+        lev->mark = mark;
+        goto exit;
       }
-      nodes++;
     } /* for (;;) */
     lev--;
     depth--;
@@ -720,7 +681,7 @@ static int ogr_cycle_256(struct OgrNgState *oState, int *pnodes,
 
 exit:
   SAVE_FINAL_STATE(lev);
-  *pnodes = nodes;
+  *pnodes -= nodes;
   return depth;
 }
 #endif  /* OGROPT_ALTERNATE_CYCLE */
@@ -735,14 +696,25 @@ exit:
 static int ogr_cycle_entry(void *state, int *pnodes, int with_time_constraints)
 {
   int retval = CORE_S_CONTINUE;
-  struct OgrNgState *oState = (struct OgrNgState *)state;
+  struct OgrState *oState = (struct OgrState *)state;
   u16* pchoose = precomp_limits[oState->maxdepth - OGR_NG_MIN].choose_array;
   int safesize = OGRNG_BITMAPS_LENGTH * 2;
   int depth;
 
+  /* Now that the core always exits when the specified number of nodes has
+  ** been processed, the "with_time_constraints" setting is obsolete.
+  */
+  with_time_constraints = with_time_constraints;
+  ++oState->depth;
+
+  /* Invoke the main core.
+  ** Except for OGR-26 (and shorter rulers), the core may still find rulers
+  ** that are not Golomb. This loop asserts the Golombness of any ruler found
+  ** when that makes sense.
+  */
   do {
-    depth = ogr_cycle_256(oState, pnodes, pchoose, with_time_constraints);
-  } while (oState->Levels[depth].mark > safesize && found_one(oState) == 0);
+    depth = ogr_cycle_256(oState, pnodes, pchoose);
+  } while (depth == oState->maxdepthm1 && oState->Levels[depth].mark > safesize && found_one(oState) == 0);
 
   if (depth == oState->maxdepthm1) {
     retval = CORE_S_SUCCESS;
@@ -757,32 +729,23 @@ static int ogr_cycle_entry(void *state, int *pnodes, int with_time_constraints)
 
 /* ----------------------------------------------------------------------- */
 
-static int ogr_getnodeoffset(void *state)
-{
-  struct OgrNgState *oState = (struct OgrNgState *)state;
-
-  return oState->node_offset;
-}
-
-/* ----------------------------------------------------------------------- */
-
 static int ogr_getresult(void *state, void *result, int resultlen)
 {
-  struct OgrNgState *oState = (struct OgrNgState *)state;
-  struct WorkStub *workstub = (struct WorkStub *)result;
+  struct OgrState *oState = (struct OgrState *)state;
+  struct OgrWorkStub *workstub = (struct OgrWorkStub *)result;
   int i;
 
-  if (resultlen != sizeof(struct WorkStub)) {
+  if (resultlen != sizeof(struct OgrWorkStub)) {
     return CORE_E_INTERNAL;
   }
   workstub->stub.marks = (u16)oState->maxdepth;
   workstub->stub.length = (u16)oState->startdepth;
-  for (i = 0; i < STUB_MAX; i++) {
+  for (i = 0; i < OGR_STUB_MAX; i++) {
     workstub->stub.diffs[i] = (u16)(oState->Levels[i+1].mark - oState->Levels[i].mark);
   }
   workstub->worklength = oState->depth;
-  if (workstub->worklength > STUB_MAX) {
-    workstub->worklength = STUB_MAX;
+  if (workstub->worklength > OGR_STUB_MAX) {
+    workstub->worklength = OGR_STUB_MAX;
   }
   return (ogr_check_cache(oState->maxdepth)) ? CORE_S_OK : CORE_E_CORRUPTED;
 }
@@ -792,18 +755,9 @@ static int ogr_getresult(void *state, void *result, int resultlen)
 
 static int ogr_destroy(void *state)
 {
-  struct OgrNgState *oState = (struct OgrNgState*) state;
+  struct OgrState *oState = (struct OgrState*) state;
 
   return (ogr_check_cache(oState->maxdepth)) ? CORE_S_OK : CORE_E_CORRUPTED;
-}
-
-
-/* ----------------------------------------------------------------------- */
-
-static int ogr_cleanup(void)
-{
-  /* NEVER CALLED */
-  return CORE_S_OK;
 }
 
 
@@ -817,15 +771,13 @@ CoreDispatchTable * OGR_NG_GET_DISPATCH_TABLE_FXN (void)
   dispatch_table.cycle     = ogr_cycle_entry;
   dispatch_table.getresult = ogr_getresult;
   dispatch_table.destroy   = ogr_destroy;
-  dispatch_table.cleanup   = ogr_cleanup;
-  dispatch_table.getnodeoffset = ogr_getnodeoffset;
   return &dispatch_table;
 }
 
 /* ----------------------------------------------------------------------- */
 
 #if defined(OGR_DEBUG)
-static void __dump(const struct OgrNgLevel *lev, int depth)
+static void __dump(const struct OgrLevel *lev, int depth)
 {
   printf("--- depth %d, limit %d\n", depth, lev->limit);
 
@@ -866,7 +818,7 @@ static void __dump(const struct OgrNgLevel *lev, int depth)
 }
 
 
-static void __dump_ruler(const struct OgrNgState *oState, int depth)
+static void __dump_ruler(const struct OgrState *oState, int depth)
 {
   int i;
   printf("max %d ruler : ", oState->max);

@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.10 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.11 2008/02/13 22:07:14 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -74,7 +74,7 @@ static FILE *BufferOpenFile( const char *filename,
 {
   /* OSs that require "b" for fopen() */
   #if ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_NEXTSTEP) || \
-       (CLIENT_OS == OS_RISCOS) \
+       (CLIENT_OS == OS_RISCOS) || \
        (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_WIN32) || \
        (CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_OS2) || \
        (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN64))
@@ -209,9 +209,6 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
   {
 // TODO?: acidblood/trashover
     case RC5_72:
-    case RC5:
-    case DES:
-    case CSC:
     {
       u32 *w = (u32 *)(&(dest->work));
       for (unsigned i=0; i<(sizeof(dest->work)/sizeof(u32)); i++)
@@ -235,15 +232,14 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
     #if defined(HAVE_OGR_CORES)
     case OGR_NG:
     {
-      dest->work.ogr.workstub.stub.marks  = (u16)ntohs(dest->work.ogr.workstub.stub.marks);
-      dest->work.ogr.workstub.stub.length = (u16)ntohs(dest->work.ogr.workstub.stub.length);
-      dest->work.ogr.maxlen               = (u32)ntohl(dest->work.ogr.maxlen);
-      dest->work.ogr.stopdepth            = (u32)ntohl(dest->work.ogr_p2.stopdepth);
-      for (int i = 0; i < STUB_MAX; i++)
-        dest->work.ogr.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr.workstub.stub.diffs[i]);
-      dest->work.ogr.workstub.worklength  = (u32)ntohl(dest->work.ogr.workstub.worklength);
-      dest->work.ogr.nodes.hi             = (u32)ntohl(dest->work.ogr.nodes.hi);
-      dest->work.ogr.nodes.lo             = (u32)ntohl(dest->work.ogr.nodes.lo);
+      dest->work.ogr_ng.workstub.stub.marks  = (u16)ntohs(dest->work.ogr_ng.workstub.stub.marks);
+      dest->work.ogr_ng.workstub.stub.length = (u16)ntohs(dest->work.ogr_ng.workstub.stub.length);
+      dest->work.ogr_ng.workstub.stopdepth   = (u32)ntohl(dest->work.ogr_ng.workstub.stopdepth);
+      for (int i = 0; i < OGR_STUB_MAX; i++)
+        dest->work.ogr_ng.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr_ng.workstub.stub.diffs[i]);
+      dest->work.ogr_ng.workstub.worklength  = (u32)ntohl(dest->work.ogr_ng.workstub.worklength);
+      dest->work.ogr_ng.nodes.hi             = (u32)ntohl(dest->work.ogr_ng.nodes.hi);
+      dest->work.ogr_ng.nodes.lo             = (u32)ntohl(dest->work.ogr_ng.nodes.lo);
       break;
     }
     #endif
