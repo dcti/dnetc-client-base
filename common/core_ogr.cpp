@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.5 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.6 2008/02/17 17:06:21 kakace Exp $"; }
 
 //#define TRACE
 
@@ -136,9 +136,15 @@ int InitializeCoreTable_ogr(int first_time)
         #endif
       #elif (CLIENT_CPU == CPU_VAX)
         ogr_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_MIPS)
+        #if (SIZEOF_LONG == 8)
+        ogr64_get_dispatch_table();
+        #else
+        ogr_get_dispatch_table();
+        #endif
       #elif (CLIENT_CPU == CPU_SPARC)
         #if (SIZEOF_LONG == 8)
-          ogr64_get_dispatch_table
+          ogr64_get_dispatch_table();
         #else
           ogr_get_dispatch_table();
         #endif
@@ -230,6 +236,8 @@ const char **corenames_for_contest_ogr()
       "GARSP 6.0",
   #elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
       "GARSP 6.0-64",
+  #elif (CLIENT_CPU == CPU_MIPS)
+      "GARSP 6.0",
   #elif (CLIENT_OS == OS_PS2LINUX)
       "GARSP 6.0",
   #else
@@ -397,6 +405,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
             case 0x09: cindex = 4; break; // AMD K7/K8  == asm-rt1-mmx-amd (E)
             // It depends on core, current AMD core is worse on these P4's
             // case 0x0B: cindex = 4; break; // Pentium 4    == asm-rt1-mmx-amd (E) (#3988)
+            case 0x0D: cindex = 4; break; // Pentium M    == asm-rt1-mmx-amd (E) (#4031)
             case 0x10: cindex = 4; break; // Cyrix Model5 == asm-rt1-mmx-amd (E) (Untested)
             case 0x11: cindex = 4; break; // Cyrix Model6 == asm-rt1-mmx-amd (E)
             default:   cindex = 3; break; // asm-rt1-mmx (D)
@@ -574,21 +583,26 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   unit_func.ogr = ogr64_get_dispatch_table();
   coresel = 0;
 #elif (CLIENT_CPU == CPU_ARM)
-  if (coresel == 0)
-    unit_func.ogr = ogr_get_dispatch_table_arm1();
+  if (coresel == 1)
+    unit_func.ogr = ogr_get_dispatch_table_arm2();
   else if (coresel == 2)
     unit_func.ogr = ogr_get_dispatch_table_arm3();
   else
   {
-    unit_func.ogr = ogr_get_dispatch_table_arm2();
-    coresel = 1;
+    unit_func.ogr = ogr_get_dispatch_table_arm1();
+    coresel = 0;
   }
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
   unit_func.ogr = ogr64_get_dispatch_table();
   coresel = 0;
-#elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
+#elif (CLIENT_CPU == CPU_MIPS)
+  #if (SIZEOF_LONG == 8)
   unit_func.ogr = ogr64_get_dispatch_table();
   coresel = 0;
+  #else
+  unit_func.ogr = ogr_get_dispatch_table();
+  coresel = 0;
+  #endif
 #else
   //extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
   unit_func.ogr = ogr_get_dispatch_table();
@@ -598,7 +612,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   /* ================================================================== */
 
 
-  if (coresel >= 0 && unit_func.ogr &&
+  if (coresel >= 0 && unit_func.gen &&
      coresel < ((int)corecount_for_contest(contestid)) )
   {
     if (client_cpuP)
