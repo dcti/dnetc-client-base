@@ -6,7 +6,7 @@
  */
 
 const char *ogr_arm3_cpp(void) {
-return "@(#)$Id: ogr-arm3.cpp,v 1.1.2.1 2008/02/12 15:43:22 teichp Exp $"; }
+return "@(#)$Id: ogr-arm3.cpp,v 1.1.2.2 2008/02/17 20:40:21 teichp Exp $"; }
 
 #if defined(ASM_ARM)
 
@@ -23,9 +23,15 @@ return "@(#)$Id: ogr-arm3.cpp,v 1.1.2.1 2008/02/12 15:43:22 teichp Exp $"; }
       static __inline__ int __CNTLZ__(register unsigned int i)
       {
         register unsigned int o;
+#if 1
+        __asm__ ("mvn     r4,%1\n\t" \
+                 ".word   0xe16f4f14 @clz r4,r4\n\t" \
+                 "add     %0,r4,#1" : "=r" (o) : "r" (i) : "r4");
+#else
         __asm__ ("mvn     %0,%1\n\t" \
                  "clz     %0,%0\n\t" \
                  "add     %0,%0,#1" : "=r" (o) : "r" (i));
+#endif
         return o;
       }
       #define __CNTLZ(x) __CNTLZ__(x)
