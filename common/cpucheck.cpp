@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.120 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.121 2008/02/17 16:58:52 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -348,36 +348,6 @@ static long __GetRawProcessorID(const char **cpuname)
       detectedtype = 68010L; // 68010
     else
       detectedtype = 68000L; // 68000
-  }
-  #elif (CLIENT_OS == OS_NEXTSTEP)
-  if (detectedtype == -2)
-  {
-    struct host_basic_info info;
-    unsigned int count = HOST_BASIC_INFO_COUNT;
-
-    if (host_info(host_self(), HOST_BASIC_INFO,
-                  (host_info_t)&info, &count) == KERN_SUCCESS &&
-        info.cpu_type == CPU_TYPE_MC680x0)
-    {
-      switch (info.cpu_subtype)
-      {
-          /* MC68030_ONLY shouldn't be returned since it's only used
-          ** to mark 68030-only executables in the mach-o
-          ** fileformat */
-        case CPU_SUBTYPE_MC68030_ONLY:
-        case CPU_SUBTYPE_MC68030:      detectedtype = 68030L; break;
-        case CPU_SUBTYPE_MC68040:      detectedtype = 68040L; break;
-
-          /* black hardware from NeXT only had 680[34]0 processors so
-          ** there are no defines for the others *shrug* */
-        default:                       detectedtype = -1;     break;
-      }
-    } else {
-      /* something went really wrong here if cpu_type doesn't match -
-      ** can we be compiled for NeXTstep on 68k but run on something
-      ** else? */
-      detectedtype = -1;
-    }
   }
   #elif (CLIENT_OS == OS_NEXTSTEP)
   if (detectedtype == -2)
