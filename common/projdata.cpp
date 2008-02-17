@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.6 2008/02/10 00:24:30 kakace Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.7 2008/02/17 16:24:29 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"
@@ -24,12 +24,16 @@ static const struct ProjectInfo_t
 // obsolete projects may be omitted
 {
 //  ProjectID             Name      filext ini sect. unit
+  { RC5,    "RC5",    "rc5", "rc5",    "keys",  1 },
+  { DES,    "DES",    "des", "des",    "keys",  2 },
+  { OGR,    "OGR",    "ogr", "ogr",    "nodes", 1 },
+  { CSC,    "CSC",    "csc", "csc",    "keys",  1 },
   { OGR_NG, "OGR-NG", "og2", "ogr-ng", "nodes", 1 },
   { RC5_72, "RC5-72", "r72", "rc5-72", "keys",  1 },
   { OGR_P2, "OGR-P2", "ogf", "ogr-p2", "nodes", 1 },
   { -1,                   NULL,     NULL,  NULL,     NULL,    0 }
-#if (PROJECT_COUNT != 3)
-  #error PROJECT_NOT_HANDLED("ProjectInfo[]: static initializer was last updated for PROJECT_COUNT == 3")
+#if (PROJECT_COUNT != 7)
+  #error PROJECT_NOT_HANDLED("ProjectInfo[]: static initializer was last updated for PROJECT_COUNT == 7")
 #endif
 };
 

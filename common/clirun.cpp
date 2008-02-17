@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.133 2008/02/10 00:24:30 kakace Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.134 2008/02/17 16:24:29 kakace Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -49,6 +49,10 @@ struct __dyn_timeslice_struct
 static struct __dyn_timeslice_struct
   default_dyn_timeslice_table[CONTEST_COUNT] =  /* for preempted crunchers */
 {
+  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  DES,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR,     200000,  0x8000000,  0x00010,  0x10000 },
+  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000 },
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
@@ -57,14 +61,18 @@ static struct __dyn_timeslice_struct
 static struct __dyn_timeslice_struct
   non_preemptive_dyn_timeslice_table[CONTEST_COUNT] = /* for co-op crunchers */
 {                                  /* adjusted by ClientRun() if appropriate */
+  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  DES,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR,     200000,  0x8000000,  0x00010,  0x10000 },
+  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000 },
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
   {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
 };
 
 // OK!
-#if (CONTEST_COUNT != 3)
-  #error PROJECT_NOT_HANDLED("timeslice_tables: static initializers expect CONTEST_COUNT == 3")
+#if (CONTEST_COUNT != 7)
+  #error PROJECT_NOT_HANDLED("timeslice_tables: static initializers expect CONTEST_COUNT == 7")
 #endif
 
 // =====================================================================

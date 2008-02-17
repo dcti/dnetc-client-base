@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.91 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.92 2008/02/17 16:24:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -135,11 +135,15 @@ static struct {
   long threshold;
   unsigned int till_completion;
 } buffer_counts[CONTEST_COUNT] = {
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* RC5    */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* DES    */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* OGR    */
+  { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* CSC    */
   { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* OGR_NG */
   { { { 0, 0 }, { 0, 0 } }, 0, 0 },     /* RC5_72 */
   { { { 0, 0 }, { 0, 0 } }, 0, 0 }      /* OGR_P2 */
-  #if (CONTEST_COUNT != 3)
-    #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 3")
+  #if (CONTEST_COUNT != 7)
+    #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
   #endif
 };
 
