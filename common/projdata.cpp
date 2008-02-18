@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.7 2008/02/17 16:24:29 kakace Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.8 2008/02/18 13:06:49 stream Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"
@@ -70,7 +70,14 @@ u32 ProjectGetFlags(int projectid)
   #else
     #define PROJECT_OK_OGR_P2 PROJECT_UNSUPPORTED
   #endif
+  #if (PROJECT_COUNT != 7)
+    #error PROJECT_NOT_HANDLED("static projectflags expects PROJECT_COUNT == 7")
+  #endif
   static const u32 projectflags[PROJECT_COUNT] = {
+    /* RC5    */ PROJECT_UNSUPPORTED,
+    /* DES    */ PROJECT_UNSUPPORTED,
+    /* OGR    */ PROJECT_UNSUPPORTED,
+    /* CSC    */ PROJECT_UNSUPPORTED,
     /* OGR_NG */ PROJECT_OK_OGR_NG,
     /* RC5_72 */ PROJECT_OK_RC5_72
         | PROJECTFLAG_TIME_THRESHOLD /* not yet! | PROJECTFLAG_PREFERRED_BLOCKSIZE */
