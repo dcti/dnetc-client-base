@@ -3,7 +3,7 @@
 # Any other distribution or use of this source violates copyright.
 #
 # Author: Decio Luiz Gazzoni Filho <decio@distributed.net>
-# $Id: ogr-cellv1-spe.s,v 1.3 2008/02/10 00:26:36 kakace Exp $
+# $Id: ogr-cellv1-spe.s,v 1.4 2008/02/19 09:54:45 stream Exp $
 
 	#################################################################
 	# Hackers: see the comments right above the .text section for a #
@@ -77,7 +77,7 @@
 	.set	CORE_S_CONTINUE,	  1
 	.set	CORE_S_OK,		  0
 
-	.set	BITMAP_LENGTH,		160
+	.set	BITMAP_LENGTH,		160	# OGR_BITMAPS_LENGTH
 	.set	CHOOSE_DIST_BITS,	 12
 	.set	ttmDISTBITS,		 32-CHOOSE_DIST_BITS
 
@@ -205,8 +205,8 @@
 	# shuffling.
 	.lcomm	Levels,		 30*SIZEOF_LEVEL_QUAD
 
-	# Temporary variable for the found_one() function.
-	.lcomm	diffs_data,	 ((1024 - BITMAP_LENGTH) + 31) / 32
+	# Temporary array for the found_one() function (16-bytes elements used)
+	.lcomm	diffs_data,	 (((1024 - BITMAP_LENGTH) + 31) / 32) * 16
 
 
 
@@ -1417,7 +1417,7 @@ loop_0_i:
 	sf		$diff, $diff, $marks_i
 
 	# if (diff <= OGR_BITMAPS_LENGTH)
-	cgti		$temp1, $diff, OGR_BITMAP_LENGTH
+	cgti		$temp1, $diff, BITMAP_LENGTH
 	#   break;
 	brz		$temp1, inc_i
 
@@ -1433,7 +1433,7 @@ loop_0_i:
 
 	# diff = (diff >> 5) - (OGR_BITMAPS_LENGTH / 32);
 	rotmi		$diff, $diff, -5
-	ai		$diff, $diff, -(OGR_BITMAP_LENGTH/32)
+	ai		$diff, $diff, -(BITMAP_LENGTH/32)
 
 	# if ((diffs[diff] & mask) != 0)
 	shli		$temp1, $diff, 4
