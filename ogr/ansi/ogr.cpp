@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr.cpp,v 1.7 2008/02/13 22:06:53 kakace Exp $
+ * $Id: ogr.cpp,v 1.8 2008/02/21 22:49:25 kakace Exp $
  */
 #include <string.h>   /* memset */
 
@@ -212,7 +212,6 @@ static int init_load_choose(void);
 static int ogr_init(void);
 static int ogr_getresult(void *state, void *result, int resultlen);
 static int ogr_destroy(void *state);
-static int ogr_cleanup(void);
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints);
 static int ogr_create(void *input, int inputlen, void *state, int statelen,
                       int minpos);
