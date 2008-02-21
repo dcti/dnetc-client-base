@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGRP2_H__
-#define __OGRP2_H__ "@(#)$Id: ogrp2.h,v 1.2 2008/02/13 22:06:53 kakace Exp $"
+#define __OGRP2_H__ "@(#)$Id: ogrp2.h,v 1.3 2008/02/21 22:48:30 kakace Exp $"
 
 #include "ogr-interface.h"
 
@@ -35,7 +35,7 @@
 ** network and buffer structure operations.
 */
 #define STUB_MAX 10
-#define MAXDEPTH 26
+#define MAXDEPTH 30
 
 #ifndef __SUNPRO_CC
   #include "pack1.h"
