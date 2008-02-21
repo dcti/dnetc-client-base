@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.6 2008/02/17 17:06:21 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.7 2008/02/21 22:50:04 kakace Exp $"; }
 
 //#define TRACE
 
@@ -612,7 +612,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   /* ================================================================== */
 
 
-  if (coresel >= 0 && unit_func.gen &&
+  if (coresel >= 0 && unit_func.ogr &&
      coresel < ((int)corecount_for_contest(contestid)) )
   {
     if (client_cpuP)
