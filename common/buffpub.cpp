@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.11 2008/02/13 22:07:14 kakace Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.12 2008/02/22 13:54:15 stream Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -234,10 +234,10 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
     {
       dest->work.ogr_ng.workstub.stub.marks  = (u16)ntohs(dest->work.ogr_ng.workstub.stub.marks);
       dest->work.ogr_ng.workstub.stub.length = (u16)ntohs(dest->work.ogr_ng.workstub.stub.length);
-      dest->work.ogr_ng.workstub.stopdepth   = (u32)ntohl(dest->work.ogr_ng.workstub.stopdepth);
+      dest->work.ogr_ng.workstub.stopdepth   = (u16)ntohs(dest->work.ogr_ng.workstub.stopdepth);
       for (int i = 0; i < OGR_STUB_MAX; i++)
         dest->work.ogr_ng.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr_ng.workstub.stub.diffs[i]);
-      dest->work.ogr_ng.workstub.worklength  = (u32)ntohl(dest->work.ogr_ng.workstub.worklength);
+      dest->work.ogr_ng.workstub.worklength  = (u16)ntohs(dest->work.ogr_ng.workstub.worklength);
       dest->work.ogr_ng.nodes.hi             = (u32)ntohl(dest->work.ogr_ng.nodes.hi);
       dest->work.ogr_ng.nodes.lo             = (u32)ntohl(dest->work.ogr_ng.nodes.lo);
       break;
