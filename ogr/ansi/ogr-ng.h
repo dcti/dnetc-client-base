@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_NG_H__
-#define __OGR_NG_H__ "@(#)$Id: ogr-ng.h,v 1.3 2008/02/13 22:06:53 kakace Exp $"
+#define __OGR_NG_H__ "@(#)$Id: ogr-ng.h,v 1.4 2008/02/25 00:04:13 kakace Exp $"
 
 #include "ogr-interface.h"
 
@@ -56,7 +56,7 @@ struct choose_datas {
 
 #define OGR_MAXDEPTH  (OGR_MAX_MARKS+1)
 #define OGR_NG_MIN    21      /* OGR-21 (test cases) */
-#define OGR_NG_MAX    27      /* Max set to OGR-27 */
+#define OGR_NG_MAX    28      /* Max set to OGR-28 */
 
 
 /* ===================================================================== */
@@ -157,7 +157,6 @@ extern struct choose_datas precomp_limits[OGR_NG_MAX - OGR_NG_MIN + 1];
 int  ogr_init_choose(void);
 void ogr_cleanup_choose(void);
 int  ogr_check_cache(int nMarks);
-
 
 #endif /* __OGR_NG_H__ */
 

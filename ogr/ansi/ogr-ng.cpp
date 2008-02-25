@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr-ng.cpp,v 1.3 2008/02/13 22:06:53 kakace Exp $
+ * $Id: ogr-ng.cpp,v 1.4 2008/02/25 00:04:13 kakace Exp $
  */
 #include <string.h>   /* memset */
 
@@ -473,6 +473,11 @@ static int ogr_init(void)
     return CORE_E_INTERNAL;
   }
 
+  // Core initialization failed and you're puzzled ?
+  // Here's why... ;-)
+  if (LOOKUP_FIRSTBLANK(0xFFFFFFFFu) != 33) {
+    return CORE_E_INTERNAL;
+  }
   #if defined(OGR_TEST_FIRSTBLANK)
     if (__testFirstBlank())
       return CORE_E_INTERNAL;

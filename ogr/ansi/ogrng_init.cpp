@@ -3,21 +3,19 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_init.cpp,v 1.2 2008/02/10 18:12:27 kakace Exp $
+ * $Id: ogrng_init.cpp,v 1.3 2008/02/25 00:04:13 kakace Exp $
  */
 
-#include <stdlib.h>   /* calloc */
+#include <stdlib.h>     /* calloc */
+#include "clisync.h"    /* fastlock_* */
 #include "ogr-ng.h"
 
 static void cache_limits(u16* pDatas, int nMarks);
-static int  length(int nSegs, u32 distSet);
-static int  ogr_build_cache(int nMarks);
-
-#define LOWEST_ENTRY 26    /* Build limits for OGR-26 and up */
+static int  min_length(int nSegs, u32 distSet);
+static int  build_cache(int nMarks);
 
 
-static const
-int OGR[] = {
+static const int OGR[] = {
   /*  1 */    0,   1,   3,   6,  11,  17,  25,  34,  44,  55,
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623, 680,
@@ -25,6 +23,7 @@ int OGR[] = {
 };
 
 
+static fastlock_t memlock;
 
 /*-------------------------------------------------------------------------*/
 
@@ -59,7 +58,7 @@ static u32 fletcher16(const u16* pDatas, size_t nElems)
 ** ogrng_dat.cpp only contains a somewhat compressed dataset that cannot be
 ** used "as is". The real datas are recovered here.
 */
-static struct choose_datas choose_dat = {NULL, -1u};
+static struct choose_datas choose_dat = {NULL, 0x4328E149};
 
 
 /*
@@ -77,11 +76,15 @@ struct choose_datas precomp_limits[OGR_NG_MAX - OGR_NG_MIN + 1] = {
    {NULL, -1u},      /* OGR-24 */
    {NULL, -1u},      /* OGR-25 */
    {NULL, -1u},      /* OGR-26 */
-   {NULL, -1u}       /* OGR-27 */
+   {NULL, -1u},      /* OGR-27 */
+   {NULL, -1u}       /* OGR-28 */
 };
 
 
-/* Returns :
+/* Rebuild the 'choose' array. The memory area is protected by a checksum
+ * (Fletcher16). That checksum is always verified after the datas have been
+ * used to initialize a new set of pre-computed limits.
+ * Returns :
  * 0 if successful
  * -1 if the choose array cannot be allocated
  * -2 if the choose array mismatch.
@@ -92,7 +95,7 @@ int ogr_init_choose(void)
   u16* array = choose_dat.choose_array;
   const u32 cksum = 0x4328E149;
 
-
+  fastlock_init(&memlock);
   if (CHOOSE_DIST_BITS != ogr_ng_choose_bits || CHOOSE_MARKS != ogr_ng_choose_marks)
   {
     /* Incompatible CHOOSE array - Give up */
@@ -120,27 +123,10 @@ int ogr_init_choose(void)
     }
   }
 
-  if (fletcher16(array, CHOOSE_ELEMS) != cksum) {
+  if (fletcher16(array, CHOOSE_ELEMS) != choose_dat.checksum) {
     return -2;          /* Modified choose_dat - Give up ! */
   }
-  choose_dat.checksum = cksum;
   choose_dat.choose_array = array;
-
-
-  /*  Compute and cache the limits.
-   *  Each array is of the form choose_array[max_mark][1 << CHOOSE_DIST_BITS]
-   */
-  for (m = LOWEST_ENTRY; m <= OGR_NG_MAX; m++) {
-    if (ogr_build_cache(m) == 0) {
-      return -1;
-    }
-  }
-
-
-  /*  Make sure the choose array is still healthy... */
-  if (cksum != fletcher16(choose_dat.choose_array, CHOOSE_ELEMS)) {
-     return -1;               /* Memory trashed ! */
-  }
 
   return 0;
 }
@@ -168,18 +154,26 @@ void ogr_cleanup_choose(void)
 }
 
 
-static int ogr_build_cache(int nMarks)
+static int build_cache(int nMarks)
 {
-  struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
-  u16* array = (u16*) malloc((nMarks << CHOOSE_DIST_BITS) * sizeof(u16));
+  int success = 0;
 
-  if (array) {
-    p->choose_array = array;
-    cache_limits(p->choose_array, nMarks);
-    p->checksum = fletcher16(p->choose_array, (nMarks << CHOOSE_DIST_BITS));
-    return -1;
+  fastlock_lock(&memlock);
+
+  if (nMarks >= OGR_NG_MIN && nMarks <= OGR_NG_MAX) {
+    struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
+    u16* array = (u16*) malloc((nMarks << CHOOSE_DIST_BITS) * sizeof(u16));
+
+    if (array) {
+      p->choose_array = array;
+      cache_limits(p->choose_array, nMarks);
+      p->checksum = fletcher16(p->choose_array, (nMarks << CHOOSE_DIST_BITS));
+      success = (fletcher16(choose_dat.choose_array, CHOOSE_ELEMS) == choose_dat.checksum);
+    }
   }
-  return 0;
+
+  fastlock_unlock(&memlock);
+  return success;
 }
 
 
@@ -191,15 +185,16 @@ static int ogr_build_cache(int nMarks)
  */
 int ogr_check_cache(int nMarks)
 {
-  struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
+  if (nMarks >= OGR_NG_MIN && nMarks <= OGR_NG_MAX) {
+    struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
 
-  if (p->choose_array) {
-    return (p->checksum == fletcher16(p->choose_array, (nMarks << CHOOSE_DIST_BITS)));
+    if (p->choose_array) {
+      return (p->checksum == fletcher16(p->choose_array, (nMarks << CHOOSE_DIST_BITS)));
+    }
+    else {
+      return build_cache(nMarks);
+    }
   }
-  else if (nMarks >= OGR_NG_MIN && nMarks < LOWEST_ENTRY) {
-    return ogr_build_cache(nMarks);
-  }
-
   return 0;
 }
 
@@ -221,10 +216,10 @@ static void cache_limits(u16* pDatas, int nMarks)
 
       table[0] = 0;
       for (depth = 1; depth <= nsegs; depth++) {
-         limit = OGR[nsegs] - length(nsegs - depth, dist);
+         limit = OGR[nsegs] - min_length(nsegs - depth, dist);
          if (depth <= midseg_pos) {
-            temp = (OGR[nsegs] - 1 - length(midseg_size, dist)) / 2
-                 - length(midseg_pos - depth, dist);
+            temp = (OGR[nsegs] - 1 - min_length(midseg_size, dist)) / 2
+                 - min_length(midseg_pos - depth, dist);
             if (temp < limit) {
                limit = temp;
             }
@@ -236,7 +231,7 @@ static void cache_limits(u16* pDatas, int nMarks)
 }
 
 
-static int length(int nSegs, u32 distSet)
+static int min_length(int nSegs, u32 distSet)
 {
    int len;
 
