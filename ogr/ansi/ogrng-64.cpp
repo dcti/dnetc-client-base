@@ -44,7 +44,7 @@
   #elif (CLIENT_CPU == CPU_X86)
     // this 64-bit version does not actually seem to be a benefit on x86.
     #include "x86/asm-x86.h"
-    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
     #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
     #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      0 /* 0/1 - memory-based    */
 
