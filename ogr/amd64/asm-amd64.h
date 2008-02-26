@@ -5,26 +5,7 @@
 */
 
 #ifndef __ASM_AMD64_H__
-#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.2 2007/10/22 16:48:28 jlawson Exp $"
-
-/* If we were to cover the whole range of 0x00000000 ... 0xffffffff
-   we would need ...
-   static __inline__ int __CNTLZ__(register unsigned int input)
-   {
-      register unsigned int result;
-      __asm__("notl %1\n\t"     \
-              "movl $33,%0\n\t" \
-              "bsrl %1,%1\n\t"  \
-              "jz   0f\n\t"     \
-              "subl %1,%0\n\t"  \
-              "decl %0\n\t"     \
-              "0:"              \
-              :"=r"(result), "=r"(input) : "1"(input) : "cc" );
-      return result;
-   }
-   but since the function is only executed for (comp0 < 0xfffffffe),
-   we can optimize it to...
-*/
+#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.3 2008/02/26 20:45:18 kakace Exp $"
 
 #if defined(__ICC)
   static inline int __CNTLZ__(register unsigned int i)
@@ -37,7 +18,7 @@
     _asm mov i,edx
     return i;
   }
-  #define __CNTLZ(x) __CNTLZ__(x)
+  #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
 
 #elif defined(__WATCOMC__)
 
@@ -48,7 +29,7 @@
           "bsr  eax,eax" \
           "sub  edx,eax" \
           value [edx] parm [eax] modify exact [eax edx] nomemory;
-  #define __CNTLZ(x) __CNTLZ__(x)
+  #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
 
 #elif defined(__GNUC__)
 
@@ -56,11 +37,14 @@
   {
      register unsigned int result;
      __asm__("notl %1\n\t"     \
-             "movl $32,%0\n\t" \
+             "movl $33,%0\n\t" \
              "bsrl %1,%1\n\t"  \
+             "jz   0f\n\t"     \
              "subl %1,%0\n\t"  \
+             "decl %0\n\t"     \
+             "0:"              \
              :"=r"(result), "=r"(input) : "1"(input) : "cc" );
-     return result;
+    return result;
   }
   #define __CNTLZ(x) __CNTLZ__(x)
 
@@ -77,7 +61,7 @@
       }
       // return value in eax
   }
-  #define __CNTLZ(x) __CNTLZ__(x)
+  #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
 
 #endif  /* compiler */
 
