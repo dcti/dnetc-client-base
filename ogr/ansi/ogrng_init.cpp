@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_init.cpp,v 1.3 2008/02/25 00:04:13 kakace Exp $
+ * $Id: ogrng_init.cpp,v 1.4 2008/02/26 20:26:53 kakace Exp $
  */
 
 #include <stdlib.h>     /* calloc */
@@ -70,14 +70,14 @@ static struct choose_datas choose_dat = {NULL, 0x4328E149};
 ** are only used by test-cases or benchmarks (which are single-threaded jobs).
 */
 struct choose_datas precomp_limits[OGR_NG_MAX - OGR_NG_MIN + 1] = {
-   {NULL, -1u},      /* OGR-21 */
-   {NULL, -1u},      /* OGR-22 */
-   {NULL, -1u},      /* OGR-23 */
-   {NULL, -1u},      /* OGR-24 */
-   {NULL, -1u},      /* OGR-25 */
-   {NULL, -1u},      /* OGR-26 */
-   {NULL, -1u},      /* OGR-27 */
-   {NULL, -1u}       /* OGR-28 */
+   {NULL, 0},       /* OGR-21 */
+   {NULL, 0},       /* OGR-22 */
+   {NULL, 0},       /* OGR-23 */
+   {NULL, 0},       /* OGR-24 */
+   {NULL, 0},       /* OGR-25 */
+   {NULL, 0},       /* OGR-26 */
+   {NULL, 0},       /* OGR-27 */
+   {NULL, 0}        /* OGR-28 */
 };
 
 
