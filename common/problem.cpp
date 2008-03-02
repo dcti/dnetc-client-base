@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.184 2008/02/13 22:07:14 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.185 2008/03/02 21:12:16 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2417,6 +2417,9 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               {
                 ogr_stubstr_r((const struct Stub *) &work.ogr_ng.workstub.stub,
                               info->sigbuf, sizeof(info->sigbuf), 0);
+                if (work.ogr_ng.workstub.stopdepth > 0) {
+                  strncat(info->sigbuf, "...", sizeof(info->sigbuf) - strlen(info->sigbuf));
+                }
               }
               if (flags & P_INFO_CWPBUF)
               {
