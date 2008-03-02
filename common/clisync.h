@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.8 2008/02/10 00:24:30 kakace Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.9 2008/03/02 20:08:46 kakace Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -199,7 +199,7 @@
     asm volatile("movl  $1,%0 \n\t" \
                  "xchgl %0,%1 \n\t" \
                  "xorl  $1,%0"
-                 : "=r"(lacquired)
+                 : "=&r"(lacquired)
                  : "m"(*l)
                  : "memory");
 # elif defined(__BORLANDC__) /* BCC can't do inline assembler in inline functions */
