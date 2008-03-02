@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.30 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.31 2008/03/02 20:07:19 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -460,7 +460,9 @@ int CliIsDevelVersion(void)
 {
   #if (defined(BETA) || defined(BETA_PERIOD))
   return 1;
-  #else
+  #elif ((CLIENT_CONTEST) <= 90) && ((CLIENT_BUILD) < 16)
+  // The following code is now obsolete. Source code has been moved to the
+  // trunc, so all version numbers only have one dot.
   static int isdevel = -1;
   if (isdevel == -1)
   {
@@ -484,6 +486,8 @@ int CliIsDevelVersion(void)
     }
   }
   return isdevel;
+  #else
+  return 0;
   #endif
 }
 
