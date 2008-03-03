@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.134 2008/02/17 16:24:29 kakace Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.135 2008/03/03 22:37:53 kakace Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1187,7 +1187,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
       //fprintf(stderr,"scheduling poll-process\n");
       thrparams->threadID = (THREADID)RegPolledProcedure(Go_mt,
                                 (void *)thrparams , NULL, 0 );
-      success = (((int)thrparams->threadID) != -1);
+      success = ((thrparams->threadID) != (THREADID)-1);
     }
 
     if (success)
