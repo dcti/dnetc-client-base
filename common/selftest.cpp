@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.90 2008/02/13 22:07:15 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.91 2008/03/03 22:29:32 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -290,7 +290,7 @@ long SelfTest( unsigned int contest )
           }
           contestwork.ogr_ng.workstub.worklength = 0;
           contestwork.ogr_ng.nodes.lo = contestwork.ogr_ng.nodes.hi = 0;
-          contestwork.ogr_ng.workstub.stopdepth = contestwork.ogr_ng.workstub.stub.length;
+          contestwork.ogr_ng.workstub.collapsed = 0;
           break;
         }  
         #endif

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr-ng.cpp,v 1.4 2008/02/25 00:04:13 kakace Exp $
+ * $Id: ogr-ng.cpp,v 1.5 2008/03/03 22:29:32 kakace Exp $
  */
 #include <string.h>   /* memset */
 
@@ -497,7 +497,7 @@ static int ogr_init(void)
 */
 
 static int ogr_create(void *input, int inputlen, void *state, int statelen,
-                      int stopDepth)
+                      int lastSegment)
 {
   struct OgrState *oState;
   struct OgrWorkStub *workstub = (struct OgrWorkStub *)input;
@@ -511,10 +511,6 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
 
   if ( (oState = (struct OgrState *)state) == NULL) {
     return CORE_E_MEMORY;
-  }
-
-  if (stopDepth > workstub->stub.length) {
-    return CORE_E_STUB;
   }
 
   memset(oState, 0, sizeof(struct OgrState));
@@ -595,7 +591,7 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
   }
 
   oState->startdepth = workstub->stub.length;
-  oState->stopdepth  = (stopDepth != 0) ? stopDepth : oState->startdepth;
+  oState->stopdepth  = (lastSegment != 0) ? oState->startdepth - 1 : oState->startdepth;
   return CORE_S_OK;
 }
 

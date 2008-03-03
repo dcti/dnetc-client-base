@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_NG_H__
-#define __OGR_NG_H__ "@(#)$Id: ogr-ng.h,v 1.4 2008/02/25 00:04:13 kakace Exp $"
+#define __OGR_NG_H__ "@(#)$Id: ogr-ng.h,v 1.5 2008/03/03 22:29:32 kakace Exp $"
 
 #include "ogr-interface.h"
 
@@ -87,7 +87,7 @@ struct OgrStub {           /* size is 60 */
 struct OgrWorkStub {       /* size is 64 */
   struct OgrStub stub;     /* stub we're working on */
   u16 worklength;          /* depth of current state */
-  u16 stopdepth;           /* Final depth */
+  u16 collapsed;           /* If != 0, then it's the last segment in stub (backup) */
 } DNETC_PACKED;
 
 #ifndef __SUNPRO_CC

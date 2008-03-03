@@ -9,7 +9,7 @@
 */
 
 const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.12 2008/02/22 13:54:15 stream Exp $"; }
+return "@(#)$Id: buffpub.cpp,v 1.13 2008/03/03 22:29:32 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"   //client class
@@ -234,7 +234,7 @@ static void __switch_byte_order( WorkRecord *dest, const WorkRecord *source,
     {
       dest->work.ogr_ng.workstub.stub.marks  = (u16)ntohs(dest->work.ogr_ng.workstub.stub.marks);
       dest->work.ogr_ng.workstub.stub.length = (u16)ntohs(dest->work.ogr_ng.workstub.stub.length);
-      dest->work.ogr_ng.workstub.stopdepth   = (u16)ntohs(dest->work.ogr_ng.workstub.stopdepth);
+      dest->work.ogr_ng.workstub.collapsed   = (u16)ntohs(dest->work.ogr_ng.workstub.collapsed);
       for (int i = 0; i < OGR_STUB_MAX; i++)
         dest->work.ogr_ng.workstub.stub.diffs[i] = (u16)ntohs(dest->work.ogr_ng.workstub.stub.diffs[i]);
       dest->work.ogr_ng.workstub.worklength  = (u16)ntohs(dest->work.ogr_ng.workstub.worklength);
