@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.61 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.62 2008/03/08 20:14:12 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -545,6 +545,25 @@ int CliGetMonotonicClock( struct timeval *tv )
       if (!gotit) return -1;
       __clks2tv( 1000, ticks, l_wrap_count, tv );
     }
+    #elif (CLIENT_OS == OS_MACOSX)
+      // OS 10.5.2 : the sysctl() call causes a huge slow down on 64-bit arch.
+      static struct timeval boot = {0, 0};
+      struct timeval now;
+      int mib[2]; size_t argsize = sizeof(boot);
+      mib[0] = CTL_KERN; mib[1] = KERN_BOOTTIME;
+      if (gettimeofday(&now, 0))
+        return -1;
+      if (boot.tv_sec == 0 && sysctl(&mib[0], 2, &boot, &argsize, NULL, 0) == -1)
+        return -1;
+      if (now.tv_sec < boot.tv_sec || /* should never happen */
+          (now.tv_sec == boot.tv_sec && now.tv_usec < boot.tv_sec))
+        return -1;
+      if (now.tv_usec < boot.tv_usec) {
+        now.tv_usec += 1000000;
+        now.tv_sec--;
+      }
+      tv->tv_sec = now.tv_sec - boot.tv_sec;
+      tv->tv_usec = now.tv_usec - boot.tv_usec;
     #elif defined(CTL_KERN) && defined(KERN_BOOTTIME) /* *BSD */
     {
       struct timeval boot, now;
