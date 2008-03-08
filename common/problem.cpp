@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.185 2008/03/02 21:12:16 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.186 2008/03/08 20:10:29 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -467,7 +467,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       //26/6-9-30-14-10-11
       work->ogr_ng.workstub.stub.marks = 25;
       work->ogr_ng.workstub.worklength = 6;
-      work->ogr_ng.workstub.stopdepth = 6;
+      work->ogr_ng.workstub.collapsed = 0;
       work->ogr_ng.workstub.stub.length = 6;
       work->ogr_ng.workstub.stub.diffs[0] = 6;
       work->ogr_ng.workstub.stub.diffs[1] = 9;
@@ -838,7 +838,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
     {
       r = (thisprob->pub_data.unit_func.ogr)->create(&thisprob->priv_data.contestwork.ogr_ng.workstub,
                       sizeof(OgrWorkStub), thisprob->priv_data.core_membuffer, MAX_MEM_REQUIRED_BY_CORE,
-                      thisprob->priv_data.contestwork.ogr_ng.workstub.stopdepth);
+                      thisprob->priv_data.contestwork.ogr_ng.workstub.collapsed);
     }
     if (r != CORE_S_OK)
     {
@@ -1084,8 +1084,6 @@ static int Run_OGR_P2( InternalProblem *thisprob, /* already validated */
       if (r == CORE_S_OK)
       {
         //Log("OGR-P2 Success!\n");
-        thisprob->priv_data.contestwork.ogr_p2.workstub.stub.length =
-                  (u16)(thisprob->priv_data.contestwork.ogr_p2.workstub.worklength);
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }
@@ -1164,9 +1162,6 @@ static int Run_OGR_NG( InternalProblem *thisprob, /* already validated */
                               &thisprob->priv_data.contestwork.ogr_ng.workstub, sizeof(OgrWorkStub));
       if (r == CORE_S_OK)
       {
-        //Log("OGR-P2 Success!\n");
-        thisprob->priv_data.contestwork.ogr_ng.workstub.stub.length =
-                  (u16)(thisprob->priv_data.contestwork.ogr_ng.workstub.worklength);
         *resultcode = RESULT_FOUND;
         return RESULT_FOUND;
       }
@@ -2278,6 +2273,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
       info->is_test_packet = contestid == RC5_72 &&
                              work.bigcrypto.iterations.lo == 0x00100000 &&
                              work.bigcrypto.iterations.hi == 0;
+#else
+      info->is_test_packet = 0;
 #endif
 // FIXME: hmmm is this correct ??????
       info->stats_units_are_integer = (contestid != OGR_P2 && contestid != OGR_NG);
@@ -2417,7 +2414,8 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
               {
                 ogr_stubstr_r((const struct Stub *) &work.ogr_ng.workstub.stub,
                               info->sigbuf, sizeof(info->sigbuf), 0);
-                if (work.ogr_ng.workstub.stopdepth > 0) {
+                if (work.ogr_ng.workstub.worklength <= work.ogr_ng.workstub.stub.length
+                    && work.ogr_ng.workstub.collapsed != 0) {
                   strncat(info->sigbuf, "...", sizeof(info->sigbuf) - strlen(info->sigbuf));
                 }
               }
