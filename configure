@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.299 2008/03/08 20:12:04 kakace Exp $
+# @(#)$Id: configure,v 1.300 2008/03/08 21:47:01 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -220,7 +220,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
 
     # --------------- ogr-ng ----------------
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
     fi
 
@@ -261,7 +261,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
 
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       if [ "$2" = "sparc64" ]; then
         DEFAULT_OGR="0"       # don't add the ansi core
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
@@ -279,7 +279,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_72" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/mips/r72mips2.cpp"
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       if [ "$2" = "mips64" ]; then
         DEFAULT_OGR="0"       # don't add the ansi core
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
@@ -314,7 +314,7 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5-72/68k"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
     fi
     if [ "$HAVE_OGR_P2" = "1" ]; then
@@ -327,7 +327,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
   elif [ "$2" = "alpha" ]; then
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/ansi/ogrng-64.cpp"
     fi
     if [ "$HAVE_OGR_P2" = "1" ]; then
@@ -383,20 +383,21 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
 
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       DEFAULT_OGRNG="0"
-      HAVE_FLEGE_PPC_CORES="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
+      HAVE_FLEGE_PPC_CORES="1"
       if [ "X$3" = "Xaltivec" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogrng-vec.cpp"
+        if [ "$1" != "aix" ]; then
+          TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/FLEGE_hybrid.gas.s"
+        fi
       fi
       if [ "$HAVE_FLEGE_PPC_CORES" = "0" ]; then
         if [ "${1}" = "macosx" ]; then
           # add the 64-bit core to the ANSI cores
           TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogrng-64.cpp"
         fi
-      #else
-        # FLEGE optimized cores
       fi
     fi
     if [ "$HAVE_OGR_P2" = "1" ]; then
@@ -451,7 +452,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/arm/r72arm3-gnu.S"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
     fi
     if [ "$HAVE_OGR_P2" = "1" ]; then
@@ -511,7 +512,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi # HAVE_RC5_72
 
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       # add the 64-bit core to the ANSI cores
       DEFAULT_OGR="0"       # don't add the ansi core
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
@@ -535,7 +536,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
 
     # -------------- ogr --------------
-    if [ "$HAVE_OGR" = "1"]; then
+    if [ "$HAVE_OGR" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
     fi
 
@@ -578,6 +579,9 @@ add_sources() # $1=os, $2=arch, $3=custom
 
   if [ "$HAVE_OGR" = "1" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+    if [ "$HAVE_FLEGE_PPC_CORES" = "1" ]; then
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_FLEGE_PPC_CORES"
+    fi
   fi
   if [ "$HAVE_OGR_P2" = "1" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_PASS2"
