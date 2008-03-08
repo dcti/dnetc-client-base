@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.298 2008/02/17 17:05:59 kakace Exp $
+# @(#)$Id: configure,v 1.299 2008/03/08 20:12:04 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -182,10 +182,10 @@ add_sources() # $1=os, $2=arch, $3=custom
   RC5_72_ANSI_SRCS="$RC5_72_ANSI1_SRCS $RC5_72_ANSI2_SRCS $RC5_72_ANSI4_SRCS"
   # -- OGR-P2 -- (needs -DHAVE_OGR_PASS2) -----
   OGR_GENERAL_SRCS="$OGR/ansi/ogr_dat.cpp"
-  OGR_ANSI_SRCS="$OGR/ansi/ogr.cpp $OGR_GENERAL_SRCS"
+  OGR_ANSI_SRCS="$OGR/ansi/ogrp2-32.cpp $OGR_GENERAL_SRCS"
   # -- OGR-NG -- (needs -DHAVE_OGR_CORES) -----
   OGRNG_GENERAL_SRCS="$OGR/ansi/ogrng_dat.cpp $OGR/ansi/ogrng_init.cpp"
-  OGRNG_ANSI_SRCS="$OGR/ansi/ogr-ng.cpp $OGRNG_GENERAL_SRCS"
+  OGRNG_ANSI_SRCS="$OGR/ansi/ogrng-32.cpp $OGRNG_GENERAL_SRCS"
 
   # -------------------------------------------------------------------
 
@@ -271,7 +271,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_OGR_P2" = "1" ]; then
       if [ "$2" = "sparc64" ]; then
         DEFAULT_OGR="0"       # don't add the ansi core
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogrp2-64.cpp"
       fi # sparc64
     fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
@@ -288,7 +288,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_OGR_P2" = "1" ]; then
       if [ "$2" = "mips64" ]; then
         DEFAULT_OGR="0"       # don't add the ansi core
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogrp2-64.cpp"
       fi # mips64
     fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
@@ -328,7 +328,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------
   elif [ "$2" = "alpha" ]; then
     if [ "$HAVE_OGR" = "1"]; then
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/ansi/ogrng-64.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/ansi/ogrng-64.cpp"
     fi
     if [ "$HAVE_OGR_P2" = "1" ]; then
       # this is just an addition to the default ansi core
@@ -337,11 +337,12 @@ add_sources() # $1=os, $2=arch, $3=custom
       if [ "$DEFAULT_OGR" = "0" ]; then
         TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR_GENERAL_SRCS"
       fi
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67.cpp"
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev4.cpp"
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/ansi/ogr-64.cpp"
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev4-64.cpp"
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} ogr/alpha/ev67-64.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/alpha/ev67.cpp"
+      # Obsolete: TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/alpha/ev4.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/ansi/ogrp2-32.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/ansi/ogrp2-64.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/alpha/ev4-64.cpp"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/alpha/ev67-64.cpp"
     fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
   elif [ "$2" = "ppc" ]; then
@@ -386,7 +387,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       DEFAULT_OGRNG="0"
       HAVE_FLEGE_PPC_CORES="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
-      if [ "X$3" = "Xaltivec" ] ; then
+      if [ "X$3" = "Xaltivec" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogrng-vec.cpp"
       fi
       if [ "$HAVE_FLEGE_PPC_CORES" = "0" ]; then
@@ -394,7 +395,7 @@ add_sources() # $1=os, $2=arch, $3=custom
           # add the 64-bit core to the ANSI cores
           TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogrng-64.cpp"
         fi
-      else
+      #else
         # FLEGE optimized cores
       fi
     fi
@@ -402,7 +403,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
 
-      if [ "X$3" = "Xaltivec" ] ; then
+      if [ "X$3" = "Xaltivec" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
       fi
       if [ "$TARGET_CC" != "mwcc" ]; then   # CodeWarrior (MacOS)
@@ -419,7 +420,7 @@ add_sources() # $1=os, $2=arch, $3=custom
         fi
         if [ "$HAVE_KOGE_PPC_CORES" = "0" -a "${1}" = "macosx" ]; then
           # add the 64-bit core to the ANSI cores
-          TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr-64.cpp"
+          TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogrp2-64.cpp"
         fi
       fi
     fi # HAVE_OGR_P2
@@ -519,7 +520,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_OGR_P2" = "1" ]; then
       # add the 64-bit core to the ANSI cores
       DEFAULT_OGR="0"       # don't add the ansi core
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogr-64.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogrp2-64.cpp"
     fi
 
   #-----------------------------------------------------------------
@@ -553,7 +554,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
      if [ "$HAVE_KOGE_PPC_CORES" = "0" -a "${1}" = "macosx" ]; then
         # add the 64-bit core to the ANSI cores
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogr-64.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogrp2-64.cpp"
       fi
       TARGET_OGRPPUWRAPPER="ogr/cellbe/ogr-cell-ppe-wrapper.cpp"
       TARGET_ADDOGRPPUCORES="cellv1"
@@ -3311,7 +3312,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       deplist=""
       for dep in $TARGET_HDEPS; do
         if [ $dep = "$OGR/ogr.h" ]; then
-          dep="$OGR/ansi/ogrp2.h $OGR/ansi/ogr-ng.h $OGR/ansi/ogr-interface.h"
+          dep="$OGR/ansi/ogrp2.h $OGR/ansi/ogrng.h $OGR/ansi/ogr-interface.h"
           has_ogr_h=1
         elif [ $dep = "common/ccoreio.h" ]; then
           has_ccoreio_h=1
@@ -3338,7 +3339,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           deplist="$deplist common/ccoreio.h"
         fi
         if [ $has_ogr_h -eq 0 ]; then
-          deplist="$deplist $OGR/ansi/ogrp2.h $OGR/ansi/ogr-ng.h $OGR/ansi/ogr-interface.h"
+          deplist="$deplist $OGR/ansi/ogrp2.h $OGR/ansi/ogrng.h $OGR/ansi/ogr-interface.h"
         fi
       fi
       #----------------
