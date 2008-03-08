@@ -7,7 +7,7 @@
 #include "ansi/ogrp2-32.h"
 
 const char *ogr_ppc_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.8 2008/03/08 20:18:29 kakace Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.9 2008/03/08 21:11:38 kakace Exp $"; }
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
 
@@ -264,6 +264,11 @@ return "@(#)$Id: ogr-ppc.cpp,v 1.8 2008/03/08 20:18:29 kakace Exp $"; }
 
   #endif  /* OGROPT_ALTERNATE_CYCLE */
 
+
+  /*
+  ** Define the name of the dispatch table.
+  */
+  #define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table
 
   #include "ansi/ogrp2_codebase.cpp"
 

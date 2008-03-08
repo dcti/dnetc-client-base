@@ -9,7 +9,7 @@
 */
 
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.8 2008/03/08 20:18:29 kakace Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.9 2008/03/08 21:11:38 kakace Exp $"; }
 
 #include "ansi/ogrp2.h"
 
@@ -97,6 +97,7 @@ struct Level {
 
 /*========================================================================*/
 
+#include <stddef.h>       /* offsetof() */
 #include "asm-ppc.h"
 
 
@@ -140,7 +141,7 @@ typedef vector unsigned int v32_t;
   #define SETUP_TOP_STATE(lev)                            \
     v8_t Varray[32];                                      \
     SCALAR comp0, dist0, list0;                           \
-    BMAP compV, listV, distV;                             \
+    v32_t compV, listV, distV;                            \
     vector unsigned int zeroes = vec_splat_u32(0);        \
     vector unsigned int ones = vec_splat_s32(-1);         \
     listV = lev->listV.v;                                 \
@@ -149,6 +150,8 @@ typedef vector unsigned int v32_t;
     list0 = lev->list0;                                   \
     dist0 = lev->dist0;                                   \
     comp0 = lev->comp0;                                   \
+    size_t listOff = offsetof(struct Level, list0);       \
+    if ((listOff&15) != 12) return CORE_E_INTERNAL;       \
     int newbit = 1;                                       \
     { /* Initialize Varray[] */                           \
       vector unsigned char val = vec_splat_u8(0);         \
@@ -193,13 +196,13 @@ typedef vector unsigned int v32_t;
 #else
   #define COMP_LEFT_LIST_RIGHT(lev, s)                    \
   {                                                       \
-    U comp1;                                              \
+    SCALAR comp1;                                         \
     v32_t Vs, Vss, listV1, bmV;                           \
     int ss = SCALAR_BITS - (s);                           \
     Vs = (v32_t) Varray[s];                               \
     list0 >>= s;                                          \
     newbit <<= ss;                                        \
-    listV1 = vec_lde(listOff, (U *)lev);                  \
+    listV1 = vec_lde(listOff, (SCALAR *)lev);             \
     list0 |= newbit;                                      \
     comp1 = lev->compV.u[0];                              \
     comp0 <<= s;                                          \
@@ -237,7 +240,7 @@ typedef vector unsigned int v32_t;
 #else
   #define COMP_LEFT_LIST_RIGHT_WORD(lev)        \
     list0 = newbit;                             \
-    v32_t listV1 = vec_lde(listOff, (U *)lev);  \
+    v32_t listV1 = vec_lde(listOff, (SCALAR *)lev);  \
     lev->list0 = newbit;                        \
     compV = vec_sld(compV, zeroes, 4);          \
     comp0 = lev->compV.u[0];                    \

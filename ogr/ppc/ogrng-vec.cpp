@@ -7,7 +7,7 @@
  *  one 32-bit scalar part (left side), and two 128-bit vector parts, thus the
  *  "hybrid" name.
  *
- * $Id: ogrng-vec.cpp,v 1.3 2008/03/08 20:18:29 kakace Exp $
+ * $Id: ogrng-vec.cpp,v 1.4 2008/03/08 21:11:38 kakace Exp $
 */
 
 #include "ansi/ogrng.h"
@@ -36,6 +36,7 @@ typedef u32 SCALAR;         /* Basic type for scalar operations on bitmaps */
 
 
 #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM     2 /* 0-2 - '100% asm'      */
+#define OGROPT_ALTERNATE_CYCLE                  1 /* 0-1 - '100% asm'      */
 
 
 /*
@@ -187,7 +188,7 @@ typedef vector unsigned int v32_t;
 ** Check the settings again since we have to make sure ogr_create()
 ** produces compatible datas.
 */
-#if defined(HAVE_FLEGE_PPC_CORES)
+#if defined(HAVE_FLEGE_PPC_CORES) && (OGROPT_ALTERNATE_CYCLE > 0)
 
   #ifdef __cplusplus
   extern "C" {
