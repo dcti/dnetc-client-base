@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.91 2008/03/03 22:29:32 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.92 2008/03/08 20:11:20 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -99,9 +99,7 @@ static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   {~0x0008B55C, 23,  2, 22, 32, 21,  5,  1},             // 29
   {~0x002DD344, 24,  2, 22, 32, 21,  5,  1, 12},         // 30
   {~0x0043227A, 25,  2, 22, 32, 21,  5,  1, 12, 34},     // 31
-  {~0x00140002, 23,  1,  8,  5, 29, 27, 36},             // 32
-  //{0, 28, 3, 12, 26, 25, 29, 2},
-  //{0, 29, 3, 25, 5, 8, 54, 61},
+  {~0x00140002, 23,  1,  8,  5, 29, 27, 36}              // 32
 };
 #endif  /* HAVE_OGR_CORES */
 
