@@ -5,8 +5,11 @@
  *
  */
 
+#include "ansi/ogrp2-32.h"
+
+
 const char *ogr_arm_cpp(void) {
-return "@(#)$Id: ogr-arm.cpp,v 1.2 2007/10/22 16:48:29 jlawson Exp $"; }
+return "@(#)$Id: ogr-arm.cpp,v 1.3 2008/03/08 20:18:29 kakace Exp $"; }
 
 #if defined(ASM_ARM)
 
@@ -15,18 +18,10 @@ return "@(#)$Id: ogr-arm.cpp,v 1.2 2007/10/22 16:48:29 jlawson Exp $"; }
   #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
   #define OGROPT_HAVE_OGR_CYCLE_ASM             1 /* 0-2 - 'yes'           */
   #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
-  #define OGROPT_ALTERNATE_CYCLE                0 /* 0-2 - 'no'  (default) */
-  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - 'std' (default) */
 
-  /*
-  ** Note from Kakace :
-  ** The following code has been borrowed from ogr.cpp
-  ** Since ARM platforms appear to use ASM cores, most of the settings as
-  ** well as this inline code only apply to ogr_create/ogr_create_pass2.
-  */
   #if defined(__GNUC__)
     #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 1)
-      static __inline__ int __CNTLZ__(register unsigned int input,
+      static __inline__ int __CNTLZ__(register SCALAR input,
                                       const char bitarray[])
       {
         register int temp, result;
@@ -45,38 +40,8 @@ return "@(#)$Id: ogr-arm.cpp,v 1.2 2007/10/22 16:48:29 jlawson Exp $"; }
       }
       #define __CNTLZ_ARRAY_BASED(x) __CNTLZ__(x)
     #endif
-
-    #if (OGROPT_ALTERNATE_CYCLE == 0 && OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1)
-      #error fixme: No longer compatible with existing code
-      // need to copy "newbit" into "list0"
-      #define COMP_LEFT_LIST_RIGHT_32(lev) {  \
-        int a1, a2;                           \
-        asm ("ldr %0,[%2,#44]\n               \
-              ldr %1,[%2,#48]\n               \
-              str %0,[%2,#40]\n               \
-              ldr %0,[%2,#52]\n               \
-              str %1,[%2,#44]\n               \
-              ldr %1,[%2,#56]\n               \
-              str %0,[%2,#48]\n               \
-              ldr %0,[%2,#12]\n               \
-              str %1,[%2,#52]\n               \
-              ldr %1,[%2,#8]\n                \
-              str %0,[%2,#16]\n               \
-              ldr %0,[%2,#4]\n                \
-              str %1,[%2,#12]\n               \
-              ldr %1,[%2,#0]\n                \
-              str %0,[%2,#8]\n                \
-              mov %0,#0\n                     \
-              str %1,[%2,#4]\n                \
-              str %0,[%2,#56]\n               \
-              str %0,[%2,#0]" :               \
-            "=r" (a1), "=r" (a2),             \
-            "=r" (lev) : "2" (lev));          \
-      }
-
-    #endif  /* OGROPT_ALTERNATE_CYCLE == 0 */
   #endif  /* __GNUC__ */
 
 #endif  /* ASM_ARM */
 
-#include "ansi/ogr.cpp"
+#include "ansi/ogrp2_codebase.cpp"

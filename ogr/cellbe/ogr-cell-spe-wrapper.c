@@ -4,18 +4,15 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.3 2008/02/19 09:54:45 stream Exp $"; }
+return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.4 2008/03/08 20:18:29 kakace Exp $"; }
 
 #ifndef CORE_NAME
 #error CORE_NAME not defined
 #endif
 
-#define OGROPT_OGR_CYCLE_ALTIVEC 1
-
 #include <spu_intrinsics.h>
 #include "ccoreio.h"
 #include "cputypes.h"
-#include "ansi/ogr.h"
 #include "ogr-cell.h"
 #include <spu_mfcio.h>
 

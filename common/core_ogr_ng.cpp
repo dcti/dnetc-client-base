@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.2 2008/02/10 18:12:47 kakace Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.3 2008/03/08 20:18:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -36,42 +36,42 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.2 2008/02/10 18:12:47 kakace Exp $"; }
    note2: if you need some 'cdecl' value define it in selcore.h to CDECL */
 
 #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
-    extern "C" CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table(void);
     #if defined(HAVE_I64) && !defined(HAVE_FLEGE_PPC_CORES)
-    extern "C" CoreDispatchTable *ogrng64_get_dispatch_table(void);
+    CoreDispatchTable *ogrng64_get_dispatch_table(void);
     #endif
     #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
-    extern "C" CoreDispatchTable *vec_ogrng_get_dispatch_table(void);
+    CoreDispatchTable *vec_ogrng_get_dispatch_table(void);
     #endif
     #if (CLIENT_CPU == CPU_CELLBE)
-    extern "C" CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table(void);
     #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
-    extern "C" CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table(void);
   #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
-//    extern "C" CoreDispatchTable *ogrng_get_dispatch_table(void);
+//    CoreDispatchTable *ogrng_get_dispatch_table(void);
   #endif
-    extern "C" CoreDispatchTable *ogrng64_get_dispatch_table(void);
+    CoreDispatchTable *ogrng64_get_dispatch_table(void);
   #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
-//    extern "C" CoreDispatchTable *ogrng64_get_dispatch_table(void);
+//    CoreDispatchTable *ogrng64_get_dispatch_table(void);
   #endif
 #elif (CLIENT_CPU == CPU_68K)
-    extern "C" CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_X86)
-    extern "C" CoreDispatchTable *ogrng_get_dispatch_table(void); //A
-    #if defined(HAVE_I64)
-    extern "C" CoreDispatchTable *ogrng64_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table(void); //A
+    #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
+    CoreDispatchTable *ogrng64_get_dispatch_table(void);
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
-    extern "C" CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_AMD64)
-    extern "C" CoreDispatchTable *ogrng64_get_dispatch_table(void);
+    CoreDispatchTable *ogrng64_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
-    extern "C" CoreDispatchTable *ogrng64_get_dispatch_table(void); 
+    CoreDispatchTable *ogrng64_get_dispatch_table(void); 
 #elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
-    extern "C" CoreDispatchTable *ogrng64_get_dispatch_table(void); 
+    CoreDispatchTable *ogrng64_get_dispatch_table(void); 
 #else
-    extern "C" CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table(void);
 #endif
 
 
@@ -87,7 +87,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
     // call the functions once to initialize the static tables before the client forks
       #if CLIENT_CPU == CPU_X86
         ogrng_get_dispatch_table();
-        #if defined(HAVE_I64)
+        #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
           ogrng64_get_dispatch_table();
         #endif
       #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
@@ -159,7 +159,7 @@ const char **corenames_for_contest_ogr_ng()
   /* ================================================================== */
   #if (CLIENT_CPU == CPU_X86)
       "FLEGE 2.0",
-      #ifdef HAVE_I64
+      #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
       "FLEGE-64 2.0",
       #endif
   #elif (CLIENT_CPU == CPU_AMD64)
@@ -245,7 +245,7 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
   if ((feature & CPU_F_64BITOPS) == 0 && cindex == 2)     /* PPC-64bit  */
     cindex = 0;                                     /* force PPC-32bit  */
 # elif (CLIENT_CPU == CPU_X86)
-#  if !defined(HAVE_I64) /* no 64-bit support? */
+#  if !defined(HAVE_I64) || (SIZEOF_LONG < 8)     /* no 64-bit support? */
     if (cindex == 1) {
       cindex = 0;
     }
@@ -305,11 +305,8 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
       if (detected_type >= 0)
       {
         cindex = 0;
-      #ifdef HAVE_I64 // Need 64-bit support and MMX
-        if (detected_flags & CPU_F_MMX)
-        {
-          // cindex = 1  /* 64-bit core */
-        }
+      #if defined(HAVE_I64) && (SIZEOF_LONG == 8) // Need native 64-bit support
+        // cindex = 1  /* 64-bit core */
       #endif
       }
   // ===============================================================
@@ -410,7 +407,7 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
   #endif
       unit_func.ogr = ogrng_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_X86)
-  #if defined(HAVE_I64)
+  #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
   if (coresel == 1) //D
     unit_func.ogr = ogrng64_get_dispatch_table();
   else

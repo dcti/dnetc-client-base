@@ -3,12 +3,12 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_init.cpp,v 1.4 2008/02/26 20:26:53 kakace Exp $
+ * $Id: ogrng_init.cpp,v 1.5 2008/03/08 20:18:31 kakace Exp $
  */
 
 #include <stdlib.h>     /* calloc */
 #include "clisync.h"    /* fastlock_* */
-#include "ogr-ng.h"
+#include "ansi/ogrng.h"
 
 static void cache_limits(u16* pDatas, int nMarks);
 static int  min_length(int nSegs, u32 distSet);
@@ -63,11 +63,9 @@ static struct choose_datas choose_dat = {NULL, 0x4328E149};
 
 /*
 ** Pre-computed limits.
-** ogr_init_choose() initialize the tables for OGR-26 up to OGR_NG_MAX. If m
-** is the number of marks of the rulers to be searched, then the table is
-** 2 x 2^16 x m bytes wide.
-** The tables for OGR-21 .. OGR-25 are built on demand from ogr_create(). They
-** are only used by test-cases or benchmarks (which are single-threaded jobs).
+** ogr_init_choose() initialize the tables for OGR-NG_MIN up to OGR_NG_MAX. Each
+** table is (2 x 2^16 x 32) bytes wide, and it is only created when required
+** (see ogr_create()).
 */
 struct choose_datas precomp_limits[OGR_NG_MAX - OGR_NG_MIN + 1] = {
    {NULL, 0},       /* OGR-21 */
@@ -93,10 +91,9 @@ int ogr_init_choose(void)
 {
   int m, set;
   u16* array = choose_dat.choose_array;
-  const u32 cksum = 0x4328E149;
 
   fastlock_init(&memlock);
-  if (CHOOSE_DIST_BITS != ogr_ng_choose_bits || CHOOSE_MARKS != ogr_ng_choose_marks)
+  if (CHOOSE_DIST_BITS != ogrng_choose_bits || CHOOSE_MARKS != ogrng_choose_marks)
   {
     /* Incompatible CHOOSE array - Give up */
     return -2;
@@ -162,12 +159,13 @@ static int build_cache(int nMarks)
 
   if (nMarks >= OGR_NG_MIN && nMarks <= OGR_NG_MAX) {
     struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
-    u16* array = (u16*) malloc((nMarks << CHOOSE_DIST_BITS) * sizeof(u16));
+    size_t n_elems = 32 << CHOOSE_DIST_BITS;
+    u16* array = (u16*) malloc(n_elems * sizeof(u16));
 
     if (array) {
       p->choose_array = array;
       cache_limits(p->choose_array, nMarks);
-      p->checksum = fletcher16(p->choose_array, (nMarks << CHOOSE_DIST_BITS));
+      p->checksum = fletcher16(p->choose_array, n_elems);
       success = (fletcher16(choose_dat.choose_array, CHOOSE_ELEMS) == choose_dat.checksum);
     }
   }
@@ -189,7 +187,7 @@ int ogr_check_cache(int nMarks)
     struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
 
     if (p->choose_array) {
-      return (p->checksum == fletcher16(p->choose_array, (nMarks << CHOOSE_DIST_BITS)));
+      return (p->checksum == fletcher16(p->choose_array, (32 << CHOOSE_DIST_BITS)));
     }
     else {
       return build_cache(nMarks);
@@ -212,7 +210,7 @@ static void cache_limits(u16* pDatas, int nMarks)
 
    for (dist = 0; dist < (1 << CHOOSE_DIST_BITS); dist++) {
       int limit, temp;
-      u16* table = &pDatas[dist];
+      u16* table = &pDatas[dist * 32];
 
       table[0] = 0;
       for (depth = 1; depth <= nsegs; depth++) {
@@ -225,7 +223,7 @@ static void cache_limits(u16* pDatas, int nMarks)
             }
          }
 
-         table[depth << CHOOSE_DIST_BITS] = (limit < 0) ? 0 : limit;
+         table[depth] = (limit < 0) ? 0 : limit;
       }
    }
 }

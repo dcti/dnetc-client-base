@@ -5,12 +5,14 @@
 */
 
 #ifndef __ASM_PPC_H__
-#define __ASM_PPC_H__ "@(#)$Id: asm-ppc.h,v 1.3 2008/02/10 00:26:19 kakace Exp $"
+#define __ASM_PPC_H__ "@(#)$Id: asm-ppc.h,v 1.4 2008/03/08 20:18:29 kakace Exp $"
 
 #if defined(__GNUC__)     /*================================================*/
 
   #if defined(ASM_POWER)
     #define __CNTLZ__(i) ({ int x; __asm__ ("cntlz %0,%0" : "=r" (x) : "0" (i)); x;})
+  #elif (SCALAR_BITS == 64) && defined(__ppc64__)
+    #define __CNTLZ__(i) ({ int x; __asm__ ("cntlzd %0,%1" : "=r" (x) : "0" (i)); x;})
   #elif defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
     #define __CNTLZ__(i) ({ int x; __asm__ ("cntlzw %0,%1" : "=r" (x) : "0" (i)); x;})
   #endif

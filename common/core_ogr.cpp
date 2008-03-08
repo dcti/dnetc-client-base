@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.7 2008/02/21 22:50:04 kakace Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.8 2008/03/08 20:18:29 kakace Exp $"; }
 
 //#define TRACE
 
@@ -53,9 +53,9 @@ return "@(#)$Id: core_ogr.cpp,v 1.7 2008/02/21 22:50:04 kakace Exp $"; }
   #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix(void);
   #endif
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table_ev4(void);
+    extern "C" CoreDispatchTable *ogr_get_dispatch_table(void);
+    extern "C" CoreDispatchTable *ogr64_get_dispatch_table_ev4(void);
     extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
-    extern "C" CoreDispatchTable *ogr_get_dispatch_table_ev4_64(void);
   #if (CLIENT_OS != OS_VMS)    /* Include for other OSes */
     extern "C" CoreDispatchTable *ogr_get_dispatch_table_cix_64(void);
   #endif
@@ -128,9 +128,9 @@ int InitializeCoreTable_ogr(int first_time)
         #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
            ogr_get_dispatch_table_cix();
         #endif
-        ogr_get_dispatch_table_ev4();
+        ogr_get_dispatch_table();
+        ogr64_get_dispatch_table_ev4();
         ogr64_get_dispatch_table();
-        ogr_get_dispatch_table_ev4_64();
         #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
         ogr_get_dispatch_table_cix_64();
         #endif
@@ -548,13 +548,13 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
     else
   #endif 
     if (coresel == 2)
-      unit_func.ogr = ogr_get_dispatch_table_ev4();
+      unit_func.ogr = ogr_get_dispatch_table();
     else
     if (coresel == 3)
-      unit_func.ogr = ogr64_get_dispatch_table();
+      unit_func.ogr = ogr64_get_dispatch_table_ev4();
     else
     if (coresel == 4)
-      unit_func.ogr = ogr_get_dispatch_table_ev4_64();
+      unit_func.ogr = ogr64_get_dispatch_table();
     else
   #if (CLIENT_OS != OS_VMS)       /* Include for other OSes */
     if (coresel == 5)

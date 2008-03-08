@@ -5,20 +5,20 @@
 */
 
 #ifndef __ASM_68K_H__
-#define __ASM_68K_H__ "@(#)$Id: asm-68k.h,v 1.2 2007/10/22 16:48:28 jlawson Exp $"
+#define __ASM_68K_H__ "@(#)$Id: asm-68k.h,v 1.3 2008/03/08 20:18:28 kakace Exp $"
 
 #if defined(ASM_68K) && defined(__GNUC__)
 
   #if (__NeXT__)
 
     #if defined(mc68020) || defined(mc68030) || defined(mc68040) || defined(mc68060)
-      static __inline__ int __CNTLZ__(register unsigned int i) {
+      static __inline__ int __CNTLZ__(register SCALAR i) {
         __asm__ ("bfffo %0{#0:#0},%0" : "=d" (i) : "0" (i));
         return i;
       }
       #define __CNTLZ(x) (__CNTLZ__(~(x))+1)
     #else
-      static __inline__ int __CNTLZ__(register unsigned int input,
+      static __inline__ int __CNTLZ__(register SCALAR input,
                                       const char bitarray[])
       {
         register int result;
@@ -49,13 +49,13 @@
   #else /* !__NeXT__ */
 
     #if defined(mc68020) || defined(mc68030) || defined(mc68040) || defined(mc68060)
-      static __inline__ int __CNTLZ__(register unsigned int i) {
+      static __inline__ int __CNTLZ__(register SCALAR i) {
         __asm__ ("bfffo %0,0,0,%0" : "=d" (i) : "0" (i));
         return i;
       }
       #define __CNTLZ(x) (__CNTLZ__(~(x))+1)
     #else
-      static __inline__ int __CNTLZ__(register unsigned int input,
+      static __inline__ int __CNTLZ__(register SCALAR input,
                                       const char bitarray[])
       {
         register int result;

@@ -5,8 +5,11 @@
  *
  */
 
+#include "ansi/ogrp2-64.h"
+
+
 const char *ogr_ev67_64_cpp(void) {
-return "@(#)$Id: ev67-64.cpp,v 1.2 2007/10/22 16:48:28 jlawson Exp $"; }
+return "@(#)$Id: ev67-64.cpp,v 1.3 2008/03/08 20:18:28 kakace Exp $"; }
 
 #if defined(__GNUC__)
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - "100% asm"      */
@@ -14,7 +17,7 @@ return "@(#)$Id: ev67-64.cpp,v 1.2 2007/10/22 16:48:28 jlawson Exp $"; }
   #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
   #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
   #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
-  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 1 /* 0/1 - register based */
+  //#define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 1 /* 0/1 - register based */
 #else /* Compaq CC */
   #include <c_asm.h>
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - "100% asm"      */
@@ -22,13 +25,12 @@ return "@(#)$Id: ev67-64.cpp,v 1.2 2007/10/22 16:48:28 jlawson Exp $"; }
   #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
   #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
   #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
-  #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 1 /* 0/1 - register based */
+  //#define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 1 /* 0/1 - register based */
 #endif
 
 #define ALPHA_CIX
-#define OVERWRITE_DEFAULT_OPTIMIZATIONS
 #define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_cix_64
 
 #include "baseincs.h" //for endian detection
 #include "alpha/alpha-asm.h"
-#include "ansi/ogr-64.cpp"
+#include "ansi/ogrp2_codebase.cpp"

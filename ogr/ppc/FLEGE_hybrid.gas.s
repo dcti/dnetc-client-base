@@ -44,9 +44,9 @@
 
 ;# rlwinm arguments
 .set          CHOOSE_BITS,        16
-.set          SH,                 CHOOSE_BITS+1
-.set          MB,                 32-CHOOSE_BITS-1
-.set          ME,                 30
+.set          SH,                 CHOOSE_BITS+6
+.set          MB,                 32-CHOOSE_BITS-6
+.set          ME,                 31-6
 
 
 ;#============================================================================
@@ -194,9 +194,9 @@ cycle_ppc_hybrid_256:
     li        r27,Levels_compV0+16      ;# index of compV1
 
     ;# Compute the base pointer to access pre-computed limits
-    ;# This pointer always points to pChoose[Depth][0]
-    slwi      r29,r8,CHOOSE_BITS+1
-    add       r5,r5,r29                 ;# &pChoose[Depth][0]
+    ;# This pointer always points to pChoose[0][Depth]
+    add       r29,r8,r8
+    add       r5,r5,r29                 ;# &pChoose[0][Depth]
 
     ;# The maximum length is only used to compute a limit, and one is
     ;# always substracted to it.
@@ -251,7 +251,7 @@ L_UpLevel:
     lwz       r14,Levels_compV0(r7)     ;# comp0
     cmpw      r8,r10                    ;# Depth > StopDepth
     lwz       r15,Levels_listV0(r7)     ;# list0
-    subis     r5,r5,2                   ;# --pChoose
+    subi      r5,r5,2                   ;# --pChoose
     lvx       v10,r24,r7                ;# listV0
     vspltisw  v2,0                      ;# vNewbit = 0
     lvx       v13,r25,r7                ;# listV1
@@ -321,8 +321,8 @@ L_UpdateLevel:
     vor       v12,v12,v13               ;# distV1 |= listV1
     or        r16,r16,r15               ;# dist0 |= list0
     stvx      v13,r25,r7                ;# store listV1
-    addis     r5,r5,2                   ;# ++pChoose
-    rlwinm    r28,r16,SH,MB,ME          ;# 2 * (dist0 >> CHOOSE_BITS)
+    addi      r5,r5,2                   ;# ++pChoose
+    rlwinm    r28,r16,SH,MB,ME          ;# 32*2*(dist0 >> CHOOSE_BITS)
     stw       r18,mark(r7)              ;# Store the current mark
     vor       v14,v14,v12               ;# compV1 |= distV1
     cmplw     cr7,r8,r11                ;# Depth > MidSegA ?
