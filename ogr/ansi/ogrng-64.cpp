@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng-64.cpp,v 1.5 2008/03/08 20:18:29 kakace Exp $
+ * $Id: ogrng-64.cpp,v 1.6 2008/03/09 13:31:03 kakace Exp $
 */
 
 #include "ansi/ogrng-64.h"
@@ -15,6 +15,7 @@
   //#include "ppc/asm-ppc.h"  /* <== FIXME : Doesn't work in 64-bit mode */
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
   #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      1 /* 0/1 - register-based  */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
 
   #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 2) && defined(__CNTLZ__)
     #define __CNTLZ(x) (__CNTLZ__(~(x))+1)
@@ -23,16 +24,20 @@
   #include "x86/asm-x86.h"
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
   #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      0 /* 0/1 - default         */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
 #elif (CLIENT_CPU == CPU_SPARC)
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
   #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      1 /* 0/1 - register-based  */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
 #elif (CLIENT_CPU == CPU_AMD64)
   #include "amd64/asm-amd64.h"
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
   #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      1 /* 0/1 - register-based  */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
 #else
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
   #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      0 /* 0/1 - memory-based    */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
 #endif
 
 
