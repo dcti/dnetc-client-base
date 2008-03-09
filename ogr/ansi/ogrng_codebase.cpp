@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.2 2008/03/09 13:34:00 kakace Exp $
+ * $Id: ogrng_codebase.cpp,v 1.3 2008/03/09 17:20:44 kakace Exp $
  */
 
 #include <string.h>   /* memset */
@@ -331,7 +331,7 @@ static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoos
       }
 
       lev->mark = mark;
-      if (depth == oState->maxdepth) {
+      if (depth == oState->maxdepthm1) {
         goto exit;         /* Ruler found */
       }
 
