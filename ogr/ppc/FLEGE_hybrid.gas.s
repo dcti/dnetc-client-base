@@ -346,26 +346,23 @@ L_GetLimit:
 
     lwz       r30,mark(r20)             ;# Levels[MidSegA].mark
     sub       r28,r13,r30               ;# temp
-    not       r29,r16                   ;# ~dist0
-    beq       cr1,L_adjust              ;# Depth == MidSegB
-
-    cntlzw    r29,r29                   ;# FFS(dist0)
-    addi      r29,r29,1
-    sub       r28,r28,r29               ;# temp -= FFS(dist0)
-
-L_adjust:                               ;# Compute : limit = min(temp, limit)
-    subfc     r29,r19,r28
+    subfc     r29,r19,r28               ;# limit = min(temp, limit)
     subfe     r28,r28,r28
     and       r29,r29,r28
     add       r19,r19,r29
+    beq       cr1,L_CheckCnt            ;# Depth == MidSegB
+
+    ;# Compute middle mark limit
+    not       r29,r16                   ;# ~dist0
+    cntlzw    r29,r29                   ;# FFZ(dist0)
+    addi      r29,r29,1
+    sub       r19,r19,r29               ;# limit -= FFZ(dist0)
 
 
 L_CheckCnt:
     ;# cr0 := nodes <= 0
-
     stw       r19,limit(r7)             ;# store the limit
     bgt+      L_MainLoop                ;# nodes > 0
-
     b         L_exit
 
 
