@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.1 2008/03/08 20:07:14 kakace Exp $
+ * $Id: ogrng_codebase.cpp,v 1.2 2008/03/09 13:34:00 kakace Exp $
  */
 
 #include <string.h>   /* memset */
@@ -37,7 +37,7 @@
            "~bitmap" (i.e. the number of leading 1 of the "bitmap" argument)
            plus one. For a 32-bit bitmap argument, the valid range is [1; 33].
            Said otherwise :
-           __CNTLZ(0xFFFFFFFF) == 32 or 33 (platform/CPU specific)
+           __CNTLZ(0xFFFFFFFF) == 33  (If not, selftest #32 will fail).
            __CNTLZ(0xFFFFFFFE) == 32
            __CNTLZ(0xFFFFA427) == 18
            __CNTLZ(0x00000000) ==  1
@@ -52,40 +52,13 @@
 /* ----------------------------------------------------------------------- */
 
 #include "ansi/first_blank.h"
+#include "ansi/ogrng_corestate.h"
 
 
 static const int OGR[] = {
   /*  1 */    0,   1,   3,   6,  11,  17,  25,  34,  44,  55,
   /* 11 */   72,  85, 106, 127, 151, 177, 199, 216, 246, 283,
   /* 21 */  333, 356, 372, 425, 480, 492, 553, 585, 623
-};
-
-
-/*
-** Level datas.
-*/
-struct OgrLevel {
-  BMAP list[OGRNG_BITMAPS_WORDS];
-  BMAP dist[OGRNG_BITMAPS_WORDS];
-  BMAP comp[OGRNG_BITMAPS_WORDS];
-  int mark;
-  int limit;
-};
-  
-
-/*
-** Full state.
-*/
-struct OgrState {
-  int max;                  /* Maximum length of the ruler */
-  int maxdepth;             /* maximum number of marks in ruler */
-  int maxdepthm1;           /* maxdepth-1 */
-  int half_depth;           /* half of maxdepth */
-  int half_depth2;          /* half of maxdepth, adjusted for 2nd mark */
-  int startdepth;           /* Initial depth */
-  int stopdepth;            /* May be lower than startdepth */
-  int depth;                /* Current depth */
-  struct OgrLevel Levels[OGR_MAXDEPTH];
 };
 
 
@@ -328,10 +301,6 @@ static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoos
 {
   struct OgrLevel *lev = &oState->Levels[oState->depth];
   int depth       = oState->depth;
-  int half_depth  = oState->half_depth;
-  int half_depth2 = oState->half_depth2;
-  int stopdepth   = oState->stopdepth;
-  int maxdepth    = oState->maxdepthm1;
   int maxlen_m1   = oState->max - 1;
   int nodes       = *pnodes;
 
@@ -362,7 +331,7 @@ static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoos
       }
 
       lev->mark = mark;
-      if (depth == maxdepth) {
+      if (depth == oState->maxdepth) {
         goto exit;         /* Ruler found */
       }
 
@@ -374,29 +343,27 @@ static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoos
       /* Compute the maximum position for the next level */
       limit = choose(dist0, depth);
 
-      /* For rulers with an even number of marks, this part can be simplified
-      ** into :
-      ** if (depth == halfdepth2) {
-      **   int temp = oState->max - 1 - mark;
-      **   if (limit > temp)
-      **     limit = temp;
-      ** }
-      */
-      if (depth > half_depth && depth <= half_depth2) {
-        int temp = maxlen_m1 - oState->Levels[half_depth].mark;
-
-        if (depth < half_depth2) {
-          #if (SCALAR_BITS <= 32)
-          temp -= LOOKUP_FIRSTBLANK(dist0);
-          #else
-          // Reduce the resolution for larger datatypes, otherwise the final
-          // node count may not match that of 32-bit cores.
-          temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
-          #endif
-        }
+      if (depth > oState->half_depth && depth <= oState->half_depth2) {
+        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
 
         if (limit > temp) {
           limit = temp;
+        }
+
+        /* The following part is only relevant for rulers with an odd number of
+        ** marks. If the number of marks is even (as for OGR-26), then the
+        ** condition is always false.
+        ** LOOKUP_FIRSTBLANK(0xFF..FF) shall return the total number of bits
+        ** set plus one. If not, selftest #32 will fail.
+        */
+        if (depth < oState->half_depth2) {
+          #if (SCALAR_BITS <= 32)
+          limit -= LOOKUP_FIRSTBLANK(dist0);
+          #else
+          // Reduce the resolution for larger datatypes, otherwise the final
+          // node count may not match that of 32-bit cores.
+          limit -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
+          #endif
         }
       }
       lev->limit = limit;
@@ -409,7 +376,7 @@ static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoos
     --lev;
     --depth;
     POP_LEVEL(lev);
-  } while (depth > stopdepth);
+  } while (depth > oState->stopdepth);
 
 exit:
   SAVE_FINAL_STATE(lev);
