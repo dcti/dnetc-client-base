@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.92 2008/03/08 20:11:20 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.93 2008/03/09 13:36:09 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -68,38 +68,38 @@ static const u32 rc5_72_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = { // seed 
 // [1] - number of marks
 // [2..9] - first differences
 static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
-  { 0x0009F217, 21,  2, 22, 32, 21,  5,  1},             // 01
+  { 0x0009DC4D, 21,  2, 22, 32, 21,  5,  1},             // 01
   { 0x0018818F, 22,  1,  8,  5, 29, 27, 36},             // 02
-  { 0x00093D71, 23,  3,  4, 10, 44,  5, 25},             // 03
+  { 0x000934A5, 23,  3,  4, 10, 44,  5, 25},             // 03
   { 0x00165473, 24,  9, 24,  4,  1, 59, 25},             // 04
-  { 0x0003B627, 25, 12, 17, 10, 33, 19, 55, 11},         // 05
+  { 0x0003B625, 25, 12, 17, 10, 33, 19, 55, 11},         // 05
   { 0x0046F7C0, 26,  5, 12, 11,  8, 16, 10, 44, 30},     // 06
-  { 0x0090AD25, 27,  3, 12, 26, 25, 29,  2,  9, 36},     // 07
-  {~0x000561C9, 21,  1,  2,  4,  5,  8, 10},             // 08
-  {~0x0038C35E, 21,  2, 22, 32,  1,  3, 10},             // 09
+  { 0x0090A530, 27,  3, 12, 26, 25, 29,  2,  9, 36},     // 07
+  {~0x00021E68, 21,  1,  2,  4,  5,  8, 10},             // 08
+  {~0x00387DE0, 21,  2, 22, 32,  1,  3, 10},             // 09
   {~0x0004B648, 22,  1,  2,  4,  5,  8, 10},             // 10
   {~0x0022CF3A, 22,  1,  8,  5, 29, 27, 37},             // 11
-  {~0x000066C1, 23,  1,  2,  4,  5,  8, 10},             // 12
-  {~0x001A3C2B, 23,  3,  4, 10, 44,  5, 26},             // 13
+  {~0x001C8AF2, 23,  1,  2,  4,  5,  8},                 // 12
+  {~0x001A322F, 23,  3,  4, 10, 44,  5, 26},             // 13
   {~0x00074037, 24,  1,  2,  4,  5,  8, 10, 14},         // 14
   {~0x0068CF0D, 24,  9, 24,  4,  1, 59, 26},             // 15
-  {~0x0030B179, 25,  1,  2,  4,  5,  8, 10, 14, 21},     // 16
+  {~0x0023F159, 25,  1,  2,  4,  5,  8, 10, 14, 21},     // 16
   {~0x002F885A, 25,  2,  7, 22,  5, 14,  4, 64, 37},     // 17
-  {~0x000EA7B9, 21,  5, 12, 11,  8, 16, 10, 44},         // 18
+  {~0x000EA7A8, 21,  5, 12, 11,  8, 16, 10, 44},         // 18
   {~0x0018B0BE, 22,  5, 12, 11,  8, 16, 10, 44},         // 19
-  {~0x000A814D, 23,  5, 12, 11,  8, 16, 10, 44},         // 20
+  {~0x000A810A, 23,  5, 12, 11,  8, 16, 10, 44},         // 20
   {~0x001209D4, 24,  5, 12, 11,  8, 16, 10, 44, 30},     // 21
-  {~0x00323B9A, 21,  9, 24,  4,  1, 59},                 // 22
+  {~0x003239FF, 21,  9, 24,  4,  1, 59},                 // 22
   {~0x008CB937, 22,  9, 24,  4,  1, 59},                 // 23
   {~0x0061B8C0, 22,  3,  4, 10, 44,  5, 25},             // 24
-  {~0x0036E9CC, 23,  9, 24,  4,  1, 59},                 // 25
+  {~0x0036D37D, 23,  9, 24,  4,  1, 59},                 // 25
   {~0x000FA7EB, 24, 12, 17, 10, 33, 19, 55},             // 26
   {~0x004490DA, 24,  1,  8,  5, 29, 27, 36, 16},         // 27
   {~0x001AC0A0, 22,  2, 22, 32, 21,  5,  1},             // 28
-  {~0x0008B55C, 23,  2, 22, 32, 21,  5,  1},             // 29
+  {~0x0008984B, 23,  2, 22, 32, 21,  5,  1},             // 29
   {~0x002DD344, 24,  2, 22, 32, 21,  5,  1, 12},         // 30
-  {~0x0043227A, 25,  2, 22, 32, 21,  5,  1, 12, 34},     // 31
-  {~0x00140002, 23,  1,  8,  5, 29, 27, 36}              // 32
+  {~0x00432258, 25,  2, 22, 32, 21,  5,  1, 12, 34},     // 31
+  {~0x00167126, 27,  8, 47, 19, 11,  2,  4,  1,  9}      // 32
 };
 #endif  /* HAVE_OGR_CORES */
 
@@ -483,7 +483,19 @@ long SelfTest( unsigned int contest )
                 if (expectedsolution_lo & 0x80000000)  // no solution
                 {
                   expectedsolution_lo = ~expectedsolution_lo;
-                  if (resultcode != RESULT_NOTHING ||
+                  if (testnum == 31 && resultcode == RESULT_NOTHING &&
+                    contestwork.ogr_ng.nodes.lo == 0x0016712C)
+                  {
+                    /* Test #32 has been designed to detect implementations of
+                    ** LOOKUP_FIRSTBLANK() that don't meet the requirement when
+                    ** all bits are set.
+                    */
+                    LogScreen( "\r%s: Test %02d FAILED : LOOKUP_FIRSTBLANK() is broken.\n",
+                              contname, testnum + 1);
+                    resultcode = -1;
+                    break;
+                  }
+                  else if (resultcode != RESULT_NOTHING ||
                     contestwork.ogr_ng.nodes.lo != expectedsolution_lo)
                   {
                     resulttext = "FAILED1";
