@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.300 2008/03/08 21:47:01 kakace Exp $
+# @(#)$Id: configure,v 1.301 2008/03/28 22:19:01 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -190,12 +190,14 @@ add_sources() # $1=os, $2=arch, $3=custom
   # -------------------------------------------------------------------
 
   if [ "$2" = "x86" ]; then
+    TARGET_ADDSRCS="$TARGET_ADDSRCS plat/x86/x86id.cpp"
+    TARGET_HDIRS="$TARGET_HDIRS ./plat/x86"
     if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
       TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_NO_NASM"  # ****NOTE****
-      TARGET_ADDASMS="$TARGET_ADDASMS plat/x86/x86ident.S"
+      # FIXME: x86ident.S has not been updated to meet the new encoding.
+      # TARGET_ADDASMS="$TARGET_ADDASMS plat/x86/x86ident.S"
     else
-      TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86ident.asm"
-      TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86features.asm"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86cpuid.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS plat/x86/x86rdtsc.asm"
     fi
 
@@ -220,9 +222,10 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
 
     # --------------- ogr-ng ----------------
-    if [ "$HAVE_OGR" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
-    fi
+    # if [ "$HAVE_OGR" = "1" ]; then
+    #  DEFAULT_OGRNG="0"
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    # fi
 
     # --------------- ogr-p2 ----------------
     if [ "$HAVE_OGR_P2" = "1" ]; then
@@ -263,7 +266,7 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     if [ "$HAVE_OGR" = "1" ]; then
       if [ "$2" = "sparc64" ]; then
-        DEFAULT_OGR="0"       # don't add the ansi core
+        DEFAULT_OGRNG="0"     # don't add the ansi core
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
       fi # sparc64
 
@@ -281,7 +284,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
     if [ "$HAVE_OGR" = "1" ]; then
       if [ "$2" = "mips64" ]; then
-        DEFAULT_OGR="0"       # don't add the ansi core
+        DEFAULT_OGRNG="0"     # don't add the ansi core
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
       fi # mips64
     fi
@@ -314,9 +317,10 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5-72/68k"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
-    fi
+    # if [ "$HAVE_OGR" = "1" ]; then
+    #  DEFAULT_OGRNG="0"
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    # fi
     if [ "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS"
@@ -328,7 +332,8 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------
   elif [ "$2" = "alpha" ]; then
     if [ "$HAVE_OGR" = "1" ]; then
-      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGR/ansi/ogrng-64.cpp"
+      DEFAULT_OGRNG="0"
+      TARGET_ADDSRCS="${TARGET_ADDSRCS} $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
     fi
     if [ "$HAVE_OGR_P2" = "1" ]; then
       # this is just an addition to the default ansi core
@@ -452,9 +457,10 @@ add_sources() # $1=os, $2=arch, $3=custom
                                         rc5-72/arm/r72arm3-gnu.S"
       fi
     fi # HAVE_RC5_72
-    if [ "$HAVE_OGR" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
-    fi
+    # if [ "$HAVE_OGR" = "1" ]; then
+    #  DEFAULT_OGRNG="0"
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    # fi
     if [ "$HAVE_OGR_P2" = "1" ]; then
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS \
                                       $OGR/arm/ogr-arm1.cpp \
@@ -491,14 +497,14 @@ add_sources() # $1=os, $2=arch, $3=custom
     : # pure ansi targets. (2 pipeline RC5 core) ==> DEFAULT
   #-----------------------------------------------------------------
   elif [ "$2" = "amd64" ]; then
+    TARGET_ADDSRCS="$TARGET_ADDSRCS plat/x86/x86id.cpp"
+    TARGET_HDIRS="$TARGET_HDIRS ./plat/x86"
     if [ "X$TARGET_YASM" = "X" -o "X$TARGET_YASM_FMT" = "X" ]; then #no YASM
       echo You need YASM to build.
       exit 1
     else
       TARGET_ADDYASMS="$TARGET_ADDYASMS plat/amd64/x86ident.asm"
       TARGET_ADDYASMS="$TARGET_ADDYASMS plat/amd64/x86rdtsc.asm"
-      # the following 32-bit sources can be used unchanged as 64-bit.
-      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/x86/x86features.asm"
     fi
 
     # -------------- rc5-72 --------------
@@ -514,7 +520,7 @@ add_sources() # $1=os, $2=arch, $3=custom
 
     if [ "$HAVE_OGR" = "1" ]; then
       # add the 64-bit core to the ANSI cores
-      DEFAULT_OGR="0"       # don't add the ansi core
+      DEFAULT_OGRNG="0"     # don't add the ansi core
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
     fi
 
@@ -536,9 +542,10 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
 
     # -------------- ogr --------------
-    if [ "$HAVE_OGR" = "1" ]; then
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
-    fi
+    # if [ "$HAVE_OGR" = "1" ]; then
+    #  DEFAULT_OGRNG="0"
+    #  TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+    # fi
 
     if [ "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
