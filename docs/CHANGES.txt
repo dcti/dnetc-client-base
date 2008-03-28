@@ -23,11 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.19 2008/02/07 10:23:25 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.20 2008/03/28 22:17:20 kakace Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9016-506  new: all: Added OGR-NG cores
+            imp: x86: Reworked x86 CPU identification code
+
 2.9015-505  fix: cellbe: Memory corruption in OGR core (#4036)
 
 2.9015-504  imp: cellbe: Tidy up cores for public source release
