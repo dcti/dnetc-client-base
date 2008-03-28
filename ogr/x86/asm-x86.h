@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.5 2008/03/09 13:37:10 kakace Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.6 2008/03/28 22:21:34 kakace Exp $"
 
 /*
  * Macro to check assertions at compile-time (e.g. sizeof(foo) == something)
@@ -120,12 +120,12 @@
     static __inline__ int __CNTLZ__(register SCALAR input)
     {
       register SCALAR result;
-      __asm__("not  %1\n\t"
-              "mov  $65,%0\n\t"
-              "bsr  %1,%1\n\t"
+      __asm__("notq  %1\n\t"
+              "movq  $65,%0\n\t"
+              "bsrq  %1,%1\n\t"
               "jz   0f\n\t"
-              "sub  %1,%0\n\t"
-              "dec  %0\n\t"
+              "subq  %1,%0\n\t"
+              "decq  %0\n\t"
               "0:"
               :"=r"(result), "=r"(input) : "1"(input) : "cc" );
       return (int) result;
