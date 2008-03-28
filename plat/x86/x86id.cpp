@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.1 2008/03/28 22:15:43 kakace Exp $
+ * $Id: x86id.cpp,v 1.2 2008/03/28 23:39:48 kakace Exp $
  *
  * Gold mine : http://datasheets.chipdb.org
  */
@@ -20,16 +20,14 @@
 /*
 ** A container to obtain results from 'cpuid'
 */
-struct PageInfos {
-  u32  eax;
-  union {
-    char string[12];
-    struct {
-      u32 ebx;
-      u32 edx;
-      u32 ecx;
-    };
-  };
+union PageInfos {
+  char string[12];
+  struct {
+    u32 ebx;
+    u32 edx;
+    u32 ecx;
+    u32 eax;
+  } regs;
 };
 
 
@@ -64,7 +62,7 @@ struct PageInfos {
     return -1;
   }
 
-  static u32 x86cpuid(u32 page, struct PageInfos* infos)
+  static u32 x86cpuid(u32 page, union PageInfos* infos)
   {
     u32 _ax, _bx, _cx, _dx;
 
@@ -76,17 +74,17 @@ struct PageInfos {
                   : "0"(page)
                   : /* nothing */
                  );
-    infos->eax = _ax;
-    infos->ebx = _bx;
-    infos->ecx = _cx;
-    infos->edx = _dx;
+    infos->regs.regs.eax = _ax;
+    infos->regs.regs.ebx = _bx;
+    infos->regs.regs.ecx = _cx;
+    infos->regs.regs.edx = _dx;
     return _ax;
   }
   #endif
 #elif (CLIENT_CPU == CPU_X86)
   #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
     extern "C" s32 x86getid(void) asm ("x86getid");
-    extern "C" u32 x86cpuid(u32 page, struct PageInfos* infos) asm ("x86cpuid");
+    extern "C" u32 x86cpuid(u32 page, union PageInfos* infos) asm ("x86cpuid");
     extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
   #else
     #if defined(__WATCOMC__)
@@ -94,11 +92,11 @@ struct PageInfos {
       // => must be declared as "cdecl" to allow compiler save necessary
       //    registers.
       extern "C" s32 __cdecl x86getid(void);
-      extern "C" u32 __cdecl x86cpuid(u32 page, struct PageInfos* infos);
+      extern "C" u32 __cdecl x86cpuid(u32 page, union PageInfos* infos);
       extern "C" ui64 __cdecl x86rdtsc( void );
     #else
       extern "C" s32 x86getid(void);
-      extern "C" u32 x86cpuid(u32 page, struct PageInfos* infos);
+      extern "C" u32 x86cpuid(u32 page, union PageInfos* infos);
       extern "C" ui64 x86rdtsc( void );
     #endif
     extern "C" u32 x86ident_haveioperm; /* default is zero */
@@ -198,21 +196,21 @@ static int x86FindCacheDescrInReg(u32 reg, int descr)
 ** Search the specified cache descriptor (one byte) in all descriptors lists
 ** (four registers). Returns 0 if not found, otherwise -1.
 */
-static int x86FindCacheDescriptor(struct PageInfos *infos, int descriptor)
+static int x86FindCacheDescriptor(union PageInfos *infos, int descriptor)
 {
   int result = -1;
 
-  if ((infos->eax & 0x8000000) == 0) {
-    result &= x86FindCacheDescrInReg(infos->eax & 0xFFFFFF00, descriptor);
+  if ((infos->regs.eax & 0x8000000) == 0) {
+    result &= x86FindCacheDescrInReg(infos->regs.eax & 0xFFFFFF00, descriptor);
   }
-  if ((infos->ebx & 0x8000000) == 0) {
-    result &= x86FindCacheDescrInReg(infos->ebx, descriptor);
+  if ((infos->regs.ebx & 0x8000000) == 0) {
+    result &= x86FindCacheDescrInReg(infos->regs.ebx, descriptor);
   }
-  if ((infos->ecx & 0x8000000) == 0) {
-    result &= x86FindCacheDescrInReg(infos->ecx, descriptor);
+  if ((infos->regs.ecx & 0x8000000) == 0) {
+    result &= x86FindCacheDescrInReg(infos->regs.ecx, descriptor);
   }
-  if ((infos->edx & 0x8000000) == 0) {
-    result &= x86FindCacheDescrInReg(infos->edx, descriptor);
+  if ((infos->regs.edx & 0x8000000) == 0) {
+    result &= x86FindCacheDescrInReg(infos->regs.edx, descriptor);
   }
   
   return result;
@@ -224,7 +222,7 @@ static int x86FindCacheDescriptor(struct PageInfos *infos, int descriptor)
 */
 static u32 x86GetDefaultId(u32 maxfunc)
 {
-  struct PageInfos infos;
+  union PageInfos infos;
   u32 cpuid = 0;
 
   if (maxfunc >= 1) {
@@ -244,7 +242,7 @@ static u32 x86GetDefaultId(u32 maxfunc)
 
 static u32 x86GetIntelId(u32 maxfunc)
 {
-  struct PageInfos infos;
+  union PageInfos infos;
   u32 cpuid = 0;
 
   if (maxfunc >= 1) {
@@ -256,7 +254,7 @@ static u32 x86GetIntelId(u32 maxfunc)
     family  = FIELD_FAMILY(signature);
     model   = FIELD_MODEL(signature);
     step    = FIELD_STEPPING(signature);
-    brandid = FIELD_BRAND_ID(infos.ebx);
+    brandid = FIELD_BRAND_ID(infos.regs.ebx);
 
     /* That's how Intel do it */
     if (family == 15) {
@@ -364,7 +362,7 @@ static u32 x86GetIntelId(u32 maxfunc)
 */
 static u32 x86GetAmdId(u32 maxfunc)
 {
-  struct PageInfos infos;
+  union PageInfos infos;
   u32 cpuid = 0;
 
   if (maxfunc >= 1) {
@@ -377,14 +375,14 @@ static u32 x86GetAmdId(u32 maxfunc)
 
     if (family == 15) {     /* AMD K8 variants */
       int extbrandid = 0;
-      brandid = FIELD_BRAND_ID(infos.ebx);
+      brandid = FIELD_BRAND_ID(infos.regs.ebx);
       family += FIELD_EXT_FAMILY(signature);
       model  |= FIELD_EXT_MODEL(signature) << 4;
 
       maxfunc = x86cpuid(0x80000000, &infos);
       if (maxfunc >= 0x80000001) {
         x86cpuid(0x80000001, &infos);
-        extbrandid = infos.ebx & 0xFFFF;
+        extbrandid = infos.regs.ebx & 0xFFFF;
       }
 
       if (family == 15) {
@@ -425,13 +423,13 @@ static u32 x86GetAmdId(u32 maxfunc)
         int pkg  = 0;
 
         if (maxfunc >= 0x80000001) {
-          code = (infos.ebx >> 11) & 0x0F;    /* AMD:string1 */
-          pkg  = (infos.ebx >> 28) & 0x0F;
+          code = (infos.regs.ebx >> 11) & 0x0F;    /* AMD:string1 */
+          pkg  = (infos.regs.ebx >> 28) & 0x0F;
         }
 
         if (maxfunc >= 0x80000008) {
           x86cpuid(0x80000008, &infos);
-          code |= (infos.ecx & 0xFF) << 4;    /* Create a composite code with AMD:NC */
+          code |= (infos.regs.ecx & 0xFF) << 4;    /* Create a composite code with AMD:NC */
         }
 
         if(pkg == 0) {      /* Socket Fr2 */
@@ -572,7 +570,7 @@ static u32 x86GetSisId(u32 maxfunc)
 */
 static void x86DumpFunctions(u32 function)
 {
-  struct PageInfos infos;
+  union PageInfos infos;
   u32 maxfunc;
 
   maxfunc = x86cpuid(function, &infos);
@@ -582,8 +580,8 @@ static void x86DumpFunctions(u32 function)
 
   if (maxfunc >= function) {
     do {
-      LogRaw("F_%08X : %08X %08X %08X %08X\n", function, infos.eax, infos.ebx,
-              infos.ecx, infos.edx);
+      LogRaw("F_%08X : %08X %08X %08X %08X\n", function, infos.regs.eax, infos.regs.ebx,
+              infos.regs.ecx, infos.regs.edx);
       x86cpuid(++function, &infos);
     } while (function <= maxfunc);
   }
@@ -622,7 +620,7 @@ u32 x86GetDetectedType(void)
       detectedtype = id;      /* Simple ID, mostly hand-made */
     }
     else {                    /* Support cpuid */
-      struct PageInfos infos;
+      union PageInfos infos;
       u32 maxfunc = x86cpuid(0, &infos);
 
       if ((maxfunc & 0xFFFFFFF0) == 0x500) {    /* Fix-up P5 Step-A */
@@ -664,7 +662,7 @@ u32 x86GetFeatures(void)
   u32 features = 0;
 
   if (x86getid() == -1) {
-    struct PageInfos infos;
+    union PageInfos infos;
     u32 cpuid = x86GetDetectedType();
     u32 maxfunc = x86cpuid(0, &infos);
 
@@ -672,7 +670,7 @@ u32 x86GetFeatures(void)
       u32 flags;
 
       x86cpuid(0x00000001, &infos);
-      flags = infos.edx;
+      flags = infos.regs.edx;
 
       /* Ignore bogus Intel Pentium MMX P55C model 4 stepping 5 */
       if (cpuid != 0x10005045 && (flags & X86_HAS_MMX) != 0) {
@@ -688,7 +686,7 @@ u32 x86GetFeatures(void)
         features |= CPU_F_SSE3;
       }
       if (ID_VENDOR_CODE(cpuid) == VENDOR_INTEL) {
-        if ((infos.ebx & 0xFF0000) > 1 && (flags & X86_HAS_HTT) != 0) {
+        if ((infos.regs.ebx & 0xFF0000) > 1 && (flags & X86_HAS_HTT) != 0) {
           features |= CPU_F_HYPERTHREAD;      /* Hyperthreading enabled */
         }
         if ((flags & X86_HAS_SSSE3) != 0) {
@@ -708,7 +706,7 @@ u32 x86GetFeatures(void)
       u32 flags;
 
       x86cpuid(0x80000001, &infos);
-      flags = infos.edx;
+      flags = infos.regs.edx;
 
       if (ID_VENDOR_CODE(cpuid) == VENDOR_INTEL) {
         if ((flags & X86_HAS_EM64T) != 0) {
@@ -752,7 +750,7 @@ u32 x86GetFeatures(void)
 void x86ShowInfos(void)
 {
   if (x86getid() == -1) {         /* cpuid is available */
-    struct PageInfos vendor, brand;
+    union PageInfos vendor, brand;
     union {
       struct {u32 eax; u32 ebx; u32 ecx; u32 edx;} regs[3];
       char brandname[48];
@@ -766,7 +764,10 @@ void x86ShowInfos(void)
     }
 
     if (maxfunc > 0) {
-      LogRaw(" Vendor ID : \"%s\"\n", vendor.string);
+      char vendorbuff[17];
+      strncpy(vendorbuff, vendor.string, 12);
+      vendorbuff[16] = '\0';
+      LogRaw(" Vendor ID : \"%s\"\n", vendorbuff);
     }
 
     maxfunc = x86cpuid(0x80000000, &brand);
@@ -777,10 +778,10 @@ void x86ShowInfos(void)
 
       for (i = 0; i <= 2; i++) {
         x86cpuid(0x80000002 + i, &brand);
-        brandbuffer.regs[i].eax = brand.eax;
-        brandbuffer.regs[i].ebx = brand.ebx;
-        brandbuffer.regs[i].ecx = brand.ecx;
-        brandbuffer.regs[i].edx = brand.edx;
+        brandbuffer.regs[i].eax = brand.regs.eax;
+        brandbuffer.regs[i].ebx = brand.regs.ebx;
+        brandbuffer.regs[i].ecx = brand.regs.ecx;
+        brandbuffer.regs[i].edx = brand.regs.edx;
       }
       brandbuffer.brandname[47] = '\0';   /* Better be safe than sorry... */
 

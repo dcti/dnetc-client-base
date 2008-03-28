@@ -7,7 +7,7 @@
 ; Written by Didier Levet <kakace@distributed.net>, mostly derived from
 ; x86ident.asm written by Cyrus Patel.
 ;
-; $Id: x86cpuid.asm,v 1.1 2008/03/28 22:15:43 kakace Exp $
+; $Id: x86cpuid.asm,v 1.2 2008/03/28 23:39:48 kakace Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -93,7 +93,7 @@ x86ident_haveioperm     dd 0            ; we do on win9x (not NT), win16, dos
 ;----------------------------------------------------------------------
 
 __CODESECT__
-_x86cpuid:      ; x86cpuid(u32 function, struct PageInfos *infos)
+_x86cpuid:      ; x86cpuid(u32 function, union PageInfos *infos)
 x86cpuid:       push    ebx
                 push    esi
                 mov     eax, [esp+12]   ; Function number
@@ -102,10 +102,10 @@ x86cpuid:       push    ebx
                 xor     ecx, ecx        ; are not modified by the cpuid instr
                 xor     edx, edx        ; for some reason...
                 cpuid
-                mov     [esi+0], eax
-                mov     [esi+4], ebx    ; Registers are ordered in such a way
-                mov     [esi+8], edx    ; that the brand string is correctly
-                mov     [esi+12], ecx   ; formatted.
+                mov     [esi+0], ebx    ; Registers are ordered in such a way
+                mov     [esi+4], edx    ; that the brand string is correctly
+                mov     [esi+8], ecx    ; formatted.
+                mov     [esi+12], eax
                 pop     esi
                 pop     ebx
                 ret                     ; returns eax
