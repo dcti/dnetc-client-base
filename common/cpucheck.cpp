@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.122 2008/03/28 22:20:21 kakace Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.123 2008/03/29 00:09:00 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1134,16 +1134,16 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x12060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Celeron M (Dothan)" },
         { 0x16060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium M (Dothan)" },
         /* Pentium 4 models 0/1 : 180 nm */
-        { 0x080F000, 0xFFFFFF0, CPU_F_I686, 0x010B, "Pentium 4 (Willamette)" },
+        { 0x080F000, 0xFFFFFF0, CPU_F_I686,    4, "Pentium 4 (Willamette)" },
         { 0x0E0F000, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Foster)" },
-        { 0x080F010, 0xFFFFFF0, CPU_F_I686, 0x010B, "Pentium 4 (Willamette)" },
+        { 0x080F010, 0xFFFFFF0, CPU_F_I686,    4, "Pentium 4 (Willamette)" },
         { 0x0A0F010, 0xFFFFFF0, CPU_F_I686, 0x0B, "Celeron 4 (Willamette)" },
         { 0x0B0F010, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Foster)" },
         { 0x0E0F013, 0xFFFFFFF, CPU_F_I686, 0x0B, "Pentium 4 M" },
         { 0x0E0F010, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Foster)" },
         /* Pentium 4 model 2 : 130 nm */
         { 0x080F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
-        { 0x090F020, 0xFFFFFF0, CPU_F_I686, 0x010B, "Pentium 4 (Northwood)" },
+        { 0x090F020, 0xFFFFFF0, CPU_F_I686,    4, "Pentium 4 (Northwood)" },
         { 0x0A0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Celeron 4 (Northwood)" },
         { 0x0B0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Prestonia)" },
         { 0x0C0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon MP (Gallatin)" },
