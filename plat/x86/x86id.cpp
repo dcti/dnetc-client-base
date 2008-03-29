@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.3 2008/03/29 00:07:22 kakace Exp $
+ * $Id: x86id.cpp,v 1.4 2008/03/29 00:22:20 kakace Exp $
  *
  * Gold mine : http://datasheets.chipdb.org
  */
@@ -765,9 +765,9 @@ void x86ShowInfos(void)
     }
 
     if (maxfunc > 0) {
-      char vendorbuff[17];
+      char vendorbuff[13];
       strncpy(vendorbuff, vendor.string, 12);
-      vendorbuff[16] = '\0';
+      vendorbuff[12] = '\0';
       LogRaw(" Vendor ID : \"%s\"\n", vendorbuff);
     }
 
