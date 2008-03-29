@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.257 2008/02/10 18:12:47 kakace Exp $"; }
+return "@(#)$Id: client.cpp,v 1.258 2008/03/29 22:00:38 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -224,7 +224,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2007, distributed.net\n");
+                    "Copyright 1997-2008, distributed.net\n");
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
         #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
