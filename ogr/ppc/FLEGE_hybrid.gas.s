@@ -3,9 +3,11 @@
 ;# For use in distributed.net projects only.
 ;# Any other distribution or use of this source violates copyright.
 ;#
-;# Hybrid Scalar/Vector - 256 bits OGR core for PowerPC processors.
-;# Code scheduled for MPC744x/745x (G4+)
-;# Written by Didier Levet
+;# 2 stages hybrid Scalar/Vector - 256 bits OGR core for PowerPC processors.
+;# Code designed for MPC744x/745x (G4+)
+;# Written by Didier Levet <kakace@distributed.net>
+;#
+;# $Id: FLEGE_hybrid.gas.s,v 1.4 2008/03/29 21:55:47 kakace Exp $
 ;#
 ;#============================================================================
 ;# Special notes :
@@ -33,13 +35,13 @@
 
 
 ;# OgrNgState dependencies (offsets)
-.set          MaxLength,          0     ;# max
-.set          MaxDepth,           8     ;# maxdepthm1
-.set          MidSegA,            12    ;# half_depth
-.set          MidSegB,            16    ;# hald_depth2
-.set          StopDepth,          24    ;# stopdepth
-.set          Depth,              28    ;# depth
-.set          Levels,             32
+.set          MaxLength,          0     ;# oState->max
+.set          MaxDepth,           8     ;# oState->maxdepthm1
+.set          MidSegA,            12    ;# oState->half_depth
+.set          MidSegB,            16    ;# oState->half_depth2
+.set          StopDepth,          24    ;# oState->stopdepth
+.set          Depth,              28    ;# oState->depth
+.set          Levels,             32    ;# oState->Levels[]
 
 
 ;# rlwinm arguments
@@ -57,6 +59,7 @@
 
 .set          wVRSave,-(GPRSaveArea+4)
 .set          localTop, 16
+
 .set          FrameSize, (localTop + GPRSaveArea + 15) & (-16)
 
 ;#============================================================================
@@ -109,6 +112,7 @@
 ;.set         v11,11
 ;.set         v12,12
 ;.set         v13,13
+;.set         v14,14
 ;.set         VRsave, 0x100
 
 
@@ -230,21 +234,27 @@ cycle_ppc_hybrid_256:
     lwz       r19,limit(r7)             ;# Levels[Depth].limit
     li        r17,0                     ;# newbit = 0
     li        r31,-2                    ;# comp0_max = 0xFFFFFFFE
-    beq-      L_MainLoop                ;# Depth == MaxDepth
+    beq-      L_MainLoop_s2             ;# Depth == MaxDepth
 
     li        r17,1                     ;# newbit = 1
     vspltisw  v2,1                      ;# vNewbit = 1
-    b         L_MainLoop
+
+    cmpw      r8,r12                    ;# Depth > MidSegB ?
+    ble       L_MainLoop_s1
+    b         L_MainLoop_s2
 
 
 ;#============================================================================
 
-    .align    4
     nop       
+    .align    4
 
-
-L_UpLevel:
-    ;# Backtrack...
+L_UpLevel_s1:
+    ;# Backtrack to the preceeding level
+    ;# r7  := pLevel
+    ;# r8  := depth
+    ;# r5  := pChoose
+    ;# r10 := stopdepth
     subi      r7,r7,SIZEOF_LEVEL        ;# --Levels
     li        r17,0                     ;# newbit = 0
     subi      r8,r8,1                   ;# --Depth
@@ -266,9 +276,10 @@ L_UpLevel:
     lvx       v14,r27,r7                ;# compV1
     ble-      L_exit                    ;# Depth <= StopDepth
 
-
-L_MainLoop:
-;#  r0 := (~comp0) >> 1
+L_MainLoop_s1:
+    ;# r0  := (~comp0) >> 1
+    ;# r18 := mark
+    ;# r19 := limit
     cntlzw    r28,r0                    ;# diff
     cmplw     cr1,r14,r31               ;# comp0 >= 0xFFFFFFFE ?
     add       r18,r18,r28               ;# mark += diff
@@ -276,42 +287,48 @@ L_MainLoop:
     cmpw      r18,r19                   ;# mark > limit ?
     subfic    r29,r28,32                ;# ss = 32 - diff
     lvx       v3,r6,r30                 ;# shift_l = pShift[diff]
-    bgt-      L_UpLevel                 ;# Go back to preceding mark.
+    bgt-      L_UpLevel_s1              ;# Go back to preceding mark.
 
     srw       r15,r15,r28               ;# list0 >>= diff
-    lwz       r30,Levels_compV0+4(r7)   ;# load comp1
     slw       r17,r17,r29               ;# newbit <<= ss
+    lwz       r30,Levels_compV0+4(r7)   ;# load comp1
     or        r15,r15,r17               ;# list0 |= newbit
-    bge       cr1,L_Shift32             ;# diff >= 32
+    bge       cr1,L_Shift32_s1          ;# diff >= 32
 
     ;# Shift bitmaps by 'diff' bits.
     ;# r28 := diff
     ;# r29 := ss
     ;# r30 := comp1
     ;# r15 := list0 = (list0 >> diff) | (newbit << ss)
-    ;# v3 := shift_l
+    ;# v3  := shift_l
     cmpw      r8,r9                     ;# Depth == MaxDepth ?
     vsldoi    v7,v11,v14,4              ;# compV0::compV1 << 4
     vsubuwm   v4,v0,v3                  ;# shift_r
     vsldoi    v8,v10,v13,12             ;# listV0::listV1 << 12
-    vslo      v14,v14,v3
     vsrw      v5,v1,v3                  ;# mask_l
-    vsl       v14,v14,v3                ;# = compV1
+    vslo      v14,v14,v3
     vsel      v11,v7,v11,v5
-    vsldoi    v7,v2,v10,12              ;# vNewbit::listV1 << 12
+    vsl       v14,v14,v3                ;# = compV1
     vslw      v6,v1,v3                  ;# mask_r
+    vsldoi    v7,v2,v10,12              ;# vNewbit::listV1 << 12
     vrlw      v11,v11,v3                ;# = compV0
     slw       r14,r14,r28               ;# comp0 <<= diff
     vsel      v13,v8,v13,v6
     srw       r30,r30,r29               ;# comp1 >>= ss
     vsel      v10,v7,v10,v6
-    stvx      v11,r26,r7                ;# store compV0
     vrlw      v13,v13,v4                ;# = listV1
+    stvx      v11,r26,r7                ;# store compV0
     or        r14,r14,r30               ;# comp0 |= comp1
     vrlw      v10,v10,v4                ;# = listV0
-    beq-      L_exit                    ;# Ruler found
 
-L_UpdateLevel:
+L_UpdateLevel_s1:
+    ;# r8  := depth
+    ;# r7  := pLevel
+    ;# r21 := nodes
+    ;# r5  := pChoose
+    ;# r18 := mark
+    ;# r11 := half_depth
+    ;# r12 := half_depth2
     vor       v9,v9,v10                 ;# distV0 |= listV0
     addi      r8,r8,1                   ;# ++Depth
     stvx      v10,r24,r7                ;# store listV0
@@ -335,22 +352,21 @@ L_UpdateLevel:
     stvx      v11,r26,r7                ;# store compV0 (next level)
     li        r17,1                     ;# newbit = 1
     srwi      r0,r0,1                   ;# v0neg = (~comp0) >> 1
-    bgt+      cr1,L_CheckCnt            ;# Depth > MidSegB
-    ble+      cr7,L_CheckCnt            ;# Depth <= MidSegA
+    bgt-      cr1,L_CheckCnt_s2         ;# Depth > MidSegB
+    ble+      cr7,L_CheckCnt_s1         ;# Depth <= MidSegA
 
-
-L_GetLimit:
+L_GetLimit_s1:
     ;# Compute the limit within the middle segment.
     ;# cr1 := Depth == MidSegB
     ;# r19 := limit
 
     lwz       r30,mark(r20)             ;# Levels[MidSegA].mark
     sub       r28,r13,r30               ;# temp
-    subfc     r29,r19,r28               ;# limit = min(temp, limit)
+    subfc     r29,r19,r28
     subfe     r28,r28,r28
     and       r29,r29,r28
-    add       r19,r19,r29
-    beq       cr1,L_CheckCnt            ;# Depth == MidSegB
+    add       r19,r19,r29               ;# limit = min(temp, limit)
+    beq       cr1,L_CheckCnt_s1         ;# Depth == MidSegB
 
     ;# Compute middle mark limit
     not       r29,r16                   ;# ~dist0
@@ -359,15 +375,146 @@ L_GetLimit:
     sub       r19,r19,r29               ;# limit -= FFZ(dist0)
 
 
-L_CheckCnt:
+L_CheckCnt_s1:
     ;# cr0 := nodes <= 0
     stw       r19,limit(r7)             ;# store the limit
-    bgt+      L_MainLoop                ;# nodes > 0
+    bgt+      L_MainLoop_s1             ;# nodes > 0
     b         L_exit
 
 
     .align    4
-L_Shift32:
+
+L_Shift32_s1:
+    ;# Shift bitmaps by 32 bits.
+    ;# cr1 := comp0 >= 0xFFFFFFFE
+    ;# r30 := comp1
+    vsldoi    v11,v11,v14,4             ;# = compV0
+    mr        r14,r30                   ;# comp0 = comp1
+    vsldoi    v13,v10,v13,12            ;# = listV1
+    li        r17,0                     ;# newbit = 0
+    not       r0,r14                    ;# ~comp0
+    vsldoi    v10,v2,v10,12             ;# = listV0
+    vor       v2,v0,v0                  ;# vNewbit = 0
+    srwi      r0,r0,1                   ;# (~comp0) >> 1
+    vsldoi    v14,v14,v0,4              ;# = compV1
+    stvx      v11,r26,r7                ;# store = compV0
+    bgt+      cr1,L_MainLoop_s1         ;# Shift count > 32
+    b         L_UpdateLevel_s1
+
+
+    .align    4
+
+L_UpLevel_s2:
+    ;# Backtrack to the preceeding level
+    ;# r7  := pLevel
+    ;# r8  := depth
+    ;# r5  := pChoose
+    ;# r12 := half_depth2
+    subi      r7,r7,SIZEOF_LEVEL        ;# --Levels
+    li        r17,0                     ;# newbit = 0
+    subi      r8,r8,1                   ;# --Depth
+    lwz       r14,Levels_compV0(r7)     ;# comp0
+    cmpw      r8,r12                    ;# Depth > MidSegB
+    lwz       r15,Levels_listV0(r7)     ;# list0
+    subi      r5,r5,2                   ;# --pChoose
+    lvx       v10,r24,r7                ;# listV0
+    vspltisw  v2,0                      ;# vNewbit = 0
+    lvx       v13,r25,r7                ;# listV1
+    not       r0,r14                    ;# v0neg = ~comp0
+    lwz       r18,mark(r7)              ;# mark = Levels[Depth].mark
+    andc      r16,r16,r15               ;# dist0 &= ~list0
+    srwi      r0,r0,1                   ;# v0neg = (~comp0) >> 1
+    lwz       r19,limit(r7)             ;# limit = Levels[Depth].limit
+    vandc     v9,v9,v10                 ;# distV0 &= ~listV0
+    lvx       v11,r26,r7                ;# compV0
+    vandc     v12,v12,v13               ;# distV1 &= ~listV1
+    lvx       v14,r27,r7                ;# compV1
+    ble-      L_MainLoop_s1             ;# Depth <= MidSegB
+
+L_MainLoop_s2:
+    ;# r0  := (~comp0) >> 1
+    ;# r18 := mark
+    ;# r19 := limit
+    cntlzw    r28,r0                    ;# diff
+    cmplw     cr1,r14,r31               ;# comp0 >= 0xFFFFFFFE ?
+    add       r18,r18,r28               ;# mark += diff
+    slwi      r30,r28,4                 ;# diff * 16
+    cmpw      r18,r19                   ;# mark > limit ?
+    subfic    r29,r28,32                ;# ss = 32 - diff
+    lvx       v3,r6,r30                 ;# shift_l = pShift[diff]
+    bgt-      L_UpLevel_s2              ;# Go back to preceding mark.
+
+    srw       r15,r15,r28               ;# list0 >>= diff
+    slw       r17,r17,r29               ;# newbit <<= ss
+    lwz       r30,Levels_compV0+4(r7)   ;# load comp1
+    or        r15,r15,r17               ;# list0 |= newbit
+    bge       cr1,L_Shift32_s2          ;# diff >= 32
+
+    ;# Shift bitmaps by 'diff' bits.
+    ;# r28 := diff
+    ;# r29 := ss
+    ;# r30 := comp1
+    ;# r15 := list0 = (list0 >> diff) | (newbit << ss)
+    ;# v3  := shift_l
+    cmpw      r8,r9                     ;# Depth == MaxDepth ?
+    vsldoi    v7,v11,v14,4              ;# compV0::compV1 << 4
+    vsubuwm   v4,v0,v3                  ;# shift_r
+    vsldoi    v8,v10,v13,12             ;# listV0::listV1 << 12
+    vsrw      v5,v1,v3                  ;# mask_l
+    vslo      v14,v14,v3
+    vsel      v11,v7,v11,v5
+    vsl       v14,v14,v3                ;# = compV1
+    vslw      v6,v1,v3                  ;# mask_r
+    vsldoi    v7,v2,v10,12              ;# vNewbit::listV1 << 12
+    vrlw      v11,v11,v3                ;# = compV0
+    slw       r14,r14,r28               ;# comp0 <<= diff
+    vsel      v13,v8,v13,v6
+    srw       r30,r30,r29               ;# comp1 >>= ss
+    vsel      v10,v7,v10,v6
+    vrlw      v13,v13,v4                ;# = listV1
+    stvx      v11,r26,r7                ;# store compV0
+    or        r14,r14,r30               ;# comp0 |= comp1
+    vrlw      v10,v10,v4                ;# = listV0
+    beq-      L_exit                    ;# Ruler found
+
+L_UpdateLevel_s2:
+    ;# r8  := depth
+    ;# r7  := pLevel
+    ;# r21 := nodes
+    ;# r5  := pChoose
+    ;# r18 := mark
+    addi      r8,r8,1                   ;# ++Depth
+    vor       v9,v9,v10                 ;# distV0 |= listV0
+    stvx      v10,r24,r7                ;# store listV0
+    or        r16,r16,r15               ;# dist0 |= list0
+    vor       v11,v11,v9                ;# compV0 |= distV0
+    stvx      v14,r27,r7                ;# store compV1
+    addi      r5,r5,2                   ;# ++pChoose
+    vor       v12,v12,v13               ;# distV1 |= listV1
+    stvx      v13,r25,r7                ;# store listV1
+    rlwinm    r28,r16,SH,MB,ME          ;# 32*2*(dist0 >> CHOOSE_BITS)
+    vor       v14,v14,v12               ;# compV1 |= distV1
+    stw       r18,mark(r7)              ;# Store the current mark
+    addi      r7,r7,SIZEOF_LEVEL        ;# ++Levels
+    or        r14,r14,r16               ;# comp0 |= dist0
+    lhzx      r19,r28,r5                ;# load the limit
+    subic.    r21,r21,1                 ;# --nodes <= 0 ?
+    not       r0,r14                    ;# v0neg = ~comp0
+    stvx      v11,r26,r7                ;# store compV0 (next level)
+    vspltisw  v2,1                      ;# vNewbit = 1
+    li        r17,1                     ;# newbit = 1
+    srwi      r0,r0,1                   ;# v0neg = (~comp0) >> 1
+
+L_CheckCnt_s2:
+    ;# cr0 := nodes <= 0
+    stw       r19,limit(r7)             ;# store the limit
+    bgt+      L_MainLoop_s2             ;# nodes > 0
+    b         L_exit
+
+
+    .align    4
+
+L_Shift32_s2:
     ;# Shift bitmaps by 32 bits.
     ;# cr1 := comp0 >= 0xFFFFFFFE
     ;# r30 := comp1
@@ -379,11 +526,11 @@ L_Shift32:
     not       r0,r14                    ;# ~comp0
     vsldoi    v10,v2,v10,12             ;# = listV0
     vor       v2,v0,v0                  ;# vNewbit = 0
+    stvx      v11,r26,r7                ;# store = compV0
     srwi      r0,r0,1                   ;# (~comp0) >> 1
     vsldoi    v14,v14,v0,4              ;# = compV1
-    stvx      v11,r26,r7                ;# store = compV0
-    bgt+      cr1,L_MainLoop            ;# Shift count > 32
-    bne+      L_UpdateLevel             ;# Depth != MaxDepth
+    bgt+      cr1,L_MainLoop_s2         ;# Shift count > 32
+    bne+      L_UpdateLevel_s2          ;# Depth != MaxDepth
 
 
 L_exit:
