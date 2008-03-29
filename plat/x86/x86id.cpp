@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.2 2008/03/28 23:39:48 kakace Exp $
+ * $Id: x86id.cpp,v 1.3 2008/03/29 00:07:22 kakace Exp $
  *
  * Gold mine : http://datasheets.chipdb.org
  */
@@ -625,7 +625,7 @@ u32 x86GetDetectedType(void)
 
       if ((maxfunc & 0xFFFFFFF0) == 0x500) {    /* Fix-up P5 Step-A */
         maxfunc = 1;
-        strcpy(infos.string, "GenuineIntel");
+        strncpy(infos.string, "GenuineIntel", 12);
       }
 
       if (strncmp(infos.string, "GenuineIntel", 12) == 0)
@@ -667,41 +667,42 @@ u32 x86GetFeatures(void)
     u32 maxfunc = x86cpuid(0, &infos);
 
     if (maxfunc >= 0x00000001) {
-      u32 flags;
+      u32 fecx, fedx;
 
       x86cpuid(0x00000001, &infos);
-      flags = infos.regs.edx;
+      fedx = infos.regs.edx;
+      fecx = infos.regs.ecx;
 
       /* Ignore bogus Intel Pentium MMX P55C model 4 stepping 5 */
-      if (cpuid != 0x10005045 && (flags & X86_HAS_MMX) != 0) {
+      if (cpuid != 0x10005045 && (fedx & X86_HAS_MMX) != 0) {
         features |= CPU_F_MMX;
       }
-      if ((flags & X86_HAS_SSE) != 0) {
+      if ((fedx & X86_HAS_SSE) != 0) {
         features |= CPU_F_SSE;
       }
-      if ((flags & X86_HAS_SSE2) != 0) {
+      if ((fedx & X86_HAS_SSE2) != 0) {
         features |= CPU_F_SSE2;
       }
-      if ((flags & X86_HAS_SSE3) != 0) {
+      if ((fecx & X86_HAS_SSE3) != 0) {
         features |= CPU_F_SSE3;
       }
       if (ID_VENDOR_CODE(cpuid) == VENDOR_INTEL) {
-        if ((infos.regs.ebx & 0xFF0000) > 1 && (flags & X86_HAS_HTT) != 0) {
+        if ((infos.regs.ebx & 0xFF0000) > 1 && (fedx & X86_HAS_HTT) != 0) {
           features |= CPU_F_HYPERTHREAD;      /* Hyperthreading enabled */
         }
-        if ((flags & X86_HAS_SSSE3) != 0) {
+        if ((fecx & X86_HAS_SSSE3) != 0) {
           features |= CPU_F_SSSE3;
         }
-        if ((flags & X86_HAS_SSE4_1) != 0) {
+        if ((fecx & X86_HAS_SSE4_1) != 0) {
           features |= CPU_F_SSE4_1;
         }
-        if ((flags & X86_HAS_SSE4_2) != 0) {
+        if ((fecx & X86_HAS_SSE4_2) != 0) {
           features |= CPU_F_SSE4_2;
         }
       }
     }
 
-    maxfunc = x86cpuid(0x8000000, &infos);
+    maxfunc = x86cpuid(0x80000000, &infos);
     if (maxfunc >= 0x80000001) {
       u32 flags;
 
@@ -760,7 +761,7 @@ void x86ShowInfos(void)
     LogRaw("\nRaw processor informations :\n");
     maxfunc = x86cpuid(0, &vendor);
     if ((maxfunc & 0xFFFFFFF0) == 0x500) {    /* Fix-up P5 Step-A */
-      strcpy(vendor.string, "GenuineIntel");
+      strncpy(vendor.string, "GenuineIntel", 12);
     }
 
     if (maxfunc > 0) {
@@ -796,11 +797,11 @@ void x86ShowInfos(void)
     }
 
     x86DumpFunctions(0);
-    if (strcmp(vendor.string, "CentaurHauls") == 0) {
+    if (strncmp(vendor.string, "CentaurHauls", 12) == 0) {
       /* Show Centaur/IDT/VIA specific functions */
       x86DumpFunctions(0xC0000000);
     }
-    if (strcmp(vendor.string, "GenuineTMx86") == 0) {
+    if (strncmp(vendor.string, "GenuineTMx86", 12) == 0) {
       /* Show Transmeta-specific functions */
       x86DumpFunctions(0x80860000);
     }
