@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng-ppc.cpp,v 1.3 2008/03/08 21:11:38 kakace Exp $
+ * $Id: ogrng-ppc.cpp,v 1.4 2008/03/29 21:54:12 kakace Exp $
 */
 
 #include "ansi/ogrng-32.h"
@@ -12,8 +12,7 @@
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
 
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM     2 /* 0-2 - '100% asm'      */
-  #define OGROPT_ALTERNATE_CYCLE                  0 /* 0-1 - '100% asm'      */
-  #warning FIXME: Need to implement FLEGE Scalar
+  #define OGROPT_ALTERNATE_CYCLE                  1 /* 0-1 - '100% asm'      */
 
   /*========================================================================*/
 
@@ -41,12 +40,12 @@
     #ifdef __cplusplus
     extern "C" {
     #endif
-    int cycle_ppc_scalar_256(struct OgrNgState *state, int *pnodes, const u16 *choose);
+    int cycle_ppc_scalar_256(struct OgrState *state, int *pnodes, const u16 *choose);
     #ifdef __cplusplus
     }
     #endif
 
-    static int ogr_cycle_256(struct OgrNgState *oState, int *pnodes,
+    static int ogr_cycle_256(struct OgrState *oState, int *pnodes,
                              const u16* pchoose)
     {
       return cycle_ppc_scalar_256(oState, pnodes, pchoose);
