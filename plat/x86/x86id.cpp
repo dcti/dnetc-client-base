@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.4 2008/03/29 00:22:20 kakace Exp $
+ * $Id: x86id.cpp,v 1.5 2008/03/30 11:49:26 kakace Exp $
  *
  * Gold mine : http://datasheets.chipdb.org
  */
@@ -74,10 +74,10 @@ union PageInfos {
                   : "0"(page)
                   : /* nothing */
                  );
-    infos->regs.regs.eax = _ax;
-    infos->regs.regs.ebx = _bx;
-    infos->regs.regs.ecx = _cx;
-    infos->regs.regs.edx = _dx;
+    infos->regs.eax = _ax;
+    infos->regs.ebx = _bx;
+    infos->regs.ecx = _cx;
+    infos->regs.edx = _dx;
     return _ax;
   }
   #endif
