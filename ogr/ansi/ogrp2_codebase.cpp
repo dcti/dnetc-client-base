@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrp2_codebase.cpp,v 1.1 2008/03/08 20:07:14 kakace Exp $
+ * $Id: ogrp2_codebase.cpp,v 1.2 2008/03/31 08:33:07 stream Exp $
  */
 #include <string.h>   /* memset */
 
@@ -135,7 +135,7 @@ int OGR[] = {
 #define CHOOSE_MARKS       12     /* maximum number of marks supported    */
 #define CHOOSE_DIST_BITS   12     /* number of bits to take into account  */
 
-extern const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
+extern "C" const unsigned char ogr_choose_dat[]; /* this is in ogr_dat.cpp */
 
 #if (CHOOSE_MARKS == 12 && OGROPT_STRENGTH_REDUCE_CHOOSE == 1)
   // strength reduce the multiply -- which is slow on MANY processors
