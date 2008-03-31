@@ -5,12 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.6 2008/03/28 22:21:34 kakace Exp $"
-
-/*
- * Macro to check assertions at compile-time (e.g. sizeof(foo) == something)
- */
-#define STATIC_ASSERT(cond)  { typedef int safoo[(cond) ? 1 : -1]; }
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.7 2008/03/31 13:09:35 stream Exp $"
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)

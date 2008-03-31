@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_INTERFACE_H__
-#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.3 2008/02/13 22:06:53 kakace Exp $"
+#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.4 2008/03/31 13:09:35 stream Exp $"
 
 #include <limits.h>
 
@@ -21,6 +21,10 @@
 
 #include "cputypes.h"
 
+/*
+ * Macro to check assertions at compile-time (e.g. sizeof(foo) == something)
+ */
+#define STATIC_ASSERT(cond)  { typedef int safoo[(cond) ? 1 : -1]; }
 
 /* ===================================================================== */
 

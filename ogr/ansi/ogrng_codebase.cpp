@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.3 2008/03/09 17:20:44 kakace Exp $
+ * $Id: ogrng_codebase.cpp,v 1.4 2008/03/31 13:09:35 stream Exp $
  */
 
 #include <string.h>   /* memset */
@@ -167,6 +167,9 @@ static int found_one(const struct OgrState *oState)
 
 static int ogr_init(void)
 {
+  /* Be sure we have enough memory in 'problem' even with wildest compiler alignment rules */
+  STATIC_ASSERT( sizeof(struct OgrState) <= OGRNG_PROBLEM_SIZE );
+
   if (CHOOSE_DIST_BITS != ogrng_choose_bits || CHOOSE_MARKS != ogrng_choose_marks)
   {
     /* Incompatible CHOOSE array - Give up */
