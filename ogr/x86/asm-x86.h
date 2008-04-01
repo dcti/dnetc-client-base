@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.7 2008/03/31 13:09:35 stream Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.8 2008/04/01 14:42:19 stream Exp $"
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)
@@ -23,59 +23,11 @@
 
   #elif defined(__WATCOMC__)
 
-    #if (OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT == 1)
-      #include <stddef.h>   /* offsetof */
-      #include "ansi/ogrp2_corestate.h"
-
-      void LIST_RIGHT_xx(void *levlist, int s, int newbit);
-      void COMP_LEFT_xx(void *levcomp, int s);
-      #pragma aux LIST_RIGHT_xx =  \
-        "mov  edx,[edi+12]"                  \
-        "shrd [edi+16],edx,cl"               \
-        "mov  edx,[edi+8]"                   \
-        "shrd [edi+12],edx,cl"               \
-        "mov  edx,[edi+4]"                   \
-        "shrd [edi+8],edx,cl"                \
-        "mov edx,[edi+0]"                    \
-        "shrd [edi+4],edx,cl"                \
-        "shrd edx,esi,cl"                    \
-        "mov  [edi+0],edx"                   \
-        parm [edi] [ecx] [esi] modify exact [edx];
-
-      #pragma aux COMP_LEFT_xx =  \
-        "mov  eax,[edi+4]"        \
-        "mov  edx,[edi+8]"        \
-        "shld [edi+0],eax,cl"     \
-        "shld eax,edx,cl"         \
-        "mov  [edi+4],eax"        \
-        "mov  eax,[edi+12]"       \
-        "shld edx,eax,cl"         \
-        "mov  [edi+8],edx"        \
-        "mov  edx,[edi+16]"       \
-        "shld eax,edx,cl"         \
-        "mov  [edi+12],eax"       \
-        "shl  edx,cl"             \
-        "mov  [edi+16],edx"       \
-        parm [edi] [ecx] modify exact [eax edx ebx];
-
-      #define COMP_LEFT_LIST_RIGHT(lev,s)        \
-        STATIC_ASSERT( offsetof(struct Level, list) == 0  );   \
-        STATIC_ASSERT( offsetof(struct Level, comp) == 40 );   \
-        STATIC_ASSERT( sizeof(lev->list) == 20 );              \
-        STATIC_ASSERT( sizeof(lev->comp) == 20 );              \
-        LIST_RIGHT_xx(&(lev->list[0]),s,newbit); \
-        COMP_LEFT_xx(&(lev->comp[0]),s);         \
-        newbit = 0;                              \
-        comp0  = lev->comp[0];                   
-
-    #endif
-
     int __CNTLONEREV__(SCALAR);
     #pragma aux __CNTLONEREV__ =  \
-            "bsr  eax,eax"      \
+            "bsr  eax,eax"        \
             value [eax] parm [eax] modify [eax] nomemory;
     #define __CNTLZ(x) (32-__CNTLONEREV__(~(x)))
-
 
   #elif defined(__GNUC__)
 

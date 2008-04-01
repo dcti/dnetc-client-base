@@ -5,13 +5,12 @@
  *
  * Wrapper around ogr64.cpp for assembly x86 64-bit cores.
  *
- * $Id: ogr-e.cpp,v 1.3 2008/03/08 20:18:29 kakace Exp $
+ * $Id: ogr-e.cpp,v 1.4 2008/04/01 14:42:19 stream Exp $
 */
 
 #include <stddef.h>
-#include "cputypes.h"
+#include "cputypes.h"      /* HAVE_I64 */
 #include "ccoreio.h"       /* CDECL    */
-#include "ansi/ogrp2-64.h"
 
 #ifdef HAVE_I64
 
@@ -20,15 +19,15 @@
  * Default settings are Ok, only OGROPT_HAVE_OGR_CYCLE_ASM changed.
  */
 
-#include "x86/asm-x86.h"
 #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
 #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
 #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
 #define OGROPT_HAVE_OGR_CYCLE_ASM             1 /* 0-2 - 'yes', need found_one() */
 
-
 #define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_asm_mmx_amd
 
+#include "asm-x86-p2.h"
+#include "ansi/ogrp2-64.h"
 #include "ansi/ogrp2_codebase.cpp"
 
 /*

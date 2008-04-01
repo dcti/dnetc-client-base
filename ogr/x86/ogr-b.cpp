@@ -6,10 +6,8 @@
  * Wrapper around ogr.cpp for all processor WITHOUT a fast bsr instruction.
  * (ie, 386, 486, Pentium, P4, K5, K6, K7, Cyrix(all), etc)
  *
- * $Id: ogr-b.cpp,v 1.6 2008/03/08 20:18:29 kakace Exp $
+ * $Id: ogr-b.cpp,v 1.7 2008/04/01 14:42:19 stream Exp $
 */
-
-#include "ansi/ogrp2-32.h"
 
 #define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_nobsr
 
@@ -32,5 +30,6 @@
   #define OGROPT_ALTERNATE_COMP_LEFT_LIST_RIGHT 0 /* 0/1 - 'std' (default) */
 #endif
 
-#include "asm-x86.h"
+#include "asm-x86-p2.h"
+#include "ansi/ogrp2-32.h"
 #include "ansi/ogrp2_codebase.cpp"

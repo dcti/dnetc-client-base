@@ -6,11 +6,8 @@
  * Wrapper around ogr.cpp for all processor WITH a fast bsr instruction.
  * (ie, PPro, PII, PIII)
  *
- * $Id: ogr-c.cpp,v 1.3 2008/03/08 20:18:29 kakace Exp $
+ * $Id: ogr-c.cpp,v 1.4 2008/04/01 14:42:19 stream Exp $
 */
-
-#include "ansi/ogrp2-32.h"
-
 
 #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
 #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
@@ -18,12 +15,12 @@
 #define OGROPT_HAVE_OGR_CYCLE_ASM             1 /* 0-2 - 'yes, partial'  */
 #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
 
-#include "asm-x86.h"
-
-
 #define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table_asm_gen
 
+#include "asm-x86-p2.h"
+#include "ansi/ogrp2-32.h"
 #include "ansi/ogrp2_codebase.cpp"
+
 #include "ccoreio.h"       /* CDECL    */
 #include <stddef.h>        /* offsetof */
 
