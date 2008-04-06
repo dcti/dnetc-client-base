@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.5 2008/03/30 11:49:26 kakace Exp $
+ * $Id: x86id.cpp,v 1.6 2008/04/06 21:20:33 kakace Exp $
  *
  * Gold mine : http://datasheets.chipdb.org
  */
@@ -200,16 +200,16 @@ static int x86FindCacheDescriptor(union PageInfos *infos, int descriptor)
 {
   int result = -1;
 
-  if ((infos->regs.eax & 0x8000000) == 0) {
-    result &= x86FindCacheDescrInReg(infos->regs.eax & 0xFFFFFF00, descriptor);
+  if ((infos->regs.eax & 0x80000000U) == 0) {
+    result &= x86FindCacheDescrInReg(infos->regs.eax & 0xFFFFFF00U, descriptor);
   }
-  if ((infos->regs.ebx & 0x8000000) == 0) {
+  if ((infos->regs.ebx & 0x80000000U) == 0) {
     result &= x86FindCacheDescrInReg(infos->regs.ebx, descriptor);
   }
-  if ((infos->regs.ecx & 0x8000000) == 0) {
+  if ((infos->regs.ecx & 0x80000000U) == 0) {
     result &= x86FindCacheDescrInReg(infos->regs.ecx, descriptor);
   }
-  if ((infos->regs.edx & 0x8000000) == 0) {
+  if ((infos->regs.edx & 0x80000000U) == 0) {
     result &= x86FindCacheDescrInReg(infos->regs.edx, descriptor);
   }
   
@@ -379,9 +379,9 @@ static u32 x86GetAmdId(u32 maxfunc)
       family += FIELD_EXT_FAMILY(signature);
       model  |= FIELD_EXT_MODEL(signature) << 4;
 
-      maxfunc = x86cpuid(0x80000000, &infos);
-      if (maxfunc >= 0x80000001) {
-        x86cpuid(0x80000001, &infos);
+      maxfunc = x86cpuid(0x80000000U, &infos);
+      if (maxfunc >= 0x80000001U) {
+        x86cpuid(0x80000001U, &infos);
         extbrandid = infos.regs.ebx & 0xFFFF;
       }
 
@@ -422,13 +422,13 @@ static u32 x86GetAmdId(u32 maxfunc)
         int code = 0;
         int pkg  = 0;
 
-        if (maxfunc >= 0x80000001) {
+        if (maxfunc >= 0x80000001U) {
           code = (infos.regs.ebx >> 11) & 0x0F;    /* AMD:string1 */
           pkg  = (infos.regs.ebx >> 28) & 0x0F;
         }
 
-        if (maxfunc >= 0x80000008) {
-          x86cpuid(0x80000008, &infos);
+        if (maxfunc >= 0x80000008U) {
+          x86cpuid(0x80000008U, &infos);
           code |= (infos.regs.ecx & 0xFF) << 4;    /* Create a composite code with AMD:NC */
         }
 
@@ -574,7 +574,7 @@ static void x86DumpFunctions(u32 function)
   u32 maxfunc;
 
   maxfunc = x86cpuid(function, &infos);
-  if ((maxfunc & 0xFFFFFFF0) == 0x500) {    /* Fix-up P5 Step-A */
+  if ((maxfunc & 0xFFFFFFF0U) == 0x500) {    /* Fix-up P5 Step-A */
     maxfunc = 1;
   }
 
@@ -623,7 +623,7 @@ u32 x86GetDetectedType(void)
       union PageInfos infos;
       u32 maxfunc = x86cpuid(0, &infos);
 
-      if ((maxfunc & 0xFFFFFFF0) == 0x500) {    /* Fix-up P5 Step-A */
+      if ((maxfunc & 0xFFFFFFF0U) == 0x500) {    /* Fix-up P5 Step-A */
         maxfunc = 1;
         strncpy(infos.string, "GenuineIntel", 12);
       }
@@ -702,11 +702,11 @@ u32 x86GetFeatures(void)
       }
     }
 
-    maxfunc = x86cpuid(0x80000000, &infos);
-    if (maxfunc >= 0x80000001) {
+    maxfunc = x86cpuid(0x80000000U, &infos);
+    if (maxfunc >= 0x80000001U) {
       u32 flags;
 
-      x86cpuid(0x80000001, &infos);
+      x86cpuid(0x80000001U, &infos);
       flags = infos.regs.edx;
 
       if (ID_VENDOR_CODE(cpuid) == VENDOR_INTEL) {
@@ -760,7 +760,7 @@ void x86ShowInfos(void)
 
     LogRaw("\nRaw processor informations :\n");
     maxfunc = x86cpuid(0, &vendor);
-    if ((maxfunc & 0xFFFFFFF0) == 0x500) {    /* Fix-up P5 Step-A */
+    if ((maxfunc & 0xFFFFFFF0U) == 0x500) {    /* Fix-up P5 Step-A */
       strncpy(vendor.string, "GenuineIntel", 12);
     }
 
@@ -771,14 +771,14 @@ void x86ShowInfos(void)
       LogRaw(" Vendor ID : \"%s\"\n", vendorbuff);
     }
 
-    maxfunc = x86cpuid(0x80000000, &brand);
-    if (maxfunc >= 0x80000004) {
+    maxfunc = x86cpuid(0x80000000U, &brand);
+    if (maxfunc >= 0x80000004U) {
       int i;
       int p = 0;
       char last = ' ';
 
       for (i = 0; i <= 2; i++) {
-        x86cpuid(0x80000002 + i, &brand);
+        x86cpuid(0x80000002U + i, &brand);
         brandbuffer.regs[i].eax = brand.regs.eax;
         brandbuffer.regs[i].ebx = brand.regs.ebx;
         brandbuffer.regs[i].ecx = brand.regs.ecx;
@@ -799,13 +799,13 @@ void x86ShowInfos(void)
     x86DumpFunctions(0);
     if (strncmp(vendor.string, "CentaurHauls", 12) == 0) {
       /* Show Centaur/IDT/VIA specific functions */
-      x86DumpFunctions(0xC0000000);
+      x86DumpFunctions(0xC0000000U);
     }
     if (strncmp(vendor.string, "GenuineTMx86", 12) == 0) {
       /* Show Transmeta-specific functions */
-      x86DumpFunctions(0x80860000);
+      x86DumpFunctions(0x80860000U);
     }
 
-    x86DumpFunctions(0x80000000);
+    x86DumpFunctions(0x80000000U);
   }
 }
