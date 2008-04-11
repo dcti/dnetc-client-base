@@ -2,7 +2,9 @@
  * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
+ */
+
+/! \file
  * portable (between win16/32) interface to profile/configuration as
  * used for windows-client specific things, such as location of 
  * executable, window position etc. 
@@ -15,7 +17,7 @@
  * ('D C T I' expands to "Distributed Computing Technologies, Inc.")
  * 'sect' is optional. If NULL or "", the format becomes key=value.
  *
- * $Id: w32ini.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $
+ * $Id: w32ini.cpp,v 1.3 2008/04/11 17:19:43 jlawson Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */
@@ -134,6 +136,16 @@ static void __do_winnt_thing(void) /* let win16 client use the registry too */
 
 /* ---------------------------------------------------- */
 
+//! Write a parameter value to the configuration section.
+/*!
+ * The configuration is stored in the Windows Registry under the
+ * system-wide HKEY_LOCAL_MACHINE for Win32.
+ *
+ * \param sect Section name to store the value.
+ * \param entry Name of the parameter key.
+ * \param val New value to store.
+ * \return Returns 0 on error, 1 on success.
+ */
 int WriteDCTIProfileString(const char *sect, const char *entry, const char *val)
 {
   int rc = 0;  
@@ -206,6 +218,18 @@ int WriteDCTIProfileString(const char *sect, const char *entry, const char *val)
 
 /* ---------------------------------------------------- */
 
+//! Read a parameter value from the configuration section.
+/*!
+ * The configuration is stored in the Windows Registry under the
+ * system-wide HKEY_LOCAL_MACHINE for Win32.
+ *
+ * \param sect Section name to store the value.
+ * \param entry Name of the parameter key.
+ * \param def Default value to return if the entry is missing.
+ * \param buf Buffer to be filled with the retrieved value.
+ * \param bufsize Maximum size of the supplied buffer.
+ * \return Returns 0 on error, otherwise the length of the retrieved value.
+ */
 unsigned int GetDCTIProfileString(const char *sect, const char *entry, 
                         const char *def, char *buf, unsigned int bufsize )
 {
@@ -259,6 +283,18 @@ unsigned int GetDCTIProfileString(const char *sect, const char *entry,
 
 /* ---------------------------------------------------- */
 
+//! Read a parameter value from the configuration section.
+/*!
+ * The configuration is stored in the Windows Registry under the
+ * system-wide HKEY_LOCAL_MACHINE for Win32.
+ *
+ * \param sect Section name to store the value.
+ * \param entry Name of the parameter key.
+ * \param defval Default value to return if the entry is missing.
+ * \return Returns the retrieved value, or defval if the value was
+ *     missing, or 1 if it is "on/yes/true", or 0 if the value is
+ *     not an integer.
+ */
 int GetDCTIProfileInt(const char *sect, const char *entry, int defval )
 {
   char s[sizeof(long)*3]; int x;
@@ -277,6 +313,16 @@ int GetDCTIProfileInt(const char *sect, const char *entry, int defval )
 
 /* ---------------------------------------------------- */
 
+//! Write a parameter value to the configuration section.
+/*!
+ * The configuration is stored in the Windows Registry under the
+ * system-wide HKEY_LOCAL_MACHINE for Win32.
+ *
+ * \param sect Section name to store the value.
+ * \param entry Name of the parameter key.
+ * \param val New value to store.
+ * \return Returns 0 on error, 1 on success.
+ */
 int WriteDCTIProfileInt(const char *sect, const char *entry, int val )
 {
   char str[sizeof(long)*3];
