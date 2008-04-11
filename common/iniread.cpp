@@ -18,7 +18,7 @@
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.40 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: iniread.cpp,v 1.41 2008/04/11 07:01:28 jlawson Exp $"; }
 
 #include "baseincs.h"
 #include "iniread.h"
@@ -37,24 +37,24 @@ return "@(#)$Id: iniread.cpp,v 1.40 2007/10/22 16:48:25 jlawson Exp $"; }
 #define TOUPPER(x) ((x)=='_'?'-':toupper(x))
 
 
-/* ini_doit() functionality:
-   section exists:  w create new key+value
-                    w delete old key+value(+sect)
-                    w replace key+value
-                    w delete section
-                    r get key+value
-                    r get all key+value pairs for section
-   does not exist:  w create new sect+key+value
-                    w delete old key+value (nop - return ok)
-                    w replace key+value  (create)
-                    w delete section  (nop - return ok)
-                    r get key+value   (nop - return default)
-                    r get all key+value pairs for section (nop, return 0)
-   null section:    w without key/value [ = flush] (nop - return ok)
-                    w with key/value (as above)
-*/                            
-
-
+//! Internal helper function used to read and write to INI files.
+/*!
+ * ini_doit() functionality:
+ * section exists:  w create new key+value
+ *                  w delete old key+value(+sect)
+ *                  w replace key+value
+ *                  w delete section
+ *                  r get key+value
+ *                  r get all key+value pairs for section
+ * does not exist:  w create new sect+key+value
+ *                  w delete old key+value (nop - return ok)
+ *                  w replace key+value  (create)
+ *                  w delete section  (nop - return ok)
+ *                  r get key+value   (nop - return default)
+ *                  r get all key+value pairs for section (nop, return 0)
+ * null section:    w without key/value [ = flush] (nop - return ok)
+ *                  w with key/value (as above)
+ */                            
 static unsigned long ini_doit( int dowrite, const char *sect, 
                                const char *key, const char *value,
                                char *buffer, unsigned long bufflen, 
@@ -644,6 +644,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
 
 /* ------------------------------------------------------------------- */
 
+//! Read a parameter's value from the INI file.
 unsigned long GetPrivateProfileStringB( const char *sect, const char *key, 
                       const char *defval, char *buffer, 
                       unsigned long buffsize, const char *filename )
@@ -651,6 +652,7 @@ unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
   return ini_doit( 0, sect, key, defval, buffer, buffsize, filename );
 }
 
+//! Write a parameter's new value to an INI file.
 int WritePrivateProfileStringB( const char *sect, const char *key, 
                         const char *value, const char *filename )
 {
@@ -658,17 +660,33 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
   return (int)ini_doit( 1, sect, key, value, buf, 0, filename );
 }
 
-
+//! Read a parameter's value (as an integer) from the INI file.
+/*!
+ * The parameter's value is read and then converted to integer.  If it
+ * is blank or missing, then a default value is assumed.  If the value
+ * is a parsable integer, then it is converted and returned.  If the
+ * value is "on", "yes", or "true" then it is considered to be 1.  All
+ * other values are invalid and is considered to be 0.
+ *
+ * \param sect Section block within the INI file.
+ * \param key Name of the parameter to read.
+ * \param defvalue The default integer value to return if the
+ *     parameter does not exist in the INI file or is blank.
+ * \param filename Name of the INI file.
+ * \return Returns the integer value that was parsed.
+ */
 unsigned int GetPrivateProfileIntB( const char *sect, const char *key, 
                           int defvalue, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];
   int n;  unsigned long i;
   i = GetPrivateProfileStringB( sect, key, "", buf, sizeof(buf), filename);
-  if (i==0)
+  if (i==0)   // empty or missing, so return default.
     return defvalue;
-  if ((n = atoi( buf ))!=0)
+  if ((n = atoi( buf ))!=0)  // if an integer, return it.
     return n;
+
+  // otherwise it must be "on", "yes", or "true"; everything else is error.
   if (i<2 || i>4)
     return 0;
   for (n=0;(i>((unsigned long)(n))) && n<4;n++)
@@ -679,9 +697,17 @@ unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
     return 1;
   if (i==4 && buf[0]=='t' && buf[1]=='r' && buf[2]=='u' && buf[3]=='e')
     return 1;
-  return 0;
+  return 0;  // otherwise error
 }
 
+//! Write a parameter's new (integer) value to an INI file.
+/*!
+ * \param sect Section block within the INI file.
+ * \param key Name of the parameter to set.
+ * \param value The new integer value to set.
+ * \param filename Name of the INI file.
+ * \return
+ */
 int WritePrivateProfileIntB( const char *sect, const char *key, 
                             int value, const char *filename )
 {
