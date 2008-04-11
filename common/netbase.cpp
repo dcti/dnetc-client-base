@@ -2,7 +2,9 @@
  * Copyright distributed.net 2000-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
+ */
+
+/*! \file
  * TCP/IP networking API abstraction layer, with automatic stack and
  * dialup-device initialization and shutdown.
  * Written October 2000 by Cyrus Patel <cyp@fb14.uni-mainz.de>
@@ -63,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.10 2008/02/10 00:24:30 kakace Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.11 2008/04/11 06:44:14 jlawson Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -2871,10 +2873,19 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
 /* CONVERSION                                                               */
 /* ======================================================================== */
 
-// a) u32 -> in_addr.s_addr ->inet_ntoa is a hassle;
-// b) BSD specs in_addr, but some implementations want a u_long;
-// c) it works around context issues.
-// d) it works everywhere, even when there is no net api loaded
+//! Convert an IPv4 address to its human-readable ASCII format.
+/*!
+ * This convenience function exists because:
+ * a) u32 -> in_addr.s_addr ->inet_ntoa is a hassle;
+ * b) BSD specs in_addr, but some implementations want a u_long;
+ * c) it works around context issues.
+ * d) it works everywhere, even when there is no net api loaded
+ *
+ * Since this function returns a static buffer, it is not threadsafe.
+ *
+ * \param addr The IPv4 address to convert
+ * \return Returns a pointer to a static buffer with the converted address.
+ */
 const char *net_ntoa(u32 addr)
 {
   static char buff[sizeof("255.255.255.255  ")];
@@ -2886,11 +2897,18 @@ const char *net_ntoa(u32 addr)
 
 /* --------------------------------------------------------------------- */
 
+/*!
+ * \param cp stringified address (source)
+ * \param destp destination buffer
+ * \param minparts must have at least this many parts
+ * \param addrtype 'h':inet_aton(), 'n':inet_network()
+ * \return
+ */
 /* courtesy of netware port :) */
-static int _inet_atox( const char *cp, /* stringified address (source) */
-                       u32 /*struct in_addr*/ *destp, /* destination buffer */
-                       int minparts, /* must have at least this many parts */
-                       int addrtype ) /* 'h':inet_aton(), 'n':inet_network()*/
+static int _inet_atox( const char *cp,
+                       u32 /*struct in_addr*/ *destp,
+                       int minparts, 
+                       int addrtype )
 {
   int err = 1;
 
@@ -3029,6 +3047,15 @@ int net_aton( const char *cp, u32 *addrp )
 /* NETDB                                                                    */
 /* ======================================================================== */
 
+//! Determine the hostname of the computer being executed on.
+/*!
+ * The returned hostname is not guaranteed to be FQDN.  If the
+ * hostname is not set, an error code will be returned.
+ *
+ * \param buffer Target buffer to be filled with the hostname.
+ * \param len Maximum length of the buffer.
+ * \return Returns 0 on success, otherwise an error code.
+ */
 int net_gethostname(char *buffer, unsigned int len)
 {
   int rc = ps_EINVAL;
@@ -3078,6 +3105,19 @@ int net_gethostname(char *buffer, unsigned int len)
 
 /* --------------------------------------------------------------------- */
 
+//! Resolve a hostname using DNS to its IPv4 address.
+/*!
+ * If the input hostname is already an ASCII IPv4 address then it is
+ * simply converted without using DNS.
+ *
+ * \param hostname The hostname to resolve.
+ * \param addr_list Pointer to the buffer to be filled with the result
+ *     of the DNS lookup.
+ * \param max_addrs Pointer to an integer that on input indicates the
+ *     maximum size of the addr_list buffer.  After return, this indicates
+ *     the used size of the buffer.
+ * \return Returns 0 on success, otherwise an error code.
+ */
 int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
 {
   int rc;
