@@ -10,7 +10,7 @@
  * 
 */
 const char *w32util_cpp(void) {
-return "@(#)$Id: w32util.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
+return "@(#)$Id: w32util.cpp,v 1.3 2008/04/11 17:25:14 jlawson Exp $"; }
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */
 #define INCLUDE_SHELLAPI_H /* __WINDOWS386__ */
@@ -26,8 +26,14 @@ int (PASCAL *__SSMAIN)(HINSTANCE,HINSTANCE,LPSTR,int) = NULL;
 
 /* ---------------------------------------------------- */
 
-/* get DOS style version: ((IsNT)?(2000):(0)) + (major*100) + minor */
-
+//! Get the Windows version number as a single decimal integer.
+/*!
+ * This method caches the version the first time it is called and
+ * returns it immediately on subsequent calls.
+ *
+ * \return Returns the version number in the following format:
+ *     ((IsNT)?(2000):(0)) + (major*100) + minor
+ */
 long winGetVersion(void)
 {
   static long ver = 0;
