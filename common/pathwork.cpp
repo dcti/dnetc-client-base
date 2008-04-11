@@ -1,11 +1,13 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> to be able to throw
  * away some very ugly hackery in buffer open code.
- *
+ */
+
+/*! \file
  * This module contains functions for setting the "working directory"
  * and pathifying a filename that has no dirspec. Functions need to be
  * initialized from main() with InitWorkingDirectoryFromSamplePaths();
@@ -24,7 +26,7 @@
  * altogether.
 */
 const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.25 2008/02/10 00:24:30 kakace Exp $"; }
+return "@(#)$Id: pathwork.cpp,v 1.26 2008/04/11 06:29:29 jlawson Exp $"; }
 
 // #define TRACE
 
@@ -45,8 +47,14 @@ return "@(#)$Id: pathwork.cpp,v 1.25 2008/02/10 00:24:30 kakace Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
-/* get the offset of the filename component in fully qualified path */
-/* previously called IsFilenamePathified() */
+//! Get the offset of the filename component in fully qualified path.
+/*!
+ * This method was previously called IsFilenamePathified().
+ *
+ * \param fullpath Buffer containing a possibly fully-qualified filename.
+ * \return Returns the offset within the buffer of the start of the 
+ *     filename portion of the path.  Returns 0 on error.
+ */
 unsigned int GetFilenameBaseOffset( const char *fullpath )
 {
   char *slash;
@@ -134,11 +142,17 @@ static const char *__finalize_fixup(char *path, unsigned int maxlen)
 static char __cwd_buffer[MAX_FULLPATH_BUFFER_LENGTH+1];
 static int __cwd_buffer_len = -1; /* not initialized */
 
-/* ------------------------------------------------------------------------ */
-/* the working directory is the app's directory, unless the ini filename    */
-/* contains a dirspec, in which case the path to the ini file is used.      */
-/* ------------------------------------------------------------------------ */
-
+//! Compute the "working directory" of the client.
+/*!
+ * The "working directory" is the executable's directory, unless the ini filename
+ * contains a dirspec, in which case the path to the ini file is used.  The
+ * computed directory is stored in a static variable for rapid retrieval later.
+ *
+ * \param inipath
+ * \param apppath
+ * \return Always returns zero.
+ * \sa GetWorkingDirectory
+ */
 int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppath )
 {
   TRACE_OUT((0,"ini: %s app: %s \n",inipath,apppath));
@@ -321,6 +335,11 @@ int InitWorkingDirectoryFromSamplePaths( const char *inipath, const char *apppat
 
 /* --------------------------------------------------------------------- */
 
+//! Check if a filename is fully-qualified.
+/*!
+ * \param fname Buffer containing the filename to check.
+ * \return Returns 0 if not fully-qualified, or 1 if so.
+ */
 static int __is_filename_absolute(const char *fname)
 {
   #if (CLIENT_OS == OS_VMS)
@@ -341,9 +360,18 @@ static int __is_filename_absolute(const char *fname)
 
 /* --------------------------------------------------------------------- */
 
-/* get working directory (may be relative to system's current directory),
-** including trailing directory separator. Returns NULL on error.
-*/
+//! Get the "working directory" of the client.
+/*!
+ * The returned directory will include a trailing directory separator.
+ * This may be relative to system's current directory, and not
+ * fully-qualfied.  The InitWorkingDirectoryFromSamplePaths() function
+ * must have been already called.
+ *
+ * \param buffer Buffer to fill with the working directory.
+ * \param maxlen Maximum size of the buffer, in bytes.
+ * \return Returns NULL on error, otherwise the buffer that was supplied.
+ * \sa InitWorkingDirectoryFromSamplePaths
+ */
 const char *GetWorkingDirectory( char *buffer, unsigned int maxlen )
 {
   if ( buffer == NULL )
@@ -364,15 +392,23 @@ const char *GetWorkingDirectory( char *buffer, unsigned int maxlen )
 
 static char __path_buffer[MAX_FULLPATH_BUFFER_LENGTH+2];
 
-/* GetFullPathForFilename( const char *fname )
-**   is a misnomer - should be called GetWorkingPathForFilename()
-**   to reflect that returned paths may be relative.
-** returns "" on error.
-** returns <fname> if <fname> is absolute
-** otherwise returns <X> + <fname>
-**   where <X> is "" if <fname> is not just a plain basename (has a dir spec)
-**   where <X> is __cwd_buffer + <dirsep> if <fname> is just a plain basename
-*/
+//! Compute a slightly more-qualified path for a relative file.
+/*!
+ * "GetFullPathForFilename" is a slight misnomer; it should be called
+ * "GetWorkingPathForFilename" to reflect that returned paths may not
+ * always be fully-qualified if the "working directory" was not.
+ *
+ * - In general, returns <fname> if <fname> is absolute
+ * - otherwise returns <X> + <fname>
+ * - where <X> is "" if <fname> is not just a plain basename (has a dir spec)
+ * - where <X> is __cwd_buffer + <dirsep> if <fname> is just a plain basename
+ *
+ * \param filename Input buffer containing the relative filename.
+ *    If the filename is already absolute, then that is the result.
+ * \return Returns a pointer to a static buffer with the
+ *    more-qualified version of the path.  Returns "" on error.
+ *    Guaranteed not to return NULL.
+ */
 const char *GetFullPathForFilename( const char *filename )
 {
   const char *outpath;
@@ -405,13 +441,17 @@ const char *GetFullPathForFilename( const char *filename )
 
 /* --------------------------------------------------------------------- */
 
-/* GetFullPathForFilenameAndDir( const char *fname, const char *dir )
-** returns <fname> if <fname> is absolute
-** otherwise returns <dir> + <dirsep> + <fname>
-**      if <dir> is NULL, use __cwd_buffer as <dir>;
-**      if <dir> is "", use ""
-**      if <fname> is NULL, use "" as <fname>
-*/
+/*!
+ * - In general, returns <fname> if <fname> is absolute
+ * - otherwise returns <dir> + <dirsep> + <fname>
+ * - if <dir> is NULL, use __cwd_buffer as <dir>;
+ * - if <dir> is "", use ""
+ * - if <fname> is NULL, use "" as <fname>
+ * 
+ * \param fname
+ * \param dir
+ * \return
+ */
 const char *GetFullPathForFilenameAndDir( const char *fname, const char *dir )
 {
   if (!fname)
