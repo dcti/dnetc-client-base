@@ -1,4 +1,4 @@
-// Copyright distributed.net 1997-2003 - All Rights Reserved
+// Copyright distributed.net 1997-2008 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
@@ -14,7 +14,7 @@
 // -----------------------------------------------------------------
 
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.8 2007/10/22 16:48:27 jlawson Exp $"; }
+return "@(#)$Id: random.cpp,v 1.9 2008/04/11 04:49:15 jlawson Exp $"; }
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */
@@ -38,6 +38,12 @@ struct IL_MixRandom_struct
 
 static IL_MixRandom_struct IL_MixRandom_seeds;
 
+//! Internal method used to validate the generator seed.
+/*!
+ * \param source
+ * \param count
+ * \return Returns 0 on failure, 1 on success.
+ */
 static s32 IL_AreBitColumnsOK(u32 *source, s32 count)
 {
   int n;
@@ -65,6 +71,10 @@ static s32 IL_AreBitColumnsOK(u32 *source, s32 count)
   return 1;                                   // success
 }
 
+//! Internal method used to seed the generator.
+/*!
+ * \param rand_fn Pointer to function used for seeding.
+ */
 static void IL_MixRandomSeed(register s32 (*rand_fn)())
 {
   int n;
@@ -86,6 +96,7 @@ static void IL_MixRandomSeed(register s32 (*rand_fn)())
   } while (!IL_AreBitColumnsOK((u32 *)p->trseed29, 29));
 }
 
+//! Internal method that returns a generated random value.
 static u32 IL_MixRandom()
 {
   s32 sum, temp, i32, i31, i29;
@@ -120,11 +131,13 @@ static u32 IL_MixRandom()
   return (u32) sum;
 }
 
+//! Internal callback method used for seeding the generator.
+/*!
+ * This is the usual random number generator most packages use,
+ * except that it's been modified to return 32 bits instead of 16.
+ */
 static s32 IL_StandardRandom()
 {
-  // This is the usual random number generator most packages use,
-  // except that it's been modified to return 32 bits instead of 16.
-
   u32 lo, hi, ll, lh, hh, hl;
 
   lo = IL_StandardRandom_seed & 0xffffL;
@@ -137,6 +150,14 @@ static s32 IL_StandardRandom()
   return ((ll + 12345L) >> 16) + lh + hl + (hh << 16);
 }
 
+//! Initialize the random number generator without entropy.
+/*!
+ * The random number generator uses a single static seed, and may only
+ * be seeded once.  If it has already been seeded, then this method
+ * does nothing.
+ *
+ * \return Does not return a value.
+ */
 void InitRandom(void)
 {
   static int random_initialized = 0;
@@ -160,6 +181,18 @@ void InitRandom(void)
   IL_MixRandomSeed( IL_StandardRandom );
 }
 
+
+//! Initialize the random number generator with entropy.
+/*!
+ * The random number generator uses a single static seed, and may only
+ * be seeded once.  If it has already been seeded, then this method
+ * does nothing.
+ *
+ * \param p Pointer to a buffer used for additional entropy.  The buffer
+ *     must be 4 bytes in size.  If NULL, then no additional entropy
+ *     will be used.
+ * \return Does not return a value.
+ */
 void InitRandom2(const char *p)
 {
   static int random_2_initialized = 0;
@@ -184,6 +217,16 @@ void InitRandom2(const char *p)
   IL_MixRandomSeed( IL_StandardRandom );
 }
 
+//! Generate 32-bits of random data.
+/*!
+ * If the random number generator has not already been seeded, then it
+ * will be automatically seeded.
+ *
+ * \param u32data Pointer to buffer that will contribute more entropy.
+ *       If NULL, then no additonal entropy will be mixed in.
+ * \param u32count Size of the buffer, measured in 32-bit words.
+ * \return Returns the generated random value.
+ */
 u32 Random( const u32 * u32data, unsigned int u32count )
 {
   register u32 tmp;
