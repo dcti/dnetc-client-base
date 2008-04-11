@@ -8,7 +8,7 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.5 2007/10/22 16:48:32 jlawson Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.6 2008/04/11 17:19:55 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "unused.h"     /* DNETC_UNUSED_* */
@@ -64,6 +64,14 @@ static int SSIsTransparencyAvailable(void)
 
 /* ---------------------------------------------------- */
 
+//! Callback used to display the password change dialog box.
+/*!
+ * This method just invokes the system-default change dialog.
+ *
+ * \param hInst Instant handle of application.
+ * \param hwnd Parent window to be used for any dialogs.
+ * \return Always returns 0.
+ */
 static int SSChangePassword(HINSTANCE hInst, HWND hwnd)
 {
   hInst = hInst;
@@ -87,6 +95,14 @@ static int SSChangePassword(HINSTANCE hInst, HWND hwnd)
 
 /* ---------------------------------------------------- */
 
+//! Callback used to process all window messages and drawing.
+/*!
+ * \param hwnd
+ * \param msg
+ * \param wParam
+ * \param lParam
+ * \return
+ */
 static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
   static struct
@@ -403,6 +419,25 @@ struct _ird
 };
 #pragma pack()
 
+//! Retrieve details about the client executable.
+/*!
+
+ * This accepts the filename of a client executable (dnetc.exe) and
+ * performs some low-level analysis on it to identify its version and
+ * execution type.
+ *
+ * \param filename Filename of a client executable (dnetc.exe)
+ *     Using an absolute pathname is recommended but not required.
+ * \param verp Optional argument that receives the version number of
+ *     the client.  If NULL, then the version will not be returned in
+ *     this argument (the return value of the function can still be used).
+ * \param isguip Optional argument that receives an indication of 
+ *     whether the executable is a "console" (0) or "GUI" (1) client.
+ * \param ssnbuf
+ * \param ssnbuflen
+ * \return Returns -1 on error, otherwise the version number of the client.
+
+ */
 static int SSGetFileData(const char *filename, int *verp, int *isguip,
                           char *ssnbuf, unsigned int ssnbuflen)
 {
@@ -608,6 +643,7 @@ int SSFreeProcess( void *handle, int withShutdown )
 
 /* ---------------------------------------------------- */
 
+//! Execute another process
 void *SSLaunchProcess( const char *filename, const char *args,
                        int waitMode, int prio )
 {
@@ -832,6 +868,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
 
 /* ---------------------------------------------------- */
 
+//! Display the screensaver preview.
 static HWND SSGetPreviewWindow(void)
 {
   HWND hPreview = (HWND)0;
@@ -888,6 +925,7 @@ static HWND SSGetPreviewWindow(void)
 
 /* ---------------------------------------------------- */
 
+//! Detect whether the client is already running.
 static int IsDCTIClientRunning(void)
 {
   int found = (FindWindow( NULL, W32CLI_CONSOLE_NAME ) != NULL);
@@ -913,6 +951,11 @@ static int IsDCTIClientRunning(void)
 
 /* ---------------------------------------------------- */
 
+//! Check whether a specified filename exists on disk.
+/*!
+ * \param filename Filename to check existence of.
+ * \return Returns 1 if the file exists, other 0.
+ */
 static int SSVerifyFileExists( const char *filename )
 {
   OFSTRUCT ofstruct;
@@ -1545,6 +1588,7 @@ static int SSExtractScreennameFromFile( const char *filename,
 #include <direct.h>
 #endif
 
+//! Iterate through a directory's list of files.
 static const char *SSFindNext(void *dirbase, char *buf, unsigned int bufsize)
 {
   if (dirbase)
@@ -1568,6 +1612,7 @@ static const char *SSFindNext(void *dirbase, char *buf, unsigned int bufsize)
 
 /* ---------------------------------------------------- */
 
+//! Stop iterating through a directory's list of files.
 static int SSFindClose(void *dirbase)
 {
   if (dirbase)
@@ -1584,6 +1629,17 @@ static int SSFindClose(void *dirbase)
 
 /* ---------------------------------------------------- */
 
+//! Start iterating through a directory's list of files.
+/*!
+ * \param path Directory to iterate through the contents of.
+ * \param buf Buffer that should receive the first matching file.
+ * \param bufsize Maximum size of the buffer.
+ * \return Returns an opaque handle to be used by SSFindNext and SSFindClose.
+ *     On error, returns NULL.
+ *
+ * \sa SSFindClose
+ * \sa SSFindNext
+ */
 static void *SSFindFirst(const char *path, char *buf, unsigned int bufsize)
 {
   #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
@@ -1894,13 +1950,16 @@ static void SSUnGenChild(HWND hChildWnd)
 /* ---------------------------------------------------- */
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
-//<BovineMoo> comdlg32.dll has a very huge memory footprint
-//<BovineMoo> pulls in like 20 dlls or so
-//<BovineMoo> well, comdlg32 pulls in winspool, which pulls in activeds,
-//<BovineMoo> which pulls in tons of network and crypto things
-//<BovineMoo> (on win2k)
-//<BovineMoo> actuall winspool is delay loaded
-//<BovineMoo> but it's still pretty bad
+//! Prompt the user to select a filename.
+/*!
+ * This uses the Windows common "open file" dialog box.  We explicitly
+ * load COMDLG32.DLL rather than statically linking against it to
+ * avoid an expensive run-time dependency during normal screensaver
+ * operations.
+ *
+ * \param lpofn Pointer to structure containing dialog attributes.
+ * \return 
+ */
 BOOL __GetOpenFileName(LPOPENFILENAME lpofn)
 {
   BOOL rc = 0;
@@ -1919,6 +1978,14 @@ BOOL __GetOpenFileName(LPOPENFILENAME lpofn)
 #endif
 
 
+//! Dialog message handler for the screensaver configuration dialog.
+/*!
+ * \param dialog
+ * \param msg
+ * \param wparam
+ * \param lparam
+ * \return
+ */
 static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
                     UINT msg, UINT wparam, LONG lparam )
 {
@@ -2263,6 +2330,15 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
 
 /* ---------------------------------------------------- */
 
+//! Display the screensaver configuration dialog.
+/*!
+ * This method does not return until the configuration dialog has been
+ * dismissed by the user.
+ *
+ * \param hInstance Application instance handle.
+ * \param hwnd Window handle of parent window.
+ * \return Always returns 0.
+ */
 static int SSConfigure(HINSTANCE hInstance, HWND hwnd)
 {
   FARPROC func = MakeProcInstance( (FARPROC)SSConfigDialogProc, hInstance );
@@ -2325,6 +2401,11 @@ static void SSAssertConfiguration(HINSTANCE hInst)
 
 /* ---------------------------------------------------- */
 
+//! Main entry-point used to begin execution.
+/*!
+ * Windows invokes this method with any command-line arguments
+ * to indicate the mode of screensaver operation.
+ */
 int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst,
                   LPSTR lpszCmdLine, int nCmdShow)
 {
@@ -2337,7 +2418,7 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst,
   {
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
-      MessageBox(NULL, "This screen saver cannot be used with win32s\n"
+      MessageBox(NULL, "This screen saver cannot be used with win32s.\n"
                        "Use the native win16 version instead.",
         szAppName, MB_OK|MB_ICONSTOP);
       return 0;
