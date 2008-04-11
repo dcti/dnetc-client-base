@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.34 2008/02/17 16:24:29 kakace Exp $"; }
+return "@(#)$Id: util.cpp,v 1.35 2008/04/11 06:05:25 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -62,6 +62,14 @@ void trace_setsrc( const char *filename )
   return;
 }
 
+//! Log a debugging message to the "trace.out" file.
+/*!
+ * \param indlevel Indentation level change used for formatting.
+ *     This should be 0, 1, or -1 to indicate the nesting level.
+ * \param format Formatting string (printf style) of log message.
+ * \param ... Arguments used for supplying formatting values.
+ * \return Does not return a value.
+ */
 void trace_out( int indlevel, const char *format, ... )
 {
   static int indentlevel = -1; /* uninitialized */
@@ -111,6 +119,16 @@ void trace_out( int indlevel, const char *format, ... )
 
 /* ------------------------------------------------------------------- */
 
+//! Check if this is a beta version and the expiration date validity.
+/*!
+ * If this is a beta version and the expiration date has passed, this
+ * will optionally log a message and then return an indicator.  If
+ * this is a beta and it has not yet expired, a message will
+ * optionally be periodically logged and no indicator returned.
+ *
+ * \param print_msg If non-zero, then messages may be logged.
+ * \return Returns 1 if beta and expired.  Otherwise 0.
+ */
 int utilCheckIfBetaExpired(int print_msg)
 {
   if (CliIsDevelVersion()) /* cliident.cpp */
@@ -539,6 +557,15 @@ const int* projectmap_build( int* buf, int* state, const char *strtomap )
 
 /* --------------------------------------------------------------------- */
 
+//! Set the application name visible to the operating system.
+/*!
+ * The application name is usually the name displayed by "top" or "ps"
+ * and can be dynamically changed on some operating systems.
+ *
+ * \param newname Optional name to use.  If NULL, then a default
+ *      will be used.
+ * \return Returns the name that was used.
+ */
 const char *utilSetAppName(const char *newname)
 {
   /*
@@ -613,11 +640,17 @@ const char *utilGetAppName(void)
   #include <fcntl.h>
 #endif /* __unix__ */
 
-/*
-    get list of pid's for procname. if pidlist is NULL or maxnumpids is 0,
-    then return found count, else return number of pids now in list.
-    On error return < 0.
-*/
+//! Get list of PIDs for any running instances of procname.
+/*! 
+ * \param procname Name of the process to look for.  Specifying NULL 
+ *     is an error condition.
+ * \param pidlist Optional buffer to be filled with PIDs.  If NULL, then
+ *     this function will return the current matching PID count.
+ * \param maxnumpids Size of the buffer, measured in longs.
+ * \return if pidlist is NULL or maxnumpids is 0,
+ *     then return found count, else return number of PIDs now in list.
+ *     On error return < 0.
+ */
 int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
 {
   int num_found = -1; /* assume all failed */
@@ -1269,6 +1302,13 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
 
 /* ------------------------------------------------------------------------ */
 
+//! Check if a string is a valid email syntax.
+/*!
+ * This function should ideally validate to RFC 2822, but it does not.
+ *
+ * \param userid Buffer containing the email address to validate.
+ * \return Returns 0 if an invalid email addres, or 1 if valid.
+ */
 static int __utilIsUserIDAValidEmailAddress(const char *userid)
 {
   const char *c = userid, *domain = NULL;
@@ -1364,8 +1404,14 @@ static int __utilIsUserIDAValidEmailAddress(const char *userid)
   return 1;
 }
 
-/* XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX where X is a hex digit,
-   may be enclosed in braces */
+//! Check if a string is a valid GUID format.
+/*! 
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX where X is a hex digit,
+ * may be enclosed in braces.
+ *
+ * \param userid Buffer containing the GUID to validate.
+ * \return Returns 0 if an invalid GUID, or 1 if valid.
+ */
 static int __utilIsUserIDAValidGUID(const char *userid)
 {
   int has_braces = 0;
@@ -1407,7 +1453,10 @@ static int __utilIsUserIDAValidGUID(const char *userid)
   return 1; // all tests passed :)
 }
 
-/* returns 1 = valid, 0 = invalid */
+//! Check if the argument is a valid email address or a valid GUID.
+/*!
+ * \return Returns 1 = valid, 0 = invalid.
+ */
 int utilIsUserIDValid(const char *userid)
 {
   return __utilIsUserIDAValidEmailAddress(userid) ||
@@ -1416,6 +1465,12 @@ int utilIsUserIDValid(const char *userid)
 
 /* ------------------------------------------------------------------------ */
 
+//! Securely copy a string, with a maximum size and preserving termination.
+/*!
+ * \param dest Destination buffer for copy of string.
+ * \param src Source buffer of original string
+ * \param n Maximum number of bytes to copy, including null termination.
+ */
 char * strncpyz(char *dest, const char *src, int n)
 {
   strncpy(dest, src, n);
