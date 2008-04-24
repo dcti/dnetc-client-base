@@ -1,5 +1,6 @@
 /*
- * Copyright distributed.net 2003 - All Rights Reserved
+ * SMC Code inspired by Naoki Hiroshima (http://n.h7a.org/hacks/rubycocoa/smc.rb)
+ * Copyright distributed.net 2003-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,12 +11,13 @@
  * For multiple cpus, gets one with highest temperature.
  * A test main() is at the end of this file.
  *
- * Currently we try 3 different sources:
+ * Currently we try 4 different sources:
  *   - host_processor_info(), which uses CPUs built-in Thermal Assist Unit
  *   - AppleCPUThermo, an IOKit Object that provides "temp-monitor" from a
  *     dedicated sensor near the CPU (PowerMac MDD and XServe only)
  *   - IOHWSensor, an IOKit Object that provides "temp-sensor" data from a
  *     dedicated sensor
+ *   - AppleSMC, the Apple System Management Controller on Intel Macs
  *
  * NOTES: Apple uses various sensors in its models
  *
@@ -32,7 +34,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.2 2007/10/22 16:48:31 jlawson Exp $
+ *  $Id: temperature.cpp,v 1.3 2008/04/24 23:37:17 snikkel Exp $
  */
 
 #include <string.h>
@@ -209,6 +211,130 @@ static SInt32 _readIOHWSensor(void)
     return k;    /* Temperature (* 100, in kelvin) or -1 (error / no sensor) */
 }
 
+typedef struct {
+  UInt32 key;
+  char dummy1[22];
+  UInt32 size;
+  UInt32 type;
+  char dummy2[6];
+  char cmd;
+  char dummy3[1];
+  UInt32 index;
+  char data[32];
+} SMCIO_t;
+
+#define SMC_READ_KEYINFO 0x9;
+#define SMC_READ_KEY 0x5;
+#define SMC_READ_INDEX 0x8;
+
+UInt32 _SMCread(UInt32 key, io_connect_t connection)
+{
+  SMCIO_t smc_input;
+  SMCIO_t smc_output;
+  IOItemCount input_size = sizeof(SMCIO_t);
+  IOByteCount output_size = sizeof(SMCIO_t);
+
+  memset(&smc_input, 0, sizeof(SMCIO_t));
+  memset(&smc_output, 0, sizeof(SMCIO_t));
+
+  smc_input.key = key;
+  smc_input.cmd = SMC_READ_KEYINFO;
+	
+  if (kIOReturnSuccess == IOConnectMethodStructureIStructureO(connection, 2, 
+    input_size, &output_size, &smc_input, &smc_output)) {
+
+    smc_input.cmd = SMC_READ_KEY;
+    smc_input.size = smc_output.size;
+    smc_input.type = smc_output.type;
+
+    if (kIOReturnSuccess == IOConnectMethodStructureIStructureO(connection, 2, 
+      input_size, &output_size, &smc_input, &smc_output)) {
+      switch (smc_input.type) {
+        case 0x75693332: /* ui32 */
+          return ntohl(*((UInt32 *)&smc_output.data));
+          break;
+        case 0x73703738: /* sp78 */
+          return smc_output.data[0];
+          break;
+        default:
+          return 0;
+          break;
+      }
+    }
+  }
+
+  return 0;
+}
+
+UInt32 _SMCreadname(int index, io_connect_t connection)
+{
+  SMCIO_t smc_input;
+  SMCIO_t smc_output;
+  IOItemCount input_size = sizeof(SMCIO_t);
+  IOByteCount output_size = sizeof(SMCIO_t);
+
+  memset(&smc_input, 0, sizeof(SMCIO_t));
+  memset(&smc_output, 0, sizeof(SMCIO_t));
+
+  smc_input.cmd = SMC_READ_INDEX;
+  smc_input.index = index;
+
+  if (kIOReturnSuccess == IOConnectMethodStructureIStructureO(connection, 2, 
+    input_size, &output_size, &smc_input, &smc_output)) {
+    return smc_output.key;
+  }
+
+  return 0;
+}
+
+static SInt32 _readAppleSMC(void)
+{
+  SInt32 rawT = -1;
+  SInt32 k = -1;	
+  io_object_t handle;
+  io_iterator_t objectIterator;
+  io_connect_t connection;
+  CFMutableDictionaryRef properties = NULL;
+  mach_port_t master_port;
+  int nb_keys, i;
+
+  /* Bug #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2,
+  ** so we obtain the default port the old way */
+  
+  if (kIOReturnSuccess == IOMasterPort(MACH_PORT_NULL, &master_port)) {
+    if (kIOReturnSuccess == IOServiceGetMatchingServices(master_port /*kIOMasterPortDefault*/, 
+                                    IOServiceNameMatching("AppleSMC"), 
+                                    &objectIterator)) {
+      while ( (handle = IOIteratorNext(objectIterator)) ) {
+        if (kIOReturnSuccess == IORegistryEntryCreateCFProperties(handle, &properties, 
+                                      kCFAllocatorDefault, kNilOptions)) {
+          if (kIOReturnSuccess == IOServiceOpen(handle, mach_task_self(), 0, &connection)) {
+            nb_keys = _SMCread(0x234B4559, connection); /* "#KEY" */
+            for (i=0;i<nb_keys;i++) {
+              int tempT;
+              UInt32 key = _SMCreadname(i,connection);
+              if ((key >= 0x54430000) && (key <= 0x5443FFFF)) { /* "TCxx" CPU temp sensors */
+                tempT = _SMCread(key, connection);
+                if (tempT > rawT)
+                  rawT = tempT;
+              }
+            }
+            IOServiceClose (connection);
+          }
+          CFRelease(properties);
+        } /* if IORegistryEntryCreateCFProperties() */
+        IOObjectRelease(handle);
+      }	/* while */
+      IOObjectRelease(objectIterator);
+    }	/* if IOServiceGetMatchingServices() */
+    mach_port_deallocate(mach_task_self(), master_port);
+  }
+  if (rawT >= 0)
+    k = rawT*100 + 27315;
+    
+  return k;    /* Temperature (* 100, in kelvin) or -1 (error / no sensor) */
+}
+
 
 SInt32 macosx_cputemp(void) {
     static int source = -1;                 /* No source defined */
@@ -223,8 +349,9 @@ SInt32 macosx_cputemp(void) {
         case 2:
             return _readAppleCPUThermo();   /* PowerMac MDD, XServe */
         case 3:
-            return _readIOHWSensor();       /* PowerBook Alu, PowerMac G5*/
-            
+            return _readIOHWSensor();       /* PowerBook Alu, PowerMac G5 */
+        case 4:
+            return _readAppleSMC();         /* Intel */			            
         default:
             CPUid = GetProcessorType(-1);
             if ((GetProcessorFeatureFlags() & CPU_F_ALTIVEC) == 0
@@ -237,13 +364,13 @@ SInt32 macosx_cputemp(void) {
                 temp = _readTAU();
                 if (temp >= 0) {source = 1; break;}
             }
-
             temp = _readAppleCPUThermo();
             if (temp >= 0) {source = 2; break;}
             temp = _readIOHWSensor();
             if (temp >= 0) {source = 3; break;}
+            temp = _readAppleSMC();
+            if (temp >= 0) {source = 4; break;}			
     }
-
     if (source > 0) {
       float k = temp / 100.0;
       Log("Current CPU temperature : %5.2fK (%2.2fC)\n", k, k-273.15);
@@ -252,7 +379,6 @@ SInt32 macosx_cputemp(void) {
       Log("Temperature monitoring disabled (no sensor found)\n");
       source = 0;
     }
-
     return temp;
 }
 
@@ -263,6 +389,7 @@ int main(int argc,char *argv[])
     printf("TAU %d Kelvin %d Celsius\n",_readTAU(),_readTAU()-27315);
     printf("AppleCPUThermo: %d/100 Kelvin (%d/100 Celsius)\n",_readAppleCPUThermo(),_readAppleCPUThermo()-27315);
     printf("IOHWSensor: %d/100 Kelvin (%d/100 Celsius)\n",_readIOHWSensor(),_readIOHWSensor()-27315);
+    printf("AppleSMC: %d/100 Kelvin (%d/100 Celsius)\n",_readAppleSMC(),_readAppleSMC()-27315);
 
     while (1) { // test for leaks
         printf("Temp %d/100\n",macosx_cputemp());
