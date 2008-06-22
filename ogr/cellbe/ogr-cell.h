@@ -1,12 +1,13 @@
 #ifndef __OGR_CELL_H__
 #define __OGR_CELL_H__
 
-
-#define  IMPLEMENT_CELL_CORES
-
-#include "cputypes.h"
-#include "ppc/ogr-vec.cpp"
-#include "ansi/ogrp2_corestate.h"
+#define IMPLEMENT_CELL_CORES         /* Required by ogr-vec.cpp */
+#include "ppc/ogr-vec.cpp"           /* Vectored stub structures */
+#ifdef __SPU__
+  #include "ansi/ogrp2_corestate.h"  /* Get only "State" structure */
+#else
+  #include "ansi/ogrp2_codebase.cpp" /* Get "State" structure and basic code */
+#endif
 
 typedef struct
 {
@@ -19,6 +20,6 @@ typedef union {
     u32 a32[2];
 } addr64;
 
-#define STATIC_ASSERT(cond) { typedef int foo[(cond) ? 1 : -1]; }
+// #define STATIC_ASSERT(cond) { typedef int foo[(cond) ? 1 : -1]; }
 
 #endif // __OGR_CELL_H__

@@ -4,25 +4,22 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogr_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.5 2008/05/18 15:37:46 stream Exp $"; }
+return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.6 2008/06/22 18:52:25 stream Exp $"; }
 
 #ifndef CORE_NAME
 #error CORE_NAME undefined.
 #endif
 
-
-#include "ogr-cell.h"
 #include <libspe2.h>
 #include <cstdlib>
 #include <cstring>
 #include "unused.h"
 #include "logstuff.h"
 
-#undef  OGR_GET_DISPATCH_TABLE_FXN
 #define OGR_GET_DISPATCH_TABLE_FXN    spe_ogr_get_dispatch_table
+#define OGROPT_HAVE_OGR_CYCLE_ASM     2
 
-#include "ansi/ogrp2_codebase.cpp"
-
+#include "ogr-cell.h"
 
 #define SPE_WRAPPER_FUNCTION(name) SPE_WRAPPER_FUNCTION2(name)
 #define SPE_WRAPPER_FUNCTION2(name) ogr_cycle_ ## name ## _spe_wrapper
@@ -39,7 +36,7 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   STATIC_ASSERT(sizeof(struct Level) == 80);
   STATIC_ASSERT(sizeof(struct State) == 2448);
   STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2464);
-  STATIC_ASSERT(sizeof(struct State) <= OGR_PROBLEM_SIZE);
+//  STATIC_ASSERT(sizeof(struct State) <= OGR_PROBLEM_SIZE);
   DNETC_UNUSED_PARAM(with_time_constraints);
 
   static spe_context_ptr_t context;

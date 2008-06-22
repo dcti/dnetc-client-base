@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_INTERFACE_H__
-#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.4 2008/03/31 13:09:35 stream Exp $"
+#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.5 2008/06/22 18:52:25 stream Exp $"
 
 #include <limits.h>
 
@@ -123,6 +123,7 @@ typedef struct {
    } VECTOR;
 #endif
 
+struct Stub;
 
 /*
 ** ogr_sup.cpp

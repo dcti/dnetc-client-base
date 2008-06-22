@@ -8,11 +8,22 @@
  *  "hybrid" name.
 */
 
+#ifndef IMPLEMENT_CELL_CORES /* Included twice for PPU and SPU */
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.9 2008/03/08 21:11:38 kakace Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.10 2008/06/22 18:52:26 stream Exp $"; }
+#endif
 
 #include "ansi/ogrp2.h"
 
+/*
+ * Todo for kakace :-) CELL SPU part includes this file but requires only
+ * definition of 'struct Level' (to define 'struct State'). Rest of code
+ * is useless and generates warning about missed asm version of CNTLZ.
+ * To cleanup things, it's possible either put almost whole file under 
+ * #ifndef __SPU__ either move defintions of BMAP and Level to separate .h file
+ */
+
+#if !defined(__SPU__)
 #if !defined(__VEC__) && !defined(__ALTIVEC__)
 #error fixme : No AltiVec support.
 #endif
@@ -20,7 +31,7 @@ return "@(#)$Id: ogr-vec.cpp,v 1.9 2008/03/08 21:11:38 kakace Exp $"; }
 #if defined (__GNUC__) && !defined(__APPLE_CC__) && (__GNUC__ >= 3)
 #include <altivec.h>
 #endif
-
+#endif // __SPU__
 
 /*
  ** Bitmaps built with 128-bit vectors
@@ -92,7 +103,9 @@ struct Level {
   #error play with the settings to find out optimal settings for your compiler
 #endif
 
-#define OGR_GET_DISPATCH_TABLE_FXN    vec_ogr_get_dispatch_table
+#ifndef IMPLEMENT_CELL_CORES
+  #define OGR_GET_DISPATCH_TABLE_FXN    vec_ogr_get_dispatch_table
+#endif
 
 
 /*========================================================================*/
