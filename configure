@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.302 2008/03/29 21:53:45 kakace Exp $
+# @(#)$Id: configure,v 1.303 2008/06/22 19:49:46 stream Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -547,12 +547,19 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDR72SPUCORES="cellv1"
     fi # HAVE_RC5_72
 
-    # -------------- ogr --------------
-    # if [ "$HAVE_OGR" = "1" ]; then
-    #  DEFAULT_OGRNG="0"
-    #  TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
-    # fi
+    # -------------- ogr-ng --------------
+    if [ "$HAVE_OGR" = "1" ]; then
+      DEFAULT_OGRNG="0"
+      HAVE_FLEGE_PPC_CORES="1"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
+      TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/FLEGE_scalar.gas.s"
+      if [ "X$3" = "Xaltivec" ] ; then
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogrng-vec.cpp"
+        TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/FLEGE_hybrid.gas.s"
+      fi
+    fi
 
+    # -------------- ogr-p2 --------------
     if [ "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
@@ -565,10 +572,6 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_scalar.gas.s"
       if [ "X$3" = "Xaltivec" ] ; then
         TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/OGR_PPC_hybrid.gas.s"
-      fi
-     if [ "$HAVE_KOGE_PPC_CORES" = "0" -a "${1}" = "macosx" ]; then
-        # add the 64-bit core to the ANSI cores
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogrp2-64.cpp"
       fi
       TARGET_OGRPPUWRAPPER="ogr/cellbe/ogr-cell-ppe-wrapper.cpp"
       TARGET_ADDOGRPPUCORES="cellv1"
@@ -1103,9 +1106,6 @@ COMMON_SRCS="\
 	     common/triggers.cpp    \
 	     common/coremem.cpp     \
 	     common/selcore.cpp     \
-	     common/core_ogr.cpp    \
-        common/core_ogr_ng.cpp \
-	     common/core_r72.cpp    \
 	     common/cmdline.cpp     \
 	     common/selftest.cpp    \
 	     common/pollsys.cpp     \
@@ -1149,9 +1149,20 @@ COMMON_SRCS="common/minihttp.cpp \
 	     ${COMMON_SRCS}"
 TARGET_CCFLAGS="$TARGET_CCFLAGS -DXMLSERVE"
 fi
+#
+# project core selection files
+#
 if [ "$HAVE_RC5_72" = "1" ]; then
-  COMMON_SRCS="$COMMON_SRCS rc5-72/stress.cpp"
+COMMON_SRCS="common/core_r72.cpp \
+             ${COMMON_SRCS}      \
+	     rc5-72/stress.cpp"
 fi # HAVE_RC5_72
+if [ "$HAVE_OGR" = "1" ]; then
+COMMON_SRCS="common/core_ogr_ng.cpp ${COMMON_SRCS}"
+fi # ogr-ng
+if [ "$HAVE_OGR_P2" = "1" ]; then
+COMMON_SRCS="common/core_ogr.cpp ${COMMON_SRCS}"
+fi # ogr-p2
 
 # **********************************************************************
 
@@ -2119,15 +2130,20 @@ case "$1" in
         ;;
 
     *cellbe-linux)		             # [snikkel]
-        TARGET_CC="ppu32-g++"
+    # ubuntu has some broken ppu32-xxx, use generic form. (un)comment if necessary.
+#        TARGET_CC="ppu32-g++"
+#        TARGET_LD="ppu32-g++"
+#        TARGET_PPUEMBEDSPU="ppu32-embedspu"
+        TARGET_CC="ppu-g++ -m32 -mabi=altivec -maltivec"
+        TARGET_LD="ppu-g++ -m32 -mabi=altivec -maltivec"
+        TARGET_PPUEMBEDSPU="ppu-embedspu -m32"
+
         TARGET_AS="ppu32-as"
-        TARGET_LD="ppu32-g++"
         TARGET_AR="ppu-ar"
         TARGET_STRIP="ppu-strip"
         TARGET_SPUCC="spu-gcc"
         TARGET_SPUAS="spu-as"
         TARGET_SPUSTRIP="spu-strip"
-        TARGET_PPUEMBEDSPU="ppu32-embedspu"
         generate_gcc_opts "ppc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-static"
@@ -3517,7 +3533,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     # ------------------------------------
     elif [ "${TARGETTYP}" = "ogrppuwrapper" ]; then
       WRAPPERTARGET="output/ogr-${TARGETSRC}-ppe-wrapper.o"
-      echo "$target:    ${TARGET_OGRPPUWRAPPER} ogr/cellbe/ogr-cell.h ogr/ansi/ogr.h ogr/ansi/ogr.cpp" >> Makefile
+      echo "$target:    ${TARGET_OGRPPUWRAPPER} ogr/cellbe/ogr-cell.h ogr/ansi/ogrp2.h ogr/ansi/ogrp2_codebase.cpp" >> Makefile
       echo "	\${CC} -c \${CCFLAGS} -DCORE_NAME=${TARGETSRC} ${TARGET_OGRPPUWRAPPER} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
@@ -3530,7 +3546,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     # ------------------------------------
     elif [ "${TARGETTYP}" = "ogrspuwrapper" ]; then
       CORE="${TARGETSRC}"
-      echo "$target:    $TARGET_OGRSPUWRAPPER ogr/cellbe/ogr-cell.h ogr/ansi/ogr.h" >> Makefile
+      echo "$target:    $TARGET_OGRSPUWRAPPER ogr/cellbe/ogr-cell.h ogr/ansi/ogrp2.h" >> Makefile
       echo "	\${SPUCC} -c -Dlinux -DCORE_NAME=$CORE -Os \${HPATHS} $TARGET_OGRSPUWRAPPER -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
