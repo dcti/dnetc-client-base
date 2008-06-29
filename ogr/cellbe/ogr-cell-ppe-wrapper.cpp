@@ -4,10 +4,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogr_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.6 2008/06/22 18:52:25 stream Exp $"; }
+return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.7 2008/06/29 11:08:38 stream Exp $"; }
 
 #ifndef CORE_NAME
-#error CORE_NAME undefined.
+#define CORE_NAME cellv1
 #endif
 
 #include <libspe2.h>

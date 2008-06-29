@@ -4,10 +4,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogr_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.5 2008/05/18 15:37:46 stream Exp $"; }
+return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.6 2008/06/29 11:08:38 stream Exp $"; }
 
 #ifndef CORE_NAME
-#error CORE_NAME not defined
+#define CORE_NAME cellv1
 #endif
 
 #include <spu_intrinsics.h>
@@ -37,6 +37,8 @@ int main(unsigned long long speid, addr64 argp, addr64 envp)
   STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2464);
   STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 32);
 
+  (void)speid; (void)envp;
+  
   // One DMA used in program
   mfc_write_tag_mask(1<<DMA_ID);
 
