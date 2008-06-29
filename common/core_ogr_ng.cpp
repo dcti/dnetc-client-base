@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.3 2008/03/08 20:18:29 kakace Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.4 2008/06/29 11:09:58 stream Exp $"; }
 
 //#define TRACE
 
@@ -44,7 +44,7 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.3 2008/03/08 20:18:29 kakace Exp $"; }
     CoreDispatchTable *vec_ogrng_get_dispatch_table(void);
     #endif
     #if (CLIENT_CPU == CPU_CELLBE)
-    CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *spe_ogrng_get_dispatch_table(void);
     #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
     CoreDispatchTable *ogrng_get_dispatch_table(void);
@@ -99,7 +99,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
           vec_ogrng_get_dispatch_table();
         #endif
         #if (CLIENT_CPU == CPU_CELLBE)
-          ogrng_get_dispatch_table();
+          spe_ogrng_get_dispatch_table();
         #endif
       #elif (CLIENT_CPU == CPU_68K)
         ogrng_get_dispatch_table();
@@ -190,7 +190,7 @@ const char **corenames_for_contest_ogr_ng()
       #endif
     #endif
     #if (CLIENT_CPU == CPU_CELLBE)
-//      "Cell v1 SPE",
+      "Cell v2 SPE (base)",
     #endif
   #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
       "FLEGE-64 2.0",
@@ -238,12 +238,16 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
     cindex = 0;
   }
 # elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+
   int feature = 0;
   feature = GetProcessorFeatureFlags();
   if ((feature & CPU_F_ALTIVEC) == 0 && cindex == 1)      /* PPC-vector */
     cindex = 0;                                     /* force PPC-scalar */
+#if !defined(HAVE_FLEGE_PPC_CORES) && defined(HAVE_I64)   /* 64-bit cores listed only in this case */
   if ((feature & CPU_F_64BITOPS) == 0 && cindex == 2)     /* PPC-64bit  */
     cindex = 0;                                     /* force PPC-32bit  */
+#endif
+
 # elif (CLIENT_CPU == CPU_X86)
 #  if !defined(HAVE_I64) || (SIZEOF_LONG < 8)     /* no 64-bit support? */
     if (cindex == 1) {
@@ -365,7 +369,7 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
 
   #if (CLIENT_CPU == CPU_CELLBE)
   if (coresel == 2)
-    coresel = -1;  // unit_func.ogr = spe_ogr_get_dispatch_table();
+    unit_func.ogr = spe_ogrng_get_dispatch_table();
   #endif
 
   #if defined(HAVE_I64) && !defined(HAVE_FLEGE_PPC_CORES)
