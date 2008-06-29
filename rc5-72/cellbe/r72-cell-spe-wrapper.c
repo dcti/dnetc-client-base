@@ -4,10 +4,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: r72-cell-spe-wrapper.c,v 1.3 2008/05/18 15:38:31 stream Exp $"; }
+return "@(#)$Id: r72-cell-spe-wrapper.c,v 1.4 2008/06/29 11:25:08 stream Exp $"; }
 
 #ifndef CORE_NAME
-#error CORE_NAME not defined
+#define CORE_NAME cellv1
 #endif
 
 #include "ccoreio.h"
@@ -28,6 +28,8 @@ CellR72CoreArgs myCellR72CoreArgs __attribute__((aligned (128)));
 
 int main(unsigned long long speid, addr64 argp, addr64 envp)
 {
+  (void)speid; (void)envp;
+  
   // One DMA used in program
   mfc_write_tag_mask(1<<DMA_ID);
 

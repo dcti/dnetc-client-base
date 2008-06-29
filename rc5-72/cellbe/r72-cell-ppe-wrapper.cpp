@@ -4,10 +4,10 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.3 2008/05/18 15:38:31 stream Exp $"; }
+return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.4 2008/06/29 11:25:08 stream Exp $"; }
 
 #ifndef CORE_NAME
-#error CORE_NAME undefined.
+#define CORE_NAME cellv1
 #endif
 
 #include "ccoreio.h"
