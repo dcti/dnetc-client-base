@@ -7,11 +7,12 @@
  *  one 32-bit scalar part (left side), and two 128-bit vector parts, thus the
  *  "hybrid" name.
  *
- * $Id: ogrng-vec.cpp,v 1.4 2008/03/08 21:11:38 kakace Exp $
+ * $Id: ogrng-vec.cpp,v 1.5 2008/06/29 11:07:19 stream Exp $
 */
 
 #include "ansi/ogrng.h"
 
+#ifndef __SPU__
 #if !defined(__VEC__) && !defined(__ALTIVEC__)
   #error fixme : No AltiVec support.
 #endif
@@ -19,7 +20,7 @@
 #if defined (__GNUC__) && !defined(__APPLE_CC__) && (__GNUC__ >= 3)
 #include <altivec.h>
 #endif
-
+#endif // __SPU__
 
 /*
 ** Bitmaps built with 128-bit vectors
@@ -38,11 +39,12 @@ typedef u32 SCALAR;         /* Basic type for scalar operations on bitmaps */
 #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM     2 /* 0-2 - '100% asm'      */
 #define OGROPT_ALTERNATE_CYCLE                  1 /* 0-1 - '100% asm'      */
 
-
 /*
 ** Define the name of the dispatch table.
 */
+#ifndef IMPLEMENT_CELL_CORES
 #define OGR_NG_GET_DISPATCH_TABLE_FXN    vec_ogrng_get_dispatch_table
+#endif
 
 
 /*========================================================================*/
@@ -53,6 +55,7 @@ typedef u32 SCALAR;         /* Basic type for scalar operations on bitmaps */
   #define __CNTLZ(x) (__CNTLZ__(~(x))+1)
 #endif
 
+#ifndef __SPU__
 
 typedef vector unsigned char v8_t;
 typedef vector unsigned int v32_t;
@@ -68,7 +71,7 @@ typedef vector unsigned int v32_t;
   v32_t listV0, listV1;                                \
   v32_t distV0, distV1;                                \
   v32_t V_ZERO = vec_splat_u32(0);                     \
-  v32_t V_ONES = vec_splat_s32(-1);                    \
+  v32_t V_ONES = vec_splat_u32(~0);                    \
   v32_t newbit = V_ZERO;                               \
   listV0 = lev->list[0].v;                             \
   listV1 = lev->list[1].v;                             \
@@ -177,7 +180,9 @@ typedef vector unsigned int v32_t;
 
 //----------------------------------------------------------------------------
 
+#ifndef IMPLEMENT_CELL_CORES
 #include "ansi/ogrng_codebase.cpp"
+#endif
 
 #if !defined(OGRNG_BITMAPS_LENGTH) || (OGRNG_BITMAPS_LENGTH != 256)
 #error OGRNG_BITMAPS_LENGTH must be 256 !!!
@@ -215,3 +220,5 @@ typedef vector unsigned int v32_t;
     return cycle_ppc_hybrid_256(oState, pnodes, pchoose, vecShift);
   }
 #endif
+
+#endif // __SPU__
