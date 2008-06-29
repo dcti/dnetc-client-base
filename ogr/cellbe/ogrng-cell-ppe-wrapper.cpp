@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.1 2008/06/29 11:03:20 stream Exp $"; }
+return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.2 2008/06/29 14:20:28 stream Exp $"; }
 
 
 #include <libspe2.h>
@@ -15,6 +15,8 @@ return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.1 2008/06/29 11:03:20 stream Exp
 
 #define OGR_NG_GET_DISPATCH_TABLE_FXN    spe_ogrng_get_dispatch_table
 #define OGROPT_HAVE_OGR_CYCLE_ASM     2
+
+// #define CELL_FULL_CYCLE
 
 #include "ogrng-cell.h"
 
@@ -37,8 +39,17 @@ extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
 #define ogr_cycle_256 ogr_cycle_256_test
 #endif
 
-static int ogr_cycle_256(struct OgrState *state, int *pnodes, const u16 *pchoose)
+#ifndef CELL_FULL_CYCLE
+static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16 *pchoose)
+#else
+static int ogr_cycle_entry(void *state, int *pnodes, int dummy)
+#endif
 {
+#ifdef CELL_FULL_CYCLE
+  struct OgrState *oState = (struct OgrState *)state;
+  u16* pchoose = precomp_limits[oState->maxdepth - OGR_NG_MIN].choose_array;
+#endif
+
   // Check size of structures, these offsets must match assembly
   STATIC_ASSERT(sizeof(struct OgrLevel) == 7*16);
   STATIC_ASSERT(sizeof(struct OgrState) == 2*16 + 7*16*29); /* 29 == OGR_MAXDEPTH */
@@ -83,7 +94,7 @@ static int ogr_cycle_256(struct OgrState *state, int *pnodes, const u16 *pchoose
   CellOGRCoreArgs* myCellOGRCoreArgs = (CellOGRCoreArgs*)myCellOGRCoreArgs_void;
 
   // Copy function arguments to CellOGRCoreArgs struct
-  memcpy(&myCellOGRCoreArgs->state, state, sizeof(struct OgrState));
+  memcpy(&myCellOGRCoreArgs->state, oState, sizeof(struct OgrState));
           myCellOGRCoreArgs->pnodes   = *pnodes;
 	  myCellOGRCoreArgs->upchoose = (u32)pchoose;
 
@@ -112,10 +123,14 @@ static int ogr_cycle_256(struct OgrState *state, int *pnodes, const u16 *pchoose
   }
 
   // Copy data from CellCoreArgs struct back to the function arguments
-  memcpy(state, &myCellOGRCoreArgs->state, sizeof(struct OgrState));
+  memcpy(oState, &myCellOGRCoreArgs->state, sizeof(struct OgrState));
         *pnodes = myCellOGRCoreArgs->pnodes;
 
+#ifdef CELL_FULL_CYCLE
+  return retval;
+#else
   return myCellOGRCoreArgs->ret_depth;
+#endif
 }
 
 #ifdef INTERNAL_TEST

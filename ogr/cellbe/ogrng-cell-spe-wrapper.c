@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.1 2008/06/29 11:03:20 stream Exp $"; }
+return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.2 2008/06/29 14:20:28 stream Exp $"; }
 
 #include <spu_intrinsics.h>
 #include "ccoreio.h"
@@ -28,9 +28,14 @@ extern "C"
 #endif
 // s32 CDECL SPE_CORE_FUNCTION(CORE_NAME) ( struct State*, int*, const unsigned char* );
 
+// #define FULL_CYCLE
+
 CellOGRCoreArgs myCellOGRCoreArgs __attribute__((aligned (128)));
 
 int ogr_cycle_256(struct OgrState *oState, int *pnodes, /* const u16* */ u32 upchoose);
+#ifdef FULL_CYCLE
+int ogr_cycle_entry(struct OgrState *oState, int *pnodes, u32 upchoose);
+#endif
 
 #define DMA_ID  31
 
@@ -59,13 +64,19 @@ int main(unsigned long long speid, addr64 argp, addr64 envp)
 
   // Call the core
 //  s32 retval = SPE_CORE_FUNCTION(CORE_NAME) (state, pnodes, ogr_choose_dat);
+  s32 retval;
+#ifdef FULL_CYCLE
+  retval = ogr_cycle_entry(state, pnodes, upchoose);
+#else
   myCellOGRCoreArgs.ret_depth = ogr_cycle_256(state, pnodes, upchoose);
+  retval = 0;
+#endif
 
   // Update changes in main memory
   mfc_put(&myCellOGRCoreArgs, argp.a32[1], sizeof(CellOGRCoreArgs), DMA_ID, 0, 0);
   mfc_read_tag_status_all();
 
-  return 0; /* no status codes in ogr-ng, core info returned in ret_depth */
+  return retval; /* no status codes in ogr-ng, core info returned in ret_depth */
 }
 
 typedef vector unsigned char v8_t;
@@ -79,7 +90,6 @@ typedef vector unsigned int v32_t;
 ** Define the local variables used for the top recursion state
 */
 #define SETUP_TOP_STATE(lev)                           \
-  /* v8_t vecShift[32];  */                                 \
   SCALAR comp0, dist0;                                 \
   v32_t compV0, compV1;                                \
   v32_t listV0, listV1;                                \
@@ -93,64 +103,11 @@ typedef vector unsigned int v32_t;
   distV1 = lev->dist[1].v;                             \
   compV0 = lev->comp[0].v;                             \
   compV1 = lev->comp[1].v;                             \
-  dist0 = lev->dist[0].u[0];                           \
-  comp0 = lev->comp[0].u[0];                           \
-  { /* Initialize vecShift[] */                        \
-/*    vector unsigned char val = vec_splat_u8(0);  */      \
-/*    vector unsigned char one = vec_splat_u8(1);  */      \
-/*    int i;                                       */      \
-/*    for (i = 0; i < 32; i++) {                   */      \
-/*      vecShift[i] = val;                         */      \
-/*      val = vec_add(val, one);                   */      \
-/*    }                                            */      \
-  }                                                    \
+  dist0 = spu_extract(distV0, 0);                      \
+  comp0 = spu_extract(compV0, 0);                      \
   if (depth < oState->maxdepthm1) {                    \
     newbit = vec_splat_u32(1);                         \
   }
-
-
-#if 0
-        
-/*
-** Shift the list to add or move a mark
-*/
-#define COMP_LEFT_LIST_RIGHT(lev, s)                   \
-{                                                      \
-  v32_t shift_l = (v32_t) vecShift[s];                 \
-  v32_t shift_r = vec_sub(V_ZERO, shift_l);            \
-  v32_t mask_l  = vec_sr(V_ONES, shift_l);             \
-  v32_t mask_r  = vec_sl(V_ONES, shift_l);             \
-  v32_t temp1, temp2;                                  \
-  temp1 = vec_sld(compV0, compV1, 4);                  \
-  temp2 = vec_sld(listV0, listV1, 12);                 \
-  temp1 = vec_sel(temp1, compV0, mask_l);              \
-  temp2 = vec_sel(temp2, listV1, mask_r);              \
-  compV0 = vec_rl(temp1, shift_l);                     \
-  listV1 = vec_rl(temp2, shift_r);                     \
-  lev->comp[0].v = compV0;                             \
-  temp2 = vec_sld(newbit, listV0, 12);                 \
-  temp1 = vec_slo(compV1, (v8_t) shift_l);             \
-  temp2 = vec_sel(temp2, listV0, mask_r);              \
-  compV1 = vec_sll(temp1, (v8_t) shift_l);             \
-  listV0 = vec_rl(temp2, shift_r);                     \
-  newbit = V_ZERO;                                     \
-  comp0 = lev->comp[0].u[0];                           \
-}
-
-
-/*
-** shift by word size
-*/
-#define COMP_LEFT_LIST_RIGHT_WORD(lev)  \
-  compV0 = vec_sld(compV0, compV1, 4);  \
-  lev->comp[0].v = compV0;              \
-  compV1 = vec_sld(compV1, V_ZERO, 4);  \
-  listV1 = vec_sld(listV0, listV1, 12); \
-  listV0 = vec_sld(newbit, listV0, 12); \
-  comp0  = lev->comp[0].u[0];           \
-  newbit = V_ZERO;
-
-#endif
 
 /*
 ** Rotate/shift full vector by specific number of bits
@@ -167,8 +124,7 @@ typedef vector unsigned int v32_t;
   compV0  = spu_sel(compV1, compV0, selMask);          \
   compV0  = full_rl(compV0, s);                        \
   compV1  = full_sl(compV1, s);                        \
-  lev->comp[0].v = compV0;                             \
-  comp0   = lev->comp[0].u[0];                         \
+  comp0   = spu_extract(compV0, 0);                    \
   selMask = full_sl(V_ONES, s);                        \
   listV1  = spu_sel(listV0, listV1, selMask);          \
   inv_s   = 128 - s;                                   \
@@ -187,15 +143,15 @@ typedef vector unsigned int v32_t;
 #define PUSH_LEVEL_UPDATE_STATE(lev)    \
   lev->list[0].v = listV0;              \
   distV0 = vec_or(distV0, listV0);      \
-  lev->dist[0].v = distV0;              \
+  lev->comp[0].v = compV0;              \
   compV0 = vec_or(compV0, distV0);      \
   lev->list[1].v = listV1;              \
   distV1 = vec_or(distV1, listV1);      \
   lev->comp[1].v = compV1;              \
   compV1 = vec_or(compV1, distV1);      \
-  dist0 = lev->dist[0].u[0];            \
-  newbit = vec_splat_u32(1);            \
-  comp0 |= dist0;
+  dist0  = spu_extract(distV0, 0);      \
+  comp0  = spu_extract(compV0, 0);      \
+  newbit = vec_splat_u32(1);
 
 
 /*
@@ -204,11 +160,11 @@ typedef vector unsigned int v32_t;
 #define POP_LEVEL(lev)                  \
   listV0 = lev->list[0].v;              \
   listV1 = lev->list[1].v;              \
-  comp0  = lev->comp[0].u[0];           \
   distV0 = vec_andc(distV0, listV0);    \
   distV1 = vec_andc(distV1, listV1);    \
   compV0 = lev->comp[0].v;              \
   compV1 = lev->comp[1].v;              \
+  comp0  = spu_extract(compV0, 0);      \
   newbit = V_ZERO;
 
 
@@ -226,7 +182,7 @@ typedef vector unsigned int v32_t;
 
 static inline unsigned direct_dma_fetch(u32 upchoose, u32 index)
 {
-  u16 tempdma[8]; /* use array to fetch 16 bytes (transfer must aligned) */
+  u16 tempdma[8]; /* use array to fetch 16 bytes (transfer must be aligned) */
   STATIC_ASSERT(sizeof(tempdma) == 16);
 
   upchoose += index * 2;        /* get true full address in u16 *pchoose */
@@ -243,7 +199,7 @@ static inline unsigned direct_dma_fetch(u32 upchoose, u32 index)
 
 #if 1
 
-int ogr_cycle_256(struct OgrState *oState, int *pnodes, /* const u16* */ u32 upchoose)
+int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 upchoose)
 {
   struct OgrLevel *lev = &oState->Levels[oState->depth];
   int depth       = oState->depth;
@@ -329,6 +285,74 @@ exit:
   *pnodes -= nodes;
   return depth;
 }
+
+#ifdef FULL_CYCLE
+static int found_one(const struct OgrState *oState)
+{
+  register int i, j;
+  u32 diffs[((1024 - OGRNG_BITMAPS_LENGTH) + 31) / 32];
+  register int max = oState->max;
+  register int maxdepth = oState->maxdepth;
+  const struct OgrLevel *levels = &oState->Levels[0];
+
+  for (i = max >> (5+1); i >= 0; --i)
+    diffs[i] = 0;
+
+  for (i = 1; i < maxdepth; i++) {
+    register int marks_i = levels[i].mark;
+
+    for (j = 0; j < i; j++) {
+      register int diff = marks_i - levels[j].mark;
+      if (diff <= OGRNG_BITMAPS_LENGTH)
+        break;
+
+      if (diff+diff <= max) {       /* Principle #1 */
+        register u32 mask = 1 << (diff & 31);
+        diff = (diff >> 5) - (OGRNG_BITMAPS_LENGTH / 32);
+        if ((diffs[diff] & mask) != 0)
+          return 0;                 /* Distance already taken = not Golomb */
+
+        diffs[diff] |= mask;
+      }
+    }
+  }
+  return -1;      /* Is golomb */
+}
+
+int ogr_cycle_entry(struct OgrState *oState, int *pnodes, u32 upchoose)
+{
+  int retval = CORE_S_CONTINUE;
+//  struct OgrState *oState = (struct OgrState *)state;
+//  u16* pchoose = precomp_limits[oState->maxdepth - OGR_NG_MIN].choose_array;
+  int safesize = OGRNG_BITMAPS_LENGTH * 2;
+  int depth;
+
+  /* Now that the core always exits when the specified number of nodes has
+  ** been processed, the "with_time_constraints" setting is obsolete.
+  */
+//  with_time_constraints = with_time_constraints;
+  ++oState->depth;
+
+  /* Invoke the main core.
+  ** Except for OGR-26 (and shorter rulers), the core may still find rulers
+  ** that are not Golomb. This loop asserts the Golombness of any ruler found
+  ** when that makes sense.
+  */
+  do {
+    depth = ogr_cycle_256(oState, pnodes, upchoose);
+  } while (depth == oState->maxdepthm1 && oState->Levels[depth].mark > safesize && found_one(oState) == 0);
+
+  if (depth == oState->maxdepthm1) {
+    retval = CORE_S_SUCCESS;
+  }
+  else if (depth <= oState->stopdepth) {
+    retval = CORE_S_OK;
+  }
+
+  oState->depth = depth - 1;
+  return retval;
+}
+#endif
 
 #else
 
