@@ -1,5 +1,6 @@
 /*
- * Copyright distributed.net 2003 - All Rights Reserved
+ * SMC Code inspired by Naoki Hiroshima (http://n.h7a.org/hacks/rubycocoa/smc.rb)
+ * Copyright distributed.net 2003-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,12 +11,13 @@
  * For multiple cpus, gets one with highest temperature.
  * A test main() is at the end of this file.
  *
- * Currently we try 3 different sources:
+ * Currently we try 4 different sources:
  *   - host_processor_info(), which uses CPUs built-in Thermal Assist Unit
  *   - AppleCPUThermo, an IOKit Object that provides "temp-monitor" from a
  *     dedicated sensor near the CPU (PowerMac MDD and XServe only)
  *   - IOHWSensor, an IOKit Object that provides "temp-sensor" data from a
  *     dedicated sensor
+ *   - AppleSMC, the Apple System Management Controller on Intel Macs
  *
  * NOTES: Apple uses various sensors in its models
  *
@@ -32,7 +34,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.1.2.6 2006/03/12 16:28:58 kakace Exp $
+ *  $Id: temperature.cpp,v 1.1.2.7 2008/07/03 23:52:40 snikkel Exp $
  */
 
 #include <string.h>
@@ -105,65 +107,58 @@ static SInt32 _readTemperature(const char *className, SensorInfos *sensors, CFSt
   io_object_t handle;
   io_iterator_t objectIterator;
   CFMutableDictionaryRef properties = NULL;
-  mach_port_t master_port;
 
-  /* Bug #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2,
-  ** so we obtain the default port the old way */
-  
-  if (kIOReturnSuccess == IOMasterPort(MACH_PORT_NULL, &master_port)) {
-    if (kIOReturnSuccess == IOServiceGetMatchingServices(master_port /*kIOMasterPortDefault*/, 
+  if (kIOReturnSuccess == IOServiceGetMatchingServices(0, 
                                     IOServiceNameMatching(className), 
                                     &objectIterator)) {
 		
-      while ( (handle = IOIteratorNext(objectIterator)) ) {
-        int matched = 0;
+    while ( (handle = IOIteratorNext(objectIterator)) ) {
+      int matched = 0;
 
-        if (kIOReturnSuccess == IORegistryEntryCreateCFProperties(handle, &properties, 
-                                      kCFAllocatorDefault, kNilOptions)) {
-				
-          /*
-          ** Check whether the "location" key matches the string pointed to by location.
-          ** If the IO Class doesn't have a "location" key, location must be NULL.
-          */
-          if(sensors == NULL) {
-            matched = 1;      /* match all instances */
-          }
-          else if (CFDictionaryGetValueIfPresent(properties, CFSTR("location"), (const void **) &string)) {
-            if (CFStringGetTypeID() == CFGetTypeID(string) 
-                  && CFStringGetCString(string, strbuf, sizeof(strbuf), CFStringGetSystemEncoding())) {
-              SensorInfos *p;
-              for (p = sensors; p->location != NULL; p++) {
-                if (strcmp(strbuf, p->location) == 0) {
-                  matched = 1;
-                  divisor = p->divisor;   /* Scale */
-                  break;
-                }
+      if (kIOReturnSuccess == IORegistryEntryCreateCFProperties(handle, &properties, 
+                                    kCFAllocatorDefault, kNilOptions)) {
+      
+        /*
+        ** Check whether the "location" key matches the string pointed to by location.
+        ** If the IO Class doesn't have a "location" key, location must be NULL.
+        */
+        if(sensors == NULL) {
+          matched = 1;      /* match all instances */
+        }
+        else if (CFDictionaryGetValueIfPresent(properties, CFSTR("location"), (const void **) &string)) {
+          if (CFStringGetTypeID() == CFGetTypeID(string) 
+                && CFStringGetCString(string, strbuf, sizeof(strbuf), CFStringGetSystemEncoding())) {
+            SensorInfos *p;
+            for (p = sensors; p->location != NULL; p++) {
+              if (strcmp(strbuf, p->location) == 0) {
+                matched = 1;
+                divisor = p->divisor;   /* Scale */
+                break;
               }
             }
           }
-				
-          /*
-          ** Obtain raw temperature data. When multiple instances are matched, we remember the
-          ** largest temperature value.
-          */
-          if(matched && CFDictionaryGetValueIfPresent(properties, dataKey, (const void **) &number)) {
-            if (CFNumberGetTypeID() == CFGetTypeID(number) 
-                      && CFNumberGetValue(number, kCFNumberSInt32Type, &temp)) {
-						
-              temp = (temp * 100) / divisor;
-              if (temp > temperature)	
-                temperature = temp;
-            }
+        }
+      
+        /*
+        ** Obtain raw temperature data. When multiple instances are matched, we remember the
+        ** largest temperature value.
+        */
+        if(matched && CFDictionaryGetValueIfPresent(properties, dataKey, (const void **) &number)) {
+          if (CFNumberGetTypeID() == CFGetTypeID(number) 
+                    && CFNumberGetValue(number, kCFNumberSInt32Type, &temp)) {
+          
+            temp = (temp * 100) / divisor;
+            if (temp > temperature)	
+              temperature = temp;
           }
+        }
 
-          CFRelease(properties);
-        }	/* if IORegistryEntryCreateCFProperties() */
-        IOObjectRelease(handle);
-      }	/* while */
-      IOObjectRelease(objectIterator);
-    }	/* if IOServiceGetMatchingServices() */
-    mach_port_deallocate(mach_task_self(), master_port);
-  }
+        CFRelease(properties);
+      }	/* if IORegistryEntryCreateCFProperties() */
+      IOObjectRelease(handle);
+    }	/* while */
+    IOObjectRelease(objectIterator);
+  }	/* if IOServiceGetMatchingServices() */
 	
   return temperature;         /* -1 := Error / No sensor */
 }
@@ -185,7 +180,7 @@ static SInt32 _readAppleCPUThermo(void)
 
 
 /*
-** PowerBook Alu (12", 15" and 17"), PowerMac G5 and iMacG5
+** PowerPC Mac
 */
 
 static SensorInfos _sensors[] = {
@@ -195,6 +190,13 @@ static SensorInfos _sensors[] = {
   {"CPU A AD7417 AD1",           10},     // PowerMac G5
   {"CPU B AD7417 AD1",           10},     // PowerMac G5 (2nd CPU)
   {"CPU T-Diode",                10},     // iMac G5
+  {"CPU A AD7417 AMB",        65536},
+  {"CPU B AD7417 AMB",        65536},
+  {"CPU A DIODE TEMP",           10},
+  {"CPU A0 DIODE TEMP",       65536},
+  {"CPU A1 DIODE TEMP",       65536},
+  {"CPU B0 DIODE TEMP",       65536},
+  {"CPU B1 DIODE TEMP",       65536},
   {NULL,                          1}      // LAST ENTRY
 };
 
@@ -210,6 +212,113 @@ static SInt32 _readIOHWSensor(void)
 }
 
 
+/*
+** Intel Mac
+*/
+
+typedef struct {
+  UInt32 key;
+  char dummy1[22];
+  UInt32 size;
+  UInt32 type;
+  char dummy2[6];
+  char cmd;
+  char dummy3[1];
+  UInt32 index;
+  char data[32];
+} SMCIO_t;
+
+#define SMC_READ_KEYINFO 0x9;
+#define SMC_READ_KEY 0x5;
+#define SMC_READ_INDEX 0x8;
+
+
+static UInt32 _SMCread(UInt32 key, io_connect_t connection)
+{
+  SMCIO_t smc_input;
+  SMCIO_t smc_output;
+  IOItemCount input_size = sizeof(SMCIO_t);
+  IOByteCount output_size = sizeof(SMCIO_t);
+
+  memset(&smc_input, 0, sizeof(SMCIO_t));
+  memset(&smc_output, 0, sizeof(SMCIO_t));
+
+  smc_input.key = key;
+  smc_input.cmd = SMC_READ_KEYINFO;
+	
+  if (kIOReturnSuccess == IOConnectMethodStructureIStructureO(connection, 2, 
+    input_size, &output_size, &smc_input, &smc_output)) {
+
+    smc_input.cmd = SMC_READ_KEY;
+    smc_input.size = smc_output.size;
+    smc_input.type = smc_output.type;
+
+    if (smc_input.size == 0)
+      return 0;         // Unknown key.
+
+    if (kIOReturnSuccess == IOConnectMethodStructureIStructureO(connection, 2, 
+      input_size, &output_size, &smc_input, &smc_output)) {
+      switch (smc_input.type) {
+        case 0x75693332: /* ui32 */
+          return ntohl(*((UInt32 *)&smc_output.data));
+          break;
+        case 0x73703738: /* sp78 */
+          return smc_output.data[0];
+          break;
+        default:
+          return 0;
+          break;
+      }
+    }
+  }
+
+  return 0;
+}
+
+
+static inline SInt32 _getMaxTemp(SInt32 temp, SInt32 max)
+{
+  return (temp > max) ? temp : max;
+}
+
+
+static SInt32 _readAppleSMC(void)
+{
+  SInt32 rawT = 0;
+  SInt32 k = -1;	
+  io_service_t handle;
+  io_connect_t connection;
+
+  if ( (handle = IOServiceGetMatchingService(0, IOServiceNameMatching("AppleSMC"))) ) {
+    if (kIOReturnSuccess == IOServiceOpen(handle, mach_task_self(), 0, &connection)) {
+      /* CAUTION : Take care to only check known keys !
+      ** Experiments show (at least on Mac Pro) that some TCxx keys are constant
+      ** and that their values are so large that they would always be taken into
+      ** account in place of temperature readings. In addition, some other TCyy
+      ** keys appear to decrease when the temperature increase (and the other
+      ** way around). Therefore, it's not safe to read arbitrary keys to find
+      ** the highest temperature value.
+      */
+      rawT = _getMaxTemp(_SMCread(0x54433048 /* TC0H */, connection), rawT);
+      rawT = _getMaxTemp(_SMCread(0x54433044 /* TC0D */, connection), rawT);
+      rawT = _getMaxTemp(_SMCread(0x54433144 /* TC1D */, connection), rawT);
+      rawT = _getMaxTemp(_SMCread(0x54433244 /* TC2D */, connection), rawT);
+      rawT = _getMaxTemp(_SMCread(0x54433344 /* TC3D */, connection), rawT);
+      rawT = _getMaxTemp(_SMCread(0x54434148 /* TCAH */, connection), rawT);
+      rawT = _getMaxTemp(_SMCread(0x54434248 /* TCBH */, connection), rawT);
+      IOServiceClose(connection);
+    } /* if IOServiceOpen() */
+    IOObjectRelease(handle);
+  }	/* if IOServiceGetMatchingService() */
+
+  if (rawT > 0)
+    k = rawT*100 + 27315;
+    
+  return k;    /* Temperature (* 100, in kelvin) or -1 (error / no sensor) */
+}
+
+/* ------------------------------------------------------------------------ */
+
 SInt32 macosx_cputemp(void) {
     static int source = -1;                 /* No source defined */
     SInt32 temp = -1;
@@ -223,8 +332,9 @@ SInt32 macosx_cputemp(void) {
         case 2:
             return _readAppleCPUThermo();   /* PowerMac MDD, XServe */
         case 3:
-            return _readIOHWSensor();       /* PowerBook Alu, PowerMac G5*/
-            
+            return _readIOHWSensor();       /* PowerBook Alu, PowerMac G5 */
+        case 4:
+            return _readAppleSMC();         /* Intel */			            
         default:
             CPUid = GetProcessorType(-1);
             if ((GetProcessorFeatureFlags() & CPU_F_ALTIVEC) == 0
@@ -237,22 +347,21 @@ SInt32 macosx_cputemp(void) {
                 temp = _readTAU();
                 if (temp >= 0) {source = 1; break;}
             }
-
             temp = _readAppleCPUThermo();
             if (temp >= 0) {source = 2; break;}
             temp = _readIOHWSensor();
             if (temp >= 0) {source = 3; break;}
+            temp = _readAppleSMC();
+            if (temp >= 0) {source = 4; break;}			
     }
-
     if (source > 0) {
-      float k = temp / 100.0;
+      float k = temp / 100.0f;
       Log("Current CPU temperature : %5.2fK (%2.2fC)\n", k, k-273.15);
     }
     else {
       Log("Temperature monitoring disabled (no sensor found)\n");
       source = 0;
     }
-
     return temp;
 }
 
@@ -263,6 +372,7 @@ int main(int argc,char *argv[])
     printf("TAU %d Kelvin %d Celsius\n",_readTAU(),_readTAU()-27315);
     printf("AppleCPUThermo: %d/100 Kelvin (%d/100 Celsius)\n",_readAppleCPUThermo(),_readAppleCPUThermo()-27315);
     printf("IOHWSensor: %d/100 Kelvin (%d/100 Celsius)\n",_readIOHWSensor(),_readIOHWSensor()-27315);
+    printf("AppleSMC: %d/100 Kelvin (%d/100 Celsius)\n",_readAppleSMC(),_readAppleSMC()-27315);
 
     while (1) { // test for leaks
         printf("Temp %d/100\n",macosx_cputemp());
