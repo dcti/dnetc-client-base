@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.31 2007/08/02 08:08:37 decio Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.86.2.32 2008/07/04 00:24:25 snikkel Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -47,7 +47,7 @@
 #define OS_FREEBSD      3
 #define OS_LINUX        4
 #define OS_BEOS         5
-#define OS_MACOS        6
+/* #define OS_MACOS     6 */  /* Obsolete (no longer supported) */
 #define OS_IRIX         7
 #define OS_VMS          8
 #define OS_DEC_UNIX     9
@@ -400,23 +400,15 @@
   #if defined(_THREAD_SAFE)
     #define HAVE_POSIX_THREADS
   #endif
-#elif defined(macintosh)
-  #define CLIENT_OS_NAME   "Mac OS"
-  #define CLIENT_OS        OS_MACOS
-  #if __POWERPC__
-    #define CLIENT_CPU     CPU_POWERPC
-  #elif __MC68K__
-    #define CLIENT_CPU     CPU_68K
-  #endif
 #elif defined(__APPLE__)
    #define CLIENT_OS_NAME  "Mac OS X"
    #define CLIENT_OS       OS_MACOSX
    #ifndef __unix__
    #define __unix__
    #endif
-   #if defined(__ppc__)
+   #if defined(__ppc__) || defined (__ppc64__)
      #define CLIENT_CPU    CPU_POWERPC
-   #elif defined(__i386__)
+   #elif defined(__i386__) || defined(__x86_64__)
      #define CLIENT_CPU    CPU_X86
    #endif
 #elif defined(__BEOS__) || defined(__be_os)
@@ -528,10 +520,6 @@
 #elif (CLIENT_OS == OS_BEOS)
   #include <OS.h>
   typedef thread_id THREADID;
-  #define OS_SUPPORTS_SMP
-#elif (CLIENT_OS == OS_MACOS) && (CLIENT_CPU == CPU_POWERPC)
-  #include <Multiprocessing.h>
-  typedef MPTaskID THREADID;
   #define OS_SUPPORTS_SMP
 #elif  ((CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS))
   /* Uses LWP instead of pthreads */
