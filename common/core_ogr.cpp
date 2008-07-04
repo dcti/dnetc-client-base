@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.1.2.59 2008/02/12 15:45:22 teichp Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.1.2.60 2008/07/04 00:29:27 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -399,8 +399,8 @@ int selcoreGetPreselectedCoreForProject_ogr()
 #ifdef HAVE_I64 // Need 64-bit support and MMX
         if (detected_flags & CPU_F_MMX)
         {
-          switch ( detected_type & 0xff ) // FIXME remove &0xff
-          {
+          switch ( detected_type )
+	  {
             case 0x05: cindex = 4; break; // K6/K6-2/K6-3 == asm-rt1-mmx-amd (E)
             case 0x09: cindex = 4; break; // AMD K7/K8  == asm-rt1-mmx-amd (E)
             // It depends on core, current AMD core is worse on these P4's
@@ -413,7 +413,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
         }
         else
 #endif
-        switch ( detected_type & 0xff ) // FIXME remove &0xff
+        switch ( detected_type )
         {
           case 0x00: cindex = 2; break; // P5           == asm-rt1-gen (C)
           case 0x01: cindex = 2; break; // 386/486      == asm-rt1-gen (C)

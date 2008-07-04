@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.54 2007/08/23 06:33:16 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.55 2008/07/04 00:29:27 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -401,7 +401,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
       if (detected_type >= 0)
       {
         #if !defined(HAVE_NO_NASM)
-        switch (detected_type & 0xff) // FIXME remove &0xff
+        switch (detected_type)
         {
           case 0x00: cindex = (have_mmx?9   // P5 MMX     == MMX 4-pipe 
                                        :2); // P5         == DG 2-pipe
@@ -416,10 +416,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x08: cindex = 1; break; // PPro           == SES 2-pipe (#3708)
           case 0x09: cindex = 6; break; // K7/K8          == GO 2-pipe
           case 0x0A: cindex = 5; break; // Centaur C6     == SS 2-pipe (#3809)
-          case 0x0B: cindex = 6;        // Pentium 4      == GO 2-pipe (#3960, #3265)
-                     if ((detected_type & 0xFF00) == 0x100)  // Hack to avoid adding of new CPU type.
-                       cindex = 7;                           // Some older P4's needs SGP-3p (or even DG-3p)
-                     break;
+          case 0x0B: cindex = 6; break; // Most Pentium 4 == GO 2-pipe (#3960, #3265)
           case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
           case 0x0D: cindex = 6; break; // Pentium M      == GO 2-pipe (#3870)
           case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
@@ -430,7 +427,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           default:   cindex =-1; break; // no default
         }
         #else
-        switch (detected_type & 0xff) // FIXME remove &0xff
+        switch (detected_type)
         {
           case 0x00: cindex = 2; break; // P5             == ANSI 1-pipe
           case 0x01: cindex = 2; break; // 386/486        == ANSI 1-pipe
