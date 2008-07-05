@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.251.2.31 2007/11/07 17:35:44 jlawson Exp $"; }
+return "@(#)$Id: client.cpp,v 1.251.2.32 2008/07/05 05:59:38 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -242,7 +242,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2007, distributed.net\n");
+                    "Copyright 1997-2008, distributed.net\n");
 #if defined HAVE_RC5_64_CORES
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5 68K assembly by John Girvin\n");
@@ -334,7 +334,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "Please provide the *entire* version descriptor "
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
-                    "http://www.distributed.net/bugs/\n");
+                    "http://bugs.distributed.net/\n");
       if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 &&
           utilIsUserIDValid(dnet_id) )
         LogTo( logto, "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
