@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.119 2008/07/04 00:55:37 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.120 2008/07/05 05:37:10 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -921,13 +921,6 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     int vendorid; u32 dettype; 
     struct cpuxref { u32 cpuid, mask, cpufeatures, simpleid;
                      const char *cpuname; } *internalxref = NULL;
-
-    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
-    if (winGetVersion() < 2000) /* win95 permits inb()/outb() */
-      x86ident_haveioperm = 1;
-    #elif (CLIENT_OS == OS_DOS) || (CLIENT_OS == OS_NETWARE) 
-      x86ident_haveioperm = 1;        /* netware client runs at IOPL 0 */
-    #endif
 
     dettype    = x86GetDetectedType();
     vendorid   = ID_VENDOR_CODE(dettype);

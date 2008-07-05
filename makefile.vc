@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.22 2006/08/14 08:41:20 stream Exp $
+# $Id: makefile.vc,v 1.83.2.23 2008/07/05 05:37:10 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -192,7 +192,7 @@ PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/strcmpi.obj
 !endif
 
 
-OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) 
+OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) -I$(CHIPSRCPATH)
 
 # --------------------------------------------
 
@@ -216,7 +216,8 @@ CUI_OBJS =                           \
 !if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 CHIP_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
-CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj       \
+CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
+            $(OUTPUTPATH)/x86id.obj          \
             $(OUTPUTPATH)/x86rdtsc.obj       \
             $(OUTPUTPATH)/x86features.obj    \
             $(OUTPUTPATH)/x86htcount.obj
@@ -415,6 +416,9 @@ $(VC_CHECK):
 
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+
+{$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(RC572SRCPATH:/=\)\x86\ $(**:/=\)
