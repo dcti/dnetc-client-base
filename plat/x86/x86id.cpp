@@ -1,13 +1,14 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.6.2.1 2008/07/03 23:58:52 snikkel Exp $
+ * $Id: x86id.cpp,v 1.6.2.2 2008/07/06 04:32:32 jlawson Exp $
  *
  * Gold mine : http://datasheets.chipdb.org
  */
 
+#include <stdio.h>
 #include <string.h>
 #include "cputypes.h"
 #include "cpucheck.h"
@@ -55,7 +56,7 @@ union PageInfos {
 /* 0x80000001:EDX (Cyrix) */
 #define CYRIX_HAS_MMX_EXT (1 << 24)
 
-#if defined(__amd64__) || defined(__x86_64__)
+#if (CLIENT_CPU == CPU_AMD64)
   #if defined(__GNUC__)
   static inline s32 x86getid(void)
   {
@@ -80,26 +81,31 @@ union PageInfos {
     infos->regs.edx = _dx;
     return _ax;
   }
+
+  extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
+
+  ui64 x86ReadTSC(void)
+  {
+    return x86rdtsc();
+  }
+
   #endif
 #elif (CLIENT_CPU == CPU_X86)
-  #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+  #if defined(__GNUC__)
     extern "C" s32 x86getid(void) asm ("x86getid");
     extern "C" u32 x86cpuid(u32 page, union PageInfos* infos) asm ("x86cpuid");
     extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
+  #elif defined(__WATCOMC__)
+    // x86getid()/x86cpuid() can destroy all registers except ebx/esi/edi/ebp
+    // => must be declared as "cdecl" to allow compiler save necessary
+    //    registers.
+    extern "C" s32 __cdecl x86getid(void);
+    extern "C" u32 __cdecl x86cpuid(u32 page, union PageInfos* infos);
+    extern "C" ui64 __cdecl x86rdtsc( void );
   #else
-    #if defined(__WATCOMC__)
-      // x86getid()/x86cpuid() can destroy all registers except ebx/esi/edi/ebp
-      // => must be declared as "cdecl" to allow compiler save necessary
-      //    registers.
-      extern "C" s32 __cdecl x86getid(void);
-      extern "C" u32 __cdecl x86cpuid(u32 page, union PageInfos* infos);
-      extern "C" ui64 __cdecl x86rdtsc( void );
-    #else
-      extern "C" s32 x86getid(void);
-      extern "C" u32 x86cpuid(u32 page, union PageInfos* infos);
-      extern "C" ui64 x86rdtsc( void );
-    #endif
-    extern "C" u32 x86ident_haveioperm; /* default is zero */
+    extern "C" s32 x86getid(void);
+    extern "C" u32 x86cpuid(u32 page, union PageInfos* infos);
+    extern "C" ui64 x86rdtsc( void );
   #endif
 
   ui64 x86ReadTSC(void)
@@ -114,7 +120,7 @@ union PageInfos {
 static s32 x86id_fixup(s32 x86id_result)
 {
 #if (CLIENT_OS == OS_LINUX)
-  if (x86id_result == MAKE_CPUID(VENDOR_CYRIX, 0, 4, 0, 0);) /* Cyrix indeterminate */
+  if (x86id_result == MAKE_CPUID(VENDOR_CYRIX, 0, 4, 0, 0)) /* Cyrix indeterminate */
   {
     FILE *file = fopen("/proc/cpuinfo", "r");
     if (file)
@@ -168,7 +174,7 @@ static s32 x86id_fixup(s32 x86id_result)
       }
       fclose(file);
       if (vendor_id == VENDOR_CYRIX && family == 4 && model == 9)
-        return MAKE_ID(vendor_id, 0, family, model, 0);
+        return MAKE_CPUID(vendor_id, 0, family, model, 0);
     } /* if (file) */
   } /* if (cyrix indeterminate) */
 #endif /* (CLIENT_OS == OS_LINUX) */
