@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.288.2.174 2008/07/08 00:28:33 jlawson Exp $
+# @(#)$Id: configure,v 1.288.2.175 2008/07/08 06:27:04 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2492,7 +2492,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
         generate_gcc_opts "${inferred_arch}" "freebsd"
-        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_LIBS="-lc" # NOT libc_r
         # note: we NEED to link against libc, and NOT libc_r because the libc_r
@@ -2511,7 +2511,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "netbsd"
-        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_NASM_FMT="aoutb"
@@ -2523,7 +2523,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "netbsd"
-        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-lc"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
