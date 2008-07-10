@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.83.2.23 2008/07/05 05:37:10 jlawson Exp $
+# $Id: makefile.vc,v 1.83.2.24 2008/07/10 06:21:53 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -219,7 +219,6 @@ CHIP_OBJS =
 CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
             $(OUTPUTPATH)/x86id.obj          \
             $(OUTPUTPATH)/x86rdtsc.obj       \
-            $(OUTPUTPATH)/x86features.obj    \
             $(OUTPUTPATH)/x86htcount.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 ####CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
