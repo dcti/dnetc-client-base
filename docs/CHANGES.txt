@@ -23,11 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.126 2008/07/04 00:54:57 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.127 2008/07/17 13:34:30 stream Exp $
 ==========================================================================
 
 2.9000
 ------
+2.9016-506  new: x86: added new RC5-72 core (GO 2-pipe alt), selected for
+                      P4 and Core Duo CPUs.
+
 2.9015-505  fix: cellbe: Memory corruption in OGR core (#4036)
             imp: x86: CPU Identification
             imp: macosx: Add support for Intel temperature sensors
