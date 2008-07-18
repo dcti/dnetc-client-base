@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
  */
 
-/! \file
+/* \file
  * portable (between win16/32) interface to profile/configuration as
  * used for windows-client specific things, such as location of 
  * executable, window position etc. 
@@ -17,7 +17,7 @@
  * ('D C T I' expands to "Distributed Computing Technologies, Inc.")
  * 'sect' is optional. If NULL or "", the format becomes key=value.
  *
- * $Id: w32ini.cpp,v 1.3 2008/04/11 17:19:43 jlawson Exp $
+ * $Id: w32ini.cpp,v 1.4 2008/07/18 14:04:33 stream Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */

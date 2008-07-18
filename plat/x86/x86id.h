@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.h,v 1.1 2008/03/28 22:15:43 kakace Exp $
+ * $Id: x86id.h,v 1.2 2008/07/18 14:04:33 stream Exp $
  */
 
 #ifndef client_x86id_H
@@ -89,5 +89,8 @@ u32         x86GetFeatures(void);
 ui64        x86ReadTSC(void);
 void        x86ShowInfos(void);
 
+#if (CLIENT_CPU == CPU_X86)
+    extern "C" u32 x86ident_haveioperm; /* default is zero, referenced in cpucheck.cpp */
+#endif
 
 #endif	/* client_x86id_H */

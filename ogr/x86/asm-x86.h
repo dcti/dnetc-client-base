@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.8 2008/04/01 14:42:19 stream Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.9 2008/07/18 14:04:33 stream Exp $"
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)
@@ -19,7 +19,7 @@
       _asm mov i,edx
       return i;
     }
-    #define __CNTLZ(x) __CNTLZ__(x)
+    #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
 
   #elif defined(__WATCOMC__)
 
@@ -59,7 +59,7 @@
         }
         // return value in eax
     }
-    #define __CNTLZ(x) __CNTLZ__(x)
+    #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
 
   #endif  /* compiler */
 #else   /*------------------- assume SCALAR_BITS == 64 ---------------------*/

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.6 2008/04/06 21:20:33 kakace Exp $
+ * $Id: x86id.cpp,v 1.7 2008/07/18 14:04:33 stream Exp $
  *
  * Gold mine : http://datasheets.chipdb.org
  */
@@ -87,19 +87,12 @@ union PageInfos {
     extern "C" u32 x86cpuid(u32 page, union PageInfos* infos) asm ("x86cpuid");
     extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
   #else
-    #if defined(__WATCOMC__)
-      // x86getid()/x86cpuid() can destroy all registers except ebx/esi/edi/ebp
-      // => must be declared as "cdecl" to allow compiler save necessary
-      //    registers.
-      extern "C" s32 __cdecl x86getid(void);
-      extern "C" u32 __cdecl x86cpuid(u32 page, union PageInfos* infos);
-      extern "C" ui64 __cdecl x86rdtsc( void );
-    #else
-      extern "C" s32 x86getid(void);
-      extern "C" u32 x86cpuid(u32 page, union PageInfos* infos);
-      extern "C" ui64 x86rdtsc( void );
-    #endif
-    extern "C" u32 x86ident_haveioperm; /* default is zero */
+    // x86getid()/x86cpuid() can destroy all registers except ebx/esi/edi/ebp
+    // => must be declared as "cdecl" to allow compiler save necessary
+    //    registers.
+    extern "C" s32 __cdecl x86getid(void);
+    extern "C" u32 __cdecl x86cpuid(u32 page, union PageInfos* infos);
+    extern "C" ui64 __cdecl x86rdtsc( void );
   #endif
 
   ui64 x86ReadTSC(void)

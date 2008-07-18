@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.89 2008/02/10 00:25:28 kakace Exp $
+# $Id: makefile.vc,v 1.90 2008/07/18 14:04:33 stream Exp $
 #
 
 BASENAME = dnetc
@@ -129,6 +129,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/coremem.obj    \
         $(OUTPUTPATH)/core_r72.obj   \
         $(OUTPUTPATH)/core_ogr.obj   \
+        $(OUTPUTPATH)/core_ogr_ng.obj \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
         $(OUTPUTPATH)/iniread.obj    \
@@ -183,7 +184,7 @@ PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/strcmpi.obj
 !endif
 
 
-OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) 
+OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) -I$(CHIPSRCPATH)
 
 # --------------------------------------------
 
@@ -207,9 +208,9 @@ CUI_OBJS =                           \
 !if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 CHIP_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
-CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj       \
+CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
+            $(OUTPUTPATH)/x86id.obj          \
             $(OUTPUTPATH)/x86rdtsc.obj       \
-            $(OUTPUTPATH)/x86features.obj    \
             $(OUTPUTPATH)/x86htcount.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 ####CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
@@ -243,22 +244,20 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !error No RC5-72 cores for this architecture.
 !endif
 
-# --------------------------------- OGR ----------------------------
+# --------------------------------- OGR-P2 ----------------------------
 
-!if !defined(HAVE_OGR_CORES) && !defined(HAVE_OGR_PASS2)
+!if !defined(HAVE_OGR_PASS2)
 OGR_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr.obj        \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 OGR_OBJS =                           \
-        $(OUTPUTPATH)/ogr.obj      \
+        $(OUTPUTPATH)/ogr.obj        \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr-a.obj      \
@@ -271,17 +270,40 @@ OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr-asm2-rt-mmx-amd.obj\
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
-OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !else
 !error No OGR cores for this architecture.
 !endif
 
-
-!ifdef HAVE_OGR_CORES
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES
-!endif
 !ifdef HAVE_OGR_PASS2
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_PASS2
+!endif
+
+# --------------------------------- OGR-NG ----------------------------
+
+!if !defined(HAVE_OGR_CORES)
+OGRNG_OBJS =
+#!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
+#OGRNG_OBJS = ???
+#!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+#OGR_OBJS = ???
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
+OGRNG_OBJS =                         \
+        $(OUTPUTPATH)/ogrng_init.obj \
+        $(OUTPUTPATH)/ogrng_dat.obj  \
+        $(OUTPUTPATH)/ogrng-32.obj
+!else
+!error No OGR cores for this architecture.
+!endif
+
+!ifdef HAVE_OGR_CORES
+# Compiler heap overflow in ogrng_dat.cpp requires -Zm option
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES -Zm500
+!endif
+
+# --------------------------------- OGR (common) ----------------------------
+
+!if defined(HAVE_OGR_PASS2) || defined(HAVE_OGR_PASS2)
+OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !endif
 
 # --------------------------------------------
@@ -324,6 +346,9 @@ $(VC_CHECK):
 
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+
+{$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(RC572SRCPATH:/=\)\x86\ $(**:/=\)
@@ -374,8 +399,8 @@ $(BASENAME).com: $(VC_CHECK) $(CUI_OBJS)
 #!endif
 
 
-$(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_72_OBJS)$(OGR_OBJS) $(RES_FILE)
-        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_72_OBJS) $(OGR_OBJS)$(RES_FILE)
+$(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_72_OBJS) $(OGR_OBJS) $(OGRNG_OBJS) $(RES_FILE)
+        link $(OPTS_LINK) /SUBSYSTEM:WINDOWS,3.10 /OUT:$(BASENAME).exe /MAP:$(BASENAME).map $(OPTS_LIBS) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_72_OBJS) $(OGR_OBJS) $(OGRNG_OBJS) $(RES_FILE)
 !if defined(EXECOMPRESSOR) && !defined(DEBUG)
         $(EXECOMPRESSOR) $(BASENAME).exe $(EXECOMPRESSOR2)
 !endif
