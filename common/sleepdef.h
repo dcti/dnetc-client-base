@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.41 2008/02/10 00:24:30 kakace Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.42 2008/07/18 07:30:16 stream Exp $"
 
 #include "cputypes.h"
 
@@ -56,10 +56,12 @@
   extern "C" void sleep(unsigned int);
   extern "C" void usleep(unsigned int);
 #elif (CLIENT_OS == OS_OS2)
-  #ifdef sleep
-  #undef sleep    // gets rid of warning messages
+  #ifndef __WATCOMC__ // have normal sleep() in "dos.h"
+    #ifdef sleep
+    #undef sleep    // gets rid of warning messages
+    #endif
+    #define sleep(x) DosSleep(1000*(x))
   #endif
-  #define sleep(x) DosSleep(1000*(x))
   #define usleep(x) DosSleep((x)/1000)
 #elif (CLIENT_OS == OS_NETWARE)
   //emulated in platforms/netware/...
