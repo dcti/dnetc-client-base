@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.90 2008/07/18 14:04:33 stream Exp $
+# $Id: makefile.vc,v 1.91 2008/07/24 15:05:35 stream Exp $
 #
 
 BASENAME = dnetc
@@ -236,6 +236,7 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-dg3a.obj   \
         $(OUTPUTPATH)/r72-ss2.obj    \
         $(OUTPUTPATH)/r72-go2.obj    \
+        $(OUTPUTPATH)/r72-go2a.obj   \
         $(OUTPUTPATH)/r72-sgp3.obj   \
         $(OUTPUTPATH)/r72-ma4.obj    \
         $(OUTPUTPATH)/r72-mmx.obj

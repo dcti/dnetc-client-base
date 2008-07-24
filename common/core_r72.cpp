@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.8 2008/03/29 00:09:00 kakace Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.9 2008/07/24 15:05:35 stream Exp $"; }
 
 //#define TRACE
 
@@ -51,6 +51,7 @@ extern "C" s32 CDECL rc5_72_unit_func_dg_3( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_dg_3a( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ss_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_go_2a( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_sgp_3( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ma_4( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_mmx( RC5_72UnitWork *, u32 *, void *);
@@ -129,6 +130,7 @@ const char **corenames_for_contest_rc572()
       "SGP 3-pipe",
       "MA 4-pipe",
       "MMX 4-pipe",
+      "GO 2-pipe alt",
       #else /* no nasm -> only ansi cores */
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -415,14 +417,16 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x08: cindex = 1; break; // PPro           == SES 2-pipe (#3708)
           case 0x09: cindex = 6; break; // K7/K8          == GO 2-pipe
           case 0x0A: cindex = 5; break; // Centaur C6     == SS 2-pipe (#3809)
-          case 0x0B: cindex = 6; break; // Most Pentium 4 == GO 2-pipe (#3960, #3265)
+//        case 0x0B: cindex = 6; break; // Most Pentium 4 == GO 2-pipe (#3960, #3265)
+          case 0x0B: cindex = 10; break; // Most Pentium 4 == GO 2-pipe-a (new)
           case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
           case 0x0D: cindex = 6; break; // Pentium M      == GO 2-pipe (#3870)
           case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
           case 0x0F: cindex = 7; break; // Via C3 Nehemiah == SGP 3-pipe (#3621)
           case 0x10: cindex = 5; break; // Cyrix Model 5  == SS 2-pipe (#3580)
           case 0x11: cindex = 4; break; // Cyrix Model 6  == DG 3-pipe alt (#3809)
-          case 0x12: cindex = 7; break; // Intel Core 2   == SGP 3-pipe (#3969)
+//        case 0x12: cindex = 7; break; // Intel Core 2   == SGP 3-pipe (#3969)
+          case 0x12: cindex = 10; break; // Intel Core 2   == GO 2-pipe-a (untested!)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -655,6 +659,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       case 9:
         unit_func.gen_72 = rc5_72_unit_func_mmx;
         pipeline_count = 4;
+        break;
+      case 10:
+        unit_func.gen_72 = rc5_72_unit_func_go_2a;
+        pipeline_count = 2;
         break;
      // -----------
      #elif (CLIENT_CPU == CPU_AMD64)
