@@ -8,7 +8,10 @@ typedef struct
 {
   struct State state;
   int pnodes;
+  unsigned signature;
 } CellOGRCoreArgs;
+
+#define CELL_OGR_SIGNATURE   0x12345678
 
 typedef union {
     ui64 a64;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogr_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.1.2.3 2008/05/18 15:35:44 stream Exp $"; }
+return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.1.2.4 2008/08/17 05:08:50 stream Exp $"; }
 
 #ifndef CORE_NAME
 #error CORE_NAME not defined
@@ -47,6 +47,12 @@ int main(unsigned long long speid, addr64 argp, addr64 envp)
   mfc_get(&myCellOGRCoreArgs, argp.a32[1], sizeof(CellOGRCoreArgs), DMA_ID, 0, 0);
   mfc_read_tag_status_all();
 
+  /*
+  if (myCellOGRCoreArgs.signature != CELL_OGR_SIGNATURE)
+    printf("!!! OGR !!! NO SIGNATURE !!!\n");
+  myCellOGRCoreArgs.signature = 0;
+  */
+  
   // Prepare arguments to be passed to the core
   struct State* state = &myCellOGRCoreArgs.state;
   int* pnodes = &myCellOGRCoreArgs.pnodes;

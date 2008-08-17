@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogr_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.1.2.4 2008/05/18 15:35:44 stream Exp $"; }
+return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.1.2.5 2008/08/17 05:08:50 stream Exp $"; }
 
 #ifndef CORE_NAME
 #error CORE_NAME undefined.
@@ -248,6 +248,8 @@ extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
   #error Code for fork'ed crunchers only - see static Args buffer below
 #endif
 
+spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program);
+
 static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 {
   // Check size of structures, these offsets must match assembly
@@ -257,37 +259,21 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   STATIC_ASSERT(sizeof(struct State) <= OGR_PROBLEM_SIZE);
   DNETC_UNUSED_PARAM(with_time_constraints);
 
-  static spe_context_ptr_t context;
-  static bool isInit = false;
   static void* myCellOGRCoreArgs_void; // Dummy variable to avoid compiler warnings
 
-  unsigned int entry = SPE_DEFAULT_ENTRY;
-  spe_stop_info_t stop_info;
-  s32 retval;
-  unsigned thread_index = 99; // todo. enough hacks.
+  spe_context_ptr_t context;
+  unsigned int      entry = SPE_DEFAULT_ENTRY;
+  spe_stop_info_t   stop_info;
+  int               retval;
+  unsigned          thread_index = 99; // todo. enough hacks.
 
-  if (!isInit)
+  if (myCellOGRCoreArgs_void == NULL)
   {
-    // Create SPE thread
-    context = spe_context_create(SPE_EVENTS_ENABLE, NULL);
-    if (context == NULL)
-    {
-      Log("Alert SPE#%d! spe_context_create() failed\n", thread_index);
-      abort();
-    }
-    retval = spe_program_load(context, &SPE_WRAPPER_FUNCTION(CORE_NAME));
-    if (retval != 0)
-    {
-      Log("Alert SPE#%d: spe_program_load() returned %d\n", thread_index, retval);
-      abort();
-    }
     if (posix_memalign(&myCellOGRCoreArgs_void, 128, sizeof(CellOGRCoreArgs)))
     {
       Log("Alert SPE#%d! posix_memalign() failed\n", thread_index);
       abort();
     }
-
-    isInit = true;
   }
 
   CellOGRCoreArgs* myCellOGRCoreArgs = (CellOGRCoreArgs*)myCellOGRCoreArgs_void;
@@ -295,17 +281,13 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
   // Copy function arguments to CellOGRCoreArgs struct
   memcpy(&myCellOGRCoreArgs->state, state, sizeof(struct State));
           myCellOGRCoreArgs->pnodes = *pnodes;
+	  myCellOGRCoreArgs->signature = CELL_OGR_SIGNATURE;
 
-  retval = spe_context_run(context, &entry, 0, (void*)myCellOGRCoreArgs, NULL, &stop_info);
+  context = ps3_assign_context_to_program(&SPE_WRAPPER_FUNCTION(CORE_NAME));
+  retval  = spe_context_run(context, &entry, 0, (void*)myCellOGRCoreArgs, NULL, &stop_info);
   if (retval != 0)
   {
     Log("Alert SPE#%d: spe_context_run() returned %d\n", thread_index, retval);
-    abort();
-  }
-  retval = spe_stop_info_read(context, &stop_info);
-  if (retval != 0)
-  {
-    Log("Alert SPE#%d: spe_stop_info_read() returned %d\n", thread_index, retval);
     abort();
   }
 
@@ -313,7 +295,13 @@ static int ogr_cycle(void *state, int *pnodes, int with_time_constraints)
 
   // Fetch return value of the SPE core
   if (stop_info.stop_reason == SPE_EXIT)
+  {
     retval = stop_info.result.spe_exit_code;
+    /*
+    if (retval != CORE_S_OK && retval != CORE_S_CONTINUE)
+      Log("Alert: SPE%d core returned %d\n", thread_index, retval);
+    */
+  }
   else
   {
     Log("Alert: SPE#%d exit status is %d\n", thread_index, stop_info.stop_reason);
