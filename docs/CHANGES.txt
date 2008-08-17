@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.129 2008/08/17 05:17:26 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.130 2008/08/17 16:48:59 stream Exp $
 ==========================================================================
 
 2.9000
@@ -31,8 +31,9 @@ Version change log: $Id: CHANGES.txt,v 1.14.2.129 2008/08/17 05:17:26 stream Exp
 2.9016-506  new: x86: added new RC5-72 core (GO 2-pipe alt), selected for
                       P4 and Core Duo CPUs.
             fix: cellbe: Memory corruption on heavy background activity
-	                 when system is low on memory.
+                         when system is low on memory.
             fix: cellbe: Workaround for broken SPU scheduler (#4038).
+            fix: all: Block lost if '-n 1' used on multi-cpu system (#4018).
 
 2.9015-505  fix: cellbe: Memory corruption in OGR core (#4036)
             imp: x86: CPU Identification
