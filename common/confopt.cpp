@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.55 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.56 2008/08/17 06:16:18 stream Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -415,13 +415,13 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   /*CFGTXT(*/
   "The following options are extensions to normal threshold management and are\n"
   "not usually necessary:\n"
-  "   0) no additional buffer-level checking. (default)\n"
+  "   0) no additional buffer-level checking.\n"
   "   1) fetch/flush all buffers if any in-buffer is not full.\n"
 /*"   1) ensure that there is always work available.\n"*/
   "   2) fetch/flush all buffers if any out-buffer is not empty.\n"
 /*"   2) ensure that all completed work is kept flushed.\n" */
   "   3) both 1) and 2). (implied if 'Dialup detection options' are enabled)\n"
-  "   4) fetch/flush all buffers if any in-buffer is empty.\n"
+  "   4) fetch/flush all buffers if any in-buffer is empty. (default)\n"
 /*"   4) update on per-project buffer exhaustion.\n" */
   "\n"
   "Options 1, 2 and 3 will cause the client to frequently check buffers levels.\n"
