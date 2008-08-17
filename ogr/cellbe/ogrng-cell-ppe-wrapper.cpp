@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.2 2008/06/29 14:20:28 stream Exp $"; }
+return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.3 2008/08/17 06:43:27 stream Exp $"; }
 
 
 #include <libspe2.h>
@@ -28,6 +28,8 @@ return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.2 2008/06/29 14:20:28 stream Exp
 #define SPE_WRAPPER_FUNCTION2(name) ogrng_cycle_ ## name ## _spe_wrapper
 
 extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
+
+spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program);
 
 #ifndef HAVE_MULTICRUNCH_VIA_FORK
   #error Code for fork'ed crunchers only - see static Args buffer below
@@ -58,37 +60,21 @@ static int ogr_cycle_entry(void *state, int *pnodes, int dummy)
   STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 32);
   STATIC_ASSERT(sizeof(pchoose) == 4); /* pchoose cast to u32 */
 
-  static spe_context_ptr_t context;
-  static bool isInit = false;
   static void* myCellOGRCoreArgs_void; // Dummy variable to avoid compiler warnings
 
-  unsigned int entry = SPE_DEFAULT_ENTRY;
-  spe_stop_info_t stop_info;
-  s32 retval;
-  unsigned thread_index = 99; // todo. enough hacks.
+  spe_context_ptr_t context;
+  unsigned int      entry = SPE_DEFAULT_ENTRY;
+  spe_stop_info_t   stop_info;
+  int               retval;
+  unsigned          thread_index = 99; // todo. enough hacks.
 
-  if (!isInit)
+  if (myCellOGRCoreArgs_void == NULL)
   {
-    // Create SPE thread
-    context = spe_context_create(SPE_EVENTS_ENABLE, NULL);
-    if (context == NULL)
-    {
-      Log("OGRNG-SPE#%d! spe_context_create() failed\n", thread_index);
-      abort();
-    }
-    retval = spe_program_load(context, &SPE_WRAPPER_FUNCTION(CORE_NAME));
-    if (retval != 0)
-    {
-      Log("OGRNG-SPE#%d: spe_program_load() returned %d\n", thread_index, retval);
-      abort();
-    }
     if (posix_memalign(&myCellOGRCoreArgs_void, 128, sizeof(CellOGRCoreArgs)))
     {
       Log("OGRNG-SPE#%d! posix_memalign() failed\n", thread_index);
       abort();
     }
-
-    isInit = true;
   }
 
   CellOGRCoreArgs* myCellOGRCoreArgs = (CellOGRCoreArgs*)myCellOGRCoreArgs_void;
@@ -98,16 +84,11 @@ static int ogr_cycle_entry(void *state, int *pnodes, int dummy)
           myCellOGRCoreArgs->pnodes   = *pnodes;
 	  myCellOGRCoreArgs->upchoose = (u32)pchoose;
 
-  retval = spe_context_run(context, &entry, 0, (void*)myCellOGRCoreArgs, NULL, &stop_info);
+  context = ps3_assign_context_to_program(&SPE_WRAPPER_FUNCTION(CORE_NAME));
+  retval  = spe_context_run(context, &entry, 0, (void*)myCellOGRCoreArgs, NULL, &stop_info);
   if (retval != 0)
   {
     Log("OGRNG-SPE#%d: spe_context_run() returned %d\n", thread_index, retval);
-    abort();
-  }
-  retval = spe_stop_info_read(context, &stop_info);
-  if (retval != 0)
-  {
-    Log("OGRNG-SPE#%d: spe_stop_info_read() returned %d\n", thread_index, retval);
     abort();
   }
 
