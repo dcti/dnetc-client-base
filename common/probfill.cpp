@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.92 2008/02/17 16:24:29 kakace Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.93 2008/08/17 16:46:27 stream Exp $"; }
 
 //#define TRACE
 
@@ -1020,12 +1020,29 @@ unsigned int LoadSaveProblems(Client *client,
       // Bug #3672 (all clients running at least 2 cores).
       // Take the number of still active crunchers into account to determine
       // whether we can load another problem.
-      if (client->blockcount>0 && 
-          totalBlocksDone+load_problem_count-empty_problems>=((unsigned long)(client->blockcount)))
+
+      // Bug #4018: It will not work for initial load: this 'if' will load
+      // packet to LAST cruncher while main loop will start FIRST cruncher.
+      // So here is a second 'if' for inital load (when mode==0), it will
+      // load cruncher from start up to block count. (I wonder can old 'if'
+      // be completely replaced with new one.)
+
+      if (client->blockcount > 0)
       {
-        ; //nothing
+          if (mode == 0)
+          {
+              /* Load from beginning to up max. count, skip last crunchers */
+              if (totalBlocksDone+total_problems_loaded >= client->blockcount)
+                  load_needed = 0;
+          }
+          else
+          {
+              /* Skip first crunchers, load from middle to last */
+              if (totalBlocksDone+load_problem_count-empty_problems>=((unsigned long)(client->blockcount)))
+                  load_needed = 0;
+          }
       }
-      else
+      if (load_needed)
       {
         load_needed = 0;
         if (__IndividualProblemLoad( thisprob, prob_i, client,
