@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.4 2008/06/29 11:25:08 stream Exp $"; }
+return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.5 2008/08/17 06:30:05 stream Exp $"; }
 
 #ifndef CORE_NAME
 #define CORE_NAME cellv1
@@ -33,39 +33,31 @@ extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
   #error Code for fork'ed crunchers only - see static Args buffer below
 #endif
 
+/* Todo: move this function to platform-specific separate file */
+spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program);
+
 s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  static spe_context_ptr_t context;
-  static bool isInit = false;
   static void* myCellR72CoreArgs_void; // Dummy variable to avoid compiler warnings
 
-  unsigned int entry = SPE_DEFAULT_ENTRY;
-  spe_stop_info_t stop_info;
-  s32 retval = 0;
-  unsigned thread_index = 99; // todo. enough hacks.
+  spe_context_ptr_t context;
+  unsigned int      entry = SPE_DEFAULT_ENTRY;
+  spe_stop_info_t   stop_info;
+  int               retval;
+  unsigned          thread_index = 99; // todo. enough hacks.
 
-  if (!isInit)
+  STATIC_ASSERT(sizeof(RC5_72UnitWork) == 44);
+  STATIC_ASSERT(sizeof(CellR72CoreArgs) == 64);
+  STATIC_ASSERT(offsetof(CellR72CoreArgs, signature) == 48);
+
+  /* One-time init of static exchange buffer */
+  if (myCellR72CoreArgs_void == NULL)
   {
-    // Create SPE thread
-    context = spe_context_create(SPE_EVENTS_ENABLE, NULL);
-    if (context == NULL)
-    {
-      Log("Alert SPE#%d! spe_context_create() failed\n", thread_index);
-      abort();
-    }
-    retval = spe_program_load(context, &SPE_WRAPPER_FUNCTION(CORE_NAME));
-    if (retval != 0)
-    {
-      Log("Alert SPE#%d: spe_program_load() returned %d\n", thread_index, retval);
-      abort();
-    }
     if (posix_memalign(&myCellR72CoreArgs_void, 128, sizeof(CellR72CoreArgs)))
     {
       Log("Alert SPE#%d! posix_memalign() failed\n", thread_index);
       abort();
     }
-
-    isInit = true;
   }
 
   CellR72CoreArgs* myCellR72CoreArgs = (CellR72CoreArgs*)myCellR72CoreArgs_void;
@@ -73,17 +65,13 @@ s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *
   // Copy function arguments to CellR72CoreArgs struct
   memcpy(&myCellR72CoreArgs->rc5_72unitwork, rc5_72unitwork, sizeof(RC5_72UnitWork));
           myCellR72CoreArgs->iterations = *iterations;
+	  myCellR72CoreArgs->signature  = CELL_RC5_72_SIGNATURE;
 
-  retval = spe_context_run(context, &entry, 0, (void*)myCellR72CoreArgs, NULL, &stop_info);
+  context = ps3_assign_context_to_program(&SPE_WRAPPER_FUNCTION(CORE_NAME));
+  retval  = spe_context_run(context, &entry, 0, (void*)myCellR72CoreArgs, NULL, &stop_info);
   if (retval != 0)
   {
     Log("Alert SPE#%d: spe_context_run() returned %d\n", thread_index, retval);
-    abort();
-  }
-  retval = spe_stop_info_read(context, &stop_info);
-  if (retval != 0)
-  {
-    Log("Alert SPE#%d: spe_stop_info_read() returned %d\n", thread_index, retval);
     abort();
   }
 
@@ -103,4 +91,70 @@ s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *
         *iterations = myCellR72CoreArgs->iterations;
 
   return retval;
+}
+
+/*-------------------------------------------------------------*/
+
+/* Todo: move this function to platform-specific separate file */
+
+#include <unistd.h>  /* getpid() */
+
+#ifndef HAVE_MULTICRUNCH_VIA_FORK
+  #error Code for fork'ed crunchers only - see static Args buffer below
+#endif
+
+/*
+ * This function will ensure that only one SPU context exist for one cruncher/pid.
+ * SPU scheduler is completely screwed, it's trying to run inactive contexts
+ * (even if spe_context_run() wasn't executed for them), spending time.
+ * On project change, when cruncher 'program' changed, we'll destroy old context
+ * and create new one, making sure that number of context is always equal
+ * to number of crunchers and SPU's.
+ */
+ 
+spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program)
+{
+  static spe_context_ptr_t      cached_context;
+  static spe_program_handle_t  *cached_program;
+  static int                    cached_pid;
+  
+  int current_pid  = getpid();
+  int thread_index = 99; /* Todo: get true cruncher index */
+  int retval;
+  
+  if (cached_context)
+  {
+    if (cached_pid != current_pid)
+    {
+      Log("!!! FATAL !!! Cached SPE context forked from another pid (%d)\n", cached_pid);
+      abort();
+    }
+    if (cached_program != program)
+    {
+      // Log("Replacing SPE context because SPE program changed\n");
+      if (spe_context_destroy(cached_context))
+        Log("Alert SPE%d! spe_context_destroy() failed, errno=%d\n", thread_index, errno);
+      cached_context = NULL;
+    }
+  }
+  
+  if (cached_context == NULL)
+  {
+    cached_context = spe_context_create(0, NULL);
+    if (cached_context == NULL)
+    {
+      Log("Alert SPE#%d! spe_context_create() failed\n", thread_index);
+      abort();
+    }
+    retval = spe_program_load(cached_context, program);
+    if (retval != 0)
+    {
+      Log("Alert SPE#%d: spe_program_load() returned %d\n", thread_index, retval);
+      abort();
+    }
+    cached_program = program;
+    cached_pid     = current_pid;
+  }
+  
+  return cached_context;
 }
