@@ -1,5 +1,5 @@
 distributed.net client for the unix family
- document revision $Id: readme.cell,v 1.1.2.5 2007/10/26 05:32:09 jlawson Exp $
+ document revision $Id: readme.cell,v 1.1.2.6 2008/08/29 22:52:41 snikkel Exp $
 
  Welcome to the distributed.net client.
 
@@ -62,17 +62,25 @@ distributed.net client for the unix family
 
     As the current client architecture doesn't support separate core choices
     for different processors, a temporary workaround has been implemented   
-    whereby the first cruncher will use the core selected in the config
-    file, and further crunchers will always use the "Cell v1 SPE" core.
-    Under this scheme, it is possible to use any combination of PPE and SPE
-    cores on single-processor Cell hardware as follows:
+    whereby the first crunchers will use the core selected in the config
+    file, and further crunchers will always use the "Cell v1 SPE" core. The 
+    client will auto-detect the number of physical Cell processors and start 
+    1 PPE core for each physical processor and 1 SPE core for each of the 
+    usuable SPE processors detected.
 
-        a) 1 PPE core and n SPE cores (n > 0): select the "Cell v1 PPE" core
-           and run n+1 crunchers simultaneously;          
-        b) 1 PPE core and no SPE core: select the "Cell v1 PPE" core and run 
-           a single cruncher;
-        c) No PPE core and n SPE cores (n > 0): select the "Cell v1 SPE"
-           core and run n crunchers simultaneously.
+    It is also possible to manually specify any combination of PPE and SPE
+    cores on Cell hardware as follows:
+
+        a) [X] PPE cores and [n] SPE cores (n > 0): select the "Cell v1 PPE"
+           core and run [X+n] crunchers simultaneously;
+        b) [m] PPE cores and [0] SPE core (m <= X): select the "Cell v1 PPE" 
+           core and run [m] crunchers simultaneously;
+        c) [0] PPE cores and [n] SPE cores (n > 0): select the "Cell v1 SPE"
+           core and run [n] crunchers simultaneously;
+        d) [m] PPE cores and [n] SPE cores (m < X; n > 0): run two
+           clients using both (b) and (c)
+
+        where X = number of physical processors         
 
     Note that although Linux reports 2 CPUs per Cell, this is due to the PPE
     being a 2-way simultaneous multi-threading (SMT) design, roughly similar
