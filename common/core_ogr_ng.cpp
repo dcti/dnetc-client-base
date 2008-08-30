@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.4 2008/06/29 11:09:58 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.5 2008/08/30 12:15:02 stream Exp $"; }
 
 //#define TRACE
 
@@ -60,7 +60,9 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.4 2008/06/29 11:09:58 stream Exp $"; }
 #elif (CLIENT_CPU == CPU_X86)
     CoreDispatchTable *ogrng_get_dispatch_table(void); //A
     #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
-    CoreDispatchTable *ogrng64_get_dispatch_table(void);
+      CoreDispatchTable *ogrng64_get_dispatch_table(void);
+    #else
+      CoreDispatchTable *ogrng_get_dispatch_table_asm1(void); //B (asm #1)
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
     CoreDispatchTable *ogrng_get_dispatch_table(void);
@@ -89,6 +91,8 @@ int InitializeCoreTable_ogr_ng(int first_time)
         ogrng_get_dispatch_table();
         #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
           ogrng64_get_dispatch_table();
+        #else
+          ogrng_get_dispatch_table_asm1();
         #endif
       #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
         ogrng_get_dispatch_table();
@@ -161,6 +165,8 @@ const char **corenames_for_contest_ogr_ng()
       "FLEGE 2.0",
       #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
       "FLEGE-64 2.0",
+      #else
+      "rt-asm-generic",
       #endif
   #elif (CLIENT_CPU == CPU_AMD64)
       "FLEGE-64 2.0",
@@ -250,9 +256,6 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
 
 # elif (CLIENT_CPU == CPU_X86)
 #  if !defined(HAVE_I64) || (SIZEOF_LONG < 8)     /* no 64-bit support? */
-    if (cindex == 1) {
-      cindex = 0;
-    }
 #  endif
 #endif
   return cindex;
@@ -308,9 +311,10 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
   #elif (CLIENT_CPU == CPU_X86)
       if (detected_type >= 0)
       {
-        cindex = 0;
       #if defined(HAVE_I64) && (SIZEOF_LONG == 8) // Need native 64-bit support
-        // cindex = 1  /* 64-bit core */
+        cindex = 1;  /* 64-bit core */
+      #else
+        cindex = 1;  /* generic asm core */
       #endif
       }
   // ===============================================================
@@ -412,11 +416,16 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
       unit_func.ogr = ogrng_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_X86)
   #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
-  if (coresel == 1) //D
-    unit_func.ogr = ogrng64_get_dispatch_table();
-  else
+    if (coresel == 1)
+      unit_func.ogr = ogrng64_get_dispatch_table();
+    else
+      unit_func.ogr = ogrng_get_dispatch_table();
+  #else
+    if (coresel == 1)
+      unit_func.ogr = ogrng_get_dispatch_table_asm1();
+    else
+      unit_func.ogr = ogrng_get_dispatch_table();
   #endif
-    unit_func.ogr = ogrng_get_dispatch_table();
 #elif (CLIENT_CPU == CPU_AMD64)
   unit_func.ogr = ogrng64_get_dispatch_table();
   coresel = 0;
