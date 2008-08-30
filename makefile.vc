@@ -1,7 +1,7 @@
 # distributed.net client makefile for VC
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.91 2008/07/24 15:05:35 stream Exp $
+# $Id: makefile.vc,v 1.92 2008/08/30 12:23:37 stream Exp $
 #
 
 BASENAME = dnetc
@@ -289,9 +289,11 @@ OGRNG_OBJS =
 #OGR_OBJS = ???
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OGRNG_OBJS =                         \
+        $(OUTPUTPATH)/ogrng-32.obj   \
+        $(OUTPUTPATH)/ogrng-a.obj    \
+        $(OUTPUTPATH)/ogrng-a-asm-rt.obj \
         $(OUTPUTPATH)/ogrng_init.obj \
-        $(OUTPUTPATH)/ogrng_dat.obj  \
-        $(OUTPUTPATH)/ogrng-32.obj
+        $(OUTPUTPATH)/ogrng_dat.obj
 !else
 !error No OGR cores for this architecture.
 !endif
