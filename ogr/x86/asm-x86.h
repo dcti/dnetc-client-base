@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.9 2008/07/18 14:04:33 stream Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.10 2008/08/30 12:11:26 stream Exp $"
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)
@@ -27,7 +27,7 @@
     #pragma aux __CNTLONEREV__ =  \
             "bsr  eax,eax"        \
             value [eax] parm [eax] modify [eax] nomemory;
-    #define __CNTLZ(x) (32-__CNTLONEREV__(~(x)))
+    #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : (32-__CNTLONEREV__(~(x))))
 
   #elif defined(__GNUC__)
 
