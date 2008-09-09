@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.114.2.121 2008/07/15 00:01:13 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.114.2.122 2008/09/09 18:45:43 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1127,6 +1127,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         /* Dothan - 0.09u */
         { 0x12060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Celeron M (Dothan)" },
         { 0x16060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium M (Dothan)" },
+        /* Some P4-class CPUs wants RC5-72 core #7, they're marked as type 4 */
         /* Pentium 4 models 0/1 : 180 nm */
         { 0x080F000, 0xFFFFFF0, CPU_F_I686,    4, "Pentium 4 (Willamette)" },
         { 0x0E0F000, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Foster)" },
@@ -1138,7 +1139,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         /* Pentium 4 model 2 : 130 nm */
         { 0x080F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
         { 0x090F020, 0xFFFFFF0, CPU_F_I686,    4, "Pentium 4 (Northwood)" },
-        { 0x0A0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Celeron 4 (Northwood)" },
+        { 0x0A0F020, 0xFFFFFF0, CPU_F_I686,    4, "Celeron 4 (Northwood)" },
         { 0x0B0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Prestonia)" },
         { 0x0C0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon MP (Gallatin)" },
         { 0x0E0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Northwood)" },

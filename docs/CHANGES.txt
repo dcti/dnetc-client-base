@@ -23,11 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.130 2008/08/17 16:48:59 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.131 2008/09/09 18:45:44 stream Exp $
 ==========================================================================
 
 2.9000
 ------
+
+            chg: x86: RC5-72 core selection (#4072)
+
 2.9016-506  new: x86: added new RC5-72 core (GO 2-pipe alt), selected for
                       P4 and Core Duo CPUs.
             fix: cellbe: Memory corruption on heavy background activity
