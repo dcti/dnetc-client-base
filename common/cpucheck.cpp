@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.124 2008/09/09 18:47:40 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.125 2008/10/08 05:23:08 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1056,7 +1056,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x050F000, 0xFFFF000, CPU_F_I686,    9, "Opteron" },
         { 0x060F000, 0xFFFF000, CPU_F_I686,    9, "Athlon XP-M" },
         { 0x070F000, 0xFFFF000, CPU_F_I686,    9, "Athlon XP" },
-        { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Sempron" },
+        { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core" }, /* #4067 */
         { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron" },
         { 0x0A0F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 FX" },
         { 0x0B0F000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
@@ -1127,6 +1127,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x02060A0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Cascades)" },
         { 0x03060A0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III Xeon (Cascades)" },
         /* Tualatin - 0.13u */
+        { 0x03060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron (Tualatin)" },
         { 0x04060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Tualatin)" },
         { 0x06060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III M (Tualatin)" },
         { 0x07060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron M (Tualatin)" },
@@ -1772,6 +1773,7 @@ static long __GetRawProcessorID(const char **cpuname)
   {22, "UltraSPARC-IV+", "UltraSPARC-IV+"}, /* unconfirmed, .09u adds 2MB L2 cache, external L3 doubled to 32MB */
   {23, "SPARC64-IV", "SPARC64-IV"},
   {24, "UltraSPARC-T1", "UltraSPARC-T1"}
+  {24, "UltraSPARC-T2", "UltraSPARC-T2"}
   };
 
   detectedtype = -1L;  /* detection supported, but failed */
