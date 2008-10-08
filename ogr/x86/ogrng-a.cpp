@@ -8,7 +8,9 @@
 
 #include "ansi/ogrng_codebase.cpp"
 
-extern "C" int cdecl ogr_cycle_256_rt1(struct OgrState *oState, int *pnodes, const u16* pchoose);
+#include "ccoreio.h"
+
+extern "C" int CDECL ogr_cycle_256_rt1(struct OgrState *oState, int *pnodes, const u16* pchoose);
 
 static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoose)
 {

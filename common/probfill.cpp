@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.93 2008/08/17 16:46:27 stream Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.94 2008/10/08 05:24:22 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1032,7 +1032,7 @@ unsigned int LoadSaveProblems(Client *client,
           if (mode == 0)
           {
               /* Load from beginning to up max. count, skip last crunchers */
-              if (totalBlocksDone+total_problems_loaded >= client->blockcount)
+              if (totalBlocksDone+total_problems_loaded >= (unsigned long)client->blockcount)
                   load_needed = 0;
           }
           else

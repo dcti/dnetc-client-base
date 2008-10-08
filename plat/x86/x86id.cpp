@@ -3,12 +3,13 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.7 2008/07/18 14:04:33 stream Exp $
+ * $Id: x86id.cpp,v 1.8 2008/10/08 05:24:22 snikkel Exp $
  *
  * Gold mine : http://datasheets.chipdb.org
  */
 
 #include <string.h>
+#include "ccoreio.h"
 #include "cputypes.h"
 #include "cpucheck.h"
 #include "logstuff.h"
@@ -90,9 +91,9 @@ union PageInfos {
     // x86getid()/x86cpuid() can destroy all registers except ebx/esi/edi/ebp
     // => must be declared as "cdecl" to allow compiler save necessary
     //    registers.
-    extern "C" s32 __cdecl x86getid(void);
-    extern "C" u32 __cdecl x86cpuid(u32 page, union PageInfos* infos);
-    extern "C" ui64 __cdecl x86rdtsc( void );
+    extern "C" s32 CDECL x86getid(void);
+    extern "C" u32 CDECL x86cpuid(u32 page, union PageInfos* infos);
+    extern "C" ui64 CDECL x86rdtsc( void );
   #endif
 
   ui64 x86ReadTSC(void)
