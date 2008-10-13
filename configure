@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.307 2008/10/08 05:24:22 snikkel Exp $
+# @(#)$Id: configure,v 1.308 2008/10/13 16:55:23 snikkel Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -228,6 +228,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       if [ "X$TARGET_NASM" = "X" -o "X$TARGET_NASM_FMT" = "X" ]; then #no NASM
         # -- non-nasm/ogr --
         # ???
+	TARGET_ADDSRCS="$TARGET_ADDSRCS"
       else
         # -- nasm/ogr --
 	TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogrng-32.cpp"
