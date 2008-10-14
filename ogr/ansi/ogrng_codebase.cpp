@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.4 2008/03/31 13:09:35 stream Exp $
+ * $Id: ogrng_codebase.cpp,v 1.5 2008/10/14 07:28:18 jlawson Exp $
  */
 
 #include <string.h>   /* memset */
@@ -446,7 +446,7 @@ static int ogr_getresult(void *state, void *result, int resultlen)
   for (i = 0; i < OGR_STUB_MAX; i++) {
     workstub->stub.diffs[i] = (u16)(oState->Levels[i+1].mark - oState->Levels[i].mark);
   }
-  workstub->worklength = oState->depth;
+  workstub->worklength = (u16)oState->depth;
 
   if (workstub->worklength > OGR_STUB_MAX) {
     workstub->worklength = OGR_STUB_MAX;
