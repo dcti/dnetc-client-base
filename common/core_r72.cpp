@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.9 2008/07/24 15:05:35 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.10 2008/10/14 06:24:23 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -408,7 +408,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
                                        :2); // P5         == DG 2-pipe
 		                 break;
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
-          case 0x02: cindex = 1; break; // Pentium II     == SES 2-pipe
+          case 0x02: cindex = 10; break; // Pentium II    == GO 2-pipe-a
           case 0x03: cindex = 7; break; // Cyrix Model 4  == SGP 3-pipe (#3665)
           case 0x04: cindex = 7; break; // K5             == SGP 3-pipe
           case 0x05: cindex = 9; break; // K6             == MMX 4-pipe (#3863)
@@ -426,7 +426,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x10: cindex = 5; break; // Cyrix Model 5  == SS 2-pipe (#3580)
           case 0x11: cindex = 4; break; // Cyrix Model 6  == DG 3-pipe alt (#3809)
 //        case 0x12: cindex = 7; break; // Intel Core 2   == SGP 3-pipe (#3969)
-          case 0x12: cindex = 10; break; // Intel Core 2   == GO 2-pipe-a (untested!)
+          case 0x12: cindex = 10; break; // Intel Core 2  == GO 2-pipe-a (untested!)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -434,7 +434,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         {
           case 0x00: cindex = 2; break; // P5             == ANSI 1-pipe
           case 0x01: cindex = 2; break; // 386/486        == ANSI 1-pipe
-          case 0x02: cindex = 1; break; // PII            == ANSI 2-pipe
+          case 0x02: cindex = 1; break; // Pentium II     == ANSI 2-pipe
           case 0x03: cindex = 2; break; // Cyrix Model 4  == ANSI 1-pipe
           case 0x04: cindex = 2; break; // K5             == ANSI 1-pipe
           case 0x05: cindex = 1; break; // K6             == ANSI 2-pipe
