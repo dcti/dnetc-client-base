@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_init.cpp,v 1.5 2008/03/08 20:18:31 kakace Exp $
+ * $Id: ogrng_init.cpp,v 1.6 2008/10/15 03:36:24 jlawson Exp $
  */
 
 #include <stdlib.h>     /* calloc */
@@ -223,7 +223,7 @@ static void cache_limits(u16* pDatas, int nMarks)
             }
          }
 
-         table[depth] = (limit < 0) ? 0 : limit;
+         table[depth] = (limit < 0) ? 0 : (u16)limit;
       }
    }
 }

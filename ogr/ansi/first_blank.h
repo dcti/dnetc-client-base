@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: first_blank.h,v 1.1 2008/03/08 20:07:14 kakace Exp $
+ * $Id: first_blank.h,v 1.2 2008/10/15 03:36:23 jlawson Exp $
  */
 
 
@@ -91,9 +91,17 @@
    #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 1) && defined(__CNTLZ_ARRAY_BASED)
       #define LOOKUP_FIRSTBLANK(x) __CNTLZ_ARRAY_BASED((x),ogr_first_blank_8bit)
    #else /* C code, no asm */
+
+#if defined(_MSC_VER)
+#pragma warning(disable:4146) // unary minus operator applied to unsigned type
+#endif
+
       static inline int LOOKUP_FIRSTBLANK(register SCALAR input)
       {
          register int result = 0;
+		 // The following may product warnings on some compilers because of 
+		 // negation of an unsigned type, however they are mathematically okay.
+		 // "-value" is equal to "~(value - 1)", but the shortest form was used.
          #if (SCALAR_BITS == 64)
          if (input >= -((SCALAR) 1 << (SCALAR_BITS-32))) {
             input <<= 32;
