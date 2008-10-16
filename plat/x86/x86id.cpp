@@ -1,14 +1,17 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.8 2008/10/08 05:24:22 snikkel Exp $
+ * $Id: x86id.cpp,v 1.9 2008/10/16 19:32:18 jlawson Exp $
  *
- * Gold mine : http://datasheets.chipdb.org
+ * Gold mine of technical details:
+ *    http://datasheets.chipdb.org/
+ *    http://sandpile.org/   
  */
 
 #include <string.h>
+#include <stdio.h>
 #include "ccoreio.h"
 #include "cputypes.h"
 #include "cpucheck.h"
@@ -108,7 +111,7 @@ union PageInfos {
 static s32 x86id_fixup(s32 x86id_result)
 {
 #if (CLIENT_OS == OS_LINUX)
-  if (x86id_result == MAKE_CPUID(VENDOR_CYRIX, 0, 4, 0, 0);) /* Cyrix indeterminate */
+  if (x86id_result == MAKE_CPUID(VENDOR_CYRIX, 0, 4, 0, 0)) /* Cyrix indeterminate */
   {
     FILE *file = fopen("/proc/cpuinfo", "r");
     if (file)
@@ -162,7 +165,7 @@ static s32 x86id_fixup(s32 x86id_result)
       }
       fclose(file);
       if (vendor_id == VENDOR_CYRIX && family == 4 && model == 9)
-        return MAKE_ID(vendor_id, 0, family, model, 0);
+        return MAKE_CPUID(vendor_id, 0, family, model, 0);
     } /* if (file) */
   } /* if (cyrix indeterminate) */
 #endif /* (CLIENT_OS == OS_LINUX) */
