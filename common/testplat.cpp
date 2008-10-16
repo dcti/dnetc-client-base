@@ -7,7 +7,7 @@
  * Specify 'build_dependancies' as argument 
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.11 2007/10/22 16:48:28 jlawson Exp $
+ * $Id: testplat.cpp,v 1.12 2008/10/16 19:40:55 jlawson Exp $
 */ 
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -212,7 +212,7 @@ static const char **get_include_dirs(int argc, char *argv[])
     } /* for (i = 1; i < argc; i++) */
     idirs[numdirs] = (char *)0;
   } /* if (idirs) */
-  return (const char **)idirs;
+  return const_cast<const char**>(idirs);
 }  
 
 
