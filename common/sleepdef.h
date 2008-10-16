@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.42 2008/07/18 07:30:16 stream Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.43 2008/10/16 22:52:26 jlawson Exp $"
 
 #include "cputypes.h"
 
@@ -127,6 +127,7 @@
   /* sleep/usleep in freebsd static libs use setitimer on pre-3.4 
      and nanosleep on 3.4 and above.
   */
+  #include <unistd.h>
   #include <sys/time.h>
   #define _xsleep(_secs,_usecs) {struct timeval tv__={(_secs),(_usecs)};select(0,NULL,NULL,NULL,&tv__);}
   #undef usleep
