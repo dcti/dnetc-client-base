@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.164 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.165 2008/10/16 22:31:45 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -190,12 +190,13 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         #elif defined(__unix__)
         {
           char buffer[1024];
-          int sig = SIGHUP; char *dowhat_descrip = "-HUP'ed";
+          int sig = SIGHUP; const char *dowhat_descrip = "-HUP'ed";
           unsigned int bin_index, kill_ok = 0, kill_failed = 0;
           int last_errno = 0, kill_found = 0;
           const char *binnames[3];
-          char rc5des[8]; rc5des[0]='r';rc5des[1]='c';rc5des[2]='5';
-          rc5des[3]='d';rc5des[4]='e';rc5des[5]='s';rc5des[6]='\0';
+          char rc5des[7];
+          rc5des[0]='d';rc5des[1]='n';rc5des[2]='e';
+          rc5des[3]='t';rc5des[4]='c';rc5des[5]='\0';
           binnames[0] = (const char *)strrchr( argv[0], '/' );
           binnames[0] = ((!binnames[0])?(argv[0]):(binnames[0]+1));
           binnames[1] = utilGetAppName();
