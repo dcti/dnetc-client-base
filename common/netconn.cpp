@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.6 2007/10/22 16:48:26 jlawson Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.7 2008/10/16 20:32:11 jlawson Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -145,7 +145,13 @@ static int __break_check(NETSTATE *netstate)
 #define DUMP_PACKET( __ctx, __pkt, __len ) /* nothing */
 #else
 #undef DUMP_PACKET
-// Logs a hexadecimal dump of the specified raw buffer of data.
+//! Logs a hexadecimal dump of the specified raw buffer of data.
+/*!
+ * \param label Descriptive text that is logged with the data.
+ * \param apackage Start of the raw buffer to log.
+ * \param alen Length of the raw buffer (in bytes)
+ * \return Does not return a value.
+ */
 static void DUMP_PACKET( const char *label, const char *apacket, 
                                             unsigned int alen )
 {
@@ -190,9 +196,15 @@ static void DUMP_PACKET( const char *label, const char *apacket,
 
 /* ====================================================================== */
 
-// clears all flags and communication buffers and mark connection
-// as closed. Does not actually close the socket (which is done by 
-// __open_connection() by way of reset(), or by the final net_close())
+//! Mark a network connection for closure.
+/*!
+ * Clears all flags and communication buffers and mark connection
+ * as closed. Does not actually close the socket (which is done by 
+ * __open_connection() by way of reset(), or by the final net_close())
+ *
+ * \param cookie Network connection to close.
+ * \return Zero on success, otherwise an error occurred.
+ */
 static int __close_connection(void *cookie)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -266,8 +278,12 @@ const char *Socks5ErrorText[9] =
 
 /* ====================================================================== */
 
-//returns zero on success, <0 on fatal err, >0 on recoverable error (try again)
-//only called from __open_connection()
+//! Helper function for initializing a network connection.
+/*!
+ * only called from __open_connection()
+ *
+ * \return Zero on success, <0 on fatal err, >0 on recoverable error (try again)
+ */
 static int __init_connection(NETSTATE *netstate)
 {
   const char *proto_init_error_msg = "protocol initialization error";
@@ -642,10 +658,14 @@ static int __init_connection(NETSTATE *netstate)
 
 /* ====================================================================== */
 
-// Initiates a connection opening sequence, and performs the initial
-// negotiation for SOCKS4/SOCKS5 connections.
-// returns -1 on error, 0 on success
-
+//! Initiates a connection opening sequence
+/*!
+ * Initiates a connection opening sequence, and performs the initial
+ * negotiation for SOCKS4/SOCKS5 connections.
+ *
+ * \param cookie Network connection to open.
+ * \return Returns -1 on error, 0 on success
+ */
 static int __open_connection(void *cookie)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -895,11 +915,22 @@ static int __open_connection(void *cookie)
 
 /* ====================================================================== */
 
-/* returns number of chars to skip to nextline, or zero if the current line */
-/* wasn't eol terminated, or -1 if error (data is binary) */
-/* if the netline was eol terminated, then copies first 'n' octets to linebuf*/
-/* The returned 'linebuf' is always lower case, always native charset */
-/* (ascii/ebcdic) and always '\0' terminated. */
+//! Read bytes from a network buffer up to the next newline sequence.
+/*!
+ * If the netline was eol terminated, then copies first 'n' octets to linebuf
+ * The returned 'linebuf' is always lower case, always native charset 
+ * (ascii/ebcdic) and always '\0' terminated.
+ *
+ * \param bufp Input network buffer of data received.
+ * \param buflen Number of bytes in the network buffer that are available.
+ * \param asc_linelen Optional argument to receive the length of the
+ *      read line (this value differs from the function return value in
+ *      that this will exclude the length of the newline sequence).
+ * \param linebuf
+ * \param linebufsz
+ * \return The number of chars to skip to nextline, or zero if the current line
+ *      wasn't eol terminated, or -1 if error (data is binary).
+ */
 static int __peek_netline(const char *bufp, unsigned int buflen, 
                           unsigned int *asc_linelen, 
                           char *linebuf, unsigned int linebufsz )
@@ -942,8 +973,10 @@ static int __peek_netline(const char *bufp, unsigned int buflen,
       if (linebufsz > linelen)
         linebufsz = linelen;
       memcpy(linebuf, bufp, linebufsz);
-      linebuf[linebufsz] = 0;  
+      linebuf[linebufsz] = '\0';
       __ntoh_str( linebuf );
+
+      // convert entire line to lowercase.
       for (pos = 0; linebuf[pos]; pos++)
         linebuf[pos] = (char)tolower(linebuf[pos]);
     }
@@ -953,8 +986,11 @@ static int __peek_netline(const char *bufp, unsigned int buflen,
   return linelen+eolcount;
 }
 
-/* detect either HTTP *or* UUE on the head of a raw network stream, */
-/* or return -1 if there isn't sufficient data to make that determination */
+//! Detect either HTTP *or* UUE on the head of a raw network stream.
+/*!
+ * \return Returns either MODE_HTTP, MODE_UUE, or -1 if there isn't
+ *     sufficient data to make that determination yet.
+ */
 static int auto_sense_http_uue(const char *netdata, unsigned int netdatalen)
 { 
   int read_mode = -1; /* if failed */
@@ -1038,9 +1074,13 @@ static void netspool_pophead(NETSPOOL *spool, unsigned int len)
 
 /* --------------------------------------------------------------------- */
 
-/* netconn_read(): receives data from the connection with any
- * necessary decoding. Returns number of bytes copied to 'data'
-*/
+//! Receives data from the connection with any necessary decoding
+/*!
+ * \param cookie Network connection to read from.
+ * \param data Output buffer to be written to.
+ * \param numRequested Number of bytes requested to be read.
+ * \return Returns number of bytes copied to 'data'
+ */
 int netconn_read( void *cookie, char * data, int numRequested )
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -1411,9 +1451,14 @@ int netconn_read( void *cookie, char * data, int numRequested )
 
 /* =================================================================== */
 
-/* netconn_reset(): reset the connection. Fails (by design) if
- * thataddress is zero.
-*/
+//! Reset the connection
+/*!
+ * Fails (by design) if thataddress is zero.
+ *
+ * \param cookie Network connection to modify.
+ * \param thataddress IPv4 address to reconnect to.
+ * \return On error returns -1.
+ */
 int netconn_reset(void *cookie, u32 thataddress)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -1438,9 +1483,11 @@ int netconn_reset(void *cookie, u32 thataddress)
 
 /* ====================================================================== */
 
-/* netconn_write(): sends data over the connection with any
- * necessary encoding. Returns 'length' on success, or -1 on error.
-*/
+//! Sends data over the connection with any necessary encoding.
+/*
+ * \param cookie Network connection
+ * \return Returns 'length' on success, or -1 on error.
+ */
 int netconn_write( void *cookie, const char * data, int length )
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -1612,9 +1659,13 @@ int netconn_write( void *cookie, const char * data, int length )
 
 /* ====================================================================== */
 
-/* netconn_getname(): name of host as determined at open time.
- * Returns zero on success or -1 on error.
-*/
+//! Get the name of host as determined at open time.
+/*!
+ * \param cookie Network connection to query.
+ * \param buffer Buffer to recieve the name of the host.
+ * \param len Maximum length of the buffer (in bytes).
+ * \return Returns zero on success or -1 on error.
+ */
 int netconn_getname(void *cookie, char *buffer, unsigned int len )
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -1627,8 +1678,12 @@ int netconn_getname(void *cookie, char *buffer, unsigned int len )
 
 /* ====================================================================== */
 
-/* netconn_getpeer(): get address of host connected to, or zero
- * on error. Probably only useful for debugging.
+//! Get address of host connected to.
+/*!
+ * Probably only useful for debugging.
+ *
+ * \param cookie Network connection to query.
+ * \return Returns IPv4 address of host, or zero on error.
 */
 u32 netconn_getpeer(void *cookie)
 {
@@ -1640,9 +1695,16 @@ u32 netconn_getpeer(void *cookie)
 
 /* ====================================================================== */
 
-/* netconn_setpeer(): set address of host to connect to in the event
- * of a disconnect. (in the event of an HTTP/1.0 close)
-*/
+//! Set address of host to connect to in the event of a disconnect.
+/*!
+ * Setting the address is necessary in the event of an HTTP/1.0 close.
+ * If the address has already been specified for this connection, then
+ * this call is ignored and the current value is returned.
+ *
+ * \param cookie Network connection to modify.
+ * \param address IPv4 address of the remote host.
+ * \return Zero on error, otherwise the IPv4 address of the connection.
+ */
 int netconn_setpeer(void *cookie, u32 address)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -1655,9 +1717,11 @@ int netconn_setpeer(void *cookie, u32 address)
 
 /* ====================================================================== */
 
-/* netconn_getaddr(): get address connected from, or zero
- * on error (or not connected).
-*/
+//! Get address connected from.
+/*!
+ * \param cookie Network connection to modify.
+ * \return Returns the IPv4 address, or zero on error (or not connected)/
+ */
 u32 netconn_getaddr(void *cookie)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -1668,9 +1732,13 @@ u32 netconn_getaddr(void *cookie)
 
 /* ====================================================================== */
 
-/* netconn_close(): close the connection. Cookie is then no longer
- * usable.
-*/
+//! Close the connection
+/*!
+ * After using this function, the cookie is then no longer usable.
+ *
+ * \param cookie Network connection to close.
+ * \return Always returns zero.
+ */
 int netconn_close(void *cookie)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -1706,9 +1774,20 @@ int netconn_close(void *cookie)
 
 /* ====================================================================== */
 
-/* netconn_open(): create a new connection. Returns a 'handle' for
- * subsequent netconn_xxx() operations or NULL on error.
-*/
+//! Create a new connection.
+/*!
+ * \param _servname Hostname of the server to connect to.
+ * \param _servport Port number of the server to connect to.
+ * \param _nofallback Whether automatic fallback to the standard d.net
+ *       server addresses should be done if connection attempt fails.
+ * \param _iotimeout Timeout duration for network attempts.
+ * \param _enctype Indicate choices for http, uue, sock4, socks5 mode.
+ * \param _fwallhost Optional hostname of the firewall/proxy server.
+ * \param _fwallport Optional port number of the firewall/proxy server.
+ * \param _fwalluid Optional username and password.
+ * \return Returns a 'handle' for subsequent netconn_xxx() operations,
+ *    or NULL on error.
+ */
 void *netconn_open( const char * _servname, int _servport, 
                     int _nofallback, int _iotimeout, int _enctype, 
                     const char *_fwallhost, int _fwallport, 
