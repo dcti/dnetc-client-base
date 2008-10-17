@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.311 2008/10/17 00:25:53 snikkel Exp $
+# @(#)$Id: configure,v 1.312 2008/10/17 17:26:17 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1205,7 +1205,7 @@ case "$1" in
 
 # 88k ******************************************************************
 
-    *88k-dgux)          # data general unix
+    *dgux-88k)          # data general unix
         TARGET_CC="/usr/local/bin/g++"
         generate_gcc_opts "88k" "dgux"
         TARGET_CCFLAGS="$OPTS_GCC -D_POSIX4A_DRAFT6_SOURCE -D_DGUX -DHAVE_POSIX_THREADS"
@@ -1232,8 +1232,8 @@ case "$1" in
 
 # Alpha ****************************************************************
 
-    *alpha*-digital_unix*) #takes alpha[4|5|67|]-digital_unix[-nonmt|]
-        archname=`echo "$1" | sed 's/^.*alpha/alpha/'| sed 's/-.*$//'`
+    *digital_unix*-alpha*) #takes digital_unix-alpha[4|5|67|][-nonmt|]
+        archname=`echo "$1" | sed 's/^.*digital_unix/digital_unix/'| cut -d- -f2`
         TARGET_CC="g++"
         TARGET_AS="as"
         generate_gcc_opts "$archname" "digital-unix"
@@ -1258,7 +1258,7 @@ case "$1" in
         esac
         ;;
 
-    *alpha-linux)       # dworz / jlawson
+    *linux-alpha)       # dworz
         TARGET_CC="g++"
         TARGET_AS="as"
         generate_gcc_opts "alpha" "linux"
@@ -1270,7 +1270,7 @@ case "$1" in
         add_sources "linux" "alpha"
         ;;
 
-    *alpha-linux-static)       # dworz / jlawson / kamy
+    *linux-alpha-static)       # dworz / jlawson / kamy
         TARGET_CC="g++"
         TARGET_AS="as"
         generate_gcc_opts "alpha" "linux"
@@ -1282,7 +1282,7 @@ case "$1" in
         add_sources "linux" "alpha"
         ;;
 
-    *alpha-netbsd)
+    *netbsd-alpha)
         TARGET_CC="g++"
         generate_gcc_opts "alpha" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1293,7 +1293,7 @@ case "$1" in
         add_sources "netbsd" "alpha"
         ;;
 
-    *alpha-openbsd)     # snake
+    *openbsd-alpha)     # snake
         TARGET_AS="g++ -c"
         TARGET_CC="g++"
         generate_gcc_opts "alpha" "openbsd"
@@ -1306,7 +1306,7 @@ case "$1" in
 
 # ARM ******************************************************************
 
-    *arm-linux-aout)    # chrisb
+    *linux-arm-aout)    # chrisb
         TARGET_CC="gcc"
         TARGET_AS="as"
         generate_gcc_opts "arm" "linux"
@@ -1317,7 +1317,7 @@ case "$1" in
         add_sources "linux" "arm" "aout"
         ;;
 
-    *arm-linux-elf)     # teichp
+    *linux-arm-elf)     # teichp
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
         generate_gcc_opts "arm" "linux"
@@ -1328,7 +1328,7 @@ case "$1" in
         add_sources "linux" "arm" "elf"
         ;;
 
-    *arm-linux-eabi)     # teichp
+    *linux-arm-eabi)     # teichp
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
         generate_gcc_opts "arm" "eabi"
@@ -1339,7 +1339,7 @@ case "$1" in
         add_sources "linux" "arm" "elf"
         ;;
 
-    *arm-linux-elf_single)     # teichp
+    *linux-arm-elf_single)     # teichp
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
         generate_gcc_opts "arm" "linux"
@@ -1350,7 +1350,7 @@ case "$1" in
         add_sources "linux" "arm" "elf"
         ;;
 
-    *arm-netbsd)        # teichp
+    *netbsd-arm)        # teichp
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
         generate_gcc_opts "arm" "netbsd"
@@ -1361,7 +1361,7 @@ case "$1" in
         add_sources "netbsd" "arm"
         ;;
 
-    *arm-nto2)
+    *nto2-arm)
         TARGET_AS="qcc -Vgcc_ntoarmle -c"
         TARGET_CC="qcc -Vgcc_ntoarmle"
         TARGET_ASFLAGS="-DNO_BALIGN"
@@ -1375,7 +1375,7 @@ case "$1" in
         add_sources "nto2" "arm"
         ;;
 
-    *arm-riscos)
+    *riscos-arm)
         TARGET_CC="armcpp -aif -nodebug -littleend -apcs 3/26bit/swst/hardfp/fpe2 \
             -zps1 -nounusedareas -l/home/cberry/play/riscoslib/CLib/stubs.o"
         TARGET_AS="armasm"
@@ -1398,7 +1398,7 @@ case "$1" in
         add_sources "riscos" "arm"
         ;;
 
-    *arm-riscos-gccsdk) # RiscOS client crosscompiled under Unix using GCCSDK
+    *riscos-arm-gccsdk) # RiscOS client crosscompiled under Unix using GCCSDK
                         # and Unixlib (http://hard-mofo.dsvr.net/)
         TARGET_CC="/home/peter/gccsdk-32/cross/bin/gcc"
         generate_gcc_opts "arm" "riscos"
@@ -1416,7 +1416,7 @@ case "$1" in
 
 # IA64 *****************************************************************
 
-    *ia64-linux)
+    *linux-ia64)
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "ia64" "linux"
@@ -1456,7 +1456,7 @@ case "$1" in
     #
     # lyndon@orthanc.ab.ca (Nov 28, 1999)
 
-    *mips-cc-n32)	# [lyndon]	Generic 32 bit client
+    *irix-mips-cc-n32)	# [lyndon]	Generic 32 bit client
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32}"
        TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_32}"
@@ -1466,7 +1466,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-64)	# [lyndon]	Generic 64 bit client
+    *irix-mips-cc-64)	# [lyndon]	Generic 64 bit client
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64}"
        TARGET_LDFLAGS="${OPTS_LD_MIPSPRO_64}"
@@ -1476,7 +1476,7 @@ case "$1" in
        add_sources "irix" "mips64"
        ;;
 
-    *mips-cc-ip19)	# [lyndon]
+    *irix-mips-cc-ip19)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip19 \
             -DCLIENT_OS_NAME=\"\\\"Irix IP19\\\"\""
@@ -1487,7 +1487,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip20)	# [lyndon]
+    *irix-mips-cc-ip20)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip20 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP20\\\"\""
@@ -1498,7 +1498,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip21)	# [lyndon]
+    *irix-mips-cc-ip21)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip21 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP21\\\"\""
@@ -1509,7 +1509,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip22_4k)	# [lyndon]
+    *irix-mips-cc-ip22_4k)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_4k \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP22/R4K\\\"\""
@@ -1520,7 +1520,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip22_5k)	# [lyndon]
+    *irix-mips-cc-ip22_5k)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip22_5k \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP22/R5K\\\"\""
@@ -1531,7 +1531,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip24)	# [lyndon]
+    *irix-mips-cc-ip24)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip24 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP24\\\"\""
@@ -1542,7 +1542,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip25)	# [lyndon]
+    *irix-mips-cc-ip25)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip25 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP25\\\"\""
@@ -1553,7 +1553,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip26)	# [lyndon]
+    *irix-mips-cc-ip26)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip26 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP26\\\"\""
@@ -1564,7 +1564,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip27)	# [lyndon]
+    *irix-mips-cc-ip27)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip27 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP27\\\"\""
@@ -1575,7 +1575,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip27-64)	# [lyndon]
+    *irix-mips-cc-ip27-64)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip27 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP27-64\\\"\""
@@ -1586,7 +1586,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip28)	# [lyndon]
+    *irix-mips-cc-ip28)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip28 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP28\\\"\""
@@ -1597,7 +1597,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip30)	# [lyndon]
+    *irix-mips-cc-ip30)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip30 \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP30\\\"\""
@@ -1608,7 +1608,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip32_5k)	# [lyndon]
+    *irix-mips-cc-ip32_5k)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_5k \
                -DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
@@ -1619,7 +1619,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip32_10k)	# [lyndon]
+    *irix-mips-cc-ip32_10k)	# [lyndon]
        TARGET_CC="CC"
        TARGET_CCFLAGS="-ISA -LNO ${OPTS_MIPSPRO_CCFLAGS_32} -TARG:platform=ip32_10k \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K\\\"\""
@@ -1630,7 +1630,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-    *mips-cc-ip32_10k-64)
+    *irix-mips-cc-ip32_10k-64)
        TARGET_CC="CC"
        TARGET_CCFLAGS="${OPTS_MIPSPRO_CCFLAGS_64} -TARG:platform=ip32_10k \
                        -DCLIENT_OS_NAME=\"\\\"Irix IP32/R10K-64\\\"\""
@@ -1643,7 +1643,7 @@ case "$1" in
 
 # END of MIPSpro targets.
 
-    *mips-linux)
+    *linux-mips)
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -march=r6000 -mtune=r6000"
@@ -1654,7 +1654,7 @@ case "$1" in
         add_sources "linux" "mips"
         ;;
 
-    *mipsel-linux-ps2)  #For PS2 Linux [jt(jt@distributed.net)]
+    *linux-mipsel-ps2)  #For PS2 Linux [jt(jt@distributed.net)]
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -mcpu=r5900 -DSINGLE_CRUNCHER_ONLY -D__ps2linux__"
@@ -1665,7 +1665,7 @@ case "$1" in
         add_sources "linux" "mips" "ps2"
         ;;
 
-    *mips-sni)	        #For MIPS SINIX
+    *sinix-mips)	        #For MIPS SINIX
         TARGET_CC="g++"
         generate_gcc_opts "mips" "sinix"
         TARGET_CCFLAGS="$OPTS_GCC -Dsinix"
@@ -1674,7 +1674,7 @@ case "$1" in
         add_sources "sni" "mips"
         ;;
 
-    *mips-irix5-gcc)	# gcc is faster because it can use mips-crunch.cpp
+    *irix5-mips-gcc)	# gcc is faster because it can use mips-crunch.cpp
         # If compiling on Irix 5 you must -D_irix5_ now to get the usleep()
         # replacement.
         TARGET_CC="g++"
@@ -1684,7 +1684,7 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
-    *mips-irix64-gcc)   #needs "very recent" egcs
+    *irix64-mips-gcc)   #needs "very recent" egcs
         TARGET_CC="g++"
         generate_gcc_opts "mips" "irix"
         TARGET_CCFLAGS="$OPTS_GCC -mabi=64 -DHAVE_POSIX_THREADS"
@@ -1694,7 +1694,7 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
-    *mips-irix32-gcc)	# [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
+    *irix32-mips-gcc)	# [lyndon] Irix 6, gcc, threaded (assumes n32 ABI)
         TARGET_CC="gcc"
         generate_gcc_opts "mips" "irix"
         TARGET_CCFLAGS="$OPTS_GCC -mabi=n32 -DHAVE_POSIX_THREADS"
@@ -1704,7 +1704,7 @@ case "$1" in
         add_sources "irix" "mips"
         ;;
 
-    *mipsel-netbsd)     # [snake] NetBSD on DECstation, PS2, ARC etc.
+    *netbsd-mipsel)     # [snake] NetBSD on DECstation, PS2, ARC etc.
         TARGET_CC="g++"
         generate_gcc_opts "mips" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC -DSINGLE_CRUNCHER_ONLY"
@@ -1715,7 +1715,7 @@ case "$1" in
         add_sources "netbsd" "mips"
         ;;
 
-    *mipseb-netbsd)     # NetBSD on SGI, Sony NEWS etc.
+    *netbsd-mipseb)     # NetBSD on SGI, Sony NEWS etc.
         TARGET_CC="g++"
         generate_gcc_opts "mips" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1726,7 +1726,7 @@ case "$1" in
         add_sources "netbsd" "mips"
         ;;
 
-    #*mips-ultrix-gcc)	# For mips based DEC Ultrix machines
+    #*ultrix-mips-gcc)	# For mips based DEC Ultrix machines
     #    TARGET_CC="g++"
     #    generate_gcc_opts "mips" "irix"
     #    TARGET_CCFLAGS="$OPTS_GCC"
@@ -1734,7 +1734,7 @@ case "$1" in
     #    add_sources "ultrix" "mips"
     #    ;;
 
-    *mipsle-nto2)
+    *nto2-mipsle)
         TARGET_AS="qcc -Vgcc_ntomipsle -c"
         TARGET_CC="qcc -Vgcc_ntomipsle"
         TARGET_ASFLAGS="-DNO_BALIGN"
@@ -1749,7 +1749,7 @@ case "$1" in
         add_sources "nto2" "mips"
         ;;
 
-    *mipsbe-nto2)
+    *nto2-mipsbe)
         TARGET_AS="qcc -Vgcc_ntomipsbe -c"
         TARGET_CC="qcc -Vgcc_ntomipsbe"
         TARGET_ASFLAGS="-DNO_BALIGN"
@@ -1830,7 +1830,7 @@ case "$1" in
 
 ###### Sparc/UltraSparc
 
-    *sparc-openbsd)                   # [snake]
+    *openbsd-sparc)                   # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "sparc" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1840,7 +1840,7 @@ case "$1" in
         add_sources "openbsd" "sparc"
         ;;
 
-    *sparc-netbsd)                    # [snake], for sun4[cdm]
+    *netbsd-sparc)                    # [snake], for sun4[cdm]
         TARGET_CC="g++"
         generate_gcc_opts "sparc" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1850,7 +1850,7 @@ case "$1" in
         add_sources "netbsd" "sparc"
         ;;
 
-    *sparc64-netbsd)                    # [snake], for sun4u
+    *netbsd-sparc64)                    # [snake], for sun4u
         TARGET_CC="g++"
         generate_gcc_opts "sparc64" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -1860,7 +1860,7 @@ case "$1" in
         add_sources "netbsd" "sparc"
         ;;
 
-    *sparc-linux)       # teichp
+    *linux-sparc)       # teichp
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
         generate_gcc_opts "sparc" "linux"
@@ -1872,7 +1872,7 @@ case "$1" in
         add_sources "linux" "sparc"
         ;;
 
-    *sparc-sunos-gcc-nomt)   # [ivo sunos413/nomt]
+    *sunos-sparc-gcc-nomt)   # [ivo sunos413/nomt]
         TARGET_CC="gcc"
         generate_gcc_opts "sparc" "sunos"
         TARGET_CCFLAGS="$OPTS_GCC -Dsunos"
@@ -1883,7 +1883,7 @@ case "$1" in
         add_sources "sunos" "sparc"
         ;;
 
-    *sparc-solaris-gcc-nomt)   # [ivo solaris/nomt]
+    *solaris-sparc-gcc-nomt)   # [ivo solaris/nomt]
         TARGET_CC="gcc"
         generate_gcc_opts "supersparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris"
@@ -1894,7 +1894,7 @@ case "$1" in
         ;;
 
 
-    *sparc-solaris-gcc)   # [andreasb sparc/v7]
+    *solaris-sparc-gcc)   # [andreasb sparc/v7]
         TARGET_CC="gcc"
         generate_gcc_opts "sparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
@@ -1904,7 +1904,7 @@ case "$1" in
         add_sources "solaris" "sparc"
         ;;
 
-    *sparc-solaris-gcc-super)   # [andreasb sparc/v8]
+    *solaris-sparc-gcc-super)   # [andreasb sparc/v8]
         TARGET_CC="gcc"
         generate_gcc_opts "supersparc" "solaris"
         TARGET_CCFLAGS="-pipe $OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS"
@@ -1914,7 +1914,7 @@ case "$1" in
         add_sources "solaris" "sparc"
         ;;
 
-    *sparc-solaris-gcc-ultra)   # [andreasb sparc/v9 32 bit] ERROR
+    *solaris-sparc-gcc-ultra)   # [andreasb sparc/v9 32 bit] ERROR
         echo "ERROR: gcc can't do this right, check ULONG_MAX vs. sizeof(long)"
         TARGET_CC="gcc"
         generate_gcc_opts "ultrasparc" "solaris"
@@ -1926,7 +1926,7 @@ case "$1" in
         ;;
 
 
-    *sparc-solaris-cc-v7)   # [andreasb sparc/v7]
+    *solaris-sparc-cc-v7)   # [andreasb sparc/v7]
         TARGET_CC="CC"
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v7 -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
@@ -1936,7 +1936,7 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"
         ;;
 
-    *sparc-solaris-cc-v8a)   # [andreasb sparc/v8a]
+    *solaris-sparc-cc-v8a)   # [andreasb sparc/v8a]
         TARGET_CC="CC"
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8a -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
@@ -1946,7 +1946,7 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"
         ;;
 
-    *sparc-solaris-cc-v8)   # [andreasb sparc/v8]
+    *solaris-sparc-cc-v8)   # [andreasb sparc/v8]
         TARGET_CC="CC"
         OPTS_CC_SOLARIS="-fast -xO4 -xarch=v8 -DASM_SPARC"
         TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS"
@@ -1956,7 +1956,7 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"
         ;;
 
-    *sparc-solaris-cc-ultra)   # [andreasb sparc/v9 32 bit]
+    *solaris-sparc-cc-ultra)   # [andreasb sparc/v9 32 bit]
         TARGET_CC="CC"
         OPTS_CC_SOLARIS="-fast -xO4 -xtarget=ultra -DASM_SPARC"
         TARGET_ASFLAGS="$TARGET_ASFLAGS -xarch=v8plus"
@@ -1967,7 +1967,7 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"
         ;;
 
-    *sparc-solaris-cc-32)   # [snikkel sparc 32bit client for 32/64bit machines, sun cc]
+    *solaris-sparc-cc-32)   # [snikkel sparc 32bit client for 32/64bit machines, sun cc]
         TARGET_CC="CC"
         TARGET_LD="cc"
         TARGET_LDFLAGS="-mt"      
@@ -1979,7 +1979,7 @@ case "$1" in
         add_sources "solaris" "sparc" "cc"   
         ;;
 
-    *sparc-solaris-cc-64)   # [snikkel sparc 64bit client, sun cc]
+    *solaris-sparc-cc-64)   # [snikkel sparc 64bit client, sun cc]
         TARGET_CC="CC"
         TARGET_LD="cc"
         TARGET_LDFLAGS="-mt -xarch=v9"
@@ -1992,36 +1992,9 @@ case "$1" in
         add_sources "solaris" "sparc64" "cc"
         ;;
 
-    *sparc-solaris-gcc-ultra-des)   # [ivo ultra] very fast DES -> hence obsolete
-        TARGET_CC="gcc"
-        # See Also: ultrasparc/s_paramaters.h
-        #OPTS_DES_ULTRA_C="-DDES_ULTRA -DINLINE=' ' -DIN_DCTI_CLIENT \
-        #	  -DLOW_WORD_VALID -DMANUAL_REGISTER_ALLOCATION  \
-        #	  -DKWAN_LOOP_SLICE='unsigned long' -Iplat/ultrasparc"
-        generate_gcc_opts "generic" "solaris"
-        OPTS_DES_ULTRA_ASM="-DIN_DCTI_CLIENT -DDES_ULTRA -DINLINE=inline \
-                            -DFULL_64_BIT_VALID -DASM \
-                            -DMANUAL_REGISTER_ALLOCATION -DDO_FLOAT_PIPE  \
-                            -DUSE_IDENTICAL_FLOAT_REGISTERS \
-                            -DUSE_64_BIT_SENTINEL \
-                            -DKWAN_LOOP_SLICE='unsigned long' \
-                            -Iplat/ultrasparc \
-                            -mtune=ultrasparc -fforce-mem -fstrict-aliasing\
-                            -mv8plus -mvis -mepilogue -Wa,-xarch=v8plusa \
-                            -mflat -Os -fcall-used-g4 -fcall-used-g5 \
-                            -fcall-used-g6"
-        TARGET_CCFLAGS="${OPTS_GCC} -pipe $OPTS_DES_ULTRA_ASM -Dsolaris \
-                        -DHAVE_POSIX_THREADS"
-        TARGET_ASFLAGS="$OPTS_AS_ULTRA"
-        TARGET_LIBS="-lnsl -lsocket -ldl -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="solaris26-ultrasparc-des"
-        add_sources "solaris" "sparc" "ultra"
-        ;;
-
     #####
 
-    *x86-solaris)    # gcc, mt, dynamic
+    *solaris-x86)    # gcc, mt, dynamic
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "solaris"
         TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
@@ -2033,7 +2006,7 @@ case "$1" in
 
 ###### PowerPC/POWER
 
-    *ppc-linux)		             # [myshkin] linux-ppc
+    *linux-ppc)		             # [myshkin] linux-ppc
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec"
@@ -2045,7 +2018,7 @@ case "$1" in
         add_sources "linux" "ppc" "altivec"
         ;;
 
-    *ppc-netbsd)                 # [snake]
+    *netbsd-ppc)                 # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2058,7 +2031,7 @@ case "$1" in
         #add_sources "netbsd" "ppc" "altivec" # not yet AltiVec
         ;;
 
-    *ppc-macosx)       # [mfeiri] (MACH 3.x based: MacOS X, Darwin)
+    *macosx-ppc)       # [mfeiri] (MACH 3.x based: MacOS X, Darwin)
         generate_gcc_opts "ppc" "macosx"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
@@ -2069,7 +2042,7 @@ case "$1" in
         add_sources "macosx" "ppc" "altivec"
         ;;
 
-    *ppc-aix-xlc)
+    *aix-ppc-xlc)
         # AIX's system as doesn't support macros, so we have to use gas for cores
         TARGET_AS="gas"
         TARGET_CC="xlC_r"
@@ -2081,7 +2054,7 @@ case "$1" in
         add_sources "aix" "ppc"
         ;;
 
-    *ppc-aix-gcc)
+    *aix-ppc-gcc)
         # system as is recommended for gcc but doesn't support macros,
         # so we have to use gas for cores
         TARGET_AS="gas"
@@ -2101,7 +2074,7 @@ case "$1" in
 	TARGET_TARBALL="aix-ppc"
         ;;
 
-    *power-aix-gcc)
+    *aix-power-gcc)
         # system as is recommended for gcc but doesn't support macros, so use gas for cores
         TARGET_AS="gas"
         TARGET_CC="g++"
@@ -2117,7 +2090,7 @@ case "$1" in
         add_sources "aix" "power"
         ;;
 
-    *power-aix-xlc)
+    *aix-power-xlc)
         # AIX's system as doesn't support macros, so we have to use gas for cores
         TARGET_AS="gas"
         TARGET_CC="xlC_r"
@@ -2130,7 +2103,7 @@ case "$1" in
         ;;
 
   ### QNX PPC targets
-    *ppc-nto2)
+    *nto2-ppc)
         TARGET_AS="qcc -Vgcc_ntoppcbe -c"
         TARGET_CC="qcc -Vgcc_ntoppcbe"
         TARGET_ASFLAGS="-DNO_BALIGN"
@@ -2144,7 +2117,7 @@ case "$1" in
         add_sources "nto2" "ppc"
         ;;
 
-    *cellbe-linux)		             # [snikkel]
+    *linux-cellbe)		             # [snikkel]
     # ubuntu has some broken ppu32-xxx, use generic form. (un)comment if necessary.
 #        TARGET_CC="ppu32-g++"
 #        TARGET_LD="ppu32-g++"
@@ -2171,7 +2144,7 @@ case "$1" in
 
   ### SH4 QNX targets
 
-    *sh4le-nto2)
+    *nto2-sh4le)
         TARGET_AS="qcc -Vgcc_ntoshle -c"
         TARGET_CC="qcc -Vgcc_ntoshle"
         TARGET_ASFLAGS="-DNO_BALIGN"
@@ -2185,7 +2158,7 @@ case "$1" in
         add_sources "nto2" "sh4"
         ;;
 
-    *sh4be-nto2)
+    *nto2-sh4be)
         TARGET_AS="qcc -Vgcc_ntoshbe -c"
         TARGET_CC="qcc -Vgcc_ntoshbe"
         TARGET_STRIP="/usr/gcc/bin/ntoshbe-strip"
@@ -2203,7 +2176,7 @@ case "$1" in
 ###### Intel X86
 
 
-    *x86-linux*)                # generic. works everywhere
+    *linux-x86*)                # generic. works everywhere
         ### ***RELEASE*** targets - mt for all
         ### use of -Xlinker -omagic (for the SMC core) forces -static
         ### so which lib (libc4/libc5/glibc20/glibc21) the binary is linked
@@ -2249,7 +2222,7 @@ case "$1" in
         esac
         ;;
 
-    *x86-netware6*)   # using LibC [jbgill]
+    *netware6-x86*)   # using LibC [jbgill]
         TARGET_NASM_FMT="elf"
         TARGET_CC="gcc"        #build on Linux with gcc cross compiler for netware       
 	TARGET_LD="gcc"
@@ -2267,7 +2240,7 @@ case "$1" in
         add_sources "netware6" "x86"
         ;;
 
-    *x86-lx-uclibc*)                # using uClibc [pfeffi]
+    *lx-x86-uclibc*)                # using uClibc [pfeffi]
         ### for testing the uClibc library www.uclibc.org
         ### I've downloaded the root_fs_i386 from
         ### http://www.kernel.org/pub/linux/libs/uclibc/root_fs_i386.bz2
@@ -2318,7 +2291,7 @@ case "$1" in
         add_sources "freebsd" "${inferred_arch}"
         ;;
 
-    *x86-netbsd-aout)	# NetBSD 1.4.x, aout [bernd]
+    *netbsd-x86-aout)	# NetBSD 1.4.x, aout [bernd]
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "netbsd"
@@ -2330,7 +2303,7 @@ case "$1" in
         add_sources "netbsd" "x86"
         ;;
 
-    *x86-netbsd-elf)       # NetBSD > 1.4.x, elf, [bernd], snake
+    *netbsd-x86-elf)       # NetBSD > 1.4.x, elf, [bernd], snake
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "netbsd"
@@ -2342,7 +2315,7 @@ case "$1" in
         add_sources "netbsd" "x86"
         ;;
 
-    *x86-openbsd-aout)	# snake
+    *openbsd-x86-aout)	# snake
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2353,7 +2326,7 @@ case "$1" in
         add_sources "openbsd" "x86"
         ;;
 
-    *x86-openbsd-elf)	# snake
+    *openbsd-x86-elf)	# snake
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2364,7 +2337,7 @@ case "$1" in
         add_sources "openbsd" "x86"
         ;;
 
-    *x86-bsdos-aout)                        # BSD/OS 2.x,3.x (aout) -snake
+    *bsdos-x86-aout)                        # BSD/OS 2.x,3.x (aout) -snake
         TARGET_AS="g++ -c -DNO_BALIGN"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "bsdos"
@@ -2376,7 +2349,7 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
-    *x86-bsdos-elf)                        # BSD/OS 4.x+ (ELF) -snake
+    *bsdos-x86-elf)                        # BSD/OS 4.x+ (ELF) -snake
         # bsdos-4 client is still experimental, found a severe bug with 
         # PentiumII now under BSD/OS 4.1 it seems to run except for rc5 core #9
         TARGET_AS="g++ -g -c -DNO_BALIGN"
@@ -2391,7 +2364,7 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
-    *x86-macosx)                 # Mac OS X, Darwin
+    *macosx-x86)                 # Mac OS X, Darwin
         generate_gcc_opts "x86" "macosx"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
@@ -2405,7 +2378,7 @@ case "$1" in
         add_sources "macosx" "x86"
         ;;
 
-    *x86-qnx4)
+    *qnx4-x86)
         TARGET_AS="cc -c"
         TARGET_CC="cc"
         TARGET_CCFLAGS="$OPTS_WATCOMCC -DSINGLE_CRUNCHER_ONLY"
@@ -2421,7 +2394,7 @@ case "$1" in
         add_sources "qnx" "x86"
         ;;
 
-    *x86-nto2)
+    *nto2-x86)
         TARGET_AS="qcc -Vgcc_ntox86 -c"
         TARGET_CC="qcc -Vgcc_ntox86"
         TARGET_STRIP="strip"
@@ -2441,7 +2414,7 @@ case "$1" in
         add_sources "nto2" "x86"
         ;;
 
-    *x86-sco5)			# SCO OpenServer 5.0.x pfeffi, ELF binaries
+    *sco5-x86)			# SCO OpenServer 5.0.x pfeffi, ELF binaries
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "sco"
@@ -2453,7 +2426,7 @@ case "$1" in
         add_sources "sco" "x86"
         ;;
 
-    *x86-dynix4)
+    *dynix4-x86)
         TARGET_CC="g++"
         TARGET_CCFLAGS="-DASM_X86"
         TARGET_LIBS="-lsocket -lnsl -lseq"
@@ -2461,7 +2434,7 @@ case "$1" in
         add_sources "dynix" "x86"
         ;;
 
-    *x86-dynix2)
+    *dynix2-x86)
         TARGET_CC="g++"
         generate_gcc_opts "x86" "dynix"
         TARGET_CCFLAGS="$OPTS_GCC -D_SEQUENT_"
@@ -2475,7 +2448,7 @@ case "$1" in
 ###### AMD 64
 
 
-    *amd64-linux*)                # generic. works everywhere
+    *linux-amd64)                # generic. works everywhere
         infer_arch_and_version "Linux"
         TARGET_YASM_FMT="elf"
         TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
@@ -2490,7 +2463,7 @@ case "$1" in
         add_sources "linux" "amd64" ""
         ;;
 
-    *amd64-netbsd)                    # [snake], not tested yet
+    *netbsd-amd64)                    # [snake], not tested yet
         TARGET_CC="g++"
         generate_gcc_opts "amd64" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2500,7 +2473,7 @@ case "$1" in
         add_sources "netbsd" "amd64"
         ;;
 
-    *amd64-openbsd)                    # [snake], working on it
+    *openbsd-amd64)                    # [snake], working on it
         TARGET_CC="g++"
         generate_gcc_opts "amd64" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2512,7 +2485,7 @@ case "$1" in
 
 ###### NeXT (x86, m68k, sparc, hppa)
 
-    *x86-next)
+    *next-x86)
         generate_gcc_opts "x86" "next"
         TARGET_CCFLAGS="-static $OPTS_GCC -arch i386 -Iplat/next"
 
@@ -2525,7 +2498,7 @@ case "$1" in
         add_sources "next" "x86"
         ;;
 
-    *m68k-next)
+    *next-m68k)
         generate_gcc_opts "68k" "next"
         TARGET_CCFLAGS="-static $OPTS_GCC -arch m68k -Iplat/next"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -2533,7 +2506,7 @@ case "$1" in
         add_sources "next" "68k"
         ;;
 
-    *sparc-next)
+    *next-sparc)
         TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
         TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -Iplat/next"
@@ -2541,7 +2514,7 @@ case "$1" in
         add_sources "next" "sparc"
         ;;
 
-    *hppa-next)
+    *next-hppa)
         TARGET_CC="cc++"
         generate_gcc_opts "generic" "next"
         TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -Iplat/next"
@@ -2549,7 +2522,7 @@ case "$1" in
         add_sources "next" "hppa"
         ;;
 
-    *m68k-openbsd)     # snake
+    *openbsd-m68k)     # snake
         # this target does probably not work with a default system, you
         # will need to update gas and ld to > 2.0
         TARGET_CC="g++"
@@ -2564,7 +2537,7 @@ case "$1" in
         add_sources "openbsd" "68k"
         ;;
 
-    *m68k-netbsd) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, [snake]
+    *netbsd-m68k) # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, [snake]
         TARGET_CC="g++"
         TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
                         -m68020-40 -DASM_68K -DLURK"
@@ -2578,7 +2551,7 @@ case "$1" in
         add_sources "netbsd" "68k"
         ;;
 
-    *vax-netbsd)  # [snake]
+    *netbsd-vax)  # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "vax" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2589,7 +2562,7 @@ case "$1" in
         add_sources "netbsd" "vax"
         ;;
 
-    *hppa32-linux)              # [friedbait]  fb@baiti.net,patch+rc5@zabbadoz.net
+    *linux-hppa32)              # [friedbait]  fb@baiti.net,patch+rc5@zabbadoz.net
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "hppa" "linux"
@@ -2599,7 +2572,7 @@ case "$1" in
         TARGET_TARBALL="linux-hppa32"
         add_sources "linux" "hppa"
         ;;
-    *hppa32-linux-static)       # [friedbait]  fb@baiti.net,patch+rc5@zabbadoz.net
+    *linux-hppa32-static)       # [friedbait]  fb@baiti.net,patch+rc5@zabbadoz.net
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "hppa" "linux"
@@ -2611,7 +2584,7 @@ case "$1" in
         add_sources "linux" "hppa"
         ;;
 
-    *s390-linux)	        # [pstadt] 31 Bit Linux on G5/G6 or older
+    *linux-s390)	        # [pstadt] 31 Bit Linux on G5/G6 or older
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2622,7 +2595,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *s390-linux-static)	        # [pstadt] 31 Bit Linux on G5/G6 or older
+    *linux-s390-static)	        # [pstadt] 31 Bit Linux on G5/G6 or older
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2634,7 +2607,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *s390-linux-z)		# [pstadt] 31 Bit Linux on z/Architecture
+    *linux-s390-z)		# [pstadt] 31 Bit Linux on z/Architecture
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2645,7 +2618,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *s390-linux-z-static)	# [pstadt] 31 Bit Linux on z/Architecture
+    *linux-s390-z-static)	# [pstadt] 31 Bit Linux on z/Architecture
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2657,7 +2630,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *s390x-linux)	        # [pstadt] 64 Bit Linux on z/Architecture
+    *linux-s390x)	        # [pstadt] 64 Bit Linux on z/Architecture
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390x" "linux"
@@ -2668,7 +2641,7 @@ case "$1" in
         add_sources "linux" "s390x"
         ;;
 
-    *s390x-linux-static)        # [pstadt] 64 Bit Linux on z/Architecture
+    *linux-s390x-static)        # [pstadt] 64 Bit Linux on z/Architecture
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390x" "linux"
@@ -2680,7 +2653,7 @@ case "$1" in
         add_sources "linux" "s390x"
         ;;
 
-    *s390-os390)                     # [friedbait]  fb@baiti.net
+    *os390-s390)                     # [friedbait]  fb@baiti.net
         TARGET_CC="gcc"
         TARGET_AS=""
         generate_gcc_opts "s390" "os390"
@@ -2692,7 +2665,7 @@ case "$1" in
         add_sources "os390" "s390"
         ;;
 
-    *x86-beos)
+    *beos-x86)
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "beos"
@@ -2704,7 +2677,7 @@ case "$1" in
         add_sources "beos" "x86"
         ;;
 
-    *ppc-beos)
+    *beos-ppc)
         TARGET_AS="mwcc -c"
         TARGET_CC="mwcc"
         TARGET_CCFLAGS="$OPTS_MWCC_PPC604"
@@ -2717,7 +2690,7 @@ case "$1" in
 
 ####### OS/2 (x86, emx)
 
-    *x86-os2)          # [pfeffi] <pfeffi@distributed.net>
+    *os2-x86)          # [pfeffi] <pfeffi@distributed.net>
         # don't need this, have GNU basename installed ;-)
         # basename ()
         # {
@@ -2743,7 +2716,7 @@ case "$1" in
         ;;
 
 ###### AmigaOS (m68k, PPC)
-    *m68k-amigaos)              # [oliver] <oliver@futaura.co.uk>
+    *amigaos-m68k)              # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="plat/amigaos/tools/genam_wrapper"
         TARGET_CC="g++"
         generate_gcc_opts "68k" "amigaos"
@@ -2762,7 +2735,7 @@ case "$1" in
         add_sources "amigaos" "68k"
         ;;
 
-    *ppc-amigaos)               # [oliver] <oliver@futaura.co.uk>
+    *amigaos-ppc)               # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
         TARGET_CC="ppc-amigaos-g++"
         TARGET_ASFLAGS=""
@@ -2779,7 +2752,7 @@ case "$1" in
         add_sources "amigaos" "ppc" "altivec"
         ;;
 
-    *ppc-amigaos-wos)           # [oliver] <oliver@futaura.co.uk>
+    *amigaos-ppc-wos)           # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
         TARGET_CC="ppc-amigaos-g++"
         TARGET_ASFLAGS="-m603"
@@ -2797,7 +2770,7 @@ case "$1" in
         add_sources "amigaos" "ppc"
         ;;
 
-    *ppc-amigaos-pup)           # [oliver] <oliver@futaura.co.uk>
+    *amigaos-ppc-pup)           # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
         TARGET_CC="ppc-amigaos-g++"
         TARGET_ASFLAGS="-m603"
@@ -2816,7 +2789,7 @@ case "$1" in
         add_sources "amigaos" "ppc"
         ;;
 
-    *ppc-morphos)               # [piru] <sintonen@iki.fi>
+    *morphos-ppc)               # [piru] <sintonen@iki.fi>
         TARGET_AS="ppc-rom-as"
         TARGET_CC="ppc-morphos-g++"
         TARGET_ASFLAGS=""
