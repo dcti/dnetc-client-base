@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.9 2008/10/16 19:32:18 jlawson Exp $
+ * $Id: x86id.cpp,v 1.10 2008/10/17 00:25:53 snikkel Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
@@ -89,22 +89,25 @@ union PageInfos {
   #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
     extern "C" s32 x86getid(void) asm ("x86getid");
     extern "C" u32 x86cpuid(u32 page, union PageInfos* infos) asm ("x86cpuid");
-    extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
   #else
     // x86getid()/x86cpuid() can destroy all registers except ebx/esi/edi/ebp
     // => must be declared as "cdecl" to allow compiler save necessary
     //    registers.
     extern "C" s32 CDECL x86getid(void);
     extern "C" u32 CDECL x86cpuid(u32 page, union PageInfos* infos);
-    extern "C" ui64 CDECL x86rdtsc( void );
   #endif
 
-  ui64 x86ReadTSC(void)
-  {
-    return x86rdtsc();
-  }
 #endif
 
+#if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+  extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
+#else
+  extern "C" ui64 CDECL x86rdtsc( void );
+#endif
+ui64 x86ReadTSC(void)
+{
+  return x86rdtsc();
+}
 
 /*----------------------------------------------------------------------------*/
 

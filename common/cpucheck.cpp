@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.126 2008/10/13 16:55:23 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.127 2008/10/17 00:25:53 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -65,10 +65,6 @@ return "@(#)$Id: cpucheck.cpp,v 1.126 2008/10/13 16:55:23 snikkel Exp $"; }
    if we have an ID but no name:       return ID, set cpuname to ""
                                                    -  cyp April/03/1999
 */
-
-#if (CLIENT_CPU == CPU_AMD64)
-#define x86htcount()  0           // TO DO
-#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -2047,7 +2043,9 @@ long GetProcessorType(int quietly)
              ((strchr("aeiou8", tolower(*cpuname)))?("n"):("")), cpuname);
       }
       retval = rawid; /* let selcore figure things out */
-      #if (CLIENT_CPU == CPU_X86) /* simply too many core<->cpu combinations */
+
+      /* simply too many core<->cpu combinations */
+      #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) 
       if ((retval = __GetRawProcessorID(NULL,'c')) < 0)
         retval = -1;
       #endif
