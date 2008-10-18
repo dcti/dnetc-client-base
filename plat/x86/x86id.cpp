@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.10 2008/10/17 00:25:53 snikkel Exp $
+ * $Id: x86id.cpp,v 1.11 2008/10/18 03:23:59 snikkel Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
@@ -366,12 +366,13 @@ static u32 x86GetAmdId(u32 maxfunc)
   u32 cpuid = 0;
 
   if (maxfunc >= 1) {
-    int family, model, step, brandid = 0;
+    int family, model, extmodel, step, brandid = 0;
     
     u32 signature = x86cpuid(0x00000001, &infos);
-    family  = FIELD_FAMILY(signature);
-    model   = FIELD_MODEL(signature);
-    step    = FIELD_STEPPING(signature);
+    family   = FIELD_FAMILY(signature);
+    model    = FIELD_MODEL(signature);
+    extmodel = FIELD_EXT_MODEL(signature);
+    step     = FIELD_STEPPING(signature);
 
     if (family == 15) {     /* AMD K8 variants */
       int extbrandid = 0;
@@ -386,37 +387,94 @@ static u32 x86GetAmdId(u32 maxfunc)
       }
 
       if (family == 15) {
-        if (brandid) {
-          brandid = (brandid >> 5) & 0x1C;
-        }
-        else if (extbrandid) {
-          brandid = (extbrandid >> 6) & 0xFF;
-          /* Should be 0x3FF, but our field is only 8-bit wide */
-        }
+	if (extmodel <= 0x2) {  /* DDR-1 */
+          if (brandid) {
+            brandid = (brandid >> 5) & 0x1C;
+          }
+          else if (extbrandid) {
+            brandid = (extbrandid >> 6) & 0xFF;
+            /* Should be 0x3FF, but our field is only 8-bit wide */
+          }
 
-        if (brandid >= 0x29 && brandid <= 0x3A)
-          brandid = AMDM15_DC_OPTERON;
-        else if (brandid >= 0x0C && brandid <= 0x17)
-          brandid = AMDM15_OPTERON;
-        else switch (brandid) {
-           case 0x04: brandid = AMDM15_ATHLON_64; break;
-           case 0x05: brandid = AMDM15_ATHLON_64_X2_DC; break;
-           case 0x08:
-           case 0x09: brandid = AMDM15_MOBILE_ATHLON_64; break;
-           case 0x0A:
-           case 0x0B: brandid = AMDM15_TURION_64; break;
-           case 0x18: brandid = AMDM15_ATHLON_64; break;
-           case 0x1D:
-           case 0x1E: brandid = AMDM15_MOBILE_ATHLON_XP; break;
-           case 0x20: brandid = AMDM15_ATHLON_XP; break;
-           case 0x21: brandid = AMDM15_MOBILE_SEMPRON; break;
-           case 0x22: brandid = AMDM15_SEMPRON; break;
-           case 0x23: brandid = AMDM15_MOBILE_SEMPRON; break;
-           case 0x24: brandid = AMDM15_ATHLON_64_FX; break;
-           case 0x26: brandid = AMDM15_SEMPRON; break;
-           default:   brandid = AMDM15_UNKNOWN; break;
+          if (brandid >= 0x29 && brandid <= 0x3A)
+            brandid = AMDM15_DC_OPTERON;
+          else if (brandid >= 0x0C && brandid <= 0x17)
+            brandid = AMDM15_OPTERON;
+          else switch (brandid) {
+             case 0x04: brandid = AMDM15_ATHLON_64; break;
+             case 0x05: brandid = AMDM15_ATHLON_64_X2_DC; break;
+             case 0x08:
+             case 0x09: brandid = AMDM15_MOBILE_ATHLON_64; break;
+             case 0x0A:
+             case 0x0B: brandid = AMDM15_TURION_64; break;
+             case 0x18: brandid = AMDM15_ATHLON_64; break;
+             case 0x1D:
+             case 0x1E: brandid = AMDM15_MOBILE_ATHLON_XP; break;
+             case 0x20: brandid = AMDM15_ATHLON_XP; break;
+             case 0x21: brandid = AMDM15_MOBILE_SEMPRON; break;
+             case 0x22: brandid = AMDM15_SEMPRON; break;
+             case 0x23: brandid = AMDM15_MOBILE_SEMPRON; break;
+             case 0x24: brandid = AMDM15_ATHLON_64_FX; break;
+             case 0x26: brandid = AMDM15_SEMPRON; break;
+             default:   brandid = AMDM15_UNKNOWN; break;
+          }
+          model = 0;    /* Scrub the model number (irrelevant) */
         }
-        model = 0;    /* Scrub the model number (irrelevant) */
+	else {  /* DDR-2 */
+	  int socket, ccount, id, pwrlmt;
+	  int comb;
+	  
+	  socket = model & 0x3;
+	  x86cpuid(0x80000001U, &infos);
+	  id = (infos.regs.ebx & 0x3E00) >> 9;
+	  pwrlmt = ((infos.regs.ebx & 0x1C0) >> 5) | 
+	    ((infos.regs.ebx & 0x4000) >> 14);
+	  x86cpuid(0x80000008U, &infos);
+	  ccount = infos.regs.ecx & 0xFF;
+
+	  comb = (socket << 17) | (ccount << 9) | 
+	    (id << 4) | (pwrlmt); /* composite branding */
+	  switch (comb) {
+	    case 0x00012: brandid = AMDM15_ATHLON_64; break;
+	    case 0x00031: 
+	    case 0x00036: brandid = AMDM15_MOBILE_SEMPRON; break;
+	    case 0x00042: brandid = AMDM15_SEMPRON; break;
+	    case 0x0022C: brandid = AMDM15_TURION_64_X2_DC; break;
+	    case 0x00254: brandid = AMDM15_ATHLON_64_X2_DC; break;
+	    case 0x20202:
+	    case 0x20206:
+	    case 0x20212:
+	    case 0x20216:
+	    case 0x2021A:
+	    case 0x2021C:
+	    case 0x20242:
+	    case 0x20246:
+	    case 0x2024A:
+	    case 0x2024C: brandid = AMDM15_DC_OPTERON; break;
+	    case 0x2026E: brandid = AMDM15_ATHLON_64_FX; break;
+	    case 0x60015: brandid = AMDM15_SEMPRON; break;
+	    case 0x60026: brandid = AMDM15_ATHLON_64; break;
+	    case 0x60041:
+	    case 0x60042:
+	    case 0x60043:
+	    case 0x60044:
+	    case 0x60045:
+	    case 0x60048: brandid = AMDM15_ATHLON_64; break;
+	    case 0x60064:
+	    case 0x60068: brandid = AMDM15_SEMPRON; break;
+	    case 0x60216:
+	    case 0x6021A:
+	    case 0x6021C: brandid = AMDM15_DC_OPTERON; break;
+	    case 0x60233:
+	    case 0x60242:
+	    case 0x60246:
+	    case 0x60248:
+	    case 0x6024C: brandid = AMDM15_ATHLON_64_X2_DC; break;
+	    case 0x6025C: brandid = AMDM15_ATHLON_64_FX; break;
+	    default: brandid = AMDM15_UNKNOWN; break;
+	  }
+          model = 0;    /* Scrub the model number (irrelevant) */
+	}
       }
       else if (family == 16) {
         int code = 0;

@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.h,v 1.2 2008/07/18 14:04:33 stream Exp $
+ * $Id: x86id.h,v 1.3 2008/10/18 03:23:59 snikkel Exp $
  */
 
 #ifndef client_x86id_H
@@ -70,7 +70,8 @@ enum AmdModel15 {
    AMDM15_SEMPRON,                 /* AMD Sempron(tm) */
    AMDM15_ATHLON_64_FX,            /* AMD Athlon(tm) 64 FX */
    AMDM15_DC_OPTERON,              /* Dual Core AMD Opteron(tm) */
-   AMDM15_LAST_MODEL = AMDM15_DC_OPTERON
+   AMDM15_TURION_64_X2_DC,         /* AMD Turion(tm) 64 X2 Mobile Technology */
+   AMDM15_LAST_MODEL = AMDM15_TURION_64_X2_DC
 };
 
 enum AmdModel16 {

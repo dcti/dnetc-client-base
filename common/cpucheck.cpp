@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.127 2008/10/17 00:25:53 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.128 2008/10/18 03:23:59 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1019,7 +1019,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     {
       /* see "AMD Processor Recognition Application Note" available at
          http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/20734.pdf 
-         also http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf */
+         http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf 
+         http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/41788.pdf 
+         http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25481.pdf
+         http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/33610.pdf
+       */
       static struct cpuxref amdxref[]={
         { 0x0004000, 0xFFFFFF0, CPU_F_I486,    0, "486"      },
         { 0x0004030, 0xFFFFFF0, CPU_F_I486,    0, "486DX2"   },
@@ -1052,15 +1056,16 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x050F000, 0xFFFF000, CPU_F_I686,    9, "Opteron" },
         { 0x060F000, 0xFFFF000, CPU_F_I686,    9, "Athlon XP-M" },
         { 0x070F000, 0xFFFF000, CPU_F_I686,    9, "Athlon XP" },
-        { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core" }, /* #4067 */
+        { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Sempron" },
         { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron" },
         { 0x0A0F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 FX" },
         { 0x0B0F000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
-    /*  { 0x0C----- AMDM16_UNKNOWN  */
-        { 0x0D10000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
-        { 0x0E10000, 0xFFFF000, CPU_F_I686,    9, "Quad Core Opteron" },
-        { 0x0F10000, 0xFFFF000, CPU_F_I686,    9, "Embedded Opteron" },
-        { 0x1010000, 0xFFFF000, CPU_F_I686,    9, "Phenom" },
+        { 0x0C0F000, 0xFFFF000, CPU_F_I686,    9, "Turion 64 X2 Mobile Technology" },
+    /*  { 0x0D----- AMDM16_UNKNOWN  */
+        { 0x0E10000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
+        { 0x0F10000, 0xFFFF000, CPU_F_I686,    9, "Quad Core Opteron" },
+        { 0x1010000, 0xFFFF000, CPU_F_I686,    9, "Embedded Opteron" },
+        { 0x1110000, 0xFFFF000, CPU_F_I686,    9, "Phenom" },
         { 0x0000000,         0,          0,    0, NULL       }
       }; internalxref = &amdxref[0];
       if ((dettype & 0xFFFFFF0) == 0x0400)        /* no such AMD ident */
