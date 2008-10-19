@@ -13,7 +13,7 @@
  *
 */
 const char *os2inst_cpp(void) {
-return "@(#)$Id: os2inst.cpp,v 1.5 2007/10/22 16:48:31 jlawson Exp $"; }
+return "@(#)$Id: os2inst.cpp,v 1.6 2008/10/19 07:47:39 jlawson Exp $"; }
 
 // #define TRACE
 
@@ -78,7 +78,7 @@ int os2CliInstallClient(int do_the_install_without_feedback, const char *exename
     my_exename = strdup(buf);
   } else {
     /* this should *never* happen */
-    ConOutErr("Your path is longer than max_path.\nPlease report this bug at http://www.distributed.net/bugs\n");
+    ConOutErr("Your path is longer than max_path.\nPlease report this bug at http://bugs.distributed.net/\n");
     rc = -1;
     my_exename = execopy = NULL;
   } /* endif */

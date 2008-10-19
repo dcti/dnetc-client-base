@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.7 2007/10/22 16:48:31 jlawson Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.8 2008/10/19 07:47:39 jlawson Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -1947,7 +1947,7 @@ LRESULT CALLBACK __w16AboutBox( HWND dialog, UINT msg, WPARAM wParam, LPARAM lPa
 //      }
       if ((hwnd = GetDlgItem( dialog, 203 )) != NULL)
       {
-        SetWindowText( hwnd, "http://www.distributed.net/bugs/" );
+        SetWindowText( hwnd, "http://bugs.distributed.net/" );
         __w16Set_BS_OWNERDRAW(hwnd);
       }
       if ((hwnd = GetDlgItem( dialog, 204 )) != NULL)
@@ -5314,7 +5314,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
       }
       else if (wParam == WMCMD_HELP_BUG)
       {
-        URL = "http://www.distributed.net/bugs/";
+        URL = "http://bugs.distributed.net/";
       }
       else if (wParam == WMCMD_HELP_MAILTO)
       {

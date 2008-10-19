@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.76 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.77 2008/10/19 07:47:39 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -360,7 +360,7 @@ void GenerateManPage( void )
 		 ".Sp\n"
                  "If you believe you have found a bug, please submit it to the "
                  "distributed.net bug tracking database at "
-                 "http://www.distributed.net/bugs/\n"
+                 "http://bugs.distributed.net/\n"
                  ".sp 1\n" 
 		 "Please provide the entire version descriptor as displayed on client start "
                  "when doing so. For example, the client version this manpage was "

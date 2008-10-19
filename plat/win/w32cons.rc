@@ -6,7 +6,7 @@
  * This resource file is shared by the client and screensaver.
  * (the client can also run as a screensaver)
  *
- * Revision $Id: w32cons.rc,v 1.6 2007/10/22 16:48:32 jlawson Exp $
+ * Revision $Id: w32cons.rc,v 1.7 2008/10/19 07:47:39 jlawson Exp $
 */
 
 #define DNETC_EXE_ICO "plat\\win\\w32cons.ico" //dnet2.ico,w32cons.ico
@@ -101,7 +101,7 @@ FONT 8, "Helv"
  CONTROL "Please send requests for assistance and support to", -1, "STATIC", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 4, 64, 167, 8
  CONTROL "help@distributed.net", 204, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP, 173, 64, 75, 8
  CONTROL "distributed.net bug tracking pages are at", -1, "STATIC", SS_RIGHT | WS_CHILD | WS_VISIBLE | WS_GROUP, 4, 73, 131, 8
- CONTROL "http://www.distributed.net/bugs/", 203, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP, 137, 73, 110, 8
+ CONTROL "http://bugs.distributed.net/", 203, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_GROUP, 137, 73, 110, 8
  CONTROL "Please provide the entire version descriptor when making reports.", -1, "STATIC", SS_CENTER | WS_CHILD | WS_VISIBLE | WS_GROUP, 8, 82, 234, 8
  CONTROL "", -1, "BUTTON", BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 6, 0, 237, 38
 }
