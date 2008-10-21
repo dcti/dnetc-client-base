@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.93 2008/03/09 13:36:09 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.94 2008/10/21 04:08:35 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -556,7 +556,7 @@ long SelfTest( unsigned int contest )
       {
         Log( "%s: WARNING WARNING WARNING: %ld Tests FAILED!!!\n", 
           contname, (((long)TEST_CASE_COUNT) - successes) );
-        successes=-successes;
+        successes = -1L;
       }
     }
     ClientEventSyncPost( CLIEVENT_SELFTEST_FINISHED, &successes, sizeof(successes) );
