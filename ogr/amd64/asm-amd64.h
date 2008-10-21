@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_AMD64_H__
-#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.5 2008/03/09 13:37:10 kakace Exp $"
+#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.6 2008/10/21 03:39:07 jlawson Exp $"
 
 #if defined(__ICC)
   static inline int __CNTLZ__(register SCALAR i)
@@ -36,14 +36,14 @@
   static __inline__ int __CNTLZ__(register SCALAR input)
   {
      register unsigned int result;
-     __asm__("notl %1\n\t"     \
-             "movl $33,%0\n\t" \
-             "bsrl %1,%1\n\t"  \
+     __asm__("notl %k1\n\t"     \
+             "movl $33,%k0\n\t" \
+             "bsrl %k1,%k1\n\t"  \
              "jz   0f\n\t"     \
-             "subl %1,%0\n\t"  \
-             "decl %0\n\t"     \
+             "subl %k1,%k0\n\t"  \
+             "decl %k0\n\t"     \
              "0:"              \
-             :"=r"(result), "=r"(input) : "1"(input) : "cc" );
+             :"=R"(result), "=R"(input) : "1"(input) : "cc" );
     return result;
   }
   #define __CNTLZ(x) __CNTLZ__(x)
