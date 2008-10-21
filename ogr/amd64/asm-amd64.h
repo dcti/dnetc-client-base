@@ -5,9 +5,13 @@
 */
 
 #ifndef __ASM_AMD64_H__
-#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.6 2008/10/21 03:39:07 jlawson Exp $"
+#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.7 2008/10/21 04:17:55 jlawson Exp $"
+
 
 #if defined(__ICC)
+  #if (SCALAR_BITS != 32)
+  #error Only supported for 32-bit SCALAR typedef.
+  #endif
   static inline int __CNTLZ__(register SCALAR i)
   {
     _asm mov eax,i
@@ -21,6 +25,9 @@
   #define __CNTLZ(x) __CNTLZ__(x)
 
 #elif defined(__WATCOMC__)
+  #if (SCALAR_BITS != 32)
+  #error Only supported for 32-bit SCALAR typedef.
+  #endif
 
   int __CNTLZ__(SCALAR);
   #pragma aux __CNTLZ__ =  \
@@ -33,23 +40,39 @@
 
 #elif defined(__GNUC__)
 
+#if (SCALAR_BITS == 32)
   static __inline__ int __CNTLZ__(register SCALAR input)
   {
      register unsigned int result;
      __asm__("notl %k1\n\t"     \
-             "movl $33,%k0\n\t" \
+             "movl $32,%k0\n\t" \
              "bsrl %k1,%k1\n\t"  \
-             "jz   0f\n\t"     \
              "subl %k1,%k0\n\t"  \
-             "decl %k0\n\t"     \
-             "0:"              \
              :"=R"(result), "=R"(input) : "1"(input) : "cc" );
     return result;
   }
   #define __CNTLZ(x) __CNTLZ__(x)
+#elif (SCALAR_BITS == 64)
+  static __inline__ int __CNTLZ__(register SCALAR input)
+  {
+     register unsigned int result;
+     __asm__("notq %q1\n\t"     \
+             "movq $64,%q0\n\t" \
+             "bsrq %q1,%q1\n\t"  \
+             "subq %q1,%q0\n\t"  \
+             :"=Q"(result), "=Q"(input) : "1"(input) : "cc" );
+    return result;
+  }
+  #define __CNTLZ(x) __CNTLZ__(x)
+#else
+#error Unsupport bitsize for SCALAR typedef.
+#endif
 
 #elif defined(_MSC_VER)
 
+  #if (SCALAR_BITS != 32)
+  #error Only supported for 32-bit SCALAR typedef.
+  #endif
   static __forceinline int __CNTLZ__(register SCALAR i)
   {
       __asm {
