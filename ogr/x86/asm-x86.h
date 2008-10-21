@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.10 2008/08/30 12:11:26 stream Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.11 2008/10/21 04:22:36 jlawson Exp $"
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)
@@ -62,7 +62,8 @@
     #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
 
   #endif  /* compiler */
-#else   /*------------------- assume SCALAR_BITS == 64 ---------------------*/
+#elif (SCALAR_BITS == 64)
+  /*------------------- assume SCALAR_BITS == 64 ---------------------*/
   #if defined(__GNUC__)
     static __inline__ int __CNTLZ__(register SCALAR input)
     {
@@ -79,6 +80,8 @@
     }
     #define __CNTLZ(x) __CNTLZ__(x)
   #endif  /* compiler */
+#else
+#error Unsupported SCALAR_BITS size.
 #endif  /* SCALAR_BITS */
 
 #endif  /* __ASM_X86__ */

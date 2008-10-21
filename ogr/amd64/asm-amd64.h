@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_AMD64_H__
-#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.7 2008/10/21 04:17:55 jlawson Exp $"
+#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.8 2008/10/21 04:22:37 jlawson Exp $"
 
 
 #if defined(__ICC)
@@ -55,7 +55,7 @@
 #elif (SCALAR_BITS == 64)
   static __inline__ int __CNTLZ__(register SCALAR input)
   {
-     register unsigned int result;
+     register SCALAR result;
      __asm__("notq %q1\n\t"     \
              "movq $64,%q0\n\t" \
              "bsrq %q1,%q1\n\t"  \
