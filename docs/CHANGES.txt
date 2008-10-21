@@ -23,15 +23,21 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.24 2008/09/09 18:47:55 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.25 2008/10/21 17:48:08 snikkel Exp $
 ==========================================================================
+
+2.9100
+------
+2.9101-507  new: all: Added OGR-NG contest 
+            chg: x86: RC5-72 core selection (#4072)
+            fix: x86: AMD CPU identification (#4073 and others)
+            fix: amd64: Fix bug preventing core pre-selection
+            imp: amd64: Fix issue preventing multi-processor client
+            chg: x86: GO2a core selected as default for P2
+
 
 2.9000
 ------
-2.90**-***  new: all: Added OGR-NG cores
-
-            chg: x86: RC5-72 core selection (#4072)
-
 2.9016-506  new: x86: added new RC5-72 core (GO 2-pipe alt), selected for
                       P4 and Core Duo CPUs.
             fix: cellbe: Memory corruption on heavy background activity
