@@ -23,13 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.14.2.131 2008/09/09 18:45:44 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.14.2.132 2008/10/22 01:24:14 piru Exp $
 ==========================================================================
 
 2.9000
 ------
 
             chg: x86: RC5-72 core selection (#4072)
+            imp: ppc: Recognize PPC5200 (603e based SoC chip)
 
 2.9016-506  new: x86: added new RC5-72 core (GO 2-pipe alt), selected for
                       P4 and Core Duo CPUs.

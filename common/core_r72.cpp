@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.1.2.56 2008/07/17 13:34:30 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.1.2.57 2008/10/22 01:24:13 piru Exp $"; }
 
 //#define TRACE
 
@@ -333,6 +333,8 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x0009: cindex = 6; break; // 604e           == MH 1-pipe 604e
         case 0x000A: cindex = 6; break; // 604ev          == MH 1-pipe 604e
         case 0x7000: cindex = 5; break; // 750FX          == MH 1-pipe
+        case 0x8081: cindex = 5; break; // 5200 (G2)      == MH 1-pipe
+        case 0x8082: cindex = 5; break; // 5200-LE (G2)   == MH 1-pipe
         /* non-altivec defaults, if no OS support */
         case 0x000C: cindex = 0; break; // 7400 (G4)      == MH 2-pipe
         case 0x8000: cindex = 2; break; // 7450 (G4+)     == KKS 604e
