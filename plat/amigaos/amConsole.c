@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amConsole.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: amConsole.c,v 1.4 2008/10/22 01:31:30 piru Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -52,6 +52,8 @@ static struct {
    BPTR NewConsole;
    BPTR OldInput;
    BPTR OldOutput;
+   BPTR OldStdInput;
+   BPTR OldStdOutput;
    #endif
 } ConStatics;
 
@@ -61,11 +63,28 @@ extern struct Library *DnetcBase;
 
 extern APTR *__fd;
 #define STDFILEDES(n) *((BPTR *)(((ULONG)__fd[n])+36))	// libc internal
+#define GET_STDFILEDES(n) STDFILEDES(n)
+#define SET_STDFILEDES(n,fh) STDFILEDES(n) = fh
+
+#elif defined(__MORPHOS__)
+
+__BEGIN_DECLS
+extern BPTR __get_handle(int fd);			// libnix internal
+extern BPTR __set_handle(int fd, BPTR fh);		// libnix internal
+__END_DECLS
+#define GET_STDFILEDES(n) __get_handle(n)
+#define SET_STDFILEDES(n,fh) __set_handle(n,fh)
+#ifndef NO_GUI
+/* default console for WB startup (libnix) */
+char __stdiowin[] = "NIL:";
+#endif
 
 #else
 
 extern BPTR *__stdfiledes;
 #define STDFILEDES(n) __stdfiledes[n]			// libnix internal
+#define GET_STDFILEDES(n) STDFILEDES(n)
+#define SET_STDFILEDES(n,fh) STDFILEDES(n) = fh
 #ifndef NO_GUI
 /* default console for WB startup (libnix) */
 char __stdiowin[] = "NIL:";
@@ -105,7 +124,10 @@ BPTR amigaOpenNewConsole(char *conname)
       if (con) {
          ConStatics.OldInput = SelectInput(con);
          ConStatics.OldOutput = SelectOutput(con);
-         STDFILEDES(STDIN_FILENO) = STDFILEDES(STDOUT_FILENO) = con;
+         ConStatics.OldStdInput = GET_STDFILEDES(STDIN_FILENO);
+         ConStatics.OldStdOutput = GET_STDFILEDES(STDOUT_FILENO);
+         SET_STDFILEDES(STDIN_FILENO, con);
+         SET_STDFILEDES(STDOUT_FILENO, con);
          ConStatics.NewConsole = con;
          amigaInitializeConsole(0,0);
       }
@@ -120,8 +142,8 @@ void amigaCloseNewConsole(void)
       Close(ConStatics.NewConsole);
       SelectInput(ConStatics.OldInput);
       SelectOutput(ConStatics.OldOutput);
-      STDFILEDES(STDIN_FILENO) = ConStatics.OldInput;
-      STDFILEDES(STDOUT_FILENO) = ConStatics.OldOutput;
+      SET_STDFILEDES(STDIN_FILENO, ConStatics.OldStdInput);
+      SET_STDFILEDES(STDOUT_FILENO, ConStatics.OldStdOutput);
       amigaInitializeConsole(0,0);
       ConStatics.NewConsole = NULL;
    }
