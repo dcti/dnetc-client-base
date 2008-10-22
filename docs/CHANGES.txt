@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.25 2008/10/21 17:48:08 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.26 2008/10/22 01:22:56 piru Exp $
 ==========================================================================
 
 2.9100
@@ -34,6 +34,7 @@ Version change log: $Id: CHANGES.txt,v 1.25 2008/10/21 17:48:08 snikkel Exp $
             fix: amd64: Fix bug preventing core pre-selection
             imp: amd64: Fix issue preventing multi-processor client
             chg: x86: GO2a core selected as default for P2
+            imp: ppc: Recognize PPC5200 (603e based SoC chip)
 
 
 2.9000
