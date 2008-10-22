@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.128 2008/10/18 03:23:59 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.129 2008/10/22 01:16:57 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -465,6 +465,8 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x8003, "7447A (G4)"          },
       {    0x8004, "7448 (G4)"           },
       {    0x800C, "7410 (G4)"           },
+      {    0x8081, "5200 (G2)"           },
+      {    0x8082, "5200 (G2-LE)"        },
       { NONPVR(1), "620"                 }, //not PVR based
       { NONPVR(2), "630"                 }, //not PVR based
       { NONPVR(3), "A35"                 }, //not PVR based
@@ -785,6 +787,8 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x0039:   // 970 (G5)
       case 0x003C:   // 970FX (G5)
       case 0x0044:   // 970MP (G5)
+      case 0x8081:   // 5200 (G2)
+      case 0x8082:   // 5200 (G2-LE)
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0
