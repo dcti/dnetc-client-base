@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.11 2008/04/11 06:44:14 jlawson Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.12 2008/10/24 08:34:01 stream Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -134,6 +134,8 @@ return "@(#)$Id: netbase.cpp,v 1.11 2008/04/11 06:44:14 jlawson Exp $"; }
   #define MSG_PEEK 0
 #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   /* nothing else needed */
+#elif (CLIENT_OS == OS_DOS)
+  /* nothing must be included */
 #else
   #include <sys/socket.h>
   #include <arpa/inet.h>
