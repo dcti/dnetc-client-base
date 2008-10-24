@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.12 2008/10/24 08:34:01 stream Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.13 2008/10/24 13:59:04 stream Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -662,9 +662,8 @@ static int ___read_errnos(SOCKET fd, int ps_errnum,
       TRACE_ERRMGMT((0,"Errno() => %d\n", *syserr ));
       ps_errnum = ps_stdsyserr;
       #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
-      *syserr = sock_errno();
-      TRACE_ERRMGMT((0,"sock_errno() => %d\n", *syserr ));
-      ps_errnum = ps_stdsyserr;
+      *neterr = sock_errno();
+      TRACE_ERRMGMT((0,"sock_errno() => %d\n", *neterr ));
       #else
       *syserr = errno;
       TRACE_ERRMGMT((0,"(net) errno => %d\n", *syserr ));
@@ -817,6 +816,62 @@ static const char *internal_net_strerror(const char *ctx, int ps_errnum, SOCKET 
       msgbuf[sizeof(msgbuf)-1] = '\0';
       got_message = 1;
     }
+#elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
+    switch (neterr)
+    {
+      case SOCEPERM:           msg = "Not owner"; break;
+      case SOCESRCH:           msg = "No such process"; break;
+      case SOCEINTR:           msg = "Interrupted system call"; break;
+      case SOCENXIO:           msg = "No such device or address"; break;
+      case SOCEBADF:           msg = "Bad file number"; break;
+      case SOCEACCES:          msg = "Permission denied"; break;
+      case SOCEFAULT:          msg = "Bad address"; break;
+      case SOCEINVAL:          msg = "Invalid argument"; break;
+      case SOCEMFILE:          msg = "Too many open files"; break;
+      case SOCEPIPE:           msg = "Broken pipe"; break;
+      case SOCEWOULDBLOCK:     msg = "Operation would block"; break;
+      case SOCEINPROGRESS:     msg = "Operation now in progress"; break;
+      case SOCEALREADY:        msg = "Operation already in progress"; break;
+      case SOCENOTSOCK:        msg = "Socket operation on non-socket"; break;
+      case SOCEDESTADDRREQ:    msg = "Destination address required"; break;
+      case SOCEMSGSIZE:        msg = "Message too long"; break;
+      case SOCEPROTOTYPE:      msg = "Protocol wrong type for socket"; break;
+      case SOCENOPROTOOPT:     msg = "Protocol not available"; break;
+      case SOCEPROTONOSUPPORT: msg = "Protocol not supported"; break;
+      case SOCESOCKTNOSUPPORT: msg = "Socket type not supported"; break;
+      case SOCEOPNOTSUPP:      msg = "Operation not supported on socket"; break;
+      case SOCEPFNOSUPPORT:    msg = "Protocol family not supported"; break;
+      case SOCEAFNOSUPPORT:    msg = "Address family not supported by protocol family"; break;
+      case SOCEADDRINUSE:      msg = "Address already in use"; break;
+      case SOCEADDRNOTAVAIL:   msg = "Can't assign requested address"; break;
+      case SOCENETDOWN:        msg = "Network is down"; break;
+      case SOCENETUNREACH:     msg = "Network is unreachable"; break;
+      case SOCENETRESET:       msg = "Network dropped connection on reset"; break;
+      case SOCECONNABORTED:    msg = "Software caused connection abort"; break;
+      case SOCECONNRESET:      msg = "Connection reset by peer"; break;
+      case SOCENOBUFS:         msg = "No buffer space available"; break;
+      case SOCEISCONN:         msg = "Socket is already connected"; break;
+      case SOCENOTCONN:        msg = "Socket is not connected"; break;
+      case SOCESHUTDOWN:       msg = "Can't send after socket shutdown"; break;
+      case SOCETOOMANYREFS:    msg = "Too many references: can't splice"; break;
+      case SOCETIMEDOUT:       msg = "Connection timed out"; break;
+      case SOCECONNREFUSED:    msg = "Connection refused"; break;
+      case SOCELOOP:           msg = "Too many levels of symbolic links"; break;
+      case SOCENAMETOOLONG:    msg = "File name too long"; break;
+      case SOCEHOSTDOWN:       msg = "Host is down"; break;
+      case SOCEHOSTUNREACH:    msg = "No route to host"; break;
+      case SOCENOTEMPTY:       msg = "Directory not empty"; break;
+      case SOCEOS2ERR:         msg = "OS/2 Error"; break;
+      default:                 msg = NULL;
+    }
+    if (!msg)
+    {
+      sprintf(scratch, "error %d: (no description available)", neterr);
+      msg = scratch;
+    }
+    strncpy( &msgbuf[msgbuflen], msg, (sizeof(msgbuf)-msgbuflen)-1 );
+    msgbuf[sizeof(msgbuf)-1] = '\0';
+    got_message = 1;
 #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     msg = (const char *)0;
     switch (neterr)
@@ -931,12 +986,16 @@ static int net_match_errno(register int which_ps_err)
     /* WSAEINPROGRESS has a completely different meaning from that on BSD */
   }
   if (which_ps_err == ps_EINTR) return (WSAGetLastError() == WSAEINTR);
+  #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
+  {
+    int err = sock_errno();
+    if (which_ps_err == ps_EINTR)       return (err == SOCEINTR);
+    if (which_ps_err == ps_EINPROGRESS) return (err == SOCEINPROGRESS);
+  }
   #else
   {
     #if (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     int err = Errno();
-    #elif (CLIENT_OS == OS_OS2) && !defined(__EMX__)
-    int err = sock_errno();
     #else
     int err = errno;
     #endif
