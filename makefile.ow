@@ -1,0 +1,173 @@
+# simple open watcom makefile for os/2 and dos clients
+# default mode is os/2. to build dos, run "wmake dos=1"
+
+# client source tree may be anywhere (use "."  for current dir)
+base     = ..\client_head
+
+# enable/disable projects
+RC5_72   = 1
+OGR_P2   = 0
+OGR_NG   = 1
+
+!ifdef dos
+os_cpp     = $(base)\plat\dos
+os_inc     = $(base);fake_dos
+output     = dnetcdos.com
+os_obj     = obj_dos\
+os_as      = 
+os_cc      = -bt=DOS -d__MSDOS__ -dDYN_TIMESLICE
+os_prelink = system pmodew
+os_link    = opt stack=64k
+OS_MODULES = 		&
+	cdoscon.obj	&
+	cdosemu.obj	&
+	cdosidle.obj	&
+	cdostime.obj
+!else
+# it's possible to build with external tcp/ip toolkit and older watcom.
+# disable this for latest OW.
+mpts       = Q:\WC\H\MPTN
+mpts_lib   = F:\MPTN\LIB
+output     = dnetc.exe
+os_cpp     = $(base)\plat\os2
+os_inc     = $(base)\plat\os2;$(mpts)
+os_obj     = obj_os2\
+os_as      =
+os_cc      = -bt=OS2 -bm -dLURK=1
+os_prelink = deb all system os2v2
+os_link    = lib $(mpts_lib)\so32dll,$(mpts_lib)\tcp32dll import DOSQPROCSTATUS DOSCALLS.154 opt symf
+OS_MODULES =		&
+	lurk.obj	&
+	os2inst.obj
+!endif
+
+.cpp: .;$(base)\common;$(base)\plat\x86;$(base)\rc5-72;$(base)\rc5-72\ansi;$(base)\ogr\x86;$(base)\ogr\ansi;$(os_cpp)
+.obj: $(os_obj)
+.asm: $(base)\plat\x86;$(base)\rc5-72\x86;$(base)\ogr\x86
+
+inc = .;$(base)\common;$(base)\rc5-72;$(base)\ogr;$(base)\plat\x86;$(os_inc)
+
+cc   = wpp386 -d1 -w8 -zc -zm -fo=$(os_obj) -s -zp1 -i=$(inc) -zq $(os_cc)
+link = wlink $(os_prelink) file {$<} name $@ opt case,map,elim $(os_link) option descr 'distributed.net client'
+
+!if $(RC5_72)
+!inject -dHAVE_RC5_72_CORES=1 cc
+!endif
+
+!if $(OGR_P2)
+!inject -dHAVE_OGR_PASS2=1 cc
+!endif
+
+!if $(OGR_NG)
+!inject -dHAVE_OGR_CORES=1 cc
+!endif
+
+
+COMMON  = &
+	base64.obj	&
+	bench.obj	&
+	buffbase.obj	&
+	buffpriv.obj	&
+	buffupd.obj	&
+	checkpt.obj	&
+	clicdata.obj	&
+	client.obj	&
+	clievent.obj	&
+	cliident.obj	&
+	clirun.obj	&
+	clitime.obj	&
+	cmdline.obj	&
+	confmenu.obj	&
+	confopt.obj	&
+	confrwv.obj	&
+	coremem.obj	&
+	cpucheck.obj	&
+	console.obj	&
+	disphelp.obj	&
+	iniread.obj	&
+	logstuff.obj	&
+	mail.obj	&
+	modereq.obj	&
+	netbase.obj	&
+	netconn.obj	&
+	pathwork.obj	&
+	pollsys.obj	&
+	probfill.obj	&
+	problem.obj	&
+	probman.obj	&
+	projdata.obj	&
+	random.obj	&
+	scram.obj	&
+	selcore.obj	&
+	selftest.obj	&
+	setprio.obj	&
+	stress.obj	&
+	triggers.obj	&
+	util.obj	&
+			&
+	x86id.obj	&
+	x86cpuid.obj	&
+	x86htcount.obj	&
+	x86rdtsc.obj	&
+			&
+!if $(OGR_NG) || $(OGR_P2)
+	ogr_sup.obj	&
+!endif
+!if $(OGR_NG)
+	core_ogr_ng.obj	&
+	ogrng_init.obj	&
+	ogrng_dat.obj	&
+			&
+	ogrng-32.obj	&
+	ogrng-a.obj	&
+	ogrng-a-asm-rt.obj&
+!endif
+!if $(OGR_P2)
+	core_ogr.obj	&
+	ogr-a.obj	&
+	ogr-b.obj	&
+	ogr-c.obj	&
+	ogr-d.obj	&
+	ogr-e.obj	&
+	ogr_dat.obj	&
+			&
+	ogr-asm1-rt.obj	&
+	ogr-asm2-rt-mmx.obj&
+	ogr-asm2-rt-mmx-amd.obj&
+!endif
+!if $(RC5_72)
+	core_r72.obj	&
+			&
+	r72-dg2.obj	&
+	r72-dg3.obj	&
+	r72-dg3a.obj	&
+	r72-go2.obj	&
+	r72-go2a.obj	&
+	r72-ses1.obj	&
+	r72-ses2.obj	&
+	r72-sgp3.obj	&
+	r72-ss2.obj	&
+	r72-ma4.obj	&
+	r72-mmx.obj	&
+!endif
+
+
+$(output): $(COMMON) $(OS_MODULES) # footrace.obj
+	$(link)
+
+.cpp.obj: .AUTODEPEND
+	@echo         Compile: $<
+	$(cc) -os $<
+
+ogr-a.obj: ogr-a.cpp .AUTODEPEND
+	$(cc) -oltb $<
+
+ogr-b.obj: ogr-b.cpp .AUTODEPEND
+	$(cc) -oltb $<
+
+ogrng-32.obj: ogrng-32.cpp .AUTODEPEND
+	$(cc) -oltb $<
+
+.asm.obj: .AUTODEPEND
+	@echo         Assembly: $<
+	@nasm $(os_as) -f obj -O5 -D__OMF__ -s -o $(os_obj)$^. -l foo.lst $[@ 
