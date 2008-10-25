@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.130 2008/10/25 19:43:12 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.131 2008/10/25 19:47:51 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1126,7 +1126,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         /* Banias - 0.13u */
         { 0x0406090, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Banias)" },
         { 0x0606090, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium III M (Banias)" },
-        { 0x1606090, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium III M (Banias)" }, (#4075)
+        { 0x1606090, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium III M (Banias)" }, /* (#4075) */
         { 0x0706090, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron M (Banias)" },
         /* Cascades - 0.18u */
         { 0x01060A0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron (Cascades)" },
