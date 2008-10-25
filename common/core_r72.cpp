@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.11 2008/10/22 01:16:57 piru Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.12 2008/10/25 19:43:12 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -429,6 +429,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x11: cindex = 4; break; // Cyrix Model 6  == DG 3-pipe alt (#3809)
 //        case 0x12: cindex = 7; break; // Intel Core 2   == SGP 3-pipe (#3969)
           case 0x12: cindex = 10; break; // Intel Core 2  == GO 2-pipe-a (untested!)
+          case 0x13: cindex = 7; break; // Other Pentium 4 == SGP 3-pipe
           default:   cindex =-1; break; // no default
         }
         #else
@@ -526,8 +527,10 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 20: cindex = 5; break; // UltraSPARC-III   == AnBe 2-pipe
         case 21: cindex = 5; break; // UltraSPARC-IIIi  == AnBe 2-pipe
         case 22: cindex = 5; break; // UltraSPARC-IV    == AnBe 2-pipe
-        case 23: cindex = 3; break; // SPARC64-IV       == KKS 2-pipe
-        case 24: cindex = 4; break; // UltraSPARC-T1    == AnBe 1-pipe
+        case 23: cindex = 4; break; // UltraSPARC-T1/T2 == AnBe 1-pipe
+        case 24: cindex = 5; break; // SPARC64-IV       == AnBe 2-pipe (#3225)
+        case 25: cindex = 3; break; // SPARC64-V        == KKS 2-pipe (#3225)
+        case 26: cindex =-1; break; // SPARC64-VI       == no default
         default: cindex =-1; break; // no default
       }
     }

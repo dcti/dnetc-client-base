@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.129 2008/10/22 01:16:57 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.130 2008/10/25 19:43:12 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1126,6 +1126,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         /* Banias - 0.13u */
         { 0x0406090, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Banias)" },
         { 0x0606090, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium III M (Banias)" },
+        { 0x1606090, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium III M (Banias)" }, (#4075)
         { 0x0706090, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron M (Banias)" },
         /* Cascades - 0.18u */
         { 0x01060A0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron (Cascades)" },
@@ -1139,20 +1140,20 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         /* Dothan - 0.09u */
         { 0x12060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Celeron M (Dothan)" },
         { 0x16060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium M (Dothan)" },
-        /* Some P4-class CPUs wants RC5-72 core #7, they're marked as type 4 */
+        /* Some P4-class CPUs wants RC5-72 core #7, they're marked as type 13 */
         /* Pentium 4 models 0/1 : 180 nm */
-        { 0x080F000, 0xFFFFFF0, CPU_F_I686,    4, "Pentium 4 (Willamette)" },
+        { 0x080F000, 0xFFFFFF0, CPU_F_I686, 0x13, "Pentium 4 (Willamette)" },
         { 0x0E0F000, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Foster)" },
-        { 0x080F010, 0xFFFFFF0, CPU_F_I686,    4, "Pentium 4 (Willamette)" },
+        { 0x080F010, 0xFFFFFF0, CPU_F_I686, 0x13, "Pentium 4 (Willamette)" },
         { 0x0A0F010, 0xFFFFFF0, CPU_F_I686, 0x0B, "Celeron 4 (Willamette)" },
         { 0x0B0F010, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Foster)" },
         { 0x0E0F013, 0xFFFFFFF, CPU_F_I686, 0x0B, "Pentium 4 M" },
         { 0x0E0F010, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Foster)" },
         /* Pentium 4 model 2 : 130 nm */
         { 0x080F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
-        { 0x090F020, 0xFFFFFF0, CPU_F_I686,    4, "Pentium 4 (Northwood)" },
-        { 0x0A0F020, 0xFFFFFF0, CPU_F_I686,    4, "Celeron 4 (Northwood)" },
-        { 0x0B0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Prestonia)" },
+        { 0x090F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Pentium 4 (Northwood)" },
+        { 0x0A0F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Celeron 4 (Northwood)" },
+        { 0x0B0F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Xeon (Prestonia)" },
         { 0x0C0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon MP (Gallatin)" },
         { 0x0E0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Northwood)" },
         { 0x0F0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Mobile Celeron 4 (Northwood)" },
@@ -1163,9 +1164,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         /* Pentium 4 model 6 :  65 nm */
         { 0x000F060, 0x00FFFF0, CPU_F_I686, 0x0B, "Pentium 4/D/4-M/Celeron/Xeon" },
         { 0x00060E0, 0x00FFFF0, CPU_F_I686, 0x0D, "Core" },
-        { 0x00060F0, 0x00FFFF0, CPU_F_I686, 0x12, "Core 2" },
+        { 0x00060F0, 0x00FFFF0, CPU_F_I686, 0x12, "Core 2/Xeon" },
         { 0x0006160, 0x00FFFF0, CPU_F_I686, 0xFF, "Celeron" },              /* 65 nm */
-        { 0x0006170, 0xFFFFFF0, CPU_F_I686, 0x12, "Core 2 Extreme/Xeon" },  /* 45 nm */
+        { 0x0006170, 0xFFFFFF0, CPU_F_I686, 0x12, "Core 2/Extreme/Xeon" },  /* 45 nm */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
@@ -1776,9 +1777,11 @@ static long __GetRawProcessorID(const char **cpuname)
   {21, "UltraSPARC-IIIi+", "UltraSPARC-IIIi+"}, /* unconfirmed, .09u, adds cache? */
   {22, "UltraSPARC-IV", "UltraSPARC-IV"},
   {22, "UltraSPARC-IV+", "UltraSPARC-IV+"}, /* unconfirmed, .09u adds 2MB L2 cache, external L3 doubled to 32MB */
-  {23, "SPARC64-IV", "SPARC64-IV"},
-  {24, "UltraSPARC-T1", "UltraSPARC-T1"},
-  {24, "UltraSPARC-T2", "UltraSPARC-T2"}
+  {23, "UltraSPARC-T1", "UltraSPARC-T1"},
+  {23, "UltraSPARC-T2", "UltraSPARC-T2"}, /* unconfirmed */
+  {24, "SPARC64-IV", "SPARC64-IV"},
+  {25, "SPARC64-V", "SPARC64-V"},
+  {26, "SPARC64-VI", "SPARC64-VI"}, /* untested, no data */
   };
 
   detectedtype = -1L;  /* detection supported, but failed */
