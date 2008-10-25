@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.313 2008/10/18 14:01:30 snikkel Exp $
+# @(#)$Id: configure,v 1.314 2008/10/25 19:45:09 snikkel Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2003,6 +2003,17 @@ case "$1" in
         TARGET_TARBALL="solaris-x86"
         add_sources "solaris" "x86"
         ;;
+
+    *solaris-amd64)	# gcc
+	TARGET_CC="gcc"
+	generate_gcc_opts "amd64" "solaris"
+	TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
+	TARGET_LDFLAGS="-m64"
+	TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
+	TARGET_DOCFILES="docs/readme._ix"
+	TARGET_TARBALL="solaris10-amd64"
+	add_sources "solaris" "amd64"
+	;;
 
 ###### PowerPC/POWER
 
