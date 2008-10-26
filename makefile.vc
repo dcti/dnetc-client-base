@@ -1,7 +1,7 @@
-# distributed.net client makefile for VC
+# distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.92 2008/08/30 12:23:37 stream Exp $
+# $Id: makefile.vc,v 1.93 2008/10/26 19:14:22 jlawson Exp $
 #
 
 BASENAME = dnetc
@@ -14,13 +14,13 @@ PLATSRCPATH = plat/win
 
 HAVE_RC5_72_CORES=1
 HAVE_OGR_CORES=1
-HAVE_OGR_PASS2=1
+#HAVE_OGR_PASS2=1
 
 # --------------------------------------------
 
 !ifndef PROCESSOR_ARCHITECTURE
 PROCESSOR_ARCHITECTURE = x86
-!endif # default to x86 (assume building on win9x)
+!endif # default to x86
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 OPTS_CC_CPU = -DNTALPHA 
@@ -289,6 +289,7 @@ OGRNG_OBJS =
 #OGR_OBJS = ???
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OGRNG_OBJS =                         \
+        $(OUTPUTPATH)/ogr_sup.obj \
         $(OUTPUTPATH)/ogrng-32.obj   \
         $(OUTPUTPATH)/ogrng-a.obj    \
         $(OUTPUTPATH)/ogrng-a-asm-rt.obj \
@@ -305,7 +306,7 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES -Zm500
 
 # --------------------------------- OGR (common) ----------------------------
 
-!if defined(HAVE_OGR_PASS2) || defined(HAVE_OGR_PASS2)
+!if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !endif
 
