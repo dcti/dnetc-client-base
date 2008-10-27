@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.186 2008/03/08 20:10:29 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.187 2008/10/27 03:08:57 piru Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1113,9 +1113,15 @@ static int Run_OGR_NG( InternalProblem *thisprob, /* already validated */
   int r, nodes;
 
   nodes = (int)(*iterationsP);
+
+  SAVE_CLIENT_OS_CONTEXT
+
   r = (thisprob->pub_data.unit_func.ogr)->cycle(
                           thisprob->priv_data.core_membuffer,
                           &nodes, 0);
+
+  RESTORE_CLIENT_OS_CONTEXT
+
   /*
    * We'll calculate and return true number of core iterations for timesling.
    * This number may be NOT equal to number of actually processed OGR nodes,
