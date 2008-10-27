@@ -1,6 +1,6 @@
 #define VERSION		1
-#define REVISION	10
-#define DATE		"14.5.2005"
-#define VERS		"dnetcgui 1.10"
-#define VSTRING		"dnetcgui 1.10 (14.5.2005)\r\n"
-#define VERSTAG		"\0$VER: dnetcgui 1.10 (14.5.2005)"
+#define REVISION	11
+#define DATE		"27.10.2008"
+#define VERS		"dnetcgui 1.11"
+#define VSTRING		"dnetcgui 1.11 (27.10.2008)\r\n"
+#define VERSTAG		"\0$VER: dnetcgui 1.11 (27.10.2008)"
