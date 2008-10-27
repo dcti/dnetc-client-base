@@ -1,5 +1,5 @@
 #
-# RC5-72 Dual key core - MPC604e (MacOS ABI)
+# RC5-72 Dual key core - MPC604e (System V.4 ABI)
 # TAB = 4
 #
 # Written by Didier Levet (kakace@wanadoo.fr)
@@ -38,9 +38,12 @@
 #		8 keys at once, all keys (within such "block") having the same mid
 #		and lo values).
 #
-# $Id: r72-KKS604e.gas.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
+# $Id: r72-KKS604e.gas.s,v 1.4 2008/10/27 19:45:10 oliver Exp $
 #
 # $Log: r72-KKS604e.gas.s,v $
+# Revision 1.4  2008/10/27 19:45:10  oliver
+# Switch ABI to System V.4 (as MacOS uses separate files anyway)
+#
 # Revision 1.3  2007/10/22 16:48:35  jlawson
 # overwrite head with contents of release-2-90xx
 #
@@ -138,14 +141,14 @@
 .set 	Q	, 0x9E3779B9
 
 
-# stack frame (MacOS ABI)
+# stack frame (System V.4 ABI)
 # The floating-point register save area and the parameter list
 # area remain empty. Therefore, the stack frame looks like this :
 #	General register save area
 #	Local variable space
 #	Linkage area
 
-.set 	oldLR		,	8			# 8(sp) stores the old LR (caller's frame)
+.set 	oldLR		,	4			# 4(sp) stores the old LR (caller's frame)
 .set 	numGPRs		,	32-13		# r13 to r31
 
 	# The linkageArea size, as defined by Apple, is equal to 24. Since we
@@ -153,7 +156,7 @@
 	# even multiple of 16, we shall add an extra padding. Of course, the
 	# padding area could be used to save some local variables.
 
-.set 	linkageArea	,	24			# Size of the linkageArea.
+.set 	linkageArea	,	8			# Size of the linkageArea.
 
 
 # Local variables area
