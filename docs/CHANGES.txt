@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.26 2008/10/22 01:22:56 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.27 2008/10/27 10:20:34 oliver Exp $
 ==========================================================================
 
 2.9100
@@ -35,6 +35,8 @@ Version change log: $Id: CHANGES.txt,v 1.26 2008/10/22 01:22:56 piru Exp $
             imp: amd64: Fix issue preventing multi-processor client
             chg: x86: GO2a core selected as default for P2
             imp: ppc: Recognize PPC5200 (603e based SoC chip)
+            imp: amigaos: Use timezone prefs for DST detection on OS4
+            imp: ppc: Recognize PPC405 and PPC440 CPU variants
 
 
 2.9000
