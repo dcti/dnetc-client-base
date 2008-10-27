@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amSupport.c,v 1.6 2008/10/22 01:26:30 piru Exp $
+ * $Id: amSupport.c,v 1.7 2008/10/27 09:49:33 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -54,7 +54,7 @@
 #ifndef __OS3PPC__
 
 #if defined(__amigaos4__)
-char *__stack_string = "$STACK:200000";
+const char *__stack_string = "$STACK:200000";
 #elif defined(__MORPHOS__)
 unsigned long __stack = 200000L;
 #else
@@ -94,7 +94,7 @@ extern struct Interface *ISocket;
 #ifndef __MORPHOS__
 const char *amigaGetOSVersion(void)
 {
-   static const char *osver[] = { "2.0","2.0x","2.1","3.0","3.1","3.2","3.3","3.4","3.5","3.9","3.9","3.9","3.9","3.9","4.0pre","4.0pre","4.0" };
+   static const char *osver[] = { "2.0","2.0x","2.1","3.0","3.1","3.2","3.3","3.4","3.5","3.9","3.9","3.9","3.9","3.9","4.0pre","4.0pre","4.0","4.1" };
    int ver = SysBase->LibNode.lib_Version;
    #ifndef __amigaos4__
    if (ver >= 40 && ver < 50) {   // Detect OS 3.5/3.9
@@ -109,7 +109,7 @@ const char *amigaGetOSVersion(void)
    if (FindResident("MorphOS") && ver > 45) ver = 45;
    #endif
    if (ver < 36) ver = 36;
-   else if (ver > 51) ver = 51;
+   else if (ver > 53) ver = 53;
    return osver[ver-36];
 }
 #endif
@@ -415,10 +415,10 @@ void amigaExit(void)
    #endif
 
    #ifdef __amigaos4__
-   if (ILocale) DropInterface((struct Interface *)ILocale);
    if (ISocket) DropInterface((struct Interface *)ISocket);
-   #endif
+   #else
    CloseLibrary((struct Library *)LocaleBase);
+   #endif
    CloseLibrary((struct Library *)SocketBase);
 
    #ifdef __OS3PPC__

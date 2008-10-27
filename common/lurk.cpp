@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.65 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.66 2008/10/27 09:49:33 oliver Exp $"; }
 
 //#define TRACE
 
@@ -339,6 +339,7 @@ struct ifact
 #include "sleepdef.h"
 #include "triggers.h"
 #include <sys/socket.h>
+#include <sys/sockio.h>
 #include <net/if.h>
 #include <fcntl.h>
 #include "plat/amigaos/amiga.h"

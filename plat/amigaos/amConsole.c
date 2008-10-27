@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amConsole.c,v 1.4 2008/10/22 01:31:30 piru Exp $
+ * $Id: amConsole.c,v 1.5 2008/10/27 09:49:33 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -16,6 +16,8 @@
 #ifdef __OS3PPC__
 #pragma pack(2)
 #endif
+
+#include "amiga.h"
 
 #include <exec/types.h>
 #include <exec/memory.h>
@@ -30,7 +32,6 @@
 
 #include <unistd.h>
 #include <ctype.h>
-#include "amiga.h"
 #include "triggers.h"
 #include "util.h"
 #include "modereq.h"

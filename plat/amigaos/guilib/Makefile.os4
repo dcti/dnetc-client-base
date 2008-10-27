@@ -12,8 +12,8 @@ CC	= ppc-amigaos-gcc
 RM	= delete
 STRIP   = ppc-amigaos-strip -R.comment
 
-CFLAGS	= -O2 -fomit-frame-pointer -fpermissive -fno-exceptions -fstrict-aliasing -I../../../plat/amigaos -D__USE_INLINE__ -D__USE_BASETYPE__
-LDFLAGS	= -nostartfiles
+CFLAGS	= -O2 -fomit-frame-pointer -fno-exceptions -fstrict-aliasing -I. -I../../../plat/amigaos -D__USE_INLINE__ -D__USE_BASETYPE__ -mcrt=clib2-ts
+LDFLAGS	= -nostartfiles -mcrt=clib2-ts
 LDLIBS	=
 OBJDIR  = ../../../output.os4
 OBJS	= $(OBJDIR)/LibBase.o $(OBJDIR)/main.o $(OBJDIR)/prefs.o $(OBJDIR)/dnetcgui_68k.o
@@ -35,9 +35,11 @@ $(OBJDIR)/main.o: main.c common.h main.h prefs.h
 $(OBJDIR)/prefs.o: prefs.c common.h main.h prefs.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(OBJDIR)/dnetcgui_68k.o: dnetcgui_68k.S
-	$(CC) -c -Wa,-mregnames $< -o $@ -IV:src/kickstart/exec_sg/include
+$(OBJDIR)/dnetcgui_68k.o: dnetcgui_68k.c
+	$(CC) $(CFLAGS) -o $@ -c $<
 
+dnetcgui_68k.c: fd/dnetcgui_lib.sfd
+	fdtrans $<  -c
 
 includes: fd/dnetcgui_lib.fd clib/dnetcgui_protos.h
 	fd2inline fd/dnetcgui_lib.fd clib/dnetcgui_protos.h > inline/dnetcgui.h

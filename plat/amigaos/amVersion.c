@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amVersion.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: amVersion.c,v 1.4 2008/10/27 09:49:33 oliver Exp $
  *
  * ----------------------------------------------------------------------
  * AmigaOS version string/tag
@@ -16,26 +16,16 @@
 #include "version.h"
 #include "common/cputypes.h"
 
-#if (CLIENT_OS == OS_AMIGAOS)
-  #ifdef __SASC
-    #if (CLIENT_CPU == CPU_68K)
-    const char versionstring[] = "\0$VER: RC5DES_68K " CLIENT_VERSIONSTRING " " __AMIGADATE__;
-    #elif (CLIENT_CPU == CPU_POWERPC)
-    const char versionstring[] = "\0$VER: RC5DES_PPC " CLIENT_VERSIONSTRING " " __AMIGADATE__;
-    #else
-    #error "An AmigaOS machine with a different CPU ? Can't be right!"
-    #endif // (CLIENT_CPU == CPU_68K)
+#if (CLIENT_CPU == CPU_68K)
+  const char *versionstring = "\0$VER: dnetc_68k " CLIENT_VERSIONSTRING " (" __AMIGADATE__ ")";
+#elif (CLIENT_CPU == CPU_POWERPC)
+  #if defined(__amigaos4__) || defined(__MORPHOS__)
+    const char *versionstring = "\0$VER: dnetc " CLIENT_VERSIONSTRING " (" __AMIGADATE__ ")";
   #else
-    #if (CLIENT_CPU == CPU_68K)
-    const char *versionstring = "\0$VER: dnetc_68k " CLIENT_VERSIONSTRING " (" __AMIGADATE__ ")";
-    #elif (CLIENT_CPU == CPU_POWERPC)
     const char *versionstring = "\0$VER: dnetc_ppc " CLIENT_VERSIONSTRING " (" __AMIGADATE__ ")";
-    #else
-    #error "An AmigaOS machine with a different CPU ? Can't be right!"
-    #endif // (CLIENT_CPU == CPU_68K)
-  #endif // __SASC
-#elif (CLIENT_OS == OS_MORPHOS)
-  const char *versionstring = "\0$VER: dnetc " CLIENT_VERSIONSTRING " (" __AMIGADATE__ ")";
-#endif // (CLIENT_OS == OS_MORPHOS)
+  #endif
+#else
+  #error "An AmigaOS machine with a different CPU ? Can't be right!"
+#endif
 
 #endif // _AMIGA_VERSION_C

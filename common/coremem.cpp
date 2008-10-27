@@ -9,7 +9,7 @@
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *probmem_cpp(void) {
-return "@(#)$Id: coremem.cpp,v 1.5 2007/10/22 16:48:25 jlawson Exp $"; }
+return "@(#)$Id: coremem.cpp,v 1.6 2008/10/27 09:49:33 oliver Exp $"; }
 
 //#define TRACE
 
@@ -168,7 +168,30 @@ int cmem_free(void *mem)
     return __shm_cmem_free(mem);
 }
 
-#else /* defined(HAVE_MULTICRUNCH_VIA_FORK) */
+#elif (CLIENT_OS == OS_AMIGAOS)
+
+void *cmem_alloc(unsigned int sz)
+{
+  void *mem = ((void *)0);
+  #if defined(__amigaos4__)
+  mem = AllocVec(sz,MEMF_SHARED);
+  #else
+  mem = malloc(sz);
+  #endif
+  return mem;
+}
+
+int cmem_free(void *mem)
+{
+  #if defined(__amigaos4__)
+  FreeVec(mem);
+  #else
+  free(mem);
+  #endif
+  return 0;
+}
+
+#else
 
 void *cmem_alloc(unsigned int sz)
 {

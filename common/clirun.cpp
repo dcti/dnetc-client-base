@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.135 2008/03/03 22:37:53 kakace Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.136 2008/10/27 09:49:33 oliver Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1101,7 +1101,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         }
         thrparams->threadID = (int)proc;
         #elif defined(__amigaos4__)
-        thrparams->threadID = (int)IDOS->CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
+        thrparams->threadID = (int)CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
                                                      NP_StackSize, 8192,
                                                      NP_Name, (ULONG)threadname,
                                                      NP_Child, TRUE,

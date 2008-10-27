@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amiga.h,v 1.3 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: amiga.h,v 1.4 2008/10/27 09:49:33 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -23,6 +23,8 @@ extern "C" {
       #define __BEGIN_DECLS
       #define __END_DECLS
       #define __P(p) p
+      #define __USE_BASETYPE__
+      #define __USE_OLD_TIMEVAL__
       #define NO_MIAMI
    #endif
 
@@ -81,9 +83,9 @@ extern "C" {
    #pragma pack()
    #endif
 
-   //#include <sys/ioctl.h>
    #include <sys/time.h>
    #include <sys/socket.h>
+   #include <netinet/in.h>
    #include <stdio.h>
    #include <stdlib.h>
    #include <string.h>
