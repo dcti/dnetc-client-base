@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amTime.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: amTime.c,v 1.4 2008/10/27 09:39:10 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -45,7 +45,11 @@
 #endif
 
 #include <exec/types.h>
+#ifdef __amigaos4__
+#include <proto/timezone.h>
+#else
 #include <proto/locale.h>
+#endif
 #include <proto/timer.h>
 #include <devices/timer.h>
 #include <stdlib.h>
@@ -60,12 +64,22 @@
 
 static int GMTOffset = -9999;
 
-#ifdef __MORPHOS__
-#define TIMERBASETYPE  struct Library *
+#if defined(__MORPHOS__) || defined(__amigaos4__)
 #define LOCALEBASETYPE struct Library *
 #else
-#define TIMERBASETYPE  struct Device *
 #define LOCALEBASETYPE struct LocaleBase *
+#endif
+
+#ifdef __MORPHOS__
+#define TIMERBASETYPE  struct Library *
+#else
+#define TIMERBASETYPE  struct Device *
+#endif
+
+#ifdef __amigaos4__
+#define TIMEVALTYPE struct TimeVal
+#else
+#define TIMEVALTYPE struct timeval
 #endif
 
 TIMERBASETYPE TimerBase = NULL;
@@ -83,7 +97,6 @@ static void *TimerObj = NULL;
 #endif /* __OS3PPC__ */
 
 #ifdef __amigaos4__
-struct LocaleBase *LocaleBase = NULL;
 struct LocaleIFace *ILocale = NULL;
 struct TimerIFace *ITimer = NULL;
 #define DST_NONE 0
@@ -396,27 +409,30 @@ void amigaSleep(unsigned int secs, unsigned int usecs)
 
 static int GetGMTOffset(void)
 {
-   struct Locale *locale;
    int gmtoffset = 0;
-
+#ifdef __amigaos4__
+   struct Library *TimezoneBase;
+   struct TimezoneIFace *ITimezone;
+   if((TimezoneBase = OpenLibrary("timezone.library",52L))) {
+      if((ITimezone = (struct TimezoneIFace *)GetInterface(TimezoneBase,"main",1L,NULL))) {
+         GetTimezoneAttrs(NULL,TZA_UTCOffset,&gmtoffset,TAG_END);
+         DropInterface((struct Interface *)ITimezone);
+      }
+      CloseLibrary(TimezoneBase);
+   }
+#else
    if (!LocaleBase) {
       LocaleBase = (LOCALEBASETYPE)OpenLibrary("locale.library",38L);
-      #ifdef __amigaos4__
-      if (LocaleBase) {
-         if (!(ILocale = (struct LocaleIFace *)GetInterface( (struct Library *)LocaleBase, "main", 1L, NULL ))) {
-            CloseLibrary((struct Library *)LocaleBase);
-            LocaleBase = NULL;
-	 }
-      }
-      #endif
    }
 
    if (LocaleBase) {
+      struct Locale *locale;
       if ((locale = OpenLocale(NULL))) {
          gmtoffset = locale->loc_GMTOffset;
          CloseLocale(locale);
       }
    }
+#endif
    return(gmtoffset);
 }
 
@@ -429,7 +445,7 @@ int gettimeofday(struct timeval *tp, struct timezone *tzp)
    if (tp) {
       /* This check required as C++ class init code calls this routine */
       if (!TimerBase) GlobalTimerInit();
-      GetSysTime(tp);
+      GetSysTime((TIMEVALTYPE *)tp);
       /* add the offset from UNIX to AmigaOS time system */
       tp->tv_sec += 2922 * 24 * 3600 + 60 * GMTOffset;
    }
@@ -490,6 +506,11 @@ int amigaGetMonoClock(struct timeval *tp)
       ULONG cpufreq = ReadCPUClock(&cpuclock);
       tp->tv_sec  = cpuclock / cpufreq;
       tp->tv_usec = (cpuclock % cpufreq) * 1000000 / cpufreq;
+#elif defined(__amigaos4__)
+      /*
+      ** OS4
+      */
+      GetUpTime((TIMEVALTYPE *)tp);
 #elif !defined(__OS3PPC__) || !defined(USE_PPCTIMER)
       /*
       ** 68K / OS4
