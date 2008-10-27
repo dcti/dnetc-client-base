@@ -6,7 +6,7 @@
  * Implementation : Each of the three bitmaps "list", "dist" and "comp" is
  * made of eight 32-bit scalars.
  *
- * $Id: ogrng-32.cpp,v 1.2 2008/03/09 13:31:03 kakace Exp $
+ * $Id: ogrng-32.cpp,v 1.3 2008/10/27 10:14:11 oliver Exp $
 */
 
 #include "ansi/ogrng-32.h"
@@ -27,6 +27,16 @@
 #elif (CLIENT_CPU == CPU_AMD64)
   #include "amd64/asm-amd64.h"
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
+#elif (CLIENT_CPU == CPU_68K)
+  #include "68k/asm-68k.h"
+  #if defined(__CNTLZ)
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 2 /* 0-2 - '100% asm       */
+  #elif defined(__CNTLZ_ARRAY_BASED)
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 1 /* 0-2 - 'Partial asm    */
+  #else
+    #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0 /* 0-2 - 'no'  (default) */
+  #endif
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
 #else
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */

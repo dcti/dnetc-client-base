@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.5 2008/08/30 12:15:02 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.6 2008/10/27 10:14:11 oliver Exp $"; }
 
 //#define TRACE
 
@@ -56,7 +56,11 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.5 2008/08/30 12:15:02 stream Exp $"; }
 //    CoreDispatchTable *ogrng64_get_dispatch_table(void);
   #endif
 #elif (CLIENT_CPU == CPU_68K)
-    CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table_000(void);
+    CoreDispatchTable *ogrng_get_dispatch_table_020(void);
+    CoreDispatchTable *ogrng_get_dispatch_table_030(void);
+    CoreDispatchTable *ogrng_get_dispatch_table_040(void);
+    CoreDispatchTable *ogrng_get_dispatch_table_060(void);
 #elif (CLIENT_CPU == CPU_X86)
     CoreDispatchTable *ogrng_get_dispatch_table(void); //A
     #if defined(HAVE_I64) && (SIZEOF_LONG == 8)
@@ -106,7 +110,11 @@ int InitializeCoreTable_ogr_ng(int first_time)
           spe_ogrng_get_dispatch_table();
         #endif
       #elif (CLIENT_CPU == CPU_68K)
-        ogrng_get_dispatch_table();
+        ogrng_get_dispatch_table_000();
+        ogrng_get_dispatch_table_020();
+        ogrng_get_dispatch_table_030();
+        ogrng_get_dispatch_table_040();
+        ogrng_get_dispatch_table_060();
       #elif (CLIENT_CPU == CPU_ALPHA)
         ogrng_get_dispatch_table();
         #if (CLIENT_OS != OS_VMS)         /* Include for other OSes */
@@ -173,7 +181,11 @@ const char **corenames_for_contest_ogr_ng()
   #elif (CLIENT_CPU == CPU_ARM)
       "FLEGE 2.0",
   #elif (CLIENT_CPU == CPU_68K)
-      "FLEGE 2.0",
+      "FLEGE 2.0 68000",
+      "FLEGE 2.0 68020",
+      "FLEGE 2.0 68030",
+      "FLEGE 2.0 68040",
+      "FLEGE 2.0 68060",
   #elif (CLIENT_CPU == CPU_ALPHA)
       "FLEGE 2.0",
     #if (CLIENT_OS != OS_VMS)  /* Include for other OSes */
@@ -243,6 +255,9 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
   if ((det <  11) && (cindex == 1)) {
     cindex = 0;
   }
+# elif (CLIENT_CPU == CPU_68K)
+  long det = GetProcessorType(1);
+  if (det == 68000) cindex = 0;
 # elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
 
   int feature = 0;
@@ -290,7 +305,16 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
   #elif (CLIENT_CPU == CPU_68K)
     if (detected_type > 0)
     {
-
+      if (detected_type >= 68060)
+        cindex = 4;
+      else if (detected_type == 68040)
+        cindex = 3;
+      else if (detected_type == 68030)
+        cindex = 2;
+      else if (detected_type == 68020)
+        cindex = 1;
+      else
+        cindex = 0;
     }
   // ===============================================================
   #elif (CLIENT_CPU == CPU_POWER)
@@ -387,16 +411,16 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
   }
 #elif (CLIENT_CPU == CPU_68K)
   if (coresel == 4)
-  //  unit_func.ogr = ogr_get_dispatch_table_060();
+    unit_func.ogr = ogrng_get_dispatch_table_060();
   else if (coresel == 3)
-  //  unit_func.ogr = ogr_get_dispatch_table_040();
+    unit_func.ogr = ogrng_get_dispatch_table_040();
   else if (coresel == 2)
-  //  unit_func.ogr = ogr_get_dispatch_table_030();
+    unit_func.ogr = ogrng_get_dispatch_table_030();
   else if (coresel == 1)
-  //  unit_func.ogr = ogr_get_dispatch_table_020();
+    unit_func.ogr = ogrng_get_dispatch_table_020();
   else
   {
-    unit_func.ogr = ogrng_get_dispatch_table();
+    unit_func.ogr = ogrng_get_dispatch_table_000();
     coresel = 0;
   }
 #elif (CLIENT_CPU == CPU_ALPHA)

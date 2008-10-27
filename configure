@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.315 2008/10/27 09:49:33 oliver Exp $
+# @(#)$Id: configure,v 1.316 2008/10/27 10:14:11 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -328,10 +328,14 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ASFLAGS="$TARGET_ASFLAGS -I./rc5-72/68k"
       fi
     fi # HAVE_RC5_72
-    # if [ "$HAVE_OGR" = "1" ]; then
-    #  DEFAULT_OGRNG="0"
-    #  TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
-    # fi
+    if [ "$HAVE_OGR" = "1" ]; then
+      DEFAULT_OGRNG="0"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
+      TARGET_ADDOBJS="$TARGET_ADDOBJS output/ogrng-32-000.o output/ogrng-32-020.o \
+                                      output/ogrng-32-030.o output/ogrng-32-040.o \
+                                      output/ogrng-32-060.o"
+      TARGET_OGRNG_MULTI="68k"
+    fi # HAVE_OGR
     if [ "$HAVE_OGR_P2" = "1" ]; then
       DEFAULT_OGR="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS"
@@ -3553,6 +3557,41 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       echo "Unknown target type ${TARGETTYP}"
       exit 1
     fi
+  done
+fi
+
+if [ "$TARGET_OGRNG_MULTI" = "68k" ]; then
+  echo "Generating Makefile 68k multi-core OGR-NG dependency targets..."
+  TARGETSRC="$OGR/ansi/ogrng-32.cpp"
+  TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+  OGR68K="000 020 030 040 060"
+  for targetext in ${OGR68K}; do
+    deplist=""
+    for dep in $TARGET_HDEPS; do
+      deplist="$deplist $dep"
+    done
+    echo "output/ogrng-32-${targetext}.o:	${TARGETSRC} $deplist" >> Makefile
+    echo "	\$(CC) \$(CCFLAGS) -DOGR_NG_GET_DISPATCH_TABLE_FXN=ogrng_get_dispatch_table_${targetext} \\" >>Makefile
+
+    # fake 68060 optimisation with gcc < 2.95 - easiest way for now
+    # still defines mc68060 (see below) so that some optimisation will still be done
+    if [ "$gccver" -ne "0" -a "$gccver" -lt "2950000" -a "$targetext" = "060" ]; then
+      echo "		-m68040 \\" >> Makefile
+    else
+      echo "		-m68${targetext} \\" >> Makefile
+    fi
+
+    if [ "$targetext" = "020" -o "$targetext" = "030" ]; then
+      echo "		-fno-unroll-loops \\" >> Makefile
+    fi
+
+    # gcc on NeXTstep doesn't define mc680x0 so we've got to do it ourselves
+    if [ "$BUILDNAME" = "m68k-next" ]; then
+      echo "		-Dmc68${targetext} \\" >> Makefile
+    fi
+
+    echo "		-c -o output/ogrng-32-${targetext}.o ${TARGETSRC}" >> Makefile
+    echo "" >> Makefile
   done
 fi
 
