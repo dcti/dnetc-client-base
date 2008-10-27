@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.44 2008/10/27 09:49:33 oliver Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.45 2008/10/27 11:00:25 oliver Exp $"
 
 #include "cputypes.h"
 
@@ -86,7 +86,9 @@
     //is 100 (10ms) for non-realtime processes, machine dependant otherwise
   #endif /* _irix5_ */
 #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+  #ifdef __amigaos4__
   #include <unistd.h>
+  #endif
   extern "C" {
   #ifdef sleep
   #undef sleep
