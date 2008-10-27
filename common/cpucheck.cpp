@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.131 2008/10/25 19:47:51 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.132 2008/10/27 09:34:52 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -458,6 +458,13 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x0080, "860"                 },
       {    0x0081, "8240"                },
       {    0x4011, "405GP"               },
+      {    0x4012, "440GP"               },
+      {    0x41F1, "405LP"               },
+      {    0x4222, "440EP/440GR"         },
+      {    0x5091, "405GPr"              },
+      {    0x5121, "405EP"               },
+      {    0x51B2, "440GX"               },
+      {    0x5322, "440SP"               },
       {    0x7000, "750FX"               },
       {    0x8000, "7441/7450/7451 (G4)" },
       {    0x8001, "7445/7455 (G4)"      },
@@ -706,6 +713,14 @@ static long __GetRawProcessorID(const char **cpuname)
        case CPUTYPE_PPC7410:        detectedtype = 0x800C; break;
        case CPUTYPE_PPC74XX_VGER:   detectedtype = 0x8000; break;
        case CPUTYPE_PPC74XX_APOLLO: detectedtype = 0x8001; break;
+       case CPUTYPE_PPC405LP:       detectedtype = 0x41F1; break;
+       case CPUTYPE_PPC405EP:       detectedtype = 0x5121; break;
+       case CPUTYPE_PPC405GP:       detectedtype = 0x4011; break;
+       case CPUTYPE_PPC405GPR:      detectedtype = 0x5091; break;
+       case CPUTYPE_PPC440EP:       detectedtype = 0x4222; break;
+       case CPUTYPE_PPC440GP:       detectedtype = 0x4012; break;
+       case CPUTYPE_PPC440GX:       detectedtype = 0x51B2; break;
+       case CPUTYPE_PPC440SP:       detectedtype = 0x5322; break;
        default: // some PPC processor that we don't know about
                 // set the tag (so that the user can tell us), but return 0
        sprintf(namebuf, "OS4:0x%lx", cpu );
