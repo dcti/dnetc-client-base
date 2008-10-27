@@ -1,7 +1,7 @@
 
  distributed.net client for AmigaOS (68k/PPC)
  Released by Oliver Roberts <oliver@futaura.co.uk>
- Document revision $Id: readme.amiga,v 1.13 2007/10/22 16:48:28 jlawson Exp $
+ Document revision $Id: readme.amiga,v 1.14 2008/10/27 10:25:53 oliver Exp $
                                                           
  Welcome to the distributed.net client.
 
@@ -112,13 +112,15 @@
     time!  For this to work correctly, you need to ensure your timezone
     is set correctly. This can be done through the Workbench Locale
     preferences program.  Of course, the drawback with using Locale is
-    that daylight savings are not accounted for. Ideally, I'd recommend
-    installing SetDST (util/time/SetDST.lha on Aminet) which will
-    handle it for you automatically - you need to use the SETLOCALE
-    feature. Alternatively, you can manually adjust the timezone in
-    Locale prefs whenever you start/end dst.  For example, if you are
-    in the UK, you would set the timezone to GMT when not in dst, and
-    to 1 hour from GMT (a zone to the right) when in dst.
+    that daylight savings are not accounted for, except on OS4 where the
+    Timezone preferences allow the client to handle daylight savings
+    automatically. Ideally, on OS3.x I'd recommend installing SetDST
+    (util/time/SetDST.lha on Aminet) which will handle it for you
+    automatically - you need to use the SETLOCALE feature. Alternatively,
+    you can manually adjust the timezone in Locale prefs whenever you
+    start/end dst.  For example, if you are in the UK, you would set the
+    timezone to GMT when not in dst, and to 1 hour from GMT (a zone to
+    the right) when in dst.
 
   3.3  Packets and work units?
 
