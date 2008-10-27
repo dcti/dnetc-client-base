@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 2004-2005 - All Rights Reserved
+ * Copyright distributed.net 2004-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: LibHeader.c,v 1.2 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: LibHeader.c,v 1.3 2008/10/27 16:13:07 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -91,7 +91,7 @@ static const struct MyInitData InitData	=
 #define LIBNAME PROGRAM_NAME
 
 static const char LibId[]	= LIBNAME " " PROGRAM_VER " " PROGRAM_DATE
-                                  " Copyright © 2004-2005 distributed.net. All rights reserved. Written by Ilkka Lehtoranta.";
+                                  " Copyright © 2004-2008 distributed.net. All rights reserved. Written by Ilkka Lehtoranta.";
 static const char LibName[]	= LIBNAME;
 
 /**********************************************************************
