@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.10 2008/10/25 19:43:12 snikkel Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.11 2008/11/08 20:49:23 stream Exp $"; }
 
 //#define TRACE
 
@@ -21,10 +21,6 @@ return "@(#)$Id: core_ogr.cpp,v 1.10 2008/10/25 19:43:12 snikkel Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
-
-#if (CLIENT_CPU == CPU_CELLBE)
-#include <libspe2.h>
-#endif
 
 #if defined(HAVE_OGR_PASS2)
 
@@ -486,11 +482,10 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees 2
   // processors), and although we should run 2 threads at a time, the way
   // CPUs are detected precludes us from doing that.
-  static unsigned int PPE_count = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
 
   // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs;
   // the rest are scheduled on the SPEs.
-  if (threadindex >= PPE_count)
+  if (threadindex >= (unsigned)GetNumberOfPhysicalProcessors())
     coresel = 2;
 #else
   DNETC_UNUSED_PARAM(threadindex);

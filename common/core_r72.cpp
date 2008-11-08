@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.14 2008/10/27 09:34:52 oliver Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.15 2008/11/08 20:49:23 stream Exp $"; }
 
 //#define TRACE
 
@@ -21,9 +21,6 @@ return "@(#)$Id: core_r72.cpp,v 1.14 2008/10/27 09:34:52 oliver Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
-#if (CLIENT_CPU == CPU_CELLBE)
-#include <libspe2.h>
-#endif
 
 #if (CLIENT_OS == OS_MORPHOS)
 #define __ALTIVEC__ 1 /* crude hack till we have real gcc-altivec */
@@ -574,11 +571,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
   // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees 2
   // processors), but it has been found that running 2 simultaneous threads
   // degrades performance, so let's pretend there's only one PPE.
-  static unsigned int PPE_count = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
 
   // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs
   // (core 0); the rest are scheduled on the SPEs (core 1).
-  if (threadindex >= PPE_count)
+  if (threadindex >= (unsigned)GetNumberOfPhysicalProcessors())
     coresel = 1;
 #else
   DNETC_UNUSED_PARAM(threadindex);

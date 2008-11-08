@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.132 2008/10/27 09:34:52 oliver Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.133 2008/11/08 20:49:23 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -287,7 +287,19 @@ int GetNumberOfLogicalProcessors ( void )
 
 int GetNumberOfPhysicalProcessors ( void )
 {
-  return GetNumberOfDetectedProcessors();
+  static int cpucount = -1;
+  
+  if (cpucount < 0)
+  {
+#if (CLIENT_CPU == CPU_CELLBE)
+    cpucount = spe_cpu_info_get(SPE_COUNT_PHYSICAL_CPU_NODES, -1);
+#else
+    cpucount = GetNumberOfDetectedProcessors();
+#endif
+    if (cpucount < 0)
+      cpucount = 1;
+  }
+  return cpucount;
 }
 
 /* ---------------------------------------------------------------------- */
