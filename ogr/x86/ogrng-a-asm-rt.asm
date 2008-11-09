@@ -39,6 +39,10 @@ ogr_cycle_256_rt1:
 	%define	oState_depth		1Ch
 	%define oState_Levels		20h
 
+; It's possible to put ebp (current level) a little forward and reference
+; elements as 'ebp-nn' and 'ebp+nn' (with signed byte offsets) to avoid
+; long command 'ebp+nnnnnnnn' (dword offset). But I get no speed gain.
+	%define ebp_shift		0	; may be 128
 	%define sizeof_level		104	; (32*3+8)
 	%define level_list		00h
 	%define level_dist		20h
@@ -46,8 +50,8 @@ ogr_cycle_256_rt1:
 	%define level_mark		60h
 	%define level_limit		64h
 
-%define cur(el, index)   [ebp+level_ %+ el + ((index)*4)]
-%define next(el, index)  [ebp+sizeof_level+level_ %+ el + ((index)*4)]
+%define cur(el, index)   [ebp+level_ %+ el + ((index)*4) - ebp_shift]
+%define next(el, index)  [ebp+sizeof_level+level_ %+ el + ((index)*4) - ebp_shift]
 
 	push	ebx
 	push	esi
@@ -59,8 +63,8 @@ ogr_cycle_256_rt1:
 	mov	ecx, [ebx+oState_depth]
 	mov	[work_depth], ecx	; depth = oState->depth (cached for SETUP_TOP_STATE)
 	imul	eax, ecx, sizeof_level
-	lea	ebp, [eax+ebx+oState_Levels]	; lev = &oState->Levels[oState->depth]
-        mov	eax, [param_pnodes]
+	lea	ebp, [eax+ebx+oState_Levels+ebp_shift]	; lev = &oState->Levels[oState->depth]
+	mov	eax, [param_pnodes]
 	mov	eax, [eax]
 	mov	[work_nodes], eax	; nodes = *pnodes
 	mov	eax, [ebx+oState_half_depth]
@@ -80,9 +84,15 @@ ogr_cycle_256_rt1:
 	; edi = newbit
 
 	; split loop header
-	mov	ebx, [ebp+level_mark]	; mark  = lev->mark;
+	mov	ebx, [ebp+level_mark-ebp_shift]	; mark  = lev->mark;
 
 	align	16
+
+; Jump probabilies calculated from summary statistic of 'dnetc -test'.
+; Main loop was entered 0x0B5ACBE2 times. For each jump, we measured
+; number of times this jump was reached (percents from main loop
+; means importance of this code path) and probability of this jump to
+; be taken (for branch prediction of important jumps).
 
 do_loop_split:
 for_loop:
@@ -93,7 +103,7 @@ for_loop:
 
 	;      if (comp0 < 0xFFFFFFFE) {
 	cmp	esi, 0FFFFFFFEh
-	jnb	comp0_ge_fffe
+	jnb	comp0_ge_fffe		; ENTERED: 0x0B5ACBE2(100%), taken: 33-35%
 	;        int s = LOOKUP_FIRSTBLANK_SAFE(comp0);
 	not	esi
 	mov	ecx, 20H
@@ -103,8 +113,8 @@ for_loop:
 	;          break;
 	;        }
 	add	ebx, ecx
-	cmp	ebx, [ebp+level_limit]	; limit (==lev->limit)
-	jg	break_for		; chance: 35%
+	cmp	ebx, [ebp+level_limit-ebp_shift] ; limit (==lev->limit)
+	jg	break_for		; ENTERED: 0x07A5D5F7(67.35%), taken 30-34%
 
 	;        COMP_LEFT_LIST_RIGHT(lev, s);
 	; !!!
@@ -164,7 +174,7 @@ after_if:
 	; ebx = mark
 
 	;      lev->mark = mark;
-	mov	[ebp+level_mark], ebx
+	mov	[ebp+level_mark-ebp_shift], ebx
 
 	;      if (depth == oState->maxdepthm1) {
 	;        goto exit;         /* Ruler found */
@@ -172,7 +182,7 @@ after_if:
 	mov	eax, [param_oState]
 	mov	eax, [eax+oState_maxdepthm1]
 	cmp	eax, [work_depth]
-	je	exit
+	je	exit			; ENTERED: 0x0513FD1B(44.72%), taken: 0%
 
 	;      PUSH_LEVEL_UPDATE_STATE(lev);
 	; !!!
@@ -229,9 +239,9 @@ after_if:
 	;;;      if (depth > halfdepth && depth <= halfdepth2) {
 	mov	eax, [work_depth]
 	cmp	eax, [work_halfdepth]
-	jle	skip_if_depth
+	jle	skip_if_depth		; ENTERED: 0x0513FD14(44.72%), taken 0.5%
 	cmp	eax, [work_halfdepth2]
-	jg	skip_if_depth
+	jg	skip_if_depth		; ENTERED: 0x050D5B51(44.49%), taken 97.02%
 
 ;        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
 ;;        int temp = oState->max - 1 - oState->Levels[halfdepth].mark;
@@ -248,39 +258,41 @@ after_if:
 ;        }
 
 	cmp	edi, edx
-	jl	limitok
+	jl	limitok		; ENTERED: 0x00267D08(1.32%), taken 17.35%
 	lea	edi, [edx-1]
 limitok:
 
 ;        if (depth < oState->half_depth2) {
 	mov	eax, [work_depth]
 	cmp	eax, [work_halfdepth2]
-	jge	skip_if_depth
+	jge	skip_if_depth	; ENTERED: 0x00267D08(1.32%), taken 78.38%
 
 ;          limit -= LOOKUP_FIRSTBLANK(dist0); // "33" version
 
-	not	ecx
+	xor	ecx, -1		; "not ecx" does not set flags!
 	mov	edx, -1
-	je	skip_bsr
+	je	skip_bsr	; ENTERED: 0x00085254(0.29%), taken 0.00%
 	bsr	edx, ecx
 skip_bsr:
 	add	edi, edx
 	sub	edi, 32
 
 skip_if_depth:
-	mov	[ebp+level_limit], edi
+	mov	[ebp+level_limit-ebp_shift], edi
 
 	mov	edi, 1		; newbit = 1 (delayed)
 
 	;      if (--nodes <= 0) {
 
 	dec	dword [work_nodes]
-	jg	for_loop
+	jg	for_loop	; ENTERED: 0x0513FD14(44.72%), taken 99.99%
 
 	;        lev->mark = mark;
 	;        goto exit;
-	mov	[ebp+level_mark], ebx
+	mov	[ebp+level_mark-ebp_shift], ebx
 	jmp	exit
+
+;	align	16
 
 comp0_ge_fffe:
 	;      else {         /* s >= 32 */
@@ -289,8 +301,8 @@ comp0_ge_fffe:
 	;          break;
 	;        }
 	add	ebx,32
-	cmp	ebx, [ebp+level_limit]	; limit (==lev->limit)
-	jg	break_for		; chance: 35%
+	cmp	ebx, [ebp+level_limit-ebp_shift] ; limit (==lev->limit)
+	jg	break_for		; ENTERED: 0x03B4F5EB(32.64%), taken 66.70%
 
 	;        if (comp0 == ~0u) {
 	;          COMP_LEFT_LIST_RIGHT_32(lev);
@@ -321,9 +333,10 @@ comp0_ge_fffe:
 %endrep
 	mov	cur(comp, 7), edi	; lev->comp[7] = 0
 
-	je	for_loop
+	je	for_loop		; ENTERED: 0x013BFDCE(10.87%), taken 97.10%
 	jmp	after_if
 
+;	align	16
 break_for:
 
 	;    lev--;
@@ -332,7 +345,7 @@ break_for:
 	dec	dword [work_depth]
 	;    POP_LEVEL(lev);
 	; !!!
-	mov	esi, [ebp+level_comp+0]	;      comp0 = lev->comp[0];
+	mov	esi, cur(comp, 0)	;      comp0 = lev->comp[0];
 	; unused here; mov	e??, [ebp+level_dist+0]	;      dist0 = lev->dist[0];
 	xor	edi, edi		;      newbit = 0;
 
@@ -342,9 +355,9 @@ break_for:
 	cmp	eax, [work_depth]
 
 	; split loop header
-	mov	ebx, [ebp+level_mark]	; mark  = lev->mark;
+	mov	ebx, [ebp+level_mark-ebp_shift]	; mark  = lev->mark;
 
-	jl	do_loop_split
+	jl	do_loop_split		; ENTERED: 0x0513FCC2(44.72%), taken 99.99%
 
 exit:
 	;  SAVE_FINAL_STATE(lev);
