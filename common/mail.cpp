@@ -1,13 +1,13 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * Created by Tim Charron (tcharron@interlog.com) 97.9.17
+ * Created by Tim Charron (tcharron@interlog.com) 1997/09/17
  * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.45 2007/10/22 16:48:26 jlawson Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.46 2008/11/09 07:17:17 jlawson Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
@@ -78,7 +78,7 @@ static int get_smtp_result( void * net )
 
 //-------------------------------------------------------------------------
 
-static int put_smtp_line(void * net, char * line, unsigned int nchars)
+static int put_smtp_line(void * net, const char * line, unsigned int nchars)
 {
   int rc;
   #ifdef SHOWMAIL
@@ -123,8 +123,17 @@ static void *smtp_open_net( const char *smtphost, unsigned int smtpport )
 
 //-------------------------------------------------------------------------
 
-//returns -1 if totally illegal address, +1 if addr is incomplete (truncated)
-//this only handles single addresses. multi-address lines require tokenizing.
+//! Format an address from components and perform simple character validations.
+/*!
+ * This only handles single addresses. multi-address lines require tokenizing.
+ *
+ * \param buffer Output buffer to write the formed address.  Must be large
+ *       enough to ensure overflow will not occur.
+ * \param addr Username portion of the address to create.
+ * \param host Hostname portion of the address to create.
+ * \param next On return, receives a pointer to the end of the formed address.
+ * \returns -1 if totally illegal address, +1 if addr is incomplete (truncated)
+ */
 static int rfc822Address( char *buffer, const char *addr,
                                        const char *host, const char **next )
 {
@@ -289,12 +298,19 @@ static int rfc822Address( char *buffer, const char *addr,
 
 //---------------------------------------------------------------------
 
-//returns 0 if success, <0 if smtp error, >0 if network error (should defer)
+//! Begin the initial SMTP conversation with the server.
+/*!
+ * \param net Already open network connection.
+ * \param fromid
+ * \param destid
+ * \param smtphost
+ * \returns 0 if success, <0 if smtp error, >0 if network error (should defer)
+ */
 static int smtp_open_message_envelope(void *net,
     const char *fromid, const char *destid, const char *smtphost )
 {
   char out_data[300];
-  const char *writefailmsg="Timeout waiting for SMTP server.";
+  const char *writefailmsg = "Timeout waiting for SMTP server.";
   const char *errmsg = NULL;
   unsigned int pos; int rc;
 
@@ -410,7 +426,13 @@ static int smtp_open_message_envelope(void *net,
 
 //-------------------------------------------------------------------------
 
-static char *rfc822Date(char *timestring)  //min 32 chars
+//! Generate the current timestamp (in RFC822 format).
+/*!
+ * \param timestring Buffer to receive the timestamp (min 32 chars)
+ * \return Returns a pointer to the supplied buffer.  On error, the
+ *     buffer may be set to a zero-length string.
+ */
+static char *rfc822Date(char *timestring)
 {
   time_t timenow;
   struct tm * tmP;
