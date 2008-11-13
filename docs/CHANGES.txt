@@ -23,11 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.27 2008/10/27 10:20:34 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.28 2008/11/13 10:02:32 stream Exp $
 ==========================================================================
 
 2.9100
 ------
+
+2-9102-508  new: x86: OGR-NG mmx core
+
 2.9101-507  new: all: Added OGR-NG contest 
             chg: x86: RC5-72 core selection (#4072)
             fix: x86: AMD CPU identification (#4073 and others)
