@@ -121,6 +121,8 @@ COMMON  = &
 	ogrng-32.obj	&
 	ogrng-a.obj	&
 	ogrng-a-asm-rt.obj&
+	ogrng-b.obj	&
+	ogrng-b-asm-rt.obj&
 !endif
 !if $(OGR_P2)
 	core_ogr.obj	&

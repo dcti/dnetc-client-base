@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.319 2008/11/10 06:05:54 snake Exp $
+# @(#)$Id: configure,v 1.320 2008/11/13 06:40:50 stream Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -233,8 +233,10 @@ add_sources() # $1=os, $2=arch, $3=custom
         # -- nasm/ogr --
 	TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ansi/ogrng-32.cpp"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogrng-a.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogrng-b.cpp"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
         TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-a-asm-rt.asm"
+        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-b-asm-rt.asm"
       fi
     fi # HAVE_OGR
 
