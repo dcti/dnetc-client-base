@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_init.cpp,v 1.6 2008/10/15 03:36:24 jlawson Exp $
+ * $Id: ogrng_init.cpp,v 1.7 2008/11/22 20:25:50 stream Exp $
  */
 
 #include <stdlib.h>     /* calloc */
@@ -78,6 +78,20 @@ struct choose_datas precomp_limits[OGR_NG_MAX - OGR_NG_MIN + 1] = {
    {NULL, 0}        /* OGR-28 */
 };
 
+/*
+ * This is mostly for Cell because DMA transfer must be aligned to 16 bytes
+ */
+static void *aligned_malloc(size_t size)
+{
+  void *varray;
+#if CLIENT_CPU == CPU_CELLBE
+  if (posix_memalign(&varray, 16, size))
+    varray = NULL;
+#else
+  varray = malloc(size);
+#endif
+  return varray;
+}
 
 /* Rebuild the 'choose' array. The memory area is protected by a checksum
  * (Fletcher16). That checksum is always verified after the datas have been
@@ -105,7 +119,7 @@ int ogr_init_choose(void)
 
 
   /* Allocate and setup the choose array */
-  array = (u16*) malloc(CHOOSE_ELEMS * sizeof(u16));
+  array = (u16*) aligned_malloc(CHOOSE_ELEMS * sizeof(u16));
 
   if (NULL == array) {
     return -1;
@@ -160,7 +174,7 @@ static int build_cache(int nMarks)
   if (nMarks >= OGR_NG_MIN && nMarks <= OGR_NG_MAX) {
     struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
     size_t n_elems = 32 << CHOOSE_DIST_BITS;
-    u16* array = (u16*) malloc(n_elems * sizeof(u16));
+    u16* array = (u16*) aligned_malloc(n_elems * sizeof(u16));
 
     if (array) {
       p->choose_array = array;

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.3 2008/08/17 06:43:27 stream Exp $"; }
+return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.4 2008/11/22 20:25:50 stream Exp $"; }
 
 
 #include <libspe2.h>
@@ -15,8 +15,6 @@ return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.3 2008/08/17 06:43:27 stream Exp
 
 #define OGR_NG_GET_DISPATCH_TABLE_FXN    spe_ogrng_get_dispatch_table
 #define OGROPT_HAVE_OGR_CYCLE_ASM     2
-
-// #define CELL_FULL_CYCLE
 
 #include "ogrng-cell.h"
 
@@ -41,21 +39,12 @@ spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program);
 #define ogr_cycle_256 ogr_cycle_256_test
 #endif
 
-#ifndef CELL_FULL_CYCLE
 static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16 *pchoose)
-#else
-static int ogr_cycle_entry(void *state, int *pnodes, int dummy)
-#endif
 {
-#ifdef CELL_FULL_CYCLE
-  struct OgrState *oState = (struct OgrState *)state;
-  u16* pchoose = precomp_limits[oState->maxdepth - OGR_NG_MIN].choose_array;
-#endif
-
   // Check size of structures, these offsets must match assembly
   STATIC_ASSERT(sizeof(struct OgrLevel) == 7*16);
   STATIC_ASSERT(sizeof(struct OgrState) == 2*16 + 7*16*29); /* 29 == OGR_MAXDEPTH */
-  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == sizeof(struct OgrState) + 16);
+  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == sizeof(struct OgrState) + 16 + 16 + 16);
   STATIC_ASSERT(sizeof(struct OgrState) <= OGRNG_PROBLEM_SIZE);
   STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 32);
   STATIC_ASSERT(sizeof(pchoose) == 4); /* pchoose cast to u32 */
@@ -67,6 +56,12 @@ static int ogr_cycle_entry(void *state, int *pnodes, int dummy)
   spe_stop_info_t   stop_info;
   int               retval;
   unsigned          thread_index = 99; // todo. enough hacks.
+
+  if ((u32)pchoose & 15)
+  {
+    Log("OGRNG-SPE#%d! pchoose misaligned (0x%p)\n", thread_index, pchoose);
+    abort();
+  }
 
   if (myCellOGRCoreArgs_void == NULL)
   {
@@ -83,6 +78,16 @@ static int ogr_cycle_entry(void *state, int *pnodes, int dummy)
   memcpy(&myCellOGRCoreArgs->state, oState, sizeof(struct OgrState));
           myCellOGRCoreArgs->pnodes   = *pnodes;
 	  myCellOGRCoreArgs->upchoose = (u32)pchoose;
+	  
+#ifdef GET_CACHE_STATS
+	  myCellOGRCoreArgs->cache_misses = 
+	  myCellOGRCoreArgs->cache_hits   =
+	  myCellOGRCoreArgs->cache_purges =
+	  myCellOGRCoreArgs->cache_search_iters = 
+	  myCellOGRCoreArgs->cache_maxlen =
+	  myCellOGRCoreArgs->cache_curlen =
+	  0;
+#endif
 
   context = ps3_assign_context_to_program(&SPE_WRAPPER_FUNCTION(CORE_NAME));
   retval  = spe_context_run(context, &entry, 0, (void*)myCellOGRCoreArgs, NULL, &stop_info);
@@ -103,15 +108,35 @@ static int ogr_cycle_entry(void *state, int *pnodes, int dummy)
     abort();
   }
 
+#ifdef GET_CACHE_STATS
+  {
+  unsigned safe_nodes = myCellOGRCoreArgs->pnodes ? myCellOGRCoreArgs->pnodes : 1;
+	
+  Log("nodes: %u/%u, hits: %u (%.2f%%), missed: %u\n",
+       myCellOGRCoreArgs->pnodes, *pnodes,
+       myCellOGRCoreArgs->cache_hits,
+       (double)myCellOGRCoreArgs->cache_hits / safe_nodes * 100,
+       myCellOGRCoreArgs->cache_misses
+     );
+  Log(".  purges: %u (%.2f%%), searches: %u (%.2f per node)\n",
+       myCellOGRCoreArgs->cache_purges,
+       (double)myCellOGRCoreArgs->cache_purges / safe_nodes * 100,
+       myCellOGRCoreArgs->cache_search_iters,
+       (double)myCellOGRCoreArgs->cache_search_iters / safe_nodes
+     );
+  Log(".  cache storage usage: %u of %u (%.2f%%)\n", 
+       myCellOGRCoreArgs->cache_curlen,
+       myCellOGRCoreArgs->cache_maxlen,
+       (double)myCellOGRCoreArgs->cache_curlen / (myCellOGRCoreArgs->cache_maxlen ? myCellOGRCoreArgs->cache_maxlen : 1) * 100
+     );
+  }
+#endif
+
   // Copy data from CellCoreArgs struct back to the function arguments
   memcpy(oState, &myCellOGRCoreArgs->state, sizeof(struct OgrState));
         *pnodes = myCellOGRCoreArgs->pnodes;
 
-#ifdef CELL_FULL_CYCLE
-  return retval;
-#else
   return myCellOGRCoreArgs->ret_depth;
-#endif
 }
 
 #ifdef INTERNAL_TEST

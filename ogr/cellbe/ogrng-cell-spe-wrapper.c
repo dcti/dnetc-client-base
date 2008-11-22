@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.2 2008/06/29 14:20:28 stream Exp $"; }
+return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.3 2008/11/22 20:25:50 stream Exp $"; }
 
 #include <spu_intrinsics.h>
 #include "ccoreio.h"
@@ -12,6 +12,12 @@ return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.2 2008/06/29 14:20:28 stream Exp $
 #include <spu_mfcio.h>
 
 #define __CNTLZ__(n)  spu_extract(spu_cntlz(spu_promote(n, 0)), 0)
+
+/*
+ * Special version of LOOKUP_FIRSTBLANK which will never produce results
+ * greater then SCALAR_BITS (32)
+ */
+#define LOOKUP_FIRSTBLANK_32(n) __CNTLZ__((~(n)) >> 1)
 
 #include "ogrng-cell.h"
 #include "ansi/first_blank.h"
@@ -28,23 +34,38 @@ extern "C"
 #endif
 // s32 CDECL SPE_CORE_FUNCTION(CORE_NAME) ( struct State*, int*, const unsigned char* );
 
-// #define FULL_CYCLE
-
 CellOGRCoreArgs myCellOGRCoreArgs __attribute__((aligned (128)));
 
 int ogr_cycle_256(struct OgrState *oState, int *pnodes, /* const u16* */ u32 upchoose);
-#ifdef FULL_CYCLE
-int ogr_cycle_entry(struct OgrState *oState, int *pnodes, u32 upchoose);
-#endif
 
 #define DMA_ID  31
+
+/*
+ * Select method to cache parts of huge pchoose array in local storage:
+ *   0 - no caching, get one element per call (very slow).
+ *   1 - also something trivial (may be broken now).
+ *   2 - use hash function to divide search space on small arrays of 'keys',
+ *       then use linear search to find 'key' in this array. Circular cache
+ *       replacement policy.
+ *   3 - improved version of (2), keys are stored in vector and compared
+ *       in single vector SPU operation. No loops for search at all.
+ */
+#define PCHOOSE_FETCH_MODE  3
+
+#ifdef GET_CACHE_STATS
+  #define UPDATE_STAT(item, n) myCellOGRCoreArgs.cache_##item += n
+#else
+  #define UPDATE_STAT(item, n)
+#endif
+
+static void cleargroups(void), update_groups_stats(void);
 
 int main(unsigned long long speid, addr64 argp, addr64 envp)
 {
   // Check size of structures, these offsets must match assembly
   STATIC_ASSERT(sizeof(struct OgrLevel) == 7*16);
   STATIC_ASSERT(sizeof(struct OgrState) == 2*16 + 7*16*29);
-  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2*16 + 7*16*29 + 16);
+  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2*16 + 7*16*29 + 16 + 16 + 16);
   STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 32);
   STATIC_ASSERT(sizeof(u16) == 2); /* DMA fetches of pchoose */
   
@@ -61,16 +82,21 @@ int main(unsigned long long speid, addr64 argp, addr64 envp)
   struct OgrState* state = &myCellOGRCoreArgs.state;
   int* pnodes   = &myCellOGRCoreArgs.pnodes;
   u32  upchoose = myCellOGRCoreArgs.upchoose;
+  
+  static int cached_maxdepth;
+  if (state->maxdepth != cached_maxdepth)
+  {
+    cached_maxdepth = state->maxdepth;
+    cleargroups();
+  }
 
   // Call the core
 //  s32 retval = SPE_CORE_FUNCTION(CORE_NAME) (state, pnodes, ogr_choose_dat);
   s32 retval;
-#ifdef FULL_CYCLE
-  retval = ogr_cycle_entry(state, pnodes, upchoose);
-#else
   myCellOGRCoreArgs.ret_depth = ogr_cycle_256(state, pnodes, upchoose);
   retval = 0;
-#endif
+
+  update_groups_stats();
 
   // Update changes in main memory
   mfc_put(&myCellOGRCoreArgs, argp.a32[1], sizeof(CellOGRCoreArgs), DMA_ID, 0, 0);
@@ -79,8 +105,8 @@ int main(unsigned long long speid, addr64 argp, addr64 envp)
   return retval; /* no status codes in ogr-ng, core info returned in ret_depth */
 }
 
-typedef vector unsigned char v8_t;
-typedef vector unsigned int v32_t;
+typedef vector unsigned int   v32_t;
+typedef vector unsigned short v16_t;
 
 #define vec_splat_u32(_a)   spu_splats((unsigned int)(_a))
 #define vec_andc            spu_andc
@@ -89,8 +115,10 @@ typedef vector unsigned int v32_t;
 /*
 ** Define the local variables used for the top recursion state
 */
+#define comp0 spu_extract(compV0, 0)
+#define dist0 spu_extract(distV0, 0)
 #define SETUP_TOP_STATE(lev)                           \
-  SCALAR comp0, dist0;                                 \
+  /* SCALAR comp0, dist0; */                           \
   v32_t compV0, compV1;                                \
   v32_t listV0, listV1;                                \
   v32_t distV0, distV1;                                \
@@ -103,8 +131,8 @@ typedef vector unsigned int v32_t;
   distV1 = lev->dist[1].v;                             \
   compV0 = lev->comp[0].v;                             \
   compV1 = lev->comp[1].v;                             \
-  dist0 = spu_extract(distV0, 0);                      \
-  comp0 = spu_extract(compV0, 0);                      \
+  /* dist0 = spu_extract(distV0, 0); */                \
+  /* comp0 = spu_extract(compV0, 0); */                \
   if (depth < oState->maxdepthm1) {                    \
     newbit = vec_splat_u32(1);                         \
   }
@@ -114,20 +142,20 @@ typedef vector unsigned int v32_t;
 */
 #define full_rl(v, n)    spu_rlqw(spu_rlqwbytebc(v, n), n)
 #define full_sl(v, n)    spu_slqw(spu_slqwbytebc(v, n), n)
-#define full_sr(v, n)    spu_rlmaskqw(spu_rlmaskqwbytebc(v, 7-n), 0-n)
+// #define full_sr(v, n)    spu_rlmaskqw(spu_rlmaskqwbytebc(v, 7-n), 0-n)
 
 #define COMP_LEFT_LIST_RIGHT(lev, s)                   \
 {                                                      \
   v32_t selMask;                                       \
-  int   inv_s;                                         \
-  selMask = full_sr(V_ONES, s);                        \
-  compV0  = spu_sel(compV1, compV0, selMask);          \
+  int   inv_s = 128-s;                                 \
+  selMask = full_sl(V_ONES, inv_s);                    \
+  compV0  = spu_sel(compV0, compV1, selMask);          \
   compV0  = full_rl(compV0, s);                        \
   compV1  = full_sl(compV1, s);                        \
-  comp0   = spu_extract(compV0, 0);                    \
+  /* comp0   = spu_extract(compV0, 0); */              \
   selMask = full_sl(V_ONES, s);                        \
   listV1  = spu_sel(listV0, listV1, selMask);          \
-  inv_s   = 128 - s;                                   \
+  /* inv_s   = 128 - s;  */                            \
   listV1  = full_rl(listV1, inv_s);                    \
   listV0  = spu_sel(newbit, listV0, selMask);          \
   listV0  = full_rl(listV0, inv_s);                    \
@@ -149,8 +177,8 @@ typedef vector unsigned int v32_t;
   distV1 = vec_or(distV1, listV1);      \
   lev->comp[1].v = compV1;              \
   compV1 = vec_or(compV1, distV1);      \
-  dist0  = spu_extract(distV0, 0);      \
-  comp0  = spu_extract(compV0, 0);      \
+  /* dist0  = spu_extract(distV0, 0); */     \
+  /* comp0  = spu_extract(compV0, 0); */     \
   newbit = vec_splat_u32(1);
 
 
@@ -164,7 +192,7 @@ typedef vector unsigned int v32_t;
   distV1 = vec_andc(distV1, listV1);    \
   compV0 = lev->comp[0].v;              \
   compV1 = lev->comp[1].v;              \
-  comp0  = spu_extract(compV0, 0);      \
+  /* comp0  = spu_extract(compV0, 0); */     \
   newbit = V_ZERO;
 
 
@@ -179,7 +207,7 @@ typedef vector unsigned int v32_t;
   lev->dist[1].v = distV1;              \
   lev->comp[1].v = compV1;
 
-
+#if PCHOOSE_FETCH_MODE == 0
 static inline unsigned direct_dma_fetch(u32 upchoose, u32 index)
 {
   u16 tempdma[8]; /* use array to fetch 16 bytes (transfer must be aligned) */
@@ -193,11 +221,236 @@ static inline unsigned direct_dma_fetch(u32 upchoose, u32 index)
   return tempdma[index];
 }
 
-#define getchoose(index)  direct_dma_fetch(upchoose, (index))
+static void cleargroups(void) {}
 
-#define choose(dist,seg) getchoose( (dist >> (SCALAR_BITS-CHOOSE_DIST_BITS)) * 32 + (seg) )
+#endif
 
-#if 1
+#if PCHOOSE_FETCH_MODE == 1
+
+#define GROUPS_COUNT  256
+#define GROUPS_LENGTH 64
+
+static unsigned group_sizes[GROUPS_COUNT];
+static struct element
+{
+   unsigned index, value;
+} group_arrays[GROUPS_COUNT][GROUPS_LENGTH];
+
+static inline unsigned direct_dma_fetch___(u32 upchoose, u32 index)
+{
+  u16 tempdma[8]; /* use array to fetch 16 bytes (transfer must be aligned) */
+  STATIC_ASSERT(sizeof(tempdma) == 16);
+
+  upchoose += index * 2;        /* get true full address in u16 *pchoose */
+  index = (upchoose & 15) / 2;  /* index of u16 element within 16 bytes  */
+  upchoose &= ~15;              /* align transfer to 16 bytes            */
+  mfc_get(tempdma, upchoose, sizeof(tempdma), DMA_ID, 0, 0);
+  mfc_read_tag_status_all();
+  return tempdma[index];
+}
+
+static inline unsigned direct_dma_fetch(u32 upchoose, u32 index)
+{
+  unsigned group  = index & (GROUPS_COUNT-1);
+  unsigned length = group_sizes[group];
+  unsigned i;
+  
+  for (i = 0; i < length; i++)
+    if (group_arrays[group][i].index == index)
+       return group_arrays[group][i].value;
+   
+  if (length == GROUPS_LENGTH)
+    length--;
+  group_arrays[group][length].index = index;
+  group_arrays[group][length].value = i = direct_dma_fetch___(upchoose, index);
+  group_sizes[group] = ++length;
+  return i;
+}
+#endif
+
+#if PCHOOSE_FETCH_MODE == 2
+
+#define GROUPS_COUNT   256
+#define GROUPS_LENGTH  8
+#define GROUP_ELEMENTS 32  /* const - because dist0 multiplied by 32 */
+
+static unsigned group_sizes[GROUPS_COUNT];
+static u32      group_keys[GROUPS_COUNT][GROUPS_LENGTH];
+static u16      group_values[GROUPS_COUNT][GROUPS_LENGTH][GROUP_ELEMENTS];
+
+static inline unsigned direct_dma_fetch(u32 upchoose, u32 group_of32, u32 index_in32)
+{
+  unsigned hash;
+  unsigned fulllength, grplength;
+  unsigned newpos;
+  unsigned i;
+  u16     *pvalues;
+  
+  STATIC_ASSERT(sizeof(group_values) == GROUPS_COUNT * GROUPS_LENGTH * GROUP_ELEMENTS * 2);
+  
+  upchoose += group_of32 * GROUP_ELEMENTS * 2; /* get true full address of group start in u16 *pchoose */
+  
+  hash       = (group_of32 ^ (group_of32 >> 8)) & (GROUPS_COUNT-1);
+  fulllength = group_sizes[hash];
+  grplength  = fulllength > GROUPS_LENGTH ? GROUPS_LENGTH : fulllength;
+  
+  for (i = 0; i < grplength; i++)
+  {
+    if (group_keys[hash][i] == upchoose)
+    {
+      UPDATE_STAT(hits, 1);
+      UPDATE_STAT(search_iters, i+1);
+      return group_values[hash][i][index_in32];
+    }
+  }
+  UPDATE_STAT(misses, 1);
+  UPDATE_STAT(search_iters, i);
+
+#if 0
+  if (fulllength >= GROUPS_LENGTH)
+  {
+    UPDATE_STAT(purges, 1);
+  }
+#else
+  UPDATE_STAT(purges, (fulllength >= GROUPS_LENGTH));
+#endif
+  newpos  = fulllength & (GROUPS_LENGTH - 1);
+  pvalues = group_values[hash][newpos];
+  mfc_get(pvalues, upchoose, GROUP_ELEMENTS * 2, DMA_ID, 0, 0);
+  group_keys[hash][newpos] = upchoose;
+  group_sizes[hash] = ++fulllength;
+  mfc_read_tag_status_all();
+  return pvalues[index_in32];
+}
+
+static void cleargroups(void)
+{
+  unsigned i;
+
+  for (i = 0; i < GROUPS_COUNT; i++)
+    group_sizes[i] = 0;
+}
+
+static void update_groups_stats(void)
+{
+#ifdef GET_CACHE_STATS
+  unsigned i;
+  
+  myCellOGRCoreArgs.cache_maxlen = GROUPS_COUNT * GROUPS_LENGTH;
+  for (i = 0; i < GROUPS_COUNT; i++)
+    myCellOGRCoreArgs.cache_curlen += (group_sizes[i] > GROUPS_LENGTH ? GROUPS_LENGTH : group_sizes[i]);
+#endif
+}
+
+#define choose(dist, seg) direct_dma_fetch(upchoose, ((dist) >> (SCALAR_BITS-CHOOSE_DIST_BITS)), (seg))
+
+#endif
+
+
+#if PCHOOSE_FETCH_MODE == 3
+
+#include <string.h>
+
+#define GROUPS_COUNT   256
+#define GROUPS_LENGTH  8   /* const - because 8 u16's can be stored in vector */
+#define GROUP_ELEMENTS 32  /* const - because dist0 multiplied by 32 */
+
+static v16_t    group_keysvectors[GROUPS_COUNT];
+static v32_t    group_insertpos[GROUPS_COUNT]; /* store as vector for faster access */
+static u16      group_values[GROUPS_COUNT][GROUPS_LENGTH][GROUP_ELEMENTS];
+#ifdef GET_CACHE_STATS
+static u32      group_length[GROUPS_COUNT];
+#endif
+
+/*
+ * 'group' is a 16-bit value (top 16 bits of dist0) so 8 id's (keys) can be stored
+ * in one SPU vector. When looking for specific key, SPU vector operations can be used
+ * to compare all of them in parallel and find index of first match:
+ *
+ *    Compare Halfwords => 0xFFFF at matched positions
+ *    Gather Bits From Halfwords => bits 24-31 in PS are set to '1' if corresp. vector matched.
+ *    Count Leading Zeros => result is 24 if vector #0 matched, 25 if #1, ..., 32 if none.
+ *    By substracting 24 from last value, we'll get index of matched key without single jump.
+ */
+static inline unsigned direct_dma_fetch(u32 upchoose, u32 group_of32, u32 index_in32)
+{
+  unsigned hash;
+  u16     *pvalues;
+  v16_t    keyvector;
+  u32      eqbits, element;
+  
+  STATIC_ASSERT(sizeof(group_values) == GROUPS_COUNT * GROUPS_LENGTH * GROUP_ELEMENTS * 2);
+  
+  hash      = (group_of32 ^ (group_of32 >> 8)) & (GROUPS_COUNT-1);
+  keyvector = group_keysvectors[hash];
+  eqbits    = spu_extract(spu_cntlz(spu_gather(spu_cmpeq(keyvector, (u16)group_of32))), 0);
+  element   = eqbits - 24;
+  if (element == 8) /* 32 zeros => Out of bounds => no match */
+  {
+    v32_t tempvect = group_insertpos[hash];
+    element        = spu_extract(tempvect, 0) & (GROUPS_LENGTH - 1);
+
+    pvalues = group_values[hash][element];
+    mfc_get(pvalues, upchoose + group_of32 * GROUP_ELEMENTS * 2, GROUP_ELEMENTS * 2, DMA_ID, 0, 0);
+
+    group_insertpos[hash]   = spu_add(tempvect, 1);
+    group_keysvectors[hash] = spu_insert((u16)group_of32, keyvector, element);
+
+#ifdef GET_CACHE_STATS
+    UPDATE_STAT(misses, 1);
+    if (group_length[hash] != GROUPS_LENGTH)
+      group_length[hash]++;
+    else
+      UPDATE_STAT(purges, 1);
+#endif
+    
+    mfc_read_tag_status_all();
+    
+    return pvalues[index_in32];
+  }
+
+  UPDATE_STAT(hits, 1);
+
+  return group_values[hash][element][index_in32];
+}
+
+static void cleargroups(void)
+{
+  unsigned i;
+
+  for (i = 0; i < GROUPS_COUNT; i++)
+  {
+    group_keysvectors[i] = spu_splats((u16) 0);
+    group_insertpos[i]   = spu_splats((u32) 0);
+#ifdef GET_CACHE_STATS
+    group_length[i]      = 0;
+#endif
+  }
+  /* All vectors now points to group0, so fill all entries with true data for group 0 */
+  mfc_get(group_values[0][0], myCellOGRCoreArgs.upchoose, GROUP_ELEMENTS * 2, DMA_ID, 0, 0);
+  mfc_read_tag_status_all();
+  for (i = 1; i < GROUPS_COUNT * GROUPS_LENGTH; i++)
+    memcpy(group_values[0][i], group_values[0][0], GROUP_ELEMENTS * 2);
+}
+
+static void update_groups_stats(void)
+{
+#ifdef GET_CACHE_STATS
+  unsigned i;
+  
+  myCellOGRCoreArgs.cache_maxlen = GROUPS_COUNT * GROUPS_LENGTH;
+  for (i = 0; i < GROUPS_COUNT; i++)
+    myCellOGRCoreArgs.cache_curlen += group_length[i];
+#endif
+}
+
+#define choose(dist, seg) direct_dma_fetch(upchoose, ((dist) >> (SCALAR_BITS-CHOOSE_DIST_BITS)), (seg))
+
+#endif
+
+//#define getchoose(index)  direct_dma_fetch(upchoose, (index))
+
+//#define choose(dist,seg) getchoose( (dist >> (SCALAR_BITS-CHOOSE_DIST_BITS)) * 32 + (seg) )
 
 int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 upchoose)
 {
@@ -213,6 +466,7 @@ int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 u
     int mark  = lev->mark;
 
     for (;;) {
+#if 0
       if (comp0 < (SCALAR)~1) {
         int s = LOOKUP_FIRSTBLANK(comp0);
 
@@ -231,6 +485,19 @@ int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 u
         }
         COMP_LEFT_LIST_RIGHT_WORD(lev);
       }
+#else
+      int s;
+      v32_t save_compV0;
+      s = LOOKUP_FIRSTBLANK_32(comp0);
+      if ((mark += s) > limit) {
+        break;
+      }
+      save_compV0 = compV0;
+      COMP_LEFT_LIST_RIGHT(lev, s);
+      if (spu_extract(save_compV0, 0) == (SCALAR)~0) {
+        continue;
+      }
+#endif
 
       lev->mark = mark;
       if (depth == oState->maxdepthm1) {
@@ -285,95 +552,3 @@ exit:
   *pnodes -= nodes;
   return depth;
 }
-
-#ifdef FULL_CYCLE
-static int found_one(const struct OgrState *oState)
-{
-  register int i, j;
-  u32 diffs[((1024 - OGRNG_BITMAPS_LENGTH) + 31) / 32];
-  register int max = oState->max;
-  register int maxdepth = oState->maxdepth;
-  const struct OgrLevel *levels = &oState->Levels[0];
-
-  for (i = max >> (5+1); i >= 0; --i)
-    diffs[i] = 0;
-
-  for (i = 1; i < maxdepth; i++) {
-    register int marks_i = levels[i].mark;
-
-    for (j = 0; j < i; j++) {
-      register int diff = marks_i - levels[j].mark;
-      if (diff <= OGRNG_BITMAPS_LENGTH)
-        break;
-
-      if (diff+diff <= max) {       /* Principle #1 */
-        register u32 mask = 1 << (diff & 31);
-        diff = (diff >> 5) - (OGRNG_BITMAPS_LENGTH / 32);
-        if ((diffs[diff] & mask) != 0)
-          return 0;                 /* Distance already taken = not Golomb */
-
-        diffs[diff] |= mask;
-      }
-    }
-  }
-  return -1;      /* Is golomb */
-}
-
-int ogr_cycle_entry(struct OgrState *oState, int *pnodes, u32 upchoose)
-{
-  int retval = CORE_S_CONTINUE;
-//  struct OgrState *oState = (struct OgrState *)state;
-//  u16* pchoose = precomp_limits[oState->maxdepth - OGR_NG_MIN].choose_array;
-  int safesize = OGRNG_BITMAPS_LENGTH * 2;
-  int depth;
-
-  /* Now that the core always exits when the specified number of nodes has
-  ** been processed, the "with_time_constraints" setting is obsolete.
-  */
-//  with_time_constraints = with_time_constraints;
-  ++oState->depth;
-
-  /* Invoke the main core.
-  ** Except for OGR-26 (and shorter rulers), the core may still find rulers
-  ** that are not Golomb. This loop asserts the Golombness of any ruler found
-  ** when that makes sense.
-  */
-  do {
-    depth = ogr_cycle_256(oState, pnodes, upchoose);
-  } while (depth == oState->maxdepthm1 && oState->Levels[depth].mark > safesize && found_one(oState) == 0);
-
-  if (depth == oState->maxdepthm1) {
-    retval = CORE_S_SUCCESS;
-  }
-  else if (depth <= oState->stopdepth) {
-    retval = CORE_S_OK;
-  }
-
-  oState->depth = depth - 1;
-  return retval;
-}
-#endif
-
-#else
-
-int ogr_cycle_256(struct OgrState *oState, int *pnodes, /* const u16* */ u32 upchoose)
-{
-#if 0
-  return direct_dma_fetch(upchoose, 0);
-#endif
-
-#if 0
-  int count;
-  v32_t V_ONES = vec_splat_u32(~0);
-
-  count  = *pnodes;
-  V_ONES = full_sr(V_ONES, count);
-  return spu_extract(V_ONES, 0);
-#endif
-
-#if 0
-  return LOOKUP_FIRSTBLANK(*pnodes);
-#endif
-}
-
-#endif
