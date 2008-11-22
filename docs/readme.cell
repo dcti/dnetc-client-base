@@ -1,5 +1,5 @@
 distributed.net client for the unix family
- document revision $Id: readme.cell,v 1.4 2008/10/08 05:23:07 snikkel Exp $
+ document revision $Id: readme.cell,v 1.5 2008/11/22 20:55:23 stream Exp $
 
  Welcome to the distributed.net client.
 
@@ -19,8 +19,8 @@ distributed.net client for the unix family
     by Sony at <http://www.playstation.com/ps3-openplatform/>.
     You'll need a Linux distribution for the PowerPC architecture, with a
     reasonably recent kernel offering support for the Cell processor. At the 
-    present time, only the Fedora Core 6 distribution with kernel 2.6.16
-    has been tested, and we recommend its use.
+    present time, Fedora Core 6 distribution with kernel 2.6.16 and Ubuntu
+    Gutsy with kernel 2.6.22 has been tested.
 
     Just unpack/unzip/untar the client in a directory of your choice and 
     fire it up.
@@ -55,10 +55,10 @@ distributed.net client for the unix family
     We ship optimized cores for the RC5-72 and OGR projects. For RC5-72,
     there are two cores available, "Cell v1 PPE" and "Cell v1 SPE". These
     run on the main processor (PPE) and co-processors (SPEs) respectively.
-    As for OGR, there are three cores available, the two KOGE cores from
-    the PowerPC client port, which run on the PPE, and a new core, "Cell
-    v1 SPE", which runs on the SPEs. Automatic core selection should
-    select the fastest core for the PPE, namely "KOGE 2.0 Hybrid".
+    As for OGR and OGR-NG, there are three cores available, the two KOGE
+    cores from the PowerPC client port, which run on the PPE, and a new
+    core, "Cell v1 SPE", which runs on the SPEs. Automatic core selection
+    should select the fastest core for the PPE, namely "KOGE 2.0 Hybrid".
 
     As the current client architecture doesn't support separate core choices
     for different processors, a temporary workaround has been implemented   
@@ -97,7 +97,7 @@ distributed.net client for the unix family
 
  2.0  Troubleshooting and Known issues ------------------------------
 
-    Some CellBE Linux distributions (such as Ubuntu Linux) may receive
+    Some CellBE Linux distributions (such as old Ubuntu Linux) may receive
     errors such as:
         "spu_create(): Function not implemented" 
         "spu_create(): no such file or directory"
