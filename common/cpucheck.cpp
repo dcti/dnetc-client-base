@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.134 2008/11/23 03:00:11 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.135 2008/11/23 07:22:52 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2065,7 +2065,8 @@ static long __GetRawProcessorID(const char **cpuname)
   cudaDeviceProp deviceProp;
         
   cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
-  sprintf (namebuf,"%29s", deviceProp.name);
+  strncpy( namebuf, deviceProp.name, sizeof(namebuf) );
+  namebuf[sizeof(namebuf)-1] = '\0';
 
   if (cpuname)
     *cpuname = (const char *)&namebuf[0];
