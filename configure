@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.320 2008/11/13 06:40:50 stream Exp $
+# @(#)$Id: configure,v 1.321 2008/11/23 03:00:11 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -64,6 +64,8 @@ TARGET_YASM_FMT="elf"
 TARGET_STRIP="strip"
 TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
 TARGET_IS_CROSSCOMPILE=""
+TARGET_CUDA_INSTALL_PATH="/usr/local/cuda"
+TARGET_NVCC="$TARGET_CUDA_INSTALL_PATH/bin/nvcc"
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -73,6 +75,7 @@ TARGET_ADDPPUCORES=""
 TARGET_ADDSPUCORES=""
 TARGET_ADDOBJS=""
 TARGET_INTOBJS=""
+TARGET_ADDCUDASRCS=""
 
 # Certain source files need to be compiled without optimization
 # to get a working client. *sigh* This flag will get set in the
@@ -137,7 +140,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                  ${COMMON_SRCS}"
   elif [ "$1" = "linux" ]; then
     COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
-    if [ "$2" = "x86" -o "$2" = "ppc" ]; then #maybe others as well
+    if [ "$2" = "x86" -o "$2" = "ppc" -o "$2" = "cuda" ]; then #maybe others as well
       #COMMON_SRCS="plat/linux/li_kthread.c ${COMMON_SRCS}"
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
       COMMON_SRCS="plat/linux/resolv.c ${COMMON_SRCS}"
@@ -601,6 +604,20 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_OGR_P2
 
   #-----------------------------------------------------------------
+  elif [ "$2" = "cuda" ]; then
+
+    HAVE_OGR="0"
+    HAVE_OGR_P2="0"
+
+    # -------------- rc5-72 --------------
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      DEFAULT_RC5_72="0"     # don't add the ansi cores
+      TARGET_ADDCUDASRCS="$TARGET_ADDCUDASRCS \
+                          rc5-72/cuda/r72cuda-1pipe.cu \
+                          rc5-72/cuda/r72cuda-2pipe.cu"
+    fi # HAVE_RC5_72
+
+  #-----------------------------------------------------------------
   else
     echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
   fi
@@ -657,6 +674,10 @@ infer_arch_and_version() { # $1=OS name to be expected from uname -s
       -o "$inferred_arch" = "i686" \
       -o "$inferred_arch" = "i786" ]; then
       inferred_arch="x86"
+    fi
+
+    if [ "$inferred_arch" = "x86_64" ]; then
+      inferred_arch="amd64"
     fi
   else
     echo "$1 targets can only be built on $1"
@@ -990,7 +1011,7 @@ generate_gcc_opts() {
 	fi
         ;;
 
-    *internal-amd64)
+    *internal-amd64|internal-x86_64)
         opts310="$OPTS_GCC310 -O2 -DASM_AMD64 \
 	    -m64 -mfpmath=sse -mno-3dnow -mno-mmx -fforce-addr \
 	    -falign-functions=5 -falign-loops=4 -funroll-loops"
@@ -2218,7 +2239,7 @@ case "$1" in
           generate_gcc_opts "${inferred_arch}" "linux"
         fi
         TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS"
         TARGET_LIBS="-lrt"
         TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}"
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
@@ -2473,7 +2494,7 @@ case "$1" in
         TARGET_CC="gcc"
         generate_gcc_opts "amd64" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS"
         TARGET_LIBS="-lstdc++ -lrt"
         TARGET_TARBALL="linux-amd64-elf"
         TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
@@ -2828,6 +2849,21 @@ case "$1" in
         SHELL="/bin/sh" # workaround for pkdsh missing SHELL var
         ;;
 
+###### CUDA
+    *linux-cuda*)               
+        infer_arch_and_version "Linux"
+        TARGET_AS="gcc -c"         
+        TARGET_CC="gcc"
+        generate_gcc_opts "${inferred_arch}" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -I$TARGET_CUDA_INSTALL_PATH/include -DCUDA -DDYN_TIMESLICE"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -L$TARGET_CUDA_INSTALL_PATH/lib -Wl,-rpath -Wl,."
+        TARGET_LIBS="-lcudart -lstdc++ -lrt"
+        TARGET_TARBALL="linux-${inferred_arch}-cuda-elf"
+        TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
+        TARGET_USES_GNUMAKE="yes"
+        add_sources "linux" "cuda" ""
+        ;;
+
 ###### Unknown
     *list)
 	egrep "^[ ]*\*" $0 | grep -v internal | more
@@ -3071,6 +3107,17 @@ if [ -n "${TARGET_ADDOGRNGSPUCORES}" ]; then
       TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETEMBEDOBJECT}"
   done
 fi
+if [ -n "${TARGET_ADDCUDASRCS}" ]; then
+  echo "Scanning additional CUDA dependencies..."
+  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} cu"
+  for target in ${TARGET_ADDCUDASRCS}; do
+      TARGETOBJECT=`basename $target .c`
+      TARGETOBJECT=output/`basename $TARGETOBJECT .cu`.o
+      echo "  ${target} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
+  done
+fi
 
 #
 # Generate the targets for supplementary resource files.
@@ -3126,6 +3173,7 @@ echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "INTOBJS = ${TARGET_INTOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
+echo "NVCC = ${TARGET_NVCC}" >>Makefile   
 if [ "$TARGET_USES_GNUMAKE" = "yes" ]; then
   # GNUMake $(shell ) evaluates only once - but this isn't supported by BSD make etc ...
   echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0123456789)" >>Makefile
@@ -3242,8 +3290,11 @@ echo "" >> Makefile
 #
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} \${ADDOBJS} \${INTOBJS}" >> Makefile
-if [ "$BUILDNAME" = "x86-os2" ]; then
+if [ "$BUILDNAME" = "os2-x86" ]; then
   echo "	rm -f output/dnetc.res" >> Makefile
+fi
+if [ "$BUILDNAME" = "linux-cuda" ]; then
+  echo "	rm -f output/*.cubin output/*.ptx" >> Makefile
 fi
 echo "	rm -f ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 if [ -n "$TARGET_GENMAN" ]; then
@@ -3316,6 +3367,8 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     elif [ "${target}" = "ogrngspumerge" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "ogrngspuembed" ]; then
+      TARGETTYP="$target"
+    elif [ "${target}" = "cu" ]; then           
       TARGETTYP="$target"
     # ------------------------------------
     elif [ "${TARGETSRC}X" = "X" ]; then
@@ -3553,6 +3606,14 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       echo "$target:    $MERGETARGET" >> Makefile
       echo "	\${SPUSTRIP} $MERGETARGET" >> Makefile
       echo "	\${PPUEMBEDSPU} -m32 $COREFUNCTION $MERGETARGET $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+      elif [ "${TARGETTYP}" = "cu" ]; then
+      echo "$target:    ${TARGETSRC}" >> Makefile
+      echo "	\${NVCC} --ptx --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target.ptx" >> Makefile 
+      echo "	\${NVCC} --cubin --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target.cubin" >> Makefile 
+      echo "	\${NVCC} -c --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------

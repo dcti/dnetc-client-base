@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.187 2008/10/27 03:08:57 piru Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.188 2008/11/23 03:00:12 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1194,6 +1194,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
   thisprob = thisprob;
   *keyscheckedP = 0;
   *resultcode = -1;
+  thisprob->priv_data.last_resultcode = -1;
   return -1;
 #else
   s32 rescode = -1;
@@ -1234,6 +1235,9 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
 
+#if (CLIENT_CPU == CPU_CUDA)
+      thisprob->priv_data.rc5_72unitwork.threadnum = thisprob->pub_data.threadnum;
+#endif     
       SAVE_CLIENT_OS_CONTEXT
 
       rescode = (*(thisprob->pub_data.unit_func.gen_72))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
@@ -1280,6 +1284,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
   if (rescode < 0) /* "kiter" error */
   {
     *resultcode = -1;
+    thisprob->priv_data.last_resultcode = -1;
     return -1;
   }
   *resultcode = (int)rescode;
@@ -1302,6 +1307,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
           thisprob->priv_data.refL0.hi, thisprob->priv_data.refL0.mid, thisprob->priv_data.refL0.lo);
     }
     *resultcode = -1;
+    thisprob->priv_data.last_resultcode = -1;
     return -1;
   };
 

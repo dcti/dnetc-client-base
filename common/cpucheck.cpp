@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.133 2008/11/08 20:49:23 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.134 2008/11/23 03:00:11 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -50,6 +50,11 @@ return "@(#)$Id: cpucheck.cpp,v 1.133 2008/11/08 20:49:23 stream Exp $"; }
 #include "x86id.h"
 #endif
 
+#if (CLIENT_CPU == CPU_CUDA)
+#include <cuda_runtime.h>
+#endif
+
+
 /* ------------------------------------------------------------------------ */
 /*
    Implementing long __GetRawProcessorID( const char **cpuname ):
@@ -75,7 +80,14 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   if (cpucount == -2)
   {
     cpucount = -1;
-    #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
+    #if (CLIENT_CPU == CPU_CUDA)
+      cudaGetDeviceCount(&cpucount);
+      if (cpucount<=0) {
+        LogScreen("No CUDA-supported GPU found.\n");
+        cpucount=-1;
+      }
+
+    #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
     { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
       int ncpus; size_t len = sizeof(ncpus);
@@ -2043,6 +2055,24 @@ static long __GetRawProcessorID(const char **cpuname)
 }
 #endif
 
+
+/* ---------------------------------------------------------------------- */
+
+#if (CLIENT_CPU == CPU_CUDA)
+static long __GetRawProcessorID(const char **cpuname)
+{
+  static char namebuf[30];
+  cudaDeviceProp deviceProp;
+        
+  cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+  sprintf (namebuf,"%29s", deviceProp.name);
+
+  if (cpuname)
+    *cpuname = (const char *)&namebuf[0];
+  return 1;
+}
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 //get (simplified) cpu ident by hardware detection
@@ -2055,7 +2085,8 @@ long GetProcessorType(int quietly)
       (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
       (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
       (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
-      (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)
+      (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
+      (CLIENT_CPU == CPU_CUDA)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -2134,7 +2165,13 @@ unsigned int GetProcessorFrequency()
 {
   unsigned int freq = 0;   /* Unknown */
 
-  #if (CLIENT_OS == OS_MACOSX)
+  #if (CLIENT_CPU == CPU_CUDA)
+    cudaDeviceProp deviceProp;
+        
+    cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+    freq = deviceProp.clockRate / 1000;
+
+  #elif (CLIENT_OS == OS_MACOSX)
     int mib[2] = {CTL_HW, HW_CPU_FREQ};
     unsigned long frequency;
     size_t len = sizeof(frequency);
@@ -2379,7 +2416,8 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_POWER) || \
     (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
     (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
-    (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)
+    (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
+    (CLIENT_CPU == CPU_CUDA)
   long rawid = __GetRawProcessorID(&cpuid_s);
   if (rawid == -1L || rawid == -2L)
     cpuid_s = ((rawid==-1)?("?\n\t(identification failed)"):

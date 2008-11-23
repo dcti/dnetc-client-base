@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd) 
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.16 2007/10/22 16:48:24 jlawson Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.17 2008/11/23 03:00:11 jlawson Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
@@ -60,6 +60,9 @@ typedef struct
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,mid,lo;} L0; /* key, changes with every unit * PIPELINE_COUNT. */
   struct {u32 count; u32 hi,mid,lo;} check; /* counter-measure check */
+#if (CLIENT_CPU == CPU_CUDA)
+  int threadnum; /* To track which GPU to use */
+#endif
 } DNETC_PACKED RC5_72UnitWork;
 
 #include "pack0.h"

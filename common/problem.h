@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.100 2008/02/17 16:24:29 kakace Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.101 2008/11/23 03:00:12 jlawson Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -145,6 +145,10 @@ struct problem_publics
   int was_reset;                 /* set if loadstate reset the block     */
   int is_random;                 /* set if problem was RC5 'random'      */
   int is_benchmark;              /* set if problem is benchmark          */
+
+#if (CLIENT_CPU == CPU_CUDA)
+  int threadnum;                 /* sets which GPU to use                */
+#endif
 
   int loaderflags; /* used by problem loader (probfill.cpp) */
 

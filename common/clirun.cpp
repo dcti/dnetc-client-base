@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.136 2008/10/27 09:49:33 oliver Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.137 2008/11/23 03:00:11 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -444,7 +444,10 @@ void Go_mt( void * parm )
 
       elapsed_sec = thisprob->pub_data.runtime_sec;
       elapsed_usec = thisprob->pub_data.runtime_usec;
-
+#if (CLIENT_CPU == CPU_CUDA)
+      if (contest_i == RC5_72) 
+        thisprob->pub_data.threadnum = thrparams->threadnum;
+#endif
       thrparams->is_suspended = 0;
       //fprintf(stderr,"thisprob->Run()\n");
       run = ProblemRun(thisprob);

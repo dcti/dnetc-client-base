@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.15 2008/11/08 20:49:23 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.16 2008/11/23 03:00:11 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -38,6 +38,12 @@ return "@(#)$Id: core_r72.cpp,v 1.15 2008/11/08 20:49:23 stream Exp $"; }
 extern "C" s32 CDECL rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
+
+// There are CUDA optimized cores
+#if (CLIENT_CPU == CPU_CUDA)
+extern "C" s32 CDECL rc5_72_unit_func_cuda_1( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_2( RC5_72UnitWork *, u32 *, void * );
+#endif
 
 // These are assembly-optimized versions for each platform.
 #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
@@ -173,6 +179,9 @@ const char **corenames_for_contest_rc572()
       "ANSI 2-pipe",
       "ANSI 1-pipe",
       "MIPS 2-pipe",
+  #elif (CLIENT_CPU == CPU_CUDA)
+      "CUDA 1-pipe",        
+      "CUDA 2-pipe",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -749,6 +758,18 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         pipeline_count = 16;
         break;
      // -----------
+     #elif (CLIENT_CPU == CPU_CUDA)
+      case 0:             
+      default:
+        unit_func.gen_72 = rc5_72_unit_func_cuda_1;
+        pipeline_count = 1;
+        coresel = 0; // yes, we explicitly set coresel in the default case !
+      break;               
+      case 1:         
+        unit_func.gen_72 = rc5_72_unit_func_cuda_2;
+        pipeline_count = 2;
+        break;
+    // -----------
      #else /* the ansi cores */
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_ansi_4;

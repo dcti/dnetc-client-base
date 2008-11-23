@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.93 2008/10/25 19:45:09 snikkel Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.94 2008/11/23 03:00:12 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -37,6 +37,7 @@
 #define CPU_AMD64       17 /* official name */
 #define CPU_X86_64      CPU_AMD64 /* old GNU name before AMD announced AMD64 */
 #define CPU_CELLBE	18
+#define CPU_CUDA	19
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -164,7 +165,9 @@
     #define CLIENT_OS_NAME "Linux"
     #define CLIENT_OS      OS_LINUX
   #endif
-  #if defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
+  #if defined(CUDA)
+    #define CLIENT_CPU     CPU_CUDA
+  #elif defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(ASM_SH4) /* cross compile, ergo don't use __sh__ */
     #define CLIENT_CPU     CPU_SH4
@@ -496,7 +499,7 @@
      (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_68K) || \
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
-     (CLIENT_CPU == CPU_AMD64) || \
+     (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
      ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_WIN32) || \
      (CLIENT_OS == OS_DEC_UNIX))))
    #define CORES_SUPPORT_SMP
@@ -539,6 +542,12 @@
   #include <sys/resource.h> /* WIF*() macros */
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
+#elif (CLIENT_CPU == CPU_CUDA)
+  #define HAVE_POSIX_THREADS
+  #define _POSIX_THREADS_SUPPORTED
+  #include <pthread.h>
+  typedef pthread_t THREADID;
+  #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_LINUX) && \
   !defined(HAVE_POSIX_THREADS) && (CLIENT_CPU == CPU_X86) && 0 /* DISABLED! */
   #define HAVE_KTHREADS /* platforms/linux/li_kthread.c */
