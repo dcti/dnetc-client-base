@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.8 2008/11/22 07:34:21 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.9 2008/11/23 02:21:59 jlawson Exp $"; }
 
 //#define TRACE
 
@@ -21,9 +21,10 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.8 2008/11/22 07:34:21 stream Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
-#include "ogr.h"
 
 #if defined(HAVE_OGR_CORES)
+#include "ogr.h"
+
 
 /* ======================================================================== */
 
