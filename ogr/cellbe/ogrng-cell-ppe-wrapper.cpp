@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.4 2008/11/22 20:25:50 stream Exp $"; }
+return "@(#)$Id: ogrng-cell-ppe-wrapper.cpp,v 1.5 2008/11/24 20:59:53 stream Exp $"; }
 
 
 #include <libspe2.h>
@@ -42,8 +42,8 @@ spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program);
 static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16 *pchoose)
 {
   // Check size of structures, these offsets must match assembly
-  STATIC_ASSERT(sizeof(struct OgrLevel) == 7*16);
-  STATIC_ASSERT(sizeof(struct OgrState) == 2*16 + 7*16*29); /* 29 == OGR_MAXDEPTH */
+  STATIC_ASSERT(sizeof(struct OgrLevel) == 8*16);
+  STATIC_ASSERT(sizeof(struct OgrState) == 2*16 + 8*16*29); /* 29 == OGR_MAXDEPTH */
   STATIC_ASSERT(sizeof(CellOGRCoreArgs) == sizeof(struct OgrState) + 16 + 16 + 16);
   STATIC_ASSERT(sizeof(struct OgrState) <= OGRNG_PROBLEM_SIZE);
   STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 32);

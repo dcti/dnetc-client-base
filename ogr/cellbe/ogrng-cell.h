@@ -7,6 +7,23 @@
 #undef  HAVE_FLEGE_PPC_CORES         /* Don't use PPC assembly  */
 #include "ppc/ogrng-vec.cpp"         /* Vectored stub structures */
 
+#define OGROPT_SPECIFIC_LEVEL_STRUCT
+/*
+ ** Level datas - mark and limit can be loaded as SPU vectors 
+ */
+#ifdef __SPU__
+  #define fake_vector(var)  __vector int var
+#else
+  #define fake_vector(var)  int var; int var##pad[3]
+#endif
+struct OgrLevel {
+   BMAP list[OGRNG_BITMAPS_WORDS];
+   BMAP dist[OGRNG_BITMAPS_WORDS];
+   BMAP comp[OGRNG_BITMAPS_WORDS];
+   fake_vector(mark);
+   fake_vector(limit);
+};
+
 #ifdef __SPU__
   #include "ansi/ogrng_corestate.h"  /* Get only "State" structure */
 #else

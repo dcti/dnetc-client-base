@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.3 2008/11/22 20:25:50 stream Exp $"; }
+return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.4 2008/11/24 20:59:53 stream Exp $"; }
 
 #include <spu_intrinsics.h>
 #include "ccoreio.h"
@@ -63,9 +63,9 @@ static void cleargroups(void), update_groups_stats(void);
 int main(unsigned long long speid, addr64 argp, addr64 envp)
 {
   // Check size of structures, these offsets must match assembly
-  STATIC_ASSERT(sizeof(struct OgrLevel) == 7*16);
-  STATIC_ASSERT(sizeof(struct OgrState) == 2*16 + 7*16*29);
-  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2*16 + 7*16*29 + 16 + 16 + 16);
+  STATIC_ASSERT(sizeof(struct OgrLevel) == 6*16+16+16);
+  STATIC_ASSERT(sizeof(struct OgrState) == 2*16 + 8*16*29);
+  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2*16 + 8*16*29 + 16 + 16 + 16);
   STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 32);
   STATIC_ASSERT(sizeof(u16) == 2); /* DMA fetches of pchoose */
   
@@ -133,7 +133,7 @@ typedef vector unsigned short v16_t;
   compV1 = lev->comp[1].v;                             \
   /* dist0 = spu_extract(distV0, 0); */                \
   /* comp0 = spu_extract(compV0, 0); */                \
-  if (depth < oState->maxdepthm1) {                    \
+  if (depth < maxdepthm1) {                            \
     newbit = vec_splat_u32(1);                         \
   }
 
@@ -454,16 +454,20 @@ static void update_groups_stats(void)
 
 int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 upchoose)
 {
-  struct OgrLevel *lev = &oState->Levels[oState->depth];
-  int depth       = oState->depth;
-  int maxlen_m1   = oState->max - 1;
   int nodes       = *pnodes;
+  int maxlen_m1   = oState->max - 1;
+  int maxdepthm1  = oState->maxdepthm1;
+  int half_depth  = oState->half_depth;
+  int half_depth2 = oState->half_depth2;
+  int stopdepth   = oState->stopdepth;
+  int depth       = oState->depth;
+  struct OgrLevel *lev = &oState->Levels[depth];
 
   SETUP_TOP_STATE(lev);
 
   do {
-    int limit = lev->limit;
-    int mark  = lev->mark;
+    int limit = spu_extract(lev->limit, 0);
+    int mark  = spu_extract(lev->mark, 0);
 
     for (;;) {
 #if 0
@@ -499,8 +503,8 @@ int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 u
       }
 #endif
 
-      lev->mark = mark;
-      if (depth == oState->maxdepthm1) {
+      lev->mark = spu_promote(mark, 0);
+      if (depth == maxdepthm1) {
         goto exit;         /* Ruler found */
       }
 
@@ -512,8 +516,8 @@ int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 u
       /* Compute the maximum position for the next level */
       limit = choose(dist0, depth);
 
-      if (depth > oState->half_depth && depth <= oState->half_depth2) {
-        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
+      if (depth > half_depth && depth <= half_depth2) {
+        int temp = maxlen_m1 - spu_extract(oState->Levels[half_depth].mark, 0);
 
         if (limit > temp) {
           limit = temp;
@@ -525,7 +529,7 @@ int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 u
         ** LOOKUP_FIRSTBLANK(0xFF..FF) shall return the total number of bits
         ** set plus one. If not, selftest #32 will fail.
         */
-        if (depth < oState->half_depth2) {
+        if (depth < half_depth2) {
           #if (SCALAR_BITS <= 32)
           limit -= LOOKUP_FIRSTBLANK(dist0);
           #else
@@ -535,17 +539,17 @@ int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 u
           #endif
         }
       }
-      lev->limit = limit;
+      lev->limit = spu_promote(limit, 0);
 
       if (--nodes <= 0) {
-        lev->mark = mark;
+        lev->mark = spu_promote(mark, 0);
         goto exit;
       }
     } /* for (;;) */
     --lev;
     --depth;
     POP_LEVEL(lev);
-  } while (depth > oState->stopdepth);
+  } while (depth > stopdepth);
 
 exit:
   SAVE_FINAL_STATE(lev);
