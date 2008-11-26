@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.31 2008/03/02 20:07:19 kakace Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.32 2008/11/26 03:27:09 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -443,16 +443,10 @@ time_t CliGetNewestModuleTime(void)
 }
 
 
-//! Determines whether the current build is a "development" or
-//! "stable" build.
+//! Determine whether the build is "beta" or "release" build.
 /*!
- * Development builds typically have a timebomb that causes them to
+ * Development beta builds have a timebomb that causes them to
  * expire after a few days/weeks.
- *
- * The build is determined to be a development build if either BETA or
- * BETA_PERIOD is defined, or if the RCS/CVS file version has only one
- * period ('.') in the version number (indicating that it is on the
- * HEAD branch).
  *
  * \return Returns zero if stable, non-zero if development.
  */
@@ -460,32 +454,6 @@ int CliIsDevelVersion(void)
 {
   #if (defined(BETA) || defined(BETA_PERIOD))
   return 1;
-  #elif ((CLIENT_CONTEST) <= 90) && ((CLIENT_BUILD) < 16)
-  // The following code is now obsolete. Source code has been moved to the
-  // trunc, so all version numbers only have one dot.
-  static int isdevel = -1;
-  if (isdevel == -1)
-  {
-    char *p = (char*)strchr( cliident_cpp(), ',' );
-    isdevel = 0;
-    if (p)
-    {
-      if (p[1] == 'v')
-      {
-        char scratch[80];
-        unsigned int len = 0;
-        p+=2;
-        while (*p && *p==' ')
-          p++;
-        while (*p && *p!=' ' && len<(sizeof(scratch)-1))
-          scratch[len++] = *p++;
-        scratch[len] = '\0';
-        if (strchr(scratch, '.' ) == strrchr(scratch, '.'))
-          isdevel = 1;
-      }
-    }
-  }
-  return isdevel;
   #else
   return 0;
   #endif
