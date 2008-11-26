@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.135 2008/11/23 07:22:52 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.136 2008/11/26 06:34:24 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -81,12 +81,15 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   {
     cpucount = -1;
     #if (CLIENT_CPU == CPU_CUDA)
+      cudaDeviceProp deviceProp;
       cudaGetDeviceCount(&cpucount);
-      if (cpucount<=0) {
-        LogScreen("No CUDA-supported GPU found.\n");
-        cpucount=-1;
-      }
+      cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+      if (strstr(deviceProp.name, "Emulation") != NULL) cpucount = 0;
 
+      if (cpucount <= 0) {
+        LogScreen("No CUDA-supported GPU found.\n");
+        cpucount = 0;
+      }
     #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
     { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
