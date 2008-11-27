@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.165 2008/10/16 22:31:45 jlawson Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.166 2008/11/27 21:09:58 snake Exp $"; }
 
 //#define TRACE
 
@@ -38,7 +38,7 @@ return "@(#)$Id: cmdline.cpp,v 1.165 2008/10/16 22:31:45 jlawson Exp $"; }
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-    (CLIENT_OS == OS_PS2LINUX)
+    (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
 #include <dirent.h> /* for direct read of /proc/ */
 #endif
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
@@ -213,7 +213,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           pid_t already_sigd[128]; unsigned int sigd_count = 0;
           #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
               (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-              (CLIENT_OS == OS_PS2LINUX)
+              (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
           DIR *dirp = opendir("/proc");
           if (!dirp)
             kill_found = -1;
@@ -427,7 +427,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           const char *pscmd = NULL;
           #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
               (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX)
+              (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX) || \
+              (CLIENT_OS == OS_DRAGONFLY)
           pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */

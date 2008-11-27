@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.94 2008/11/23 03:00:12 jlawson Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.95 2008/11/27 21:09:58 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -90,6 +90,7 @@
 #define OS_MORPHOS      45
 #define OS_WIN64        46
 #define OS_NETWARE6     47
+#define OS_DRAGONFLY    48
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
@@ -268,6 +269,13 @@
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
   #endif
+#elif defined(__DragonFly__)
+  #ifndef __unix__ /* should already be defined */
+  #define __unix__
+  #endif
+  #define CLIENT_OS_NAME   "DragonFly"
+  #define CLIENT_CPU       CPU_X86 /* no other CPU for now */
+  #define CLIENT_OS        OS_DRAGONFLY
 #elif defined(__QNX__)
   #ifndef __unix__ /* should already be defined */
   #define __unix__

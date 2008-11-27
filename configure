@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.324 2008/11/27 00:45:36 snake Exp $
+# @(#)$Id: configure,v 1.325 2008/11/27 21:09:58 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -119,7 +119,7 @@ add_sources() # $1=os, $2=arch, $3=custom
   if [ "$1" = "freebsd" -o "$1" = "netbsd" -o "$1" = "openbsd" \
     -o "$1" = "bsdos"   -o "$1" = "os2"    -o "$1" = "amigaos" \
     -o "$1-$3" = "macosx-" -o "$1-$3" = "linux-" -o "$1" = "uclibc" \
-    -o "$1" = "digital-unix" -o "$1" = "morphos" ]; then
+    -o "$1" = "digital-unix" -o "$1" = "morphos" -o "$1" = "dragonfly" ]; then
     COMMON_SRCS="common/lurk.cpp ${COMMON_SRCS}"
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DLURK"
   fi
@@ -2370,6 +2370,17 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="openbsd-x86-elf"
         add_sources "openbsd" "x86"
+        ;;
+
+    *dragonfly-x86)	# snake
+        TARGET_CC="gcc"
+        generate_gcc_opts "x86" "dragonfly"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_NASM_FMT="elf"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="dragonfly-x86-elf"
+        add_sources "dragonfly" "x86"
         ;;
 
     *bsdos-x86-aout)                        # BSD/OS 2.x,3.x (aout) -snake

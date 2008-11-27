@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.13 2008/10/24 13:59:04 stream Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.14 2008/11/27 21:09:58 snake Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -185,6 +185,7 @@ return "@(#)$Id: netbase.cpp,v 1.13 2008/10/24 13:59:04 stream Exp $"; }
 #if (defined(__GLIBC__) && (__GLIBC__ >= 2)) \
     || (CLIENT_OS == OS_OPENBSD) \
     || (CLIENT_OS == OS_NETBSD) \
+    || (CLIENT_OS == OS_DRAGONFLY) \
     || ((CLIENT_OS == OS_QNX) && (defined(__QNXNTO__))) \
     || ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 4)) \
     || (CLIENT_OS == OS_SOLARIS) \

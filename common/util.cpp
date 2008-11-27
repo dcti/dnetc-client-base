@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.35 2008/04/11 06:05:25 jlawson Exp $"; }
+return "@(#)$Id: util.cpp,v 1.36 2008/11/27 21:09:58 snake Exp $"; }
 
 //#define TRACE
 
@@ -624,7 +624,7 @@ const char *utilGetAppName(void)
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-      (CLIENT_OS == OS_PS2LINUX)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
   #include <dirent.h>         // for direct read of /proc/
 #elif (CLIENT_OS == OS_BEOS)
   #include <kernel/OS.h>      // get_next_team_info()
@@ -1054,7 +1054,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
 
       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
           (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-          (CLIENT_OS == OS_PS2LINUX)
+          (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
       {
         DIR *dirp = opendir("/proc");
 
@@ -1126,7 +1126,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         const char *pscmd = ((char *)NULL);
         #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
             (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
-            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX)
+            (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX) || \
+            (CLIENT_OS == OS_DRAGONFLY)
         pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
