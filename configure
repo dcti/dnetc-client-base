@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.322 2008/11/26 03:28:21 jlawson Exp $
+# @(#)$Id: configure,v 1.323 2008/11/27 00:24:11 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1001,14 +1001,10 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -DASM_X86 -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
                  -malign-functions=5 -malign-loops=4 -funroll-loops"
-	if [ "$2" = "macosx" ]; then
-	  # Apple's gcc is confused by '-mcpu=pentiumpro'
-          opts400="$OPTS_GCC400 -O2 -DASM_X86 -mtune=pentiumpro -fforce-addr \
+        opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
                  -falign-functions=5 -falign-loops=4 -funroll-loops"
-	else
-          opts310="$OPTS_GCC310 -O2 -DASM_X86 -mcpu=pentiumpro -fforce-addr \
+        opts400="$OPTS_GCC400 -O2 -DASM_X86 -mtune=pentiumpro -fforce-addr \
                  -falign-functions=5 -falign-loops=4 -funroll-loops"
-	fi
         ;;
 
     *internal-amd64|internal-x86_64)
