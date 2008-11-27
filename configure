@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.323 2008/11/27 00:24:11 snake Exp $
+# @(#)$Id: configure,v 1.324 2008/11/27 00:45:36 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2342,7 +2342,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
         generate_gcc_opts "x86" "netbsd"
-        TARGET_CCFLAGS="$OPTS_GCC -Werror"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-lc"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
