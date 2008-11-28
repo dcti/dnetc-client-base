@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.136 2008/11/26 06:34:24 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.137 2008/11/28 18:12:39 snake Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -91,7 +91,8 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         cpucount = 0;
       }
     #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD)
+        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
+        (CLIENT_OS == OS_DRAGONFLY)
     { /* comment out if inappropriate for your *bsd - cyp (25/may/1999) */
       int ncpus; size_t len = sizeof(ncpus);
       int mib[2]; mib[0] = CTL_HW; mib[1] = HW_NCPU;
