@@ -1,8 +1,6 @@
 #ifndef __OGR_CELL_H__
 #define __OGR_CELL_H__
 
-#define CORE_NAME cellv1
-
 #define IMPLEMENT_CELL_CORES         /* Required by ogr-vec.cpp */
 #undef  HAVE_FLEGE_PPC_CORES         /* Don't use PPC assembly  */
 #include "ppc/ogrng-vec.cpp"         /* Vectored stub structures */

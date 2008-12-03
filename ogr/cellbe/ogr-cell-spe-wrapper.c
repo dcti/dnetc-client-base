@@ -3,8 +3,10 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
+/*
 const char *ogr_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.7 2008/08/17 06:43:27 stream Exp $"; }
+return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.8 2008/12/03 20:43:52 stream Exp $"; }
+*/
 
 #ifndef CORE_NAME
 #define CORE_NAME cellv1
