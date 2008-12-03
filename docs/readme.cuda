@@ -1,0 +1,73 @@
+distributed.net client for nVidia CUDA-compatible GPUs
+ document revision $Id: readme.cuda,v 1.1 2008/12/03 22:04:34 jlawson Exp $
+
+ Welcome to the distributed.net client.
+
+ This document covers information specific to the client for the nVidia
+ CUDA-capable video card GPU. Refer to other enclosed documentation or
+ browse the online FAQ at <http://faq.distributed.net/> for
+ non-platform-specific documentation.
+
+    1.0  Getting started
+    2.0  nVidia CUDA specific notes
+    3.0  Troubleshooting and Known issues
+
+ 1.0  Getting started ------------------------------------------------
+ 
+    Just unpack/unzip/untar the client in a directory of your choice and 
+    fire it up.
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done.
+
+    Then, simply restart the client. From that point on it will use the 
+    saved configuration.
+    
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client 
+    with '-help' or '--help'.
+
+    A complete step-by-step guide to running your first client is 
+    available at <http://www.distributed.net/docs/tutor_clients.php>
+
+ 2.0  nVidia CUDA specific notes ------------------------------------
+
+    This client requires nVidia CUDA capable hardware and appropriate
+    drivers to be installed.  For a list of GPU hardware that supports
+    CUDA, see <http://en.wikipedia.org/wiki/CUDA#Supported_GPUs>
+
+    At the moment, our CUDA clients only provide support for RC5-72.
+    Due to the nature of OGR, it is difficult to parallelize in a way
+    that can make use of the CUDA architecture.
+
+    Our CUDA clients also only execute crunchers on the GPU.  In order
+    to utilize the CPUs on your computer, you will need to download
+    and run another instance of the standard client.  (On Windows
+    platforms, you will need to use the -multiok option to allow two
+    simultaneous instances of the client to be run.)
+
+
+ 2.0  Troubleshooting and Known issues ------------------------------
+
+    On Windows platforms, the client prevents more than once instance
+    from running at the same time making it impossible to run a CUDA
+    and a standard client at the same time.  To bypass this check,
+    start the client with the "-multiok" command-line option.
+
+
+    On Windows Vista platforms, the CUDA client will not be able to
+    access the GPU when run as a Service due to operating system
+    limitations.  The current workaround is to run the client
+    interactively as a logged-in user instead.
+
+
+    On Linux platforms, you may see errors when attempting to run the
+    CUDA client on a text-mode system without X11 (init level 3 not
+    5).  This usually occurs because the nVidia module has not been
+    loaded or the /dev/nvidiactl control file has not been
+    initialized.  To make your RHEL/CentOS system automatically
+    prepare these things without starting X11, see
+    <http://forums.nvidia.com/lofiversion/index.php?t52629.html>
+    Similar solutions will be necessary for other distributions.
+
