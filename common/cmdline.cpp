@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.166 2008/11/27 21:09:58 snake Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.167 2008/12/03 07:11:28 umccullough Exp $"; }
 
 //#define TRACE
 
@@ -448,7 +448,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           pscmd = "/bin/ps -ef -o pid -o comm 2>/dev/null";	/*svr4/posix*/
           #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
           pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
-          #elif (CLIENT_OS == OS_BEOS)
+          #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
           pscmd = "/bin/ps | /bin/egrep zzz | /bin/egrep -v crunch 2>/dev/null";  /* get the (sleeping) main thread ID, not the team ID */
           #elif (CLIENT_OS == OS_QNX)
             #if defined(__QNXNTO__) /* neutrino */

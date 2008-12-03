@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.36 2008/11/27 21:09:58 snake Exp $"; }
+return "@(#)$Id: util.cpp,v 1.37 2008/12/03 07:11:28 umccullough Exp $"; }
 
 //#define TRACE
 
@@ -626,7 +626,7 @@ const char *utilGetAppName(void)
       (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
       (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
   #include <dirent.h>         // for direct read of /proc/
-#elif (CLIENT_OS == OS_BEOS)
+#elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
   #include <kernel/OS.h>      // get_next_team_info()
   #include <kernel/image.h>   // get_next_image_info()
 #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
@@ -664,7 +664,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
   if (procname != NULL)
   {
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #if (CLIENT_OS == OS_BEOS)
+    #if (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
     {
       team_info tInfo;
       team_id ourteam;
@@ -1219,7 +1219,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                   if (num_found < 0)
                     num_found = 0;
 
-                  #if (CLIENT_OS == OS_BEOS)
+                  #if (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
                   if (fullpath[0])
                   {
                     foundname = fullpath;

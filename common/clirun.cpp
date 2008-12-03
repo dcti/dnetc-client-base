@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.138 2008/11/27 21:09:58 snake Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.139 2008/12/03 07:11:28 umccullough Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -89,7 +89,7 @@ struct thread_param_block
     long threadID;
   #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS)
     long threadID;
-  #elif (CLIENT_OS == OS_BEOS)
+  #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
     thread_id threadID;
   #elif (CLIENT_OS == OS_OS2)
     #if defined(__EMX__)
@@ -225,7 +225,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     sched_yield();
   #elif (CLIENT_OS == OS_DRAGONFLY)
     sched_yield();
-  #elif (CLIENT_OS == OS_BEOS)
+  #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
     NonPolledUSleep( 0 ); /* yield */
   #elif (CLIENT_OS == OS_OPENBSD)
     NonPolledUSleep( 0 ); /* yield */
@@ -687,7 +687,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       while (!thrparams->hasexited)
         Sleep(100);
-      #elif (CLIENT_OS == OS_BEOS)
+      #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
       static status_t be_exit_value;
       if (!thrparams->hasexited)
         wait_for_thread(thrparams->threadID, &be_exit_value);
@@ -1069,7 +1069,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           RenameThread( thrparams->threadID, threadname );
         }
       }
-      #elif (CLIENT_OS == OS_BEOS)
+      #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
       {
         char thread_name[128];
         long be_priority = thrparams->priority+1;
@@ -1424,7 +1424,7 @@ int ClientRun( Client *client )
       numcrunchers = GetMaxCrunchersPermitted();
     }
 
-    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_BEOS)
+    #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_OS2) || (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
     force_no_realthreads = 0; // must run with real threads because the
                               // main thread runs at normal priority
     #elif (CLIENT_OS == OS_NETWARE)

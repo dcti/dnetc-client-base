@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.91 2008/11/27 21:09:58 snake Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.92 2008/12/03 07:11:28 umccullough Exp $"
 
 #include "cputypes.h"
 
@@ -158,7 +158,7 @@
   #elif defined(__TURBOC__)
     #include <dir.h>
   #endif
-#elif (CLIENT_OS == OS_BEOS)
+#elif ((CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU))
   #include <OS.h>
   #include <unistd.h>
   #include <fcntl.h>

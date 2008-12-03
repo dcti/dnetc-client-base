@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.63 2008/11/23 03:00:11 jlawson Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.64 2008/12/03 07:11:28 umccullough Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -368,7 +368,7 @@ int CliGetMonotonicClock( struct timeval *tv )
 {
   if (tv)
   {
-    #if (CLIENT_OS == OS_BEOS)
+    #if (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
     {
       bigtime_t now = system_time();
       tv->tv_sec = (time_t)(now / 1000000LL); /* microseconds -> seconds */
@@ -806,7 +806,7 @@ int CliGetMonotonicClock( struct timeval *tv )
 /* if tv is NULL, the function must still return 0 if supported */
 int CliGetThreadUserTime( struct timeval *tv )
 {
-#if (CLIENT_OS == OS_BEOS)
+#if (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
   if (tv)
   {
     thread_info tInfo;
