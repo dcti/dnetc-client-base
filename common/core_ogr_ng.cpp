@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.9 2008/11/23 02:21:59 jlawson Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.10 2008/12/03 20:50:44 stream Exp $"; }
 
 //#define TRACE
 
@@ -42,6 +42,7 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.9 2008/11/23 02:21:59 jlawson Exp $"; }
     #endif
     #if (CLIENT_CPU == CPU_CELLBE)
     CoreDispatchTable *spe_ogrng_get_dispatch_table(void);
+    CoreDispatchTable *spe_ogrng_get_dispatch_table_asm(void);
     #endif
 #elif (CLIENT_CPU == CPU_ALPHA)
     CoreDispatchTable *ogrng_get_dispatch_table(void);
@@ -109,6 +110,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
         #endif
         #if (CLIENT_CPU == CPU_CELLBE)
           spe_ogrng_get_dispatch_table();
+          spe_ogrng_get_dispatch_table_asm();
         #endif
       #elif (CLIENT_CPU == CPU_68K)
         ogrng_get_dispatch_table_000();
@@ -211,6 +213,7 @@ const char **corenames_for_contest_ogr_ng()
     #endif
     #if (CLIENT_CPU == CPU_CELLBE)
       "Cell v2 SPE (base)",
+      "Cell v2 SPE (asm)",
     #endif
   #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
       "FLEGE-64 2.0",
@@ -394,7 +397,7 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
   // Threads with threadindex = 0..PPE_count-1 will be scheduled on the PPEs;
   // the rest are scheduled on the SPEs.
   if (threadindex >= (unsigned)GetNumberOfPhysicalProcessors())
-    coresel = 2;
+    coresel = 3;
 #else
   DNETC_UNUSED_PARAM(threadindex);
 #endif
@@ -417,6 +420,8 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
   #if (CLIENT_CPU == CPU_CELLBE)
   if (coresel == 2)
     unit_func.ogr = spe_ogrng_get_dispatch_table();
+  if (coresel == 3)
+    unit_func.ogr = spe_ogrng_get_dispatch_table_asm();
   #endif
 
   #if defined(HAVE_I64) && !defined(HAVE_FLEGE_PPC_CORES)
