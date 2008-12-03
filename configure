@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.326 2008/12/03 05:39:15 umccullough Exp $
+# @(#)$Id: configure,v 1.327 2008/12/03 20:53:55 stream Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -579,8 +579,10 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
       # PPE + SPE pairs
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/cellbe/ogrng-cell-ppe-wrapper.cpp"
-      TARGET_OGRNGSPUWRAPPER="ogr/cellbe/ogrng-cell-spe-wrapper.c"
       TARGET_ADDOGRNGSPUCORES="cellv1"
+      
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/cellbe/ogrng-cellv2-ppe-wrapper.cpp"
+      TARGET_ADDOGRNGSPUCORES="$TARGET_ADDOGRNGSPUCORES cellv2"
     fi
 
     # -------------- ogr-p2 --------------
@@ -3062,14 +3064,13 @@ if [ -n "${TARGET_ADDSRCS}" ]; then
   done
 fi
 if [ -n "${TARGET_ADDR72SPUCORES}" ]; then
-  echo "Scanning SPE core dependencies..."
-#  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spucore"
+  echo "Scanning RC5-72 SPE core dependencies..."
   for target in ${TARGET_ADDR72SPUCORES}; do
       TARGETCORE="rc5-72/cellbe/r72-$target-spe.s"
       TARGETCOREOBJECT=output/`basename $TARGETCORE .s`.o
       echo "  ${TARGETCORE} -> ${TARGETCOREOBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETCOREOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} r72spucore ${TARGETCORE} ${TARGETCOREOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spuasm ${TARGETCORE} ${TARGETCOREOBJECT}"
       TARGETWRAPPEROBJECT=output/r72-$target-spe-wrapper.o
       echo "  ${TARGET_R72SPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETWRAPPEROBJECT}"
@@ -3085,12 +3086,13 @@ if [ -n "${TARGET_ADDR72SPUCORES}" ]; then
   done
 fi
 if [ -n "${TARGET_ADDOGRSPUCORES}" ]; then
+  echo "Scanning OGR-P2 SPE core dependencies..."
   for target in ${TARGET_ADDOGRSPUCORES}; do
       TARGETCORE="ogr/cellbe/ogr-$target-spe.s"
       TARGETCOREOBJECT=output/`basename $TARGETCORE .s`.o
       echo "  ${TARGETCORE} -> ${TARGETCOREOBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETCOREOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspucore ${TARGETCORE} ${TARGETCOREOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spuasm ${TARGETCORE} ${TARGETCOREOBJECT}"
       TARGETWRAPPEROBJECT=output/ogr-$target-spe-wrapper.o
       echo "  ${TARGET_OGRSPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETWRAPPEROBJECT}"
@@ -3107,20 +3109,38 @@ if [ -n "${TARGET_ADDOGRSPUCORES}" ]; then
 fi
 
 if [ -n "${TARGET_ADDOGRNGSPUCORES}" ]; then
+  echo "Scanning OGR-NG SPE core dependencies..."
   for target in ${TARGET_ADDOGRNGSPUCORES}; do
-#      TARGETCORE="ogr/cellbe/ogr-$target-spe.s"
-#      TARGETCOREOBJECT=output/`basename $TARGETCORE .s`.o
-#      echo "  ${TARGETCORE} -> ${TARGETCOREOBJECT}"
-#      TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETCOREOBJECT}"
-#      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrspucore ${TARGETCORE} ${TARGETCOREOBJECT}"
+      # corev1 was mistyped (files names as 'cell' instead of 'cellv1'
+      targetfile=$target
+      if [ "$target" = "cellv1" ]; then
+        targetfile=cell
+      fi
+      TARGETCORE="ogr/cellbe/ogrng-$targetfile-spe.s"
+      TARGETCOREOBJECT=
+      if [ -e "$TARGETCORE" ]; then
+        TARGETCOREOBJECT=output/`basename $TARGETCORE .s`.o
+        echo "  ${TARGETCORE} -> ${TARGETCOREOBJECT}"
+        TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETCOREOBJECT}"
+        TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} spuasm ${TARGETCORE} ${TARGETCOREOBJECT}"
+      fi
+
+      TARGETSPUWRAPPER=ogr/cellbe/ogrng-$targetfile-spe-wrapper.c
       TARGETWRAPPEROBJECT=output/ogrng-$target-spe-wrapper.o
-      echo "  ${TARGET_OGRNGSPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
+      echo "  ${TARGETSPUWRAPPER} -> ${TARGETWRAPPEROBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETWRAPPEROBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrngspuwrapper $target ${TARGETWRAPPEROBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrngspuwrapper $target,$TARGETSPUWRAPPER ${TARGETWRAPPEROBJECT}"
+
       TARGETMERGEDOBJECT=output/ogrng-$target-spe-merged.o
-      echo "  ${TARGETCOREOBJECT},${TARGETWRAPPEROBJECT} -> ${TARGETMERGEDOBJECT}"
+      if [ -n "${TARGETCOREOBJECT}" ]; then
+        TARGETLINKLIST=${TARGETCOREOBJECT},${TARGETWRAPPEROBJECT}
+      else
+        TARGETLINKLIST=${TARGETWRAPPEROBJECT}
+      fi
+      echo "  ${TARGETLINKLIST} -> ${TARGETMERGEDOBJECT}"
       TARGET_INTOBJS="${TARGET_INTOBJS} ${TARGETMERGEDOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrngspumerge $target ${TARGETMERGEDOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrngspumerge ${TARGETLINKLIST} ${TARGETMERGEDOBJECT}"
+      
       TARGETEMBEDOBJECT=output/ogrng-$target-spe-embed.o
       echo "  ${TARGETMERGEDOBJECT} -> ${TARGETEMBEDOBJECT}"
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ogrngspuembed $target ${TARGETEMBEDOBJECT}"
@@ -3366,15 +3386,13 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "yasm" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "r72spucore" ]; then
+    elif [ "${target}" = "spuasm" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "r72spuwrapper" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "r72spumerge" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "r72spuembed" ]; then
-      TARGETTYP="$target"
-    elif [ "${target}" = "ogrspucore" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "ogrspuwrapper" ]; then
       TARGETTYP="$target"
@@ -3539,7 +3557,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "r72spucore" ]; then
+    elif [ "${TARGETTYP}" = "spuasm" ]; then
       echo "$target:    ${TARGETSRC}" >> Makefile
       echo "	\${SPUAS} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
@@ -3571,12 +3589,6 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "ogrspucore" ]; then
-      echo "$target:    ${TARGETSRC}" >> Makefile
-      echo "	\${SPUAS} ${TARGETSRC} -o $target" >> Makefile
-      echo "" >> Makefile
-      TARGETSRC=""
-    # ------------------------------------
     elif [ "${TARGETTYP}" = "ogrspuwrapper" ]; then
       CORE="${TARGETSRC}"
       echo "$target:    $TARGET_OGRSPUWRAPPER ogr/cellbe/ogr-cell.h ogr/ansi/ogrp2.h" >> Makefile
@@ -3604,18 +3616,25 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETSRC=""
     # ------------------------------------
     elif [ "${TARGETTYP}" = "ogrngspuwrapper" ]; then
-      CORE="${TARGETSRC}"
-      echo "$target:    $TARGET_OGRNGSPUWRAPPER ogr/cellbe/ogrng-cell.h ogr/ansi/ogrng.h" >> Makefile
-      echo "	\${SPUCC} -c -Dlinux -DCORE_NAME=$CORE -O3 -Wall -Wextra \${HPATHS} $TARGET_OGRNGSPUWRAPPER -o $target" >> Makefile
+      # core name and source separated by comma
+      CORE_AND_SOURCE=`echo "${TARGETSRC}" | tr "," " "`
+      CORE=
+      for TARGETSRC in $CORE_AND_SOURCE; do
+        if [ "X$CORE" = "X" ]; then
+	  CORE=TARGETSRC
+	fi
+      done
+      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+      echo "$target:    $TARGETSRC $TARGET_HDEPS" >> Makefile
+      echo "	\${SPUCC} -c -Dlinux -O3 -Wall -Wextra \${HPATHS} -DCORE_NAME=$CORE $TARGETSRC -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
     elif [ "${TARGETTYP}" = "ogrngspumerge" ]; then
-      CORE="${TARGETSRC}"
-      WRAPPERTARGET="output/ogrng-$CORE-spe-wrapper.o"
-      CORETARGET=""  # "output/ogrng-$CORE-spe.o"  no asm target yet
-      echo "$target:    $WRAPPERTARGET $CORETARGET" >> Makefile
-      echo "	\${SPUCC} $WRAPPERTARGET $CORETARGET -o $target" >> Makefile
+      # list of sources separated by comma
+      TARGETSRC=`echo "${TARGETSRC}" | tr "," " "`
+      echo "$target:    $TARGETSRC" >> Makefile
+      echo "	\${SPUCC} $TARGETSRC -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
