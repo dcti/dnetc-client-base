@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.95 2008/11/27 21:09:58 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.96 2008/12/03 06:25:15 umccullough Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -91,6 +91,7 @@
 #define OS_WIN64        46
 #define OS_NETWARE6     47
 #define OS_DRAGONFLY    48
+#define OS_HAIKU        49
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
@@ -435,6 +436,18 @@
   #elif defined(__INTEL__)
     #define CLIENT_CPU     CPU_X86
   #endif
+#elif defined(__HAIKU__)
+  /* Haiku is nearly the same as BeOS, but with better POSIX support */
+  #ifndef __unix__
+  #define __unix__ /* seems to be good practice */
+  #endif
+  #define CLIENT_OS_NAME   "Haiku"
+  #define CLIENT_OS        OS_HAIKU
+  #if defined(__POWERPC__) || defined(__PPC__)
+    #define CLIENT_CPU     CPU_POWERPC
+  #elif defined(__INTEL__)
+    #define CLIENT_CPU     CPU_X86
+  #endif
 #elif defined(__MORPHOS__)
   #define CLIENT_OS_NAME   "MorphOS"
   #define CLIENT_OS        OS_MORPHOS
@@ -532,6 +545,11 @@
   typedef pthread_t THREADID;
   #define OS_SUPPORTS_SMP
 #elif (CLIENT_OS == OS_BEOS)
+  #include <OS.h>
+  typedef thread_id THREADID;
+  #define OS_SUPPORTS_SMP
+#elif (CLIENT_OS == OS_HAIKU)
+  /* behave like BeOS for now, but Haiku does support pthreads properly as well */
   #include <OS.h>
   typedef thread_id THREADID;
   #define OS_SUPPORTS_SMP
