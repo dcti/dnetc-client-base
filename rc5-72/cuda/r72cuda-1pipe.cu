@@ -39,12 +39,6 @@ extern "C" s32 CDECL rc5_72_unit_func_cuda_1( RC5_72UnitWork *, u32 *, void * );
 /* -------------------------------------------------------------------------- */
 
 
-/* The number of GPU threads per thread block   */
-/* to execute.  The default value of 64 makes   */
-/* optimum usage of __shared__ multiprocessor   */
-/* memory.  The maximum value is 512.           */
-const u32 num_threads = 128;
-
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
@@ -56,11 +50,12 @@ static __host__ __device__ u32 swap_u32(u32 num);
 static __host__ __device__ u8 add_u32(u32 num1, u32 num2, u32 * result);
 static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 amount);
 
-
 static __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
                                  const u32 cypher_hi, const u32 cypher_lo,
                                  const u32 L0_hi, const u32 L0_mid, const u32 L0_lo,
                                  const u32 process_amount, u8 * results, u8 * match_found);
+
+static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode);
 
 #ifdef DISPLAY_TIMESTAMPS
 static __inline int64_t linux_read_counter(void);
@@ -162,6 +157,17 @@ static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 
 
 s32 CDECL rc5_72_unit_func_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
+	/* The number of GPU threads per thread block   */
+	/* to execute.  The default value of 64 makes   */
+	/* optimum usage of __shared__ multiprocessor   */
+	/* memory.  The maximum value is 512.           */
+	const u32 num_threads = 64;
+
+	return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, num_threads, -1);
+}
+
+static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int /*waitmode*/)
+{
 	u32 i;
 	u32 grid_dim;
 	s32 retval = RESULT_NOTHING;
@@ -179,7 +185,7 @@ s32 CDECL rc5_72_unit_func_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteration
 
 	//fprintf(stderr, "\r\nRC5 cuda: iterations=%i\r\n", *iterations);
         
-        cudaSetDevice(rc5_72unitwork->threadnum);
+        cudaSetDevice(device);
 
 	/* Determine the grid dimensionality based on the */
 	/* number of iterations.                          */
@@ -637,3 +643,5 @@ __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
 		}
 	}
 }
+
+// vim: syntax=cpp
