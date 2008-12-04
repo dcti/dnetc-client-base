@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.10 2008/07/18 07:30:16 stream Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.11 2008/12/04 10:47:53 andreasb Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -182,7 +182,7 @@
     return 1;
   }
 
-#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA)
 
   typedef volatile long fastlock_t;
 
