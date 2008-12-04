@@ -1,5 +1,5 @@
 distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.1 2008/12/03 22:04:34 jlawson Exp $
+ document revision $Id: readme.cuda,v 1.2 2008/12/04 13:23:57 mikereed Exp $
 
  Welcome to the distributed.net client.
 
@@ -33,7 +33,7 @@ distributed.net client for nVidia CUDA-compatible GPUs
 
  2.0  nVidia CUDA specific notes ------------------------------------
 
-    This client requires nVidia CUDA capable hardware and appropriate
+    This client requires nVidia CUDA-capable hardware and appropriate
     drivers to be installed.  For a list of GPU hardware that supports
     CUDA, see <http://en.wikipedia.org/wiki/CUDA#Supported_GPUs>
 
@@ -50,7 +50,7 @@ distributed.net client for nVidia CUDA-compatible GPUs
 
  2.0  Troubleshooting and Known issues ------------------------------
 
-    On Windows platforms, the client prevents more than once instance
+    On Windows platforms, the client prevents more than one instance
     from running at the same time making it impossible to run a CUDA
     and a standard client at the same time.  To bypass this check,
     start the client with the "-multiok" command-line option.
