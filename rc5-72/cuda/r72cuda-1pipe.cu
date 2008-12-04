@@ -312,6 +312,12 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 		prev_ts = current_ts;
 #endif
 
+		if (cudaEventSynchronize(stop) != CUDA_SUCCESS) {
+			retval = -1;
+			fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
+			goto error_exit;
+		}
+
 		/* Copy the match_found variable to the host */
 		if( cudaMemcpy((void *)&match_found, (void *)cuda_match_found, sizeof(u8), cudaMemcpyDeviceToHost) != (cudaError_t) CUDA_SUCCESS ) {
 			retval = -1;
