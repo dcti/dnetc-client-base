@@ -178,6 +178,10 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 	u8 * results = NULL;
 	u8 * cuda_results = NULL;
 
+	cudaStream_t core;
+	cudaEvent_t stop;
+	cudaError_t last_error;
+
 #ifdef DISPLAY_TIMESTAMPS
 	int64_t current_ts;
 	int64_t prev_ts;
@@ -197,6 +201,18 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 			fprintf(stderr, "RC5 cuda: ERROR: cudaSetDevice\r\n");
 			goto error_exit;
 		}
+	}
+
+	if( cudaStreamCreate(&core) != (cudaError_t) CUDA_SUCCESS ) {
+		retval = -1;
+		fprintf(stderr, "RC5 cuda: ERROR: cudaStreamCreate\r\n");
+		goto error_exit;
+	}
+
+	if( cudaEventCreate(&stop) != (cudaError_t) CUDA_SUCCESS ) {
+		retval = -1;
+		fprintf(stderr, "RC5 cuda: ERROR: cudaEventCreate\r\n");
+		goto error_exit;
 	}
 
 	/* Determine the grid dimensionality based on the */
@@ -271,18 +287,23 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
 		/* Execute the CUDA core */
                 
-		cuda_2pipe<<<grid_dimension, block_dimension>>>(rc5_72unitwork->plain.hi, rc5_72unitwork->plain.lo,
+		cuda_2pipe<<<grid_dimension, block_dimension, 0, core>>>(
+			rc5_72unitwork->plain.hi, rc5_72unitwork->plain.lo,
 		                                            rc5_72unitwork->cypher.hi, rc5_72unitwork->cypher.lo,
 							    rc5_72unitwork->L0.hi, rc5_72unitwork->L0.mid, rc5_72unitwork->L0.lo,
 		                                            (process_amount+1)/2, cuda_results, cuda_match_found);
 		/* (process_amount+1)/2 just to handle the (impossible) case that process_amount is odd */
-		{
-			cudaError_t last_error = cudaGetLastError();
+ 		last_error = cudaGetLastError();
 			if(last_error != (cudaError_t) CUDA_SUCCESS) {
 				retval = -1;
 				fprintf(stderr, "RC5 cuda: CUDA CORE ERROR: %s\r\n", cudaGetErrorString(last_error));
 				goto error_exit;
 			}
+ 
+ 		if (cudaEventRecord(stop, core) != CUDA_SUCCESS) {
+ 			retval = -1;
+ 			fprintf(stderr, "RC5 cuda: ERROR: cudaEventRecord\r\n");
+ 			goto error_exit;
 		}
 
 #ifdef DISPLAY_TIMESTAMPS
@@ -375,6 +396,14 @@ error_exit:
 
 	if(cuda_results) {
 		cudaFree(cuda_results);
+	}
+
+	if(core) {
+		cudaStreamDestroy(core);
+	}
+
+	if(stop) {
+		cudaEventDestroy(stop);
 	}
 
 	if(results) {
