@@ -1,5 +1,5 @@
 distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.2 2008/12/04 13:23:57 mikereed Exp $
+ document revision $Id: readme.cuda,v 1.3 2008/12/04 16:14:34 jlawson Exp $
 
  Welcome to the distributed.net client.
 
@@ -62,12 +62,20 @@ distributed.net client for nVidia CUDA-compatible GPUs
     interactively as a logged-in user instead.
 
 
-    On Linux platforms, you may see errors when attempting to run the
-    CUDA client on a text-mode system without X11 (init level 3 not
-    5).  This usually occurs because the nVidia module has not been
+    On Linux platforms, you may see errors when running the CUDA
+    client on a text-mode system without X11 (init level 3 not 5).
+    This usually occurs because the nVidia module has not been
     loaded or the /dev/nvidiactl control file has not been
     initialized.  To make your RHEL/CentOS system automatically
     prepare these things without starting X11, see
     <http://forums.nvidia.com/lofiversion/index.php?t52629.html>
     Similar solutions will be necessary for other distributions.
 
+    You may also encounter problems on Linux platforms if you try
+    to run the CUDA client as a non-root user that does not have
+    permission to access the /dev/nvidiactl control file.
+    Typically membership to the "video" group is used to manage
+    access, so you will need to ensure that your UNIX user is a
+    member of it.  If uncertain, view the file permissions of
+    the /dev/nvidiactl control file.
+    
