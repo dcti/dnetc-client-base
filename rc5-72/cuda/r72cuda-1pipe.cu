@@ -168,6 +168,7 @@ s32 CDECL rc5_72_unit_func_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteration
 
 static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int /*waitmode*/)
 {
+	int currentdevice;
 	u32 i;
 	u32 grid_dim;
 	s32 retval = RESULT_NOTHING;
@@ -185,7 +186,19 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
 	//fprintf(stderr, "\r\nRC5 cuda: iterations=%i\r\n", *iterations);
         
-        cudaSetDevice(device);
+	if( cudaGetDevice(&currentdevice) != (cudaError_t) CUDA_SUCCESS ) {
+		retval = -1;
+		fprintf(stderr, "RC5 cuda: ERROR: cudaGetDevice\r\n");
+		goto error_exit;
+	}
+
+	if (currentdevice != device) {
+		if( cudaSetDevice(device) != (cudaError_t) CUDA_SUCCESS ) {
+			retval = -1;
+			fprintf(stderr, "RC5 cuda: ERROR: cudaSetDevice\r\n");
+			goto error_exit;
+		}
+	}
 
 	/* Determine the grid dimensionality based on the */
 	/* number of iterations.                          */
