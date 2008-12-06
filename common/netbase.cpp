@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.15 2008/12/03 07:11:28 umccullough Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.16 2008/12/06 20:55:24 umccullough Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -135,7 +135,8 @@ return "@(#)$Id: netbase.cpp,v 1.15 2008/12/03 07:11:28 umccullough Exp $"; }
 #elif (CLIENT_OS == OS_HAIKU)
   /* while Haiku is similar to BeOS, it has slightly different network support */
   #include <sys/socket.h>
-  #include <sys/ioctl.h>
+  /* it seems Haku's ioctl doesn't currently work properly, using FIONREAD fails */
+  /*#include <sys/ioctl.h> */
   #include <netdb.h>
 #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   /* nothing else needed */
@@ -1787,14 +1788,11 @@ int net_close(SOCKET fd)
     TRACE_CLOSE((+1,"close(s)\n"));
     #if (CLIENT_OS == OS_OS2) && !defined(__EMX__)
     rc = (int)soclose( fd );
-    #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+    #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || \
+          (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_BEOS)
     rc = (int)closesocket( fd );
     #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     rc = (int)CloseSocket( fd );
-    #elif (CLIENT_OS == OS_BEOS)
-    rc = (int)closesocket( fd );
-    #elif (CLIENT_OS == OS_HAIKU)
-    rc = (int)close( fd );
     #elif (CLIENT_OS == OS_VMS) && defined(MULTINET)
     rc = (int)socket_close( fd );
     #else
