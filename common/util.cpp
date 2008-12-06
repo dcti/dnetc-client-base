@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.37 2008/12/03 07:11:28 umccullough Exp $"; }
+return "@(#)$Id: util.cpp,v 1.38 2008/12/06 16:07:42 umccullough Exp $"; }
 
 //#define TRACE
 
@@ -1145,8 +1145,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS) || \
               (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_AIX)
         pscmd = "/usr/bin/ps -ef -o pid -o comm 2>/dev/null"; /*svr4/posix*/
-	#elif (CLIENT_OS == OS_DYNIX)
-	pscmd = "/bin/ps -ef -o pid -o comm 2>/dev/null";     /*svr4/posix*/
+        #elif (CLIENT_OS == OS_DYNIX)
+        pscmd = "/bin/ps -ef -o pid -o comm 2>/dev/null";     /*svr4/posix*/
         #elif (CLIENT_OS == OS_IRIX) || (CLIENT_OS == OS_HPUX)
         pscmd = "/usr/bin/ps -e |awk '{print$1\" \"$4\" \"$5\" \"$6\" \"$7\" \"$8\" \"$9}' 2>/dev/null";
         #elif (CLIENT_OS == OS_QNX)
@@ -1156,7 +1156,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
           pscmd = "ps -A -F\"%p %c\" 2>/dev/null";
           #endif
         #elif (CLIENT_OS == OS_SCO)
-          pscmd = "/bin/ps -A -o pid,comm 2>/dev/null";
+        pscmd = "/bin/ps -A -o pid,comm 2>/dev/null";
         #else
         #error fixme: select an appropriate ps syntax (or use another method to get pidlist)
         #error "this part is only needed for OSs that do not have another way"
@@ -1219,7 +1219,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                   if (num_found < 0)
                     num_found = 0;
 
-                  #if (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
+                  #if (CLIENT_OS == OS_BEOS) /* appears to be dead code */
                   if (fullpath[0])
                   {
                     foundname = fullpath;
