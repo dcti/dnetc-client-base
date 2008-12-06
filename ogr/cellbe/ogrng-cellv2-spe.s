@@ -60,6 +60,7 @@
 	.set	ones_shl_inv,		43
 	.set	ones_shl_s,		44
 	.set	new_compV1,		45
+	.set	new_distV0,		46
 
 	# temp variables for pchoose fetch
 
@@ -201,7 +202,7 @@ for_loop:
 
 	# if (spu_extract(save_compV0, 0) == (SCALAR)~0) { continue; }
 
-	ceq		$cond_depth_maxm1, $depth, $maxdepthm1
+	ceq		$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
 .L_fl:
 	bi		$addr_is_forloop
 	
@@ -211,7 +212,9 @@ no_for_loop:
 	# lev->mark = mark;
 	# if (depth == oState->maxdepthm1) {  goto exit; }
 
+	or		$new_distV0, $distV0, $listV0	# distV0 = vec_or(distV0, listV0); (precalc)
 	stqd		$mark, 96($lev)
+	nop
 	brnz		$cond_depth_maxm1, do_exit
 
 	#  PUSH_LEVEL_UPDATE_STATE(lev);
@@ -220,16 +223,21 @@ no_for_loop:
 	#  dist |= list;
 	#  comp |= dist;
 
-	or		$distV0, $distV0, $listV0	# distV0 = vec_or(distV0, listV0);
+	rotmi		$hash,  $new_distV0, -24	# hash = (group_of32 ^ (group_of32 >> 8)) & (GROUPS_COUNT-1);
+	shufb		$grpid_vector, $new_distV0, $new_distV0, $consth_0x0001 # copy high 16 bits of dist0 to all slots for vector compare
+
+	ori		$distV0, $new_distV0, 0		# copy preloaded distV0
 	stqd		$compV0, 64($lev)		# lev->comp[0].v = compV0;
+
 	or		$distV1, $distV1, $listV1	# distV1 = vec_or(distV1, listV1);
 	stqd		$compV1, 80($lev)		# lev->comp[1].v = compV1;
 
-	rotmi		$hash,  $distV0, -24	# hash = (group_of32 ^ (group_of32 >> 8)) & (GROUPS_COUNT-1);
-	shufb		$grpid_vector, $distV0, $distV0, $consth_0x0001 # copy high 16 bits of dist0 to all slots for vector compare
-
 	or		$compV0, $compV0, $distV0	# compV0 = vec_or(compV0, distV0);
 	stqd		$listV0, 0($lev)		# lev->list[0].v = listV0;
+
+	xor		$hash, $grpid_vector, $hash	# ... group xor ...
+	lnop
+	
 	or		$compV1, $compV1, $distV1	# compV1 = vec_or(compV1, distV1);
 	stqd		$listV1, 16($lev)		# lev->list[1].v = listV1;
 
@@ -240,18 +248,16 @@ no_for_loop:
 	#      limit = choose(dist0, depth);
 	# i.e. group = high 16 bits of dist0
 
-	xor		$hash, $grpid_vector, $hash	# ... group xor ...
-	ai		$lev, $lev, 128		# ++lev;
 	andi		$hash, $hash, 255	# ... & (GROUPS_COUNT-1)
 	ai		$depth, $depth, 1	# ++depth;
 	shli		$hash_mul16, $hash, 4	# hash*16 to access array[hash],
 	il		$newbit, 1		# newbit = 1 from PUSH_LEVEL
+	ai		$lev, $lev, 128		# ++lev;
 
 	# eqbits    = spu_extract(spu_cntlz(spu_gather(spu_cmpeq(keyvector, (u16)group_of32))), 0);
 	# element   = eqbits - 24;
 
 	shli		$pvalues, $hash, 3		# 1D: hash * 8
-	lnop
 
 	lqx		$keyvector, $hash_mul16, $p_gkeyvectors	# keyvector = group_keysvectors[hash]
 	ceqh		$element, $keyvector, $grpid_vector	# spu_cmpeq(keyvector, (u16)group_of32)
