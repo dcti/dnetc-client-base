@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.138 2008/12/04 09:17:54 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.139 2008/12/06 16:47:10 umccullough Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -124,7 +124,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0) !=-1)
       cpucount = (int)psd.psd_proc_cnt;
     }
-    #elif (CLIENT_OS == OS_BEOS)
+    #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
     {
       system_info the_info;
       get_system_info(&the_info);

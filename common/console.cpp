@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.80 2008/11/27 21:09:58 snake Exp $"; }
+return "@(#)$Id: console.cpp,v 1.81 2008/12/06 16:47:10 umccullough Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -38,7 +38,8 @@ return "@(#)$Id: console.cpp,v 1.80 2008/11/27 21:09:58 snake Exp $"; }
   || (CLIENT_OS==OS_OPENBSD) || (CLIENT_OS==OS_HPUX) || (CLIENT_OS==OS_SUNOS) \
   || (CLIENT_OS==OS_MACOSX) || (CLIENT_OS==DRAGONFLY) \
   || ((CLIENT_OS==OS_QNX) && defined(__QNXNTO__)) \
-  || (CLIENT_OS==OS_DYNIX)) || (CLIENT_OS == OS_PS2LINUX)
+  || (CLIENT_OS==OS_DYNIX)) || (CLIENT_OS == OS_PS2LINUX) \
+  || (CLIENT_OS == OS_HAIKU)
 #include <termios.h>
 #define HAVE_TERMIOS
 #elif (CLIENT_OS == OS_SCO)
@@ -373,8 +374,8 @@ int ConInKey(int timeout_millisecs) /* Returns -1 if err. 0 if timed out. */
         fflush(stdout);
         tcgetattr(fd,&stored); /* Get the original termios configuration */
         memcpy(&newios,&stored,sizeof(struct termios));
-        #if (CLIENT_OS == OS_BEOS)
-        newios.c_lflag &= ~(ECHO|ECHONL);  /* BeOS does not have (non-Posix?) ECHOPRT and ECHOCTL */
+        #if (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
+        newios.c_lflag &= ~(ECHO|ECHONL);  /* BeOS/Haiku do not have (non-Posix?) ECHOPRT and ECHOCTL */
         #else
         #if (CLIENT_OS == OS_QNX) && defined(__QNXNTO__)
         newios.c_lflag &= ~(ECHO|ECHONL|ECHOCTL);
@@ -730,7 +731,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
         (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_PS2LINUX) || \
         ( (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ ) ) || \
-	(CLIENT_OS == OS_SCO)
+        (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_HAIKU)
     /* good for any flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
