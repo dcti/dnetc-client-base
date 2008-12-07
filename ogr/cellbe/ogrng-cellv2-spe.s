@@ -1,3 +1,19 @@
+	;#
+	;# Assembly OGR-NG core for Cell SPU
+	;#
+	;# Created by Roman Trunov <stream@distributed.net>
+	;#
+	;# Additional References:
+	;#
+	;#    1) C OGR-NG core for Cell SPU (ogrng-cell-spe-wrapper.c) -
+	;# describes algorithm used in this code, especially vector tricks and
+	;# caching method.
+	;#    2) Assembly SPU core for OGR-P2 by Decio (ogr-cellv1-spe.s) - 
+	;# describes lot of useful SPU programming and optimization tricks.
+	;#
+	;# After scheduling and reordering, code look like complete mess. So be it.
+	;#
+
 	.text
 	.align	3
 	.global	ogr_cycle_256_test
@@ -103,7 +119,6 @@ ogr_cycle_256_test:
 	ila		$p_grvalues,	group_values
 	ila		$p_gkeyvectors,	group_keysvectors
 
-
 	ila		$addr_forloop,    for_loop
 	ila		$addr_no_forloop, no_for_loop
 
@@ -124,7 +139,7 @@ ogr_cycle_256_test:
 
 	# if (depth < oState->maxdepthm1) { newbit = vec_splat_u32(1); } else = 0;
 	#
-	# note that only 32 bits of newbit are valid (we'll never shift in more)
+	# note that only 32 bits of newbit are valid (we will never shift in more)
 
 	il		$newbit, 1
 	cgt		$temp, $maxdepthm1, $depth
@@ -159,7 +174,14 @@ ogr_cycle_256_test:
 outer_loop:
 
 for_loop:
-	# shift argument of cntlz right to produce exactly what we've needed -
+
+	;#
+	;# Four commands below are in dependency chain. So, if possible,
+	;# (~comp0 >> 1) and $addr_is_forloop must be precalculated 
+	;# 'in background' using free slots of other commands.
+	;#
+
+	# shift argument of cntlz right to produce exactly what we are needed -
 	# a version with return values 1..32 (32 for both -2 and -1)
 
 	nor		$s, $compV0, $compV0	# ~comp0
@@ -305,7 +327,7 @@ fetch_pvalues:
 
 	# if (depth > half_depth && depth <= half_depth2) { ...
 
-	# Compiler generated nice compilcated straight-forward code, but chance for
+	# It is possible to generate compilcated straight-forward code, but chance for
 	# 'if' body to execute is about 3%. Dumb jump is better in our case.
 
 	# finish load of 'limit'
@@ -325,11 +347,14 @@ fetch_pvalues:
 	brnz		$nodes, for_loop_comp0_ready
 	br		save_mark_and_exit
 
-	#
-	# Visited in less then 3% cases and not important
-	#
 	.align		3	
 update_limit:
+	;#
+	;# Visited in less then 3% cases and not so important
+	;#
+	;# ~comp0 already preloaded at upper layer.
+	;#
+
 	nop
 	lqd		$temp, 128($lev_half_depth)	# offsetof(Levels) added here
 
@@ -379,6 +404,13 @@ do_exit:
 	.align		3
 
 break_for:
+	;#
+	;# I wasn't able to get much out of this part (e.g. --lev can be calculated
+	;# in advance). Probably branch hit is very close to branch.
+	;# Even if few clocks are gained in code they'll be lost during branch.
+	;#
+	;# ~comp0 is must be preloaded at the end of this part.
+
 	# --lev;
 	# --depth;
 	ai		$lev, $lev, -128
@@ -396,6 +428,7 @@ break_for:
 
 	# copy loop header from outer_loop (placed here to break dependency)
 	# and finish POP_LEVEL
+	# meantime, prepare ~comp0 using free slots
 	
 	lqd		$limit, 112($lev)	# int limit = lev->limit;
 		nor	$s, $compV0, $compV0	# ~comp0
@@ -412,6 +445,11 @@ break_for:
 	br		do_exit
 
 fetch_new_pchoose:
+	;#
+	;# Called when new portion of pchoose entries must be copied from main
+	;# memory using DMA. Since this is very long process by itself, which MUST
+	;# not be executed often, optimizations are useless here.
+	;#
 
 	# v32_t tempvect = group_insertpos[hash];
 	# element        = spu_extract(tempvect, 0) & (GROUPS_LENGTH - 1);
