@@ -17,6 +17,7 @@
 	.set	const_ffff,		10
 	.set	consth_0x0001,		11	# halfwords
 	.set	V_ONES,			12	# ones in all bits
+	.set	const_0x0FF0,		13
 
 	.set	p_gkeyvectors,		15
 	.set	p_grvalues,		16
@@ -64,7 +65,6 @@
 
 	# temp variables for pchoose fetch
 
-	.set	hash,			50
 	.set	hash_mul16,		51
 	.set	grpid_vector,		52
 	.set	keyvector,		53
@@ -98,6 +98,7 @@ ogr_cycle_256_test:
 	il		$const_2,	2
 	ilh		$consth_0x0001, 0x0001
 	ila		$const_ffff,	65535
+	ila		$const_0x0FF0,  0x0FF0
 	ila		$p_grinsertpos, group_insertpos
 	ila		$p_grvalues,	group_values
 	ila		$p_gkeyvectors,	group_keysvectors
@@ -153,6 +154,8 @@ ogr_cycle_256_test:
 	lqd		$limit, 112($lev)	# int limit = lev->limit;
 	lqd		$mark,  96($lev)	# int mark  = lev->mark;
 
+	nop
+
 outer_loop:
 
 for_loop:
@@ -163,6 +166,10 @@ for_loop:
 	ceqi		$cond_comp0_minus1, $compV0, -1
 	rotmi		$s, $s, -1		# magic shift
 	selb		$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
+
+outer_loop_comp0_ready:
+for_loop_comp0_ready:
+
 	clz		$s, $s			# get it
 	hbr		.L_fl, $addr_is_forloop
 
@@ -222,10 +229,14 @@ no_for_loop:
 	#  lev->list = list;
 	#  dist |= list;
 	#  comp |= dist;
+	# hash = (group_of32 ^ (group_of32 >> 8)) & (GROUPS_COUNT-1);
 
-	rotmi		$hash,  $new_distV0, -24	# hash = (group_of32 ^ (group_of32 >> 8)) & (GROUPS_COUNT-1);
+	rotmi		$hash_mul16,  $new_distV0, -20	# 12345678 => 00000123
 	shufb		$grpid_vector, $new_distV0, $new_distV0, $consth_0x0001 # copy high 16 bits of dist0 to all slots for vector compare
 
+	rotmi		$temp,  $new_distV0, -12	# 12345678 => 00012345
+	lnop
+	
 	ori		$distV0, $new_distV0, 0		# copy preloaded distV0
 	stqd		$compV0, 64($lev)		# lev->comp[0].v = compV0;
 
@@ -235,7 +246,7 @@ no_for_loop:
 	or		$compV0, $compV0, $distV0	# compV0 = vec_or(compV0, distV0);
 	stqd		$listV0, 0($lev)		# lev->list[0].v = listV0;
 
-	xor		$hash, $grpid_vector, $hash	# ... group xor ...
+	xor		$hash_mul16, $temp, $hash_mul16	# 123 ^ 345
 	lnop
 	
 	or		$compV1, $compV1, $distV1	# compV1 = vec_or(compV1, distV1);
@@ -248,20 +259,32 @@ no_for_loop:
 	#      limit = choose(dist0, depth);
 	# i.e. group = high 16 bits of dist0
 
-	andi		$hash, $hash, 255	# ... & (GROUPS_COUNT-1)
+	and		$hash_mul16, $hash_mul16, $const_0x0FF0	# ... (123 ^ 345) & ((GROUPS_COUNT-1) * 16)
+							# hash*16 to access array[hash],
 	ai		$depth, $depth, 1	# ++depth;
-	shli		$hash_mul16, $hash, 4	# hash*16 to access array[hash],
+
+	shli		$pvalues, $hash_mul16, 5	# 1D: hash * 8 * 32 * 2  [ (hash * 16) * 32 ]
+	lqx		$keyvector, $hash_mul16, $p_gkeyvectors	# keyvector = group_keysvectors[hash]
+
+	a		$temp2, $depth, $depth	# depth * 2
+
 	il		$newbit, 1		# newbit = 1 from PUSH_LEVEL
+
 	ai		$lev, $lev, 128		# ++lev;
+	lnop
+
+	a		$pvalues, $pvalues, $temp2	# 1D + 3D (hash * 8 * 32 * 2 + depth * 2)
 
 	# eqbits    = spu_extract(spu_cntlz(spu_gather(spu_cmpeq(keyvector, (u16)group_of32))), 0);
 	# element   = eqbits - 24;
+	# also start making new $s using free clocks
 
-	shli		$pvalues, $hash, 3		# 1D: hash * 8
-
-	lqx		$keyvector, $hash_mul16, $p_gkeyvectors	# keyvector = group_keysvectors[hash]
+		nor	$s, $compV0, $compV0	# ~comp0
 	ceqh		$element, $keyvector, $grpid_vector	# spu_cmpeq(keyvector, (u16)group_of32)
+		ceqi	$cond_comp0_minus1, $compV0, -1
+		rotmi	$s, $s, -1		# magic shift
 	gbh		$temp, $element		# spu_gather(...)
+		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
 	clz		$element, $temp		# spu_cntlz(...)
 
 	# if (element == 8) /* 32 zeros => Out of bounds => no match */
@@ -272,12 +295,10 @@ no_for_loop:
 	#            u16              8          32
 	# return group_values[hash][element][index_in32];
 
-	a		$pvalues, $pvalues, $element	# 2D: hash * 8 + element
-	hbrr		.L_1, for_loop
-	shli		$pvalues, $pvalues, 5		# 3D: (...) * 32
+	shli		$element, $element, 6		# 2D: element * 32 * 2
+	hbrr		.L_1, for_loop_comp0_ready
+	a		$pvalues, $pvalues, $element	# final byte offset
 	lnop
-	a		$pvalues, $pvalues, $depth	# final element number
-	a		$pvalues, $pvalues, $pvalues	# convert to bytes (*2)
 	a		$temp, $pvalues, $p_grvalues	# full address (for shift)
 	lqx		$tempvector, $pvalues, $p_grvalues	# get data at full address
 fetch_pvalues:
@@ -301,7 +322,7 @@ fetch_pvalues:
 
 	stqd		$limit, 112($lev)
 .L_1:
-	brnz		$nodes, for_loop
+	brnz		$nodes, for_loop_comp0_ready
 	br		save_mark_and_exit
 
 	#
@@ -315,7 +336,7 @@ update_limit:
 	# while $temp is loading (6 clocks), calc other things
 
 	nor		$temp2, $distV0, $distV0
-	hbrr		.L_2, for_loop
+	hbrr		.L_2, for_loop_comp0_ready
 	cgt		$cond_depth_hd2, $half_depth2, $depth
 	clz		$temp2, $temp2
 	ai		$temp2, $temp2, 1
@@ -329,7 +350,7 @@ update_limit:
 	
 	stqd		$limit, 112($lev)
 .L_2:
-	brnz		$nodes, for_loop
+	brnz		$nodes, for_loop_comp0_ready
 	
 save_mark_and_exit:
 	stqd		$mark, 96($lev)
@@ -361,29 +382,33 @@ break_for:
 	# --lev;
 	# --depth;
 	ai		$lev, $lev, -128
-	hbrr		.L33, outer_loop
+	hbrr		.L33, outer_loop_comp0_ready
 	ai		$depth, $depth, -1
 	fsmbi		$newbit, 0		# newbit = 0
 
 	# POP_LEVEL(lev);
 
-	lqd		$listV0, 0($lev)
-	lqd		$listV1, 16($lev)
-	cgt		$cond_depth_stopdepth, $depth, $stopdepth
 	lqd		$compV0, 64($lev)
 	lqd		$compV1, 80($lev)
+	cgt		$cond_depth_stopdepth, $depth, $stopdepth
+	lqd		$listV0, 0($lev)
+	lqd		$listV1, 16($lev)
 
 	# copy loop header from outer_loop (placed here to break dependency)
 	# and finish POP_LEVEL
 	
 	lqd		$limit, 112($lev)	# int limit = lev->limit;
+		nor	$s, $compV0, $compV0	# ~comp0
+		ceqi	$cond_comp0_minus1, $compV0, -1
 	andc		$distV0, $distV0, $listV0
+		rotqmbii $s, $s, -1		# magic shift (use slot 1)
+		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
 	lqd		$mark,  96($lev)	# int mark  = lev->mark;
 	andc		$distV1, $distV1, $listV1
 
 	# while (depth > oState->stopdepth);
 .L33:
-	brnz		$cond_depth_stopdepth, outer_loop
+	brnz		$cond_depth_stopdepth, outer_loop_comp0_ready
 	br		do_exit
 
 fetch_new_pchoose:
@@ -397,8 +422,7 @@ fetch_new_pchoose:
 	#               u16               8     [32]
 	# pvalues = group_values[hash][element];
 
-# prefetched above
-#	shli		$pvalues, $hash, 3		# hash * 8
+	rotmi		$pvalues, $hash_mul16, -1	# hash * 8 [ hash * 16 / 2 ]
 	a		$pvalues, $pvalues, $element	# hash * 8 + element
 	shli		$pvalues, $pvalues, 6		# (...) * 32 * 2 (last dimension and u16 to bytes)
 	a		$pvalues, $pvalues, $p_grvalues	# full byte address
@@ -440,5 +464,5 @@ fetch_new_pchoose:
 	rdch		$temp2, $ch24
 
 	lqd		$tempvector, 0($temp)
-.L32:
+
 	br		fetch_pvalues	# byte address in temp, values in tempvector
