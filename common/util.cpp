@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.38 2008/12/06 16:07:42 umccullough Exp $"; }
+return "@(#)$Id: util.cpp,v 1.39 2008/12/08 04:02:03 umccullough Exp $"; }
 
 //#define TRACE
 
@@ -1219,14 +1219,6 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                   if (num_found < 0)
                     num_found = 0;
 
-                  #if (CLIENT_OS == OS_BEOS) /* appears to be dead code */
-                  if (fullpath[0])
-                  {
-                    foundname = fullpath;
-                    if ((++threadindex) != 1)
-                      thatpid = 0; /* ignore all but the main thread */
-                  }
-                  #endif
                   if (thatpid != 0 && thatpid != ourpid)
                   {
                     while (*foundname && isspace(*foundname))

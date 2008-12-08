@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.16 2008/12/06 20:55:24 umccullough Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.17 2008/12/08 04:02:03 umccullough Exp $"; }
 
 #define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -129,13 +129,17 @@ return "@(#)$Id: netbase.cpp,v 1.16 2008/12/06 20:55:24 umccullough Exp $"; }
   }
 #elif (CLIENT_OS == OS_BEOS)
   #include <sys/socket.h>
-  #include <sys/ioctl.h>
+  /* BeOS ioctl() is pitiful, remove it since it doesn't get used anyway */
+  /*#include <sys/ioctl.h>*/
   #include <netdb.h>
-  #define MSG_PEEK 0
+  /* don't lie about supporting MSG_PEEK */
+  /*#define MSG_PEEK 0 */
 #elif (CLIENT_OS == OS_HAIKU)
-  /* while Haiku is similar to BeOS, it has slightly different network support */
+  /* while Haiku is similar to BeOS, it has slightly different network 
+     support */
   #include <sys/socket.h>
-  /* it seems Haku's ioctl doesn't currently work properly, using FIONREAD fails */
+  /* it seems Haku's ioctl doesn't currently work properly, 
+     and using FIONREAD fails */
   /*#include <sys/ioctl.h> */
   #include <netdb.h>
 #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
@@ -1112,6 +1116,7 @@ static int __bsd_quick_disco_look(SOCKET fd, int fdr_is_ready)
   }
   if (rc > 0)
   {
+    #if (CLIENT_OS != OS_BEOS) /* BeOS doesn't support MSG_PEEK */
     char ch = 0;
     #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if (winGetVersion() < 400) /* broken 16bit winsock.dll */
@@ -1123,6 +1128,7 @@ static int __bsd_quick_disco_look(SOCKET fd, int fdr_is_ready)
       rc = recv(fd, &ch, 1, MSG_PEEK);
       TRACE_POLL((-1,"ql: recv(...,MSG_PEEK) =>%d%s\n",rc,trace_expand_api_rc(rc,fd)));
     }
+    #endif /* (CLIENT_OS != OS_BEOS) */
     if (rc == 0) /* 0 means graceful shutdown */
       rc = ps_T_ORDREL;
     else if (rc < 0) /* means reset */
