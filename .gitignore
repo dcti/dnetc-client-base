@@ -1,0 +1,11 @@
+Makefile
+dnetc
+dnetc.1
+dnetc*.tar.gz
+dnetc*.zip
+dnetc*.lha
+
+buff-in.*
+buff-out.*
+ckpoint
+logfile*.log
