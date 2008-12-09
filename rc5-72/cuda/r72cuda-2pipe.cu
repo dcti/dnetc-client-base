@@ -13,7 +13,8 @@
 #include "r72cuda-helper.cu"
 
 #ifdef __cplusplus
-extern "C" s32 CDECL rc5_72_unit_func_cuda_2( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_2_64( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_2_128( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 static __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
@@ -21,7 +22,7 @@ static __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
                                  const u32 L0_hi, const u32 L0_mid, const u32 L0_lo,
                                  const u32 process_amount, u8 * results, u8 * match_found);
 
-static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int /*waitmode*/);
+static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode);
 
 
 /* -------------------------------------------------------------------------- */
@@ -30,7 +31,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-s32 CDECL rc5_72_unit_func_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+s32 CDECL rc5_72_unit_func_cuda_2_64(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
 	/* The number of GPU threads per thread block   */
 	/* to execute.  The default value of 64 makes   */
@@ -39,6 +40,11 @@ s32 CDECL rc5_72_unit_func_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteration
 	const u32 num_threads = 64;
 
 	return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, num_threads, -1);
+}
+
+s32 CDECL rc5_72_unit_func_cuda_2_128(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+{
+	return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 128, -1);
 }
 
 static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int /*waitmode*/)
