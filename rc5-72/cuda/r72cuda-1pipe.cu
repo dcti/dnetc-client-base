@@ -9,46 +9,12 @@
 
 #include <stdio.h>
 #include <cuda.h>
-#include "ccoreio.h"
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-/* Uncomment the define below to display the    */
-/* processing timestamps.  (Linux Only)         */
-//#define DISPLAY_TIMESTAMPS
-
-#ifdef DISPLAY_TIMESTAMPS
-#include <sys/time.h>
-#endif
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-#define P 0xB7E15163
-#define Q 0x9E3779B9
+#include "r72cuda.h"
+#include "r72cuda-helper.cu"
 
 #ifdef __cplusplus
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1( RC5_72UnitWork *, u32 *, void * );
 #endif
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-/* ---------------              Local Variables               --------------- */
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-/* ---------------     Local Helper Function Prototypes       --------------- */
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-static __host__ __device__ u32 swap_u32(u32 num);
-static __host__ __device__ u8 add_u32(u32 num1, u32 num2, u32 * result);
-static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 amount);
 
 static __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
                                  const u32 cypher_hi, const u32 cypher_lo,
@@ -56,97 +22,6 @@ static __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
                                  const u32 process_amount, u8 * results, u8 * match_found);
 
 static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode);
-
-#ifdef DISPLAY_TIMESTAMPS
-static __inline int64_t linux_read_counter(void);
-#endif
-
-/* Type decaration for the L0 field of the      */
-/* RC5_72UnitWork structure.                    */
-typedef struct {
-        u32 hi;
-        u32 mid;
-        u32 lo;
-} L0_t;
-
-
-#define SHL(x, s) ((u32) ((x) << ((s) & 31)))
-#define SHR(x, s) ((u32) ((x) >> (32 - ((s) & 31))))
-
-#define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
-#define ROTL3(x) ROTL(x, 3)
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-/* ---------------           Local Helper Functions           --------------- */
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-/* u32 byte swap */
-static __host__ __device__ u32 swap_u32(u32 num)
-{
-	u32 retval = (num & 0xFF000000) >> 24;
-	retval |= (num & 0x00FF0000) >> 8;
-	retval |= (num & 0x0000FF00) << 8;
-	retval |= (num & 0x000000FF) << 24;
-
-	return retval;
-}
-
-/* Adds two u32s, returning the carry out bit.  */
-static __host__ __device__ u8 add_u32(u32 num1, u32 num2, u32 * result)
-{
-	u8 carry = 0;
-	u32 temp = num1;
-
-	temp += num2;
-
-	/* Check for an overflow */
-	if(temp < num1) {
-		carry = 1;
-	}
-
-	/* Pass back the result */
-	*result = temp;
-
-	return carry;
-}
-
-/* Increments the hi, mid and lo parts of the   */
-/* L0 by the specified amount.                  */
-static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 amount)
-{
-	u32 temp;
-	u32 result;
-	u8 carry;
-
-	/* Low uint32 */
-	temp = *hi & 0xFF;
-	temp |= swap_u32(*mid) << 8;
-	carry = add_u32(temp, amount, &result);
-	*hi = result & 0xFF;
-	*mid &= 0x000000FF;
-	*mid |= swap_u32(result >> 8);
-
-	/* Mid uint32 */
-	if(carry) {
-		temp = *mid & 0xFF;
-		temp |= swap_u32(*lo) << 8;
-		carry = add_u32(temp, 1, &result);
-		*mid &= 0xFFFFFF00;
-		*mid |= result & 0xFF;
-		*lo &= 0x000000FF;
-		*lo |= swap_u32(result >> 8);
-	}
-
-	if(carry) {
-		temp = *lo & 0xFF;
-		carry = add_u32(temp, 1, &result);
-		*lo &= 0xFFFFFF00;
-		*lo |= result & 0xFF;
-	}
-}
-
 
 
 /* -------------------------------------------------------------------------- */
@@ -431,24 +306,6 @@ error_exit:
 
 	return retval;
 }
-
-
-
-/* Linux Only: Return the current uSec count */
-#ifdef DISPLAY_TIMESTAMPS
-static __inline int64_t linux_read_counter(void)
-{
-        struct timeval tv;
-        int64_t retval = 0;
-
-        gettimeofday(&tv, NULL);
-
-        retval = (((int64_t)tv.tv_sec) * 1000000) + tv.tv_usec;
-
-        return retval;
-}
-#endif /* ifdef DISPLAY_TIMESTAMPS */
-
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
