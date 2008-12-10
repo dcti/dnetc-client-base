@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.328 2008/12/03 22:04:30 jlawson Exp $
+# @(#)$Id: configure,v 1.329 2008/12/10 05:11:04 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2881,9 +2881,27 @@ case "$1" in
         TARGET_LDFLAGS="$TARGET_LDFLAGS -L$TARGET_CUDA_INSTALL_PATH/lib -Wl,-rpath -Wl,."
         TARGET_LIBS="-lcudart -lstdc++ -lrt"
         TARGET_TARBALL="linux-${inferred_arch}-cuda-elf"
-        TARGET_DOCFILES="docs/readme.linux docs/readme.cell"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.linux docs/readme.cuda"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
-        add_sources "linux" "cuda" ""
+        add_sources "linux" "cuda"
+        ;;
+
+    *macosx-cuda)                 # Mac OS X, Darwin plus CUDA
+        generate_gcc_opts "x86" "macosx"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -I$TARGET_CUDA_INSTALL_PATH/include -DCUDA"
+        #TARGET_CCFLAGS="$TARGET_CCFLAGS -DCUDA -DDYN_TIMESLICE"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
+
+        TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -L$TARGET_CUDA_INSTALL_PATH/lib -Wl,-rpath -Wl,."
+        # To use nasm's macho output, you will need a custom patch:
+        # http://sf.net/project/shownotes.php?release_id=337548
+        TARGET_NASM_FMT="macho"
+
+        TARGET_LIBS="$TARGET_LIBS -lcudart"
+        TARGET_DOCFILES="docs/readme.cuda"   #platform specific docfile
+        TARGET_TARBALL="macosx-cuda"
+        add_sources "macosx" "cuda"
         ;;
 
 ###### Unknown
@@ -3333,7 +3351,7 @@ echo "	rm -f \${ALLOBJS} \${ADDOBJS} \${INTOBJS}" >> Makefile
 if [ "$BUILDNAME" = "os2-x86" ]; then
   echo "	rm -f output/dnetc.res" >> Makefile
 fi
-if [ "$BUILDNAME" = "linux-cuda" ]; then
+if [ "$BUILDNAME" = "linux-cuda" -o "$BUILDNAME" = "macosx-cuda" ]; then
   echo "	rm -f output/*.cubin output/*.ptx" >> Makefile
 fi
 echo "	rm -f ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile

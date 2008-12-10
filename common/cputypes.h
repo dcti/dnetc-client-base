@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.96 2008/12/03 06:25:15 umccullough Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.97 2008/12/10 05:11:04 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -420,7 +420,9 @@
    #ifndef __unix__
    #define __unix__
    #endif
-   #if defined(__ppc__) || defined (__ppc64__)
+   #if defined(CUDA)
+     #define CLIENT_CPU     CPU_CUDA
+   #elif defined(__ppc__) || defined (__ppc64__)
      #define CLIENT_CPU    CPU_POWERPC
    #elif defined(__i386__) || defined(__x86_64__)
      #define CLIENT_CPU    CPU_X86
