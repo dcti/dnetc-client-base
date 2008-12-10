@@ -1,6 +1,6 @@
  distributed.net client for BeOS (x86 and PowerPC)
- Released by Christopher Tate <ctate@be.com>
- document revision $Id: readme.beos,v 1.5 2002/09/02 00:35:45 andreasb Exp $
+ Released by Urias McCullough <umccullough@teamhaiku.com>
+ document revision $Id: readme.beos,v 1.6 2008/12/10 06:25:11 umccullough Exp $
 
  Welcome to the distributed.net client.
 
@@ -36,7 +36,15 @@
 
 
 
- 2.0  Notes: ---------------------------------------------------------
+ 2.0  BeOS specific notes: -------------------------------------------
+ 
+    This version of the client has been built for BeOS R5 net_server, but 
+    should also run successfully on BeOS R5 BONE, Zeta 1.x, and Haiku R1.
+    
+    NOTE: If using Haiku, it's advisable to use the Haiku-specific version 
+          of the client instead for optimal performance and proper 
+          statistical CPU/OS reporting. This can be obtained from
+          http://www.distributed.net/download
 
     Beginning with v2.7101, the client's default directory is the 
     one the configuration file is located in, which in turn is assumed to
@@ -70,7 +78,7 @@
 
     Beginning with v2.8010.462, the BeOS client will only run on BeOS R5.0
     or later.  Users of BeOS versions prior to R5.0 should download the free
-    R5 release from http://www.be.com/.
+    R5 release from http://www.bebits.com/.
 
     As of November 7th, 1998, much of the client source, including all the 
     core crunch code that was previously scattered about, is available 
