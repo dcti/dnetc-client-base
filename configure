@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.329 2008/12/10 05:11:04 andreasb Exp $
+# @(#)$Id: configure,v 1.330 2008/12/10 11:10:45 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -64,8 +64,9 @@ TARGET_YASM_FMT="elf"
 TARGET_STRIP="strip"
 TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
 TARGET_IS_CROSSCOMPILE=""
-TARGET_CUDA_INSTALL_PATH="/usr/local/cuda"
-TARGET_NVCC="$TARGET_CUDA_INSTALL_PATH/bin/nvcc"
+TARGET_CUDA_INSTALL_PATH=""
+#TARGET_CUDA_INSTALL_PATH="/usr/local/cuda"
+TARGET_NVCC="${TARGET_CUDA_INSTALL_PATH:+${TARGET_CUDA_INSTALL_PATH}/bin/}nvcc"
 
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
@@ -2876,9 +2877,10 @@ case "$1" in
         TARGET_AS="gcc -c"         
         TARGET_CC="gcc"
         generate_gcc_opts "${inferred_arch}" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -I$TARGET_CUDA_INSTALL_PATH/include -DCUDA -DDYN_TIMESLICE"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -I/usr/include/cuda -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -L$TARGET_CUDA_INSTALL_PATH/lib -Wl,-rpath -Wl,."
+        TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
         TARGET_LIBS="-lcudart -lstdc++ -lrt"
         TARGET_TARBALL="linux-${inferred_arch}-cuda-elf"
         TARGET_DOCFILES="docs/readme.linux docs/readme.cuda"   #platform specific docfile
@@ -2888,12 +2890,13 @@ case "$1" in
 
     *macosx-cuda)                 # Mac OS X, Darwin plus CUDA
         generate_gcc_opts "x86" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -I$TARGET_CUDA_INSTALL_PATH/include -DCUDA"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -I/usr/include/cuda -DCUDA -DDYN_TIMESLICE"
         #TARGET_CCFLAGS="$TARGET_CCFLAGS -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
 
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -L$TARGET_CUDA_INSTALL_PATH/lib -Wl,-rpath -Wl,."
+        TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
         # To use nasm's macho output, you will need a custom patch:
         # http://sf.net/project/shownotes.php?release_id=337548
         TARGET_NASM_FMT="macho"
@@ -3667,7 +3670,8 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETSRC=""
     # ------------------------------------
       elif [ "${TARGETTYP}" = "cu" ]; then
-      echo "$target:    ${TARGETSRC}" >> Makefile
+      deplist="rc5-72/cuda/r72cuda.h rc5-72/cuda/r72cuda-helper.cu"
+      echo "$target:    ${TARGETSRC} ${deplist}" >> Makefile
       echo "	\${NVCC} --ptx --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target.ptx" >> Makefile 
       echo "	\${NVCC} --cubin --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target.cubin" >> Makefile 
       echo "	\${NVCC} -c --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target" >> Makefile
