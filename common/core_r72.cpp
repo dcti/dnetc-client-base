@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.17 2008/12/09 19:13:13 andreasb Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.18 2008/12/10 02:01:49 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -92,6 +92,7 @@ extern "C" s32 CDECL rc5_72_unit_func_cuda_1_128( RC5_72UnitWork *, u32 *, void 
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_256( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_2_64( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_2_128( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s0( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 
@@ -187,6 +188,7 @@ const char **corenames_for_contest_rc572()
       "CUDA 1-pipe 64-thd",
       "CUDA 1-pipe 256-thd",
       "CUDA 2-pipe 128-thd",
+      "CUDA 1-pipe 64-thd sleep 100us",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -789,6 +791,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       case 4:
         unit_func.gen_72 = rc5_72_unit_func_cuda_2_128;
         pipeline_count = 2;
+        break;
+      case 5:
+        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_s0;
+        pipeline_count = 1;
         break;
     // -----------
      #else /* the ansi cores */

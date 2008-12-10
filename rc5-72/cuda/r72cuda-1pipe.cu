@@ -16,6 +16,7 @@
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_128( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_256( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s0( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 static __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
@@ -53,7 +54,12 @@ s32 CDECL rc5_72_unit_func_cuda_1_256(RC5_72UnitWork *rc5_72unitwork, u32 *itera
 	return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 256, -1);
 }
 
-static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int /*waitmode*/)
+s32 CDECL rc5_72_unit_func_cuda_1_64_s0(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+{
+	return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 64, 0);
+}
+
+static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode)
 {
 	int currentdevice;
 	u32 i;
@@ -199,10 +205,18 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 		prev_ts = current_ts;
 #endif
 
-		if (cudaEventSynchronize(stop) != CUDA_SUCCESS) {
-			retval = -1;
-			fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
-			goto error_exit;
+		if (waitmode == 0) {
+			const int interval = 100; // microseconds
+			int slept;
+			for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept) 
+				NonPolledUSleep(interval);
+			//fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
+		} else {
+			if (cudaEventSynchronize(stop) != CUDA_SUCCESS) {
+				retval = -1;
+				fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
+				goto error_exit;
+			}
 		}
 
 		/* Copy the match_found variable to the host */
