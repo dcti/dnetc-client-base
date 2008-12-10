@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.98 2008/12/10 10:38:59 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.99 2008/12/10 11:16:40 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -574,7 +574,7 @@
   #include <sys/resource.h> /* WIF*() macros */
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
-#elif (CLIENT_CPU == CPU_CUDA)
+#elif (CLIENT_CPU == CPU_CUDA) && 0 /* DISABLED! This has to be decided by the OS! */
   #define HAVE_POSIX_THREADS
   #define _POSIX_THREADS_SUPPORTED
   #include <pthread.h>
