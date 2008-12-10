@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.139 2008/12/03 07:11:28 umccullough Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.140 2008/12/10 01:43:09 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -43,31 +43,36 @@ struct __dyn_timeslice_struct
   unsigned int contest;
   u32 usec;              /* time */
   u32 max, min, optimal; /* ... timeslice/nodes */
+  u32 increment;         /* timeslice should be a multiple of increment unless it's zero */
 };
 
 // FIXME: allow obsolete projects to be omitted
 static struct __dyn_timeslice_struct
   default_dyn_timeslice_table[CONTEST_COUNT] =  /* for preempted crunchers */
 {
-  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000 },
-  {  DES,    1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR,     200000,  0x8000000,  0x00010,  0x10000 },
-  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000 },
-  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
+  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
+  {  DES,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
+  {  OGR,     200000,  0x8000000,  0x00010,  0x10000,  0 },
+  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
+  {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000,  0 },
+#if (CLIENT_CPU == CPU_CUDA) // HACK! The increment value should come from the core!
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  65535*64 },
+#else
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  0 },
+#endif
+  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000,  0 },
 };
 // OK!
 static struct __dyn_timeslice_struct
   non_preemptive_dyn_timeslice_table[CONTEST_COUNT] = /* for co-op crunchers */
 {                                  /* adjusted by ClientRun() if appropriate */
-  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000 },
-  {  DES,    1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR,     200000,  0x8000000,  0x00010,  0x10000 },
-  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000 },
-  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
-  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
+  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
+  {  DES,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
+  {  OGR,     200000,  0x8000000,  0x00010,  0x10000,  0 },
+  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
+  {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000,  0 },
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  0 },
+  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000,  0 },
 };
 
 // OK!
@@ -567,10 +572,15 @@ void Go_mt( void * parm )
             else
             #endif
             {
-              unsigned int usec5perc = (thrparams->dyn_timeslice_table[contest_i].usec / 20);
+              const u32 fixed_increment = thrparams->dyn_timeslice_table[contest_i].increment;
+              const u32 usec = thrparams->dyn_timeslice_table[contest_i].usec;
+              const u32 usec5perc = usec / 20;
               if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
               {
-                optimal_timeslice <<= 1;
+                if ((fixed_increment >= optimal_timeslice / 100) && (usec - 5 * usec5perc < runtime_usec))
+                  optimal_timeslice += fixed_increment;
+                else
+                  optimal_timeslice <<= 1;
                 if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
                   optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
               }
@@ -581,6 +591,16 @@ void Go_mt( void * parm )
                   optimal_timeslice >>= 2; /* fall fast, rise slow(er) */
                 if (optimal_timeslice < thrparams->dyn_timeslice_table[contest_i].min)
                   optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].min;
+              }
+              if (fixed_increment)
+              {
+                if (optimal_timeslice < fixed_increment)
+                  optimal_timeslice = fixed_increment;
+                else
+                {
+                  optimal_timeslice += fixed_increment / 2;
+                  optimal_timeslice -= optimal_timeslice % fixed_increment;
+                }
               }
             }
             thisprob->pub_data.tslice = optimal_timeslice; /* for the next round */
