@@ -44,9 +44,9 @@ static __inline int64_t linux_read_counter(void);
 /* Type decaration for the L0 field of the      */
 /* RC5_72UnitWork structure.                    */
 typedef struct {
-        u32 hi;
-        u32 mid;
-        u32 lo;
+  u32 hi;
+  u32 mid;
+  u32 lo;
 } L0_t;
 
 #define SHL(x, s) ((u32) ((x) << ((s) & 31)))
