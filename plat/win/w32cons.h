@@ -8,10 +8,14 @@
 */ 
 
 #ifndef __W32CONS_H__
-#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $"
+#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.3 2008/12/10 10:38:59 andreasb Exp $"
 
 /* ********* DO NOT EVER CHANGE THE W32CLI_*_NAME defines ********** */
+#if (CLIENT_CPU == CPU_CUDA)
+#define W32CLI_MUTEX_NAME       "Bovine RC5/DES Win32-Cuda Client"
+#else
 #define W32CLI_MUTEX_NAME       "Bovine RC5/DES Win32 Client"
+#endif
 #define W32CLI_CONSOLE_NAME     "distributed.net client"
 #define W32CLI_OLD_CONSOLE_NAME "distributed.net RC5DES client"
 #define W32CLI_SSATOM_NAME      "distributed.net ScreenSaver"

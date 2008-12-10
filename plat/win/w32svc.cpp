@@ -7,7 +7,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.5 2007/10/22 16:48:32 jlawson Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.6 2008/12/10 10:38:59 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -74,7 +74,12 @@ return "@(#)$Id: w32svc.cpp,v 1.5 2007/10/22 16:48:32 jlawson Exp $"; }
   const char *W9xSERVICEKEY = "distributed.net client";
 #endif /* PROXYTYPE or not */
 const char *APPDESCRIP = "distributed.net "SERVICEFOR;
+
+#if (CLIENT_CPU == CPU_CUDA)
+#define SERVICEMUTEX "distributed.net "SERVICEFOR" CUDA mutex"
+#else
 #define SERVICEMUTEX "distributed.net "SERVICEFOR" service mutex"
+#endif
 
 /* ---------------------------------------------------------- */
 

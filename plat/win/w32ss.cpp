@@ -8,7 +8,7 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.6 2008/04/11 17:19:55 jlawson Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.7 2008/12/10 10:38:59 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "unused.h"     /* DNETC_UNUSED_* */
@@ -2479,7 +2479,12 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst,
           memset(&sa,0,sizeof(sa));
           sa.nLength = sizeof(sa);
           SetLastError(0);
+
+#if (CLIENT_CPU == CPU_CUDA)
+          hmutex = CreateMutex( &sa, TRUE, "distributed.net CUDS ScreenSaver");
+#else
           hmutex = CreateMutex( &sa, TRUE, "distributed.net ScreenSaver");
+#endif
           if (GetLastError() == 0)  /* ie, does not exist */
           #endif
           SSConfigure(hInst, hwndParent);

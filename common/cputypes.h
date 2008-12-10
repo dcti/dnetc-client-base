@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.97 2008/12/10 05:11:04 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.98 2008/12/10 10:38:59 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -110,6 +110,10 @@
 #elif defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
   #if defined(NTALPHA) || defined(_M_ALPHA)
     #define CLIENT_CPU     CPU_ALPHA
+    #define CLIENT_OS      OS_WIN32
+    #define CLIENT_OS_NAME "Win32"
+  #elif defined (CUDA)
+    #define CLIENT_CPU     CPU_CUDA
     #define CLIENT_OS      OS_WIN32
     #define CLIENT_OS_NAME "Win32"
   #elif defined(ASM_PPC)
