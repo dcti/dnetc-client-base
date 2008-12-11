@@ -39,15 +39,15 @@ s32 CDECL rc5_72_unit_func_cuda_2_64(RC5_72UnitWork *rc5_72unitwork, u32 *iterat
   /* memory.  The maximum value is 512.           */
   const u32 num_threads = 64;
 
-  return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, num_threads, -1);
+  return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, num_threads, default_wait_mode);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_2_128(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 128, -1);
+  return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 128, default_wait_mode);
 }
 
-static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int /*waitmode*/)
+static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode)
 {
   int currentdevice;
   u32 i;
@@ -69,7 +69,10 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   int64_t prev_ts;
 #endif
 
-//	fprintf(stderr, "\r\nRC5 cuda: iterations=%i\r\n", *iterations);
+  struct timeval tv_core_start;
+  struct timeval tv_core_elapsed;
+
+  //fprintf(stderr, "\r\nRC5 cuda: iterations=%i\r\n", *iterations);
 
   if( cudaGetDevice(&currentdevice) != (cudaError_t) CUDA_SUCCESS ) {
     retval = -1;
@@ -169,6 +172,9 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
     /* Execute the CUDA core */
 
+    if (waitmode == 1)
+      CliTimer(&tv_core_start);
+
     cuda_2pipe<<<grid_dimension, block_dimension, 0, core>>>(
       rc5_72unitwork->plain.hi, rc5_72unitwork->plain.lo,
       rc5_72unitwork->cypher.hi, rc5_72unitwork->cypher.lo,
@@ -194,10 +200,57 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     prev_ts = current_ts;
 #endif
 
-    if (cudaEventSynchronize(stop) != CUDA_SUCCESS) {
-      retval = -1;
-      fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
-      goto error_exit;
+    if (waitmode == 0) {
+      int slept;
+      for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
+        NonPolledUSleep(min_sleep_interval);
+      //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
+    } else if (waitmode == 1) {
+      static long best_time = -1;
+      long expected = 0, elapsed = 0;
+      int slept = 0;
+      if (best_time <= 0) {
+        for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
+          NonPolledUSleep(min_sleep_interval);
+      } else {
+        expected = best_time * process_amount / (65535 * num_threads);
+        if (expected / 2 >= min_sleep_interval) {
+          //fprintf(stderr, "\rRC5 cuda: sleep_now=%d\n", expected / 2);
+          NonPolledUSleep(expected / 2);
+          ++slept;
+        }
+        while (cudaEventQuery(stop) == cudaErrorNotReady) {
+          CliTimerDiff(&tv_core_elapsed, &tv_core_start, NULL);
+          elapsed = tv_core_elapsed.tv_sec * 1000000 + tv_core_elapsed.tv_usec;
+          long sleep_now = (expected - elapsed) / 2;
+          //fprintf(stderr, "\rRC5 cuda: sleep_now=%d\n", sleep_now);
+          if (sleep_now < min_sleep_interval) {
+            if (cudaEventSynchronize(stop) != CUDA_SUCCESS) {
+              retval = -1;
+              fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
+              goto error_exit;
+            }
+            break;
+          } else {
+            NonPolledUSleep(sleep_now);
+            ++slept;
+          }
+        }
+      }
+      CliTimerDiff(&tv_core_elapsed, &tv_core_start, NULL);
+      elapsed = tv_core_elapsed.tv_sec * 1000000 + tv_core_elapsed.tv_usec;
+      if (process_amount == 65535 * num_threads) {
+        // update best speed
+        if (best_time <= 0 || best_time > elapsed)
+          best_time = elapsed;
+      }
+      //fprintf(stderr, "\rRC5 cuda: slept=%d best_time=%ld elapsed=%ld process_amount=%d\n", slept, best_time, elapsed, process_amount);
+    } else {
+      if (cudaEventSynchronize(stop) != CUDA_SUCCESS) {
+        retval = -1;
+        fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
+        goto error_exit;
+      }
     }
 
     /* Copy the match_found variable to the host */

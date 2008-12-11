@@ -93,11 +93,6 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   int64_t prev_ts;
 #endif
 
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
-  const int min_sleep_interval = 1000;   // microseconds
-#else
-  const int min_sleep_interval = 100;   // microseconds
-#endif
   struct timeval tv_core_start;
   struct timeval tv_core_elapsed;
 
