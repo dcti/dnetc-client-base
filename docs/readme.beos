@@ -1,6 +1,6 @@
  distributed.net client for BeOS (x86 and PowerPC)
  Released by Urias McCullough <umccullough@teamhaiku.com>
- document revision $Id: readme.beos,v 1.6 2008/12/10 06:25:11 umccullough Exp $
+ document revision $Id: readme.beos,v 1.7 2008/12/11 07:43:25 umccullough Exp $
 
  Welcome to the distributed.net client.
 
@@ -10,6 +10,7 @@
 
     1.0  Getting started
     2.0  BeOS specific notes
+
 
  1.0  Getting started ------------------------------------------------
 
@@ -35,9 +36,11 @@
     available at: http://www.distributed.net/docs/tutor_clients.html
 
 
-
  2.0  BeOS specific notes: -------------------------------------------
  
+    The BeOS version of the client was originally ported and maintained by
+    Christopher Tate.
+    
     This version of the client has been built for BeOS R5 net_server, but 
     should also run successfully on BeOS R5 BONE, Zeta 1.x, and Haiku R1.
     
