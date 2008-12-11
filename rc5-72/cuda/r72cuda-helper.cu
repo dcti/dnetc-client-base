@@ -83,14 +83,14 @@ static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 
   }
 }
 
-/* Linux Only: Return the current uSec count */
 #ifdef DISPLAY_TIMESTAMPS
+/* Return the current uSec count */
 static __inline int64_t linux_read_counter(void)
 {
   struct timeval tv;
   int64_t retval = 0;
 
-  gettimeofday(&tv, NULL);
+  CliTimer(&tv);
 
   retval = (((int64_t)tv.tv_sec) * 1000000) + tv.tv_usec;
 

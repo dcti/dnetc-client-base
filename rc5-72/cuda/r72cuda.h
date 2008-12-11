@@ -8,6 +8,7 @@
 */
 
 #include "ccoreio.h"
+#include "clitime.h"
 #include "sleepdef.h"
 
 /* -------------------------------------------------------------------------- */
@@ -16,10 +17,6 @@
 /* Uncomment the define below to display the    */
 /* processing timestamps.  (Linux Only)         */
 //#define DISPLAY_TIMESTAMPS
-
-#ifdef DISPLAY_TIMESTAMPS
-#include <sys/time.h>
-#endif
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
@@ -38,6 +35,7 @@ static __host__ __device__ u8 add_u32(u32 num1, u32 num2, u32 * result);
 static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 amount);
 
 #ifdef DISPLAY_TIMESTAMPS
+// FIXME: this is no longer Linux-only, so please rename this function accordingly
 static __inline int64_t linux_read_counter(void);
 #endif
 
