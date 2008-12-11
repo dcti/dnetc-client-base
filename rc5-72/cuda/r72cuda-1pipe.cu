@@ -16,6 +16,7 @@
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_128( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_256( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_bw( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s0( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s1( RC5_72UnitWork *, u32 *, void * );
 #endif
@@ -42,17 +43,22 @@ s32 CDECL rc5_72_unit_func_cuda_1_64(RC5_72UnitWork *rc5_72unitwork, u32 *iterat
   /* memory.  The maximum value is 512.           */
   const u32 num_threads = 64;
 
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, num_threads, -1);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, num_threads, default_wait_mode);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_128(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 128, -1);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 128, default_wait_mode);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_256(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 256, -1);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 256, default_wait_mode);
+}
+
+s32 CDECL rc5_72_unit_func_cuda_1_64_bw(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+{
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 64, -1);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_64_s0(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
