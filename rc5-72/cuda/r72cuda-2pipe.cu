@@ -379,6 +379,8 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
                            const u32 L0_hi, const u32 L0_mid, const u32 L0_lo,
                            const u32 process_amount, u8 * results, u8 * match_found)
 {
+  const int pipeline_count = 2;
+  int k;
   /* Grid of blocks dimension */
 //	int gd = gridDim.x;
 
@@ -406,6 +408,7 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
     return;
   }
 
+  for (k = 0; k < pipeline_count; ++k) {
   /* Initialize the S[] with constants */
 #define KEY_INIT(i) S[i] = P + i*Q;
   KEY_INIT(0);
@@ -440,7 +443,7 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
   L[2] = L0_hi;
   L[1] = L0_mid;
   L[0] = L0_lo;
-  increment_L0(&L[2], &L[1], &L[0], 2*((bx * bd) + tx));
+  increment_L0(&L[2], &L[1], &L[0], pipeline_count * ((bx * bd) + tx) + k);
 
   /* ------------------------------------- */
   /* ------------------------------------- */
@@ -602,15 +605,17 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
 
     /* Record the "check_*" match   */
     /* in the results array.        */
-    results[(bx * bd) + tx] = 1;
+    results[(bx * bd) + tx] += (1 << (2 * k));
 
     if (B == cypher_hi) {
       /* Record the RESULT_FOUND match  */
       /* in the results array.          */
-      results[(bx * bd) + tx] = 2;
+      results[(bx * bd) + tx] += (1 << (2 * k)); /* add another 1 */
     }
   }
 
+  }
+#if 0
   /* Now test second key */
 
   /* Initialize the S[] with constants */
@@ -788,7 +793,7 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
       results[(bx * bd) + tx] += (1<<2); /* add another 1 */
     }
   }
-
+#endif
 }
 
 // vim: syntax=cpp
