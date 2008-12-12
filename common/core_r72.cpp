@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.22 2008/12/12 11:22:11 andreasb Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.23 2008/12/12 17:22:18 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -199,8 +199,8 @@ const char **corenames_for_contest_rc572()
       "CUDA 1-pipe 64-thd busy wait",
       "CUDA 2-pipe 256-thd",
       "CUDA 4-pipe 64-thd",
-      "CUDA 4-pipe 256-thd",
       "CUDA 4-pipe 128-thd",
+      "CUDA 4-pipe 256-thd",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
