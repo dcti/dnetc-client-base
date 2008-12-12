@@ -13,17 +13,17 @@
 #include "r72cuda-helper.cu"
 
 #ifdef __cplusplus
-extern "C" s32 CDECL rc5_72_unit_func_cuda_2_64( RC5_72UnitWork *, u32 *, void * );
-extern "C" s32 CDECL rc5_72_unit_func_cuda_2_128( RC5_72UnitWork *, u32 *, void * );
-extern "C" s32 CDECL rc5_72_unit_func_cuda_2_256( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_4_64( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_4_128( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_4_256( RC5_72UnitWork *, u32 *, void * );
 #endif
 
-static __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
+static __global__ void cuda_4pipe(const u32 plain_hi, const u32 plain_lo,
                                   const u32 cypher_hi, const u32 cypher_lo,
                                   const u32 L0_hi, const u32 L0_mid, const u32 L0_lo,
                                   const u32 process_amount, u8 * results, u8 * match_found);
 
-static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode);
+static s32 CDECL rc5_72_run_cuda_4(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode);
 
 
 /* -------------------------------------------------------------------------- */
@@ -32,30 +32,24 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-s32 CDECL rc5_72_unit_func_cuda_2_64(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+s32 CDECL rc5_72_unit_func_cuda_4_64(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  /* The number of GPU threads per thread block   */
-  /* to execute.  The default value of 64 makes   */
-  /* optimum usage of __shared__ multiprocessor   */
-  /* memory.  The maximum value is 512.           */
-  const u32 num_threads = 64;
-
-  return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, num_threads, default_wait_mode);
+  return rc5_72_run_cuda_4(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 64, default_wait_mode);
 }
 
-s32 CDECL rc5_72_unit_func_cuda_2_128(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+s32 CDECL rc5_72_unit_func_cuda_4_128(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 128, default_wait_mode);
+  return rc5_72_run_cuda_4(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 128, default_wait_mode);
 }
 
-s32 CDECL rc5_72_unit_func_cuda_2_256(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+s32 CDECL rc5_72_unit_func_cuda_4_256(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_2(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 256, default_wait_mode);
+  return rc5_72_run_cuda_4(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 256, default_wait_mode);
 }
 
-static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode)
+static s32 CDECL rc5_72_run_cuda_4(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode)
 {
-  const u32 pipeline_count = 2;
+  const u32 pipeline_count = 4;
   const u32 max_grid_dim = 65535;
   const u32 optimal_process_amount = num_threads * max_grid_dim * pipeline_count; // optimal GPU utilization during a single GPU core invocation
 
@@ -175,13 +169,13 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     if (waitmode == 1)
       CliTimer(&tv_core_start);
 
-    cuda_2pipe<<<grid_dimension, block_dimension, 0, core>>>(
+    cuda_4pipe<<<grid_dimension, block_dimension, 0, core>>>(
       rc5_72unitwork->plain.hi, rc5_72unitwork->plain.lo,
       rc5_72unitwork->cypher.hi, rc5_72unitwork->cypher.lo,
       rc5_72unitwork->L0.hi, rc5_72unitwork->L0.mid, rc5_72unitwork->L0.lo,
       (process_amount + pipeline_count - 1) / pipeline_count,
       cuda_results, cuda_match_found);
-    /* (process_amount+1)/2 just to handle the (impossible) case that process_amount is odd */
+    /* (process_amount+3)/4 just to handle the case that process_amount is not a multiple of 4 */
     last_error = cudaGetLastError();
     if(last_error != (cudaError_t) CUDA_SUCCESS) {
       retval = -1;
@@ -374,7 +368,7 @@ error_exit:
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-__global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
+__global__ void cuda_4pipe(const u32 plain_hi, const u32 plain_lo,
                            const u32 cypher_hi, const u32 cypher_lo,
                            const u32 L0_hi, const u32 L0_mid, const u32 L0_lo,
                            const u32 process_amount, u8 * results, u8 * match_found)
@@ -440,8 +434,8 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
   L[2] = L0_hi;
   L[1] = L0_mid;
   L[0] = L0_lo;
-  increment_L0(&L[2], &L[1], &L[0], 2*((bx * bd) + tx));
-
+  increment_L0(&L[2], &L[1], &L[0], 4*((bx * bd) + tx));
+ 
   /* ------------------------------------- */
   /* ------------------------------------- */
   /* ------------------------------------- */
@@ -647,7 +641,7 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
   L[2] = L0_hi;
   L[1] = L0_mid;
   L[0] = L0_lo;
-  increment_L0(&L[2], &L[1], &L[0], 2*((bx * bd) + tx)+1);
+  increment_L0(&L[2], &L[1], &L[0], 4*((bx * bd) + tx)+1);
 
   /* ------------------------------------- */
   /* ------------------------------------- */
@@ -789,6 +783,361 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
     }
   }
 
+/* Now test third key */
+
+  /* Initialize the S[] with constants */
+
+  KEY_INIT(0);
+  KEY_INIT(1);
+  KEY_INIT(2);
+  KEY_INIT(3);
+  KEY_INIT(4);
+  KEY_INIT(5);
+  KEY_INIT(6);
+  KEY_INIT(7);
+  KEY_INIT(8);
+  KEY_INIT(9);
+  KEY_INIT(10);
+  KEY_INIT(11);
+  KEY_INIT(12);
+  KEY_INIT(13);
+  KEY_INIT(14);
+  KEY_INIT(15);
+  KEY_INIT(16);
+  KEY_INIT(17);
+  KEY_INIT(18);
+  KEY_INIT(19);
+  KEY_INIT(20);
+  KEY_INIT(21);
+  KEY_INIT(22);
+  KEY_INIT(23);
+  KEY_INIT(24);
+  KEY_INIT(25);
+
+  /* Initialize L0[] based on our block    */
+  /* and thread index.                     */
+  L[2] = L0_hi;
+  L[1] = L0_mid;
+  L[0] = L0_lo;
+  increment_L0(&L[2], &L[1], &L[0], 4*((bx * bd) + tx)+2);
+
+  /* ------------------------------------- */
+  /* ------------------------------------- */
+  /* ------------------------------------- */
+
+  S[0] = ROTL3(S[0]);
+  L[0] = ROTL(L[0]+S[0],S[0]);
+
+  /* ---------- */
+
+  ROTL_BLOCK(1,1);
+  ROTL_BLOCK(2,2);
+  ROTL_BLOCK(3,0);
+  ROTL_BLOCK(4,1);
+  ROTL_BLOCK(5,2);
+  ROTL_BLOCK(6,0);
+  ROTL_BLOCK(7,1);
+  ROTL_BLOCK(8,2);
+  ROTL_BLOCK(9,0);
+  ROTL_BLOCK(10,1);
+  ROTL_BLOCK(11,2);
+  ROTL_BLOCK(12,0);
+  ROTL_BLOCK(13,1);
+  ROTL_BLOCK(14,2);
+  ROTL_BLOCK(15,0);
+  ROTL_BLOCK(16,1);
+  ROTL_BLOCK(17,2);
+  ROTL_BLOCK(18,0);
+  ROTL_BLOCK(19,1);
+  ROTL_BLOCK(20,2);
+  ROTL_BLOCK(21,0);
+  ROTL_BLOCK(22,1);
+  ROTL_BLOCK(23,2);
+  ROTL_BLOCK(24,0);
+  ROTL_BLOCK(25,1);
+
+  /* ---------- */
+
+  ROTL_BLOCK_i0_j2;
+
+  /* ---------- */
+
+  ROTL_BLOCK(1,0);
+  ROTL_BLOCK(2,1);
+  ROTL_BLOCK(3,2);
+  ROTL_BLOCK(4,0);
+  ROTL_BLOCK(5,1);
+  ROTL_BLOCK(6,2);
+  ROTL_BLOCK(7,0);
+  ROTL_BLOCK(8,1);
+  ROTL_BLOCK(9,2);
+  ROTL_BLOCK(10,0);
+  ROTL_BLOCK(11,1);
+  ROTL_BLOCK(12,2);
+  ROTL_BLOCK(13,0);
+  ROTL_BLOCK(14,1);
+  ROTL_BLOCK(15,2);
+  ROTL_BLOCK(16,0);
+  ROTL_BLOCK(17,1);
+  ROTL_BLOCK(18,2);
+  ROTL_BLOCK(19,0);
+  ROTL_BLOCK(20,1);
+  ROTL_BLOCK(21,2);
+  ROTL_BLOCK(22,0);
+  ROTL_BLOCK(23,1);
+  ROTL_BLOCK(24,2);
+  ROTL_BLOCK(25,0);
+
+  /* ---------- */
+
+  ROTL_BLOCK_i0_j1;
+
+  /* ---------- */
+
+  ROTL_BLOCK(1,2);
+  ROTL_BLOCK(2,0);
+  ROTL_BLOCK(3,1);
+  ROTL_BLOCK(4,2);
+  ROTL_BLOCK(5,0);
+  ROTL_BLOCK(6,1);
+  ROTL_BLOCK(7,2);
+  ROTL_BLOCK(8,0);
+  ROTL_BLOCK(9,1);
+  ROTL_BLOCK(10,2);
+  ROTL_BLOCK(11,0);
+  ROTL_BLOCK(12,1);
+  ROTL_BLOCK(13,2);
+  ROTL_BLOCK(14,0);
+  ROTL_BLOCK(15,1);
+  ROTL_BLOCK(16,2);
+  ROTL_BLOCK(17,0);
+  ROTL_BLOCK(18,1);
+  ROTL_BLOCK(19,2);
+  ROTL_BLOCK(20,0);
+  ROTL_BLOCK(21,1);
+  ROTL_BLOCK(22,2);
+  ROTL_BLOCK(23,0);
+  ROTL_BLOCK(24,1);
+  ROTL_BLOCK(25,2);
+
+  /* ---------- */
+
+  A = plain_lo + S[0];
+  B = plain_hi + S[1];
+
+  /* ---------- */
+
+  FINAL_BLOCK(1);
+  FINAL_BLOCK(2);
+  FINAL_BLOCK(3);
+  FINAL_BLOCK(4);
+  FINAL_BLOCK(5);
+  FINAL_BLOCK(6);
+  FINAL_BLOCK(7);
+  FINAL_BLOCK(8);
+  FINAL_BLOCK(9);
+  FINAL_BLOCK(10);
+  FINAL_BLOCK(11);
+  FINAL_BLOCK(12);
+
+  /* ------------------------------------- */
+  /* ------------------------------------- */
+  /* ------------------------------------- */
+
+  /* Check the results for a match.        */
+  if (A == cypher_lo) {
+
+    /* Set the match_found flag */
+    *match_found = 1;
+
+    /* Record the "check_*" match   */
+    /* in the results array.        */
+    results[(bx * bd) + tx] += (1<<4);
+
+    if (B == cypher_hi) {
+      /* Record the RESULT_FOUND match  */
+      /* in the results array.          */
+      results[(bx * bd) + tx] += (1<<4); /* add another 1 */
+    }
+  }
+
+/* Now test fourth key */
+
+  /* Initialize the S[] with constants */
+
+  KEY_INIT(0);
+  KEY_INIT(1);
+  KEY_INIT(2);
+  KEY_INIT(3);
+  KEY_INIT(4);
+  KEY_INIT(5);
+  KEY_INIT(6);
+  KEY_INIT(7);
+  KEY_INIT(8);
+  KEY_INIT(9);
+  KEY_INIT(10);
+  KEY_INIT(11);
+  KEY_INIT(12);
+  KEY_INIT(13);
+  KEY_INIT(14);
+  KEY_INIT(15);
+  KEY_INIT(16);
+  KEY_INIT(17);
+  KEY_INIT(18);
+  KEY_INIT(19);
+  KEY_INIT(20);
+  KEY_INIT(21);
+  KEY_INIT(22);
+  KEY_INIT(23);
+  KEY_INIT(24);
+  KEY_INIT(25);
+
+  /* Initialize L0[] based on our block    */
+  /* and thread index.                     */
+  L[2] = L0_hi;
+  L[1] = L0_mid;
+  L[0] = L0_lo;
+  increment_L0(&L[2], &L[1], &L[0], 4*((bx * bd) + tx)+3);
+
+  /* ------------------------------------- */
+  /* ------------------------------------- */
+  /* ------------------------------------- */
+
+  S[0] = ROTL3(S[0]);
+  L[0] = ROTL(L[0]+S[0],S[0]);
+
+  /* ---------- */
+
+  ROTL_BLOCK(1,1);
+  ROTL_BLOCK(2,2);
+  ROTL_BLOCK(3,0);
+  ROTL_BLOCK(4,1);
+  ROTL_BLOCK(5,2);
+  ROTL_BLOCK(6,0);
+  ROTL_BLOCK(7,1);
+  ROTL_BLOCK(8,2);
+  ROTL_BLOCK(9,0);
+  ROTL_BLOCK(10,1);
+  ROTL_BLOCK(11,2);
+  ROTL_BLOCK(12,0);
+  ROTL_BLOCK(13,1);
+  ROTL_BLOCK(14,2);
+  ROTL_BLOCK(15,0);
+  ROTL_BLOCK(16,1);
+  ROTL_BLOCK(17,2);
+  ROTL_BLOCK(18,0);
+  ROTL_BLOCK(19,1);
+  ROTL_BLOCK(20,2);
+  ROTL_BLOCK(21,0);
+  ROTL_BLOCK(22,1);
+  ROTL_BLOCK(23,2);
+  ROTL_BLOCK(24,0);
+  ROTL_BLOCK(25,1);
+
+  /* ---------- */
+
+  ROTL_BLOCK_i0_j2;
+
+  /* ---------- */
+
+  ROTL_BLOCK(1,0);
+  ROTL_BLOCK(2,1);
+  ROTL_BLOCK(3,2);
+  ROTL_BLOCK(4,0);
+  ROTL_BLOCK(5,1);
+  ROTL_BLOCK(6,2);
+  ROTL_BLOCK(7,0);
+  ROTL_BLOCK(8,1);
+  ROTL_BLOCK(9,2);
+  ROTL_BLOCK(10,0);
+  ROTL_BLOCK(11,1);
+  ROTL_BLOCK(12,2);
+  ROTL_BLOCK(13,0);
+  ROTL_BLOCK(14,1);
+  ROTL_BLOCK(15,2);
+  ROTL_BLOCK(16,0);
+  ROTL_BLOCK(17,1);
+  ROTL_BLOCK(18,2);
+  ROTL_BLOCK(19,0);
+  ROTL_BLOCK(20,1);
+  ROTL_BLOCK(21,2);
+  ROTL_BLOCK(22,0);
+  ROTL_BLOCK(23,1);
+  ROTL_BLOCK(24,2);
+  ROTL_BLOCK(25,0);
+
+  /* ---------- */
+
+  ROTL_BLOCK_i0_j1;
+
+  /* ---------- */
+
+  ROTL_BLOCK(1,2);
+  ROTL_BLOCK(2,0);
+  ROTL_BLOCK(3,1);
+  ROTL_BLOCK(4,2);
+  ROTL_BLOCK(5,0);
+  ROTL_BLOCK(6,1);
+  ROTL_BLOCK(7,2);
+  ROTL_BLOCK(8,0);
+  ROTL_BLOCK(9,1);
+  ROTL_BLOCK(10,2);
+  ROTL_BLOCK(11,0);
+  ROTL_BLOCK(12,1);
+  ROTL_BLOCK(13,2);
+  ROTL_BLOCK(14,0);
+  ROTL_BLOCK(15,1);
+  ROTL_BLOCK(16,2);
+  ROTL_BLOCK(17,0);
+  ROTL_BLOCK(18,1);
+  ROTL_BLOCK(19,2);
+  ROTL_BLOCK(20,0);
+  ROTL_BLOCK(21,1);
+  ROTL_BLOCK(22,2);
+  ROTL_BLOCK(23,0);
+  ROTL_BLOCK(24,1);
+  ROTL_BLOCK(25,2);
+
+  /* ---------- */
+
+  A = plain_lo + S[0];
+  B = plain_hi + S[1];
+
+  /* ---------- */
+
+  FINAL_BLOCK(1);
+  FINAL_BLOCK(2);
+  FINAL_BLOCK(3);
+  FINAL_BLOCK(4);
+  FINAL_BLOCK(5);
+  FINAL_BLOCK(6);
+  FINAL_BLOCK(7);
+  FINAL_BLOCK(8);
+  FINAL_BLOCK(9);
+  FINAL_BLOCK(10);
+  FINAL_BLOCK(11);
+  FINAL_BLOCK(12);
+
+  /* ------------------------------------- */
+  /* ------------------------------------- */
+  /* ------------------------------------- */
+
+  /* Check the results for a match.        */
+  if (A == cypher_lo) {
+
+    /* Set the match_found flag */
+    *match_found = 1;
+
+    /* Record the "check_*" match   */
+    /* in the results array.        */
+    results[(bx * bd) + tx] += (1<<6);
+
+    if (B == cypher_hi) {
+      /* Record the RESULT_FOUND match  */
+      /* in the results array.          */
+      results[(bx * bd) + tx] += (1<<6); /* add another 1 */
+    }
+  }  
 }
 
 // vim: syntax=cpp

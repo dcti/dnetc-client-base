@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.330 2008/12/10 11:10:45 andreasb Exp $
+# @(#)$Id: configure,v 1.331 2008/12/12 11:22:11 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -617,7 +617,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       DEFAULT_RC5_72="0"     # don't add the ansi cores
       TARGET_ADDCUDASRCS="$TARGET_ADDCUDASRCS \
                           rc5-72/cuda/r72cuda-1pipe.cu \
-                          rc5-72/cuda/r72cuda-2pipe.cu"
+                          rc5-72/cuda/r72cuda-2pipe.cu \
+                          rc5-72/cuda/r72cuda-4pipe.cu"
     fi # HAVE_RC5_72
 
   #-----------------------------------------------------------------
