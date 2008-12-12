@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.20 2008/12/11 12:05:41 andreasb Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.21 2008/12/12 04:59:23 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -92,6 +92,7 @@ extern "C" s32 CDECL rc5_72_unit_func_cuda_1_128( RC5_72UnitWork *, u32 *, void 
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_256( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_2_64( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_2_128( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_cuda_2_256( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_bw( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s0( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s1( RC5_72UnitWork *, u32 *, void * );
@@ -193,6 +194,7 @@ const char **corenames_for_contest_rc572()
       "CUDA 1-pipe 64-thd sleep 100us",
       "CUDA 1-pipe 64-thd sleep dynamic",
       "CUDA 1-pipe 64-thd busy wait",
+      "CUDA 2-pipe 256-thd",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -807,6 +809,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       case 7:
         unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_bw;
         pipeline_count = 1;
+        break;
+      case 8:
+        unit_func.gen_72 = rc5_72_unit_func_cuda_2_256;
+        pipeline_count = 2;
         break;
     // -----------
      #else /* the ansi cores */
