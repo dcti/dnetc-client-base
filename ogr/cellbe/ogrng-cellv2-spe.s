@@ -4,7 +4,6 @@
 	;# Created by Roman Trunov <stream@distributed.net>
 	;#
 	;# Additional References:
-	;#
 	;#    1) C OGR-NG core for Cell SPU (ogrng-cell-spe-wrapper.c) -
 	;# describes algorithm used in this code, especially vector tricks and
 	;# caching method.
@@ -13,6 +12,20 @@
 	;#
 	;# After scheduling and reordering, code look like complete mess. So be it.
 	;#
+
+	;#
+	;# Known non-optimal things:
+	;#    1) Calculation of 's' has long dependency chain. Most of codepathes
+	;# will preload 's' "in background", at least partially, but it's not
+	;# possible in inner loop which is too short and 'compV0' is ready
+	;# only in the end of it.
+	;#    2) 'break_for' path has some optimization possibilities. E.g. '--lev'
+	;# can be calculated before jump to 'break_for' using free slot, decreasing
+	;# dep. length inside 'break_for'. 1-2 clock can be gained, but it will not
+	;# make core faster. Probably problem is in jump - branch hint is too close
+	;# to branch instruction. If we'll put this code block above main loop to
+	;# eliminate jump, it'll conflict with 'for_loop' codepath. I didn't tested
+	;# this case, try it if you like.
 
 	.text
 	.align	3
@@ -171,8 +184,6 @@ ogr_cycle_256_test:
 
 	nop
 
-outer_loop:
-
 for_loop:
 
 	;#
@@ -190,9 +201,16 @@ for_loop:
 	selb		$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
 
 outer_loop_comp0_ready:
-for_loop_comp0_ready:
 
 	clz		$s, $s			# get it
+	lnop
+	
+	# If clz can be hidden, then do this and jump to label below.
+	# These two nops may look ugly but really cpu time is not used
+	# (nops are hidden in dependency between 'clz' and 'a')
+	
+for_loop_clz_ready:
+	nop
 	hbr		.L_fl, $addr_is_forloop
 
 	#  if ((mark += s) > limit) { break; }
@@ -318,7 +336,7 @@ no_for_loop:
 	# return group_values[hash][element][index_in32];
 
 	shli		$element, $element, 6		# 2D: element * 32 * 2
-	hbrr		.L_1, for_loop_comp0_ready
+	hbrr		.L_1, for_loop_clz_ready
 	a		$pvalues, $pvalues, $element	# final byte offset
 	lnop
 	a		$temp, $pvalues, $p_grvalues	# full address (for shift)
@@ -337,6 +355,8 @@ fetch_pvalues:
 	ai		$temp, $temp, 14			# prepare u16 shift to PS
 	andc		$cond_depth_hd,  $cond_depth_hd, $cond_depth_hd2
 	ai		$nodes, $nodes, -1
+		lnop
+		clz	$s, $s					# precount s (clz)!
 	rotqby		$tempvector, $tempvector, $temp		# shift result to PS
 	and		$limit, $const_ffff, $tempvector	# u16 -> u32
 
@@ -344,7 +364,7 @@ fetch_pvalues:
 
 	stqd		$limit, 112($lev)
 .L_1:
-	brnz		$nodes, for_loop_comp0_ready
+	brnz		$nodes, for_loop_clz_ready
 	br		save_mark_and_exit
 
 	.align		3	
@@ -361,7 +381,7 @@ update_limit:
 	# while $temp is loading (6 clocks), calc other things
 
 	nor		$temp2, $distV0, $distV0
-	hbrr		.L_2, for_loop_comp0_ready
+	hbrr		.L_2, for_loop_clz_ready
 	cgt		$cond_depth_hd2, $half_depth2, $depth
 	clz		$temp2, $temp2
 	ai		$temp2, $temp2, 1
@@ -375,7 +395,7 @@ update_limit:
 	
 	stqd		$limit, 112($lev)
 .L_2:
-	brnz		$nodes, for_loop_comp0_ready
+	brnz		$nodes, for_loop_clz_ready
 	
 save_mark_and_exit:
 	stqd		$mark, 96($lev)
