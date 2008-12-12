@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.259 2008/10/19 07:47:39 jlawson Exp $"; }
+return "@(#)$Id: client.cpp,v 1.260 2008/12/12 18:26:17 stream Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -250,7 +250,10 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
         #endif
       #endif
       #if (CLIENT_CPU == CPU_CELLBE)
-      LogScreenRaw( "RC5-72 and OGR SPE assembly by Decio Luiz Gazzoni Filho\n");
+      LogScreenRaw( "RC5-72 and OGR-P2 SPE assembly by Decio Luiz Gazzoni Filho\n");
+        #ifdef HAVE_OGR_CORES
+	  LogScreenRaw( "OGR-NG SPE assembly by Roman Trunov\n");
+        #endif
       #endif
       #if (CLIENT_CPU == CPU_SPARC)
       LogScreenRaw( "RC5-72 SPARC assembly by Didier Levet and Andreas Beckmann\n");
