@@ -21,7 +21,7 @@
 #endif
 
 // choices are -1 = busy wait, 0 = simple sleep loop, 1 = adaptive sleep loop
-const int default_wait_mode = -1;
+const int default_wait_mode = 1;
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
