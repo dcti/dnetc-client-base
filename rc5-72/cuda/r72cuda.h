@@ -15,9 +15,9 @@
 /* -------------------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
-  const int min_sleep_interval = 1000;   // microseconds
+const int min_sleep_interval = 1000;     // microseconds
 #else
-  const int min_sleep_interval = 100;   // microseconds
+const int min_sleep_interval = 100;     // microseconds
 #endif
 
 // choices are -1 = busy wait, 0 = simple sleep loop, 1 = adaptive sleep loop

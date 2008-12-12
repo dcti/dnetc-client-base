@@ -282,33 +282,33 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       /* Check the results array for any matches. */
       for (j = 0; j < (process_amount + pipeline_count - 1) / pipeline_count; j++) {
         for (k = 0; k < pipeline_count; k++) {
-        /* Check if we have found a partial match */
-        if(((results[j] >> 2*k) & 3) > 0) {
-          rc5_72unitwork->check.count++;
-          match_count++;
+          /* Check if we have found a partial match */
+          if(((results[j] >> 2*k) & 3) > 0) {
+            rc5_72unitwork->check.count++;
+            match_count++;
 
-          /* Copy over the current key */
-          rc5_72unitwork->check.hi = rc5_72unitwork->L0.hi;
-          rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
-          rc5_72unitwork->check.lo = rc5_72unitwork->L0.lo;
+            /* Copy over the current key */
+            rc5_72unitwork->check.hi = rc5_72unitwork->L0.hi;
+            rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
+            rc5_72unitwork->check.lo = rc5_72unitwork->L0.lo;
 
-          /* Offset the key index to match out current position */
-          increment_L0(&rc5_72unitwork->check.hi, &rc5_72unitwork->check.mid, &rc5_72unitwork->check.lo, pipeline_count * j + k);
+            /* Offset the key index to match out current position */
+            increment_L0(&rc5_72unitwork->check.hi, &rc5_72unitwork->check.mid, &rc5_72unitwork->check.lo, pipeline_count * j + k);
 
-          /* Check if we have found an exact match */
-          if(((results[j] >> 2*k) & 3) > 1) {
-            /* Correct the L0 offste value */
-            increment_L0(&rc5_72unitwork->L0.hi, &rc5_72unitwork->L0.mid, &rc5_72unitwork->L0.lo, pipeline_count * j + k);
+            /* Check if we have found an exact match */
+            if(((results[j] >> 2*k) & 3) > 1) {
+              /* Correct the L0 offste value */
+              increment_L0(&rc5_72unitwork->L0.hi, &rc5_72unitwork->L0.mid, &rc5_72unitwork->L0.lo, pipeline_count * j + k);
 
-            /* Pass back the iterations count to the callee */
-            *iterations = i + pipeline_count * j + k;
+              /* Pass back the iterations count to the callee */
+              *iterations = i + pipeline_count * j + k;
 
-            /* Update the return value and jump to the exit point */
-            retval = RESULT_FOUND;
-            goto sucess_exit;
+              /* Update the return value and jump to the exit point */
+              retval = RESULT_FOUND;
+              goto sucess_exit;
+            }
           }
         }
-      }
       }       /* for(... j < process_amount ...) */
 
     }     /* if(match_found) */
@@ -788,7 +788,7 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
       results[(bx * bd) + tx] += (1<<2); /* add another 1 */
     }
   }
-  
+
 }
 
 // vim: syntax=cpp
