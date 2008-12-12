@@ -49,6 +49,10 @@ s32 CDECL rc5_72_unit_func_cuda_2_128(RC5_72UnitWork *rc5_72unitwork, u32 *itera
 
 static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode)
 {
+  const u32 pipeline_count = 2;
+  const u32 max_grid_dim = 65535;
+  const u32 optimal_process_amount = num_threads * max_grid_dim * pipeline_count; // optimal GPU utilization during a single GPU core invocation
+
   int currentdevice;
   u32 i;
   u32 grid_dim;
@@ -102,10 +106,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
   /* Determine the grid dimensionality based on the */
   /* number of iterations.                          */
-  grid_dim = (*iterations/2 + num_threads - 1) / num_threads;
-  if(grid_dim > 65535) {
-    grid_dim = 65535;
-  }
+  grid_dim = min_u32((*iterations / pipeline_count + num_threads - 1) / num_threads, max_grid_dim);
 
   /* --------------------------------------------- */
 
@@ -136,19 +137,12 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   prev_ts = linux_read_counter();
 #endif
 
-  for(i = 0; i < *iterations; i += (grid_dim * num_threads * 2)) {
+  for (i = 0; i < *iterations; i += optimal_process_amount) {
     dim3 block_dimension(num_threads);
     dim3 grid_dimension(grid_dim);
-    u32 process_amount = *iterations - i;
+    u32 process_amount = min_u32(*iterations - i, optimal_process_amount);
     u32 j;
     u32 match_count = 0;
-
-    /* Determine the amount of keys that we */
-    /* need to process on this pass through */
-    /* the for() loop.                      */
-    if(process_amount > (grid_dim * num_threads * 2)) {
-      process_amount = (grid_dim * num_threads * 2);
-    }
 
     /* Clear the match_found variable */
     if( cudaMemset(cuda_match_found, 0, sizeof(u8)) != (cudaError_t) CUDA_SUCCESS ) {
@@ -179,7 +173,8 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       rc5_72unitwork->plain.hi, rc5_72unitwork->plain.lo,
       rc5_72unitwork->cypher.hi, rc5_72unitwork->cypher.lo,
       rc5_72unitwork->L0.hi, rc5_72unitwork->L0.mid, rc5_72unitwork->L0.lo,
-      (process_amount+1)/2, cuda_results, cuda_match_found);
+      (process_amount + pipeline_count - 1) / pipeline_count,
+      cuda_results, cuda_match_found);
     /* (process_amount+1)/2 just to handle the (impossible) case that process_amount is odd */
     last_error = cudaGetLastError();
     if(last_error != (cudaError_t) CUDA_SUCCESS) {
@@ -213,7 +208,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
         for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
           NonPolledUSleep(min_sleep_interval);
       } else {
-        expected = best_time * process_amount / (65535 * num_threads);
+        expected = best_time * process_amount / optimal_process_amount;
         if (expected / 2 >= min_sleep_interval) {
           //fprintf(stderr, "\rRC5 cuda: sleep_now=%d\n", expected / 2);
           NonPolledUSleep(expected / 2);
@@ -239,7 +234,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       }
       CliTimerDiff(&tv_core_elapsed, &tv_core_start, NULL);
       elapsed = tv_core_elapsed.tv_sec * 1000000 + tv_core_elapsed.tv_usec;
-      if (process_amount == 65535 * num_threads) {
+      if (process_amount == optimal_process_amount) {
         // update best speed
         if (best_time <= 0 || best_time > elapsed)
           best_time = elapsed;
@@ -352,7 +347,7 @@ error_exit:
   }
 
   if(retval == -1) {
-    cudaError_t last_error = cudaGetLastError();
+    last_error = cudaGetLastError();
     fprintf(stderr, "RC5 cuda: error_exit\r\n");
     fprintf(stderr, "RC5 cuda: ERROR: %s\r\n", cudaGetErrorString(last_error));
     fflush(stderr);
