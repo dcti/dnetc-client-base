@@ -1,8 +1,10 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.94 2008/11/13 06:40:50 stream Exp $
+# $Id: makefile.vc,v 1.95 2008/12/13 15:04:19 andreasb Exp $
 #
+
+#PROCESSOR_ARCHITECTURE = cuda
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -39,6 +41,17 @@ EXECOMPRESSOR2 = /NoBackup /CodeIntegrityCheck:Y /StripDebug:Y /WinModuleLoader:
 OPTS_CC_CPU =
 OPTS_M_PLAT = AMD64
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+# This assumes 32-bit Windows since there's no advantage to using 64-bit
+HAVE_OGR_CORES = 0
+OPTS_CC_CPU =
+OPTS_M_PLAT = IX86
+CHIPSRCPATH = plat/x86
+.SUFFIXES : .cu
+#EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
+#EXECOMPRESSOR2 =
+EXECOMPRESSOR = pec2.exe
+EXECOMPRESSOR2 = /NoBackup /CodeIntegrityCheck:Y /StripDebug:Y /WinModuleLoader:Y
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
@@ -90,11 +103,18 @@ OPTS_LINK = /nologo /incremental:no \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
+!if "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+OPTS_LIBS = $(OPTS_LIBS) cudart.lib
+!endif
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 OPTS_MSVC = $(OPTS_MSVC:-GM=)
 OPTS_MSVC = $(OPTS_MSVC:-WX=)
-!else
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+OPTS_MSVC = $(OPTS_MSVC:-WX=)
+#endif
+
+!if "$(PROCESSOR_ARCHITECTURE)" != "AMD64"
 OPTS_LINK = $(OPTS_LINK) /warn:1 
 !endif
 
@@ -241,6 +261,12 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-ma4.obj    \
         $(OUTPUTPATH)/r72-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+RC5_72_OBJS =                             \
+        $(OUTPUTPATH)/r72cuda-1pipe.obj   \
+        $(OUTPUTPATH)/r72cuda-2pipe.obj   \
+        $(OUTPUTPATH)/r72cuda-4pipe.obj 
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DCUDA -DDYN_TIMESLICE
 !else
 !error No RC5-72 cores for this architecture.
 !endif
@@ -364,6 +390,17 @@ $(VC_CHECK):
 
 {$(OGRSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+
+{$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+
+{$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(RC572SRCPATH)/cuda}.cu{$(OUTPUTPATH)}.obj:
+        nvcc -v -c -O2 -Xcompiler "$(OPTS_MSVC)" -D__WIN32__ -D_M_IX86 -DNDEBUG -Icommon -DLURK -Iplat/win -o $(@:/=\) $<
 
 !endif
 
