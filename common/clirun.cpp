@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.140 2008/12/10 01:43:09 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.141 2008/12/13 16:10:58 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -56,7 +56,7 @@ static struct __dyn_timeslice_struct
   {  CSC,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
   {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000,  0 },
 #if (CLIENT_CPU == CPU_CUDA) // HACK! The increment value should come from the core!
-  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  65535*64 },
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  65535*64*4*4 },
 #else
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  0 },
 #endif
