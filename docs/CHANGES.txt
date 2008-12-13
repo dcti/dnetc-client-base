@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.31 2008/12/10 06:25:11 umccullough Exp $
+Version change log: $Id: CHANGES.txt,v 1.32 2008/12/13 07:38:37 stream Exp $
 ==========================================================================
 
 2.9100
@@ -34,6 +34,7 @@ Version change log: $Id: CHANGES.txt,v 1.31 2008/12/10 06:25:11 umccullough Exp 
             new: cuda: RC5-72 core for nVidia CUDA video cards (#4030)
             new: haiku: Added support for Haiku operating system
             fix: beos: Fix bug in network code preventing server communication
+            new: cellbe: OGR-NG SPU ASM core
 
 2.9101-507  new: all: Added OGR-NG contest 
             chg: x86: RC5-72 core selection (#4072)
