@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.139 2008/12/06 16:47:10 umccullough Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.140 2008/12/13 16:52:11 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1096,6 +1096,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006070, 0xFFFFFF0, CPU_F_I686,    9, "Duron (Morgan)"  }, // Morgan core = Palomino core w/ 64K L2
         { 0x0006080, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP or Sempron (Thoroughbred)" },
         { 0x00060A0, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP/XP-M or Sempron (Barton)" },
+        { 0x000F000, 0xFFFF000, CPU_F_I686,    9, "Athlon Unknown (Model 15)" },
         { 0x010F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64" },
         { 0x020F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core" },
         { 0x030F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Athlon 64" },
@@ -1108,7 +1109,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0A0F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 FX" },
         { 0x0B0F000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
         { 0x0C0F000, 0xFFFF000, CPU_F_I686,    9, "Turion 64 X2 Mobile Technology" },
-    /*  { 0x0D----- AMDM16_UNKNOWN  */
+        { 0x0D0F000, 0xFFFF000, CPU_F_I686,    9, "Athlon Unknown (Model 16)" },
         { 0x0E10000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
         { 0x0F10000, 0xFFFF000, CPU_F_I686,    9, "Quad Core Opteron" },
         { 0x1010000, 0xFFFF000, CPU_F_I686,    9, "Embedded Opteron" },
