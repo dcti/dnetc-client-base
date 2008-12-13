@@ -37,13 +37,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
 s32 CDECL rc5_72_unit_func_cuda_1_64(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  /* The number of GPU threads per thread block   */
-  /* to execute.  The default value of 64 makes   */
-  /* optimum usage of __shared__ multiprocessor   */
-  /* memory.  The maximum value is 512.           */
-  const u32 num_threads = 64;
-
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, num_threads, default_wait_mode);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 64, default_wait_mode);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_128(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
@@ -165,7 +159,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     dim3 block_dimension(num_threads);
     dim3 grid_dimension(grid_dim);
     u32 process_amount = min_u32(*iterations - i, optimal_process_amount);
-    u32 j;
+    u32 j, k;
     u32 match_count = 0;
 
     /* Clear the match_found variable */
@@ -290,18 +284,17 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     if(match_found) {
 
       /* Copy the results[] array to the host */
-      if( cudaMemcpy((void *)results, (void *)cuda_results, process_amount * sizeof(u8), cudaMemcpyDeviceToHost) != (cudaError_t) CUDA_SUCCESS ) {
+      if( cudaMemcpy((void *)results, (void *)cuda_results, (process_amount + pipeline_count - 1) / pipeline_count * sizeof(u8), cudaMemcpyDeviceToHost) != (cudaError_t) CUDA_SUCCESS ) {
         retval = -1;
         fprintf(stderr, "RC5 cuda: ERROR: cudaMemcpy: cuda_results\r\n");
         goto error_exit;
       }
 
       /* Check the results array for any matches. */
-      for(j = 0; j < process_amount; j++) {
-
-        {
+      for (j = 0; j < (process_amount + pipeline_count - 1) / pipeline_count; j++) {
+        for (k = 0; k < pipeline_count; k++) {
           /* Check if we have found a partial match */
-          if(results[j] > 0) {
+          if(((results[j] >> 2*k) & 3) > 0) {
             rc5_72unitwork->check.count++;
             match_count++;
 
@@ -311,15 +304,15 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
             rc5_72unitwork->check.lo = rc5_72unitwork->L0.lo;
 
             /* Offset the key index to match out current position */
-            increment_L0(&rc5_72unitwork->check.hi, &rc5_72unitwork->check.mid, &rc5_72unitwork->check.lo, j);
+            increment_L0(&rc5_72unitwork->check.hi, &rc5_72unitwork->check.mid, &rc5_72unitwork->check.lo, pipeline_count * j + k);
 
             /* Check if we have found an exact match */
-            if(results[j] > 1) {
+            if(((results[j] >> 2*k) & 3) > 1) {
               /* Correct the L0 offste value */
-              increment_L0(&rc5_72unitwork->L0.hi, &rc5_72unitwork->L0.mid, &rc5_72unitwork->L0.lo, j);
+              increment_L0(&rc5_72unitwork->L0.hi, &rc5_72unitwork->L0.mid, &rc5_72unitwork->L0.lo, pipeline_count * j + k);
 
               /* Pass back the iterations count to the callee */
-              *iterations = i + j;
+              *iterations = i + pipeline_count * j + k;
 
               /* Update the return value and jump to the exit point */
               retval = RESULT_FOUND;
@@ -397,6 +390,9 @@ __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
                            const u32 L0_hi, const u32 L0_mid, const u32 L0_lo,
                            const u32 process_amount, u8 * results, u8 * match_found)
 {
+  const int pipeline_count = 1;
+  int k;
+
   /* Grid of blocks dimension */
   //int gd = gridDim.x;
 
@@ -424,7 +420,7 @@ __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
     return;
   }
 
-  {
+  for (k = 0; k < pipeline_count; ++k) {
     /* Initialize the S[] with constants */
 #define KEY_INIT(i) S[i] = P + i*Q;
     KEY_INIT(0);
@@ -459,7 +455,7 @@ __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
     L[2] = L0_hi;
     L[1] = L0_mid;
     L[0] = L0_lo;
-    increment_L0(&L[2], &L[1], &L[0], (bx * bd) + tx);
+    increment_L0(&L[2], &L[1], &L[0], pipeline_count * ((bx * bd) + tx) + k);
 
     /* ------------------------------------- */
     /* ------------------------------------- */
@@ -620,12 +616,12 @@ __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
 
       /* Record the "check_*" match   */
       /* in the results array.        */
-      results[(bx * bd) + tx] = 1;
+      results[(bx * bd) + tx] += (1 << (2 * k));
 
       if (B == cypher_hi) {
         /* Record the RESULT_FOUND match  */
         /* in the results array.          */
-        results[(bx * bd) + tx] = 2;
+        results[(bx * bd) + tx] += (1 << (2 * k)); /* add another 1 */
       }
     }
   }
