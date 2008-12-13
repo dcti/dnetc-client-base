@@ -206,7 +206,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       goto error_exit;
     }
 
-    if (cudaEventRecord(stop, core) != CUDA_SUCCESS) {
+    if (cudaEventRecord(stop, core) != (cudaError_t) CUDA_SUCCESS) {
       retval = -1;
       fprintf(stderr, "RC5 cuda: ERROR: cudaEventRecord\r\n");
       goto error_exit;
@@ -243,7 +243,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
           long sleep_now = (expected - elapsed) / 2;
           //fprintf(stderr, "\rRC5 cuda: sleep_now=%d\n", sleep_now);
           if (sleep_now < min_sleep_interval) {
-            if (cudaEventSynchronize(stop) != CUDA_SUCCESS) {
+            if (cudaEventSynchronize(stop) != (cudaError_t) CUDA_SUCCESS) {
               retval = -1;
               fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
               goto error_exit;
@@ -264,7 +264,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       }
       //fprintf(stderr, "\rRC5 cuda: slept=%d best_time=%ld elapsed=%ld process_amount=%d\n", slept, best_time, elapsed, process_amount);
     } else {
-      if (cudaEventSynchronize(stop) != CUDA_SUCCESS) {
+      if (cudaEventSynchronize(stop) != (cudaError_t) CUDA_SUCCESS) {
         retval = -1;
         fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
         goto error_exit;
