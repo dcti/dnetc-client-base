@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.331 2008/12/12 11:22:11 andreasb Exp $
+# @(#)$Id: configure,v 1.332 2008/12/13 14:08:32 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3206,6 +3206,11 @@ echo "CC = ${TARGET_CC}" >> Makefile
 echo "CP = ${TARGET_CP}" >> Makefile
 echo "HPATHS = ${TARGET_INCSWITCHES}" >> Makefile
 echo "CCFLAGS = ${TARGET_CCFLAGS} \${HPATHS}" >> Makefile
+if [ "$TARGET_USES_GNUMAKE" = "yes" ]; then
+  echo "CFLAGS = \$(filter-out -Woverloaded-virtual -fno-rtti,\${CCFLAGS})" >> Makefile   
+else
+  echo "CFLAGS = \${CCFLAGS}" >> Makefile   
+fi
 if [ "${BUILDNAME}" = "aix-all" ]; then
   echo "PPC601FLAGS = ${AIXPPC601FLAGS} \${HPATHS}" >> Makefile
   echo "PPC604FLAGS = ${AIXPPC604FLAGS} \${HPATHS}" >> Makefile
@@ -3236,6 +3241,7 @@ echo "INTOBJS = ${TARGET_INTOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
 echo "NVCC = ${TARGET_NVCC}" >>Makefile   
+echo "NVCCFLAGS = \${CFLAGS}" >> Makefile   
 if [ "$TARGET_USES_GNUMAKE" = "yes" ]; then
   # GNUMake $(shell ) evaluates only once - but this isn't supported by BSD make etc ...
   echo "BUILDNUM:= \$(shell grep \" CLIENT_BUILD_FRAC \" common/version.h|$TARGET_TR -dc 0123456789)" >>Makefile
@@ -3673,9 +3679,9 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       elif [ "${TARGETTYP}" = "cu" ]; then
       deplist="rc5-72/cuda/r72cuda.h rc5-72/cuda/r72cuda-helper.cu"
       echo "$target:    ${TARGETSRC} ${deplist}" >> Makefile
-      echo "	\${NVCC} --ptx --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target.ptx" >> Makefile 
-      echo "	\${NVCC} --cubin --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target.cubin" >> Makefile 
-      echo "	\${NVCC} -c --compiler-options \"\${CCFLAGS}\" \${HPATHS} ${TARGETSRC} -o $target" >> Makefile
+      echo "	\${NVCC} --ptx --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target.ptx" >> Makefile 
+      echo "	\${NVCC} --cubin --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target.cubin" >> Makefile 
+      echo "	\${NVCC} -c --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
