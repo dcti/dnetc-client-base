@@ -7,7 +7,7 @@
  * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.46 2008/11/09 07:17:17 jlawson Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.47 2008/12/13 13:26:49 andreasb Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
@@ -214,8 +214,8 @@ static int rfc822Address( char *buffer, const char *addr,
       {
         do{
           ptr2--;
-        } while (ptr2>=ptr) &&
-                 (isspace(*ptr2) || !isprint(*ptr2) || *ptr2==','))
+        } while ((ptr2>=ptr) &&
+                 (isspace(*ptr2) || !isprint(*ptr2) || *ptr2==','));
       }
       if (ptr2 >= ptr)
       {

@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.57 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.58 2008/12/13 13:23:39 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1018,7 +1018,7 @@ static int __do_crunchometer( int event_disp_format,
         if (benchrate)
         {
           #if (ULONG_MAX > 0xfffffffful)
-          unsigned long r = (((unsigned long)ratehi)<<32)+ratelo)*100;
+          unsigned long r = ((((unsigned long)ratehi)<<32)+ratelo)*100;
           bestperm = (int)(r/benchrate);
           #else
           if (!ratehi)
