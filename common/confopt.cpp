@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.56 2008/08/17 06:16:18 stream Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.57 2008/12/14 16:00:53 snake Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -210,7 +210,8 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "that the system is not running on mains power.\n" 
   "\n"
   #if (CLIENT_OS == OS_LINUX) ||  ((CLIENT_CPU == CPU_X86) && \
-      ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD)))
+      ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD) || \
+      (CLIENT_OS == DRAGONFLY)))
   "This option is ignored if power management is disabled or not configured or\n"
   "if /dev/apm cannot be opened for reading (may require superuser privileges).\n"
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOSX)

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.92 2008/12/03 07:11:28 umccullough Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.93 2008/12/14 16:00:53 snake Exp $"
 
 #include "cputypes.h"
 
@@ -265,6 +265,7 @@
   #include <fcntl.h> /* O_RDWR etc */
 #elif (CLIENT_OS == OS_DRAGONFLY)
   #include <sys/time.h>
+  #include <sys/sysctl.h>
   #include <unistd.h>
   #include <sched.h>
   #include <fcntl.h> /* O_RDWR etc */

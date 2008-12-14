@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.35 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.36 2008/12/14 16:00:53 snake Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -327,7 +327,8 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #include <machine/apmvar.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-#elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
+#elif ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_DRAGONFLY)) && \
+      (CLIENT_CPU == CPU_X86)
 #include <fcntl.h>
 #include <machine/apm_bios.h>
 #elif (CLIENT_OS == OS_MACOSX)
@@ -549,7 +550,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       } /* if time */
     } /* #if (linux & cpu_ppc) */
 
-    #elif (CLIENT_OS == OS_FREEBSD) && (CLIENT_CPU == CPU_X86)
+    #elif ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_DRAGONFLY)) && \
+          (CLIENT_CPU == CPU_X86)
     {
       /* This is sick and sooo un-BSD like! Tatsumi Hokosawa must have
          been dealing too much with linux and forgot all about sysctl. :)

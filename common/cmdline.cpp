@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.167 2008/12/03 07:11:28 umccullough Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.168 2008/12/14 16:00:53 snake Exp $"; }
 
 //#define TRACE
 
@@ -301,7 +301,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                           break;
                         } 
                       }
-                      #elif (CLIENT_OS == OS_FREEBSD)
+                      #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_DRAGONFLY)
                       len = fread( buffer, 1, sizeof(buffer), file );
                       if (len == sizeof(buffer))
                         len--;
