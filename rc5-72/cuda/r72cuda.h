@@ -27,7 +27,7 @@ const int default_wait_mode = 1;
 /* -------------------------------------------------------------------------- */
 
 /* Uncomment the define below to display the    */
-/* processing timestamps.  (Linux Only)         */
+/* processing timestamps.                       */
 //#define DISPLAY_TIMESTAMPS
 
 /* -------------------------------------------------------------------------- */
@@ -47,8 +47,7 @@ static __host__ __device__ u8 add_u32(u32 num1, u32 num2, u32 * result);
 static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 amount);
 
 #ifdef DISPLAY_TIMESTAMPS
-// FIXME: this is no longer Linux-only, so please rename this function accordingly
-static __inline int64_t linux_read_counter(void);
+static __inline int64_t read_counter(void);
 #endif
 
 static __inline u32 min_u32(u32 a, u32 b)

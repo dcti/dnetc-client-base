@@ -85,7 +85,7 @@ static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 
 
 #ifdef DISPLAY_TIMESTAMPS
 /* Return the current uSec count */
-static __inline int64_t linux_read_counter(void)
+static __inline int64_t read_counter(void)
 {
   struct timeval tv;
   int64_t retval = 0;

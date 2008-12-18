@@ -152,7 +152,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   /* --------------------------------------------- */
 
 #ifdef DISPLAY_TIMESTAMPS
-  prev_ts = linux_read_counter();
+  prev_ts = read_counter();
 #endif
 
   for (i = 0; i < *iterations; i += optimal_process_amount) {
@@ -177,7 +177,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     }
 
 #ifdef DISPLAY_TIMESTAMPS
-    current_ts = linux_read_counter();
+    current_ts = read_counter();
     fprintf(stderr, "RC5 cuda: elapsed_time_1=%lli\r\n", current_ts - prev_ts);
     prev_ts = current_ts;
 #endif
@@ -207,7 +207,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     }
 
 #ifdef DISPLAY_TIMESTAMPS
-    current_ts = linux_read_counter();
+    current_ts = read_counter();
     fprintf(stderr, "RC5 cuda: elapsed_time_2=%lli\r\n", current_ts - prev_ts);
     prev_ts = current_ts;
 #endif
@@ -273,7 +273,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     }
 
 #ifdef DISPLAY_TIMESTAMPS
-    current_ts = linux_read_counter();
+    current_ts = read_counter();
     fprintf(stderr, "RC5 cuda: elapsed_time_3=%lli\r\n", current_ts - prev_ts);
     prev_ts = current_ts;
 #endif
@@ -329,7 +329,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     increment_L0(&rc5_72unitwork->L0.hi, &rc5_72unitwork->L0.mid, &rc5_72unitwork->L0.lo, process_amount);
 
 #ifdef DISPLAY_TIMESTAMPS
-    current_ts = linux_read_counter();
+    current_ts = read_counter();
     fprintf(stderr, "RC5 cuda: elapsed_time_4=%lli\r\n", current_ts - prev_ts);
     prev_ts = current_ts;
 #endif
@@ -338,7 +338,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 sucess_exit:
 error_exit:
 #ifdef DISPLAY_TIMESTAMPS
-  current_ts = linux_read_counter();
+  current_ts = read_counter();
   fprintf(stderr, "RC5 cuda: elapsed_time_5=%lli\r\n", current_ts - prev_ts);
   prev_ts = current_ts;
 #endif
@@ -371,7 +371,7 @@ error_exit:
   }
 
 #ifdef DISPLAY_TIMESTAMPS
-  current_ts = linux_read_counter();
+  current_ts = read_counter();
   fprintf(stderr, "RC5 cuda: elapsed_time_6=%lli\r\n", current_ts - prev_ts);
   prev_ts = current_ts;
 #endif
