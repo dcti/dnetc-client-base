@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.95 2008/12/13 15:04:19 andreasb Exp $
+# $Id: makefile.vc,v 1.96 2008/12/18 20:32:40 andreasb Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = cuda
@@ -93,6 +93,7 @@ OPTS_LINK_DEBUG = /release
 
 OPTS_MSVC = -nologo -D__WIN32__ \
             -W4 -WX -GR- -GX- -GA -GF -GM -Gy \
+            -Dsnprintf=_snprintf -DHAVE_SNPRINTF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG)
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
