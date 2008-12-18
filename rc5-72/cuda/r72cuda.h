@@ -51,7 +51,7 @@ static __host__ __device__ void increment_L0(u32 * hi, u32 * mid, u32 * lo, u32 
 static __inline int64_t linux_read_counter(void);
 #endif
 
-static inline u32 min_u32(const u32 a, const u32 b)
+static __inline u32 min_u32(u32 a, u32 b)
 {
   return (a < b) ? a : b;
 }
