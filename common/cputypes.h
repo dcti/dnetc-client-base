@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.99 2008/12/10 11:16:40 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.100 2008/12/18 20:56:19 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -574,7 +574,8 @@
   #include <sys/resource.h> /* WIF*() macros */
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
-#elif (CLIENT_CPU == CPU_CUDA) && 0 /* DISABLED! This has to be decided by the OS! */
+#elif ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_CUDA))
+  /* Necessary for streams to work correctly */
   #define HAVE_POSIX_THREADS
   #define _POSIX_THREADS_SUPPORTED
   #include <pthread.h>
@@ -638,6 +639,9 @@
   #endif
   #ifndef CORES_SUPPORT_SMP 
   #define CORES_SUPPORT_SMP /* no shared data, so cores become smp safe */
+  #endif
+  #if (CLIENT_CPU == CPU_CUDA)
+  #error FORK and CUDA don't work together - can't use multiple GPUs
   #endif
 #else
   typedef int THREADID;
