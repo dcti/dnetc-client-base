@@ -5,15 +5,15 @@
  * Any other distribution or use of this source violates copyright.
  *
  * ----------------------------------------------------------------------
- * This file contains functions for obtaining contest constants as 
- * well as name, id, iteration-to-keycount-multiplication-factor or 
- * obtaining/adding to contest summary data (totalblocks, totaliterations, 
- * totaltime. The data itself is hidden from other modules to protect 
- * integrity and ease maintenance. 
+ * This file contains functions for obtaining contest constants as
+ * well as name, id, iteration-to-keycount-multiplication-factor or
+ * obtaining/adding to contest summary data (totalblocks, totaliterations,
+ * totaltime. The data itself is hidden from other modules to protect
+ * integrity and ease maintenance.
  * ----------------------------------------------------------------------
-*/ 
+*/
 #ifndef __CLICDATA_H__
-#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.28 2007/10/22 16:48:24 jlawson Exp $"
+#define __CLICDATA_H__ "@(#)$Id: clicdata.h,v 1.29 2008/12/19 11:10:58 andreasb Exp $"
 
 // return 0 if contestID is invalid, non-zero if valid.
 int CliIsContestIDValid(int contestID);
@@ -25,8 +25,8 @@ int CliGetContestIDFromName( char *name );
 #if 0
 // obtain constant data for a contest. name/iter2key may be NULL
 // returns 0 if success, !0 if error (bad contestID).
-int CliGetContestInfoBaseData( int contestid, const char **name, 
-                                               unsigned int *iter2key );
+int CliGetContestInfoBaseData( int contestid, const char **name,
+                               unsigned int *iter2key );
 #endif
 
 // clear summary data for a contest.
@@ -36,15 +36,15 @@ int CliClearContestInfoSummaryData( int contestid );
 // obtain summary data for a contest. unrequired args may be NULL
 // returns 0 if success, !0 if error (bad contestID).
 int CliGetContestInfoSummaryData( int contestid, unsigned int *totalblocks,
-                                  u32 *donei_hi, u32 *done_ilo, 
-                                  struct timeval *totaltime, 
+                                  u32 *donei_hi, u32 *done_ilo,
+                                  struct timeval *totaltime,
                                   unsigned int *totalunits );
 
 // add data to the summary data for a contest.
 // returns 0 if added successfully, !0 if error (bad contestID).
-int CliAddContestInfoSummaryData( int contestid, 
-                                  u32 iter_hi, u32 iter_lo, 
-                                  const struct timeval *addtime, 
+int CliAddContestInfoSummaryData( int contestid,
+                                  u32 iter_hi, u32 iter_lo,
+                                  const struct timeval *addtime,
                                   unsigned int addunits );
 
 // Return a usable contest name, returns "???" if bad id.

@@ -3,10 +3,11 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
-*/ 
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
+*/
 const char *probman_cpp(void) {
-return "@(#)$Id: probman.cpp,v 1.19 2007/10/22 16:48:27 jlawson Exp $"; }
+  return "@(#)$Id: probman.cpp,v 1.20 2008/12/19 11:10:59 andreasb Exp $";
+}
 
 #include "baseincs.h"  // malloc()/NULL/memset()
 #include "problem.h"   // Problem class
@@ -36,7 +37,7 @@ Problem *GetProblemPointerFromIndex(unsigned int probindex)
   if (probmanstatics.probcount && probindex < probmanstatics.probcount )
     return probmanstatics.probtable[probindex];
   return ((Problem *)0);
-}  
+}
 
 // -----------------------------------------------------------------------
 
@@ -71,7 +72,7 @@ int GetProblemIndexFromPointer( Problem *prob )
 int InitializeProblemManager(unsigned int maxnumproblems)
 {
   unsigned int i, probcount;
-  
+
   if (maxnumproblems == 0 || probmanstatics.probtable != ((Problem **)0))
     return -1;
   if (((int)(maxnumproblems)) < 0)
@@ -83,16 +84,16 @@ int InitializeProblemManager(unsigned int maxnumproblems)
                                     // good.
 
   probmanstatics.probtable=(Problem **)
-                             malloc(maxnumproblems * sizeof(Problem *));
+                            malloc(maxnumproblems * sizeof(Problem *));
   if (probmanstatics.probtable == ((Problem **)0))
     return -1;
 
   probmanstatics.tablesize = maxnumproblems;
   memset((void *)probmanstatics.probtable,0,
-                             (maxnumproblems * sizeof(Problem *)));
-    
+         (maxnumproblems * sizeof(Problem *)));
+
   probcount = 0;
-  for (i=0;i<maxnumproblems;i++)
+  for (i=0; i<maxnumproblems; i++)
   {
     probmanstatics.probtable[i]=ProblemAlloc();
     if (probmanstatics.probtable[i]==((Problem *)0))
@@ -102,10 +103,10 @@ int InitializeProblemManager(unsigned int maxnumproblems)
   if (probcount != maxnumproblems)
   {
     unsigned int j;
-    
+
     for(j=0; j<probcount; j++)
-        ProblemFree(probmanstatics.probtable[j]);
-        
+      ProblemFree(probmanstatics.probtable[j]);
+
     free((void *)probmanstatics.probtable);
     probmanstatics.probtable = ((Problem **)0);
     probmanstatics.probcount = 0;
@@ -114,7 +115,7 @@ int InitializeProblemManager(unsigned int maxnumproblems)
   }
   probmanstatics.probcount = probcount;
   return (int)(probmanstatics.probcount);
-}    
+}
 
 // -----------------------------------------------------------------------
 
@@ -124,7 +125,7 @@ int DeinitializeProblemManager(void)
 
   if (probtable != ((Problem **)0))
   {
-    for (;probmanstatics.probcount>0;probmanstatics.probcount--)
+    for (; probmanstatics.probcount>0; probmanstatics.probcount--)
     {
       if (probtable[probmanstatics.probcount-1])
         ProblemFree(probtable[probmanstatics.probcount-1]);

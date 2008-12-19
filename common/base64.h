@@ -3,21 +3,21 @@
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
-*/ 
+*/
 
 #ifndef __BASE64_H__
-#define __BASE64_H__ "@(#)$Id: base64.h,v 1.10 2007/10/22 16:48:23 jlawson Exp $"
+#define __BASE64_H__ "@(#)$Id: base64.h,v 1.11 2008/12/19 11:10:58 andreasb Exp $"
 
-/* 
-  On success, both functions return the number of bytes in the outbuf (not 
+/*
+  On success, both functions return the number of bytes in the outbuf (not
   counting the terminating '\0'). On error, both return < 0.
-  note: The outbuffer is terminated only if there is sufficient space 
+  note: The outbuffer is terminated only if there is sufficient space
   remaining after conversion.
-*/ 
+*/
 
-int base64_encode(char *outbuf, const char *inbuf, 
+int base64_encode(char *outbuf, const char *inbuf,
                   unsigned int outbuflen, unsigned int inbuflen );
-int base64_decode(char *outbuf, const char *inbuf, 
+int base64_decode(char *outbuf, const char *inbuf,
                   unsigned int outbuflen, unsigned int inbuflen );
 
 #endif /* __BASE64_H__ */

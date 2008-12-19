@@ -6,7 +6,8 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-return "@(#)$Id: buffbase.cpp,v 1.39 2007/10/22 16:48:23 jlawson Exp $"; }
+  return "@(#)$Id: buffbase.cpp,v 1.40 2008/12/19 11:10:58 andreasb Exp $";
+}
 
 //#define TRACE
 //#define PROFILE_DISK_HITS
@@ -28,9 +29,9 @@ return "@(#)$Id: buffbase.cpp,v 1.39 2007/10/22 16:48:23 jlawson Exp $"; }
 #include "buffupd.h"  // BUFFERUPDATE_FETCH / BUFFERUPDATE_FLUSH
 #include "buffbase.h" //ourselves
 
-struct membuffstruct 
-{ 
-  unsigned long count; 
+struct membuffstruct
+{
+  unsigned long count;
   unsigned long maxcount;
   WorkRecord **buff;
 };
@@ -44,7 +45,7 @@ static struct {
 
 /* --------------------------------------------------------------------- */
 
-int BufferGetRecordInfo( const WorkRecord * data, 
+int BufferGetRecordInfo( const WorkRecord * data,
                          unsigned int *contest,
                          unsigned int *swucount )
 {
@@ -63,7 +64,7 @@ int BufferGetRecordInfo( const WorkRecord * data,
 /* --------------------------------------------------------------------- */
 
 const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
-                                                       const char *basename )
+                                      const char *basename )
 {
   static char filename[128];
   const char *suffix = ProjectGetFileExtension( project );
@@ -87,14 +88,14 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
   if (filename[0] == 0)
   {
     strcpy( filename, ((is_out_type) ?
-       BUFFER_DEFAULT_OUT_BASENAME /* "buff-out" */:
-       BUFFER_DEFAULT_IN_BASENAME  /* "buff-in" */  ) );
+                       BUFFER_DEFAULT_OUT_BASENAME /* "buff-out" */ :
+                       BUFFER_DEFAULT_IN_BASENAME /* "buff-in" */  ) );
   }
 
   filename[sizeof(filename)-5]='\0';
   strcat( filename, EXTN_SEP );
   len = strlen( filename );
-  for (n=0;suffix[n] && n<3;n++)
+  for (n=0; suffix[n] && n<3; n++)
     filename[len++] = (char)tolower(suffix[n]);
   filename[len]='\0';
   return filename;
@@ -106,7 +107,7 @@ const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
 /* ===================================================================== */
 
 static int BufferPutMemRecord( struct membuffstruct *membuff,
-    const WorkRecord* data, unsigned long *countP ) /* returns <0 on ioerr */
+                               const WorkRecord* data, unsigned long *countP ) /* returns <0 on ioerr */
 {
   unsigned long count = 0;
   int retcode = -1;
@@ -148,7 +149,7 @@ static int BufferPutMemRecord( struct membuffstruct *membuff,
 /* --------------------------------------------------------------------- */
 
 static int BufferGetMemRecord( struct membuffstruct *membuff,
-                            WorkRecord* data, unsigned long *countP )
+                               WorkRecord* data, unsigned long *countP )
 {
   /*  <0 on ioerr, >0 if norecs */
   unsigned long count = 0;
@@ -179,7 +180,7 @@ static int BufferGetMemRecord( struct membuffstruct *membuff,
 
 
 static int BufferCountMemRecords( struct membuffstruct *membuff,
-   unsigned int contest, unsigned long *packetcountP, unsigned long *normcountP )
+                                  unsigned int contest, unsigned long *packetcountP, unsigned long *normcountP )
 {
   unsigned long rec, reccount = 0, packetcount = 0, normcount = 0;
   int retcode = -1;
@@ -284,13 +285,13 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
       if (tmp_use_out_file)
         filename = client->out_buffer_basename;
       filename = BufferGetDefaultFilename(tmp_contest, tmp_use_out_file,
-                                                       filename );
+                                          filename );
       #ifdef PROFILE_DISK_HITS
       LogScreen("Diskhit: BufferPutFileRecord() called from PutBufferRecord()\n");
       #endif
-      tmp_retcode = BufferPutFileRecord( filename, data, 
+      tmp_retcode = BufferPutFileRecord( filename, data,
                                          &count, BUFFER_FLAGS_NONE );
-                    /* returns <0 on ioerr, >0 if norecs */
+      /* returns <0 on ioerr, >0 if norecs */
     }
     else
     {
@@ -298,7 +299,7 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
       if (tmp_use_out_file)
         membuff = &(membufftable[tmp_contest].out);
       tmp_retcode = BufferPutMemRecord( membuff, data, &count );
-               /* returns <0 on ioerr, >0 if norecs */
+      /* returns <0 on ioerr, >0 if norecs */
     }
     if (tmp_retcode == 0)
       return (long)count;
@@ -329,7 +330,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
 
   if (!(contest < CONTEST_COUNT))
     return -1;
-  
+
   do
   {
     if (client->nodiskbuffers == 0)
@@ -338,11 +339,11 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       if (use_out_file)
         filename = client->out_buffer_basename;
       filename = BufferGetDefaultFilename(contest, use_out_file, filename );
-                 /* returns <0 on ioerr, >0 if norecs */
+      /* returns <0 on ioerr, >0 if norecs */
       #ifdef PROFILE_DISK_HITS
       LogScreen("Diskhit: BufferGetFileRecord() <- GetBufferRecord()\n");
       #endif
-      retcode = BufferGetFileRecord( filename, data, 
+      retcode = BufferGetFileRecord( filename, data,
                                      &count, BUFFER_FLAGS_NONE );
 //LogScreen("b:%d\n", retcode);
     }
@@ -351,7 +352,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       membuff = &(membufftable[contest].in);
       if (use_out_file)
         membuff = &(membufftable[contest].out);
-                 /* returns <0 on ioerr, >0 if norecs */
+      /* returns <0 on ioerr, >0 if norecs */
       retcode = BufferGetMemRecord( membuff, data, &count );
     }
     if ( retcode != 0)
@@ -378,7 +379,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
         Log("Discarded packet from unknown contest.\n");
       }
       else if (workstate != RESULT_WORKING && workstate != RESULT_FOUND &&
-              workstate != RESULT_NOTHING)
+               workstate != RESULT_NOTHING)
       {
         Log("Discarded packet with unrecognized workstate %ld.\n",workstate);
       }
@@ -402,7 +403,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
           #ifdef PROFILE_DISK_HITS
           LogScreen("Diskhit: BufferPutFileRecord() <- GetBufferRecord()\n");
           #endif
-          tmp_retcode = BufferPutFileRecord( filename, data, 
+          tmp_retcode = BufferPutFileRecord( filename, data,
                                              NULL, BUFFER_FLAGS_NONE );
         }
         else
@@ -410,7 +411,7 @@ long GetBufferRecord( Client *client, WorkRecord* data,
           membuff = &(membufftable[tmp_contest].in);
           if (tmp_use_out_file)
             membuff = &(membufftable[tmp_contest].out);
-                 /* returns <0 on ioerr, >0 if norecs */
+          /* returns <0 on ioerr, >0 if norecs */
           tmp_retcode = BufferPutMemRecord( membuff, data, NULL );
         }
         if (tmp_retcode < 0)
@@ -565,7 +566,7 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     #ifdef PROFILE_DISK_HITS
     LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferImportFileRecords()\n");
     #endif
-    if (BufferGetFileRecord( source_file, &data, 
+    if (BufferGetFileRecord( source_file, &data,
                              &remaining, BUFFER_FLAGS_REMOTEBUF ) != 0)
     {
       break;  //returned <0 on ioerr/corruption, > 0 if norecs
@@ -585,12 +586,12 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     if ( PutBufferRecord( client, &data ) > 0 )
     {
       recovered++;
-    } 
+    }
     else
     {
       // failed to save packet into regular buffer, so put it back in the source file
       // error message for regular buffer has been printed
-      if (BufferPutFileRecord( source_file, &data, 
+      if (BufferPutFileRecord( source_file, &data,
                                NULL, BUFFER_FLAGS_NONE ) >= 0)
       {
         if (interactive)
@@ -645,7 +646,7 @@ unsigned long BufferReComputeUnitsToFetch(Client *client, unsigned int contest)
         swucount = packets*100; /* >= 1.00 stats units per packet */
       if (swucount < swuthresh)
         swucount = swuthresh - swucount;
-      else 
+      else
       {
         /* ok, we've determined that the thresholds are satisfied, now */
         /* determine if we have at least one packet per cruncher */
@@ -695,7 +696,7 @@ static int __get_remote_filename(Client *client, int project, int use_out,
     localname = defaultname;
 
   strncpy( buffer, GetFullPathForFilenameAndDir( localname,
-                   client->remote_update_dir ), buflen );
+                                                 client->remote_update_dir ), buflen );
   buffer[buflen-1] = '\0';
 
   strcat( strcpy( suffix, EXTN_SEP ), ProjectGetFileExtension( project ));
@@ -715,7 +716,7 @@ static int __get_remote_filename(Client *client, int project, int use_out,
 
 /* --------------------------------------------------------------------- */
 
-long BufferFetchFile( Client *client, int break_pending, 
+long BufferFetchFile( Client *client, int break_pending,
                       const char *loaderflags_map )
 {
   unsigned long totaltrans_wu = 0, totaltrans_pkts = 0;
@@ -742,7 +743,7 @@ long BufferFetchFile( Client *client, int break_pending,
     if (!contname)
       continue;
     if (!__get_remote_filename(client, contest, 0, remote_file, sizeof(remote_file)))
-      continue;    
+      continue;
 
     lefttotrans_su = 1;
     while (lefttotrans_su > 0 )
@@ -763,7 +764,7 @@ long BufferFetchFile( Client *client, int break_pending,
         #ifdef PROFILE_DISK_HITS
         LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferFetchFile()\n");
         #endif
-        res = BufferGetFileRecord( remote_file, &wrdata, 
+        res = BufferGetFileRecord( remote_file, &wrdata,
                                    &remaining, BUFFER_FLAGS_REMOTEBUF );
         if ( res < 0 ) /* remote buffer i/o error */
         {
@@ -779,11 +780,11 @@ long BufferFetchFile( Client *client, int break_pending,
         else if (((unsigned int)wrdata.contest) != contest)
         {
           Log("Remote buffer %s\ncontains non-%s packets. Stopped fetch for %s.\n",
-                       remote_file, contname, contname );
+              remote_file, contname, contname );
           #ifdef PROFILE_DISK_HITS
           LogScreen("Diskhit: BufferPutFileRecord() <- BufferFetchFile()\n");
           #endif
-          BufferPutFileRecord( remote_file, &wrdata, 
+          BufferPutFileRecord( remote_file, &wrdata,
                                NULL, BUFFER_FLAGS_REMOTEBUF );
           //lefttotrans_su = 0; /* move to next contest on file error */
           break; /* move to next contest - error msg has been printed */
@@ -793,7 +794,7 @@ long BufferFetchFile( Client *client, int break_pending,
           #ifdef PROFILE_DISK_HITS
           LogScreen("Diskhit: BufferPutFileRecord() <- BufferFetchFile()\n");
           #endif
-          BufferPutFileRecord( remote_file, &wrdata, 
+          BufferPutFileRecord( remote_file, &wrdata,
                                NULL, BUFFER_FLAGS_REMOTEBUF );
           failed = -1; /* stop further local buffer I/O */
           //lefttotrans_su = 0; /* move to next contest on file error */
@@ -830,7 +831,7 @@ long BufferFetchFile( Client *client, int break_pending,
             ClientEventSyncPost( CLIEVENT_BUFFER_FETCHBEGIN, 0, 0 );
 
           if (swucount == 0) /* project doesn't support statsunits on unfinished work */
-            swucount = 100; /* 1.00 stats units per packet */    
+            swucount = 100; /* 1.00 stats units per packet */
           if (remaining == 0) /* if no more available, then we've done 100% */
             lefttotrans_su = 0;
           else if (swucount > lefttotrans_su) /* done >= 100%? */
@@ -860,7 +861,7 @@ long BufferFetchFile( Client *client, int break_pending,
         percent = ((donesofar*10000)/totrans);
 
         LogScreen( "\r%s: Retrieved %s %lu of %lu (%lu.%02lu%%) ",
-            contname, unittype, donesofar, totrans, percent/100, percent%100 );
+                   contname, unittype, donesofar, totrans, percent/100, percent%100 );
       }
     }  /* while ( lefttotrans_su > 0  ) */
 
@@ -874,18 +875,18 @@ long BufferFetchFile( Client *client, int break_pending,
       if (projtrans_su)
       {
         sprintf(scratch, "(%lu.%02lu stats units) ",
-                         projtrans_su/100,projtrans_su%100);
+                projtrans_su/100,projtrans_su%100);
       }
       LogScreen("\n");
       LogTo(LOGTO_FILE|LOGTO_MAIL,
             "%s: Retrieved %lu packet%s %sfrom file.\n",
-                  contname, projtrans_pkts,
-                  ((projtrans_pkts==1)?(""):("s")), scratch );
+            contname, projtrans_pkts,
+            ((projtrans_pkts==1) ? ("") : ("s")), scratch );
     }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
   TRACE_BUFFUPD((-1, "BufferFetchFile() => failed=%d, errors=%d, totaltrans_pkts=%lu\n",
-                failed, errors, totaltrans_pkts));
+                 failed, errors, totaltrans_pkts));
   if (failed || errors)
     return -((long)(totaltrans_pkts+1));
   return totaltrans_pkts;
@@ -919,7 +920,7 @@ long BufferFlushFile( Client *client, int break_pending,
     if (!contname)
       continue;
     if (!__get_remote_filename(client, contest, 1, remote_file, sizeof(remote_file)))
-      continue;    
+      continue;
 
     totrans_pkts = 1;
     totrans_pkts_last = -1;
@@ -939,7 +940,7 @@ long BufferFlushFile( Client *client, int break_pending,
       #ifdef PROFILE_DISK_HITS
       LogScreen("Diskhit: BufferPutFileRecord() <- BufferFlushFile()\n");
       #endif
-      if ( BufferPutFileRecord( remote_file, &wrdata, 
+      if ( BufferPutFileRecord( remote_file, &wrdata,
                                 NULL, BUFFER_FLAGS_REMOTEBUF ) != 0 )
       {
         PutBufferRecord( client, &wrdata );
@@ -977,7 +978,7 @@ long BufferFlushFile( Client *client, int break_pending,
         unsigned long totrans = (projtrans_pkts + (unsigned long)(totrans_pkts));
         unsigned int percent = ((projtrans_pkts*10000)/totrans);
         LogScreen( "\r%s: Sent packet %lu of %lu (%u.%02u%% transferred) ",
-          contname, projtrans_pkts, totrans,  percent/100, percent%100 );
+                   contname, projtrans_pkts, totrans,  percent/100, percent%100 );
       }
     } /* while (totrans_pkts >=0 ) */
 
@@ -986,17 +987,17 @@ long BufferFlushFile( Client *client, int break_pending,
       unsigned long swu_count_dummy;
       /* have GetBufferCount() update Probfill's stats */
       /* only necessary when flushing, since the fetchers will */
-      /* have implictely updated the counts when they load */  
+      /* have implictely updated the counts when they load */
       GetBufferCount( client, contest, 1, &swu_count_dummy );
 
       totaltrans_pkts += projtrans_pkts;
 
       LogScreen("\r");
       Log("%s: Transferred %lu packet%s (%lu.%02lu stats units) to file.\n",
-            contname, projtrans_pkts,
-            ((projtrans_pkts==1)?(""):("s")),
-            projtrans_su/100, projtrans_su%100 );
-    }        
+          contname, projtrans_pkts,
+          ((projtrans_pkts==1) ? ("") : ("s")),
+          projtrans_su/100, projtrans_su%100 );
+    }
   } /* for (contest = 0; contest < CONTEST_COUNT; contest++) */
 
   if (failed)
@@ -1009,7 +1010,7 @@ long BufferFlushFile( Client *client, int break_pending,
 int BufferUpdate( Client *client, int req_flags, int interactive )
 {
   int dofetch, doflush, didfetch, didflush, dontfetch, dontflush, didnews;
-  unsigned int i; 
+  unsigned int i;
   char loaderflags_map[CONTEST_COUNT];
   struct timeval tv;
   const char *ffmsg = "--fetch and --flush services are not available.\n";
@@ -1021,13 +1022,13 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   #define BUFFERUPDATE_MODE_NET  0x02
 
   TRACE_BUFFUPD((+1, "BufferUpdate: req_flags = %d, interactive = %d\n", req_flags, interactive));
-  
+
   if (client->last_buffupd_failed_time != 0 && CliClock(&tv) == 0) {
     if (!tv.tv_sec)
       tv.tv_sec++;
     if (client->last_buffupd_failed_time + client->buffupd_retry_delay > tv.tv_sec)
       return 0;   /* Retry delay not elapsed : did nothing */
-  }  
+  }
 
   /* -------------------------------------- */
 
@@ -1055,7 +1056,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
     req_flags = 0; // &= ~BUFFERUPDATE_FETCH;
   }
   else if (!client->offlinemode) /* not interactive, not networking disabled */
-  {                            
+  {
     int connect_permitted = 1;
     #ifdef LURK
     if ((LurkIsWatching() & (CONNECT_LURK|CONNECT_LURKONLY))!=0)
@@ -1077,7 +1078,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
       LogScreen( "%sThis client has been configured to run without\n"
                  "updating its buffers.\n",ffmsg);
     TRACE_BUFFUPD((-1, "BufferUpdate = -1: %sThis client has been configured to run without\n"
-                 "updating its buffers.\n",ffmsg));
+                   "updating its buffers.\n",ffmsg));
     return -1;
   }
 
@@ -1115,7 +1116,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
     if (!dontfetch)
       check_flags |= BUFFERUPDATE_FETCH;
     if (!dontflush)
-      check_flags |= BUFFERUPDATE_FLUSH;  
+      check_flags |= BUFFERUPDATE_FLUSH;
     if (fill_even_if_not_totally_empty)
       check_flags |= BUFFUPDCHECK_TOPOFF;
     check_flags = BufferCheckIfUpdateNeeded(client, -1, check_flags);
@@ -1123,7 +1124,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
       dofetch = 1;
     if ((check_flags & BUFFERUPDATE_FLUSH) != 0)
       doflush = 1;
-  }    
+  }
 
   /* -------------------------------------- */
 
@@ -1164,7 +1165,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
       int transerror = 0;
       if (transerror == 0 && !dontfetch)
       {
-        long transferred = BufferFetchFile( client, break_pending, 
+        long transferred = BufferFetchFile( client, break_pending,
                                             &loaderflags_map[0] );
         if (transferred < 0)
         {
@@ -1221,7 +1222,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
       else
         client->buffupd_retry_delay = 3600;   /* Max : 1 hour */
     }
-  }  
+  }
   if (didfetch || didflush || didnews) {
     client->last_buffupd_failed_time = 0; /* forget previous failures */
     client->buffupd_retry_delay = 0;
@@ -1235,7 +1236,7 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
   {                             /* all methods failed completely */
     TRACE_BUFFUPD((-1, "BufferUpdate = -1: failed\n"));
     if (interactive)
-      LogScreen("Buffer %s failed.\n", dontfetch?"flush":dontflush?"fetch":"update");
+      LogScreen("Buffer %s failed.\n", dontfetch ? "flush" : dontflush ? "fetch" : "update");
     return -1;
   }
   if (interactive && (break_pending || !CheckExitRequestTrigger()))
@@ -1245,16 +1246,16 @@ int BufferUpdate( Client *client, int req_flags, int interactive )
       LogScreen(ffmsg, "In", "full (or projects are closed).\n", "fetch");
     if (!dontflush && !doflush && !didflush)
       LogScreen(ffmsg, "Out", "empty. ", "flush");
-  }    
+  }
   TRACE_BUFFUPD((-1, "BufferUpdate = %d: success\n", req_flags));
   return (req_flags);
 }
 
 /* --------------------------------------------------------------------- */
 
-/* BufferCheckIfUpdateNeeded() is called from BufferUpdate and also 
+/* BufferCheckIfUpdateNeeded() is called from BufferUpdate and also
    from various connect-often test points.
-*/   
+*/
 int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
 {
   int check_flush, check_fetch, need_flush, need_fetch;
@@ -1267,12 +1268,12 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   if ((buffupd_flags & BUFFERUPDATE_FLUSH)!=0)
     check_flush = 1;
   if (!check_fetch && !check_flush)
-    return 0;    
+    return 0;
 
   /* normally an fetch_needed check will be true only if the in-buff is
      completely empty. With BUFFUPDCHECK_TOPOFF, the fetch_needed check
      will be also be true if below threshold. Used with connect_often etc.
-  */   
+  */
   fill_even_if_not_totally_empty = 0;
   if ((buffupd_flags & BUFFUPDCHECK_TOPOFF)!=0)
     fill_even_if_not_totally_empty = 1;
@@ -1284,43 +1285,43 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
   either_or = 0;
   if (check_fetch && check_flush && (buffupd_flags & BUFFUPDCHECK_EITHER)!=0)
     either_or = 1; /* either criterion filled fulfills both criteria */
-                   
-  TRACE_OUT((+1, "BufferCheckIfUpdateNeeded(contestid=%d, check_fetch=%d/check_flush=%d, forcefetch=%d, either_or=%d)\n", 
-                 contestid, check_fetch, check_flush, fill_even_if_not_totally_empty, either_or));
+
+  TRACE_OUT((+1, "BufferCheckIfUpdateNeeded(contestid=%d, check_fetch=%d/check_flush=%d, forcefetch=%d, either_or=%d)\n",
+             contestid, check_fetch, check_flush, fill_even_if_not_totally_empty, either_or));
 
   ignore_closed_flags = 0;
   cont_start = 0; cont_count = CONTEST_COUNT;
   if (contestid >= 0 && contestid < CONTEST_COUNT)
   {
-    /* on some systems (linux), checking for empty-contest expiry is very 
-       slow, so this can be bypassed if doing a single contest check 
+    /* on some systems (linux), checking for empty-contest expiry is very
+       slow, so this can be bypassed if doing a single contest check
        (the caller already knows its open)
-    */  
+    */
     ignore_closed_flags = 1;
     cont_start = contestid;
     cont_count = contestid+1;
-  }    
+  }
 
   TRACE_OUT((0,"ignore_closed_flags=%d\n", ignore_closed_flags));
 
-  need_flush = need_fetch = 0; 
+  need_flush = need_fetch = 0;
   suspend_expired = closed_expired = -1;
   for (pos = cont_start; pos < cont_count; pos++)
   {
-    unsigned int projectid = pos; /* do not look up project_order_map, 
+    unsigned int projectid = pos; /* do not look up project_order_map,
                                      may be short circuited ... */
     int proj_state = client->project_state[projectid];
     if (ProjectGetFlags(projectid) == PROJECT_UNSUPPORTED)
       continue;
     if ((proj_state & PROJECTSTATE_USER_DISABLED) == 0 &&
-       IsProblemLoadPermitted(-1, projectid)) /* core not disabled */
+        IsProblemLoadPermitted(-1, projectid)) /* core not disabled */
     {
       int fetchable = 1, flushable = 1;
       int proj_state = client->project_state[projectid];
       TRACE_OUT((0,"proj_state[projectid=%d] = 0x%x\n", projectid, proj_state));
 
-      if (!ignore_closed_flags && 
-         (proj_state & (PROJECTSTATE_CLOSED|PROJECTSTATE_SUSPENDED)) != 0)
+      if (!ignore_closed_flags &&
+          (proj_state & (PROJECTSTATE_CLOSED|PROJECTSTATE_SUSPENDED)) != 0)
       {
         /* this next bit is not a good candidate for a code hoist */
         if (closed_expired < 0) /* undetermined */
@@ -1333,35 +1334,35 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           {
             closed_expired = 1;
             suspend_expired = 1;
-          }  
-          else if ((client->scheduledupdatetime != 0 && 
-            ((unsigned long)CliTimer(0)->tv_sec) >= 
-     	      ((unsigned long)client->scheduledupdatetime)))
-          {  
+          }
+          else if ((client->scheduledupdatetime != 0 &&
+                    ((unsigned long)CliTimer(0)->tv_sec) >=
+                    ((unsigned long)client->scheduledupdatetime)))
+          {
             closed_expired = 2;
             suspend_expired = 2;
-          }  
+          }
           else if (CliClock(&tv)==0)
           {
             #define PROJECTFLAGS_SUSPENDED_TTL (15*60) /* 15 minutes */
             //#define PROJECTFLAGS_CLOSED_TTL (7*24*60*60) /* 7 days */
 
-            if (((unsigned long)tv.tv_sec) > 
-              (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_SUSPENDED_TTL)) 
-            {  
+            if (((unsigned long)tv.tv_sec) >
+                (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_SUSPENDED_TTL))
+            {
               suspend_expired = 3;
-            }  
+            }
             #if defined(PROJECTFLAGS_CLOSED_TTL) /* any expiry time at all? */
-            if (((unsigned long)tv.tv_sec) > 
-              (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_CLOSED_TTL)) 
-            {  
+            if (((unsigned long)tv.tv_sec) >
+                (unsigned long)(client->last_buffupd_time+PROJECTFLAGS_CLOSED_TTL))
+            {
               closed_expired = 3;
-            }  
+            }
             #endif
-          }      
+          }
         } /* if (closed_expired < 0) (undetermined) */
-        TRACE_OUT((0,"closed_expired = %d, suspend_expired = %d\n", 
-                           closed_expired, suspend_expired ));
+        TRACE_OUT((0,"closed_expired = %d, suspend_expired = %d\n",
+                   closed_expired, suspend_expired ));
         if ((proj_state & PROJECTSTATE_CLOSED)!=0)
         {
           if (!closed_expired)
@@ -1372,7 +1373,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           if (!suspend_expired)
             fetchable = 0;
         }
-      }	  
+      }
 
       TRACE_OUT((0,"project %d, fetchable=%d flushable=%d\n", projectid, fetchable, flushable));
       if (check_flush && !need_flush && flushable)
@@ -1382,9 +1383,9 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
           need_flush = 1;
           if (either_or)    /* either criterion satisfied ... */
             need_fetch = 1; /* ... fullfills both criteria */
-        }    
+        }
         TRACE_OUT((0,"1. project %d, need_flush = %d need_fetch = %d\n", projectid, need_flush, need_fetch));
-      }      
+      }
       if (check_fetch && !need_fetch && fetchable)
       {
         if (!BufferAssertIsBufferFull(client, projectid))
@@ -1400,11 +1401,11 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
             if (swucount == 0) /* count not supported */
               swucount = pktcount * 100; /* >= 1.00 SWU's per packet */
             if (swucount < ClientGetInThreshold( client, projectid, 1 /*force*/ ))
-            {     
+            {
               need_fetch = 1;
-            }  
+            }
           }
-        }      
+        }
         if (need_fetch && either_or) /* either criterion satisfied ... */
           need_flush = 1;            /* ... fulfills both criteria */
         TRACE_OUT((0,"2. project %d, need_flush = %d need_fetch = %d\n", projectid, need_flush, need_fetch));
@@ -1419,9 +1420,9 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int buffupd_flags)
     buffupd_flags |= BUFFERUPDATE_FETCH;
   if (need_flush)
     buffupd_flags |= BUFFERUPDATE_FLUSH;
-  
+
   TRACE_OUT((-1,"BufferCheckIfUpdateNeeded() => 0x%x\n", buffupd_flags ));
   return buffupd_flags;
-}  
+}
 
 /* --------------------------------------------------------------------- */

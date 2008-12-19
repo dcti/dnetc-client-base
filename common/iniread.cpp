@@ -1,24 +1,25 @@
 /*
  * .ini (configuration file ala windows) file read/write[parse] routines
- * written by Cyrus Patel <cyp@fb14.uni-mainz.de>, no copyright, 
+ * written by Cyrus Patel <cyp@fb14.uni-mainz.de>, no copyright,
  * and no restrictions on usage in any form or function :)
  *
  * Unlike native windows' this version does not cache the file
- * separately, but uses buffered I/O and assumes the OS knows what 
+ * separately, but uses buffered I/O and assumes the OS knows what
  * file caching is. It does pass all windows compatibility tests I
  * could come up with (see table below).
  *
  * Unlike a cpp file of a similar name, this .ini file parser is pure
- * C, is portable, passes -pedantic tests, does not 'new' a bazillion 
- * and one times, will not die if mem is scarce, does not fragment 
+ * C, is portable, passes -pedantic tests, does not 'new' a bazillion
+ * and one times, will not die if mem is scarce, does not fragment
  * memory, does not attempt to parse comments, will not choke on
- * crlf translation, can somewhat deal with no-disk space conditions, 
- * and does not assume that the calling function was written by a twit. 
+ * crlf translation, can somewhat deal with no-disk space conditions,
+ * and does not assume that the calling function was written by a twit.
  *
 */
 
 const char *iniread_cpp(void) {
-return "@(#)$Id: iniread.cpp,v 1.41 2008/04/11 07:01:28 jlawson Exp $"; }
+  return "@(#)$Id: iniread.cpp,v 1.42 2008/12/19 11:10:58 andreasb Exp $";
+}
 
 #include "baseincs.h"
 #include "iniread.h"
@@ -30,11 +31,11 @@ return "@(#)$Id: iniread.cpp,v 1.41 2008/04/11 07:01:28 jlawson Exp $"; }
 #endif
 
 #if 0 /* embedded comment handling is not api conform */
-#define ALLOW_EMBEDDED_COMMENTS 
+#define ALLOW_EMBEDDED_COMMENTS
 #endif
 
 /* Also convert '_' to '-' */
-#define TOUPPER(x) ((x)=='_'?'-':toupper(x))
+#define TOUPPER(x) ((x)=='_' ? '-' : toupper(x))
 
 
 //! Internal helper function used to read and write to INI files.
@@ -54,10 +55,10 @@ return "@(#)$Id: iniread.cpp,v 1.41 2008/04/11 07:01:28 jlawson Exp $"; }
  *                  r get all key+value pairs for section (nop, return 0)
  * null section:    w without key/value [ = flush] (nop - return ok)
  *                  w with key/value (as above)
- */                            
-static unsigned long ini_doit( int dowrite, const char *sect, 
+ */
+static unsigned long ini_doit( int dowrite, const char *sect,
                                const char *key, const char *value,
-                               char *buffer, unsigned long bufflen, 
+                               char *buffer, unsigned long bufflen,
                                const char *filename )
 {
   char *data = NULL;
@@ -83,7 +84,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       else
       {
         long malloclen = 16;
-        malloclen += (((sect)?(strlen(sect)):(0))+strlen(key)+strlen(value)+3);
+        malloclen += (((sect) ? (strlen(sect)) : (0))+strlen(key)+strlen(value)+3);
         if (((unsigned long)malloclen) < ((unsigned long)(UINT_MAX-128)))
         {
           data = (char *)malloc((int)malloclen);
@@ -96,7 +97,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
   }
   else /* file exists, the fopen() is our write test */
   {
-    FILE *file = fopen( filename, ((dowrite)?("r+"):("r")) );
+    FILE *file = fopen( filename, ((dowrite) ? ("r+") : ("r")) );
     /* printf("fopen(\"%s\",\"%s\") => %p\n", filename, ((dowrite)?("r+"):("r")), file ); */
     if (file)
     {
@@ -115,7 +116,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       {
         long malloclen = filelen + 16;
         if (dowrite && key && value)
-          malloclen += (((sect)?(strlen(sect)):(0))+strlen(key)+strlen(value)+3);
+          malloclen += (((sect) ? (strlen(sect)) : (0))+strlen(key)+strlen(value)+3);
         /* printf("malloclen: %ld, max: %ld\n", malloclen, (((long)(UINT_MAX))-128) ); */
         if (((unsigned long)malloclen) < ((unsigned long)(UINT_MAX-128)))
         {
@@ -142,7 +143,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
   }
 
   /* printf("havedata: %p\n", data ); getchar(); */
-      
+
   if (data)
   {
     char quotechar = 0;
@@ -150,16 +151,16 @@ static unsigned long ini_doit( int dowrite, const char *sect,
     int anysect = 0, changed = 0, foundsect = 0;
 
     if (sect == NULL && filelen)
-      foundsect = 1;      
+      foundsect = 1;
 
     if (dowrite && key && value && value[0]!='\'' && value[0]!='\"')
     {
       int qn=0;
-      for (i=0;quotechar==0 && value[i];i++)
+      for (i=0; quotechar==0 && value[i]; i++)
       {
         char c = (char)value[i];
         if (c=='\"' || c=='\'')
-          quotechar = ((c=='\"')?('\''):('\"'));
+          quotechar = ((c=='\"') ? ('\'') : ('\"'));
         else if (c == ' ' || c=='\t')
           qn = 1;
         #ifdef ALLOW_EMBEDDED_COMMENTS
@@ -188,7 +189,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
           offset--;
           break;
         }
-        else if (linelen == 0 && (c==' ' || c== '\t')) 
+        else if (linelen == 0 && (c==' ' || c== '\t'))
         {
           leadspaces++;
         }
@@ -245,7 +246,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
             if (keylen<linelen && data[keyoff+keylen]=='=')
             {
               valuepos = keylen+1;
-              while (keylen>0 && (data[keyoff+(keylen-1)]==' ' || 
+              while (keylen>0 && (data[keyoff+(keylen-1)]==' ' ||
                                   data[keyoff+(keylen-1)]=='\t'))
                 keylen--;
             }
@@ -269,7 +270,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
               }
             }
           }
-            
+
           if (keyfound)
           {
             long valuelen=0;
@@ -277,7 +278,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
             {
               linelen+=leadspaces+eollen;
               keyoff-=leadspaces;
-              memmove( (void *)&data[keyoff], 
+              memmove( (void *)&data[keyoff],
                        (void *)&data[keyoff+linelen],
                        filelen-(keyoff+linelen) );
               filelen-=linelen;
@@ -287,8 +288,8 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 foundrecs--;     /* the record is gone */
                 if (keyoff < filelen && data[keyoff]=='[')
                 {                /* need to reinsert a blank line */
-                  memmove( (void *)&data[keyoff+1], 
-                           (void *)&data[keyoff], 
+                  memmove( (void *)&data[keyoff+1],
+                           (void *)&data[keyoff],
                            filelen-keyoff );
                   data[keyoff]='\n';
                   filelen++;
@@ -300,13 +301,13 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 valuelen = 0;
                 while (value[valuelen])
                   valuelen++;
-                linelen = keylen+1+valuelen+((quotechar)?(2):(0))+1;
+                linelen = keylen+1+valuelen+((quotechar) ? (2) : (0))+1;
                 if (keyoff < filelen)
                 {
                   int iseosec = (data[keyoff] == '[');
                   if (iseosec)
                     linelen++;
-                  memmove( (void *)&data[keyoff+linelen], 
+                  memmove( (void *)&data[keyoff+linelen],
                            (void *)&data[keyoff],
                            filelen-keyoff );
                   if (iseosec)
@@ -318,12 +319,12 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 filelen+=linelen;
                 offset+=linelen;
                 n=keyoff;
-                for (i=0;i<keylen;i++)
+                for (i=0; i<keylen; i++)
                   data[n++]=key[i];
                 data[n++]='=';
                 if (quotechar)
                   data[n++]=quotechar;
-                for (i=0;i<valuelen;i++)
+                for (i=0; i<valuelen; i++)
                   data[n++]=value[i];
                 if (quotechar)
                   data[n++]=quotechar;
@@ -335,20 +336,20 @@ static unsigned long ini_doit( int dowrite, const char *sect,
             {
               long valueoff;
 
-              while (valuepos<linelen && 
-                 (data[keyoff+valuepos]==' ' || data[keyoff+valuepos]=='\t'))
+              while (valuepos<linelen &&
+                     (data[keyoff+valuepos]==' ' || data[keyoff+valuepos]=='\t'))
                 valuepos++;
-                
+
               valueoff = keyoff+valuepos;
               valuelen = linelen-valuepos;
-              
+
               if (valuelen == 0)
                 ;
               else if (data[valueoff]=='\'' || data[valueoff]=='\"')
               {
                 char endquote=data[valueoff++];
                 valuelen--;
-                for (i=0;i<valuelen;i++)
+                for (i=0; i<valuelen; i++)
                 {
                   if (data[i+valueoff]==endquote)
                   {
@@ -360,7 +361,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
               else
               {
                 #ifdef ALLOW_EMBEDDED_COMMENTS
-                for (i=0;i<valuelen;i++)
+                for (i=0; i<valuelen; i++)
                 {
                   if (data[i+valueoff]==';' || data[i+valueoff]=='#')
                   {
@@ -369,7 +370,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                   }
                 }
                 #endif
-                while (valuelen>0 && (data[(valuelen-1)+valueoff]==' ' || 
+                while (valuelen>0 && (data[(valuelen-1)+valueoff]==' ' ||
                                       data[(valuelen-1)+valueoff]=='\t'))
                   valuelen--;
               }
@@ -379,10 +380,10 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                   break;
                 else
                 {
-                  for (i=0;i<keylen;i++)
+                  for (i=0; i<keylen; i++)
                     buffer[success++]=data[keyoff+i];
                   buffer[success++]='=';
-                  for (i=0;success<(bufflen-2) && i<valuelen;i++)
+                  for (i=0; success<(bufflen-2) && i<valuelen; i++)
                     buffer[success++]=data[valueoff+i];
                   buffer[success++]=0;
                   buffer[success]=0;
@@ -391,7 +392,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
               else
               {
                 success=0;
-                while (((unsigned int)success)<(bufflen-1) && 
+                while (((unsigned int)success)<(bufflen-1) &&
                        ((long)success)<valuelen)
                   buffer[success++]=data[valueoff++];
                 buffer[success++]=0;
@@ -403,8 +404,8 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       } /* if linelen */
     } /* while (offset < filelen) */
 
-        
-    if (dowrite) 
+
+    if (dowrite)
     {
       if (!foundsect) /* no such section */
       {
@@ -416,27 +417,27 @@ static unsigned long ini_doit( int dowrite, const char *sect,
         {
           /*can't use isspace(data[filelen-1])*/
           while (filelen > 0 && (data[filelen-1]=='\r' || data[filelen-1]=='\n'
-                 || data[filelen-1]==' ' || data[filelen-1]=='\t'))
+                                 || data[filelen-1]==' ' || data[filelen-1]=='\t'))
             filelen--;
           if (filelen > 0)
           {
-            data[filelen++]='\n';  
+            data[filelen++]='\n';
             data[filelen++]='\n';
           }
           if (sect)
           {
             data[filelen++]='[';
-            for (i=0;sect[i];i++)
+            for (i=0; sect[i]; i++)
               data[filelen++]=sect[i];
             data[filelen++]=']';
             data[filelen++]='\n';
           }
-          for (i=0;key[i];i++)
+          for (i=0; key[i]; i++)
             data[filelen++]=key[i];
           data[filelen++]='=';
           if (quotechar)
             data[filelen++]=quotechar;
-          for (i=0;value[i];i++)
+          for (i=0; value[i]; i++)
             data[filelen++]=value[i];
           if (quotechar)
             data[filelen++]=quotechar;
@@ -448,23 +449,23 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       {
         if (value == NULL && foundrecs == 0) /* no more records, */
           key = NULL;                        /* so delete section too */
-              
+
         if (key == NULL)          /* delete section */
         {
           /*can't use isspace(data[sectoff-1])*/
           while (sectoff > 0 && (data[sectoff-1]=='\r' || data[sectoff-1]=='\n'
-                 || data[sectoff-1]==' ' || data[sectoff-1]=='\t'))
-             sectoff--;
+                                 || data[sectoff-1]==' ' || data[sectoff-1]=='\t'))
+            sectoff--;
           if (sectoff > 0)
           {
-            data[sectoff++]='\n';  
-            data[sectoff++]='\n';  
+            data[sectoff++]='\n';
+            data[sectoff++]='\n';
           }
           if (sectoffend == 0) /* no section after found section */
             filelen = sectoff; /* new filelen */
           else
           {
-            memmove( (void *)&data[sectoff], 
+            memmove( (void *)&data[sectoff],
                      (void *)&data[sectoffend],
                      filelen-sectoffend );
             filelen-=(sectoffend-sectoff);
@@ -480,21 +481,21 @@ static unsigned long ini_doit( int dowrite, const char *sect,
           if (sectoffend == 0)
             sectoffend = filelen;
           /*can't use isspace(data[sectoffend-1])*/
-          while (sectoffend > 0 && (data[sectoffend-1]=='\r' || 
-                 data[sectoffend-1]=='\n' || data[sectoffend-1]==' ' || 
-                 data[sectoffend-1]=='\t'))
+          while (sectoffend > 0 && (data[sectoffend-1]=='\r' ||
+                                    data[sectoffend-1]=='\n' || data[sectoffend-1]==' ' ||
+                                    data[sectoffend-1]=='\t'))
             sectoffend--;
-          i = strlen(key)+strlen(value)+1+((quotechar)?(2):(0))+2;
+          i = strlen(key)+strlen(value)+1+((quotechar) ? (2) : (0))+2;
           memmove( (void *)&data[sectoffend+i], (void *)&data[sectoffend],
                    filelen-sectoffend );
           filelen+=i;
           data[sectoffend++]='\n';
-          for (i=0;key[i];i++)
+          for (i=0; key[i]; i++)
             data[sectoffend++]=key[i];
           data[sectoffend++]='=';
           if (quotechar)
             data[sectoffend++]=quotechar;
-          for (i=0;value[i];i++)
+          for (i=0; value[i]; i++)
             data[sectoffend++]=value[i];
           if (quotechar)
             data[sectoffend++]=quotechar;
@@ -509,13 +510,13 @@ static unsigned long ini_doit( int dowrite, const char *sect,
 
         /* strip trailing triviality */
         while (filelen > 0 && (data[filelen-1]=='\r' ||
-             data[filelen-1]=='\n' || data[filelen-1]==' ' ||
-             data[filelen-1]=='\t' || iscntrl(data[filelen-1])))
+                               data[filelen-1]=='\n' || data[filelen-1]==' ' ||
+                               data[filelen-1]=='\t' || iscntrl(data[filelen-1])))
           filelen--;
         if (filelen > 0)
           data[filelen++]='\n';
 
-        i = -1L; 
+        i = -1L;
         if (!file)
         {
           if (access(filename,0)!=0) /* only if file doesn't exist */
@@ -555,18 +556,18 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 nnn[0] = ' ';
               }
               if (i != -1L)
-              { 
+              {
                 if (fseek(file,0,SEEK_SET)!=0)
                   i = -1L;
               }
             }
             else /* new size is less than old */
             {
-              /* we should use ftruncate here, but thats not 
+              /* we should use ftruncate here, but thats not
                  supported by MacOS, AmigaOS and perhaps others.
               */
-              if (fwrite( (void *)&nnn[0], sizeof(char), 
-                           sizeof(nnn), file )!=sizeof(nnn))
+              if (fwrite( (void *)&nnn[0], sizeof(char),
+                          sizeof(nnn), file )!=sizeof(nnn))
                 i = -1L;
               else if (fflush(file) != 0)
                 i = -1L;
@@ -578,8 +579,8 @@ static unsigned long ini_doit( int dowrite, const char *sect,
                 if (i != -1L)
                 {
                   /* if the size difference was small, then the padding
-                     maybe all we need. The chances are good that thats 
-                     good enough to avoid the fopen(,"w") since .ini's 
+                     maybe all we need. The chances are good that thats
+                     good enough to avoid the fopen(,"w") since .ini's
                      rarely shrink by more than a few bytes.
                   */
                   if (filelen >= i)
@@ -609,12 +610,12 @@ static unsigned long ini_doit( int dowrite, const char *sect,
 
       } /* if changed */
     } /* if dowrite */
-    
+
     free(data);
   } /* if data */
 
-  
-  if (!dowrite) 
+
+  if (!dowrite)
   {
     if (success != 0)
       success--;
@@ -622,7 +623,7 @@ static unsigned long ini_doit( int dowrite, const char *sect,
     {
       if (key == NULL) /* get all key+value pairs for sect */
       {
-        buffer[0] = 0; 
+        buffer[0] = 0;
         if (bufflen > 1) /* getsect is terminated by '\0\0' */
           buffer[1] = 0;
       }
@@ -638,23 +639,23 @@ static unsigned long ini_doit( int dowrite, const char *sect,
       }
     }
   }
-  
+
   return success;
-}  
+}
 
 /* ------------------------------------------------------------------- */
 
 //! Read a parameter's value from the INI file.
-unsigned long GetPrivateProfileStringB( const char *sect, const char *key, 
-                      const char *defval, char *buffer, 
-                      unsigned long buffsize, const char *filename )
+unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
+                                        const char *defval, char *buffer,
+                                        unsigned long buffsize, const char *filename )
 {
   return ini_doit( 0, sect, key, defval, buffer, buffsize, filename );
 }
 
 //! Write a parameter's new value to an INI file.
-int WritePrivateProfileStringB( const char *sect, const char *key, 
-                        const char *value, const char *filename )
+int WritePrivateProfileStringB( const char *sect, const char *key,
+                                const char *value, const char *filename )
 {
   char buf[2];
   return (int)ini_doit( 1, sect, key, value, buf, 0, filename );
@@ -675,8 +676,8 @@ int WritePrivateProfileStringB( const char *sect, const char *key,
  * \param filename Name of the INI file.
  * \return Returns the integer value that was parsed.
  */
-unsigned int GetPrivateProfileIntB( const char *sect, const char *key, 
-                          int defvalue, const char *filename )
+unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
+                                    int defvalue, const char *filename )
 {
   char buf[(sizeof(long)+1)*3];
   int n;  unsigned long i;
@@ -689,7 +690,7 @@ unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
   // otherwise it must be "on", "yes", or "true"; everything else is error.
   if (i<2 || i>4)
     return 0;
-  for (n=0;(i>((unsigned long)(n))) && n<4;n++)
+  for (n=0; (i>((unsigned long)(n))) && n<4; n++)
     buf[n]=(char)tolower(buf[n]);
   if (i==2 && buf[0]=='o' && buf[1]=='n')
     return 1;
@@ -708,8 +709,8 @@ unsigned int GetPrivateProfileIntB( const char *sect, const char *key,
  * \param filename Name of the INI file.
  * \return
  */
-int WritePrivateProfileIntB( const char *sect, const char *key, 
-                            int value, const char *filename )
+int WritePrivateProfileIntB( const char *sect, const char *key,
+                             int value, const char *filename )
 {
   char buffer[(sizeof(long)+1)*3]; sprintf(buffer, "%lu", ((long)(value)) );
   return WritePrivateProfileStringB( sect, key, buffer, filename );

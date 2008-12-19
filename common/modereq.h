@@ -4,17 +4,17 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * --------------------------------------------------------------------     
+ * --------------------------------------------------------------------
  * This file contains functions for getting/setting/clearing
  * "mode" requests (--fetch,--flush) and the like. Client::Run() will
  * clear/run the modes when appropriate.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * --------------------------------------------------------------------     
-*/ 
+ * --------------------------------------------------------------------
+*/
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.23 2007/10/22 16:48:26 jlawson Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.24 2008/12/19 11:10:59 andreasb Exp $"
 
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002

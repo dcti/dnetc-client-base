@@ -1,14 +1,14 @@
-/* 
+/*
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * This file contains functions used from ./configure
- * Specify 'build_dependancies' as argument 
+ * Specify 'build_dependancies' as argument
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.12 2008/10/16 19:40:55 jlawson Exp $
-*/ 
+ * $Id: testplat.cpp,v 1.13 2008/12/19 11:10:59 andreasb Exp $
+*/
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
 #include <stdlib.h>  /* malloc()/free()/atoi() */
@@ -31,7 +31,7 @@ static void __fixup_pathspec_for_locate(char *foundbuf)
     if (foundbuf[n] == '/') /* dirsep */
       foundbuf[n] = '.';
     else if (foundbuf[n] == '.') /* suffix */
-      foundbuf[n] = '/';  
+      foundbuf[n] = '/';
   }
   #elif defined(amigaos)
   char *ptr;
@@ -39,7 +39,7 @@ static void __fixup_pathspec_for_locate(char *foundbuf)
     memmove( foundbuf, &foundbuf[2], strlen(&foundbuf[2])+1 );
   /* suppress "Insert volume" requesters from netbase.cpp */
   if ((ptr = strstr(foundbuf,"multinet_root:")))
-     ptr[13] = '_';
+    ptr[13] = '_';
   #endif
 }
 
@@ -52,7 +52,7 @@ static void __fixup_pathspec_for_makefile(char *foundbuf)
     if (foundbuf[n] == '.')
       foundbuf[n] = '/';
     else if (foundbuf[n] == '/')
-      foundbuf[n] = '.';  
+      foundbuf[n] = '.';
   }
   #else
   if (foundbuf[0] == '.' && foundbuf[1] == '/')
@@ -63,12 +63,12 @@ static void __fixup_pathspec_for_makefile(char *foundbuf)
 static int is_trace_checked(const char *filename)
 {
   filename = filename;
-#if 0  
-  if (strcmp(filename,"ogr/x86/ogr-a.cpp") == 0 
-      || strcmp(filename,"ogr/x86/ogr-b.cpp") == 0);
-    return 1;
-#endif    
-  return 0;      
+#if 0
+  if (strcmp(filename,"ogr/x86/ogr-a.cpp") == 0
+      || strcmp(filename,"ogr/x86/ogr-b.cpp") == 0) ;
+  return 1;
+#endif
+  return 0;
 }
 
 static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
@@ -88,7 +88,7 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
 
     strcpy( pathbuf, cppname );
     p = strrchr( pathbuf, '/' ); /* input specifiers are always unix paths */
-    if ( p == NULL ) 
+    if ( p == NULL )
       pathbuf[0]=0;
     else *(++p)=0;
 
@@ -97,8 +97,8 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
       p = linebuf;
       while ( *p == ' ' || *p == '\t' )
         p++;
-      if ( *p == '#' && strncmp( p, "#include", 8 ) == 0 && 
-                              (p[8]==' ' || p[8] =='\t'))
+      if ( *p == '#' && strncmp( p, "#include", 8 ) == 0 &&
+           (p[8]==' ' || p[8] =='\t'))
       {
         p+=8;
         while ( *p == ' ' || *p == '\t' )
@@ -134,7 +134,7 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
                   if (namelen > 2 && strcmp(&origbuf[namelen-2],".h")!=0)
                     count = build_dependancies( origbuf, include_dirs, count );
                   break;
-                }         
+                }
                 if (!include_dirs)
                   break;
                 if (!include_dirs[l])
@@ -149,18 +149,18 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
             if ( fileexists( foundbuf ) )
             {
               __fixup_pathspec_for_makefile(foundbuf);
-              printf( "%s%s", ((count!=0)?(" "):("")), foundbuf );
+              printf( "%s%s", ((count!=0) ? (" ") : ("")), foundbuf );
               count++;
-            }  
+            }
           }
         }
       }
-    }  
+    }
     fclose(file);
   }
   printf("\n");
   return count;
-}      
+}
 
 static const char **get_include_dirs(int argc, char *argv[])
 {
@@ -172,7 +172,7 @@ static const char **get_include_dirs(int argc, char *argv[])
   if (idirs)
   {
     int numdirs = 0, in_i_loop = 0;
-    char *buf = (char *)idirs;    
+    char *buf = (char *)idirs;
     buf += (argc * sizeof(char *));
     for (i = 1; i < argc; i++)
     {
@@ -197,23 +197,23 @@ static const char **get_include_dirs(int argc, char *argv[])
             d++;
           if (d != s)
           {
-            idirs[numdirs++] = buf;  
+            idirs[numdirs++] = buf;
             while (s < d)
               *buf++ = *s++;
-            if ((*--s) != '/')  
+            if ((*--s) != '/')
               *buf++ = '/';
             *buf++ = '\0';
             //fprintf(stderr,"\"-I%s\"\n", idirs[numdirs-1]);
           }
           while (*d == ':')
             d++;
-        } /* while (*d) */          
+        } /* while (*d) */
       }  /* if (is_i) */
     } /* for (i = 1; i < argc; i++) */
     idirs[numdirs] = (char *)0;
   } /* if (idirs) */
   return const_cast<const char**>(idirs);
-}  
+}
 
 
 int main(int argc, char *argv[])
@@ -229,10 +229,10 @@ int main(int argc, char *argv[])
     //fprintf(stderr,"%s 1\n", argv[2] );
     idirs = get_include_dirs(argc,argv);
     //fprintf(stderr,"%s 2\n", argv[2] );
-    build_dependancies( argv[2], idirs, 0 );    
+    build_dependancies( argv[2], idirs, 0 );
     //fprintf(stderr,"%s 3\n", argv[2] );
-    if (idirs) 
+    if (idirs)
       free((void *)idirs);
-  }  
+  }
   return 0;
 }

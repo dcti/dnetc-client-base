@@ -6,15 +6,16 @@
 // The following is adapted from source in
 //   "Inner Loops -- A sourcebook for fast 32-bit software development"
 //                                                      by Rick Booth.
-// Get a random 32bit number with Random() 
-// If called continuously, the sequence IL_MixRandom() generates 
+// Get a random 32bit number with Random()
+// If called continuously, the sequence IL_MixRandom() generates
 // wouldn't start to repeat for about 37 trillion years.
 //
 //                                - Added by Tim Charron 12.15.1997
 // -----------------------------------------------------------------
 
 const char *random_cpp(void) {
-return "@(#)$Id: random.cpp,v 1.9 2008/04/11 04:49:15 jlawson Exp $"; }
+  return "@(#)$Id: random.cpp,v 1.10 2008/12/19 11:10:59 andreasb Exp $";
+}
 
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */
@@ -50,9 +51,9 @@ static s32 IL_AreBitColumnsOK(u32 *source, s32 count)
   u32 l, b;
 
   for (n = 0, l = 0; n < count; n++)
-      l |= source[n];
+    l |= source[n];
   if (l != (u32)-1L)
-      return 0;                               // a column of zeroes fails
+    return 0;                                 // a column of zeroes fails
   b = 1;
   do
   {
@@ -65,7 +66,7 @@ static s32 IL_AreBitColumnsOK(u32 *source, s32 count)
         l &= ~source[n];
     }
     if (l)
-        return 0;                           // equal columns fail
+      return 0;                             // equal columns fail
     b <<= 1;
   } while (b);
   return 1;                                   // success
@@ -106,9 +107,9 @@ static u32 IL_MixRandom()
   p    = (struct IL_MixRandom_struct *)&IL_MixRandom_seeds;
   i32      = ((p->ptr32 >> 2) + 1) &  0x1f;
   if ((i31 =  (p->ptr31 >> 2) + 1) ==   31)
-      i31  = 0;
+    i31  = 0;
   if ((i29 =  (p->ptr29 >> 2) + 1) ==   29)
-      i29  = 0;
+    i29  = 0;
   p->ptr32 = i32 << 2;
   p->ptr31 = i31 << 2;
   p->ptr29 = i29 << 2;
@@ -202,7 +203,7 @@ void InitRandom2(const char *p)
   if (random_2_initialized || !p)
     return;
   random_2_initialized = 1;
-    
+
   IL_StandardRandom_seed ^= ((p[0]<<24) + (p[1]<<16) + (p[2]<<8) + p[3]);
   for ( i=0 ; i< 64 ; i++ )
   {
@@ -231,12 +232,12 @@ u32 Random( const u32 * u32data, unsigned int u32count )
 {
   register u32 tmp;
   InitRandom2( (const char *)u32data ); /* does nothing if already seeded */
-  
+
   tmp = IL_MixRandom();
-  if (u32data && u32count) 
+  if (u32data && u32count)
   {
     register unsigned int i;
-    for( i = 0 ; i < u32count ; i++ ) 
+    for( i = 0 ; i < u32count ; i++ )
       tmp ^= u32data[i];
   }
   return( tmp );

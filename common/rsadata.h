@@ -6,21 +6,21 @@
 //
 
 #ifndef __RSADATA_H__
-#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.15 2007/10/22 16:48:27 jlawson Exp $"
+#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.16 2008/12/19 11:10:59 andreasb Exp $"
 
 // RC5-56:
-// Contest identifier: RC5-32/12/7 
+// Contest identifier: RC5-32/12/7
 // Cipher: RC5-32/12/7 (RC5 with 32-bit wordsize, 12 rounds, and
-// 7*8=56-bit key) 
-// Start of contest: 28 January 1997, 9 am PST 
-// State of contest: finished 
-// IV: 7b 32 f0 8a e6 17 de 8c 
+// 7*8=56-bit key)
+// Start of contest: 28 January 1997, 9 am PST
+// State of contest: finished
+// IV: 7b 32 f0 8a e6 17 de 8c
 // Hexadecimal ciphertext:
 //   82 d3 4e a7 b3 24 86 0b c6 d8 61 5c e9 f9 e4 79
 //   88 5c 98 f1 d2 92 4c 59 ee 47 51 31 01 3e a8 ab
 //   d6 f0 4d c8 19 97 af 01 5e af f8 3f cd 61 b3 c2
 //   66 89 7c 82 09 87 4d fb 07 f2 56 03 8d d5 1b 01
-//   ca e3 41 c2 8d d7 18 1d             
+//   ca e3 41 c2 8d d7 18 1d
 #define RC556_IVLO 0x8AF0327BL
 #define RC556_IVHI 0x8CDE17E6L
 #define RC556_CYPHERLO 0xA74ED382L
@@ -29,12 +29,12 @@
 #define RC556_PLAINHI 0x6E6B6E75L
 
 // RC5-64:
-// Contest identifier: RC5-32/12/8 
+// Contest identifier: RC5-32/12/8
 // Cipher: RC5-32/12/8 (RC5 with 32-bit wordsize, 12 rounds, and
-// 8*8=64-bit key) 
-// Start of contest: 28 January 1997, 9 am PST 
+// 8*8=64-bit key)
+// Start of contest: 28 January 1997, 9 am PST
 // State of contest: finished
-// IV: 79 ce d5 d5 50 75 ea fc 
+// IV: 79 ce d5 d5 50 75 ea fc
 // Hexadecimal ciphertext:
 //   bf 55 01 55 dc 26 f2 4b 26 e4 85 4d f9 0a d6 79
 //   66 93 ab 92 3c 72 f1 37 c8 b7 0d 1f 60 11 0c 92

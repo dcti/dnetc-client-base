@@ -6,16 +6,16 @@
 //
 
 #ifndef __LURK_H__
-#define __LURK_H__ "@(#)$Id: lurk.h,v 1.28 2007/10/22 16:48:26 jlawson Exp $"
+#define __LURK_H__ "@(#)$Id: lurk.h,v 1.29 2008/12/19 11:10:58 andreasb Exp $"
 
 /* lurk: fetch/flush if modem goes online but also go online if fetch/flush needed */
-#define CONNECT_LURK         0x01 
+#define CONNECT_LURK         0x01
 
 /* lurkonly: connect only if modem goes online. equivalent to lurk+offlinemode? */
 #define CONNECT_LURKONLY     0x02
 
 /* ifacemask: limit the interfaces to watch for conn on */
-#define CONNECT_IFACEMASK    0x04 
+#define CONNECT_IFACEMASK    0x04
 
 /* dodbyscript: run this script to initiate a dialup connection */
 #define CONNECT_DODBYSCRIPT  0x08
@@ -35,17 +35,17 @@ struct dialup_conf
 };
 
 // initialization/stop. -> 0=success, !0 = failure
-int LurkStart(int nonetworking, struct dialup_conf *);  
+int LurkStart(int nonetworking, struct dialup_conf *);
 int LurkStop(void);
-  
+
 // state info
 int LurkIsWatching(void); //Start() was ok and CONNECT_LURK|LURKONLY|DOD */
 int LurkIsWatcherPassive(void); //Start was ok and lurkmode is CONNECT_LURKONLY
 int LurkIsConnected(void); // test (and say) connection state
 const char **LurkGetConnectionProfileList(void); //get the list of conn profiles
-int LurkGetCapabilityFlags(void);      //return supported CONNECT_* bits 
+int LurkGetCapabilityFlags(void);      //return supported CONNECT_* bits
 
-  // methods used for dialup initiation/hangup
+// methods used for dialup initiation/hangup
 int LurkDialIfNeeded(int ignore_lurkonly_flag); // -> 0=success, !0 = failure
 int LurkHangupIfNeeded(void);          // -> 0=success, !0 = failure
 

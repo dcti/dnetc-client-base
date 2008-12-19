@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.21 2008/02/10 18:12:47 kakace Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.22 2008/12/19 11:10:59 andreasb Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -25,7 +25,7 @@ extern "C" {
 #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
 typedef CoreDispatchTable *ogr_func;
 #endif
-typedef s32 CDECL gen_72_func( RC5_72UnitWork *, u32 *, void * );
+typedef s32 CDECL gen_72_func ( RC5_72UnitWork *, u32 *, void * );
 
 
 typedef union
@@ -63,7 +63,7 @@ struct selcore
 
 /* Set the xx_unit_func vectors/cputype/coresel in the problem. */
 /* Returns core # or <0 if error. Called from Prob::LoadState and probfill */
-int selcoreSelectCore( unsigned int cont_id, unsigned int thrindex, 
+int selcoreSelectCore( unsigned int cont_id, unsigned int thrindex,
                        int *client_cpuP, struct selcore *selinfo );
 
 /* Get the core # for a contest. Informational use only. */
@@ -75,11 +75,11 @@ unsigned int nominal_rate_for_contest( unsigned int cont_i);
 
 /* conf calls these */
 int selcoreValidateCoreIndex( unsigned int cont_i, int index );
-void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont, 
-                              const char *corename, int idx, void *udata ),
+void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont,
+                                            const char *corename, int idx, void *udata ),
                        void *userdata );
 void selcoreEnumerateWide( int (*enumcoresproc)(
-                              const char **corenames, int idx, void *udata ),
+                             const char **corenames, int idx, void *udata ),
                            void *userdata );
 
 /* benchmark/test each core - return < 0 on error, 0 = not supported, > 0=ok */
@@ -129,7 +129,7 @@ const char **corenames_for_contest_ogr_ng();
 int apply_selcore_substitution_rules_ogr_ng(int cindex);
 int selcoreGetPreselectedCoreForProject_ogr_ng();
 int selcoreSelectCore_ogr_ng( unsigned int threadindex, int *client_cpuP,
-                           struct selcore *selinfo, unsigned int contestid );
+                              struct selcore *selinfo, unsigned int contestid );
 #endif
 
 /* ---------------------------------------------------------------------- */

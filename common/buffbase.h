@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.8 2007/10/22 16:48:23 jlawson Exp $"
+#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.9 2008/12/19 11:10:58 andreasb Exp $"
 
 //efficiency hints/open mode modifiers
 #define BUFFER_FLAGS_NONE           (0x00) //regular local buffer
@@ -20,22 +20,22 @@
 #define BUFFER_FLAGS_CHECKPOINT     (0x08) //hint:no scan/truncate, not unlink
 
 /* ..Put() returns <0 on ioerr, else 0 on success */
-int BufferPutFileRecord( const char *filename, const WorkRecord * data, 
-                         unsigned long *countP, int flags ); 
-               
+int BufferPutFileRecord( const char *filename, const WorkRecord * data,
+                         unsigned long *countP, int flags );
+
 /* ..Get() returns <0 on err (ioerr ==-1, corrupt==-123), else >=0 if ok */
-int BufferGetFileRecord( const char *filename, WorkRecord * data, 
-                         unsigned long *countP, int flags ); 
-               
+int BufferGetFileRecord( const char *filename, WorkRecord * data,
+                         unsigned long *countP, int flags );
+
 /* ..Count() returns <0 on ioerr, else 0 on success */
-int BufferCountFileRecords( const char *filename, unsigned int contest, 
-               unsigned long *countP, unsigned long *normcountP );
+int BufferCountFileRecords( const char *filename, unsigned int contest,
+                            unsigned long *countP, unsigned long *normcountP );
 
 /* "erase" a buffer to zero blocks */
 int BufferZapFileRecords( const char *filename );
 
 /* used by -forceunlock */
-int UnlockBuffer( const char *filename ); 
+int UnlockBuffer( const char *filename );
 
 /* determine how many (more) stats units to fetch. */
 /* MUST BE CALLED FOR EACH PASS THROUGH A FETCH LOOP */
@@ -51,18 +51,18 @@ long BufferFetchFile( Client *client, int break_pending, const char *loadermap_f
 
 /* automatically open a buffer and read/write/count single records */
 long PutBufferRecord(Client *client, const WorkRecord * data);
-long GetBufferRecord(Client *client, WorkRecord * data, 
-		     unsigned int contest, int use_out_file);
-long GetBufferCount(Client *client, unsigned int contest, 
-		    int use_out_file, unsigned long *normcountP );
+long GetBufferRecord(Client *client, WorkRecord * data,
+                     unsigned int contest, int use_out_file);
+long GetBufferCount(Client *client, unsigned int contest,
+                    int use_out_file, unsigned long *normcountP );
 
 /* determine if an in-buffer is full. */
 int BufferAssertIsBufferFull( Client *client, unsigned int contest );
 
 const char *BufferGetDefaultFilename( unsigned int project, int is_out_type,
-                                                       const char *basename );
+                                      const char *basename );
 
-int BufferGetRecordInfo( const WorkRecord * data, 
+int BufferGetRecordInfo( const WorkRecord * data,
                          unsigned int *contest,
                          unsigned int *swucount );
 

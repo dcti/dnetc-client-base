@@ -8,14 +8,15 @@
 ** This code is POSIXly correct. Please keep it that way.
 **
 ** This is a posix stream interface to memory, standard FILE functions are
-** emulated. Multiple 'files' can be open simultaneously. The size of a 'file' 
-** is limited only by available memory. The following functions are available: 
-** mfopen(), mfread(), mfwrite(), mfeof(), mftell(), mfseek(), mrewind(), 
-** mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(), 
-** mdup(). The stream object used/created by these functions is a MEMFILE *. 
+** emulated. Multiple 'files' can be open simultaneously. The size of a 'file'
+** is limited only by available memory. The following functions are available:
+** mfopen(), mfread(), mfwrite(), mfeof(), mftell(), mfseek(), mrewind(),
+** mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(),
+** mdup(). The stream object used/created by these functions is a MEMFILE *.
 */
 const char *memfile_cpp(void) {
-return "@(#)$Id: memfile.cpp,v 1.9 2008/02/10 00:24:29 kakace Exp $"; }
+  return "@(#)$Id: memfile.cpp,v 1.10 2008/12/19 11:10:58 andreasb Exp $";
+}
 
 #include <stdio.h>
 #include <string.h>
@@ -82,28 +83,28 @@ static MEMFILE *__memstreambase = NULL;
 static MEMFILE *__find_mp( MEMFILE *mp, MEMFILE **prev )
 {
   MEMFILE *last, *here;
-  
-  if (mp) 
-    {
+
+  if (mp)
+  {
     last = NULL;
     here = __memstreambase;
     while (here && mp!=here)
-      {
+    {
       last = here;
       here = (MEMFILE *)here->next;
-      }
+    }
     if (here == mp)
-      {
-      if (prev) 
+    {
+      if (prev)
         *prev = last;
       return (mp);
-      }
     }
+  }
   return (NULL);
-}  
+}
 
 /* ---------------------------------------------------------------------- */
-  
+
 int mfclose( MEMFILE *mp )
 {
   MEMFILE *prev;
@@ -115,21 +116,21 @@ int mfclose( MEMFILE *mp )
   if (mp->opencount>1)
     mp->opencount--;
   else
-    {
-    if (prev) 
+  {
+    if (prev)
       prev->next = mp->next;
-    else 
+    else
       __memstreambase = (MEMFILE *)mp->next;
     while( mp->mbuff )
-      {
+    {
       mbuff = mp->mbuff->next;
       free( (void *)mp->mbuff );
       mp->mbuff = mbuff;
-      }
-    free( (void *)mp );
     }
+    free( (void *)mp );
+  }
   return 0;
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -138,12 +139,14 @@ int mfcloseall(void)
   while ( __memstreambase )
     mfclose( __memstreambase );
   return 0;
-}    
+}
 
 /* ---------------------------------------------------------------------- */
 
 int mfflushall(void)
-{ return 0; }  
+{
+  return 0;
+}
 
 int mfflush( MEMFILE *mp )
 {
@@ -161,7 +164,7 @@ long mftell( MEMFILE *mp )
   if ( __find_mp( mp, NULL ) == NULL )
     return (long)(-1L);
   return ((long)(mp->offset));
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -170,7 +173,7 @@ int mfeof( MEMFILE *mp )
   if ( __find_mp( mp, NULL ) == NULL )
     return -1;
   return (mp->ateof != 0);
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -187,7 +190,7 @@ int mfileno( MEMFILE *mp )
 #define MFO_RDONLY 0x0002
 #define MFO_RDWR   (MFO_WRONLY|MFO_RDONLY)
 #define MFO_APPEND 0x0010
-#define MFO_CREAT  0x0100  
+#define MFO_CREAT  0x0100
 #define MFO_TRUNC  0x0200
 #define MFO_TEXT   0x1000 /* posixly correct. ignored, everything is binary */
 #define MFO_BINARY 0x2000 /* posixly correct. ignored, everything is binary */
@@ -199,27 +202,27 @@ static int __cmode2umode( const char *cmode, int *umode )
   int oflags, aflags;
 
   if ( cmode[0]=='a')
-    {
+  {
     oflags = MFO_WRONLY;
     aflags = (MFO_APPEND | MFO_CREAT);
-    }
+  }
   else if (cmode[0]=='w')
-    {
-    oflags = ((cmode[1]=='+' || cmode[2]=='+')?(MFO_RDWR):(MFO_WRONLY));
+  {
+    oflags = ((cmode[1]=='+' || cmode[2]=='+') ? (MFO_RDWR) : (MFO_WRONLY));
     aflags = (MFO_CREAT | MFO_TRUNC);
-    }
+  }
   else if (cmode[0]=='r')
-    {
-    oflags = ((cmode[1]=='+' || cmode[2]=='+')?(MFO_RDWR):(MFO_RDONLY));
+  {
+    oflags = ((cmode[1]=='+' || cmode[2]=='+') ? (MFO_RDWR) : (MFO_RDONLY));
     aflags = 0;
-    }
+  }
   else
     return -1;
-  
-  aflags |= (( cmode[1]=='b' || cmode[2]=='b' )?(MFO_BINARY):(MFO_TEXT));
+
+  aflags |= (( cmode[1]=='b' || cmode[2]=='b' ) ? (MFO_BINARY) : (MFO_TEXT));
   *umode = (aflags | oflags);
   return 0;
-}    
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -235,76 +238,76 @@ MEMFILE *mfopen( const char *filename, const char *cmode )
   if ( __cmode2umode( cmode, &mode ) != 0)
     return NULL;
 
-  tmp = prev = NULL;    
+  tmp = prev = NULL;
   mp = __memstreambase;
   while (mp && strcmp(mp->fname, filename)!=0)
-    {
+  {
     if (mp->mode == 0) /* unused */
       tmp = mp;
     prev = mp;
     mp = (MEMFILE *)mp->next;
-    }
+  }
 
   if (!mp)
-    {
+  {
     if (( mode & (MFO_CREAT | MFO_TRUNC) )==0)
       return NULL;
     mp = tmp;
     if ( mp )
       fd = mp->fd;
-    else 
-      {
+    else
+    {
       if ( ( mp = (MEMFILE *)malloc( sizeof( MEMFILE ) ) ) == NULL )
         return NULL;
       if (!prev)
-        {
+      {
         fd = (int)0x4001;
         __memstreambase = mp;
-        }
+      }
       else
-        {
+      {
         prev->next = (void *)mp;
         fd = 1 + prev->fd;
-        }
       }
+    }
     memset( mp, 0, sizeof( MEMFILE ));
     mp->mode = mode;
     strncpy( mp->fname, filename, sizeof(mp->fname)-1 );
     mp->fd = fd;
-    }
+  }
 
   mp->opencount++;
   mp->offset = 0;
-  
+
   if ((mp->mode & MFO_TRUNC) != 0)
-    {
+  {
     while( mp->mbuff )
-      {
+    {
       mbuff = mp->mbuff->next;
       free( (void *)mp->mbuff );
       mp->mbuff = mbuff;
-      }
     }
+  }
 
   return mp;
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
 int mdup( int mfd )
-{ 
+{
   MEMFILE *mp;
-  
+
   mp = __memstreambase;
   while ( mp && mp->fd != mfd )
     mp = (MEMFILE *)mp->next;
-  
+
   if ( mp )
     return -1;
 
   mp->opencount++;
   return ( mp->fd );
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -314,22 +317,24 @@ int mfseek( MEMFILE *mp, long offset, int whence )
     return -1;
 
   mp->ateof = 0;
-  if ((mp->mode & MFO_APPEND)!=0) 
+  if ((mp->mode & MFO_APPEND)!=0)
     return -1;
 
   if (whence == SEEK_CUR)
     offset += (long)(mp->offset);
   else if (whence == SEEK_END)
     offset += (long)(mp->length);
-  
+
   if ((offset < 0) || (((unsigned long)(offset)) > mp->length))
     return -1;
-  
+
   mp->offset = (unsigned long)(offset);
   return 0;
-}        
+}
 
-void mrewind( MEMFILE *mp ) { mfseek( mp, 0, SEEK_SET ); }
+void mrewind( MEMFILE *mp ) {
+  mfseek( mp, 0, SEEK_SET );
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -338,11 +343,11 @@ int mftruncate( int mfd, unsigned long newlen )
   MEMFILE *mp;
   struct memfilebuff *mbuff, *prev, *next;
   unsigned long origin, offset, blocksize;
-  
+
   mp = __memstreambase;
   while ( mp && mp->fd != mfd )
     mp = (MEMFILE *)mp->next;
-  
+
   if ( !mp )
     return -1;
 
@@ -351,7 +356,7 @@ int mftruncate( int mfd, unsigned long newlen )
 
   mp->ateof = 0;
 
-  if ( newlen == mp->length ) 
+  if ( newlen == mp->length )
     return 0;
 
   mbuff = mp->mbuff;
@@ -359,60 +364,60 @@ int mftruncate( int mfd, unsigned long newlen )
   origin = 0;
   offset = newlen;
   mp->length = 0;
-  
+
   while ( mbuff )
-    {  
+  {
     next = mbuff->next;
     blocksize = mbuff->blocksize;
     if ((offset >=origin) && (offset <(origin+( mbuff->usedsize))))
-      {
+    {
       mbuff->usedsize = ((offset)-origin);
       offset = origin + mbuff->blocksize;
       if ( mbuff->usedsize != 0 )
         mp->length = origin + mbuff->usedsize;
       else
-        {
+      {
         if ( !prev )
           mp->mbuff = mbuff->next;
         else
           prev->next = mbuff->next;
         free( mbuff );
         mbuff = prev;
-        }
       }
+    }
     origin += blocksize;
     prev = mbuff;
     mbuff = next;
-    }
+  }
 
   if (mp->offset > mp->length)
     mp->offset = mp->length;
-  
+
   return 0;
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
 long int mfilelength( int mfd )
-{ 
+{
   MEMFILE *mp;
-  
+
   mp = __memstreambase;
   while ( mp && mp->fd != mfd )
     mp = (MEMFILE *)mp->next;
-  
+
   if ( !mp )
     return (long int)(-1L);
 
   return (long int)mp->length;
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
-#define MAXIMUM_GROW_INCREMENT (8192-(sizeof(struct memfilebuff)+16)) 
-#define DEFAULT_GROW_INCREMENT (1024-(sizeof(struct memfilebuff)+16)) 
-#define MINIMUM_GROW_INCREMENT (   2*(sizeof(struct memfilebuff)+16)) 
-                      /* 16 bytes to compensate for malloc overhead */
+#define MAXIMUM_GROW_INCREMENT (8192-(sizeof(struct memfilebuff)+16))
+#define DEFAULT_GROW_INCREMENT (1024-(sizeof(struct memfilebuff)+16))
+#define MINIMUM_GROW_INCREMENT (   2*(sizeof(struct memfilebuff)+16))
+/* 16 bytes to compensate for malloc overhead */
 
 size_t _mfsetgrowincrement( MEMFILE *mp, size_t growincrement )
 {
@@ -423,15 +428,15 @@ size_t _mfsetgrowincrement( MEMFILE *mp, size_t growincrement )
   if ( old_grow == 0 )
     old_grow = DEFAULT_GROW_INCREMENT;
   if ( growincrement != 0 )
-    {
+  {
     if ( growincrement < MINIMUM_GROW_INCREMENT )
       growincrement = MINIMUM_GROW_INCREMENT;
     if ( growincrement > MAXIMUM_GROW_INCREMENT )
       growincrement = MAXIMUM_GROW_INCREMENT;
     mp->grow_increment = growincrement;
-    }
+  }
   return old_grow;
-}  
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -454,22 +459,22 @@ size_t mfwrite( void *buffer, size_t elemcount, size_t elemsize, MEMFILE *mp)
   origin = total = 0;
 
   while ( dosize > 0 )
-    {  
+  {
     if ( mbuff == NULL )
-      {
+    {
       if (mp->grow_increment == 0)
         mp->grow_increment = DEFAULT_GROW_INCREMENT;
       grow_by = mp->grow_increment;
-      do{
+      do {
         mbuff = (struct memfilebuff *)
-                   ( malloc( grow_by + sizeof(struct memfilebuff) ));
+                           ( malloc( grow_by + sizeof(struct memfilebuff) ));
         if ( !mbuff )
-          {
+        {
           if ( grow_by < (MINIMUM_GROW_INCREMENT * 2))
             break;
           grow_by -= MINIMUM_GROW_INCREMENT;
-          }
-        } while ( !mbuff );
+        }
+      } while ( !mbuff );
       if (!mbuff)
         break;
       mbuff->next = NULL;
@@ -480,12 +485,12 @@ size_t mfwrite( void *buffer, size_t elemcount, size_t elemsize, MEMFILE *mp)
         prev->next = mbuff;
       else
         mp->mbuff = mbuff;
-      }
+    }
     if ((mp->offset>=origin) && (mp->offset<(origin+( mbuff->blocksize))))
-      {
+    {
       pos = (mp->offset)-origin;
       remain = (mbuff->blocksize)-pos;
-      if (dosize < remain) 
+      if (dosize < remain)
         remain = dosize;
       memcpy( (void *)((mbuff->buffer)+pos), buffer, remain );
       total += remain;
@@ -494,23 +499,23 @@ size_t mfwrite( void *buffer, size_t elemcount, size_t elemsize, MEMFILE *mp)
       charbuff = ((char *)(buffer))+remain;
       buffer = ((void *)(charbuff));
       dosize -= remain;
-      }
+    }
     prev = mbuff;
     origin += mbuff->blocksize;
     mbuff = mbuff->next;
-    }
+  }
 
   mbuff = mp->mbuff;
   mp->length = 0;
   while ( mbuff )
-    {
+  {
     mp->length += mbuff->usedsize;
     mbuff = mbuff->next;
-    }
+  }
 
   mp->ateof = (mp->offset >= mp->length);
   return ( total / elemsize );
-}    
+}
 
 /* ---------------------------------------------------------------------- */
 
@@ -533,14 +538,14 @@ size_t mfread( void *buffer, size_t elemcount, size_t elemsize, MEMFILE *mp )
   total = origin = 0;
 
   while ( dosize > 0 )
-    {  
+  {
     if (mbuff == NULL)
       break;
     if ((mp->offset>=origin) && (mp->offset<(origin+( mbuff->usedsize))))
-      {
+    {
       pos = (mp->offset)-origin;
       remain = (mbuff->usedsize)-pos;
-      if (dosize < remain) 
+      if (dosize < remain)
         remain = dosize;
       memcpy( buffer, (void *)((mbuff->buffer)+pos), remain );
       total +=  remain;
@@ -550,10 +555,10 @@ size_t mfread( void *buffer, size_t elemcount, size_t elemsize, MEMFILE *mp )
       dosize -= remain;
       charbuf = ((char *)(buffer))+remain;
       buffer = (void *)(charbuf);
-      }
+    }
     origin += mbuff->blocksize;
     mbuff = mbuff->next;
-    }
+  }
 
   mp->ateof = (mp->offset >= mp->length);
   return (size_t)( total / elemsize );
@@ -568,20 +573,20 @@ unsigned int count_open_streams(void)
   unsigned int count = 0;
   MEMFILE *mp = __memstreambase;
   while ( mp )
-    {
+  {
     count++;
     mp = (MEMFILE *)mp->next;
-    }
+  }
   return count;
-}  
-  
+}
+
 
 int main(void)
 {
   MEMFILE *file, *file2, *file3;
   char test[] = "This is a very long string that just goes on and on, but it can surely tell us a few things about how this code is working.";
   char test2[] = "This is the second string, and should get cat'd right up behind the first string.";
-  char buffer[512];              
+  char buffer[512];
 
   printf("\n--------- open should fail (file doesn't exist)\n");
   file = mfopen( "dummy", "r+b" );
@@ -600,39 +605,39 @@ int main(void)
 
   printf("\n--------- should write %d bytes\n", strlen(test));
   printf( "fwrite( [], %d, %d, file )  -> %d\n", strlen(test), sizeof(char),
-                        mfwrite( test, strlen(test), sizeof(char), file ) );
+          mfwrite( test, strlen(test), sizeof(char), file ) );
   printf( "ftell(file) -> %ld feof(file)-> %d\n", mftell( file ), mfeof( file ) );
 
   printf("\n--------- should read the string back in\n");
   printf( "rewind(file) \n" ); mrewind(file);
   printf( "ftell(file) -> %ld feof(file)-> %d\n", mftell( file ), mfeof( file ) );
   memset( buffer, 0, sizeof( buffer ));
-  printf( "fread( [], %d, %d, file )  -> %d\n", sizeof(buffer), sizeof(char), 
-                       mfread( buffer, sizeof(buffer), sizeof(char), file ) );
+  printf( "fread( [], %d, %d, file )  -> %d\n", sizeof(buffer), sizeof(char),
+          mfread( buffer, sizeof(buffer), sizeof(char), file ) );
   printf( "ftell(file) -> %ld feof(file)-> %d\n", mftell( file ), mfeof( file ) );
 
   printf("\n--------- should cat the second string to the first\n");
-  printf( "fwrite( [], %d, %d, file )  -> %d\n", sizeof(char), strlen(test2), 
-                        mfwrite( test2, strlen(test2), sizeof(char), file ) );
+  printf( "fwrite( [], %d, %d, file )  -> %d\n", sizeof(char), strlen(test2),
+          mfwrite( test2, strlen(test2), sizeof(char), file ) );
   printf( "ftell(file) -> %ld feof(file)-> %d\n", mftell( file ), mfeof( file ) );
 
   printf("\n--------- should read zero (fp is at eof)\n");
   memset( buffer, 0, sizeof( buffer ));
-  printf( "fread( [], %d, %d, file )  -> %d\n", sizeof(buffer), sizeof(char), 
-                       mfread( buffer, sizeof(buffer), sizeof(char), file ) );
+  printf( "fread( [], %d, %d, file )  -> %d\n", sizeof(buffer), sizeof(char),
+          mfread( buffer, sizeof(buffer), sizeof(char), file ) );
   printf( "ftell(file) -> %ld  feof(file)-> %d\n", mftell( file ), mfeof( file ) );
 
   printf("\n--------- seek test\n");
   printf( "filelength( fileno( file ) )-> %ld\n", mfilelength( mfileno( file ) ) );
   printf( "seek(file,64,0)-> %d\n", mfseek( file, 64, SEEK_SET ) );
   printf( "ftell(file) -> %ld  feof(file)-> %d\n", mftell( file ), mfeof( file ) );
-  
+
   printf("\n--------- read after seek test, should read filelen-64 bytes\n");
   memset( buffer, 0, sizeof( buffer ));
-  printf( "fread( [], %d, %d, file )  -> %d\n", sizeof(buffer), sizeof(char), 
-                       mfread( buffer, sizeof(buffer), sizeof(char), file ) );
+  printf( "fread( [], %d, %d, file )  -> %d\n", sizeof(buffer), sizeof(char),
+          mfread( buffer, sizeof(buffer), sizeof(char), file ) );
   printf( "-> \"%s\"\n", buffer );
-  
+
   printf("\n--------- change size test\n");
   printf( "filelength( fileno( file ) )-> %ld\n", mfilelength( mfileno( file ) ) );
   printf( "ftell(file) -> %ld  feof(file)-> %d\n", mftell( file ), mfeof( file ) );
@@ -646,15 +651,15 @@ int main(void)
 
   printf("\n--------- read after seek test, should read 5 bytes\n");
   memset( buffer, 0, sizeof( buffer ));
-  printf( "fread( [], %d, %d, file )  -> %d\n", sizeof(buffer), sizeof(char), 
-                       mfread( buffer, sizeof(buffer), sizeof(char), file ) );
+  printf( "fread( [], %d, %d, file )  -> %d\n", sizeof(buffer), sizeof(char),
+          mfread( buffer, sizeof(buffer), sizeof(char), file ) );
   printf( "-> \"%s\"\n", buffer );
 
   printf("\n--------- open and write a second file\n");
   file2 = mfopen( "dummy2", "w+b" );
   printf("fopen(\"dummy2\",\"w+b\") -> 0x%x\n", file2 );
   printf( "fwrite( [], %d, %d, file2 )  -> %d\n", strlen("TEST"), sizeof(char),
-                        mfwrite( "TEST", strlen("TEST"), sizeof(char), file2 ) );
+          mfwrite( "TEST", strlen("TEST"), sizeof(char), file2 ) );
   printf( "filelength( fileno( file2 ) )-> %ld\n", mfilelength( mfileno( file2 ) ) );
   printf( "ftell(file2) -> %ld feof(file2)-> %d\n", mftell( file2 ), mfeof( file2 ) );
   printf("#of open memstreams: %d\n", count_open_streams() );
@@ -663,7 +668,7 @@ int main(void)
   file3 = mfopen( "dummy3", "w+b" );
   printf("fopen(\"dummy3\",\"w+b\") -> 0x%x\n", file3 );
   printf( "fwrite( [], %d, %d, file3 )  -> %d\n", strlen("BLAHBLAH"), sizeof(char),
-            mfwrite( "BLAHBLAH", strlen("BLAHBLAH"), sizeof(char), file3 ) );
+          mfwrite( "BLAHBLAH", strlen("BLAHBLAH"), sizeof(char), file3 ) );
   printf( "filelength( fileno( file3 ) )-> %ld\n", mfilelength( mfileno( file3 ) ) );
   printf( "ftell(file3) -> %ld feof(file3)-> %d\n", mftell( file3 ), mfeof( file3 ) );
   printf("#of open memstreams: %d\n", count_open_streams() );
@@ -678,7 +683,7 @@ int main(void)
   printf( "filelength( fileno( file ) )-> %ld\n", mfilelength( mfileno( file ) ) );
   printf( "ftell(file) -> %ld feof(file)-> %d\n", mftell( file ), mfeof( file ) );
   printf("#of open memstreams: %d\n", count_open_streams() );
-  
+
   printf("\n--------- truncate to zero test\n");
   printf( "ftruncate(fileno(file),0)   ->  %d\n", mftruncate( mfileno( file ), 0 ) );
   printf( "filelength( fileno( file ) )-> %ld\n", mfilelength( mfileno( file ) ) );

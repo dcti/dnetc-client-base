@@ -9,15 +9,15 @@
 ** This code is POSIXly correct. Please keep it that way.
 **
 ** This is a posix stream interface to memory, standard FILE functions are
-** emulated. Multiple 'files' can be open simultaneously. The size of a 'file' 
-** is limited only by available memory. The following functions are available: 
-** mfopen(), mfread(), mfwrite(), mfeof(), mftell(), mfseek(), mrewind(), 
-** mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(), 
-** mdup(). The 'stream' object used/created by these functions is a MEMFILE *. 
+** emulated. Multiple 'files' can be open simultaneously. The size of a 'file'
+** is limited only by available memory. The following functions are available:
+** mfopen(), mfread(), mfwrite(), mfeof(), mftell(), mfseek(), mrewind(),
+** mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(),
+** mdup(). The 'stream' object used/created by these functions is a MEMFILE *.
 **
 */
 #ifndef __MEMFILE_H__
-#define __MEMFILE_H__ "@(#)$Id: memfile.h,v 1.6 2007/10/22 16:48:26 jlawson Exp $"
+#define __MEMFILE_H__ "@(#)$Id: memfile.h,v 1.7 2008/12/19 11:10:58 andreasb Exp $"
 
 #include <stdio.h>   /* required for the size_t typedef */
 

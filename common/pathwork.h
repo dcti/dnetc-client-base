@@ -6,12 +6,12 @@
 */
 
 #ifndef __PATHWORK_H__
-#define __PATHWORK_H__ "@(#)$Id: pathwork.h,v 1.10 2007/10/22 16:48:26 jlawson Exp $"
+#define __PATHWORK_H__ "@(#)$Id: pathwork.h,v 1.11 2008/12/19 11:10:59 andreasb Exp $"
 
 /* -------------------------------------------------------------------
- * Get the working directory previously initialized with 
+ * Get the working directory previously initialized with
  * InitWorkingDirectoryFromSamplePaths(). returns NULL if buffer is too
- * small otherwise returns buffer. The directory returned can be 
+ * small otherwise returns buffer. The directory returned can be
  * strcat()ed with a filename (ie it always ends with '/' or whatever)
  * ------------------------------------------------------------------ */
 const char *GetWorkingDirectory( char *buffer, unsigned int maxlen );
@@ -43,7 +43,7 @@ const char *GetFullPathForFilenameAndDir( const char *fname, const char *dir );
 
 
 /* -------------------------------------------------------------------
- * get the offset of the filename component in 'fullpath' 
+ * get the offset of the filename component in 'fullpath'
  *------------------------------------------------------------------- */
 unsigned int GetFilenameBaseOffset( const char *fullpath );
 

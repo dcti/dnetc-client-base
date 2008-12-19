@@ -7,7 +7,7 @@
  * This file should be shared between client and proxynet some day ...
  */
 #ifndef __PROJDATA_H__
-#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.6 2008/02/17 16:24:29 kakace Exp $"
+#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.7 2008/12/19 11:10:59 andreasb Exp $"
 
 #include "cputypes.h"   // u32 ...
 
@@ -29,7 +29,7 @@ enum {
 #define MAX_PROJECT_NAME_LEN 6 /* "RC5-72" */
 
 /* ------------------------------------------------------------------------- */
-  
+
 /* Project Flags - static, defined at compile time */
 
 #define PROJECT_UNSUPPORTED                       0x00000000

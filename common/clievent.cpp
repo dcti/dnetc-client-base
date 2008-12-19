@@ -6,32 +6,33 @@
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  *
  * ----------------------------------------------------------------------
- * This is an amazingly trivial :p event handling mechanism for client 
- * platforms that do something when a special condition arises. 
+ * This is an amazingly trivial :p event handling mechanism for client
+ * platforms that do something when a special condition arises.
  *
  * Event posting to listeners is currently synchronous (blocking) only,
  * although asynchronous posting could be implemented with a minimum of
  * effort (should the need ever arise).
  *
- * Since the listener queue is a static resource, and it is in everyone's 
- * best interest to keep the queue small, platforms that implement 
- * an event listener that 'lives' for the clients entire lifetime should do 
- * so in a cascaded fashion, ie with one wrapper function that branches to 
+ * Since the listener queue is a static resource, and it is in everyone's
+ * best interest to keep the queue small, platforms that implement
+ * an event listener that 'lives' for the clients entire lifetime should do
+ * so in a cascaded fashion, ie with one wrapper function that branches to
  * subfunctions. Register that wrapper function with event_id == -1 to
  * listen for all events and branch internally as appropriate.
  *
  * Currently, 3 event listeners are reserved for client common code.
  *
  * If you need to add a new event id that requires more than a long as a
- * parameter FIRST make sure that that information cannot be obtained any 
+ * parameter FIRST make sure that that information cannot be obtained any
  * other way and THEN declare a struct in clievent.h, fill it in the code
- * and pass the pointer to the struct as the parm. Keep the structures 
+ * and pass the pointer to the struct as the parm. Keep the structures
  * generic so that they can be used by other events as well. For example:
  * struct struct_EVENT_ll { long l1, l2; };
  * ----------------------------------------------------------------------
 */
 const char *clievent_cpp(void) {
-return "@(#)$Id: clievent.cpp,v 1.14 2007/10/22 16:48:24 jlawson Exp $"; }
+  return "@(#)$Id: clievent.cpp,v 1.15 2008/12/19 11:10:58 andreasb Exp $";
+}
 
 #include "baseincs.h"   /* NULL, memset */
 #include "clievent.h"   /* keep prototypes in sync */
@@ -45,7 +46,7 @@ return "@(#)$Id: clievent.cpp,v 1.14 2007/10/22 16:48:24 jlawson Exp $"; }
 
 struct event_listener
 {
-  int event_id; 
+  int event_id;
   void (*proc)(int event_id, const void *parm, int isize);
 };
 struct event_listener listeners[MAX_EVENT_LISTENERS];
@@ -57,7 +58,7 @@ int ClientEventAddListener(int event_id, void (*proc)(int event_id, const void *
 {
   if (listener_count == 0)
     memset( (void *)(&listeners[0]), 0, sizeof(listeners ));
-    
+
   if (event_id == 0 || proc == NULL)
     return -1;
 
@@ -72,9 +73,9 @@ int ClientEventAddListener(int event_id, void (*proc)(int event_id, const void *
     }
   }
   return -1;
-}  
-  
- 
+}
+
+
 /* ------------------------------------------------------------ */
 
 int ClientEventRemoveListener(int event_id, void (*proc)(int event_id, const void *parm, int isize))
@@ -96,8 +97,8 @@ int ClientEventRemoveListener(int event_id, void (*proc)(int event_id, const voi
     }
   }
   return -1;
-}  
-    
+}
+
 /* ------------------------------------------------------------ */
 
 int ClientEventSyncPost( int event_id, const void *parm, int isize )
@@ -112,7 +113,7 @@ int ClientEventSyncPost( int event_id, const void *parm, int isize )
 
   for (int i = 0; i < (int) (sizeof(listeners)/sizeof(listeners[0])); i++)
   {
-    if (listeners[i].proc != NULL && 
+    if (listeners[i].proc != NULL &&
         (listeners[i].event_id == event_id || listeners[i].event_id == -1))
     {
       (*(listeners[i].proc))( event_id, parm, isize );
@@ -120,7 +121,7 @@ int ClientEventSyncPost( int event_id, const void *parm, int isize )
     }
   }
   return posted_count;
-}   
-      
+}
+
 /* ------------------------------------------------------------ */
 

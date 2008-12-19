@@ -3,44 +3,45 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  *
  * --------------------------------------------------------------------
- * The polling process is essentially an event handler that gets called 
+ * The polling process is essentially an event handler that gets called
  * when "idle events" get queued, ie the main process sleeps. Procedures
- * registered with the polling process then get called synchronously 
+ * registered with the polling process then get called synchronously
  * (subject to priority and round-robin order).
  *
- * The advantages, from the client's perspective, are many-fold: 
- * For one, the line between "multi-threaded" and "single-threaded" clients 
+ * The advantages, from the client's perspective, are many-fold:
+ * For one, the line between "multi-threaded" and "single-threaded" clients
  * vanishes (silly terminology from the client's perspective anyway; a
  * threaded client is not faster that a non-threaded one on a single
  * processor machine), which cuts down on the need to maintain separate
  * source or binaries. Secondly, its more efficient on platforms that do
- * not support threading: Multiple 'small problems' running back-to-back 
+ * not support threading: Multiple 'small problems' running back-to-back
  * have less overhead that 'big problems' (still <3 seconds) since the
- * time-till-stop can be controlled precisely. Thirdly, it is more efficient 
- * on platforms that do support threading, but are non-preemptive. That is, 
- * the number of context switches can be kept at a minimum while still 
+ * time-till-stop can be controlled precisely. Thirdly, it is more efficient
+ * on platforms that do support threading, but are non-preemptive. That is,
+ * the number of context switches can be kept at a minimum while still
  * maintaining exact control over when when the client _should_ yield.
- * Fourthly, it is useful even in preemptive environments since routine 
+ * Fourthly, it is useful even in preemptive environments since routine
  * work can be delegated (with a run-at time stamp if necessary) without
- * having to spin off another thread and without having oodles of 
+ * having to spin off another thread and without having oodles of
  * platform-specific code mucking about in real client code. Fifth: it
  * does away with the 'timeslice factor' crutch.
  *
- * PolledSleep() and PolledUSleep() are automatic/default replacements for 
+ * PolledSleep() and PolledUSleep() are automatic/default replacements for
  * sleep() and usleep() (see sleepdef.h) and allow the polling process to run.
  *
- * NonPolledSleep() and NonPolledUSleep() are "real" sleepers. This are 
- * required for real threads (a la Go_mt()) that need to yield control to 
+ * NonPolledSleep() and NonPolledUSleep() are "real" sleepers. This are
+ * required for real threads (a la Go_mt()) that need to yield control to
  * other threads.
  *
- * Created by Cyrus Patel (cyp@fb14.uni-mainz.de) 
+ * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-return "@(#)$Id: pollsys.cpp,v 1.18 2007/10/22 16:48:26 jlawson Exp $"; }
+  return "@(#)$Id: pollsys.cpp,v 1.19 2008/12/19 11:10:59 andreasb Exp $";
+}
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */
@@ -72,7 +73,7 @@ struct polldata
   int fd;
   void (*proc)(void *);
   void *arg;
-  struct timeval execat; 
+  struct timeval execat;
 };
 
 static struct
@@ -86,13 +87,13 @@ static struct
 /* ---------------------------------------------------------------------- */
 /*
    RegPolledProcedure(). Procedures are auto unregistered when executed.
-*/   
+*/
 
 int UnregPolledProcedure( int fd )
 {
   struct polldata *thisp;
   int rc = -1;
-  
+
   thisp = pollsysdata.runlist;
   while ( thisp )
   {
@@ -109,22 +110,22 @@ int UnregPolledProcedure( int fd )
     thisp = thisp->next;
   }
   return rc;
-}  
+}
 
 /*
   RegPolledProcedure() adds a procedure to be called from the polling loop.
-  Procedures may *not* use sleep() or usleep() directly! (Its a stack issue, 
-  not a reentrancy problem). Procedures are automatically unregistered 
-  when called (they can re-register themselves). The 'interval' argument 
-  specifies how much time must elapse before the proc is scheduled to run - 
-  the default is {0,0}, ie schedule as soon as possible. Returns a non-zero 
+  Procedures may *not* use sleep() or usleep() directly! (Its a stack issue,
+  not a reentrancy problem). Procedures are automatically unregistered
+  when called (they can re-register themselves). The 'interval' argument
+  specifies how much time must elapse before the proc is scheduled to run -
+  the default is {0,0}, ie schedule as soon as possible. Returns a non-zero
   handle on success or -1 if error. Care should be taken to ensure that
   procedures registered with a high priority have an interval long enough
   to allow procedures with a low(er) priority to run.
-*/  
+*/
 
-int RegPolledProcedure( auto void (*proc)(void *), void *arg, 
-                        struct timeval *interval, unsigned int priority ) 
+int RegPolledProcedure( auto void (*proc)(void *), void *arg,
+                        struct timeval *interval, unsigned int priority )
 {
   struct polldata *thatp, *thisp, *chaintail;
   unsigned int i, mcount;
@@ -147,7 +148,7 @@ int RegPolledProcedure( auto void (*proc)(void *), void *arg,
       if (!pollsysdata.runlist)
       {
         for (i = 0; i < (sizeof(pollsysdata.nextrun)/
-            sizeof(pollsysdata.nextrun[0])); i++)
+                         sizeof(pollsysdata.nextrun[0])); i++)
           pollsysdata.nextrun[i]=NULL;
       }
       mcount = 1024/(sizeof(struct polldata));
@@ -159,10 +160,10 @@ int RegPolledProcedure( auto void (*proc)(void *), void *arg,
           fd = 0;
         for (i = 0; i < mcount; i++)
         {
-          thatp->next = (i<(mcount-1))?(thatp+1):(NULL);
+          thatp->next = (i<(mcount-1)) ? (thatp+1) : (NULL);
           thatp->chainhead = (i==0);
-          thatp->proc = NULL;  
-          thatp->inuse = 0;  
+          thatp->proc = NULL;
+          thatp->inuse = 0;
           thatp->fd = ++fd;
           thatp++;
         }
@@ -194,12 +195,14 @@ int RegPolledProcedure( auto void (*proc)(void *), void *arg,
     }
   }
   return (fd);
-}  
+}
 
 
-static void __initchk(void *dummy) { dummy = dummy; }
+static void __initchk(void *dummy) {
+  dummy = dummy;
+}
 int InitializePolling(void)
-{ 
+{
   int fd;
   if (pollsysdata.runlist != NULL)
     return 0;
@@ -232,7 +235,7 @@ int DeinitializePolling(void)
       free((void *)(thatp));
   }
   return 0;
-}  
+}
 
 void __RunPollingLoop( unsigned int secs, unsigned int usecs )
 {
@@ -274,7 +277,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
     CliTimerDiff( &until, &until, &overflow );
 
     runprio = MAX_POLL_RUNLEVEL;
-    
+
     do
     {
       thisp = NULL;
@@ -285,8 +288,8 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
       {
         dorun = 0;
 //printf("i");
-      
-        //could lock MUTEX here 
+
+        //could lock MUTEX here
         if ( !pollsysdata.runlist )
         {
           loopend = 1;
@@ -303,14 +306,14 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
           }
           if ((nextp = thisp->next) == NULL)
             nextp = pollsysdata.runlist;
-          loopend = ( !nextp || 
-                (pollsysdata.nextrun[runprio])->fd == nextp->fd );
+          loopend = ( !nextp ||
+                      (pollsysdata.nextrun[runprio])->fd == nextp->fd );
           if (thisp->inuse)
           {
             if ((thisp->priority == runprio) &&
-              (( now.tv_sec > thisp->execat.tv_sec ) ||
-              (( thisp->execat.tv_sec == now.tv_sec ) && 
-              ( now.tv_usec >= thisp->execat.tv_usec ))))
+                (( now.tv_sec > thisp->execat.tv_sec ) ||
+                 (( thisp->execat.tv_sec == now.tv_sec ) &&
+                ( now.tv_usec >= thisp->execat.tv_usec ))))
             {
               arg = thisp->arg;
               proc = thisp->proc;
@@ -325,12 +328,12 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
           }
         }
         //could unlock MUTEX here
-        
+
         if (dorun)
           (*proc)(arg);
         thisp = nextp;
       } while (!loopend);
-      
+
       if (reclock) /* ran at that level */
         runprio = MAX_POLL_RUNLEVEL; /* start over */
       else if (runprio > 0)
@@ -338,9 +341,9 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
       else
       {
         runprio = MAX_POLL_RUNLEVEL;
-        if (( now.tv_sec < until.tv_sec ) || (( now.tv_sec == until.tv_sec ) 
-          && ( now.tv_usec < until.tv_usec )))
-          usleep(100); 
+        if (( now.tv_sec < until.tv_sec ) || (( now.tv_sec == until.tv_sec )
+                                              && ( now.tv_usec < until.tv_usec )))
+          usleep(100);
         reclock = 1;
       }
 
@@ -353,35 +356,43 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
           now = until; /* exit loop and ensure overflow gets set to zero */
         }
       }
-    } while (( now.tv_sec < until.tv_sec ) || 
-              (( now.tv_sec == until.tv_sec ) && 
-               ( now.tv_usec < until.tv_usec )));
+    } while (( now.tv_sec < until.tv_sec ) ||
+             (( now.tv_sec == until.tv_sec ) &&
+              ( now.tv_usec < until.tv_usec )));
 
     /* store extra time spent, ready for next call */
     CliTimerDiff( &overflow, &now, &until );
 //printf("overflow = %lu,%06lu\n",overflow.tv_sec,overflow.tv_usec);
   }
-    
+
   --isrunning;
-  return;           
+  return;
 }
 
-// PolledSleep() and PolledUSleep() are automatic/default replacements for 
+// PolledSleep() and PolledUSleep() are automatic/default replacements for
 // sleep() and usleep() (see sleepdef.h) and allow the polling process to run.
 
-void PolledSleep( unsigned int seconds )   
-{ __RunPollingLoop( seconds, 0 ); }
+void PolledSleep( unsigned int seconds )
+{
+  __RunPollingLoop( seconds, 0 );
+}
 
-void PolledUSleep( unsigned int useconds)  
-{ __RunPollingLoop( 0, useconds ); }
+void PolledUSleep( unsigned int useconds)
+{
+  __RunPollingLoop( 0, useconds );
+}
 
-// NonPolledSleep() and NonPolledUSleep() are "real" sleepers. This are 
-// required for real threads (a la Go_mt()) that need to yield control to 
+// NonPolledSleep() and NonPolledUSleep() are "real" sleepers. This are
+// required for real threads (a la Go_mt()) that need to yield control to
 // other threads.
 
-void NonPolledSleep( unsigned int seconds) 
-{ sleep( seconds ); }
+void NonPolledSleep( unsigned int seconds)
+{
+  sleep( seconds );
+}
 
 void NonPolledUSleep(unsigned int useconds)
-{ usleep( useconds ); }
+{
+  usleep( useconds );
+}
 

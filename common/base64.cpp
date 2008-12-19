@@ -1,38 +1,39 @@
-/* 
+/*
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * On success, both functions return the number of bytes in the outbuf (not 
+ * On success, both functions return the number of bytes in the outbuf (not
  * counting the terminating '\0'). On error, both return < 0.
- * note: The outbuffer is terminated only if there is sufficient space 
+ * note: The outbuffer is terminated only if there is sufficient space
  * remaining after conversion.
  *
-*/ 
+*/
 const char *base64_cpp(void) {
-return "@(#)$Id: base64.cpp,v 1.12 2007/10/22 16:48:23 jlawson Exp $"; }
+  return "@(#)$Id: base64.cpp,v 1.13 2008/12/19 11:10:58 andreasb Exp $";
+}
 
-static const unsigned char base64table[64] = 
+static const unsigned char base64table[64] =
 {
   'A','B','C','D','E','F','G','H','I','J','K','L','M',
   'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
   'a','b','c','d','e','f','g','h','i','j','k','l','m',
   'n','o','p','q','r','s','t','u','v','w','x','y','z',
-  '0','1','2','3','4','5','6','7','8','9','+','/' 
+  '0','1','2','3','4','5','6','7','8','9','+','/'
 };
 
-int base64_encode(char *outbuf, const char *inbuf, 
+int base64_encode(char *outbuf, const char *inbuf,
                   unsigned int outbuflen, unsigned int inbuflen )
 { /* outbuff must be at least (((strlen(inbuf) + 2) / 3) * 4) bytes */
 
   int outlen = 0, errors = 0;
-    
+
   if (outbuflen < ((inbuflen + 2) / 3) * 4)
     errors++;
   else if (inbuflen)
   {
     #define B64_ENC(Ch) (char) (base64table[((unsigned char)(Ch)) & 63])
-    
+
     for (; inbuflen > 2; inbuflen -= 3, inbuf += 3)
     {
       *outbuf++ = B64_ENC(inbuf[0] >> 2);
@@ -63,7 +64,7 @@ int base64_encode(char *outbuf, const char *inbuf,
 
   if (errors)
     outlen = -1;
-    
+
   return outlen;
 }
 
@@ -78,7 +79,7 @@ int base64_decode(char *outbuf, const char *inbuf,
 
   for (c = 0; c < ((int)sizeof(decoder)); c++)
     decoder[c] = '\0';
-  for (c = (sizeof(base64table)-1); c >= 0 ; c--) 
+  for (c = (sizeof(base64table)-1); c >= 0 ; c--)
     decoder[base64table[c]] = ((unsigned char)(c+1));
 
   while (!errors)
@@ -138,6 +139,6 @@ int base64_decode(char *outbuf, const char *inbuf,
 
   if (errors)
     outlen = -1;
-    
+
   return outlen;
-}  
+}

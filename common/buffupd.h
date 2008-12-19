@@ -3,11 +3,11 @@
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
-*/ 
+*/
 #ifndef __BUFFUPD_H__
-#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.15 2007/10/22 16:48:24 jlawson Exp $"
+#define __BUFFUPD_H__ "@(#)$Id: buffupd.h,v 1.16 2008/12/19 11:10:58 andreasb Exp $"
 
-// pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH. 
+// pass flags ORd with BUFFERUPDATE_FETCH/*_FLUSH.
 // if interactive, prints "Input buffer full. No fetch required" etc.
 // returns updated flags or < 0 if failed. (offlinemode!=0/NetOpen() etc)
 
@@ -30,7 +30,7 @@ int BufferCheckIfUpdateNeeded(Client *client, int contestid, int upd_flags);
 #define BUFFERUPDATE_STATE_NEWS      (BUFFERUPDATE_LASTBIT<<1)
 #define BUFFERUPDATE_STATE_TRANSERR  (BUFFERUPDATE_LASTBIT<<2)
 #define BUFFERUPDATE_STATE_MSGPOSTED (BUFFERUPDATE_LASTBIT<<3)
-int BufferNetUpdate(Client *client,int updatereq_flags, int break_pending, 
+int BufferNetUpdate(Client *client,int updatereq_flags, int break_pending,
                     int interactive, char *loaderflags_map);
 
 // define any/all/some of the following to TRACE_OUT(x) for sectional tracing

@@ -3,16 +3,17 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * Created by Cyrus Patel <cyp@fb14.uni-mainz.de> 
+ * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
  * ---------------------------------------------------------------
  * This file contains functions for getting/setting/clearing
- * "mode" requests (--flush,--fetch etc) and the like. Client::Run() will 
+ * "mode" requests (--flush,--fetch etc) and the like. Client::Run() will
  * clear/run the modes when appropriate.
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-return "@(#)$Id: modereq.cpp,v 1.41 2007/10/22 16:48:26 jlawson Exp $"; }
+  return "@(#)$Id: modereq.cpp,v 1.42 2008/12/19 11:10:59 andreasb Exp $";
+}
 
 //#define TRACE
 
@@ -54,15 +55,15 @@ int ModeReqIsProjectLimited(int mode, unsigned int contest_i)
   unsigned long l = 0;
   if (contest_i < CONTEST_COUNT)
   {
-    if (mode == MODEREQ_BENCHMARK || 
+    if (mode == MODEREQ_BENCHMARK ||
         mode == MODEREQ_BENCHMARK_QUICK ||
         mode == MODEREQ_BENCHMARK_ALLCORE )
       l = modereq.bench_projbits;
     else if (mode == MODEREQ_TEST ||
-          mode == MODEREQ_TEST_ALLCORE )
+             mode == MODEREQ_TEST_ALLCORE )
       l = modereq.test_projbits;
     else if (mode == MODEREQ_STRESS ||
-          mode == MODEREQ_STRESS_ALLCORE )
+             mode == MODEREQ_STRESS_ALLCORE )
       l = modereq.stress_projbits;
     l &= (1L<<contest_i);
   }
@@ -74,12 +75,12 @@ int ModeReqIsProjectLimited(int mode, unsigned int contest_i)
 int ModeReqLimitProject(int mode, unsigned int contest_i)
 {
   unsigned long l;
-  if (contest_i > CONTEST_COUNT) 
+  if (contest_i > CONTEST_COUNT)
     return -1;
   l = 1<<contest_i;
   if (l == 0) /* wrapped */
     return -1;
-  if (mode == MODEREQ_BENCHMARK || 
+  if (mode == MODEREQ_BENCHMARK ||
       mode == MODEREQ_BENCHMARK_QUICK ||
       mode == MODEREQ_BENCHMARK_ALLCORE )
     modereq.bench_projbits |= l;
@@ -110,8 +111,8 @@ int ModeReqSetArg(int mode, const void *arg)
     return -1;
   ModeReqSet(mode);
   return 0;
-}  
-  
+}
+
 /* --------------------------------------------------------------- */
 
 int ModeReqIsSet(int modemask)
@@ -163,16 +164,16 @@ int ModeReqIsRunning(void)
 int ModeReqRun(Client *client)
 {
   int retval = 0;
-  
+
   if (++modereq.isrunning == 1)
   {
     int restart = ((modereq.reqbits & MODEREQ_RESTART) != 0);
     modereq.reqbits &= ~MODEREQ_RESTART;
-    
+
     while ((modereq.reqbits & MODEREQ_ALL)!=0)
     {
       unsigned int bits = modereq.reqbits;
-      if ((bits & (MODEREQ_BENCHMARK | 
+      if ((bits & (MODEREQ_BENCHMARK |
                    MODEREQ_BENCHMARK_QUICK |
                    MODEREQ_BENCHMARK_ALLCORE )) != 0)
       {
@@ -189,7 +190,7 @@ int ModeReqRun(Client *client)
             if (CheckExitRequestTriggerNoIO())
               break;
             if (sel_contests == 0 /*none set==all set*/
-             || (sel_contests & (1L<<contest)) != 0)
+                || (sel_contests & (1L<<contest)) != 0)
             {
               if ((bits & (MODEREQ_BENCHMARK_ALLCORE))!=0)
                 if(client->corenumtotestbench < 0)
@@ -210,14 +211,14 @@ int ModeReqRun(Client *client)
       {
         DisplayHelp(modereq.helpoption);
         modereq.helpoption = (const char *)0;
-        modereq.reqbits &= ~(MODEREQ_CMDLINE_HELP);        
+        modereq.reqbits &= ~(MODEREQ_CMDLINE_HELP);
         retval |= (MODEREQ_CMDLINE_HELP);
       }
       if ((bits & (MODEREQ_CONFIG | MODEREQ_CONFRESTART)) != 0)
       {
-	/* cmdline_config is set if there is an explicit --config on the cmdline */
-	/* Configure() returns <0=error,0=exit+nosave,>0=exit+save */
-	Configure(client,(!(!modereq.cmdline_config))/* nottycheck */);
+        /* cmdline_config is set if there is an explicit --config on the cmdline */
+        /* Configure() returns <0=error,0=exit+nosave,>0=exit+save */
+        Configure(client,(!(!modereq.cmdline_config)) /* nottycheck */);
         /* it used to be such that restart would only be posted on an exit+save */
         /* but now we restart for other retvals too, otherwise the GUI windows */
         /* end up with half-assed content */
@@ -246,7 +247,7 @@ int ModeReqRun(Client *client)
         }
         modereq.reqbits &= ~(MODEREQ_FETCH | MODEREQ_FLUSH | MODEREQ_FQUIET);
       }
-      if ((bits & MODEREQ_IDENT) != 0)    
+      if ((bits & MODEREQ_IDENT) != 0)
       {
         CliIdentifyModules();
         modereq.reqbits &= ~(MODEREQ_IDENT);
@@ -274,7 +275,7 @@ int ModeReqRun(Client *client)
       }
       if ((bits & MODEREQ_CPUINFO) != 0)
       {
-        DisplayProcessorInformation(); 
+        DisplayProcessorInformation();
         modereq.reqbits &= ~(MODEREQ_CPUINFO);
         retval |= (MODEREQ_CPUINFO);
       }
@@ -283,7 +284,7 @@ int ModeReqRun(Client *client)
         int testfailed = 0;
         do
         {
-          unsigned int contest; 
+          unsigned int contest;
           unsigned long sel_contests = modereq.test_projbits;
           modereq.test_projbits = 0;
 
@@ -295,7 +296,7 @@ int ModeReqRun(Client *client)
               break;
             }
             if (sel_contests == 0 /*none set==all set*/
-             || (sel_contests & (1L<<contest)) != 0)
+                || (sel_contests & (1L<<contest)) != 0)
             {
               if ((bits & (MODEREQ_TEST_ALLCORE)) != 0)
               {
@@ -311,7 +312,7 @@ int ModeReqRun(Client *client)
                 }
               }
               else if ( SelfTest( contest ) < 0 )
-                 testfailed = 1;
+                testfailed = 1;
             }
           }
         } while (!testfailed && modereq.test_projbits);
@@ -323,7 +324,7 @@ int ModeReqRun(Client *client)
         int testfailed = 0;
         do
         {
-          unsigned int contest; 
+          unsigned int contest;
           unsigned long sel_contests = modereq.stress_projbits;
           modereq.stress_projbits = 0;
 
@@ -335,7 +336,7 @@ int ModeReqRun(Client *client)
               break;
             }
             if (sel_contests == 0 /*none set==all set*/
-             || (sel_contests & (1L<<contest)) != 0)
+                || (sel_contests & (1L<<contest)) != 0)
             {
               if ((bits & (MODEREQ_STRESS_ALLCORE)) != 0)
               {
@@ -351,7 +352,7 @@ int ModeReqRun(Client *client)
                 }
               }
               else if ( StressTest( contest ) < 0 )
-                 testfailed = 1;
+                testfailed = 1;
             }
           }
         } while (!testfailed && modereq.stress_projbits);
@@ -370,7 +371,7 @@ int ModeReqRun(Client *client)
         break;
       }
     } //end while
-    
+
     if (restart)
       RaiseRestartRequestTrigger();
   } //if (++isrunning == 1)

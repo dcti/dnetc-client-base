@@ -3,15 +3,15 @@
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
-*/ 
+*/
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.36 2007/10/22 16:48:25 jlawson Exp $"
+#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.37 2008/12/19 11:10:58 andreasb Exp $"
 
 // ConIsScreen() returns non-zero if console represents the screen
 // also returns 0 if the console is not initialized.
 int ConIsScreen(void);
 
-// Are we running under a non-command line oriented UI? 
+// Are we running under a non-command line oriented UI?
 // (for cases where GUIishness will have been determined at runtime)
 int ConIsGUI(void);
 

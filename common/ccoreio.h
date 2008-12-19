@@ -7,21 +7,21 @@
  * Parameter/Result definitions for crypto cores:
  * Caution: ******** this header is used from C source ************
  *
- * Crypto cores take a RC5UnitWork struct as an argument, and 
+ * Crypto cores take a RC5UnitWork struct as an argument, and
  * a) [obsolete] return the number of keys they checked in that call
  * b) [TODO] return one of the result codes defined in the ResultCode enum
  *
  * The ideal core prototype is:
  * extern s32 (*core)(RC5UnitWork *, u32 *timeslice, void *scratch_area );
  * - which returns a ResultCode member, or 0xffffffff (-1) if error
- * - timeslice is a *pointer*. On input this is the number of timeslices to 
- *   do, and on return it contains the number of timeslices done. This may be 
+ * - timeslice is a *pointer*. On input this is the number of timeslices to
+ *   do, and on return it contains the number of timeslices done. This may be
  *   greater than the number requested.
- * - scratch_area is a membuffer of core dependant size. This buffer is part 
- *   of the problem object (ie created when the object is new'd) 
+ * - scratch_area is a membuffer of core dependant size. This buffer is part
+ *   of the problem object (ie created when the object is new'd)
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.17 2008/11/23 03:00:11 jlawson Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.18 2008/12/19 11:10:58 andreasb Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 

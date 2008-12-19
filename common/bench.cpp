@@ -1,10 +1,11 @@
-/* 
+/*
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-return "@(#)$Id: bench.cpp,v 1.61 2008/02/17 16:24:29 kakace Exp $"; }
+  return "@(#)$Id: bench.cpp,v 1.62 2008/12/19 11:10:58 andreasb Exp $";
+}
 
 //#define TRACE
 
@@ -45,16 +46,16 @@ unsigned long BenchGetBestRate(unsigned int contestid)
 {
   TRACE_OUT((+1, "BenchGetBestRate(%d)\n", contestid));
   if (contestid < CONTEST_COUNT)
-  { 
+  {
     if (bestrate_tab[contestid] == 0)
-    { 
+    {
       // This may trigger a mini-benchmark, which will get the speed
       // we need and not waste time.
       selcoreGetSelectedCoreForContest( contestid );
     }
     if (bestrate_tab[contestid] == 0)
-    { 
-      TBenchmark(contestid, 2, 
+    {
+      TBenchmark(contestid, 2,
                  TBENCHMARK_CALIBRATION|TBENCHMARK_QUIET|TBENCHMARK_IGNBRK);
     }
     TRACE_OUT((-1, "BenchGetBestRate(%d) => %ld\n", contestid, bestrate_tab[contestid]));
@@ -70,7 +71,7 @@ static inline void __BenchSetBestRate(unsigned int contestid, unsigned long rate
 {
   TRACE_OUT((0, "__BenchSetBestRate(%d, %ld)\n", contestid, rate));
   if (contestid < CONTEST_COUNT)
-  { 
+  {
     if (rate > bestrate_tab[contestid])
       bestrate_tab[contestid] = rate;
   }
@@ -85,14 +86,14 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   /* non-preemptive os minimum yields per second */
   struct { int yps, did_adjust; } non_preemptive_os;
   long retvalue = -1L; /* assume error */
-  Problem *thisprob; 
-  u32 tslice; 
+  Problem *thisprob;
+  u32 tslice;
 
   if (!IsProblemLoadPermitted(-1 /*any thread*/, contestid))
     return 0;
 
   TRACE_OUT((+1,"TBenchmark(%u, %u, %d)\n",contestid,numsecs,flags));
-  
+
   /* ++++++ determine initial 'timeslice' +++++ */
 
   tslice = 0; /* zero means 'use calibrated value' */
@@ -104,23 +105,23 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
   else
   {
-    non_preemptive_os.yps = 1000/10; /* 10 ms minimum yield rate */ 
+    non_preemptive_os.yps = 1000/10; /* 10 ms minimum yield rate */
     tslice = 0; /* zero means 'use calibrated value' */
-  }  
+  }
   #elif (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) /* or win32s */
   if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
     numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
   else if (winGetVersion() < 400) /* win16 or win32s */
-  {  
-    non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */ 
+  {
+    non_preemptive_os.yps = 1000/20; /* 20 ms minimum yield rate */
     tslice = 0;  /* zero means 'use calibrated value' */
-  } 
+  }
   #elif (CLIENT_OS == OS_RISCOS)
   if ( ( flags & TBENCHMARK_CALIBRATION ) != 0 ) // 2 seconds without yield
     numsecs = ((numsecs > 2) ? (2) : (numsecs)); // ... is acceptable
   else if (riscos_check_taskwindow())
   {
-    non_preemptive_os.yps = 1000/100; /* 100 ms minimum yield rate */ 
+    non_preemptive_os.yps = 1000/100; /* 100 ms minimum yield rate */
     tslice = 0;  /* zero means 'use calibrated value' */
   }
   #endif
@@ -132,7 +133,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     {
       selcoreGetSelectedCoreForContest(contestid); /* let selcore message */
       //LogScreen("Calibrating ... " );
-    }  
+    }
     res = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
     if ( res == -1 ) /* LoadState failed */
     {
@@ -151,7 +152,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       }
       TRACE_OUT((-1,"TBenchmark()=-1 (Calibration failed)\n"));
       return -1;
-    }  
+    }
     tslice = (((u32)res) + 0xFFF) & 0xFFFFF000;
     //if ((flags & TBENCHMARK_QUIET) == 0)
     //  LogScreen("\rCalibrating ... done. (%lu)\n", (unsigned long)tslice );
@@ -161,19 +162,19 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 //    tslice <<= 1; /* try for two second steps */
   }
   if (tslice == 0)
-  { 
+  {
     tslice = 0x10000;
     if (non_preemptive_os.yps)
       tslice = 4096;
   }
 
   /* ++++++ run the benchmark +++++ */
-  
+
   thisprob = ProblemAlloc();
   if (thisprob)
   {
-    if ( ProblemLoadState( thisprob, CONTESTWORK_MAGIC_BENCHMARK, 
-                             contestid, tslice, 0, 0, 0, 0) == 0)
+    if ( ProblemLoadState( thisprob, CONTESTWORK_MAGIC_BENCHMARK,
+                           contestid, tslice, 0, 0, 0, 0) == 0)
     {
       const char *contname = CliGetContestNameFromID(contestid);
       int silent = 1, run = RESULT_WORKING; u32 bestlo = 0, besthi = 0;
@@ -186,8 +187,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         LogScreen("%s: Benchmarking ... ", contname );
       }
 
-      /* Sleep a bit to a) try to begin the while loop at the top of a 
-      ** scheduling quantum, b) Also, per-contest bench can be very stressful 
+      /* Sleep a bit to a) try to begin the while loop at the top of a
+      ** scheduling quantum, b) Also, per-contest bench can be very stressful
       ** if there are a lot of cores per contest.
       */
       NonPolledUSleep(50000); /* 50 millisecs */
@@ -199,8 +200,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
         {
           if (!thisprob->pub_data.last_runtime_is_invalid &&
-             non_preemptive_os.did_adjust < 30 /* don't do this too often */
-             && thisprob->pub_data.runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
+              non_preemptive_os.did_adjust < 30 /* don't do this too often */
+              && thisprob->pub_data.runtime_sec >= ((u32)(2+non_preemptive_os.did_adjust)))
           {
             u32 newtslice;
             ProblemInfo info;
@@ -227,8 +228,8 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           ThreadSwitchLowPriority();
           #endif
         }
-        else /* preemptive environment */ 
-             if (!thisprob->pub_data.last_runtime_is_invalid)
+        else /* preemptive environment */
+        if (!thisprob->pub_data.last_runtime_is_invalid)
         {
           ProblemInfo info;
           if (ProblemGetInfo(thisprob, &info, P_INFO_DCOUNT) == -1)
@@ -236,20 +237,20 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
             run = -2;
             break;
           }
-          ProblemComputeRate( contestid, thisprob->pub_data.runtime_sec, 
-                                         thisprob->pub_data.runtime_usec,
-                                         info.dcounthi, info.dcountlo,
-                                         &ratehi, &ratelo, 0, 0 );
+          ProblemComputeRate( contestid, thisprob->pub_data.runtime_sec,
+                              thisprob->pub_data.runtime_usec,
+                              info.dcounthi, info.dcountlo,
+                              &ratehi, &ratelo, 0, 0 );
 
           tslice = thisprob->pub_data.tslice;
           if (ratehi > besthi || (ratehi == besthi && ratelo > bestlo))
           {
-            bestlo = ratelo; 
+            bestlo = ratelo;
             besthi = ratehi;
 //printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "BEST!");
           }
           else
-          { 
+          {
             ratehi = besthi;
             ratelo = bestlo;
 //printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "");
@@ -264,7 +265,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         {
           run = -1;
           break;
-        }   
+        }
         if ((flags & TBENCHMARK_IGNBRK)==0 && CheckExitRequestTriggerNoIO())
         {
           if (!silent)
@@ -275,34 +276,34 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         permille = 1000; /* assume finished */
         if (run == RESULT_WORKING) /* not finished */
         {
-          permille = ((thisprob->pub_data.runtime_sec  * 1000) + 
+          permille = ((thisprob->pub_data.runtime_sec  * 1000) +
                       (thisprob->pub_data.runtime_usec / 1000)) / numsecs;
           if (permille > 1000)
             permille = 1000;
         }
         if (permille == 1000 || last_permille != (permille / 10))
-        {    
+        {
           if (!silent)
-            LogScreen("\r%s: Benchmarking ... %u.%02u%% done", 
-                       contname, (unsigned int)(permille/10), 
-                               (unsigned int)((permille%10)*10) );
+            LogScreen("\r%s: Benchmarking ... %u.%02u%% done",
+                      contname, (unsigned int)(permille/10),
+                      (unsigned int)((permille%10)*10) );
           last_permille = (permille / 10);
           //ClientEventSyncPost(CLIEVENT_BENCHMARK_BENCHING, (long)problem );
-        }                                 
+        }
         if (permille == 1000) /* time is up or ran out of work */
         {
           char ratebuf[32];
           ProblemInfo info;
           info.rate.ratebuf = ratebuf;
           info.rate.size = sizeof(ratebuf);
-          
+
           if (ProblemGetInfo(thisprob, &info, P_INFO_E_TIME | P_INFO_RATEBUF |
-                                              P_INFO_RATE) == -1)
+                             P_INFO_RATE) == -1)
           {
             run = -4;
             break;
           }
-          
+
           if (bestlo || besthi)
           {
             ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &(info.ratehi),
@@ -315,13 +316,13 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
           __BenchSetBestRate(contestid, retvalue);
           if (!silent)
           {
-            struct timeval tv; 
+            struct timeval tv;
             tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
             LogScreen("\r");
             Log("%s: Benchmark for core #%d (%s)\n%s [%s/sec]\n",
-               contname, thisprob->pub_data.coresel, 
-               selcoreGetDisplayName(contestid, thisprob->pub_data.coresel),
-               CliGetTimeString( &tv, 2 ), info.rate.ratebuf );
+                contname, thisprob->pub_data.coresel,
+                selcoreGetDisplayName(contestid, thisprob->pub_data.coresel),
+                CliGetTimeString( &tv, 2 ), info.rate.ratebuf );
           }
           //ClientEventSyncPost(CLIEVENT_BENCHMARK_FINISHED, (long)problem );
           break;
@@ -346,4 +347,4 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 
   TRACE_OUT((-1,"TBenchmark()=%ld\n", retvalue));
   return retvalue;
-}  
+}

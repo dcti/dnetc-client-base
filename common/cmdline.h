@@ -3,14 +3,14 @@
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
-*/ 
+*/
 #ifndef __CMDLINE_H__
-#define __CMDLINE_H__ "@(#)$Id: cmdline.h,v 1.10 2007/10/22 16:48:24 jlawson Exp $"
+#define __CMDLINE_H__ "@(#)$Id: cmdline.h,v 1.11 2008/12/19 11:10:58 andreasb Exp $"
 
 // runlevel=0 = parse cmdline, >0==exec modes && print messages
 // returns !0 if app should be terminated; (retcodeP then has exit code)
-int ParseCommandline( Client *client, 
-                      int run_level, int argc, const char *argv[], 
+int ParseCommandline( Client *client,
+                      int run_level, int argc, const char *argv[],
                       int *retcodeP, int restarted );
 
 #endif /* __CMDLINE_H__ */

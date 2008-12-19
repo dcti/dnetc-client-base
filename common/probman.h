@@ -3,9 +3,9 @@
  * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
-*/ 
+*/
 #ifndef __PROBMAN_H__
-#define __PROBMAN_H__ "@(#)$Id: probman.h,v 1.9 2007/10/22 16:48:27 jlawson Exp $"
+#define __PROBMAN_H__ "@(#)$Id: probman.h,v 1.10 2008/12/19 11:10:59 andreasb Exp $"
 
 //Return a specific Problem object or NULL if that problem doesn't exist
 Problem *GetProblemPointerFromIndex(unsigned int probindex);

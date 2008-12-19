@@ -9,7 +9,8 @@
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *probmem_cpp(void) {
-return "@(#)$Id: coremem.cpp,v 1.6 2008/10/27 09:49:33 oliver Exp $"; }
+  return "@(#)$Id: coremem.cpp,v 1.7 2008/12/19 11:10:58 andreasb Exp $";
+}
 
 //#define TRACE
 
@@ -22,9 +23,9 @@ return "@(#)$Id: coremem.cpp,v 1.6 2008/10/27 09:49:33 oliver Exp $"; }
 #if defined(HAVE_MULTICRUNCH_VIA_FORK)
 
 #if ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_HPUX))
-    /* MAP_ANON|MAP_SHARED is completely unsupported in linux */
-    /* <=2.2.2, and flakey in 2.2.3. MAP_SHARED is broken in 2.0 */
-    /* MAP_SHARED is broken on HPUX <= 9.0 */
+/* MAP_ANON|MAP_SHARED is completely unsupported in linux */
+/* <=2.2.2, and flakey in 2.2.3. MAP_SHARED is broken in 2.0 */
+/* MAP_SHARED is broken on HPUX <= 9.0 */
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #define USE_SYSV_SHM
@@ -84,7 +85,7 @@ static void *__shm_cmem_alloc(unsigned int sz)
     if (mem == ((void *)-1))
       mem = (void *)0;
     TRACE_OUT((0,"mmap(0, %u, ..., MAP_ANON|MAP_SHARED, -1, 0)=%p\n%s\n",
-                  sz, mem, ((mem)?(""):(strerror(errno))) ));
+               sz, mem, ((mem) ? ("") : (strerror(errno))) ));
   }
   #else /* SysV style */
   {
@@ -97,7 +98,7 @@ static void *__shm_cmem_alloc(unsigned int sz)
       close(fd);
     }
     TRACE_OUT((0, "mmap(0, %u, ..., MAP_SHARED, fd=%d, 0)=%p\n%s\n",
-                  sz, fd, mem, ((mem)?(""):(strerror(errno))) ));
+               sz, fd, mem, ((mem) ? ("") : (strerror(errno))) ));
   }
   #endif
   if (mem)

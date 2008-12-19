@@ -5,12 +5,12 @@
  * Any other distribution or use of this source violates copyright.
  *
  * ----------------------------------------------------------------------
- * This module contains functions for obtaining/formatting/manipulating 
- * the time. 
+ * This module contains functions for obtaining/formatting/manipulating
+ * the time.
  * ----------------------------------------------------------------------
-*/ 
+*/
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.30 2007/10/22 16:48:24 jlawson Exp $"
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.31 2008/12/19 11:10:58 andreasb Exp $"
 
 #include "baseincs.h" /* struct timeval */
 
@@ -28,7 +28,7 @@ struct timeval *CliTimer( struct timeval *tv );
 // before it the time is returned. CliTimerSetDelta() returns the old delta.
 int CliTimerSetDelta( int delta );
 
-// Get time as string. Curr time if tv is NULL. Separate buffers for 
+// Get time as string. Curr time if tv is NULL. Separate buffers for
 // each type: See source for valid types.
 const char *CliGetTimeString( const struct timeval *tv, int strtype );
 
@@ -39,7 +39,7 @@ int CliGetMonotonicClock( struct timeval *tv );
 int CliClock( struct timeval *tv );
 
 // Get thread/process (user) time. Returns 0=ok, -1 if error/not-supported
-int CliGetThreadUserTime( struct timeval *tv ); 
+int CliGetThreadUserTime( struct timeval *tv );
 
 // Add 'tv1' to 'tv2' and store in 'result'. Uses curr time if a 'tv' is NULL
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
@@ -49,7 +49,7 @@ int CliTimerAdd( struct timeval *result, const struct timeval *tv1, const struct
 // tv1/tv2 are not modified (unless 'result' is the same as one of them).
 int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 );
 
-// do we have a valid timezone to work with? 
+// do we have a valid timezone to work with?
 // (currently supported by DOS,WIN[16],OS/2 only)
 int CliIsTimeZoneInvalid(void);
 
