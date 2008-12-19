@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.23 2008/12/12 17:22:18 andreasb Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.24 2008/12/19 00:22:06 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -281,7 +281,13 @@ int apply_selcore_substitution_rules_rc572(int cindex)
         cindex = 1;     /* default core */
       }
     }
-
+  }
+#elif (CLIENT_CPU == CPU_CUDA)
+  if (GetProcessorType(1) < 256 * 36) {
+    /* the 2/4-pipe cores require 36/35 registers per thread, so the 256-thread cores are only feasible on a GTX */
+    if (cindex == 8 || cindex == 11) {
+      cindex = 0;    /* default: 1-pipe 64-thread */
+    }
   }
 #endif
 

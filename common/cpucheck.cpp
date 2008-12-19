@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.141 2008/12/17 23:25:14 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.142 2008/12/19 00:22:06 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2074,7 +2074,10 @@ static long __GetRawProcessorID(const char **cpuname)
 
   if (cpuname)
     *cpuname = &namebuf[0];
-  return 1;
+
+  // FIXME: we need some ID to distinguish different cards
+  // for now the register count is enough to decide whether 256-thread cores are feasible
+  return deviceProp.regsPerBlock;
 }
 #endif
 
