@@ -500,24 +500,23 @@ __global__ void cuda_4pipe(const u32 plain_hi, const u32 plain_lo,
 
 #define ROTL_BLOCK_i0_j1 \
   S[0] = ROTL3(S[0]+(S[25]+L[0])); \
-  L[1] = ROTL(L[1]+(S[0]+L[0]),(S[0]+L[0])); \
+  L[1] = ROTL(L[1]+(S[0]+L[0]),(S[0]+L[0]));
 
 #define ROTL_BLOCK_i0_j2 \
   S[0] = ROTL3(S[0]+(S[25]+L[1])); \
-  L[2] = ROTL(L[2]+(S[0]+L[1]),(S[0]+L[1])); \
+  L[2] = ROTL(L[2]+(S[0]+L[1]),(S[0]+L[1]));
 
 #define ROTL_BLOCK_j0(i) \
   S[i] = ROTL3(S[i]+(S[i-1]+L[2])); \
-  L[0] = ROTL(L[0]+(S[i]+L[2]),(S[i]+L[2])); \
+  L[0] = ROTL(L[0]+(S[i]+L[2]),(S[i]+L[2]));
 
 #define ROTL_BLOCK_j1(i) \
   S[i] = ROTL3(S[i]+(S[i-1]+L[0])); \
-  L[1] = ROTL(L[1]+(S[i]+L[0]),(S[i]+L[0])); \
+  L[1] = ROTL(L[1]+(S[i]+L[0]),(S[i]+L[0]));
 
 #define ROTL_BLOCK_j2(i) \
   S[i] = ROTL3(S[i]+(S[i-1]+L[1])); \
-  L[2] = ROTL(L[2]+(S[i]+L[1]),(S[i]+L[1])); \
-
+  L[2] = ROTL(L[2]+(S[i]+L[1]),(S[i]+L[1]));
 
     /* ---------- */
 
