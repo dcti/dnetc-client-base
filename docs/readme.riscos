@@ -1,7 +1,7 @@
 
  distributed.net client for RISC OS v3.10 or later.
  Released by Peter Teichmann <teichp@distributed.net>
- Document revision $Id: readme.riscos,v 1.8 2008/12/22 21:16:22 teichp Exp $
+ Document revision $Id: readme.riscos,v 1.9 2008/12/22 21:21:27 teichp Exp $
 
  Welcome to the distributed.net client.
 
@@ -53,7 +53,7 @@
 
     For more information have a look at http://faq.distributed.net/
 
- 2.0  Several notes ---------------------------------------------------------
+ 2.0  Important notes ---------------------------------------------------------
 
     The client became quite memory-hungry. You need at least 3652KB free
     to participate in the RC5-72 contest, and 7752KB for OGR-26. It will
