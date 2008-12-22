@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.39 2008/12/08 04:02:03 umccullough Exp $"; }
+return "@(#)$Id: util.cpp,v 1.40 2008/12/22 11:39:23 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -437,7 +437,7 @@ const int* projectmap_build( int* buf, int* state, const char *strtomap )
       scratch[i++]=(char)toupper(*strtomap++);
     while (*strtomap && isspace(*strtomap))
       strtomap++;
-    if (i && *strtomap == ':' || *strtomap == '=')
+    if (i && (*strtomap == ':' || *strtomap == '='))
     {
       while (*strtomap && (*strtomap==':' || *strtomap=='=' || isspace(*strtomap)))
        strtomap++;
