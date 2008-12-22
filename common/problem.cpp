@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.190 2008/12/22 01:46:44 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.191 2008/12/22 10:55:54 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -655,6 +655,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   thisprob->pub_data.loaderflags = 0;
   thisprob->pub_data.contest = contestid;
   thisprob->pub_data.tslice = _iterations;
+  thisprob->pub_data.tslice_increment_hint = 0;
   thisprob->pub_data.was_reset = 0;
   thisprob->pub_data.was_truncated = 0;
   thisprob->pub_data.is_random = genned_random;
@@ -772,7 +773,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
       #if (CLIENT_CPU == CPU_CUDA)
-      thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = thisprob->pub_data.tslice;
+      thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = 0;
       thisprob->priv_data.rc5_72unitwork.best_time = -1;
       #endif
 
@@ -1249,10 +1250,6 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
 
       RESTORE_CLIENT_OS_CONTEXT
 
-#if (CLIENT_CPU == CPU_CUDA)
-      thisprob->pub_data.tslice = thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment;
-#endif
-
       if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
       {
         keystocheck = *keyscheckedP; /* always so */
@@ -1673,6 +1670,10 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
                              using_ptime, &s_using_ptime, last_resultcode );
         core_prob->pub_data.core_run_count++;
         core_prob->pub_data.tslice = iterations;
+#if (CLIENT_CPU == CPU_CUDA)
+        // FIXME there could be a better way to do this
+        core_prob->pub_data.tslice_increment_hint = core_prob->priv_data.rc5_72unitwork.optimal_timeslice_increment;
+#endif
 
         /*
         ** make the necessary modifications to the private area

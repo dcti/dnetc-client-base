@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.101 2008/11/23 03:00:12 jlawson Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.102 2008/12/22 10:55:54 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -141,6 +141,7 @@ struct problem_publics
   int coresel;                   /*  |                                   */
   int client_cpu;                /*  | effective CLIENT_CPU              */
   u32 tslice;                    /* -' -- adjusted by non-preemptive OSs */
+  u32 tslice_increment_hint;     /* hint from core                       */
   const char *was_truncated;     /* set (reason msg) if truncated        */
   int was_reset;                 /* set if loadstate reset the block     */
   int is_random;                 /* set if problem was RC5 'random'      */

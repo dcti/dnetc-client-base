@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.141 2008/12/13 16:10:58 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.142 2008/12/22 10:55:54 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -56,7 +56,7 @@ static struct __dyn_timeslice_struct
   {  CSC,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
   {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000,  0 },
 #if (CLIENT_CPU == CPU_CUDA) // HACK! The increment value should come from the core!
-  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  65535*64*4*4 },
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  65535 * 64 * 1 },
 #else
   {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  0 },
 #endif
@@ -572,7 +572,7 @@ void Go_mt( void * parm )
             else
             #endif
             {
-              const u32 fixed_increment = thrparams->dyn_timeslice_table[contest_i].increment;
+              const u32 fixed_increment = thisprob->pub_data.tslice_increment_hint;
               const u32 usec = thrparams->dyn_timeslice_table[contest_i].usec;
               const u32 usec5perc = usec / 20;
               if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
