@@ -83,7 +83,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   u8 * cuda_results = NULL;
 
   cudaStream_t core;
-  cudaEvent_t stop;
+  cudaEvent_t start, stop;
   cudaError_t last_error;
 
 #ifdef DISPLAY_TIMESTAMPS
@@ -113,6 +113,12 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   if( cudaStreamCreate(&core) != (cudaError_t) CUDA_SUCCESS ) {
     retval = -1;
     fprintf(stderr, "RC5 cuda: ERROR: cudaStreamCreate\r\n");
+    goto error_exit;
+  }
+
+  if( cudaEventCreate(&start) != (cudaError_t) CUDA_SUCCESS ) {
+    retval = -1;
+    fprintf(stderr, "RC5 cuda: ERROR: cudaEventCreate\r\n");
     goto error_exit;
   }
 
@@ -184,8 +190,15 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
     /* Execute the CUDA core */
 
-    if (waitmode == 1)
+    if (waitmode == 1) {
       CliTimer(&tv_core_start);
+    } else if (waitmode == 2) {
+      if (cudaEventRecord(start, core) != (cudaError_t) CUDA_SUCCESS) {
+        retval = -1;
+        fprintf(stderr, "RC5 cuda: ERROR: cudaEventRecord\r\n");
+        goto error_exit;
+      }
+    }
 
     cuda_1pipe<<<grid_dimension, block_dimension, 0, core>>>(
       rc5_72unitwork->plain.hi, rc5_72unitwork->plain.lo,
@@ -257,6 +270,41 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
           best_time = elapsed;
       }
       //fprintf(stderr, "\rRC5 cuda: slept=%d best_time=%ld elapsed=%ld process_amount=%d\n", slept, best_time, elapsed, process_amount);
+    } else if (waitmode == 2) {
+      static long best_time = -1;
+      float gpu_time;
+      long expected = 0, elapsed = 0;
+      int slept = 0;
+      if (best_time <= 0) {
+        for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
+          NonPolledUSleep(min_sleep_interval);
+      } else {
+        expected = (long) ((double)best_time * ((double)process_amount / (double)optimal_process_amount));
+        //fprintf(stderr, "\rRC5 cuda: sleep_now=%d best_time=%d\n", expected, best_time);
+        if (expected >= min_sleep_interval) {
+          // Sleep for entire expected time (since it is an accurate time from the GPU clock) rounded
+          // down to the nearest multiple of min_sleep_interval
+          NonPolledUSleep((expected/min_sleep_interval) * min_sleep_interval);
+          ++slept;
+        }
+      }
+      if (cudaEventSynchronize(stop) != (cudaError_t) CUDA_SUCCESS) {
+        retval = -1;
+        fprintf(stderr, "RC5 cuda: ERROR: cudaEventSynchronize\r\n");
+        goto error_exit;
+      }
+      if (process_amount == optimal_process_amount) {
+        // update best speed
+        if (cudaEventElapsedTime(&gpu_time,start,stop) != (cudaError_t) CUDA_SUCCESS) {
+          retval = -1;
+          fprintf(stderr, "RC5 cuda: ERROR: cudaEventElapsedTime\r\n");
+          goto error_exit;
+        }
+        elapsed = (long)(1000.0 * gpu_time);
+        if (best_time <= 0 || best_time > elapsed ) {
+          best_time = elapsed;
+        }
+      }
     } else {
       if (cudaEventSynchronize(stop) != (cudaError_t) CUDA_SUCCESS) {
         retval = -1;
@@ -351,12 +399,16 @@ error_exit:
     cudaFree(cuda_results);
   }
 
-  if(core) {
-    cudaStreamDestroy(core);
-  }
-
   if(stop) {
     cudaEventDestroy(stop);
+  }
+
+  if(start) {
+    cudaEventDestroy(start);
+  }
+
+  if(core) {
+    cudaStreamDestroy(core);
   }
 
   if(results) {
@@ -627,4 +679,4 @@ __global__ void cuda_1pipe(const u32 plain_hi, const u32 plain_lo,
   }
 }
 
-// vim: syntax=cpp
+// vim: syntax=cpp:et:sw=2:ts=2
