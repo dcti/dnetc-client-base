@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-2pipe.cu,v 1.22 2008/12/22 01:27:57 andreasb Exp $
+ * $Id: r72cuda-2pipe.cu,v 1.23 2008/12/22 01:46:44 andreasb Exp $
 */
 
 #include <stdio.h>
@@ -216,7 +216,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
         NonPolledUSleep(min_sleep_interval);
       //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
     } else if (waitmode == 1) {
-      static long best_time = -1;
+      long best_time = rc5_72unitwork->best_time;
       long expected = 0, elapsed = 0;
       int slept = 0;
       if (best_time <= 0) {
@@ -252,11 +252,11 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       if (process_amount == optimal_process_amount) {
         // update best speed
         if (best_time <= 0 || best_time > elapsed)
-          best_time = elapsed;
+          rc5_72unitwork->best_time = best_time = elapsed;
       }
       //fprintf(stderr, "\rRC5 cuda: slept=%d best_time=%ld elapsed=%ld process_amount=%d\n", slept, best_time, elapsed, process_amount);
     } else if (waitmode == 2) {
-      static long best_time = -1;
+      long best_time = rc5_72unitwork->best_time;
       float gpu_time;
       long expected = 0, elapsed = 0;
       int slept = 0;
@@ -287,7 +287,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
         }
         elapsed = (long)(1000.0 * gpu_time);
         if (best_time <= 0 || best_time > elapsed ) {
-          best_time = elapsed;
+          rc5_72unitwork->best_time = best_time = elapsed;
         }
       }
     } else {

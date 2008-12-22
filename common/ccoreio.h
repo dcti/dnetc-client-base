@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd)
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.19 2008/12/22 01:27:57 andreasb Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.20 2008/12/22 01:46:44 andreasb Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
@@ -64,6 +64,7 @@ typedef struct
   // HACK! better move these members to someplace else
   int threadnum; /* To track which GPU to use */
   int optimal_timeslice_increment; /* Best timeslice increment for the core */
+  long best_time; /* Remember the best time for optimal sleeping in subsequent runs */
 #endif
 } DNETC_PACKED RC5_72UnitWork;
 

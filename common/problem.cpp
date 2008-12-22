@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.189 2008/12/22 01:27:57 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.190 2008/12/22 01:46:44 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -773,6 +773,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
 
       #if (CLIENT_CPU == CPU_CUDA)
       thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = thisprob->pub_data.tslice;
+      thisprob->priv_data.rc5_72unitwork.best_time = -1;
       #endif
 
       break;
