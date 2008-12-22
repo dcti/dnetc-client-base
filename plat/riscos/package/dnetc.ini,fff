@@ -1,6 +1,9 @@
 [triggers]
-exit-flag-filename=exitrc5/now
+exit-flag-filename=exitfile
 
 [logging]
 log-file=logfile
 log-file-type="no limit"
+
+[buffers]
+checkpoint-filename=checkpoint

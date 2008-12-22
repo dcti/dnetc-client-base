@@ -1,2 +1,2 @@
 Set Dnetc$Dir <Obey$Dir>
-Echo { > <Dnetc$Dir>.exitrc5/now }
+Echo { > <Dnetc$Dir>.exitfile }
