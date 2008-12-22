@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-2pipe.cu,v 1.23 2008/12/22 01:46:44 andreasb Exp $
+ * $Id: r72cuda-2pipe.cu,v 1.24 2008/12/22 11:34:38 andreasb Exp $
 */
 
 #include <stdio.h>
@@ -78,7 +78,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   struct timeval tv_core_start;
   struct timeval tv_core_elapsed;
 
-  //fprintf(stderr, "\r\nRC5 cuda: iterations=%i\r\n", *iterations);
+  //fprintf(stderr, "\r\nRC5 cuda: iterations=%i (%i*%i+%i)\r\n", *iterations, *iterations / optimal_process_amount, optimal_process_amount, *iterations % optimal_process_amount);
 
   if( cudaGetDevice(&currentdevice) != (cudaError_t) CUDA_SUCCESS ) {
     retval = -1;
@@ -222,6 +222,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       if (best_time <= 0) {
         for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
           NonPolledUSleep(min_sleep_interval);
+        //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
       } else {
         expected = best_time * process_amount / optimal_process_amount;
         if (expected / 2 >= min_sleep_interval) {
@@ -263,6 +264,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       if (best_time <= 0) {
         for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
           NonPolledUSleep(min_sleep_interval);
+        //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
       } else {
         expected = (long) ((double)best_time * ((double)process_amount / (double)optimal_process_amount));
         //fprintf(stderr, "\rRC5 cuda: sleep_now=%d best_time=%d\n", expected, best_time);
@@ -290,6 +292,7 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
           rc5_72unitwork->best_time = best_time = elapsed;
         }
       }
+      //fprintf(stderr, "\rRC5 cuda: slept=%d best_time=%ld elapsed=%ld process_amount=%d\n", slept, best_time, elapsed, process_amount);
     } else {
       if (cudaEventSynchronize(stop) != (cudaError_t) CUDA_SUCCESS) {
         retval = -1;
