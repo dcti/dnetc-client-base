@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.142 2008/12/22 10:55:54 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.143 2008/12/22 11:09:10 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -43,36 +43,31 @@ struct __dyn_timeslice_struct
   unsigned int contest;
   u32 usec;              /* time */
   u32 max, min, optimal; /* ... timeslice/nodes */
-  u32 increment;         /* timeslice should be a multiple of increment unless it's zero */
 };
 
 // FIXME: allow obsolete projects to be omitted
 static struct __dyn_timeslice_struct
   default_dyn_timeslice_table[CONTEST_COUNT] =  /* for preempted crunchers */
 {
-  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
-  {  DES,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
-  {  OGR,     200000,  0x8000000,  0x00010,  0x10000,  0 },
-  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
-  {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000,  0 },
-#if (CLIENT_CPU == CPU_CUDA) // HACK! The increment value should come from the core!
-  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  65535 * 64 * 1 },
-#else
-  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  0 },
-#endif
-  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000,  0 },
+  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  DES,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR,     200000,  0x8000000,  0x00010,  0x10000 },
+  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000 },
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
 };
 // OK!
 static struct __dyn_timeslice_struct
   non_preemptive_dyn_timeslice_table[CONTEST_COUNT] = /* for co-op crunchers */
 {                                  /* adjusted by ClientRun() if appropriate */
-  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
-  {  DES,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
-  {  OGR,     200000,  0x8000000,  0x00010,  0x10000,  0 },
-  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000,  0 },
-  {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000,  0 },
-  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000,  0 },
-  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000,  0 },
+  {  RC5,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  DES,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR,     200000,  0x8000000,  0x00010,  0x10000 },
+  {  CSC,    1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR_NG,  200000,  0x8000000,  0x00010,  0x10000 },
+  {  RC5_72, 1000000, 0x80000000,  0x00100,  0x10000 },
+  {  OGR_P2,  200000,  0x8000000,  0x00010,  0x10000 },
 };
 
 // OK!
