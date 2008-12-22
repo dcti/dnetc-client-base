@@ -5,6 +5,8 @@
  * Any other distribution or use of this source violates copyright.
  *
  * With modifications by Greg Childers
+ *
+ * $Id: r72cuda.h,v 1.12 2008/12/22 00:53:41 andreasb Exp $
 */
 
 #include "ccoreio.h"

@@ -4,7 +4,9 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * With modifications by Greg Childers
+ * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
+ *
+ * $Id: r72cuda-helper.cu,v 1.5 2008/12/22 00:53:41 andreasb Exp $
 */
 
 /* nvcc requires all __device__ functions to be in the same source file as
@@ -98,4 +100,4 @@ static __inline int64_t read_counter(void)
 }
 #endif /* ifdef DISPLAY_TIMESTAMPS */
 
-// vim: syntax=cpp
+// vim: syntax=cpp:et:sw=2:ts=2

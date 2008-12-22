@@ -4,7 +4,9 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * With modifications by Greg Childers
+ * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
+ *
+ * $Id: r72cuda-4pipe.cu,v 1.9 2008/12/22 00:53:41 andreasb Exp $
 */
 
 #include <stdio.h>
@@ -447,7 +449,7 @@ __global__ void cuda_4pipe(const u32 plain_hi, const u32 plain_lo,
 
   /* Drop out early if we don't have any data to process */
   if( ((bx * bd) + tx) > process_amount) {
-    /* This processes two extra keys at the end of a non-full block */
+    /* This processes four extra keys at the end of a non-full block */
     /* But this takes no extra time so might as well */
     /* Warning... Make sure you DON'T use  */
     /* __syncthreads() anywhere after this */

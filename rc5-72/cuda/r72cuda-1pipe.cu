@@ -4,7 +4,9 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * With modifications by Greg Childers
+ * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
+ *
+ * $Id: r72cuda-1pipe.cu,v 1.20 2008/12/22 00:53:41 andreasb Exp $
 */
 
 #include <stdio.h>

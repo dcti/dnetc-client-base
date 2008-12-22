@@ -4,7 +4,9 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * With modifications by Greg Childers
+ * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
+ *
+ * $Id: r72cuda-2pipe.cu,v 1.21 2008/12/22 00:53:41 andreasb Exp $
 */
 
 #include <stdio.h>
@@ -455,7 +457,8 @@ __global__ void cuda_2pipe(const u32 plain_hi, const u32 plain_lo,
   }
 
   {
-    const int k = 0; /* process the first key */
+    /* process the first key */
+    const int k = 0;
     /* Initialize the S[] with constants */
 #define KEY_INIT(i) S[i] = P + i*Q;
     KEY_INIT(0);
