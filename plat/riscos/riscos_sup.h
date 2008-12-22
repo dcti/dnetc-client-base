@@ -5,12 +5,12 @@
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.h,v 1.6 2007/10/22 16:48:31 jlawson Exp $
+ * $Id: riscos_sup.h,v 1.7 2008/12/22 21:16:21 teichp Exp $
 */
 #ifndef __RISCOS_SUP_H__
 #define __RISCOS_SUP_H__
 
-#include "riscos_x86.h"
+//#include "riscos_x86.h"
 #include "riscos_asm.h"
 
 #ifdef __cplusplus
@@ -18,9 +18,9 @@ extern "C" {
 #endif
 
 int riscos_check_taskwindow(void);
-static const char *riscos_x86_ident(void);
+//static const char *riscos_x86_ident(void);
 static unsigned int riscos_hsleep(unsigned long hsecs);
-const char *riscos_x86_determine_name(void);
+//const char *riscos_x86_determine_name(void);
 int riscos_count_cpus(void);
 void riscos_clear_screen(void);
 void riscos_backspace(void);

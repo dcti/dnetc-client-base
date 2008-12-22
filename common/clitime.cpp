@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.64 2008/12/03 07:11:28 umccullough Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.65 2008/12/22 21:16:22 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -320,7 +320,7 @@ int CliClock(struct timeval *tv)
 
 /* --------------------------------------------------------------------- */
 // only used if clock can't be used
-#if !defined(CLOCK_REALTIME)
+#if !defined(CLOCK_REALTIME) || (CLOCK_REALTIME == 0)
 // __clks2tv() is called/inline'd from CliGetMonotonicClock() and converts
 // 'ticks' (ticks/clks/whatever: whatever it is that your time-since-whenever
 // function returns) to secs/usecs. 'hz' is that function's equivalent of

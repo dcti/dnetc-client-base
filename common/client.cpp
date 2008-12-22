@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.261 2008/12/14 16:00:53 snake Exp $"; }
+return "@(#)$Id: client.cpp,v 1.262 2008/12/22 21:16:22 teichp Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -227,11 +227,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
                     "Copyright 1997-2008, distributed.net\n");
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
-        #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
-        LogScreenRaw( "RC5-72 and OGR ARM assembly by Peter Teichmann\n");
-        #else
-        LogScreenRaw( "RC5-72 ARM assembly by Peter Teichmann\n");
-        #endif
+        LogScreenRaw( "ARM assembly by Peter Teichmann\n");
       #endif
       #if (CLIENT_CPU == CPU_68K)
       LogScreenRaw( "RC5-72 68K assembly by Malcolm Howell and John Girvin\n");
@@ -257,13 +253,6 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       #endif
       #if (CLIENT_CPU == CPU_SPARC)
       LogScreenRaw( "RC5-72 SPARC assembly by Didier Levet and Andreas Beckmann\n");
-      #endif
-#endif
-#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
-      #if (CLIENT_CPU == CPU_ARM)
-        #if !defined HAVE_RC5_72_CORES
-        LogScreenRaw( "OGR ARM assembly by Peter Teichmann\n");
-        #endif
       #endif
 #endif
       #if (CLIENT_OS == OS_DOS)
@@ -692,9 +681,11 @@ int main( int argc, char *argv[] )
   return ClientMain( argc, argv );
 }
 #elif (CLIENT_OS == OS_RISCOS)
+const char* const __dynamic_da_name = "dnetc heap";
+int __riscosify_control=__RISCOSIFY_NO_PROCESS;
+
 int main( int argc, char *argv[] )
 {
-  __riscosify_control = __RISCOSIFY_NO_PROCESS;
   riscos_in_taskwindow = riscos_check_taskwindow();
   if (riscos_find_local_directory(argv[0]))
   {

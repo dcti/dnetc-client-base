@@ -1,7 +1,7 @@
 
  distributed.net client for RISC OS v3.10 or later.
  Released by Peter Teichmann <teichp@distributed.net>
- Document revision $Id: readme.riscos,v 1.7 2007/10/22 16:48:28 jlawson Exp $
+ Document revision $Id: readme.riscos,v 1.8 2008/12/22 21:16:22 teichp Exp $
 
  Welcome to the distributed.net client.
 
@@ -10,12 +10,12 @@
  http://www.distributed.net/FAQ for non-platform-specific documentation.
 
     1.0  Getting started
-    2.0  Several notes
+    2.0  Important notes
 
  1.0  Getting started -------------------------------------------------------
 
     Just unpack the client in a directory of your choice. Install the
-    included !System update, which contains the SharedUnixLibrary 1.02
+    included !System update, which contains the SharedUnixLibrary 1.10
     and a recent FPEmulator for machines running RISC OS 3.1. On a machine
     with a recent !Boot application, start this application, select "System"
     and follow the instructions. On older machines you need install these
@@ -51,34 +51,40 @@
     the '-config' option. A list of command line options is available by
     starting "!Help" or starting the client with '-help'.
 
-    A "Complete Step-by-Step Guide to Running Your First Client" is
-    available at http://distributed.net/FAQ/
+    For more information have a look at http://faq.distributed.net/
 
  2.0  Several notes ---------------------------------------------------------
 
-    If you want to run the client quiet, start "!RunQuiet" instead. To
-    stop a running client, press the "Esc" key in its task window. If
-    you have started it quiet, start the file "!Stop". This will
-    create a file called "exitrc5/now" in the clients directory. Note
-    that this method may take up to 30 seconds. This method of
-    stopping the client will only work if you have configured the
-    exit flag file name "exitrc5/now". This is already done for you in
-    the supplied "dnetc/ini" file by default, but you should take care
-    not to change this option.
-
-    If you want to run the client automatically when the computer
-    starts, you can not simply copy "!Run" or "!RunQuiet" to your
-    desktop boot directory. You will first have to edit the files
-    and replace <Obey$Dir> with the path of your client directory.
+    The client became quite memory-hungry. You need at least 3652KB free
+    to participate in the RC5-72 contest, and 7752KB for OGR-26. It will
+    therefore most probably only run on RiscPCs and newer machines. In order
+    to pass all tests for OGR-NG, you will need at least 32MB free.
     
-    Do never forget to stop the client before shutting down the
-    computer, otherwise the work done on the current work unit will
-    be lost. Do not kill it from the task manager. You can configure
-    the client to use a checkpoint file. That will make the client save
-    its state every couple of minutes, so that it can be recovered if
-    the client is killed by accident.
-
-    This version does not support the x86 coprocessor card.
-
-    This version is not compatible with the previously released
-    (v2.7104.428 or below) GUI frontend.
+    When stopping a client, never just close the task window or kill the
+    client. This will leave the dynamic areas and slowly fill up your memory.
+    If you do not have configure a checkpoint file, it will loose all work on
+    the current block. To avoid this, press the "Esc" key in the task window
+    and wait until the client quits. After that you can close the task window.
+    
+    If you want to run the client quiet, start "!RunQuiet" instead. To
+    stop it, start the file "!Stop". This will create a file with the name
+    "exitfile" in the clients directory. Note that this method may take up
+    to 30 seconds. This method of stopping the client will only work if you
+    have configured the exit flag file name "exitfile". This is already done
+    for you in the supplied "dnetc/ini" file by default, but you should take
+    care not to change this option during configuration.
+    
+    If you want to run the client automatically when the computer starts,
+    you can not simply copy "!Run" or "!RunQuiet" to your desktop boot
+    directory. You will first have to edit the files and replace <Obey$Dir>
+    with the path of your client directory.
+    
+    The client is configured to use a checkpoint file in the supplied
+    "dnetc/ini" file by default. This will make the client save its state
+    every couple of minutes, so that it can be recovered if the client is
+    killed by accident. This happens for instance if you shutdown your
+    computer without stopping the client first. You may want to change this
+    option if this prevents your harddisk from spinning down.
+    
+    If you have problems, don't hesitate to contact me at
+    <teichp@distributed.net>.
