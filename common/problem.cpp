@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.188 2008/11/23 03:00:12 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.189 2008/12/22 01:27:57 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -771,6 +771,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
+      #if (CLIENT_CPU == CPU_CUDA)
+      thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = thisprob->pub_data.tslice;
+      #endif
+
       break;
     }
   #endif
@@ -1243,6 +1247,10 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
       rescode = (*(thisprob->pub_data.unit_func.gen_72))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);
 
       RESTORE_CLIENT_OS_CONTEXT
+
+#if (CLIENT_CPU == CPU_CUDA)
+      thisprob->pub_data.tslice = thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment;
+#endif
 
       if (rescode >= 0 && thisprob->pub_data.cruncher_is_asynchronous) /* co-processor or similar */
       {

@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-1pipe.cu,v 1.20 2008/12/22 00:53:41 andreasb Exp $
+ * $Id: r72cuda-1pipe.cu,v 1.21 2008/12/22 01:27:57 andreasb Exp $
 */
 
 #include <stdio.h>
@@ -429,6 +429,10 @@ error_exit:
   fprintf(stderr, "RC5 cuda: elapsed_time_6=%lli\r\n", current_ts - prev_ts);
   prev_ts = current_ts;
 #endif
+
+  /* tell the client about the optimal timeslice increment for this core 
+     (with current parameters) */
+  rc5_72unitwork->optimal_timeslice_increment = optimal_process_amount;
 
   return retval;
 }
