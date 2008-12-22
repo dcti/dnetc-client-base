@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.97 2008/12/22 00:57:58 andreasb Exp $
+# $Id: makefile.vc,v 1.98 2008/12/22 20:39:02 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = cuda
@@ -32,10 +32,6 @@ CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 OPTS_CC_CPU = 
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
-#EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
-#EXECOMPRESSOR2 =
-EXECOMPRESSOR = pec2.exe
-EXECOMPRESSOR2 = /NoBackup /CodeIntegrityCheck:Y /StripDebug:Y /WinModuleLoader:Y
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 OPTS_CC_CPU =
 OPTS_M_PLAT = AMD64
@@ -47,10 +43,6 @@ OPTS_CC_CPU =
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat/x86
 .SUFFIXES : .cu
-#EXECOMPRESSOR = upx.exe -9 -qq --compress-resources=0
-#EXECOMPRESSOR2 =
-EXECOMPRESSOR = pec2.exe
-EXECOMPRESSOR2 = /NoBackup /CodeIntegrityCheck:Y /StripDebug:Y /WinModuleLoader:Y
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
@@ -63,6 +55,16 @@ OPTS_LINK_DEBUG = /debug /pdb:dnetc.pdb
 OPTS_CC_DEBUG = -MT -DNDEBUG
 OPTS_LINK_DEBUG = /release
 !endif
+
+
+!if defined(PECOMPACT)
+EXECOMPRESSOR = "$(PECOMPACT)\pec2.exe"
+EXECOMPRESSOR2 = /NoBackup /CodeIntegrityCheck:Y /StripDebug:Y /WinModuleLoader:Y
+!elseif defined(UPX)
+EXECOMPRESSOR = "$(UPX)\upx.exe" -9 -qq --compress-resources=0
+EXECOMPRESSOR2 =
+!endif
+
 
 # --------------------------------------------
 
@@ -104,6 +106,7 @@ OPTS_LINK = /nologo /incremental:no \
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+OPTS_MSVC = $(OPTS_MSVC) -DBETA -DBETA_PERIOD=2419200
 OPTS_LIBS = $(OPTS_LIBS) cudart.lib
 !endif
 
