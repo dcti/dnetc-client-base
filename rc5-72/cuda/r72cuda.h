@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers
  *
- * $Id: r72cuda.h,v 1.12 2008/12/22 00:53:41 andreasb Exp $
+ * $Id: r72cuda.h,v 1.13 2008/12/22 11:46:33 andreasb Exp $
 */
 
 #include "ccoreio.h"
@@ -17,7 +17,7 @@
 /* -------------------------------------------------------------------------- */
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
-const int min_sleep_interval = 1000;     // microseconds
+const int min_sleep_interval = 15000;   // microseconds
 #else
 const int min_sleep_interval = 100;     // microseconds
 #endif
