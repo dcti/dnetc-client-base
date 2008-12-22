@@ -20,8 +20,8 @@ const int min_sleep_interval = 1000;     // microseconds
 const int min_sleep_interval = 100;     // microseconds
 #endif
 
-// choices are -1 = busy wait, 0 = simple sleep loop, 1 = adaptive sleep loop
-const int default_wait_mode = 1;
+// choices are -1 = busy wait, 0 = simple sleep loop, 1 = adaptive sleep loop, 2 = gpu timed sleep
+const int default_wait_mode = 2;
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
