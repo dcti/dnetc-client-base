@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.96 2008/12/18 20:32:40 andreasb Exp $
+# $Id: makefile.vc,v 1.97 2008/12/22 00:57:58 andreasb Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = cuda
@@ -13,10 +13,9 @@ RC572SRCPATH = rc5-72
 OGRSRCPATH = ogr
 PLATSRCPATH = plat/win
 
-
 HAVE_RC5_72_CORES=1
 HAVE_OGR_CORES=1
-#HAVE_OGR_PASS2=1
+HAVE_OGR_PASS2=0
 
 # --------------------------------------------
 
@@ -113,7 +112,7 @@ OPTS_MSVC = $(OPTS_MSVC:-GM=)
 OPTS_MSVC = $(OPTS_MSVC:-WX=)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
 OPTS_MSVC = $(OPTS_MSVC:-WX=)
-#endif
+!endif
 
 !if "$(PROCESSOR_ARCHITECTURE)" != "AMD64"
 OPTS_LINK = $(OPTS_LINK) /warn:1 
@@ -239,7 +238,7 @@ CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
 
 # --------------------------------- RC5-72 -------------------------
 
-!ifndef HAVE_RC5_72_CORES
+!if $(HAVE_RC5_72_CORES) == 0
 RC5_72_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 RC5_72_OBJS = \
@@ -274,7 +273,7 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DCUDA -DDYN_TIMESLICE
 
 # --------------------------------- OGR-P2 ----------------------------
 
-!if !defined(HAVE_OGR_PASS2)
+!if $(HAVE_OGR_PASS2) == 0
 OGR_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 OGR_OBJS =                           \
@@ -302,13 +301,13 @@ OGR_OBJS =                           \
 !error No OGR cores for this architecture.
 !endif
 
-!ifdef HAVE_OGR_PASS2
+!if $(HAVE_OGR_PASS2) == 1
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_PASS2
 !endif
 
 # --------------------------------- OGR-NG ----------------------------
 
-!if !defined(HAVE_OGR_CORES)
+!if $(HAVE_OGR_CORES) == 0
 OGRNG_OBJS =
 #!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 #OGRNG_OBJS = ???
@@ -328,14 +327,14 @@ OGRNG_OBJS =                         \
 !error No OGR cores for this architecture.
 !endif
 
-!ifdef HAVE_OGR_CORES
+!if $(HAVE_OGR_CORES) == 1
 # Compiler heap overflow in ogrng_dat.cpp requires -Zm option
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_CORES -Zm500
 !endif
 
 # --------------------------------- OGR (common) ----------------------------
 
-!if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+!if $(HAVE_OGR_CORES) == 1 || $(HAVE_OGR_PASS2) == 1
 OPTS_MSVC = $(OPTS_MSVC) -I$(OGRSRCPATH)
 !endif
 
