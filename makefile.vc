@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.98 2008/12/22 20:39:02 jlawson Exp $
+# $Id: makefile.vc,v 1.99 2008/12/23 03:28:19 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = cuda
@@ -68,6 +68,13 @@ EXECOMPRESSOR2 =
 
 # --------------------------------------------
 
+ZIPEXTRAS = docs/readme.1st \
+	docs/readme.win32.html \
+	docs/dnetc.txt \
+	docs/CHANGES.txt
+
+# --------------------------------------------
+
 # a little blurb about options
 #
 # -Gs<num> == control stack probes (DevStudio docs)
@@ -106,8 +113,9 @@ OPTS_LINK = /nologo /incremental:no \
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-OPTS_MSVC = $(OPTS_MSVC) -DBETA -DBETA_PERIOD=2419200
-OPTS_LIBS = $(OPTS_LIBS) cudart.lib
+OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH) -DBETA -DBETA_PERIOD=2419200
+OPTS_LIBS = $(OPTS_LIBS) $(CUDA_LIB_PATH)\cudart.lib
+ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda cudart.dll
 !endif
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
@@ -403,8 +411,10 @@ $(VC_CHECK):
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/cuda}.cu{$(OUTPUTPATH)}.obj:
-        nvcc -v -c -O2 -Xcompiler "$(OPTS_MSVC)" -D__WIN32__ -D_M_IX86 -DNDEBUG -Icommon -DLURK -Iplat/win -o $(@:/=\) $<
+        $(CUDA_BIN_PATH)\nvcc -v -c -O2 -Xcompiler "$(OPTS_MSVC)" -D__WIN32__ -D_M_IX86 -DNDEBUG -Icommon -DLURK -Iplat/win -o $(@:/=\) $<
 
+cudart.dll: $(CUDA_BIN_PATH)\cudart.dll
+	copy /y $** $@
 !endif
 
 {$(RC572SRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
@@ -463,10 +473,12 @@ rebuild: clean all
 
 # --------------------------------------------
 
-makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr docs/readme.1st docs/readme.win32.html docs/dnetc.txt docs/CHANGES.txt
+makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
 	zip dnetcXXX-win32-x86.zip $**
 !if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win64-amd64.zip
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86-cuda.zip
 !else
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86.zip
 !endif
