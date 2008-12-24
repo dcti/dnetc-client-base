@@ -1,5 +1,5 @@
 distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.4 2008/12/10 10:38:59 andreasb Exp $
+ document revision $Id: readme.cuda,v 1.5 2008/12/24 22:27:44 jlawson Exp $
 
  Welcome to the distributed.net client.
 
@@ -48,6 +48,10 @@ distributed.net client for nVidia CUDA-compatible GPUs
 
  2.0  Troubleshooting and Known issues ------------------------------
 
+    We recommend using the nVidia driver version 178.xx, since we have
+    received reports of the client hanging with driver 180.xx.
+
+
     On Windows Vista platforms, the CUDA client will not be able to
     access the GPU when run as a Service due to operating system
     limitations.  The current workaround is to run the client
@@ -71,3 +75,9 @@ distributed.net client for nVidia CUDA-compatible GPUs
     member of it.  If uncertain, view the file permissions of
     the /dev/nvidiactl control file.
     
+
+    If you are unable to execute the dnetc binary because of a missing
+    libcudart.so library, you will need to visit the nVidia website
+    and download the "CUDA toolkit 2.0" first.  After installing, you
+    may need to either set your LD_LIBRARY_PATH environment variable
+    to its lib directory prior to running dnetc.
