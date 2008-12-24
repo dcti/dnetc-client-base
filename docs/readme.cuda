@@ -1,5 +1,5 @@
 distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.5 2008/12/24 22:27:44 jlawson Exp $
+ document revision $Id: readme.cuda,v 1.6 2008/12/24 23:15:37 jlawson Exp $
 
  Welcome to the distributed.net client.
 
@@ -35,7 +35,11 @@ distributed.net client for nVidia CUDA-compatible GPUs
 
     This client requires nVidia CUDA-capable hardware and appropriate
     drivers to be installed.  For a list of GPU hardware that supports
-    CUDA, see <http://en.wikipedia.org/wiki/CUDA#Supported_GPUs>
+    CUDA, see <http://en.wikipedia.org/wiki/CUDA#Supported_GPUs> 
+
+    When installing the CUDA drivers and toolkit, be sure to download
+    the versions for CUDA 2.0 (and not version 2.1 nor 1.1).  Visit
+    <http://www.nvidia.com/object/cuda_get.html>
 
     At the moment, our CUDA clients only provide support for RC5-72.
     Due to the nature of OGR, it is difficult to parallelize in a way
@@ -43,13 +47,15 @@ distributed.net client for nVidia CUDA-compatible GPUs
 
     Our CUDA clients also only execute crunchers on the GPU.  In order
     to utilize the CPUs on your computer, you will need to download
-    and run another instance of the standard client.
+    and run another instance of the standard client from a separate
+    subdirectory.
 
 
  2.0  Troubleshooting and Known issues ------------------------------
 
-    We recommend using the nVidia driver version 178.xx, since we have
-    received reports of the client hanging with driver 180.xx.
+    We recommend using the nVidia driver version 178.xx (for use with
+    CUDA 2.0), since we have received reports of the client hanging
+    with driver 180.xx (which is intended for CUDA 2.1).
 
 
     On Windows Vista platforms, the CUDA client will not be able to
