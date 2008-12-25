@@ -1,5 +1,5 @@
 distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.6 2008/12/24 23:15:37 jlawson Exp $
+ document revision $Id: readme.cuda,v 1.7 2008/12/25 00:32:12 jlawson Exp $
 
  Welcome to the distributed.net client.
 
@@ -87,3 +87,13 @@ distributed.net client for nVidia CUDA-compatible GPUs
     and download the "CUDA toolkit 2.0" first.  After installing, you
     may need to either set your LD_LIBRARY_PATH environment variable
     to its lib directory prior to running dnetc.
+
+
+    In systems with dual nVidia cards, you must ensure that SLI is
+    turned "off" in the driver panel.  On Vista (but not Windows XP),
+    you must connect a second monitor (if you're using a flat panel
+    and it has a second input, you can use that) to the second card
+    and "Extend" your desktop onto that monitor.  You can then
+    disconnect the monitor leaving your desktop "extended."  The
+    client should then find all GPUs.
+
