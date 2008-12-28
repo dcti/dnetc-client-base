@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.10 2008/12/03 20:50:44 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.11 2008/12/28 23:20:51 teichp Exp $"; }
 
 //#define TRACE
 
@@ -69,6 +69,8 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.10 2008/12/03 20:50:44 stream Exp $"; }
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
     CoreDispatchTable *ogrng_get_dispatch_table(void);
+    CoreDispatchTable *ogrng_get_dispatch_table_arm1(void);
+    CoreDispatchTable *ogrng_get_dispatch_table_arm2(void);
 #elif (CLIENT_CPU == CPU_AMD64)
     CoreDispatchTable *ogrng64_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
@@ -184,6 +186,8 @@ const char **corenames_for_contest_ogr_ng()
       "FLEGE-64 2.0",
   #elif (CLIENT_CPU == CPU_ARM)
       "FLEGE 2.0",
+      "FLEGE 2.0 ARMv3",
+      "FLEGE 2.0 ARMv5",
   #elif (CLIENT_CPU == CPU_68K)
       "FLEGE 2.0 68000",
       "FLEGE 2.0 68020",
@@ -263,6 +267,12 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
 # elif (CLIENT_CPU == CPU_68K)
   long det = GetProcessorType(1);
   if (det == 68000) cindex = 0;
+# elif (CLIENT_CPU == CPU_ARM)
+  long det = GetProcessorType(1);
+  int have_clz = (((det >> 12) & 0xf) != 0) &&
+                 (((det >> 12) & 0xf) != 7) &&
+                 (((det >> 16) & 0xf) >= 3);
+  if (!have_clz && (cindex == 2))  cindex = 1;
 # elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
 
   int feature = 0;
@@ -482,7 +492,15 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
   unit_func.ogr = ogrng64_get_dispatch_table();
   coresel = 0;
 #elif (CLIENT_CPU == CPU_ARM)
-  unit_func.ogr = ogrng_get_dispatch_table();
+  if (coresel == 1)
+    unit_func.ogr = ogrng_get_dispatch_table_arm1();
+  else if (coresel == 2)
+    unit_func.ogr = ogrng_get_dispatch_table_arm2();
+  else
+  {
+    unit_func.ogr = ogrng_get_dispatch_table();
+    coresel = 0;
+  }
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
   unit_func.ogr = ogrng64_get_dispatch_table();
   coresel = 0;

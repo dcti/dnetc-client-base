@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.142 2008/12/19 00:22:06 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.143 2008/12/28 23:20:51 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1274,51 +1274,51 @@ static long __GetRawProcessorID(const char **cpuname )
   static char namebuf[65];
   static struct {
     unsigned int id, mask;
-    signed int rc5, r72, ogr;
+    signed int r72, ogr;
     const char *name;
   } ids[] = {
     // ARM
-    { 0x41560200, 0xfffffff0, 2, 1, 1, "ARM 2" },
-    { 0x41560250, 0xfffffff0, 2, 1, 1, "ARM 250" },
-    { 0x41560300, 0xfffffff0, 0, 1, 1, "ARM 3" },
-    { 0x41560600, 0xfffffff0, 0, 1, 1, "ARM 600" },
-    { 0x41560610, 0xfffffff0, 0, 1, 1, "ARM 610" },
-    { 0x41560200, 0xfffffff0, 0, 1, 1, "ARM 620" },
-    { 0x41007000, 0xfffffff0, 0, 1, 1, "ARM 700" },
-    { 0x41007100, 0xfffffff0, 0, 1, 1, "ARM 710" },
-    { 0x41007500, 0xffffffff, 0, 1, 1, "ARM 7500" },  // 7500/FEL are "artificial" ids
-    { 0x410F7500, 0xffffffff, 0, 1, 1, "ARM 7500FEL" },  // created by IOMD detection
-    { 0x41047100, 0xfffffff0, 0, 1, 1, "ARM 7100" },
-    { 0x41807100, 0xfffffff0, 0, 1, 1, "ARM 710T" },
-    { 0x41807200, 0xfffffff0, 0, 1, 1, "ARM 720T" },
-    { 0x41807400, 0xfffffff0, 0, 1, 1, "ARM 740T8K" },
-    { 0x41817400, 0xfffffff0, 0, 1, 1, "ARM 740T4K" },
-    { 0x41018100, 0xfffffff0, 1, 0, 0, "ARM 810" },
-    { 0x41129200, 0xfffffff0, 1, 0, 0, "ARM 920T" },
-    { 0x41029220, 0xfffffff0, 1, 0, 0, "ARM 922T" },
-    { 0x41009260, 0xff00fff0, 1, 0, 0, "ARM 926" },
-    { 0x41029400, 0xfffffff0, 1, 0, 0, "ARM 940T" },
-    { 0x41049460, 0xfffffff0, 1, 0, 0, "ARM 946ES" },
-    { 0x41049660, 0xfffffff0, 1, 0, 0, "ARM 966ES" },
-    { 0x41059660, 0xfffffff0, 1, 0, 0, "ARM 966ESR" },
-    { 0x4100a200, 0xff00fff0, 1, 0, 0, "ARM 1020" },
-    { 0x4100a260, 0xff00fff0, 1, 0, 0, "ARM 1026" },
+    { 0x41560200, 0xfffffff0, 1, 1, "ARM 2" },
+    { 0x41560250, 0xfffffff0, 1, 1, "ARM 250" },
+    { 0x41560300, 0xfffffff0, 1, 1, "ARM 3" },
+    { 0x41560600, 0xfffffff0, 1, 1, "ARM 600" },
+    { 0x41560610, 0xfffffff0, 1, 1, "ARM 610" },
+    { 0x41560200, 0xfffffff0, 1, 1, "ARM 620" },
+    { 0x41007000, 0xfffffff0, 1, 1, "ARM 700" },
+    { 0x41007100, 0xfffffff0, 1, 1, "ARM 710" },
+    { 0x41007500, 0xffffffff, 1, 1, "ARM 7500" },  // 7500/FEL are "artificial" ids
+    { 0x410F7500, 0xffffffff, 1, 1, "ARM 7500FEL" },  // created by IOMD detection
+    { 0x41047100, 0xfffffff0, 1, 1, "ARM 7100" },
+    { 0x41807100, 0xfffffff0, 1, 1, "ARM 710T" },
+    { 0x41807200, 0xfffffff0, 1, 1, "ARM 720T" },
+    { 0x41807400, 0xfffffff0, 1, 1, "ARM 740T8K" },
+    { 0x41817400, 0xfffffff0, 1, 1, "ARM 740T4K" },
+    { 0x41018100, 0xfffffff0, 0, 1, "ARM 810" },
+    { 0x41129200, 0xfffffff0, 0, 1, "ARM 920T" },
+    { 0x41029220, 0xfffffff0, 0, 1, "ARM 922T" },
+    { 0x41009260, 0xff00fff0, 0, 1, "ARM 926" },
+    { 0x41029400, 0xfffffff0, 0, 1, "ARM 940T" },
+    { 0x41049460, 0xfffffff0, 0, 1, "ARM 946ES" },
+    { 0x41049660, 0xfffffff0, 0, 1, "ARM 966ES" },
+    { 0x41059660, 0xfffffff0, 0, 1, "ARM 966ESR" },
+    { 0x4100a200, 0xff00fff0, 0, 1, "ARM 1020" },
+    { 0x4100a260, 0xff00fff0, 0, 1, "ARM 1026" },
     // ?
-    { 0x54029150, 0xfffffff0, 1, 0, 0, "ARM 915" },
-    { 0x54029250, 0xfffffff0, 1, 0, 0, "ARM 925" },
+    { 0x54029150, 0xfffffff0, 0, 1, "ARM 915" },
+    { 0x54029250, 0xfffffff0, 0, 1, "ARM 925" },
     // Digital
-    { 0x4401a100, 0xfffffff0, 1, 0, 0, "Digital StrongARM 110" },
-    { 0x4401a110, 0xfffffff0, 1, 0, 0, "Digital StrongARM 1100" },
+    { 0x4401a100, 0xfffffff0, 0, 1, "Digital StrongARM 110" },
+    { 0x4401a110, 0xfffffff0, 0, 1, "Digital StrongARM 1100" },
     // Intel
-    { 0x6901b110, 0xfffffff0, 1, 0, 0, "Intel StrongARM 1110" },
-    { 0x69052120, 0xfffff3f0, 1, 2, 2, "Intel PXA210" },
-    { 0x69052100, 0xfffff7f0, 1, 2, 2, "Intel PXA250" },
-    { 0x69052d00, 0xfffffff0, 1, 2, 2, "Intel PXA255" },
-    { 0x69054110, 0xfffffff0, 1, 2, 2, "Intel PXA270" },
-    { 0x69052000, 0xfffffff0, 1, 2, 2, "Intel 80200" },
-    { 0x69052e20, 0xffffffe0, 1, 2, 2, "Intel 80219" },
-    { 0x69052420, 0xffffffe0, 1, 2, 2, "Intel IOP321" },
-    { 0x00000000, 0x00000000, -1, -1, -1, "" }
+    { 0x6901b110, 0xfffffff0, 0, 1, "Intel StrongARM 1110" },
+    { 0x69052120, 0xfffff3f0, 2, 2, "Intel PXA210" },
+    { 0x69052100, 0xfffff7f0, 2, 2, "Intel PXA250" },
+    { 0x69052d00, 0xfffffff0, 2, 2, "Intel PXA255" },
+    { 0x69054110, 0xfffffff0, 2, 2, "Intel PXA270" },
+    { 0x69052000, 0xfffffff0, 2, 2, "Intel 80200" },
+    { 0x69052e20, 0xffffffe0, 2, 2, "Intel 80219" },
+    { 0x69052420, 0xffffffe0, 2, 2, "Intel IOP321" },
+    { 0x00000000, 0x00000000, -1, -1, "" }
   };
 
   #if (CLIENT_OS == OS_RISCOS)
@@ -1541,7 +1541,6 @@ static long __GetRawProcessorID(const char **cpuname )
         {
           detectedname = ids[n].name;
         }
-        default_rc5_core = ids[n].rc5;
         default_r72_core = ids[n].r72;
         default_ogr_core = ids[n].ogr;
       }
