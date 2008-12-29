@@ -7,7 +7,7 @@
 ;# Code designed for MPC744x/745x (G4+)
 ;# Written by Didier Levet <kakace@distributed.net>
 ;#
-;# $Id: FLEGE_hybrid.gas.s,v 1.4 2008/03/29 21:55:47 kakace Exp $
+;# $Id: FLEGE_hybrid.gas.s,v 1.5 2008/12/29 23:41:09 kakace Exp $
 ;#
 ;#============================================================================
 ;# Special notes :
@@ -19,7 +19,7 @@
 ;#============================================================================
 
 
-    .text     
+    .text
     .align    4
     .globl    _cycle_ppc_hybrid_256     ;# a.out
     .globl    cycle_ppc_hybrid_256      ;# elf
@@ -362,20 +362,20 @@ L_GetLimit_s1:
 
     lwz       r30,mark(r20)             ;# Levels[MidSegA].mark
     sub       r28,r13,r30               ;# temp
-    subfc     r29,r19,r28
-    subfe     r28,r28,r28
-    and       r29,r29,r28
-    add       r19,r19,r29               ;# limit = min(temp, limit)
     beq       cr1,L_CheckCnt_s1         ;# Depth == MidSegB
 
     ;# Compute middle mark limit
     not       r29,r16                   ;# ~dist0
     cntlzw    r29,r29                   ;# FFZ(dist0)
     addi      r29,r29,1
-    sub       r19,r19,r29               ;# limit -= FFZ(dist0)
-
+    sub       r28,r28,r29               ;# temp -= FFZ(dist0)
 
 L_CheckCnt_s1:
+    subfc     r29,r19,r28
+    subfe     r28,r28,r28
+    and       r29,r29,r28
+    add       r19,r19,r29               ;# limit = min(temp, limit)
+
     ;# cr0 := nodes <= 0
     stw       r19,limit(r7)             ;# store the limit
     bgt+      L_MainLoop_s1             ;# nodes > 0
