@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.5 2008/10/14 07:28:18 jlawson Exp $
+ * $Id: ogrng_codebase.cpp,v 1.6 2008/12/29 14:18:42 kakace Exp $
  */
 
 #include <string.h>   /* memset */
@@ -349,26 +349,27 @@ static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoos
       if (depth > oState->half_depth && depth <= oState->half_depth2) {
         int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
 
-        if (limit > temp) {
-          limit = temp;
-        }
-
         /* The following part is only relevant for rulers with an odd number of
         ** marks. If the number of marks is even (as for OGR-26), then the
         ** condition is always false.
         ** LOOKUP_FIRSTBLANK(0xFF..FF) shall return the total number of bits
-        ** set plus one. If not, selftest #32 will fail.
+        ** set plus one.
         */
         if (depth < oState->half_depth2) {
           #if (SCALAR_BITS <= 32)
-          limit -= LOOKUP_FIRSTBLANK(dist0);
+          temp -= LOOKUP_FIRSTBLANK(dist0);
           #else
           // Reduce the resolution for larger datatypes, otherwise the final
           // node count may not match that of 32-bit cores.
-          limit -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
+          temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
           #endif
         }
+
+        if (limit > temp) {
+          limit = temp;
+        }
       }
+
       lev->limit = limit;
 
       if (--nodes <= 0) {

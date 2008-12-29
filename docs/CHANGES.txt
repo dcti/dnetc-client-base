@@ -23,11 +23,12 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.34 2008/12/17 23:29:36 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.35 2008/12/29 14:18:42 kakace Exp $
 ==========================================================================
 
 2.9100
 ------
+2.9102-509  fix: all: Fix OGR-NG middle mark limit miscalculation on odd rulers 
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core
