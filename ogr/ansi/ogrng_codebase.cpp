@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.6 2008/12/29 14:18:42 kakace Exp $
+ * $Id: ogrng_codebase.cpp,v 1.7 2008/12/29 23:06:57 kakace Exp $
  */
 
 #include <string.h>   /* memset */
@@ -281,6 +281,31 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
 
       /* Setup the next level */
       limit = choose(dist0, depth);
+
+      if (depth > oState->half_depth && depth <= oState->half_depth2) {
+        int temp = oState->max - 1 - oState->Levels[oState->half_depth].mark;
+        
+        /* The following part is only relevant for rulers with an odd number of
+         ** marks. If the number of marks is even (as for OGR-26), then the
+         ** condition is always false.
+         ** LOOKUP_FIRSTBLANK(0xFF..FF) shall return the total number of bits
+         ** set plus one.
+         */
+        if (depth < oState->half_depth2) {
+          #if (SCALAR_BITS <= 32)
+          temp -= LOOKUP_FIRSTBLANK(dist0);
+          #else
+          // Reduce the resolution for larger datatypes, otherwise the final
+          // node count may not match that of 32-bit cores.
+          temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
+          #endif
+        }
+        
+        if (limit > temp) {
+          limit = temp;
+        }
+      }
+      
       lev->limit = limit;
       lev->mark  = mark;
     }
