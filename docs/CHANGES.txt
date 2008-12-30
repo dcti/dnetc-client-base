@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.40 2008/12/30 13:24:41 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.41 2008/12/30 16:26:45 andreasb Exp $
 ==========================================================================
 
 2.9100
@@ -32,6 +32,7 @@ Version change log: $Id: CHANGES.txt,v 1.40 2008/12/30 13:24:41 andreasb Exp $
             imp: x86: Intel Atom (#4080)
             imp: x86: Pentium III detection (#4121)
             add: all: support for requesting larger packets
+            new: stream: RC5-72 core for AMD stream video cards (#4099)
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core
