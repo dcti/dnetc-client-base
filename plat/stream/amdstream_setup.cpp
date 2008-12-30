@@ -8,27 +8,26 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.5 2008/12/30 17:48:38 andreasb Exp $
+ * $Id: amdstream_setup.cpp,v 1.6 2008/12/30 18:08:50 andreasb Exp $
 */
 
 #include "amdstream_setup.h"
 #include "amdstream_context.h"
 #include "logstuff.h"
 
-bool cInit=false;
-
-stream_context_t CContext[16];  //MAXCPUS?
-static CALuint numDevices = 0;
+stream_context_t CContext[AMD_STREAM_MAX_GPUS];
+int amdstream_numDevices = -1;
 
 // FIXME: call this function *once* at client start, before CPU detection!
 void AMDStreamInitialize()
 {
-  if (cInit)
+  if (amdstream_numDevices >= 0)
     return;
 
-    numDevices=0;
-    calInit();
-    cInit=true;
+  amdstream_numDevices=0;
+  calInit();
+  {
+    CALuint numDevices;
     // Finding number of devices
     if(calDeviceGetCount(&numDevices)!=CAL_RESULT_OK)
       return;
@@ -38,9 +37,11 @@ void AMDStreamInitialize()
       return;
     }
     numDevices=1;           //TODO: add multigpu support
-    if(numDevices>16)
-      numDevices=16;
-  for(u32 i=0; i<16; i++) {
+    amdstream_numDevices = numDevices;
+  }
+  if(amdstream_numDevices>AMD_STREAM_MAX_GPUS)
+    amdstream_numDevices=AMD_STREAM_MAX_GPUS;
+  for(u32 i=0; i<AMD_STREAM_MAX_GPUS; i++) {
     CContext[i].active=false;
     CContext[i].coreID=CORE_NONE;
     CContext[i].constMem=0;
@@ -55,7 +56,7 @@ void AMDStreamInitialize()
     CContext[i].obj=NULL;
     CContext[i].image=NULL;
 
-    if(i<numDevices) {
+    if(i<amdstream_numDevices) {
       // Opening device
       calDeviceOpen(&CContext[i].device, i);
 

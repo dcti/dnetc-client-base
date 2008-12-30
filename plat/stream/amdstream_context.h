@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.1 2008/12/30 17:48:38 andreasb Exp $
+ * $Id: amdstream_context.h,v 1.2 2008/12/30 18:08:50 andreasb Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -18,6 +18,8 @@
 
 #include <cal.h>
 
+
+#define AMD_STREAM_MAX_GPUS 16
 
 #define CORE_NONE   0xffffffff
 
@@ -48,7 +50,7 @@ typedef struct {
   bool active;
 } stream_context_t;
 
-extern stream_context_t CContext[16];   //MAXCPUS?
-extern bool cInit;
+extern stream_context_t CContext[AMD_STREAM_MAX_GPUS];
+extern int amdstream_numDevices;
 
 #endif // AMD_STREAM_CONTEXT_H
