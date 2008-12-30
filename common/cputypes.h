@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.100 2008/12/18 20:56:19 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.101 2008/12/30 16:02:03 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -38,6 +38,7 @@
 #define CPU_X86_64      CPU_AMD64 /* old GNU name before AMD announced AMD64 */
 #define CPU_CELLBE	18
 #define CPU_CUDA	19
+#define CPU_AMD_STREAM	20
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -116,6 +117,10 @@
     #define CLIENT_CPU     CPU_CUDA
     #define CLIENT_OS      OS_WIN32
     #define CLIENT_OS_NAME "Win32"
+  #elif defined(AMD_STREAM)
+    #define CLIENT_CPU     CPU_AMD_STREAM
+    #define CLIENT_OS      OS_WIN32
+    #define CLIENT_OS_NAME "Win32"
   #elif defined(ASM_PPC)
     #define CLIENT_CPU     CPU_POWERPC
     #define CLIENT_OS      OS_WIN32
@@ -173,6 +178,8 @@
   #endif
   #if defined(CUDA)
     #define CLIENT_CPU     CPU_CUDA
+  #elif defined(AMD_STREAM)
+    #define CLIENT_CPU     CPU_AMD_STREAM
   #elif defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(ASM_SH4) /* cross compile, ergo don't use __sh__ */
@@ -574,7 +581,8 @@
   #include <sys/resource.h> /* WIF*() macros */
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
-#elif ((CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_CUDA))
+#elif ((CLIENT_OS == OS_LINUX) && \
+  ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)))
   /* Necessary for streams to work correctly */
   #define HAVE_POSIX_THREADS
   #define _POSIX_THREADS_SUPPORTED

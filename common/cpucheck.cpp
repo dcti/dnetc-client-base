@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.146 2008/12/30 05:05:21 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.147 2008/12/30 16:02:03 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -54,6 +54,12 @@ return "@(#)$Id: cpucheck.cpp,v 1.146 2008/12/30 05:05:21 snikkel Exp $"; }
 #include <cuda_runtime.h>
 #endif
 
+#if (CLIENT_CPU == CPU_AMD_STREAM)
+extern u32 getAMDStreamDeviceCount();
+extern long __GetRawProcessorID(const char **cpuname);
+extern unsigned getAMDStreamDeviceFreq();
+#endif
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -89,6 +95,12 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       if (cpucount <= 0) {
         LogScreen("No CUDA-supported GPU found.\n");
         cpucount = 0;
+      }
+    #elif (CLIENT_CPU == CPU_AMD_STREAM)
+      cpucount=getAMDStreamDeviceCount();
+      if (cpucount<=0) {
+        LogScreen("No AMD STREAM-compatible device found.\n");
+        cpucount=-1;
       }
     #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
@@ -2095,7 +2107,7 @@ long GetProcessorType(int quietly)
       (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
       (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
       (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
-      (CLIENT_CPU == CPU_CUDA)
+      (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_AMD_STREAM)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -2179,6 +2191,9 @@ unsigned int GetProcessorFrequency()
         
     cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
     freq = deviceProp.clockRate / 1000;
+
+  #elif (CLIENT_CPU == CPU_AMD_STREAM)
+    freq = getAMDStreamDeviceFreq();
 
   #elif (CLIENT_OS == OS_MACOSX)
     int mib[2] = {CTL_HW, HW_CPU_FREQ};
@@ -2426,7 +2441,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
     (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
     (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
-    (CLIENT_CPU == CPU_CUDA)
+    (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_AMD_STREAM)
   long rawid = __GetRawProcessorID(&cpuid_s);
   if (rawid == -1L || rawid == -2L)
     cpuid_s = ((rawid==-1)?("?\n\t(identification failed)"):

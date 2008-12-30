@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.26 2008/12/30 12:20:05 andreasb Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.27 2008/12/30 16:02:03 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -39,7 +39,7 @@ extern "C" s32 CDECL rc5_72_unit_func_ansi_4( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_ansi_2( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_ansi_1( RC5_72UnitWork *, u32 *, void * );
 
-// These are assembly-optimized versions for each platform.
+// These are (assembly-)optimized versions for each platform.
 #if (CLIENT_CPU == CPU_X86) && !defined(HAVE_NO_NASM)
 extern "C" s32 CDECL rc5_72_unit_func_ses( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_ses_2( RC5_72UnitWork *, u32 *, void *);
@@ -99,6 +99,10 @@ extern "C" s32 CDECL rc5_72_unit_func_cuda_4_256( RC5_72UnitWork *, u32 *, void 
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_bw( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s0( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s1( RC5_72UnitWork *, u32 *, void * );
+#elif (CLIENT_CPU == CPU_AMD_STREAM)
+extern "C" s32 CDECL rc5_72_unit_func_il4( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_il4c( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_il4_nand( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 
@@ -199,6 +203,10 @@ const char **corenames_for_contest_rc572()
       "CUDA 1-pipe 64-thd busy wait",
       "CUDA 1-pipe 64-thd sleep 100us",
       "CUDA 1-pipe 64-thd sleep dynamic",
+  #elif (CLIENT_CPU == CPU_AMD_STREAM)
+      "IL 4-pipe",
+      "IL 4-pipe cont",
+      "IL 4-pipe c nand",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -839,6 +847,22 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_s1;
         pipeline_count = 1;
         break;
+     // -----------
+     #elif (CLIENT_CPU == CPU_AMD_STREAM)
+      case 0:             
+      default:
+        unit_func.gen_72 = rc5_72_unit_func_il4;
+        pipeline_count = 4;
+        coresel = 0; // yes, we explicitly set coresel in the default case !
+      break;               
+      case 1:
+        unit_func.gen_72 = rc5_72_unit_func_il4c;
+        pipeline_count = 4;
+      break;               
+      case 2:
+        unit_func.gen_72 = rc5_72_unit_func_il4_nand;
+        pipeline_count = 4;
+      break;               
     // -----------
      #else /* the ansi cores */
       case 0:

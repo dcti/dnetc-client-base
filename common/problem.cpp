@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.191 2008/12/22 10:55:54 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.192 2008/12/30 16:02:04 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1241,7 +1241,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
 
-#if (CLIENT_CPU == CPU_CUDA)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)
       thisprob->priv_data.rc5_72unitwork.threadnum = thisprob->pub_data.threadnum;
 #endif     
       SAVE_CLIENT_OS_CONTEXT

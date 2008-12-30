@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.102 2008/12/22 10:55:54 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.103 2008/12/30 16:02:04 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -147,7 +147,7 @@ struct problem_publics
   int is_random;                 /* set if problem was RC5 'random'      */
   int is_benchmark;              /* set if problem is benchmark          */
 
-#if (CLIENT_CPU == CPU_CUDA)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)
   int threadnum;                 /* sets which GPU to use                */
 #endif
 
