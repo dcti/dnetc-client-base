@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.11 2008/12/28 23:20:51 teichp Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.12 2008/12/30 00:27:52 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -373,6 +373,8 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
           cindex = 1; /* no 64-bit support - generic asm core */
         #endif
       #endif
+	  if (detected_type == 0x14)	// Intel Atom
+	      cindex = 1;
       }
   // ===============================================================
   #elif (CLIENT_CPU == CPU_ARM)

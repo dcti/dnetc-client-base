@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.24 2008/12/19 00:22:06 andreasb Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.25 2008/12/30 00:27:52 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -445,7 +445,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
                                        :2); // P5         == DG 2-pipe
 		                 break;
           case 0x01: cindex = 0; break; // 386/486        == SES 1-pipe
-          case 0x02: cindex = 10; break; // Pentium II    == GO 2-pipe-a
+          case 0x02: cindex =10; break; // Pentium II     == GO 2-pipe-a
           case 0x03: cindex = 7; break; // Cyrix Model 4  == SGP 3-pipe (#3665)
           case 0x04: cindex = 7; break; // K5             == SGP 3-pipe
           case 0x05: cindex = 9; break; // K6             == MMX 4-pipe (#3863)
@@ -455,7 +455,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x09: cindex = 6; break; // K7/K8          == GO 2-pipe
           case 0x0A: cindex = 5; break; // Centaur C6     == SS 2-pipe (#3809)
 //        case 0x0B: cindex = 6; break; // Most Pentium 4 == GO 2-pipe (#3960, #3265)
-          case 0x0B: cindex = 10; break; // Most Pentium 4 == GO 2-pipe-a (new)
+          case 0x0B: cindex =10; break; // Most Pentium 4 == GO 2-pipe-a (new)
           case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
           case 0x0D: cindex = 6; break; // Pentium M      == GO 2-pipe (#3870)
           case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
@@ -463,8 +463,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x10: cindex = 5; break; // Cyrix Model 5  == SS 2-pipe (#3580)
           case 0x11: cindex = 4; break; // Cyrix Model 6  == DG 3-pipe alt (#3809)
 //        case 0x12: cindex = 7; break; // Intel Core 2   == SGP 3-pipe (#3969)
-          case 0x12: cindex = 10; break; // Intel Core 2  == GO 2-pipe-a (untested!)
+          case 0x12: cindex =10; break; // Intel Core 2   == GO 2-pipe-a (untested!)
           case 0x13: cindex = 7; break; // Other Pentium 4 == SGP 3-pipe
+          case 0x14: cindex = 6; break; // Intel Atom     == GO 2-pipe (#4080)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -488,6 +489,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x0F: cindex =-1; break; // Via C3 Nehemiah == ?
           case 0x10: cindex =-1; break; // Cyrix Model 5  == ?
           case 0x11: cindex =-1; break; // Cyrix Model 6  == ?
+          case 0x12: cindex =-1; break; // Intel Core 2   == ?
+          case 0x13: cindex =-1; break; // Other Pentium 4 == ?
+          case 0x14: cindex =-1; break; // Intel Atom     == ?
           default:   cindex =-1; break; // no default
         }
         #endif

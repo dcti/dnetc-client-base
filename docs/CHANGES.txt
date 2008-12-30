@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.35 2008/12/29 14:18:42 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.36 2008/12/30 00:27:52 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -38,6 +38,7 @@ Version change log: $Id: CHANGES.txt,v 1.35 2008/12/29 14:18:42 kakace Exp $
             new: cellbe: OGR-NG SPU ASM core
             imp: x86: Identify AMD "Unknown" processors (#4106)
             fix: x86: Pentium M naming (#4075)
+            imp: x86: Intel Atom (#4080)
 
 2.9101-507  new: all: Added OGR-NG contest 
             chg: x86: RC5-72 core selection (#4072)
