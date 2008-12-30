@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_layered.cpp,v 1.1 2008/03/12 19:37:52 kakace Exp $
+ * $Id: ogrng_layered.cpp,v 1.2 2008/12/30 23:05:52 kakace Exp $
  *
  * This file demonstrates the implementation of a layered, two stages, OGR-NG
  * core. If you wish to test it, proceed as follows :
@@ -100,16 +100,16 @@ stage2:     //---------- Stage #2 begins here ----------
             if (depth > oState->half_depth) {
                int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
                
-               if (limit > temp) {
-                  limit = temp;
-               }
-               
                if (depth < oState->half_depth2) {
                   #if (SCALAR_BITS <= 32)
-                  limit -= LOOKUP_FIRSTBLANK(dist0);
+                  temp -= LOOKUP_FIRSTBLANK(dist0);
                   #else
-                  limit -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
+                  temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
                   #endif
+               }
+
+               if (limit > temp) {
+                  limit = temp;
                }
             }
             lev->limit = limit;
