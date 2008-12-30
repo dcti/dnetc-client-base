@@ -2,13 +2,13 @@
  distributed.net client for x86 DOS (PC-,MS-,DR- or whatever) 5.0 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
  Version 496 and above compiled by Roman Trunov <stream@distributed.net>
- document revision $Id: readme.dos,v 1.11 2007/10/22 16:48:28 jlawson Exp $
+ document revision $Id: readme.dos,v 1.12 2008/12/30 13:24:41 andreasb Exp $
 
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for DOS.
  Refer to other enclosed documentation or browse the online FAQ at
- http://www.distributed.net/FAQ for non-platform-specific documentation.
+ http://faq.distributed.net/ for non-platform-specific documentation.
 
     1.0  Getting started
     2.0  DOS specific notes
@@ -28,7 +28,7 @@
     A list of command line options is available by starting the client
     with '-help'.
 
-    FAQs are available online at http://www.distributed.net/FAQ/
+    FAQs are available online at http://faq.distributed.net/
 
  2.0  Notes: ---------------------------------------------------------
 
@@ -61,8 +61,8 @@
     If you have some programming skill, and the Watcom compiler, you
     might want to take a look at the DOS specific source
     and see whether you find any blatant bug in it.
-    (source archive is at http://www.distributed.net/source The DOS
-    specific code is under client\platform\DOS)
+    (The source archive is at http://www.distributed.net/source/ and
+    the DOS specific code is under client\plat\dos)
     Nonetheless, the client never worked well with Desqview. It doesn't
     make interrupts often enough for the DesqView scheduler to work very
     efficiently, and TAME et al won't help either. In return, DesqView

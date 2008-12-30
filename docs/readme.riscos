@@ -1,13 +1,13 @@
 
  distributed.net client for RISC OS v3.10 or later.
  Released by Peter Teichmann <teichp@distributed.net>
- Document revision $Id: readme.riscos,v 1.9 2008/12/22 21:21:27 teichp Exp $
+ Document revision $Id: readme.riscos,v 1.10 2008/12/30 13:24:41 andreasb Exp $
 
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for RISCOS.
  Refer to other enclosed documentation or browse the online FAQ at
- http://www.distributed.net/FAQ for non-platform-specific documentation.
+ http://faq.distributed.net/ for non-platform-specific documentation.
 
     1.0  Getting started
     2.0  Important notes

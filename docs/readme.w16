@@ -1,13 +1,13 @@
 
  distributed.net client for Win16 (MS-Windows 3.1,WINE or whatever) and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.w16,v 1.11 2008/12/30 12:42:51 andreasb Exp $
+ Document revision $Id: readme.w16,v 1.12 2008/12/30 13:24:41 andreasb Exp $
 
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for Win16.
  Refer to other enclosed documentation or browse the online FAQ at
- http://www.distributed.net/FAQ for non-platform-specific documentation.
+ http://faq.distributed.net/ for non-platform-specific documentation.
 
     1.0  Getting started
          1.1 Using the screensaver multiplexor
@@ -28,7 +28,7 @@
     A list of command line options is available by starting the client 
     with '-help'.
 
-    FAQs are available online at http://www.distributed.net/FAQ/
+    FAQs are available online at http://faq.distributed.net/
 
     1.1  The screensaver multiplexor ---------------------------------
 

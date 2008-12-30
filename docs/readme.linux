@@ -1,12 +1,12 @@
 
  distributed.net client for Linux/x86
- document revision $Id: readme.linux,v 1.2 2002/09/02 00:35:45 andreasb Exp $
+ document revision $Id: readme.linux,v 1.3 2008/12/30 13:24:41 andreasb Exp $
                                                           
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for Linux/x86.
  Refer to other enclosed documentation or browse the online FAQ at
- http://www.distributed.net/FAQ for non-platform-specific documentation.
+ http://faq.distributed.net/ for non-platform-specific documentation.
 
     1.0  Getting started
     2.0  Linux/x86 specific notes
@@ -28,7 +28,7 @@
     with '-help' or '--help'.
 
     A complete step-by-step guide to running your first client is 
-    available at: http://www.distributed.net/docs/tutor_clients.html
+    available at: http://www.distributed.net/docs/tutor_clients.php
 
  2.0  Notes: ---------------------------------------------------------
 

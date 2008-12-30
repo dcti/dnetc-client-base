@@ -1,13 +1,13 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.2 2007/10/22 16:48:28 jlawson Exp $
+ Document revision $Id: readme.morphos,v 1.3 2008/12/30 13:24:41 andreasb Exp $
 
  Welcome to the distributed.net client.
 
  This document covers information specific to the client for MorphOS.
  Refer to other enclosed documentation or browse the online FAQ at
- http://www.distributed.net/FAQ for non-platform-specific documentation.
+ http://faq.distributed.net/ for non-platform-specific documentation.
 
     1.0  System requirements
     2.0  Getting started
@@ -50,7 +50,7 @@
     options is available by starting the client with '-help'.
 
     A detailed guide to the various configuration options is available
-    online at http://www.distributed.net/FAQ/
+    online at http://faq.distributed.net/
 
  3.0  Notes ----------------------------------------------------------
 
@@ -80,7 +80,7 @@
     familiar with the new terminology that has replaced "blocks".  The
     new clients refer to "packets" and "work units".  Descriptions of
     their meanings can be found at
-    http://www.distributed.net/faq/cache/138.html
+    http://faq.distributed.net/cache/138.html
 
   3.3  Dial-up detection caveats
 

@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.39 2008/12/30 10:43:42 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.40 2008/12/30 13:24:41 andreasb Exp $
 ==========================================================================
 
 2.9100
@@ -483,7 +483,7 @@ Version change log: $Id: CHANGES.txt,v 1.39 2008/12/30 10:43:42 andreasb Exp $
             new: "pause-if-running-on-batterypower" (not on all platforms)
             new: macosx: a native (BSD subsystem) client for Server and DPs
             chg: some: OGR is auto-disabled for non-preemptive OSs running on 
-                 low-end cpus. http://www.distributed.net/faq/cache/188.html
+                 low-end cpus. http://faq.distributed.net/cache/188.html
             fix: NetWare: all MP (migration) issues resolved.     
             fix: most: user changes to time-of-day won't affect "Summary:"
             chg: AmigaOS: updated 68k cores and many changes made to bring
@@ -501,7 +501,7 @@ Version change log: $Id: CHANGES.txt,v 1.39 2008/12/30 10:43:42 andreasb Exp $
                  provides better control and supports one new mode
                  "update on per-project buffer exhaustion" which enables
                  old-style single-contest crunching (disables rotation).
-                 See also: http://www.distributed.net/faq/cache/176.html
+                 See also: http://faq.distributed.net/cache/176.html
             new: all: out-buffer thresholds have been removed entirely;
                  use the "additional buffer-level checking" to support
                  updating/flushing more frequently than buffer exhaustion.

@@ -1,14 +1,14 @@
 
  distributed.net client for NetWare 3.11 and above
  Released by Cyrus Patel <cyp@fb14.uni-mainz.de>
- Document revision $Id: readme.nw,v 1.10 2002/09/02 00:35:45 andreasb Exp $
+ Document revision $Id: readme.nw,v 1.11 2008/12/30 13:24:41 andreasb Exp $
                                                           
  Welcome to the distributed.net client.
  This version is a unified client for both SMP and non-SMP machines.
 
  This document covers information specific to the client for NetWare.
  Refer to other enclosed documentation or browse the online FAQ at
- http://www.distributed.net/FAQ/ for non-platform-specific documentation.
+ http://faq.distributed.net/ for non-platform-specific documentation.
 
     1.0  Getting started
     2.0  distributed.net client for NetWare specific history
@@ -55,7 +55,7 @@
  2.0  History/Notes: -------------------------------------------------
 
     v2.8011+: the client for NetWare no longer supports OGR. For further 
-    information please refer to http://www.distributed.net/faq/cache/188.html
+    information please refer to http://faq.distributed.net/cache/188.html
 
     v2.8011+: the client will attempt to use the originating namespace 
     (DOS/NFS/OS2/NT) of the ini file if one was specified on the command line, 

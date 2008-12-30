@@ -1,13 +1,13 @@
 
  distributed.net client for OpenVMS.
  Released by Jason Brady <jr_brady@comcast.net>
- Document revision $Id: readme.vms,v 1.6 2007/10/22 16:48:28 jlawson Exp $
+ Document revision $Id: readme.vms,v 1.7 2008/12/30 13:24:41 andreasb Exp $
                   
  Welcome to the distributed.net client!
 
  This document covers information specific to the client for OpenVMS on
  the Alpha platform.  Non-platform-specific information can be found in
- the online FAQ at http://www.distributed.net/FAQ.
+ the online FAQ at http://faq.distributed.net/
 
     1.0  Getting started
     2.0  Platform-specific notes
