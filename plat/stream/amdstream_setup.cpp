@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.2 2008/12/30 17:01:33 andreasb Exp $
+ * $Id: amdstream_setup.cpp,v 1.3 2008/12/30 17:24:47 andreasb Exp $
 */
 
 #include "amdstream_setup.h"
@@ -18,32 +18,40 @@ bool cInit=false;
 stream_context_t CContext[16];  //MAXCPUS?
 static CALuint numDevices = 0;
 
-u32 getAMDStreamDeviceCount()
+// FIXME: call this function *once* at client start, before CPU detection!
+void AMDStreamInitialize()
 {
-  if(!cInit) {
+  if (cInit)
+    return;
+
     numDevices=0;
     calInit();
     cInit=true;
     // Finding number of devices
     if(calDeviceGetCount(&numDevices)!=CAL_RESULT_OK)
-      return 0;
+      return;
     if(numDevices==0) {
       LogScreen("No supported devices found!");
-      exit(-1);             //TODO:
-      return 0;
+      //exit(-1);             //TODO: // thou shalt not call exit()!
+      return;
     }
     numDevices=1;           //TODO: add multigpu support
     if(numDevices>16)
       numDevices=16;
-  } else
-    return numDevices;
   for(u32 i=0; i<16; i++) {
     CContext[i].active=false;
     CContext[i].coreID=CORE_NONE;
-    CContext[i].constMem=0; CContext[i].constName=0; CContext[i].constRes=0;
-    CContext[i].ctx=0; CContext[i].device=0; CContext[i].module=0;
-    CContext[i].outName0=0; CContext[i].outputMem0=0; CContext[i].outputRes0=0;
-    CContext[i].obj=NULL; CContext[i].image=NULL;
+    CContext[i].constMem=0;
+    CContext[i].constName=0;
+    CContext[i].constRes=0;
+    CContext[i].ctx=0;
+    CContext[i].device=0;
+    CContext[i].module=0;
+    CContext[i].outName0=0;
+    CContext[i].outputMem0=0;
+    CContext[i].outputRes0=0;
+    CContext[i].obj=NULL;
+    CContext[i].image=NULL;
 
     if(i<numDevices) {
       // Opening device
@@ -60,6 +68,10 @@ u32 getAMDStreamDeviceCount()
       CContext[i].maxIters=512;
     }
   }
+}
+
+u32 getAMDStreamDeviceCount()
+{
   return numDevices;
 }
 
@@ -106,7 +118,7 @@ long __GetRawProcessorID(const char **cpuname)
   return CContext[0].attribs.target;            //TODO:device id
 }
 
-void Deinitialize_rc5_72_il4(u32 Device)
+void AMDStreamReinitializeDevice(u32 Device)
 {
   // Unloading the module
   if(CContext[Device].module)

@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.h,v 1.2 2008/12/30 17:01:33 andreasb Exp $
+ * $Id: amdstream_setup.h,v 1.3 2008/12/30 17:24:47 andreasb Exp $
 */
 
 #ifndef AMD_STREAM_SETUP_H
@@ -61,6 +61,7 @@ extern bool cInit;
 u32 getAMDStreamDeviceCount();
 u32 getAMDStreamDeviceFreq();
 long __GetRawProcessorID(const char **cpuname);
-void Deinitialize_rc5_72_il4(u32 Device);
+void AMDStreamInitialize();
+void AMDStreamReinitializeDevice(u32 Device);
 
 #endif // AMD_STREAM_SETUP_H
