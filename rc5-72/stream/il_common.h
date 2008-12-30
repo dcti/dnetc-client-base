@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: il_common.h,v 1.2 2008/12/30 16:54:56 andreasb Exp $
+ * $Id: il_common.h,v 1.3 2008/12/30 17:01:33 andreasb Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -18,7 +18,7 @@
 
 #include <cal.h>
 #include <calcl.h>
- 
+
 #include "ccoreio.h"
 #include <malloc.h>
 #include <stdio.h>
@@ -28,9 +28,9 @@
 
 #define NULL 0
 
-#define CORE_IL4	0
-#define CORE_IL4C	1
-#define CORE_IL4N	2
+#define CORE_IL4    0
+#define CORE_IL4C   1
+#define CORE_IL4N   2
 
 u32 sub72(u32 t_hi, u32 t_mid, u32 s_hi, u32 s_mid);
 u32 cmp72(u32 o1h, u32 o1m, u32 o1l, u32 o2h, u32 o2m, u32 o2l);

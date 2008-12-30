@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.h,v 1.1 2008/12/30 16:54:56 andreasb Exp $
+ * $Id: amdstream_setup.h,v 1.2 2008/12/30 17:01:33 andreasb Exp $
 */
 
 #ifndef AMD_STREAM_SETUP_H
@@ -16,7 +16,7 @@
 
 #include <cal.h>
 #include <calcl.h>
- 
+
 #include "ccoreio.h"
 #include <malloc.h>
 #include <stdio.h>
@@ -24,37 +24,37 @@
 
 #include "logstuff.h"  // LogScreen()
 
-#define CORE_NONE	0xffffffff
+#define CORE_NONE   0xffffffff
 
-typedef struct{
+typedef struct {
 
-	CALdevice device;
-	CALdeviceattribs attribs;
-	CALcontext ctx;
+  CALdevice device;
+  CALdeviceattribs attribs;
+  CALcontext ctx;
 
-	CALresource outputRes0;
-	CALresource constRes;
+  CALresource outputRes0;
+  CALresource constRes;
 
-	CALmodule module;
+  CALmodule module;
 
-	CALmem outputMem0;
-	CALmem constMem;
+  CALmem outputMem0;
+  CALmem constMem;
 
-	CALfunc func;
-	CALname outName0, constName;
+  CALfunc func;
+  CALname outName0, constName;
 
-	CALobject obj;
-    CALimage image;
+  CALobject obj;
+  CALimage image;
 
-	CALint domainSizeY;
-	CALint domainSizeX;
-	unsigned maxIters;
+  CALint domainSizeY;
+  CALint domainSizeX;
+  unsigned maxIters;
 
-	u32		coreID;
-	bool	active;
+  u32 coreID;
+  bool active;
 }stream_context_t;
 
-extern stream_context_t CContext[16];	//MAXCPUS?
+extern stream_context_t CContext[16];   //MAXCPUS?
 extern bool cInit;
 
 
