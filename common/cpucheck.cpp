@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.147 2008/12/30 16:02:03 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.148 2008/12/30 19:53:19 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -55,9 +55,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.147 2008/12/30 16:02:03 andreasb Exp $"; }
 #endif
 
 #if (CLIENT_CPU == CPU_AMD_STREAM)
-extern u32 getAMDStreamDeviceCount();
-extern long __GetRawProcessorID(const char **cpuname);
-extern unsigned getAMDStreamDeviceFreq();
+#include "amdstream_info.h"
 #endif
 
 
@@ -2073,7 +2071,6 @@ static long __GetRawProcessorID(const char **cpuname)
 }
 #endif
 
-
 /* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_CUDA)
@@ -2091,6 +2088,15 @@ static long __GetRawProcessorID(const char **cpuname)
   // FIXME: we need some ID to distinguish different cards
   // for now the register count is enough to decide whether 256-thread cores are feasible
   return deviceProp.regsPerBlock;
+}
+#endif
+
+/* ---------------------------------------------------------------------- */
+
+#if (CLIENT_CPU == CPU_AMD_STREAM)
+static inline long __GetRawProcessorID(const char **cpuname)
+{
+  return getAMDStreamRawProcessorID(cpuname);
 }
 #endif
 

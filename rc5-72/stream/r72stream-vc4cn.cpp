@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.2 2008/12/30 17:01:33 andreasb Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.3 2008/12/30 19:53:19 andreasb Exp $
 */
 
 #include "il_common.h"
@@ -17,11 +17,8 @@
 bool init_rc5_72_il4_nand(u32 Device){
   char* programIL;
 
-  if(!cInit)
-    getAMDStreamDeviceCount();
-
   if(CContext[Device].coreID!=CORE_IL4N)
-    Deinitialize_rc5_72_il4(Device);
+    AMDStreamReinitializeDevice(Device);
 
   if(!CContext[Device].active)
   {
@@ -154,7 +151,7 @@ extern "C" s32 rc5_72_unit_func_il4_nand (RC5_72UnitWork *rc5_72unitwork, u32 *i
 s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
   u32 deviceID=rc5_72unitwork->threadnum;
-  if((CContext[deviceID].coreID!=CORE_IL4N)||(!cInit))
+  if (CContext[deviceID].coreID!=CORE_IL4N)
   {
     init_rc5_72_il4_nand(deviceID);
     if(CContext[deviceID].coreID!=CORE_IL4N) {
