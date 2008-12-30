@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.7 2008/12/29 23:06:57 kakace Exp $
+ * $Id: ogrng_codebase.cpp,v 1.8 2008/12/30 17:29:03 kakace Exp $
  */
 
 #include <string.h>   /* memset */
@@ -429,6 +429,14 @@ static int ogr_cycle_entry(void *state, int *pnodes, int with_time_constraints)
   int safesize = OGRNG_BITMAPS_LENGTH * 2;
   int depth;
 
+  // Bug #4076 : Make sure a forked process has a chance to initialize itself.
+  if (pchoose == NULL) {
+    if (0 == ogr_check_cache(oState->maxdepth)) {
+      return CORE_E_CORRUPTED;
+    }
+    pchoose = precomp_limits[oState->maxdepth - OGR_NG_MIN].choose_array;
+  }
+  
   /* Now that the core always exits when the specified number of nodes has
   ** been processed, the "with_time_constraints" setting is obsolete.
   */
