@@ -7,7 +7,7 @@
  * This file should be shared between client and proxynet some day ...
  */
 #ifndef __PROJDATA_H__
-#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.7 2008/12/19 11:10:59 andreasb Exp $"
+#define __PROJDATA_H__ "@(#)$Id: projdata.h,v 1.8 2008/12/30 05:33:33 snikkel Exp $"
 
 #include "cputypes.h"   // u32 ...
 
@@ -35,7 +35,8 @@ enum {
 #define PROJECT_UNSUPPORTED                       0x00000000
 #define PROJECT_OK                                0x00000001
 #define PROJECTFLAG_TIME_THRESHOLD                0x00000002
-#define PROJECTFLAG_RANDOM_BLOCKS                 0x00000004
+#define PROJECTFLAG_PREFERRED_BLOCKSIZE           0x00000004
+#define PROJECTFLAG_RANDOM_BLOCKS                 0x00000008
 
 /* Project States - may change at runtime */
 

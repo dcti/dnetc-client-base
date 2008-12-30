@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.94 2008/10/08 05:24:22 snikkel Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.95 2008/12/30 05:33:33 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -244,7 +244,7 @@ unsigned int ClientGetInThreshold(Client *client,
   }
   if (bufthresh < 1) /* undetermined */
   {
-    #define BUFTHRESHOLD_DEFAULT_PER_CRUNCHER (24*100)  /* in stats units */
+    #define BUFTHRESHOLD_DEFAULT_PER_CRUNCHER (PREFERREDBLOCKSIZE_DEFAULT*24*100)  /* in stats units */
     bufthresh = BUFTHRESHOLD_DEFAULT_PER_CRUNCHER * numcrunchers;
     #undef BUFTHRESHOLD_DEFAULT_PER_CRUNCHER
   }

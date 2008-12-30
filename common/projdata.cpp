@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *projdata_cpp(void) {
-return "@(#)$Id: projdata.cpp,v 1.8 2008/02/18 13:06:49 stream Exp $"; }
+return "@(#)$Id: projdata.cpp,v 1.9 2008/12/30 05:33:33 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "projdata.h"
@@ -80,7 +80,8 @@ u32 ProjectGetFlags(int projectid)
     /* CSC    */ PROJECT_UNSUPPORTED,
     /* OGR_NG */ PROJECT_OK_OGR_NG,
     /* RC5_72 */ PROJECT_OK_RC5_72
-        | PROJECTFLAG_TIME_THRESHOLD /* not yet! | PROJECTFLAG_PREFERRED_BLOCKSIZE */
+        | PROJECTFLAG_TIME_THRESHOLD 
+	| PROJECTFLAG_PREFERRED_BLOCKSIZE
         | PROJECTFLAG_RANDOM_BLOCKS,
     /* OGR_P2 */ PROJECT_OK_OGR_P2,
   };

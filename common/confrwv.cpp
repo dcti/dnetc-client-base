@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.96 2008/02/10 00:24:29 kakace Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.97 2008/12/30 05:33:33 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -634,6 +634,23 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
 
   /* ----------------- project options ----------------- */
 
+  /* PREFERRED-BLOCKSIZE MUST COME BEFORE THRESHOLDS */
+  if (!GetPrivateProfileStringB( __getprojsectname(RC5), "preferred-blocksize", "", buffer, sizeof(buffer), fn )
+   && !GetPrivateProfileStringB( __getprojsectname(DES), "preferred-blocksize", "", buffer, sizeof(buffer), fn ))
+  {
+    if ((i = GetPrivateProfileIntB(OPTION_SECTION, "preferredblocksize", -1, fn ))!=-1)
+    {
+      if (i >= PREFERREDBLOCKSIZE_MIN &&
+          i <= PREFERREDBLOCKSIZE_MAX &&
+          i != OLD_PREFERREDBLOCKSIZE_DEFAULT) /* 30 */
+      {
+        client->preferred_blocksize[RC5] = i;
+        client->preferred_blocksize[DES] = i;
+        modfail += (!_WritePrivateProfile_sINT( __getprojsectname(RC5), "preferred-blocksize", i, fn));
+        modfail += (!_WritePrivateProfile_sINT( __getprojsectname(DES), "preferred-blocksize", i, fn));
+      }
+    }
+  }
   TRACE_OUT((0,"remapping 5 (%d)\n", modfail));
   {
     int thresholdsdone = 0;
@@ -672,6 +689,16 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
           switch (cont_i)
           {
              case RC5_72:
+               multiplier = GetPrivateProfileIntB( cont_sect,
+                            "preferred-blocksize", OLD_PREFERREDBLOCKSIZE_DEFAULT, fn );
+               if ( multiplier < 1)
+                 multiplier = OLD_PREFERREDBLOCKSIZE_DEFAULT;
+               else if ( multiplier < PREFERREDBLOCKSIZE_MIN)
+                 multiplier = PREFERREDBLOCKSIZE_MIN;
+               else if (multiplier > PREFERREDBLOCKSIZE_MAX)
+                 multiplier = OLD_PREFERREDBLOCKSIZE_DEFAULT;
+               multiplier -= (PREFERREDBLOCKSIZE_MIN-1);
+               break;
              case OGR_P2:
              case OGR_NG:
                multiplier = 1;
@@ -1207,6 +1234,13 @@ int ConfigRead(Client *client)
       client->coretypes[cont_i] =
          GetPrivateProfileIntB(cont_name, "core",
                        client->coretypes[cont_i],fn);
+      if (proj_flags & PROJECTFLAG_PREFERRED_BLOCKSIZE)
+      {
+        /* note that the default preferred_blocksize is now <=0 (auto) */
+        client->preferred_blocksize[cont_i] =
+           GetPrivateProfileIntB(cont_name, "preferred-blocksize",
+                         client->preferred_blocksize[cont_i], fn );
+      }
 
       client->inthreshold[cont_i] =
            GetPrivateProfileIntB(cont_name, "fetch-workunit-threshold",
@@ -1390,6 +1424,16 @@ int ConfigWrite(Client *client)
           __XSetProfileInt( p, "fetch-time-threshold", client->timethreshold[cont_i], fn, 0, 0 );
         }
         __XSetProfileInt( p, "core", client->coretypes[cont_i], fn, -1, 0 );
+        if (proj_flags & PROJECTFLAG_PREFERRED_BLOCKSIZE)
+        {
+          // FIXME? why do we do this check first?
+          if (client->preferred_blocksize[cont_i] > 0 ||
+              GetPrivateProfileStringB(p,"preferred-blocksize","",buffer,2,fn))
+          {
+            __XSetProfileInt( p, "preferred-blocksize",
+              client->preferred_blocksize[cont_i], fn, 0, 0 );
+          }
+        }
       }
     }
 

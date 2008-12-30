@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.28 2008/02/10 00:24:30 kakace Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.29 2008/12/30 05:33:33 snikkel Exp $"
 
 enum /* anonymous */
 {
@@ -39,6 +39,7 @@ enum /* anonymous */
   CONF_FREQUENT                , /* CONF_MENU_BUFF */
   CONF_FREQUENT_FREQUENCY      , /* CONF_MENU_BUFF */
   CONF_FREQUENT_RETRY_FREQUENCY, /* CONF_MENU_BUFF */
+  CONF_PREFERREDBLOCKSIZE      , /* CONF_MENU_BUFF */
   CONF_THRESHOLDI              , /* CONF_MENU_BUFF */
   CONF_THRESHOLDT              , /* CONF_MENU_BUFF */
 

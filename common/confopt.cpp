@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.57 2008/12/14 16:00:53 snake Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.58 2008/12/30 05:33:33 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -469,6 +469,19 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "until it succeeds.\n"
   /*)*/,CONF_MENU_BUFF,CONF_TYPE_TIMESTR,NULL,NULL,0,0,NULL,NULL
 },   
+{
+  CONF_PREFERREDBLOCKSIZE      , /* CONF_MENU_BUFF */
+  CFGTXT("Preferred packet size (X*2^32 keys/packet)"), "-1 (auto)",
+  /* CFGTXT( */
+  "When fetching key-based packets from a server, the client will request\n"
+  "packets with the size you specify in this option.\n"
+  "The minimum and maximum packet sizes are " _TEXTIFY(PREFERREDBLOCKSIZE_MIN) " and " _TEXTIFY(PREFERREDBLOCKSIZE_MAX) " respectively,\n"
+  "and specifying '-1' permits the client to use internal defaults.\n"
+  "Note : the number you specify is the *preferred* size. Although the\n"
+  "keyserver will do its best to serve that size, there is no guarantee that\n"
+  "it will always do so.\n"
+  /*)*/,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,PREFERREDBLOCKSIZE_MIN,PREFERREDBLOCKSIZE_MAX,NULL,NULL
+},
 { 
   CONF_THRESHOLDI              , /* CONF_MENU_BUFF */
   CFGTXT("Fetch work threshold"), "0 (default size or determine from time threshold)",
