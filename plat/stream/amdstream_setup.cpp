@@ -8,10 +8,12 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.4 2008/12/30 17:39:36 andreasb Exp $
+ * $Id: amdstream_setup.cpp,v 1.5 2008/12/30 17:48:38 andreasb Exp $
 */
 
 #include "amdstream_setup.h"
+#include "amdstream_context.h"
+#include "logstuff.h"
 
 bool cInit=false;
 
