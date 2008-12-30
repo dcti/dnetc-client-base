@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.h,v 1.3 2008/12/30 17:24:47 andreasb Exp $
+ * $Id: amdstream_setup.h,v 1.4 2008/12/30 17:39:36 andreasb Exp $
 */
 
 #ifndef AMD_STREAM_SETUP_H
@@ -52,15 +52,11 @@ typedef struct {
 
   u32 coreID;
   bool active;
-}stream_context_t;
+} stream_context_t;
 
 extern stream_context_t CContext[16];   //MAXCPUS?
 extern bool cInit;
 
-
-u32 getAMDStreamDeviceCount();
-u32 getAMDStreamDeviceFreq();
-long __GetRawProcessorID(const char **cpuname);
 void AMDStreamInitialize();
 void AMDStreamReinitializeDevice(u32 Device);
 

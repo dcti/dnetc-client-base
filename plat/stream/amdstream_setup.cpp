@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.3 2008/12/30 17:24:47 andreasb Exp $
+ * $Id: amdstream_setup.cpp,v 1.4 2008/12/30 17:39:36 andreasb Exp $
 */
 
 #include "amdstream_setup.h"
@@ -68,54 +68,6 @@ void AMDStreamInitialize()
       CContext[i].maxIters=512;
     }
   }
-}
-
-u32 getAMDStreamDeviceCount()
-{
-  return numDevices;
-}
-
-unsigned getAMDStreamDeviceFreq()
-{
-  return CContext[0].attribs.engineClock;       //TODO:device id
-}
-
-long __GetRawProcessorID(const char **cpuname)
-{
-  static char buf[30];
-  buf[0]='\0';
-  if(!cInit)
-    getAMDStreamDeviceCount();
-  switch(CContext[0].attribs.target) {          //TODO:device id
-  case CAL_TARGET_600:
-    strcpy(buf,"R600");
-    break;
-  case CAL_TARGET_610:
-    strcpy(buf,"RV610");
-    break;
-  case CAL_TARGET_630:
-    strcpy(buf,"RV630");
-    break;
-  case CAL_TARGET_670:
-    strcpy(buf,"RV670");
-    break;
-  case CAL_TARGET_7XX:
-    strcpy(buf,"R700 class");
-    break;
-  case CAL_TARGET_770:
-    strcpy(buf,"RV770");
-    break;
-  case CAL_TARGET_710:
-    strcpy(buf,"RV710");
-    break;
-  case CAL_TARGET_730:
-    strcpy(buf,"RV730");
-    break;
-  default:
-    break;
-  }
-  *cpuname=buf;
-  return CContext[0].attribs.target;            //TODO:device id
 }
 
 void AMDStreamReinitializeDevice(u32 Device)
