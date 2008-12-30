@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.25 2008/12/30 00:27:52 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.26 2008/12/30 12:20:05 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -187,20 +187,18 @@ const char **corenames_for_contest_rc572()
       "ANSI 1-pipe",
       "MIPS 2-pipe",
   #elif (CLIENT_CPU == CPU_CUDA)
-      // FIXME: reorder the cores when doing a version increment:
-      // 1-64, 1-128, 1-256, 2-64, 2-128
-      "CUDA 1-pipe 128-thd",
-      "CUDA 2-pipe 64-thd",
       "CUDA 1-pipe 64-thd",
+      "CUDA 1-pipe 128-thd",
       "CUDA 1-pipe 256-thd",
+      "CUDA 2-pipe 64-thd",
       "CUDA 2-pipe 128-thd",
-      "CUDA 1-pipe 64-thd sleep 100us",
-      "CUDA 1-pipe 64-thd sleep dynamic",
-      "CUDA 1-pipe 64-thd busy wait",
       "CUDA 2-pipe 256-thd",
       "CUDA 4-pipe 64-thd",
       "CUDA 4-pipe 128-thd",
       "CUDA 4-pipe 256-thd",
+      "CUDA 1-pipe 64-thd busy wait",
+      "CUDA 1-pipe 64-thd sleep 100us",
+      "CUDA 1-pipe 64-thd sleep dynamic",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -283,9 +281,10 @@ int apply_selcore_substitution_rules_rc572(int cindex)
     }
   }
 #elif (CLIENT_CPU == CPU_CUDA)
+  // GetProcessorType() currently returns the number of registers
   if (GetProcessorType(1) < 256 * 36) {
     /* the 2/4-pipe cores require 36/35 registers per thread, so the 256-thread cores are only feasible on a GTX */
-    if (cindex == 8 || cindex == 11) {
+    if (cindex == 5 || cindex == 8) {
       cindex = 0;    /* default: 1-pipe 64-thread */
     }
   }
@@ -589,7 +588,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
   #error CLIENT_OS may only be used for sub-selects (only if neccessary)
     cindex = 1; // now we use ansi-2pipe
   #elif (CLIENT_CPU == CPU_CUDA)
-    //cindex = ?; // 1-pipe 64-threads should be a good default
+    //cindex = 0; // 1-pipe 64-threads should be a good default
   #endif
 
   return cindex;
@@ -790,57 +789,55 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         break;
      // -----------
      #elif (CLIENT_CPU == CPU_CUDA)
-      // FIXME: reorder the cores when doing a version increment:
-      // 1-64, 1-128, 1-256, 2-64, 2-128
       case 0:
       default:
-        unit_func.gen_72 = rc5_72_unit_func_cuda_1_128;
+        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64;
         pipeline_count = 1;
         coresel = 0; // yes, we explicitly set coresel in the default case !
         break;
       case 1:
-        unit_func.gen_72 = rc5_72_unit_func_cuda_2_64;
-        pipeline_count = 2;
+        unit_func.gen_72 = rc5_72_unit_func_cuda_1_128;
+        pipeline_count = 1;
         break;
       case 2:
-        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64;
+        unit_func.gen_72 = rc5_72_unit_func_cuda_1_256;
         pipeline_count = 1;
         break;
       case 3:
-        unit_func.gen_72 = rc5_72_unit_func_cuda_1_256;
-        pipeline_count = 1;
+        unit_func.gen_72 = rc5_72_unit_func_cuda_2_64;
+        pipeline_count = 2;
         break;
       case 4:
         unit_func.gen_72 = rc5_72_unit_func_cuda_2_128;
         pipeline_count = 2;
         break;
       case 5:
-        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_s0;
-        pipeline_count = 1;
-        break;
-      case 6:
-        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_s1;
-        pipeline_count = 1;
-        break;
-      case 7:
-        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_bw;
-        pipeline_count = 1;
-        break;
-      case 8:
         unit_func.gen_72 = rc5_72_unit_func_cuda_2_256;
         pipeline_count = 2;
         break;
-      case 9:
+      case 6:
         unit_func.gen_72 = rc5_72_unit_func_cuda_4_64;
         pipeline_count = 4;
         break;
-       case 10:
+      case 7:
         unit_func.gen_72 = rc5_72_unit_func_cuda_4_128;
         pipeline_count = 4;
         break;
-       case 11:
+      case 8:
         unit_func.gen_72 = rc5_72_unit_func_cuda_4_256;
         pipeline_count = 4;
+        break;
+      case 9:
+        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_bw;
+        pipeline_count = 1;
+        break;
+      case 10:
+        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_s0;
+        pipeline_count = 1;
+        break;
+      case 11:
+        unit_func.gen_72 = rc5_72_unit_func_cuda_1_64_s1;
+        pipeline_count = 1;
         break;
     // -----------
      #else /* the ansi cores */
