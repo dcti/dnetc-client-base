@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.78 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.79 2008/12/30 23:05:18 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -40,6 +40,7 @@ static const char *helpbody[] =
   "                   [optional: only core cn, must be used with prj]",
   "-test [prj [cn]]   tests for core errors [optional: only project prj]",
   "                   [optional: only core cn, must be used with prj]",
+  "-stress [prj [cn]] more thorough and longer running variant of -test",
   "-cpuinfo           print information about the detected cpu(s)",
   "-restart           restart all active clients",
   "-shutdown          gracefully shut down all active clients",
