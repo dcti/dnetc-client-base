@@ -1,5 +1,6 @@
 
  distributed.net client for NetWare 5.1 and above
+ Document revision $Id: readme.nw6,v 1.3 2008/12/30 12:42:51 andreasb Exp $
                                                          
 This is a port of the dnetc client to the Netware LibC platform.
 
@@ -12,7 +13,7 @@ development and testing was all done with Netware 6.5, with the latest
 support pack.  Any feedback on earlier versions would be appreciated.
 
   - The Netware TCPIP stack must be properly configured to do DNS lookups, 
-meaning	you must be able to "ping www.distributed.net" at the console and get
+meaning you must be able to "ping www.distributed.net" at the console and get
 responses back.
 
 Running:
@@ -33,7 +34,7 @@ Notes:
 priorities.  This makes it difficult for the distributed.net client to 
 "play nice" with other processes.  Running it on a production server can 
 hinder other processes.  I have made it yield the processor regularly as 
-a start, and plan on doing more	work in this area in the future. Update: 
+a start, and plan on doing more work in this area in the future. Update: 
 any client after 10/19/2004 should behave better.  I have enabled the
 Netware 5/6 pseudo-preemption feature on dnetc.nlm.  It's still not a 
 perfect solution because even the newer newer kernel is not truly preemptive, 

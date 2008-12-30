@@ -1,5 +1,6 @@
-distributed.net client for the unix family
- document revision $Id: readme.cell,v 1.5 2008/11/22 20:55:23 stream Exp $
+
+ distributed.net client for the PlayStation 3/Cell Broadband Engine
+ document revision $Id: readme.cell,v 1.6 2008/12/30 12:42:51 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -109,5 +110,4 @@ distributed.net client for the unix family
         echo "none /spu spufs defaults 0 0" >> /etc/fstab
         mkdir /spu
         mount /spu
-
 

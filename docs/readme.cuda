@@ -1,5 +1,6 @@
-distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.7 2008/12/25 00:32:12 jlawson Exp $
+
+ distributed.net client for nVidia CUDA-compatible GPUs
+ document revision $Id: readme.cuda,v 1.8 2008/12/30 12:42:51 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -51,7 +52,7 @@ distributed.net client for nVidia CUDA-compatible GPUs
     subdirectory.
 
 
- 2.0  Troubleshooting and Known issues ------------------------------
+ 3.0  Troubleshooting and Known issues ------------------------------
 
     We recommend using the nVidia driver version 178.xx (for use with
     CUDA 2.0), since we have received reports of the client hanging

@@ -1,6 +1,7 @@
+ 
  distributed.net client for BeOS (x86 and PowerPC)
  Released by Urias McCullough <umccullough@teamhaiku.com>
- document revision $Id: readme.beos,v 1.7 2008/12/11 07:43:25 umccullough Exp $
+ document revision $Id: readme.beos,v 1.8 2008/12/30 12:42:51 andreasb Exp $
 
  Welcome to the distributed.net client.
 

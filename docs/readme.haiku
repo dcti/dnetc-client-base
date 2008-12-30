@@ -1,6 +1,7 @@
+
  distributed.net client for Haiku (x86)
  Released by Urias McCullough <umccullough@teamhaiku.com>
- document revision $Id: readme.haiku,v 1.2 2008/12/11 07:43:25 umccullough Exp $
+ document revision $Id: readme.haiku,v 1.3 2008/12/30 12:42:51 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -38,8 +39,8 @@
 
  2.0  Haiku specific Notes: ------------------------------------------
  
- 	The Haiku version of the client is based in part on the BeOS version
- 	originally ported and maintained by Christopher Tate.
+    The Haiku version of the client is based in part on the BeOS version
+    originally ported and maintained by Christopher Tate.
 
     Beginning with v2.7101, the client's default directory is the 
     one the configuration file is located in, which in turn is assumed to
