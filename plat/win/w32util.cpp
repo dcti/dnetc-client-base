@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  * 
 */
 const char *w32util_cpp(void) {
-return "@(#)$Id: w32util.cpp,v 1.3 2008/04/11 17:25:14 jlawson Exp $"; }
+return "@(#)$Id: w32util.cpp,v 1.4 2008/12/30 20:58:45 andreasb Exp $"; }
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */
 #define INCLUDE_SHELLAPI_H /* __WINDOWS386__ */

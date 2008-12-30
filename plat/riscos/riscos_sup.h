@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * By Kevin Bracey <kbracey@acorn.com> and Chris Berry <cberry@acorn.com>
  *
- * $Id: riscos_sup.h,v 1.7 2008/12/22 21:16:21 teichp Exp $
+ * $Id: riscos_sup.h,v 1.8 2008/12/30 20:58:44 andreasb Exp $
 */
 #ifndef __RISCOS_SUP_H__
 #define __RISCOS_SUP_H__

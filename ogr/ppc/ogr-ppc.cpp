@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1999-2004 - All Rights Reserved
+ * Copyright distributed.net 1999-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
@@ -7,7 +7,7 @@
 #include "ansi/ogrp2-32.h"
 
 const char *ogr_ppc_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.9 2008/03/08 21:11:38 kakace Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.10 2008/12/30 20:58:43 andreasb Exp $"; }
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
 

@@ -1,11 +1,11 @@
 /* 
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 /*
 const char *ogr_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.8 2008/12/03 20:43:52 stream Exp $"; }
+return "@(#)$Id: ogr-cell-spe-wrapper.c,v 1.9 2008/12/30 20:58:43 andreasb Exp $"; }
 */
 
 #ifndef CORE_NAME

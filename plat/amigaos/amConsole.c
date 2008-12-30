@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: amConsole.c,v 1.5 2008/10/27 09:49:33 oliver Exp $
+ * $Id: amConsole.c,v 1.6 2008/12/30 20:58:44 andreasb Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *

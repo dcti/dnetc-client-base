@@ -1,6 +1,6 @@
 /* Hey, Emacs, this is *not* a -*-C++-*- file !
  *
- * Copyright distributed.net 2000-2003 - All Rights Reserved
+ * Copyright distributed.net 2000-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,7 +13,7 @@
  * module.
 */
 #ifndef __NETBASE_H__
-#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.6 2008/12/19 11:10:59 andreasb Exp $"
+#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.7 2008/12/30 20:58:42 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 

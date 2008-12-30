@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 2001-2004 - All Rights Reserved
+ * Copyright distributed.net 2001-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Wrapper around ogr64.cpp for assembly x86 64-bit cores.
  *
- * $Id: ogr-d.cpp,v 1.4 2008/04/01 14:42:19 stream Exp $
+ * $Id: ogr-d.cpp,v 1.5 2008/12/30 20:58:44 andreasb Exp $
 */
 
 #include <stddef.h>

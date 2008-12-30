@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.40 2008/02/17 16:24:29 kakace Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.41 2008/12/30 20:58:41 andreasb Exp $"; }
 
 //#define TRACE
 

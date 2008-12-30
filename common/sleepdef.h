@@ -1,6 +1,6 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.45 2008/10/27 11:00:25 oliver Exp $"
+#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.46 2008/12/30 20:58:42 andreasb Exp $"
 
 #include "cputypes.h"
 

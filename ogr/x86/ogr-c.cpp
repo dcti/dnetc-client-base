@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 2001-2004 - All Rights Reserved
+ * Copyright distributed.net 2001-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Wrapper around ogr.cpp for all processor WITH a fast bsr instruction.
  * (ie, PPro, PII, PIII)
  *
- * $Id: ogr-c.cpp,v 1.4 2008/04/01 14:42:19 stream Exp $
+ * $Id: ogr-c.cpp,v 1.5 2008/12/30 20:58:44 andreasb Exp $
 */
 
 #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */

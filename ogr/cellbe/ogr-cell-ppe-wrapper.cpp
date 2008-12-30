@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogr_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.8 2008/08/17 06:43:27 stream Exp $"; }
+return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.9 2008/12/30 20:58:43 andreasb Exp $"; }
 
 #ifndef CORE_NAME
 #define CORE_NAME cellv1

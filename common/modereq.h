@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -14,7 +14,7 @@
 */
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.24 2008/12/19 11:10:59 andreasb Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.25 2008/12/30 20:58:41 andreasb Exp $"
 
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002

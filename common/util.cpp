@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.40 2008/12/22 11:39:23 andreasb Exp $"; }
+return "@(#)$Id: util.cpp,v 1.41 2008/12/30 20:58:42 andreasb Exp $"; }
 
 //#define TRACE
 

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.32 2008/11/26 03:27:09 jlawson Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.33 2008/12/30 20:58:41 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"

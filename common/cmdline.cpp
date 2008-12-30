@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.168 2008/12/14 16:00:53 snake Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.169 2008/12/30 20:58:41 andreasb Exp $"; }
 
 //#define TRACE
 

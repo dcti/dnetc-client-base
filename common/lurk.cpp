@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -49,7 +49,7 @@
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
 const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.67 2008/11/27 21:09:58 snake Exp $"; }
+return "@(#)$Id: lurk.cpp,v 1.68 2008/12/30 20:58:41 andreasb Exp $"; }
 
 //#define TRACE
 

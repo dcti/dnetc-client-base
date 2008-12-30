@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1998-2002 - All Rights Reserved
+ * Copyright distributed.net 1998-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32CONS_H__
-#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.3 2008/12/10 10:38:59 andreasb Exp $"
+#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.4 2008/12/30 20:58:44 andreasb Exp $"
 
 /* ********* DO NOT EVER CHANGE THE W32CLI_*_NAME defines ********** */
 #if (CLIENT_CPU == CPU_CUDA)

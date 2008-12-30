@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  *
 */
 const char *base64_cpp(void) {
-  return "@(#)$Id: base64.cpp,v 1.13 2008/12/19 11:10:58 andreasb Exp $";
+  return "@(#)$Id: base64.cpp,v 1.14 2008/12/30 20:58:40 andreasb Exp $";
 }
 
 static const unsigned char base64table[64] =

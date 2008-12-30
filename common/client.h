@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.154 2008/12/30 05:33:33 snikkel Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.155 2008/12/30 20:58:41 andreasb Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */

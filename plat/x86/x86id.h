@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.h,v 1.3 2008/10/18 03:23:59 snikkel Exp $
+ * $Id: x86id.h,v 1.4 2008/12/30 20:58:45 andreasb Exp $
  */
 
 #ifndef client_x86id_H

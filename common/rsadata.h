@@ -1,12 +1,12 @@
 // Hey, Emacs, this a -*-C++-*- file !
 //
-// Copyright distributed.net 1997-2003 - All Rights Reserved
+// Copyright distributed.net 1997-2008 - All Rights Reserved
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 //
 
 #ifndef __RSADATA_H__
-#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.16 2008/12/19 11:10:59 andreasb Exp $"
+#define __RSADATA_H__ "@(#)$Id: rsadata.h,v 1.17 2008/12/30 20:58:42 andreasb Exp $"
 
 // RC5-56:
 // Contest identifier: RC5-32/12/7

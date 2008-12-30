@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2003 - All Rights Reserved
+ * Copyright distributed.net 1999-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * OGR support routines and data.
  *
- * $Id: ogr_sup.cpp,v 1.7 2008/02/13 22:06:53 kakace Exp $
+ * $Id: ogr_sup.cpp,v 1.8 2008/12/30 20:58:43 andreasb Exp $
 */
 #include <stdio.h>
 #include <string.h>

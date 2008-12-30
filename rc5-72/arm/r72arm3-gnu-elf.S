@@ -1,9 +1,9 @@
-@ Copyright distributed.net 1997-2002 - All Rights Reserved
+@ Copyright distributed.net 1997-2008 - All Rights Reserved
 @ For use in distributed.net projects only.
 @ Any other distribution or use of this source violates copyright.
 @
 @ Author: Peter Teichmann <dnet@peter-teichmann.de>
-@ $Id: r72arm3-gnu-elf.S,v 1.2 2008/02/07 10:24:18 kakace Exp $
+@ $Id: r72arm3-gnu-elf.S,v 1.3 2008/12/30 20:58:45 andreasb Exp $
 
 #define	WORK	r0
 #define	L0	r2

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.67 2008/12/30 05:33:33 snikkel Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.68 2008/12/30 20:58:41 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 

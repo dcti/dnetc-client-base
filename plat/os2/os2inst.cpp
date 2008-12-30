@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,7 +13,7 @@
  *
 */
 const char *os2inst_cpp(void) {
-return "@(#)$Id: os2inst.cpp,v 1.6 2008/10/19 07:47:39 jlawson Exp $"; }
+return "@(#)$Id: os2inst.cpp,v 1.7 2008/12/30 20:58:44 andreasb Exp $"; }
 
 // #define TRACE
 

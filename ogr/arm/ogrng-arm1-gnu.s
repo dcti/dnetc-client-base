@@ -1,9 +1,9 @@
-@ Copyright distributed.net 1997-2002 - All Rights Reserved
+@ Copyright distributed.net 1997-2008 - All Rights Reserved
 @ For use in distributed.net projects only.
 @ Any other distribution or use of this source violates copyright.
 @
 @ Author: Peter Teichmann <teichp@distributed.net>
-@ $Id: ogrng-arm1-gnu.s,v 1.1 2008/12/30 01:04:22 teichp Exp $
+@ $Id: ogrng-arm1-gnu.s,v 1.2 2008/12/30 20:58:43 andreasb Exp $
 @
 @ Stack:
 @ 0   int *pnodes

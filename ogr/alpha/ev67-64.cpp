@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2002-2003 - All Rights Reserved
+ * Copyright distributed.net 2002-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
 
 
 const char *ogr_ev67_64_cpp(void) {
-return "@(#)$Id: ev67-64.cpp,v 1.3 2008/03/08 20:18:28 kakace Exp $"; }
+return "@(#)$Id: ev67-64.cpp,v 1.4 2008/12/30 20:58:43 andreasb Exp $"; }
 
 #if defined(__GNUC__)
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - "100% asm"      */

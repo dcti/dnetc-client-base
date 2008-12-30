@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2002-2004 - All Rights Reserved
+ * Copyright distributed.net 2002-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
 
 
 const char *ogr_arm_cpp(void) {
-return "@(#)$Id: ogr-arm.cpp,v 1.3 2008/03/08 20:18:29 kakace Exp $"; }
+return "@(#)$Id: ogr-arm.cpp,v 1.4 2008/12/30 20:58:43 andreasb Exp $"; }
 
 #if defined(ASM_ARM)
 

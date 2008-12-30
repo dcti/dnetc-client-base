@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -40,7 +40,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-  return "@(#)$Id: pollsys.cpp,v 1.19 2008/12/19 11:10:59 andreasb Exp $";
+  return "@(#)$Id: pollsys.cpp,v 1.20 2008/12/30 20:58:42 andreasb Exp $";
 }
 
 #include "baseincs.h"  /* NULL, malloc */

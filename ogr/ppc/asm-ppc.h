@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2004 - All Rights Reserved
+ * Copyright distributed.net 1999-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __ASM_PPC_H__
-#define __ASM_PPC_H__ "@(#)$Id: asm-ppc.h,v 1.4 2008/03/08 20:18:29 kakace Exp $"
+#define __ASM_PPC_H__ "@(#)$Id: asm-ppc.h,v 1.5 2008/12/30 20:58:43 andreasb Exp $"
 
 #if defined(__GNUC__)     /*================================================*/
 

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1999-2004 - All Rights Reserved
+ * Copyright distributed.net 1999-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
 
 #ifndef IMPLEMENT_CELL_CORES /* Included twice for PPU and SPU */
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.10 2008/06/22 18:52:26 stream Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.11 2008/12/30 20:58:44 andreasb Exp $"; }
 #endif
 
 #include "ansi/ogrp2.h"

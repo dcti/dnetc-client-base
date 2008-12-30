@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2004 - All Rights Reserved
+ * Copyright distributed.net 1999-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86-p2.h,v 1.1 2008/04/01 14:42:19 stream Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86-p2.h,v 1.2 2008/12/30 20:58:44 andreasb Exp $"
 
 /*
  * Assembly routines for OGR-P2 only. They're not compatible with OGR-NG

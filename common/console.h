@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CONSOLE_H__
-#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.37 2008/12/19 11:10:58 andreasb Exp $"
+#define __CONSOLE_H__ "@(#)$Id: console.h,v 1.38 2008/12/30 20:58:41 andreasb Exp $"
 
 // ConIsScreen() returns non-zero if console represents the screen
 // also returns 0 if the console is not initialized.

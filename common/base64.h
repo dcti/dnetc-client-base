@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __BASE64_H__
-#define __BASE64_H__ "@(#)$Id: base64.h,v 1.11 2008/12/19 11:10:58 andreasb Exp $"
+#define __BASE64_H__ "@(#)$Id: base64.h,v 1.12 2008/12/30 20:58:40 andreasb Exp $"
 
 /*
   On success, both functions return the number of bytes in the outbuf (not

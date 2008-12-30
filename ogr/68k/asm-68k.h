@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2004 - All Rights Reserved
+ * Copyright distributed.net 1999-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __ASM_68K_H__
-#define __ASM_68K_H__ "@(#)$Id: asm-68k.h,v 1.3 2008/03/08 20:18:28 kakace Exp $"
+#define __ASM_68K_H__ "@(#)$Id: asm-68k.h,v 1.4 2008/12/30 20:58:43 andreasb Exp $"
 
 #if defined(ASM_68K) && defined(__GNUC__)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2001-2004 - All Rights Reserved
+ * Copyright distributed.net 2001-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -20,7 +20,7 @@ const char *ogr_68020_cpp(void)
 #else
 const char *ogr_68000_cpp(void)
 #endif
-{ return "@(#)$Id: ogr-68k.cpp,v 1.3 2008/03/08 20:18:28 kakace Exp $"; }
+{ return "@(#)$Id: ogr-68k.cpp,v 1.4 2008/12/30 20:58:43 andreasb Exp $"; }
 
 /*
 ** The following macro is defined on the command line for each target CPU
