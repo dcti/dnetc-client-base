@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.336 2008/12/28 23:20:51 teichp Exp $
+# @(#)$Id: configure,v 1.337 2008/12/30 00:47:14 teichp Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -491,6 +491,12 @@ add_sources() # $1=os, $2=arch, $3=custom
                                       $OGR/ansi/ogrng-32.cpp \
                                       $OGR/arm/ogrng-arm1.cpp \
                                       $OGR/arm/ogrng-arm2.cpp"
+      if [ "$1-$3" = "riscos-gccsdk" ]; then
+          TARGET_ADDASMS="$TARGET_ADDASMS ogr/arm/ogrng-arm1-gccsdk.s"
+      else
+          echo No ogr-ng asm cores for target!
+          exit 1
+      fi
     fi # HAVE_OGR
     
     if [ "$HAVE_OGR_P2" = "1" ]; then
