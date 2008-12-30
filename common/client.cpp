@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.262 2008/12/22 21:16:22 teichp Exp $"; }
+return "@(#)$Id: client.cpp,v 1.263 2008/12/30 19:36:48 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -29,6 +29,10 @@ return "@(#)$Id: client.cpp,v 1.262 2008/12/22 21:16:22 teichp Exp $"; }
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
 #include "selcore.h"   // [De]InitializeCoreTable()
+
+#if (CLIENT_CPU == CPU_AMD_STREAM)
+#include "amdstream_setup.h" // AMDStreamInitialize();
+#endif
 
 /* ------------------------------------------------------------------------ */
 
@@ -347,6 +351,10 @@ static int ClientMain( int argc, char *argv[] )
   }
   srand( (unsigned) time(NULL) );
   InitRandom();
+
+  #if (CLIENT_CPU == CPU_AMD_STREAM)
+  AMDStreamInitialize();
+  #endif
 
   do
   {

@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.6 2008/12/30 18:08:50 andreasb Exp $
+ * $Id: amdstream_setup.cpp,v 1.7 2008/12/30 19:36:49 andreasb Exp $
 */
 
 #include "amdstream_setup.h"
@@ -18,7 +18,6 @@
 stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 int amdstream_numDevices = -1;
 
-// FIXME: call this function *once* at client start, before CPU detection!
 void AMDStreamInitialize()
 {
   if (amdstream_numDevices >= 0)
