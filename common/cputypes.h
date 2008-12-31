@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.102 2008/12/30 20:58:41 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.103 2008/12/31 16:46:40 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -432,7 +432,7 @@
    #define __unix__
    #endif
    #if defined(CUDA)
-     #define CLIENT_CPU     CPU_CUDA
+     #define CLIENT_CPU    CPU_CUDA
    #elif defined(__ppc__) || defined (__ppc64__)
      #define CLIENT_CPU    CPU_POWERPC
    #elif defined(__i386__) || defined(__x86_64__)
@@ -534,6 +534,7 @@
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
+     (CLIENT_CPU == CPU_AMD_STREAM) || \
      ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_WIN32) || \
      (CLIENT_OS == OS_DEC_UNIX))))
    #define CORES_SUPPORT_SMP
@@ -650,6 +651,8 @@
   #endif
   #if (CLIENT_CPU == CPU_CUDA)
   #error FORK and CUDA don't work together - can't use multiple GPUs
+  #elif (CLIENT_CPU == CPU_AMD_STREAM)
+  #error FORK and AMD STREAM probably don't work together
   #endif
 #else
   typedef int THREADID;

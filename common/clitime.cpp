@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.67 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.68 2008/12/31 16:46:40 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -835,9 +835,6 @@ int CliGetThreadUserTime( struct timeval *tv )
 #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   static int is_supp = -1;
   FILETIME ct,et,kt,ut;
-  #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)
-    return -1;
-  #endif
   if (is_supp == 0)
     return -1;
   if ( !tv && is_supp > 0 )

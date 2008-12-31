@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.149 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.150 2008/12/31 16:46:40 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -85,21 +85,25 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
   {
     cpucount = -1;
     #if (CLIENT_CPU == CPU_CUDA)
+    {
       cudaDeviceProp deviceProp;
       cudaGetDeviceCount(&cpucount);
       cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
-      if (strstr(deviceProp.name, "Emulation") != NULL) cpucount = 0;
-
+      if (strstr(deviceProp.name, "Emulation") != NULL)
+        cpucount = 0;
       if (cpucount <= 0) {
         LogScreen("No CUDA-supported GPU found.\n");
         cpucount = 0;
       }
+    }
     #elif (CLIENT_CPU == CPU_AMD_STREAM)
+    {
       cpucount=getAMDStreamDeviceCount();
       if (cpucount<=0) {
         LogScreen("No AMD STREAM-compatible device found.\n");
-        cpucount=-1;
+        cpucount = 0;
       }
+    }
     #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
         (CLIENT_OS == OS_DRAGONFLY)
