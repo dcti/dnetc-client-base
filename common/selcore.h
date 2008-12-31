@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.23 2008/12/30 20:58:42 andreasb Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.24 2008/12/31 15:09:47 kakace Exp $"
 
 #include "cputypes.h"
 #include "ccoreio.h"
@@ -66,6 +66,7 @@ struct selcore
 int selcoreSelectCore( unsigned int cont_id, unsigned int thrindex,
                        int *client_cpuP, struct selcore *selinfo );
 
+int selcoreGetPreselectedCoreForProject(unsigned int projectid);
 /* Get the core # for a contest. Informational use only. */
 int selcoreGetSelectedCoreForContest( unsigned int contestid );
 const char *selcoreGetDisplayName( unsigned int cont_i, int index );

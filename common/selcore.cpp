@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.117 2008/12/30 20:58:42 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.118 2008/12/31 15:09:47 kakace Exp $"; }
 
 //#define TRACE
 
@@ -343,6 +343,9 @@ static long __bench_or_test( int which,
     int user_cputype = selcorestatics.user_cputype[cont_i];
     int corenum = selcorestatics.corenum[cont_i];
     int coreidx, corecount = corecount_for_contest( cont_i );
+    int fastest = -1;
+    int hardcoded = selcoreGetPreselectedCoreForProject(cont_i);
+    long bestrate = 0, refrate = 0;
 
     rc = 0; /* assume nothing done */
     for (coreidx = 0; coreidx < corecount; coreidx++)
@@ -371,8 +374,16 @@ static long __bench_or_test( int which,
           rc = SelfTest( cont_i );
         else if (which == 's') /* stresstest */
           rc = StressTest( cont_i );
-        else
+        else {
           rc = TBenchmark( cont_i, benchsecs, 0 );
+          if (rc > 0 && selcorestatics.corenum[cont_i] == hardcoded) {
+            refrate = rc;
+          }
+          if (rc > bestrate) {
+            bestrate = rc;
+            fastest  = selcorestatics.corenum[cont_i];
+          }
+        }
         #if (CLIENT_OS != OS_WIN32 || !defined(SMC))
         if (rc <= 0) /* failed (<0) or not supported (0) */
           break; /* stop */
@@ -393,7 +404,32 @@ static long __bench_or_test( int which,
     selcorestatics.user_cputype[cont_i] = user_cputype;
     selcorestatics.corenum[cont_i] = corenum;
 
-    #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
+    /* Summarize the results if multiple cores have been benchmarked (#4108) */
+    if (in_corenum < 0 && fastest >= 0 && bestrate > 0) {
+      long percent = 100 * refrate / bestrate;
+
+      Log("%s benchmark summary :\n"
+          "Default core : #%d (%s)\n"
+          "Fastest core : #%d (%s)\n",
+          CliGetContestNameFromID(cont_i), hardcoded,
+          (hardcoded >= 0 ? selcoreGetDisplayName(cont_i, hardcoded) : "undefined"),
+          fastest, selcoreGetDisplayName(cont_i, fastest));
+
+      if (percent < 100 && hardcoded >= 0 && hardcoded != fastest) {
+        if (percent >= 97) {
+          Log("Core #%d is marginally faster than the default core.\n"
+              "Testing variability might lead to pick one or the other.\n",
+              fastest);
+        }
+        else {
+          Log("Core #%d is significantly faster than the default core.\n"
+              "Please file a bug report along with the output of\n-cpuinfo.\n",
+              fastest);
+        }
+      }
+    }
+
+#if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
     if (rc > 0 && cont_i == RC5 && 
           GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     {
