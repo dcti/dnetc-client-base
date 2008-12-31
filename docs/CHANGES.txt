@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.43 2008/12/31 00:26:17 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.44 2008/12/31 00:49:38 kakace Exp $
 ==========================================================================
 
 2.9100
@@ -36,6 +36,7 @@ Version change log: $Id: CHANGES.txt,v 1.43 2008/12/31 00:26:17 kakace Exp $
             fix: all: OGR-NG state restored properly after a restart
             fix: linux: Improved OGR-NG cache management (#4076)
             imp: all: Print combined OGR-NG stubs with more details (#4082)
+            fix: all: Combined OGR-NG stubs no longer appear to restart (#4083)
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core

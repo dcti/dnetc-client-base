@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.194 2008/12/31 00:26:17 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.195 2008/12/31 00:49:38 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2168,9 +2168,17 @@ static unsigned int __compute_permille(unsigned int cont_i,
     case OGR_NG:
     if (work->ogr_ng.workstub.worklength > (u32)work->ogr_ng.workstub.stub.length)
     {
-      // This is just a quick&dirty calculation that resembles progress.
-      permille = work->ogr_ng.workstub.stub.diffs[work->ogr_ng.workstub.stub.length]*10
-                +work->ogr_ng.workstub.stub.diffs[work->ogr_ng.workstub.stub.length+1]/10;
+      // This is just a quick&dirty calculation that resembles progress. For
+      // regular stubs, we look at the first two diffs appended to the stub.
+      // For combined stubs, we look at the last diff of these stubs and the
+      // first diff appended to them. In short, the two leftmost diffs that are
+      // modified while the core is running are taken into account to compute
+      // this pseudo-progress value (#4083).
+      int index = (work->ogr_ng.workstub.collapsed != 0) ? -1 : 0;
+      index += work->ogr_ng.workstub.stub.length;
+
+      permille = work->ogr_ng.workstub.stub.diffs[index]*10
+                +work->ogr_ng.workstub.stub.diffs[index+1]/10;
     }
     break;
 #endif
