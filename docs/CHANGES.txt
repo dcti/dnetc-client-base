@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.42 2008/12/30 17:29:03 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.43 2008/12/31 00:26:17 kakace Exp $
 ==========================================================================
 
 2.9100
@@ -35,6 +35,7 @@ Version change log: $Id: CHANGES.txt,v 1.42 2008/12/30 17:29:03 kakace Exp $
             new: stream: RC5-72 core for AMD stream video cards (#4099)
             fix: all: OGR-NG state restored properly after a restart
             fix: linux: Improved OGR-NG cache management (#4076)
+            imp: all: Print combined OGR-NG stubs with more details (#4082)
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core

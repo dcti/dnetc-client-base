@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_INTERFACE_H__
-#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.5 2008/06/22 18:52:25 stream Exp $"
+#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.6 2008/12/31 00:26:17 kakace Exp $"
 
 #include <limits.h>
 
@@ -123,7 +123,12 @@ typedef struct {
    } VECTOR;
 #endif
 
+
+// Forward references
+
 struct Stub;
+struct OgrWorkStub;
+
 
 /*
 ** ogr_sup.cpp
@@ -132,6 +137,11 @@ const char *ogr_stubstr_r(const struct Stub *stub, char *buffer,
                           unsigned int bufflen, int worklength);
 const char *ogr_stubstr(const struct Stub *stub);
 const char *ogr_errormsg(int errorcode);
+
+// Overloaded methods
+const char *ogrng_stubstr_r(const struct OgrWorkStub *stub, char *buffer,
+                            unsigned int bufflen, int maxdiff);
+const char *ogrng_stubstr(const struct OgrWorkStub *stub);
 
 #endif /* __OGR_INTERFACE_H__ */
 

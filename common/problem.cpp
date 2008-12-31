@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.193 2008/12/30 20:58:42 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.194 2008/12/31 00:26:17 kakace Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2434,17 +2434,11 @@ int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags)
 
               if (flags & P_INFO_SIGBUF)
               {
-                ogr_stubstr_r((const struct Stub *) &work.ogr_ng.workstub.stub,
-                              info->sigbuf, sizeof(info->sigbuf), 0);
-                if (work.ogr_ng.workstub.worklength <= work.ogr_ng.workstub.stub.length
-                    && work.ogr_ng.workstub.collapsed != 0) {
-                  strncat(info->sigbuf, "...", sizeof(info->sigbuf) - strlen(info->sigbuf));
-                }
+                ogrng_stubstr_r(&work.ogr_ng.workstub, info->sigbuf, sizeof(info->sigbuf), 0);
               }
               if (flags & P_INFO_CWPBUF)
               {
-                ogr_stubstr_r((const struct Stub *)  &work.ogr_ng.workstub.stub,
-                              info->cwpbuf, sizeof(info->sigbuf), work.ogr_ng.workstub.worklength);
+                ogrng_stubstr_r(&work.ogr_ng.workstub, info->cwpbuf, sizeof(info->sigbuf), 10);
               }
               if ((flags & P_INFO_SWUCOUNT) && (tcounthi || tcountlo)) /* only if finished */
               {
