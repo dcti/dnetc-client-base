@@ -1,9 +1,10 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.99 2008/12/23 03:28:19 jlawson Exp $
+# $Id: makefile.vc,v 1.100 2009/01/01 08:44:24 jlawson Exp $
 #
 
+#PROCESSOR_ARCHITECTURE = AMD64
 #PROCESSOR_ARCHITECTURE = cuda
 
 BASENAME = dnetc
@@ -33,7 +34,7 @@ OPTS_CC_CPU =
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-OPTS_CC_CPU =
+OPTS_CC_CPU = -D_AMD64_ -GS-
 OPTS_M_PLAT = AMD64
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
@@ -58,8 +59,10 @@ OPTS_LINK_DEBUG = /release
 
 
 !if defined(PECOMPACT)
+!if "$(OPTS_M_PLAT)" == "IX86"
 EXECOMPRESSOR = "$(PECOMPACT)\pec2.exe"
 EXECOMPRESSOR2 = /NoBackup /CodeIntegrityCheck:Y /StripDebug:Y /WinModuleLoader:Y
+!endif
 !elseif defined(UPX)
 EXECOMPRESSOR = "$(UPX)\upx.exe" -9 -qq --compress-resources=0
 EXECOMPRESSOR2 =
@@ -104,7 +107,7 @@ OPTS_MSVC = -nologo -D__WIN32__ \
             -Dsnprintf=_snprintf -DHAVE_SNPRINTF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG)
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
-OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
+OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib bufferoverflowu.lib
             ## *** SOMETHING IS BROKEN IF YOU NEED MORE
 	    ## *** THAN advapi+user32+kernel32+gdi32 ***
 	    ## *** +++++++++++++++++++++++++++++++++++++++++
@@ -217,6 +220,10 @@ PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/strcmpi.obj
 
 OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) -I$(CHIPSRCPATH)
 
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+OPTS_MSVC = $(OPTS_MSVC) -I plat/x86
+!endif
+
 # --------------------------------------------
 
 SCR_OBJS =                           \
@@ -244,7 +251,10 @@ CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
             $(OUTPUTPATH)/x86rdtsc.obj       \
             $(OUTPUTPATH)/x86htcount.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-####CHIP_OBJS = $(OUTPUTPATH)/x86ident.obj
+CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
+            $(OUTPUTPATH)/x86id.obj          \
+            $(OUTPUTPATH)/x86rdtsc.obj       \
+            $(OUTPUTPATH)/x86htcount.obj
 !endif
 
 # --------------------------------- RC5-72 -------------------------
@@ -254,6 +264,7 @@ RC5_72_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 RC5_72_OBJS = \
         $(OUTPUTPATH)/r72-snjl.obj \
+        $(OUTPUTPATH)/r72-kbe.obj \
         $(OUTPUTPATH)/r72ansi1.obj \
         $(OUTPUTPATH)/r72ansi2.obj \
         $(OUTPUTPATH)/r72ansi4.obj
@@ -309,7 +320,7 @@ OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
 !else
-!error No OGR cores for this architecture.
+!error No OGR-P2 cores for this architecture.
 !endif
 
 !if $(HAVE_OGR_PASS2) == 1
@@ -322,8 +333,12 @@ OPTS_MSVC = $(OPTS_MSVC) -DHAVE_OGR_PASS2
 OGRNG_OBJS =
 #!elseif "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 #OGRNG_OBJS = ???
-#!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-#OGR_OBJS = ???
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+OGRNG_OBJS =                         \
+        $(OUTPUTPATH)/ogr_sup.obj \
+        $(OUTPUTPATH)/ogrng-64.obj   \
+        $(OUTPUTPATH)/ogrng_init.obj \
+        $(OUTPUTPATH)/ogrng_dat.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OGRNG_OBJS =                         \
         $(OUTPUTPATH)/ogr_sup.obj \
@@ -335,7 +350,7 @@ OGRNG_OBJS =                         \
         $(OUTPUTPATH)/ogrng_init.obj \
         $(OUTPUTPATH)/ogrng_dat.obj
 !else
-!error No OGR cores for this architecture.
+!error No OGR-NG cores for this architecture.
 !endif
 
 !if $(HAVE_OGR_CORES) == 1
@@ -384,6 +399,8 @@ $(VC_CHECK):
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS $(**:/=\)
 
+{plat/x86}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 

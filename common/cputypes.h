@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.103 2008/12/31 16:46:40 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.104 2009/01/01 08:44:24 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -529,8 +529,9 @@
 
 /* ----------------------------------------------------------------- */
 
-#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_88K) || \
-     (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_68K) || \
+#if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || \
+	 (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_88K) || \
+     (CLIENT_CPU == CPU_SPARC) || \
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
@@ -540,7 +541,7 @@
    #define CORES_SUPPORT_SMP
 #endif
 
-#if (CLIENT_OS == OS_WIN32)
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   #include <process.h>
   typedef unsigned long THREADID;
   #define OS_SUPPORTS_SMP

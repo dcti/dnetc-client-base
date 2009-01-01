@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.13 2008/12/31 16:46:39 andreasb Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.14 2009/01/01 08:44:24 jlawson Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -202,7 +202,9 @@
   static inline int fastlock_trylock(fastlock_t *l) {
     int lacquired = 0;
 
-# if defined(__GNUC__)
+# if defined(_MSC_VER)
+    lacquired = _InterlockedExchange(l, 1) ^ 1;
+# elif defined(__GNUC__)
     /* note: no 'lock' prefix even on SMP since xchg is always atomic */
     asm volatile("movl  $1,%0 \n\t" \
                  "xchgl %0,%1 \n\t" \

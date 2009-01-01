@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_AMD64_H__
-#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.9 2008/10/21 05:07:46 jlawson Exp $"
+#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.10 2009/01/01 08:44:24 jlawson Exp $"
 
 
 #if defined(__ICC)
@@ -75,12 +75,33 @@
 
 #elif defined(_MSC_VER)
 
+  #if defined(_M_AMD64)
+  extern "C" unsigned char _BitScanReverse(unsigned long* index, unsigned long mask);
+  extern "C" unsigned char _BitScanReverse64(unsigned long * Index, unsigned __int64 Mask);
+  #pragma intrinsic(_BitScanReverse)
+  #pragma intrinsic(_BitScanReverse64)
+  #endif
+
+  static __forceinline int __CNTLZ__(register SCALAR i)
+  {
+#if defined(_M_AMD64)
+	  // unfortunately VC.NET 2003 x64 does not allow inline assembly at all!
+      // use a VC.NET intrinsic instead of the BSR instruction.
+  #if (SCALAR_BITS == 32)
+      register unsigned long tmp;
+      _BitScanReverse(&tmp, ~i);
+      return (0x20 - tmp);
+  #elif (SCALAR_BITS == 64)
+      register unsigned long tmp;
+      _BitScanReverse64(&tmp, ~i);
+      return (0x40 - tmp);
+  #endif
+#else
   #if (SCALAR_BITS != 32)
   #error Only supported for 32-bit SCALAR typedef.
   #endif
-  static __forceinline int __CNTLZ__(register SCALAR i)
-  {
-      __asm {
+
+	  __asm {
         mov ecx,i
         not ecx
         mov eax,20h
@@ -88,6 +109,7 @@
         sub eax,ecx
       }
       // return value in eax
+#endif
   }
   #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
 

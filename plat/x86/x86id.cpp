@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.11 2008/10/18 03:23:59 snikkel Exp $
+ * $Id: x86id.cpp,v 1.12 2009/01/01 08:44:24 jlawson Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
@@ -85,7 +85,7 @@ union PageInfos {
     return _ax;
   }
   #endif
-#elif (CLIENT_CPU == CPU_X86)
+#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
   #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
     extern "C" s32 x86getid(void) asm ("x86getid");
     extern "C" u32 x86cpuid(u32 page, union PageInfos* infos) asm ("x86cpuid");

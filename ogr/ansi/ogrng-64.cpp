@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng-64.cpp,v 1.6 2008/03/09 13:31:03 kakace Exp $
+ * $Id: ogrng-64.cpp,v 1.7 2009/01/01 08:44:24 jlawson Exp $
 */
 
 #include "ansi/ogrng-64.h"
@@ -48,8 +48,8 @@
 ** more registers. If we're not compiling for a native 64-bit architecture,
 ** then the __CNTLZ macro is discarded.
 */
-#if !defined(__x86_64__) && !defined(__amd64__) && !defined(__ppc64__) \
-  && !defined(__alpha__) && !defined(__sparc_v9__)
+#if !defined(__x86_64__) && !defined(__amd64__) && !defined(_M_AMD64) && \
+	!defined(__ppc64__) && !defined(__alpha__) && !defined(__sparc_v9__)
   #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 2)
     #undef  __CNTLZ
     #undef  OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM
