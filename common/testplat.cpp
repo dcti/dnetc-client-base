@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,7 +7,7 @@
  * Specify 'build_dependancies' as argument
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.14 2008/12/30 20:58:42 andreasb Exp $
+ * $Id: testplat.cpp,v 1.15 2009/01/01 21:48:01 andreasb Exp $
 */
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -71,6 +71,45 @@ static int is_trace_checked(const char *filename)
   return 0;
 }
 
+struct name_list {
+  struct name_list *next;
+  char *name;
+};
+
+/* returns 1 if name was found in list, otherwise adds name to list and returns zero */
+static int find_or_add(name_list **list, const char *name)
+{
+  if (!list)
+    return -1;
+  while (*list) {
+    if (strcmp(name, (*list)->name) == 0)
+      return 1;
+    list = &((*list)->next);
+  }
+  name_list *next = (name_list *)malloc(sizeof(name_list));
+  next->next = NULL;
+  next->name = strdup(name);
+  *list = next;
+  return 0;
+}
+
+static void delete_list(name_list **list)
+{
+  if (list) {
+    name_list *curr = *list;
+    while (curr) {
+      name_list *next = curr->next;
+      free(curr->name);
+      free(curr);
+      curr = next;
+    }
+    *list = NULL;
+  }
+}
+
+struct name_list *seen_files = NULL;
+struct name_list *seen_deps = NULL;
+
 static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
                                         const char **include_dirs,
                                         unsigned int count )
@@ -78,13 +117,21 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
   char linebuf[512], pathbuf[64], foundbuf[64];
   char *p, *r;
   unsigned int l;
-  FILE *file = fopen( cppname, "r" );
+  FILE *file;
+
+  // skip this file if it was parsed before
+  if (find_or_add(&seen_files, cppname))
+    return count;
+  
+  file = fopen( cppname, "r" );
 
   //fprintf(stderr,"cppname='%s', file=%p\n",cppname,file);
 
   if ( file )
   {
     int debug = is_trace_checked(cppname);
+    if (debug)
+      fprintf(stderr, "File: %s\n", cppname);
 
     strcpy( pathbuf, cppname );
     p = strrchr( pathbuf, '/' ); /* input specifiers are always unix paths */
@@ -103,7 +150,7 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
         p+=8;
         while ( *p == ' ' || *p == '\t' )
           p++;
-        if ( *p == '\"' /* || *p == '<' */ )
+        if ( *p == '\"' || *p == '<' )
         {
           r = linebuf;
           foundbuf[0]= ((*p == '<') ? ('>') : ('\"'));
@@ -127,12 +174,10 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
                 strcpy(origbuf, foundbuf);
                 __fixup_pathspec_for_locate(foundbuf);
                 if (debug)
-                  fprintf(stderr, "%d) '%s'\n", l, foundbuf);
+                  fprintf(stderr, "%d) '%s'%s\n", l, foundbuf, fileexists(foundbuf)?" *":"");
                 if (fileexists( foundbuf ))
                 {
-                  int namelen = strlen(origbuf);
-                  if (namelen > 2 && strcmp(&origbuf[namelen-2],".h")!=0)
-                    count = build_dependancies( origbuf, include_dirs, count );
+                  count = build_dependancies( origbuf, include_dirs, count );
                   break;
                 }
                 if (!include_dirs)
@@ -149,8 +194,10 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
             if ( fileexists( foundbuf ) )
             {
               __fixup_pathspec_for_makefile(foundbuf);
-              printf( "%s%s", ((count!=0) ? (" ") : ("")), foundbuf );
-              count++;
+              if (find_or_add(&seen_deps, foundbuf) == 0) {
+                printf( "%s%s", ((count!=0) ? (" ") : ("")), foundbuf );
+                count++;
+              }
             }
           }
         }
@@ -158,7 +205,6 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
     }
     fclose(file);
   }
-  printf("\n");
   return count;
 }
 
@@ -230,9 +276,12 @@ int main(int argc, char *argv[])
     idirs = get_include_dirs(argc,argv);
     //fprintf(stderr,"%s 2\n", argv[2] );
     build_dependancies( argv[2], idirs, 0 );
+    printf("\n");
     //fprintf(stderr,"%s 3\n", argv[2] );
     if (idirs)
       free((void *)idirs);
+    delete_list(&seen_files);
+    delete_list(&seen_deps);
   }
   return 0;
 }

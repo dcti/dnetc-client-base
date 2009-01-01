@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-2008 - All Rights Reserved
+# Copyright distributed.net 1998-2009 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.338 2008/12/30 20:58:40 andreasb Exp $
+# @(#)$Id: configure,v 1.339 2009/01/01 21:48:01 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2971,7 +2971,7 @@ if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
   if [ $? -ne 0 ]; then
     echo "Compilation failed.  Check your target options."
     echo " ---------------------------------------------"
-    echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -DOGRDIR=${OGR} -o testplat"
+    echo "${TARGET_CC} ${TARGET_CCFLAGS} common/testplat.cpp ${TARGET_LDFLAGS} ${TARGET_LIBS} -o testplat"
     echo " ---------------------------------------------"
     exit 1
   fi
@@ -3463,46 +3463,6 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETSRC="$target"
     # ------------------------------------
     elif [ "${TARGETTYP}" = "cc" -o "${TARGETTYP}" = "cc-decunix" ]; then
-      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
-      has_problem_h=0
-      has_client_h=0
-      has_ogr_h=0
-      has_ccoreio_h=0
-      has_lurk_h=0
-      deplist=""
-      for dep in $TARGET_HDEPS; do
-        if [ $dep = "$OGR/ogr.h" ]; then
-          dep="$OGR/ansi/ogrp2.h $OGR/ansi/ogrng.h $OGR/ansi/ogr-interface.h"
-          has_ogr_h=1
-        elif [ $dep = "common/ccoreio.h" ]; then
-          has_ccoreio_h=1
-        elif [ $dep = "common/problem.h" ]; then
-          has_problem_h=1
-        elif [ $dep = "common/client.h" ]; then
-          has_client_h=1
-        elif [ $dep = "common/lurk.h" ]; then
-          has_lurk_h=1
-        fi
-        deplist="$deplist $dep"
-      done
-      if [ $has_client_h -eq 1 ]; then
-        if [ $has_lurk_h -eq 0 ]; then
-          deplist="$deplist common/lurk.h"
-        fi
-        if [ $has_problem_h -eq 0 ]; then
-          deplist="$deplist common/problem.h"
-          has_problem_h=1
-        fi
-      fi
-      if [ $has_problem_h -eq 1 ]; then
-        if [ $has_ccoreio_h -eq 0 ]; then
-          deplist="$deplist common/ccoreio.h"
-        fi
-        if [ $has_ogr_h -eq 0 ]; then
-          deplist="$deplist $OGR/ansi/ogrp2.h $OGR/ansi/ogrng.h $OGR/ansi/ogr-interface.h"
-        fi
-      fi
-      #----------------
       CCFLAGS_SELECT="\${CCFLAGS}"
       if [ "$target" = "output/ev67.o" -o "$target" = "output/ev67-64.o" ]; then
         if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
@@ -3560,6 +3520,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           CCFLAGS_SELECT="\${PPC601FLAGS}"
         fi
       fi
+      deplist=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
       echo "	\${CC} -c ${CCFLAGS_SELECT} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
@@ -3699,7 +3660,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETSRC=""
     # ------------------------------------
       elif [ "${TARGETTYP}" = "cu" ]; then
-      deplist="rc5-72/cuda/r72cuda.h rc5-72/cuda/r72cuda-helper.cu"
+      deplist=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       echo "$target:    ${TARGETSRC} ${deplist}" >> Makefile
       echo "	\${NVCC} --ptx --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target.ptx" >> Makefile 
       echo "	\${NVCC} --cubin --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target.cubin" >> Makefile 
