@@ -1,6 +1,6 @@
 /* -*-C-*-
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.104 2009/01/01 08:44:24 jlawson Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.105 2009/01/01 12:28:22 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -176,9 +176,9 @@
     #define CLIENT_OS_NAME "Linux"
     #define CLIENT_OS      OS_LINUX
   #endif
-  #if defined(CUDA)
+  #if defined(CUDA) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
     #define CLIENT_CPU     CPU_CUDA
-  #elif defined(AMD_STREAM)
+  #elif defined(AMD_STREAM) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
     #define CLIENT_CPU     CPU_AMD_STREAM
   #elif defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU     CPU_PA_RISC
@@ -431,7 +431,7 @@
    #ifndef __unix__
    #define __unix__
    #endif
-   #if defined(CUDA)
+   #if defined(CUDA) && (defined(__i386__) || defined(__x86_64__))
      #define CLIENT_CPU    CPU_CUDA
    #elif defined(__ppc__) || defined (__ppc64__)
      #define CLIENT_CPU    CPU_POWERPC
@@ -651,9 +651,9 @@
   #define CORES_SUPPORT_SMP /* no shared data, so cores become smp safe */
   #endif
   #if (CLIENT_CPU == CPU_CUDA)
-  #error FORK and CUDA don't work together - can't use multiple GPUs
+  #error "FORK and CUDA don't work together - can't use multiple GPUs"
   #elif (CLIENT_CPU == CPU_AMD_STREAM)
-  #error FORK and AMD STREAM probably don't work together
+  #error "FORK and AMD STREAM probably don't work together"
   #endif
 #else
   typedef int THREADID;
