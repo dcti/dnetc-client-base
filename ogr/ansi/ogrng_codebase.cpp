@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1999-2008 - All Rights Reserved
+ * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.8 2008/12/30 17:29:03 kakace Exp $
+ * $Id: ogrng_codebase.cpp,v 1.9 2009/01/01 14:18:24 andreasb Exp $
  */
 
 #include <string.h>   /* memset */
@@ -167,6 +167,12 @@ static int found_one(const struct OgrState *oState)
 
 static int ogr_init(void)
 {
+  /* Enforce hard limits and sizes */
+  STATIC_ASSERT( OGR_MAX_MARKS <= 28 );
+  STATIC_ASSERT( OGR_STUB_MAX <= 28 );
+  STATIC_ASSERT( sizeof(struct OgrStub) == 60 );
+  STATIC_ASSERT( sizeof(struct OgrWorkStub) == 64 );
+
   /* Be sure we have enough memory in 'problem' even with wildest compiler alignment rules */
   STATIC_ASSERT( sizeof(struct OgrState) <= OGRNG_PROBLEM_SIZE );
 
