@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.105 2009/01/01 12:28:22 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.106 2009/01/01 12:38:17 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -99,44 +99,33 @@
 
 /* determine current compiling platform */
 #if defined(_WIN64)
+  #define CLIENT_OS        OS_WIN64
+  #define CLIENT_OS_NAME   "Win64"
   #if defined(_M_AMD64)
     #define CLIENT_CPU     CPU_AMD64
-    #define CLIENT_OS      OS_WIN64
-    #define CLIENT_OS_NAME "Win64"
   #elif defined(_M_IA64)
     #define CLIENT_CPU     CPU_IA64
-    #define CLIENT_OS      OS_WIN64
-    #define CLIENT_OS_NAME "Win64"
   #endif
 #elif defined(WIN32) || defined(__WIN32__) || defined(_Windows) || defined(_WIN32)
+  #define CLIENT_OS        OS_WIN32
+  #define CLIENT_OS_NAME   "Win32"
   #if defined(NTALPHA) || defined(_M_ALPHA)
     #define CLIENT_CPU     CPU_ALPHA
-    #define CLIENT_OS      OS_WIN32
-    #define CLIENT_OS_NAME "Win32"
-  #elif defined (CUDA)
-    #define CLIENT_CPU     CPU_CUDA
-    #define CLIENT_OS      OS_WIN32
-    #define CLIENT_OS_NAME "Win32"
-  #elif defined(AMD_STREAM)
-    #define CLIENT_CPU     CPU_AMD_STREAM
-    #define CLIENT_OS      OS_WIN32
-    #define CLIENT_OS_NAME "Win32"
   #elif defined(ASM_PPC)
     #define CLIENT_CPU     CPU_POWERPC
-    #define CLIENT_OS      OS_WIN32
-    #define CLIENT_OS_NAME "Win32"
-  #elif !defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32) /* win16 */
+  #elif defined (CUDA)
+    #define CLIENT_CPU     CPU_CUDA
+  #elif defined(AMD_STREAM)
+    #define CLIENT_CPU     CPU_AMD_STREAM
+  #elif (!defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)) /* win16 */ \
+        || (defined(__WINDOWS386__)) /* standard 32bit client built for win16 */
     #define CLIENT_CPU     CPU_X86
-    #define CLIENT_OS      OS_WIN16
-    #define CLIENT_OS_NAME "Win16"
-  #elif defined(__WINDOWS386__) /* standard 32bit client built for win16 */
-    #define CLIENT_CPU     CPU_X86
+    #undef CLIENT_OS
+    #undef CLIENT_OS_NAME
     #define CLIENT_OS      OS_WIN16
     #define CLIENT_OS_NAME "Win16"
   #else
     #define CLIENT_CPU     CPU_X86
-    #define CLIENT_OS      OS_WIN32
-    #define CLIENT_OS_NAME "Win32"
   #endif
 #elif defined(DJGPP) || defined(DOS4G) || defined(__MSDOS__)
   #define CLIENT_OS        OS_DOS
