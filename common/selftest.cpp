@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.98 2009/01/01 13:41:04 andreasb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.99 2009/01/01 15:05:40 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -67,38 +67,41 @@ static const u32 rc5_72_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = { // seed 
 // [0] - expected number of nodes (~ if no solution expected to be found)
 // [1] - number of marks
 // [2..9] - first differences
+//
+// CAUTION : Tests should be sorted by number of marks to avoid unecessary
+//           overhead.
 static const s32 ogr_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
   { 0x0009F217, 21,  2, 22, 32, 21,  5,  1},             // 01
-  { 0x0018818F, 22,  1,  8,  5, 29, 27, 36},             // 02
-  { 0x00093D71, 23,  3,  4, 10, 44,  5, 25},             // 03
-  { 0x00165473, 24,  9, 24,  4,  1, 59, 25},             // 04
-  { 0x0003B627, 25, 12, 17, 10, 33, 19, 55, 11},         // 05
-  { 0x0046F7C0, 26,  5, 12, 11,  8, 16, 10, 44, 30},     // 06
-  { 0x0090AD25, 27,  3, 12, 26, 25, 29,  2,  9, 36},     // 07
-  {~0x000561C9, 21,  1,  2,  4,  5,  8, 10},             // 08
-  {~0x0038C35E, 21,  2, 22, 32,  1,  3, 10},             // 09
-  {~0x0004B648, 22,  1,  2,  4,  5,  8, 10},             // 10
-  {~0x0022CF3A, 22,  1,  8,  5, 29, 27, 37},             // 11
-  {~0x003B1EF7, 23,  1,  2,  4,  5,  8},                 // 12
-  {~0x001A3C2B, 23,  3,  4, 10, 44,  5, 26},             // 13
-  {~0x00074037, 24,  1,  2,  4,  5,  8, 10, 14},         // 14
-  {~0x0068CF0D, 24,  9, 24,  4,  1, 59, 26},             // 15
-  {~0x0030B179, 25,  1,  2,  4,  5,  8, 10, 14, 21},     // 16
-  {~0x002F885A, 25,  2,  7, 22,  5, 14,  4, 64, 37},     // 17
-  {~0x000EA7B9, 21,  5, 12, 11,  8, 16, 10, 44},         // 18
-  {~0x0018B0BE, 22,  5, 12, 11,  8, 16, 10, 44},         // 19
-  {~0x000A814D, 23,  5, 12, 11,  8, 16, 10, 44},         // 20
-  {~0x001209D4, 24,  5, 12, 11,  8, 16, 10, 44, 30},     // 21
-  {~0x00323B9A, 21,  9, 24,  4,  1, 59},                 // 22
-  {~0x008CB937, 22,  9, 24,  4,  1, 59},                 // 23
-  {~0x0061B8C0, 22,  3,  4, 10, 44,  5, 25},             // 24
-  {~0x0036E9CC, 23,  9, 24,  4,  1, 59},                 // 25
-  {~0x000FA7EB, 24, 12, 17, 10, 33, 19, 55},             // 26
-  {~0x004490DA, 24,  1,  8,  5, 29, 27, 36, 16},         // 27
-  {~0x001AC0A0, 22,  2, 22, 32, 21,  5,  1},             // 28
-  {~0x0008B55C, 23,  2, 22, 32, 21,  5,  1},             // 29
-  {~0x002DD344, 24,  2, 22, 32, 21,  5,  1, 12},         // 30
-  {~0x0043227A, 25,  2, 22, 32, 21,  5,  1, 12, 34},     // 31
+  {~0x000561C9, 21,  1,  2,  4,  5,  8, 10},             // 02
+  {~0x0038C35E, 21,  2, 22, 32,  1,  3, 10},             // 03
+  {~0x00323B9A, 21,  9, 24,  4,  1, 59},                 // 04
+  {~0x000EA7B9, 21,  5, 12, 11,  8, 16, 10, 44},         // 05
+  { 0x0018818F, 22,  1,  8,  5, 29, 27, 36},             // 06
+  {~0x0004B648, 22,  1,  2,  4,  5,  8, 10},             // 07
+  {~0x0022CF3A, 22,  1,  8,  5, 29, 27, 37},             // 08
+  {~0x0018B0BE, 22,  5, 12, 11,  8, 16, 10, 44},         // 09
+  {~0x008CB937, 22,  9, 24,  4,  1, 59},                 // 10
+  {~0x0061B8C0, 22,  3,  4, 10, 44,  5, 25},             // 11
+  {~0x001AC0A0, 22,  2, 22, 32, 21,  5,  1},             // 12
+  { 0x00093D71, 23,  3,  4, 10, 44,  5, 25},             // 13
+  {~0x003B1EF7, 23,  1,  2,  4,  5,  8},                 // 14
+  {~0x001A3C2B, 23,  3,  4, 10, 44,  5, 26},             // 15
+  {~0x000A814D, 23,  5, 12, 11,  8, 16, 10, 44},         // 16
+  {~0x0036E9CC, 23,  9, 24,  4,  1, 59},                 // 17
+  {~0x0008B55C, 23,  2, 22, 32, 21,  5,  1},             // 18
+  { 0x00165473, 24,  9, 24,  4,  1, 59, 25},             // 19
+  {~0x00074037, 24,  1,  2,  4,  5,  8, 10, 14},         // 20
+  {~0x0068CF0D, 24,  9, 24,  4,  1, 59, 26},             // 21
+  {~0x001209D4, 24,  5, 12, 11,  8, 16, 10, 44, 30},     // 22
+  {~0x000FA7EB, 24, 12, 17, 10, 33, 19, 55},             // 23
+  {~0x004490DA, 24,  1,  8,  5, 29, 27, 36, 16},         // 24
+  {~0x002DD344, 24,  2, 22, 32, 21,  5,  1, 12},         // 25
+  { 0x0003B627, 25, 12, 17, 10, 33, 19, 55, 11},         // 26
+  {~0x0030B179, 25,  1,  2,  4,  5,  8, 10, 14, 21},     // 27
+  {~0x002F885A, 25,  2,  7, 22,  5, 14,  4, 64, 37},     // 28
+  {~0x0043227A, 25,  2, 22, 32, 21,  5,  1, 12, 34},     // 29
+  { 0x0046F7C0, 26,  5, 12, 11,  8, 16, 10, 44, 30},     // 30
+  { 0x0090AD25, 27,  3, 12, 26, 25, 29,  2,  9, 36},     // 31
   {~0x00177314, 27,  8, 47, 19, 11,  2,  4,  1,  9}      // 32
 };
 #endif  /* HAVE_OGR_CORES */
@@ -484,7 +487,7 @@ long SelfTest( unsigned int contest )
                 {
                   expectedsolution_lo = ~expectedsolution_lo;
                   /*------------------------------------------------------------
-                  ** 2.9102.509 : Changes in OGR-NG core to fix miscalculations
+                  ** 2.9103.509 : Changes in OGR-NG core to fix miscalculations
                   **    of the limit for the middle mark in odd rulers makes
                   **    test #32 no longer able to detect a specific bug in
                   **    LOOKUP_FIRSTBLANK().
@@ -551,8 +554,13 @@ long SelfTest( unsigned int contest )
         ProblemFree(thisprob);
       } /* if ProblemAlloc() */
       #ifdef HAVE_OGR_CORES
-      if (contest == OGR_NG)
-        ogr_cleanup_cache();
+      if (contest == OGR_NG) {
+        // Release cached limits once they are no longer required. We assume the
+        // tests are sorted by number of marks.
+        if (testnum == TEST_CASE_COUNT - 1 || (*test_cases)[testnum][1] != (*test_cases)[testnum+1][1]) {
+          ogr_cleanup_cache();
+        }
+      }
       #endif
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
