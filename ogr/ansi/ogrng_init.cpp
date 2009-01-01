@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1999-2008 - All Rights Reserved
+ * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_init.cpp,v 1.7 2008/11/22 20:25:50 stream Exp $
+ * $Id: ogrng_init.cpp,v 1.8 2009/01/01 13:37:14 andreasb Exp $
  */
 
 #include <stdlib.h>     /* calloc */
@@ -145,13 +145,20 @@ int ogr_init_choose(void)
 
 void ogr_cleanup_choose(void)
 {
-  int m;
+  ogr_cleanup_cache();
 
   /* Release the choose array */
   if (NULL != choose_dat.choose_array) {
     free(choose_dat.choose_array);
     choose_dat.choose_array = NULL;
   }
+}
+
+
+/* Only call this function if no cruncher is loaded with an OGR stub! */
+void ogr_cleanup_cache(void)
+{
+  int m;
 
   /* Release the cached limits arrays */
   for (m = OGR_NG_MIN; m <= OGR_NG_MAX; m++) {
@@ -221,7 +228,7 @@ static void cache_limits(u16* pDatas, int nMarks)
    int  midseg_size = 2 - (nsegs & 1);
    int  midseg_pos  = (nsegs - midseg_size) / 2;
 
-
+   //fprintf(stderr, "OGR-NG cache_limits(%d)\n", nMarks);
    for (dist = 0; dist < (1 << CHOOSE_DIST_BITS); dist++) {
       int limit, temp;
       u16* table = &pDatas[dist * 32];

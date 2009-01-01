@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_NG_H__
-#define __OGR_NG_H__ "@(#)$Id: ogrng.h,v 1.1 2008/03/08 20:07:14 kakace Exp $"
+#define __OGR_NG_H__ "@(#)$Id: ogrng.h,v 1.2 2009/01/01 13:37:14 andreasb Exp $"
 
 #include "ansi/ogr-interface.h"
 
@@ -111,6 +111,7 @@ extern struct choose_datas precomp_limits[OGR_NG_MAX - OGR_NG_MIN + 1];
 
 int  ogr_init_choose(void);
 void ogr_cleanup_choose(void);
+void ogr_cleanup_cache();
 int  ogr_check_cache(int nMarks);
 
 #endif /* __OGR_NG_H__ */
