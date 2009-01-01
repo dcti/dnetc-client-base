@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.97 2008/12/31 00:26:18 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.98 2009/01/01 13:41:04 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -550,6 +550,10 @@ long SelfTest( unsigned int contest )
         }
         ProblemFree(thisprob);
       } /* if ProblemAlloc() */
+      #ifdef HAVE_OGR_CORES
+      if (contest == OGR_NG)
+        ogr_cleanup_cache();
+      #endif
     } /* for ( testnum = 0 ; testnum < TEST_CASE_COUNT ; testnum++ ) */
 
     if (userbreak)
