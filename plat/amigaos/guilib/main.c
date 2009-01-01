@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: main.c,v 1.6 2008/10/27 09:49:34 oliver Exp $
+ * $Id: main.c,v 1.7 2009/01/01 12:24:55 andreasb Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -159,7 +159,7 @@ struct NewMenu ClientMenus[] = {
 
 const char AboutText[] =
    "distributed.net client - a product of distributed.net\n"
-   "%s\nCopyright (C) 1997-2008 distributed.net\n\n"
+   "%s\nCopyright (C) 1997-2009 distributed.net\n\n"
 #ifndef __amigaos4__
    "\33cAmigaOS clients maintained by\n"
 #else

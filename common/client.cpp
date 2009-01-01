@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.263 2008/12/30 19:36:48 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.264 2009/01/01 12:24:55 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -228,7 +228,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
-                    "Copyright 1997-2008, distributed.net\n");
+                    "Copyright 1997-2009, distributed.net\n");
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
         LogScreenRaw( "ARM assembly by Peter Teichmann\n");

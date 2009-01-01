@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 2004-2008 - All Rights Reserved
+ * Copyright distributed.net 2004-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.c,v 1.3 2008/10/27 16:13:07 piru Exp $
+ * $Id: CreateGUI.c,v 1.4 2009/01/01 12:24:55 andreasb Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -112,7 +112,7 @@ Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct Dn
 	RawDoFmt(
 	 "\33cdistributed.net client - a product of distributed.net\n"
 	 "%s\n"
-	 "Copyright 1997-2008 distributed.net\n"
+	 "Copyright 1997-2009 distributed.net\n"
 	 "\n"
 	 "\n"
 	 "MorphOS client maintained by\n"
