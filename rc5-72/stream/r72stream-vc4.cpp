@@ -8,11 +8,11 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-vc4.cpp,v 1.3 2008/12/30 19:53:19 andreasb Exp $
+ * $Id: r72stream-vc4.cpp,v 1.4 2009/01/02 04:02:32 andreasb Exp $
 */
 
-#include "il_common.h"
-#include "il4.h"
+#include "r72stream-common.h"
+#include "r72stream-vc4_il.cpp"
 
 bool init_rc5_72_il4(u32 Device){
   char* programIL;

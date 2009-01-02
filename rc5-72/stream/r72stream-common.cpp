@@ -8,10 +8,10 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.4 2009/01/02 03:21:46 andreasb Exp $
+ * $Id: r72stream-common.cpp,v 1.5 2009/01/02 04:02:32 andreasb Exp $
 */
 
-#include "il_common.h"
+#include "r72stream-common.h"
 
 //Key increment
 void key_incr(unsigned *hi, unsigned *mid, unsigned *lo, unsigned incr)
