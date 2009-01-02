@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: il_common.cpp,v 1.3 2008/12/30 17:01:33 andreasb Exp $
+ * $Id: il_common.cpp,v 1.4 2009/01/02 03:21:46 andreasb Exp $
 */
 
 #include "il_common.h"
@@ -16,6 +16,7 @@
 //Key increment
 void key_incr(unsigned *hi, unsigned *mid, unsigned *lo, unsigned incr)
 {
+#if 0
   _asm {
     mov esi,[hi]
     mov eax,[esi]
@@ -35,6 +36,9 @@ void key_incr(unsigned *hi, unsigned *mid, unsigned *lo, unsigned incr)
     mov     [esi],ebx
     mov     [edi],edx
   }
+#else
+#warning PLEASE PROVIDE A PORTABLE IMPLEMENTATION
+#endif
 }
 
 //Subtract two keys, use only mid & hi, since the result is always less than 40 bits
@@ -42,6 +46,7 @@ u32 sub72(u32 t_hi, u32 t_mid, u32 s_hi, u32 s_mid)
 {
   u32 res;
 
+#if 0
   _asm {
     mov al,byte ptr [t_hi]
     sub al, byte ptr [s_hi]     ; hi
@@ -54,6 +59,9 @@ u32 sub72(u32 t_hi, u32 t_mid, u32 s_hi, u32 s_mid)
     mov dl,al
     mov res,edx
   }
+#else
+#warning PLEASE PROVIDE A PORTABLE IMPLEMENTATION
+#endif
   return res;
 }
 
@@ -61,6 +69,7 @@ u32 sub72(u32 t_hi, u32 t_mid, u32 s_hi, u32 s_mid)
 u32 cmp72(u32 o1h, u32 o1m, u32 o1l, u32 o2h, u32 o2m, u32 o2l)
 {
   u32 _o1l,_o2l,_o1m,_o2m;
+#if 0
   _asm {
     mov eax,o1l
     mov ebx,o2l
@@ -76,6 +85,9 @@ u32 cmp72(u32 o1h, u32 o1m, u32 o1l, u32 o2h, u32 o2m, u32 o2l)
     mov _o1m,eax
     mov _o2m,ebx
   }
+#else
+#warning PLEASE PROVIDE A PORTABLE IMPLEMENTATION
+#endif
   if(_o2l>_o1l)
     return 1;
   else
