@@ -23,16 +23,16 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.45 2008/12/31 15:09:47 kakace Exp $
+Version change log: $Id: CHANGES.txt,v 1.46 2009/01/02 05:11:54 andreasb Exp $
 ==========================================================================
 
 2.9100
 ------
-2.9103-509  fix: all: Fix OGR-NG middle mark limit miscalculation on odd rulers 
+2.9103-509  new: rc5-72: support for requesting larger packets (#3918)
+            new: stream: RC5-72 core for AMD stream video cards (#4099)
             imp: x86: Intel Atom (#4080)
             imp: x86: Pentium III detection (#4121)
-            add: all: support for requesting larger packets
-            new: stream: RC5-72 core for AMD stream video cards (#4099)
+            fix: all: Fix OGR-NG middle mark limit miscalculation on odd rulers 
             fix: all: OGR-NG state restored properly after a restart
             fix: linux: Improved OGR-NG cache management (#4076)
             imp: all: Print combined OGR-NG stubs with more details (#4082)
@@ -41,10 +41,10 @@ Version change log: $Id: CHANGES.txt,v 1.45 2008/12/31 15:09:47 kakace Exp $
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core
+            new: cellbe: OGR-NG SPU ASM core
             new: cuda: RC5-72 core for nVidia CUDA video cards (#4030)
             new: haiku: Added support for Haiku operating system
             fix: beos: Fix bug in network code preventing server communication
-            new: cellbe: OGR-NG SPU ASM core
             imp: x86: Identify AMD "Unknown" processors (#4106)
             fix: x86: Pentium M naming (#4075)
 
