@@ -8,11 +8,11 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.2 2008/12/30 18:08:50 andreasb Exp $
+ * $Id: amdstream_info.cpp,v 1.3 2009/01/02 03:25:28 andreasb Exp $
 */
 
 #include "amdstream_info.h"
-#include "amdstream_setup.h"
+#include "amdstream_context.h"
 
 u32 getAMDStreamDeviceCount()
 {

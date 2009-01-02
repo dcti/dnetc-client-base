@@ -8,13 +8,13 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.h,v 1.5 2008/12/30 17:48:38 andreasb Exp $
+ * $Id: amdstream_setup.h,v 1.6 2009/01/02 03:25:28 andreasb Exp $
 */
 
 #ifndef AMD_STREAM_SETUP_H
 #define AMD_STREAM_SETUP_H
 
 void AMDStreamInitialize();
-void AMDStreamReinitializeDevice(u32 Device);
+void AMDStreamReinitializeDevice(int Device);
 
 #endif // AMD_STREAM_SETUP_H

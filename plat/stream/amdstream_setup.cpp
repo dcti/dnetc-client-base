@@ -8,12 +8,14 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.7 2008/12/30 19:36:49 andreasb Exp $
+ * $Id: amdstream_setup.cpp,v 1.8 2009/01/02 03:25:28 andreasb Exp $
 */
 
 #include "amdstream_setup.h"
 #include "amdstream_context.h"
 #include "logstuff.h"
+
+#include <calcl.h>
 
 stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 int amdstream_numDevices = -1;
@@ -40,7 +42,7 @@ void AMDStreamInitialize()
   }
   if(amdstream_numDevices>AMD_STREAM_MAX_GPUS)
     amdstream_numDevices=AMD_STREAM_MAX_GPUS;
-  for(u32 i=0; i<AMD_STREAM_MAX_GPUS; i++) {
+  for(int i=0; i<AMD_STREAM_MAX_GPUS; i++) {
     CContext[i].active=false;
     CContext[i].coreID=CORE_NONE;
     CContext[i].constMem=0;
@@ -72,7 +74,7 @@ void AMDStreamInitialize()
   }
 }
 
-void AMDStreamReinitializeDevice(u32 Device)
+void AMDStreamReinitializeDevice(int Device)
 {
   // Unloading the module
   if(CContext[Device].module)

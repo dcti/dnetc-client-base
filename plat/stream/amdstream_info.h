@@ -8,11 +8,13 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_info.h,v 1.1 2008/12/30 17:39:36 andreasb Exp $
+ * $Id: amdstream_info.h,v 1.2 2009/01/02 03:25:28 andreasb Exp $
 */
 
 #ifndef AMD_STREAM_INFO_H
 #define AMD_STREAM_INFO_H
+
+#include "cputypes.h"
 
 u32 getAMDStreamDeviceCount();
 u32 getAMDStreamDeviceFreq();

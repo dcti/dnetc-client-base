@@ -8,13 +8,14 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.3 2008/12/30 17:01:33 andreasb Exp $
+ * $Id: r72stream-common.h,v 1.4 2009/01/02 03:25:28 andreasb Exp $
 */
 
 #ifndef IL_COMMON_H
 #define IL_COMMON_H
 
 #include "amdstream_setup.h"
+#include "amdstream_context.h"
 
 #include <cal.h>
 #include <calcl.h>
@@ -25,8 +26,6 @@
 #include <string.h>
 
 #include "logstuff.h"  // LogScreen()
-
-#define NULL 0
 
 #define CORE_IL4    0
 #define CORE_IL4C   1

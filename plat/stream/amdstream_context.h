@@ -8,13 +8,14 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.2 2008/12/30 18:08:50 andreasb Exp $
+ * $Id: amdstream_context.h,v 1.3 2009/01/02 03:25:28 andreasb Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
 #define AMD_STREAM_CONTEXT_H
 
 #include "amdstream_setup.h"
+#include "cputypes.h"
 
 #include <cal.h>
 
