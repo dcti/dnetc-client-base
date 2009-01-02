@@ -8,15 +8,14 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-vc4c.cpp,v 1.4 2009/01/02 04:02:32 andreasb Exp $
+ * $Id: r72stream-vc4c.cpp,v 1.5 2009/01/02 04:12:45 andreasb Exp $
 */
 
 #include "r72stream-common.h"
 #include "r72stream-vc4c_il.cpp"
 
-bool init_rc5_72_il4c(u32 Device){
-  char* programIL;
-
+bool init_rc5_72_il4c(u32 Device)
+{
   if(CContext[Device].coreID!=CORE_IL4N)
     AMDStreamReinitializeDevice(Device);
 
@@ -78,8 +77,6 @@ bool init_rc5_72_il4c(u32 Device){
   // Compiling Device Program
   //-------------------------------------------------------------------------
 
-  CALlanguage lang = CAL_LANGUAGE_IL;
-
   CALresult result;
   result=calclCompile(&CContext[Device].obj, CAL_LANGUAGE_IL, il4c_src, CContext[Device].attribs.target);
   if ( result!= CAL_RESULT_OK)
@@ -106,14 +103,17 @@ bool init_rc5_72_il4c(u32 Device){
       LogScreen("Using cached remote buffer\n");
   }
 
-  if(!CContext[Device].outputRes0)
+  if(!CContext[Device].outputRes0) {
     if(calResAllocRemote2D(&CContext[Device].outputRes0, &CContext[Device].device, 1, CContext[Device].domainSizeX,
                            CContext[Device].domainSizeY, CAL_FORMAT_UINT_4, 0)!=CAL_RESULT_OK)
     {
       LogScreen("Failed to allocate output buffer(s).\n");
       return false;
-    } else
+    } else {
       LogScreen("Using uncached remote buffer\n");
+    }
+  }
+
   // Constant resource
   if(calResAllocLocal1D(&CContext[Device].constRes, CContext[Device].device, 3, CAL_FORMAT_UINT_4, 0)!=CAL_RESULT_OK)
   {
