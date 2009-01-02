@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.9 2009/01/01 14:18:24 andreasb Exp $
+ * $Id: ogrng_codebase.cpp,v 1.10 2009/01/02 16:59:42 kakace Exp $
  */
 
 #include <string.h>   /* memset */
@@ -37,7 +37,7 @@
            "~bitmap" (i.e. the number of leading 1 of the "bitmap" argument)
            plus one. For a 32-bit bitmap argument, the valid range is [1; 33].
            Said otherwise :
-           __CNTLZ(0xFFFFFFFF) == 33  (If not, selftest #32 will fail).
+           __CNTLZ(0xFFFFFFFF) == 32 or 33  (Implementation defined).
            __CNTLZ(0xFFFFFFFE) == 32
            __CNTLZ(0xFFFFA427) == 18
            __CNTLZ(0x00000000) ==  1
@@ -294,17 +294,9 @@ static int ogr_create(void *input, int inputlen, void *state, int statelen,
         /* The following part is only relevant for rulers with an odd number of
          ** marks. If the number of marks is even (as for OGR-26), then the
          ** condition is always false.
-         ** LOOKUP_FIRSTBLANK(0xFF..FF) shall return the total number of bits
-         ** set plus one.
          */
         if (depth < oState->half_depth2) {
-          #if (SCALAR_BITS <= 32)
           temp -= LOOKUP_FIRSTBLANK(dist0);
-          #else
-          // Reduce the resolution for larger datatypes, otherwise the final
-          // node count may not match that of 32-bit cores.
-          temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
-          #endif
         }
         
         if (limit > temp) {
@@ -383,17 +375,9 @@ static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoos
         /* The following part is only relevant for rulers with an odd number of
         ** marks. If the number of marks is even (as for OGR-26), then the
         ** condition is always false.
-        ** LOOKUP_FIRSTBLANK(0xFF..FF) shall return the total number of bits
-        ** set plus one.
         */
         if (depth < oState->half_depth2) {
-          #if (SCALAR_BITS <= 32)
           temp -= LOOKUP_FIRSTBLANK(dist0);
-          #else
-          // Reduce the resolution for larger datatypes, otherwise the final
-          // node count may not match that of 32-bit cores.
-          temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
-          #endif
         }
 
         if (limit > temp) {

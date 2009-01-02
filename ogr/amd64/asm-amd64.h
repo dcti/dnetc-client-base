@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_AMD64_H__
-#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.10 2009/01/01 08:44:24 jlawson Exp $"
+#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.11 2009/01/02 16:59:42 kakace Exp $"
 
 
 #if defined(__ICC)
@@ -22,7 +22,7 @@
     _asm mov i,edx
     return i;
   }
-  #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
+  #define __CNTLZ(x) (__CNTLZ__(x))
 
 #elif defined(__WATCOMC__)
   #if (SCALAR_BITS != 32)
@@ -36,7 +36,7 @@
           "bsr  eax,eax" \
           "sub  edx,eax" \
           value [edx] parm [eax] modify exact [eax edx] nomemory;
-  #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
+  #define __CNTLZ(x) (__CNTLZ__(x))
 
 #elif defined(__GNUC__)
 
@@ -58,12 +58,9 @@
   {
     register SCALAR result;
     __asm__("notq  %1\n\t"
-            "movq  $65,%0\n\t"
+            "movq  $64,%0\n\t"
             "bsrq  %1,%1\n\t"
-            "jz   0f\n\t"
             "subq  %1,%0\n\t"
-            "decq  %0\n\t"
-            "0:"
             :"=r"(result), "=r"(input) : "1"(input) : "cc" );
     return (int) result;
   }
@@ -111,7 +108,7 @@
       // return value in eax
 #endif
   }
-  #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
+  #define __CNTLZ(x) (__CNTLZ__(x))
 
 #endif  /* compiler */
 

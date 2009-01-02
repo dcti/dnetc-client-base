@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.11 2008/10/21 04:22:36 jlawson Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.12 2009/01/02 16:59:42 kakace Exp $"
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)
@@ -19,7 +19,7 @@
       _asm mov i,edx
       return i;
     }
-    #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
+    #define __CNTLZ(x) (__CNTLZ__(x))
 
   #elif defined(__WATCOMC__)
 
@@ -27,7 +27,7 @@
     #pragma aux __CNTLONEREV__ =  \
             "bsr  eax,eax"        \
             value [eax] parm [eax] modify [eax] nomemory;
-    #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : (32-__CNTLONEREV__(~(x))))
+    #define __CNTLZ(x) (32-__CNTLONEREV__(~(x)))
 
   #elif defined(__GNUC__)
 
@@ -35,12 +35,9 @@
     {
        register SCALAR result;
        __asm__("notl %1\n\t"
-               "movl $33,%0\n\t"
+               "movl $32,%0\n\t"
                "bsrl %1,%1\n\t"
-               "jz   0f\n\t"
                "subl %1,%0\n\t"
-               "decl %0\n\t"
-               "0:"
                :"=r"(result), "=r"(input) : "1"(input) : "cc" );
       return result;
     }
@@ -59,7 +56,7 @@
         }
         // return value in eax
     }
-    #define __CNTLZ(x) ((x) == 0xFFFFFFFF ? 33 : __CNTLZ__(x))
+    #define __CNTLZ(x) (__CNTLZ__(x))
 
   #endif  /* compiler */
 #elif (SCALAR_BITS == 64)
@@ -69,12 +66,9 @@
     {
       register SCALAR result;
       __asm__("notq  %1\n\t"
-              "movq  $65,%0\n\t"
+              "movq  $64,%0\n\t"
               "bsrq  %1,%1\n\t"
-              "jz   0f\n\t"
               "subq  %1,%0\n\t"
-              "decq  %0\n\t"
-              "0:"
               :"=r"(result), "=r"(input) : "1"(input) : "cc" );
       return (int) result;
     }

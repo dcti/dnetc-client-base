@@ -1,4 +1,4 @@
-$Id: ogr_readme.txt,v 1.1 2008/03/09 17:19:05 kakace Exp $
+$Id: ogr_readme.txt,v 1.2 2009/01/02 16:59:42 kakace Exp $
 
 
                         OGR - Optimum Golomb Rulers
@@ -189,10 +189,6 @@ $Id: ogr_readme.txt,v 1.1 2008/03/09 17:19:05 kakace Exp $
    used to lookup "comp0", implementors can choose to return either SCALAR_BITS
    or SCALAR_BITS+1 when all bits are set in "comp0". Both will work the same
    due to how the bulk code select one of the COMP_LEFT_LIST_RIGHT macros.
-   However, when used to lookup "dist0", the macro SHALL return 33 when the 32
-   leftmost bits (or more) of "dist0" are set. This constraint asserts that all
-   core compute the very same position limit for the middle mark. Any failure
-   to do so will lead to mismatching node counts.
 
    4.8 choose(dist_bitmap, depth)
 
@@ -318,3 +314,35 @@ $Id: ogr_readme.txt,v 1.1 2008/03/09 17:19:05 kakace Exp $
    
    The side effect is that the client now requires much more memory than before.
    Selftests may run out of memory on old platforms because of that.
+
+   6.3 Why is "LOOKUP_FIRSTBLANK(0xffffffff) == 32" safe ?
+
+   When used to determine the shift count, the code actually checks the argument
+   and switch to an alternate method that shift the bitmaps by 32 whenever
+   necessary.
+   When used to compute the limit of the middle mark in odd rulers, the reason
+   is far less obvious. If we have "dist0 == 0xffffffff", then the leftmost part
+   of the ruler being constructed measures all the distances from 1 to 32
+   (inclusive). The remaining part of this ruler (yet unknown) cannot measure
+   these distances so as to not break the Golomb criteria. The "choose" array
+   gives us the minimum length of this remaining part, which leads to a maximum
+   position for the middle mark. Another bound is given by the position of the
+   last mark placed so far because we want to filter out mirrored image (middle
+   segment reduction method). This calculation involves LOOKUP_FIRSTBLANK.
+   Finally, the code picks the lowest bound.
+
+   Let G be the length of the ruler we're searching, C the value obtained from
+   the "choose" array, and P the position of the last mark placed when we need
+   to compute the limit of the middle mark. We need to ensure that :
+                           G - C  <=  G - 1 - P - 32
+   otherwise implementations of LOOKUP_FIRSTBLANK that return 33 instead of 32
+   will get a better limit. This equation simplifies into "P <= C - 33", so
+   the error first occurs when P == C-32. But because the remaining part of the
+   ruler is of length C (at least), and because the middle mark must be placed
+   at a position x >= P+33, the entire ruler would be of length :
+                          G' = (C-32) + 33 + C = 2*C + 1
+   It turns out that for any odd ruler of up to 29 marks, G' > G. Therefore,
+   implementations of LOOKUP_FIRSTBLANK can safely return 32 or 33 when the
+   argument is 0xFFFFFFFF because this bit pattern cannot occur. In addition,
+   no special care is required for 64-bit implementations because we always have
+   LOOKUP_FIRSTBLANK(dist0) < 33.

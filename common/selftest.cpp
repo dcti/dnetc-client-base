@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.99 2009/01/01 15:05:40 kakace Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.100 2009/01/02 16:59:42 kakace Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -486,27 +486,6 @@ long SelfTest( unsigned int contest )
                 if (expectedsolution_lo & 0x80000000)  // no solution
                 {
                   expectedsolution_lo = ~expectedsolution_lo;
-                  /*------------------------------------------------------------
-                  ** 2.9103.509 : Changes in OGR-NG core to fix miscalculations
-                  **    of the limit for the middle mark in odd rulers makes
-                  **    test #32 no longer able to detect a specific bug in
-                  **    LOOKUP_FIRSTBLANK().
-                  **    No other test sample has been found yet.
-                  **
-                  if (testnum == 31 && resultcode == RESULT_NOTHING &&
-                    contestwork.ogr_ng.nodes.lo == 0x0016712C)
-                  {
-                    // Test #32 has been designed to detect implementations of
-                    // LOOKUP_FIRSTBLANK() that don't meet the requirement when
-                    // all bits are set.
-                    //
-                    LogScreen( "\r%s: Test %02d FAILED : LOOKUP_FIRSTBLANK() is broken.\n",
-                              contname, testnum + 1);
-                    resultcode = -1;
-                    break;
-                  }
-                  else
-                  ------------------------------------------------------------*/
                   if (resultcode != RESULT_NOTHING ||
                     contestwork.ogr_ng.nodes.lo != expectedsolution_lo)
                   {

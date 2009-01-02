@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: first_blank.h,v 1.3 2008/12/29 14:18:42 kakace Exp $
+ * $Id: first_blank.h,v 1.4 2009/01/02 16:59:42 kakace Exp $
  */
 
 
@@ -24,7 +24,7 @@
           "~bitmap" (i.e. the number of leading 1 of the "bitmap" argument) plus
           one. For a 32-bit bitmap argument, the valid range is [1; 33]. Said
           otherwise :
-          __CNTLZ(0xFFFFFFFF) == 33
+          __CNTLZ(0xFFFFFFFF) == 32 or 33 (Implementation defined)
           __CNTLZ(0xFFFFFFFE) == 32
           __CNTLZ(0xFFFFA427) == 18
           __CNTLZ(0x00000000) ==  1
