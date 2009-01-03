@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.151 2009/01/03 01:00:44 teichp Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.152 2009/01/03 02:05:35 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1333,7 +1333,7 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x69054110, 0xfffffff0, 2, 2, "Intel PXA270" },
     { 0x69052000, 0xfffffff0, 2, 2, "Intel 80200" },
     { 0x69052e20, 0xffffffe0, 2, 2, "Intel 80219" },
-    { 0x69052420, 0xffffffe0, 2, 2, "Intel IOP321" },
+    { 0x69052c20, 0xffffffe0, 2, 2, "Intel IOP321" },
     { 0x00000000, 0x00000000, -1, -1, "" }
   };
 
@@ -1470,7 +1470,7 @@ static long __GetRawProcessorID(const char **cpuname )
                     { "strongarm-1110", 0x6901b110},
                     { "80200",          0x69052000},
                     { "80219",          0x69052e30},
-                    { "iop80321",       0x69052430},
+                    { "iop80321",       0x69052c30},
                     { "pxa210",         0x69052120},
                     { "pxa250",         0x69052100},
                     { "pxa255",         0x69052d00},
