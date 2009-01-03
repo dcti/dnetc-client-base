@@ -3,7 +3,7 @@
 @ Any other distribution or use of this source violates copyright.
 @
 @ Author: Peter Teichmann <teichp@distributed.net>
-@ $Id: ogrng-arm2-gnu.S,v 1.2 2009/01/03 00:59:24 teichp Exp $
+@ $Id: ogrng-arm2-gnu.S,v 1.3 2009/01/03 02:04:30 teichp Exp $
 @
 @ Optimized for XScale:
 @ * Intel really did a extremly bad job. They had better just taken the
@@ -327,7 +327,7 @@ cllr_29:
 	.space	64*4
 cllr_30:
 	COMP_LEFT_LIST_RIGHT 30
-	.space	28*4
+	.space	44*4
 	
 @ End COMP_LEFT_LIST_RIGHT(lev, s)
 
