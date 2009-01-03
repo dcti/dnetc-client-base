@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.150 2008/12/31 16:46:40 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.151 2009/01/03 01:00:44 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1470,7 +1470,7 @@ static long __GetRawProcessorID(const char **cpuname )
                     { "strongarm-1110", 0x6901b110},
                     { "80200",          0x69052000},
                     { "80219",          0x69052e30},
-                    { "iop321",         0x69052430},
+                    { "iop80321",       0x69052430},
                     { "pxa210",         0x69052120},
                     { "pxa250",         0x69052100},
                     { "pxa255",         0x69052d00},
