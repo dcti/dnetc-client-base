@@ -3,9 +3,9 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <teichp@distributed.net>
-; $Id: ogrng-arm2-gccsdk.s,v 1.1 2009/01/03 02:04:30 teichp Exp $
+; $Id: ogrng-arm2-gccsdk.s,v 1.2 2009/01/04 22:00:30 teichp Exp $
 ;
-; Optimized for XScale:
+; ARMv5 variant, optimized for XScale:
 ; * Intel really did a extremly bad job. They had better just taken the
 ;   StrongARM core and scaled to 0.18u. Consequences are:
 ; * 3 cycle more for ldm/stm than sequence of ldr/str (SA 1)
