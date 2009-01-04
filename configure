@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.343 2009/01/02 21:03:24 teichp Exp $
+# @(#)$Id: configure,v 1.344 2009/01/04 04:55:10 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3508,6 +3508,11 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     # ------------------------------------
     elif [ "${TARGETTYP}" = "cc" -o "${TARGETTYP}" = "cc-decunix" ]; then
       CCFLAGS_SELECT="\${CCFLAGS}"
+      case "internal-${TARGETSRC}" in
+        internal-*.c)
+          CCFLAGS_SELECT="\${CFLAGS}"
+	  ;;
+      esac
       if [ "$target" = "output/ev67.o" -o "$target" = "output/ev67-64.o" ]; then
         if [ $gccver -ge 3000000 ]; then # works only for gcc > 3 
           if [ "$TARGET_CC" = "g++" ] ; then
