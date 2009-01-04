@@ -3,7 +3,7 @@
 @ Any other distribution or use of this source violates copyright.
 @
 @ Author: Peter Teichmann <teichp@distributed.net>
-@ $Id: ogrng-arm1-gnu.S,v 1.2 2009/01/04 22:00:30 teichp Exp $
+@ $Id: ogrng-arm1-gnu.S,v 1.3 2009/01/04 22:33:47 teichp Exp $
 @
 @ ARMv3 variant, optimized for StrongARM
 @
@@ -438,7 +438,7 @@ comp0_fi:
 	movcs	r5, r5, lsl#8
 	ldrb	r4, [r4, r5, lsr#24]
 	subcs	r3, r3, #8
-	sub	r3, r3, r4		; temp -= LOOKUP_FIRSTBLANK(dist0)
+	sub	r3, r3, r4		@ temp -= LOOKUP_FIRSTBLANK(dist0)
 	
 not_smaller:
 	cmp	r12, r3			@ if (limit > temp)
