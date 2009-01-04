@@ -237,47 +237,16 @@ after_if:
 
 	;      if (depth > oState->half_depth && depth <= oState->half_depth2) {
 	;;;      if (depth > halfdepth && depth <= halfdepth2) {
-	mov	eax, [work_depth]
-	cmp	eax, [work_halfdepth]
-	jle	skip_if_depth		; ENTERED: 0x0513FD14(44.72%), taken 0.5%
-	cmp	eax, [work_halfdepth2]
-	jg	skip_if_depth		; ENTERED: 0x050D5B51(44.49%), taken 97.02%
-
-;        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
-;;        int temp = oState->max - 1 - oState->Levels[halfdepth].mark;
-
-	mov	edx, [param_oState]
-	mov	eax, [work_halfdepth]
-	imul	eax, sizeof_level
-	mov	eax, [eax+edx+oState_Levels+level_mark]
-	mov	edx, [edx+oState_max]
-	sub	edx, eax
-
-;        if (limit > temp) {
-;          limit = temp;
-;        }
-
-	cmp	edi, edx
-	jl	limitok		; ENTERED: 0x00267D08(1.32%), taken 17.35%
-	lea	edi, [edx-1]
-limitok:
-
-;        if (depth < oState->half_depth2) {
+	;
+	; Check second condition first, it's very rare
 	mov	eax, [work_depth]
 	cmp	eax, [work_halfdepth2]
-	jge	skip_if_depth	; ENTERED: 0x00267D08(1.32%), taken 78.38%
-
-;          limit -= LOOKUP_FIRSTBLANK(dist0); // "33" version
-
-	xor	ecx, -1		; "not ecx" does not set flags!
-	mov	edx, -1
-	je	skip_bsr	; ENTERED: 0x00085254(0.29%), taken 0.00%
-	bsr	edx, ecx
-skip_bsr:
-	add	edi, edx
-	sub	edi, 32
+	jle	continue_if_depth	; ENTERED: 0x0513FD14(44.72%), NOT taken 97.02%
 
 skip_if_depth:
+	;
+	; returning here with edi=new limit
+	;
 	mov	[ebp+level_limit-ebp_shift], edi
 
 	mov	edi, 1		; newbit = 1 (delayed)
@@ -292,7 +261,51 @@ skip_if_depth:
 	mov	[ebp+level_mark-ebp_shift], ebx
 	jmp	exit
 
-;	align	16
+	align	16
+
+continue_if_depth:
+	cmp	eax, [work_halfdepth]
+	jle	skip_if_depth		; ENTERED: 0x********(**.**%), taken 0.5%
+
+;        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
+;;        int temp = oState->max - 1 - oState->Levels[halfdepth].mark;
+;	Note: "-1" is not counted here. Instead, condition below is altered
+;	and one is substracted, if required, during copy (in "lea").
+
+	mov	edx, [param_oState]
+	mov	eax, [work_halfdepth]
+	imul	eax, sizeof_level
+	mov	eax, [eax+edx+oState_Levels+level_mark]
+	mov	edx, [edx+oState_max]
+	sub	edx, eax
+
+;        if (depth < oState->half_depth2) {
+	mov	eax, [work_depth]
+	cmp	eax, [work_halfdepth2]
+	jge	update_limit_temp	; ENTERED: 0x00267D08(1.32%), taken 78.38%
+
+;          temp -= LOOKUP_FIRSTBLANK(dist0); // "33" version
+
+	xor	ecx, -1		; "not ecx" does not set flags!
+	mov	eax, -1
+	je	skip_bsr	; ENTERED: 0x00085254(0.29%), taken 0.00%
+	bsr	eax, ecx
+skip_bsr:
+	add	edx, eax
+	sub	edx, 32
+
+update_limit_temp:
+;        if (limit > temp) {
+;          limit = temp;
+;        }
+
+	cmp	edi, edx
+	jl	limitok		; ENTERED: 0x00267D08(1.32%), taken 17.35%
+	lea	edi, [edx-1]
+limitok:
+	jmp	skip_if_depth
+
+	align	16
 
 comp0_ge_fffe:
 	;      else {         /* s >= 32 */
@@ -336,7 +349,7 @@ comp0_ge_fffe:
 	je	for_loop		; ENTERED: 0x013BFDCE(10.87%), taken 97.10%
 	jmp	after_if
 
-;	align	16
+	align	16
 break_for:
 
 	;    lev--;
@@ -376,5 +389,3 @@ exit:
 	pop	esi
 	pop	ebx
 	ret
-
-	end
