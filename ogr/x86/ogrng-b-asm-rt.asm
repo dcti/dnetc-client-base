@@ -34,6 +34,8 @@ ogr_cycle_256_rt1_mmx:
 	%define work_halfdepth	esp+04h
 	%define work_halfdepth2	esp+08h
 	%define work_nodes	esp+0Ch
+	%define work_maxlen_m1	esp+10h
+	%define work_half_depth_mark_addr esp+14h
 
 	%define	param_oState	esp+regsavesize+worksize+04h
 	%define param_pnodes	esp+regsavesize+worksize+08h
@@ -77,10 +79,21 @@ ogr_cycle_256_rt1_mmx:
 	mov	eax, [param_pnodes]
 	mov	eax, [eax]
 	mov	[work_nodes], eax	; nodes = *pnodes
+
 	mov	eax, [ebx+oState_half_depth]
 	mov	[work_halfdepth], eax	; halfdepth = oState->half_depth
+	; get address of oState->Levels[oState->half_depth].mark
+	; value of this var can be changed during crunching, but addr is const
+	imul	eax, sizeof_level
+	lea	eax, [eax+ebx+oState_Levels+level_mark]
+	mov	[work_half_depth_mark_addr], eax
+
 	mov	eax, [ebx+oState_half_depth2]
 	mov	[work_halfdepth2], eax	; halfdepth2 = oState->half_depth2
+
+	mov	eax, [ebx+oState_max]
+	dec	eax
+	mov	[work_maxlen_m1], eax	; maxlen_m1 = oState->max - 1
 
 %define mm_comp0	mm0
 %define mm_comp1	mm1
@@ -280,7 +293,10 @@ after_if:
 	;      lev++;
 	add	ebp, sizeof_level
 	;      depth++;
-	inc	dword [work_depth]
+;	inc	dword [work_depth]
+	mov	edx, [work_depth]
+	add	edx, 1
+	mov	[work_depth], edx
 
 	%define CHOOSE_DIST_BITS	16     ; /* number of bits to take into account  */
 
@@ -294,55 +310,20 @@ after_if:
 	mov	eax, ecx ; dist 0
 	shr	eax, 16
 	shl	eax, 5
-	add	eax, [work_depth]
+	add	eax, edx		; depth
 	mov	edx, [param_pchoose]
 	movzx	edi, word [edx+eax*2]
 
 	;      if (depth > oState->half_depth && depth <= oState->half_depth2) {
 	;;;      if (depth > halfdepth && depth <= halfdepth2) {
 	mov	eax, [work_depth]
-	cmp	eax, [work_halfdepth]
-	jle	skip_if_depth		; ENTERED: 0x0513FD14(44.72%), taken 0.5%
 	cmp	eax, [work_halfdepth2]
-	jg	skip_if_depth		; ENTERED: 0x050D5B51(44.49%), taken 97.02%
-
-;        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
-;;        int temp = oState->max - 1 - oState->Levels[halfdepth].mark;
-
-	mov	edx, [param_oState]
-	mov	eax, [work_halfdepth]
-	imul	eax, sizeof_level
-	mov	eax, [eax+edx+oState_Levels+level_mark]
-	mov	edx, [edx+oState_max]
-	sub	edx, eax
-
-;        if (limit > temp) {
-;          limit = temp;
-;        }
-
-	cmp	edi, edx
-	jl	limitok		; ENTERED: 0x00267D08(1.32%), taken 17.35%
-	lea	edi, [edx-1]
-limitok:
-
-;        if (depth < oState->half_depth2) {
-	mov	eax, [work_depth]
-	cmp	eax, [work_halfdepth2]
-	jge	skip_if_depth	; ENTERED: 0x00267D08(1.32%), taken 78.38%
-
-;          limit -= LOOKUP_FIRSTBLANK(dist0); // "33" version
-;;;        limit -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
-;;;        (we already have upper part of dist0 in ecx)
-
-	xor	ecx, -1		; "not ecx" does not set flags!
-	mov	edx, -1
-	je	skip_bsr	; ENTERED: 0x00085254(0.29%), taken 0.00%
-	bsr	edx, ecx
-skip_bsr:
-	add	edi, edx
-	sub	edi, 32
+	jle	continue_if_depth	; ENTERED: 0x0513FD14(44.72%), NOT taken 97.02%
 
 skip_if_depth:
+	;
+	; returning here with edi=new limit
+	;
 	mov	[ebp+level_limit-ebp_shift], edi
 
 	mov	eax, 1		; newbit = 1 (delayed)
@@ -357,6 +338,47 @@ skip_if_depth:
 	;        goto exit;
 	mov	[ebp+level_mark-ebp_shift], ebx
 	jmp	exit
+
+	align	16
+
+continue_if_depth:
+	cmp	eax, [work_halfdepth]
+	jle	skip_if_depth		; ENTERED: 0x????????(??.??%), taken 0.5%
+
+;        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
+;;        int temp = oState->max - 1 - oState->Levels[halfdepth].mark;
+
+	mov	edx, [work_maxlen_m1]
+	mov	eax, [work_half_depth_mark_addr]
+	sub	edx, [eax]
+
+;        if (depth < oState->half_depth2) {
+	mov	eax, [work_depth]
+	cmp	eax, [work_halfdepth2]
+	jge	update_limit_temp	; ENTERED: 0x00267D08(1.32%), taken 78.38%
+
+;          temp -= LOOKUP_FIRSTBLANK(dist0); // "33" version
+;;;        temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
+;;;        (we already have upper part of dist0 in ecx)
+
+	xor	ecx, -1		; "not ecx" does not set flags!
+	mov	eax, -1
+	je	skip_bsr	; ENTERED: 0x00085254(0.29%), taken 0.00%
+	bsr	eax, ecx
+skip_bsr:
+	add	edx, eax
+	sub	edx, 32
+
+update_limit_temp:
+;        if (limit > temp) {
+;          limit = temp;
+;        }
+
+	cmp	edi, edx
+	jl	limitok		; ENTERED: 0x00267D08(1.32%), taken 17.35%
+	mov	edi, edx
+limitok:
+	jmp	skip_if_depth
 
 	align	16
 
