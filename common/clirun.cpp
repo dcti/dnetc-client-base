@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.145 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.146 2009/01/04 04:36:20 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -420,13 +420,11 @@ void Go_mt( void * parm )
     else if (!ProblemIsInitialized(thisprob))
     {
       thrparams->refillneeded = 1;
-      if (thrparams->realthread) // don't race in the loop
-        __cruncher_sleep__(thrparams);
-        /* was :
-        ** __cruncher_yield__(thrparams);
-        ** but that caused the client to busy-wait if no other process/thread
-        ** needs the CPU (see bug #3618, for instance).
-        */
+      // sleep to avoid busy-waiting for new work to arrive (bug #3618)
+      // especially since the client does not exit if it has run out of work
+      // __cruncher_yield__(thrparams) is not enough and also this needs to
+      // be done independently of the thrparams->realthread setting
+      __cruncher_sleep__(thrparams);
     }
     else
     {
