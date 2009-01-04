@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.5 2008/12/30 20:58:43 andreasb Exp $"; }
+return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.6 2009/01/04 19:17:19 stream Exp $"; }
 
 #include <spu_intrinsics.h>
 #include "ccoreio.h"
@@ -519,10 +519,6 @@ int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 u
       if (depth > half_depth && depth <= half_depth2) {
         int temp = maxlen_m1 - spu_extract(oState->Levels[half_depth].mark, 0);
 
-        if (limit > temp) {
-          limit = temp;
-        }
-
         /* The following part is only relevant for rulers with an odd number of
         ** marks. If the number of marks is even (as for OGR-26), then the
         ** condition is always false.
@@ -531,12 +527,16 @@ int ogr_cycle_256(struct OgrState * oState, int * pnodes, /* const u16* */ u32 u
         */
         if (depth < half_depth2) {
           #if (SCALAR_BITS <= 32)
-          limit -= LOOKUP_FIRSTBLANK(dist0);
+          temp -= LOOKUP_FIRSTBLANK(dist0);
           #else
           // Reduce the resolution for larger datatypes, otherwise the final
           // node count may not match that of 32-bit cores.
-          limit -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
+          temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
           #endif
+        }
+
+        if (limit > temp) {
+          limit = temp;
         }
       }
       lev->limit = spu_promote(limit, 0);

@@ -382,16 +382,17 @@ update_limit:
 
 	nor		$temp2, $distV0, $distV0
 	hbrr		.L_2, for_loop_clz_ready
-	cgt		$cond_depth_hd2, $half_depth2, $depth
-	clz		$temp2, $temp2
-	ai		$temp2, $temp2, 1
-	
-	sf		$temp, $temp, $maxlen_m1
-	cgt		$cond_limit_temp, $limit, $temp
 
-	selb		$limit, $limit, $temp, $cond_limit_temp
-	sf		$temp2, $temp2, $limit
-	selb		$limit, $limit, $temp2, $cond_depth_hd2
+	cgt		$cond_depth_hd2, $half_depth2, $depth	;# if (depth < oState->half_depth2)
+	clz		$temp2, $temp2
+	ai		$temp2, $temp2, 1			;# temp2 = LOOKUP_FIRSTBLANK
+	
+	sf		$temp, $temp, $maxlen_m1		;# temp  = ... (ready)
+	sf		$temp2, $temp2, $temp			;# temp2 = temp - LFB() (probably will use)
+	selb		$temp, $temp, $temp2, $cond_depth_hd2	;# use temp or "temp -= ..."
+
+	cgt		$cond_limit_temp, $limit, $temp		;# if (limit > temp)
+	selb		$limit, $limit, $temp, $cond_limit_temp ;#   limit = temp;
 	
 	stqd		$limit, 112($lev)
 .L_2:
