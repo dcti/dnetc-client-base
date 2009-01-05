@@ -2,7 +2,7 @@
 ; integer/mmx mixed version - 2 pipe
 ; Vyacheslav Chupyatov - goteam@mail.ru - 26/04/2003,07/03/2007
 ; For use by distributed.net. 
-; $Id: r72-go2.asm,v 1.3 2007/10/22 16:48:36 jlawson Exp $
+; $Id: r72-go2.asm,v 1.4 2009/01/05 22:45:21 mfeiri Exp $
 
 %define P	  0xB7E15163
 %define Q	  0x9E3779B9
@@ -115,6 +115,8 @@ defwork save_esp
     nop
 %endmacro
 
+; NASM needs help to generate optimized nop padding
+%ifdef __NASM_VER__
 %macro k7align 1
     %assign unal ($-startseg)&(%1-1)
     %if unal
@@ -136,6 +138,9 @@ defwork save_esp
 	%endif
     %endif
 %endmacro
+%else
+    %define k7align align
+%endif
 
 ; register allocation for the key setup blocks
 %define A1	eax

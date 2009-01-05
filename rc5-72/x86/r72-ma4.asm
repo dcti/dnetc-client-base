@@ -8,7 +8,7 @@
 ; Version 1.0    2003/09/08  23:53
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-ma4.asm,v 1.3 2007/10/22 16:48:36 jlawson Exp $
+; $Id: r72-ma4.asm,v 1.4 2009/01/05 22:45:21 mfeiri Exp $
 
 ; SIMD Core Idea
 ; The only areas of the CPU that former cores have not utilized are the
@@ -157,6 +157,8 @@ defwork save_esp
     nop
 %endmacro
 
+; NASM needs help to generate optimized nop padding
+%ifdef __NASM_VER__
 %macro k7align 1
     %assign unal ($-startseg)&(%1-1)
     %if unal
@@ -178,6 +180,9 @@ defwork save_esp
     %endif
     %%alend:
 %endmacro
+%else
+    %define k7align align
+%endif
 
 %macro KEYSETUP_BLOCK 3
         movdqa  xmm6, xmm3

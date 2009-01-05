@@ -6,7 +6,7 @@
 ;  Author: Carsten Haustein (chaus@cs.uni-potsdam.de)
 ;
 ;---------------------------------------------------------------------
-; $Id: r72-mmx.asm,v 1.2 2007/10/22 16:48:36 jlawson Exp $
+; $Id: r72-mmx.asm,v 1.3 2009/01/05 22:45:21 mfeiri Exp $
 
 
 ;
@@ -46,7 +46,7 @@
 %define work_P_1        work_P_0+8
 %define work_C_0        work_P_1+8
 %define work_C_1        work_C_0+8
-%define work_size       work_C_1+8-L1+align_value  ; extra bytes for alignment
+%define work_size       544+align_value   ; extra bytes for alignment
 
 
 ;

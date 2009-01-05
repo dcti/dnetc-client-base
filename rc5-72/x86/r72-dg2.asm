@@ -3,7 +3,7 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg2.asm,v 1.16 2007/10/22 16:48:36 jlawson Exp $
+; $Id: r72-dg2.asm,v 1.17 2009/01/05 22:45:21 mfeiri Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -84,6 +84,8 @@ defwork save_ebp
     nop
 %endmacro
 
+; NASM needs help to generate optimized nop padding
+%ifdef __NASM_VER__
 %macro k7align 1
     %assign unal ($-startseg)&(%1-1)
     %if unal
@@ -105,6 +107,9 @@ defwork save_ebp
     %endif
     %%alend:
 %endmacro
+%else
+    %define k7align align
+%endif
 
 ; register allocation for the key setup blocks
 %define A1         eax

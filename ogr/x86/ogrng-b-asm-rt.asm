@@ -1,4 +1,8 @@
-cpu	586
+%ifdef __NASM_VER__
+	cpu	586	; NASM doesnt know feature flags but accepts mmx in 586 mode
+%else
+	cpu	586 mmx	; mmx is not part of i586
+%endif
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
 	[SECTION _DATA USE32 ALIGN=16 CLASS=DATA]

@@ -4,7 +4,7 @@
 ;
 ; Author: Ianos Gnatiuc <ssianky@hotmail.com>
 ; based on r72-dg2 and r72ansi2 cores
-; $Id: r72-ss2.asm,v 1.3 2007/10/22 16:48:36 jlawson Exp $
+; $Id: r72-ss2.asm,v 1.4 2009/01/05 22:45:21 mfeiri Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
@@ -82,6 +82,8 @@
     nop
 %endmacro
 
+; NASM needs help to generate optimized nop padding
+%ifdef __NASM_VER__
 %macro k7align 1
     %assign unal ($-startseg)&(%1-1)
     %if unal
@@ -103,6 +105,9 @@
     %endif
     %%alend:
 %endmacro
+%else
+    %define k7align align
+%endif
 
 ;------------------------------------------------
 
