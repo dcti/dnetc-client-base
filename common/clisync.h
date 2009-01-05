@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.14 2009/01/01 08:44:24 jlawson Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.15 2009/01/05 04:24:37 jlawson Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -160,7 +160,7 @@
     *l = 0;
   }
 
-  /* MS VC 6 has spinlock intrinsics */
+  /* MSVC 6 on Alpha has spinlock intrinsics */
   extern "C" int _AcquireSpinLockCount(long *, int);
   extern "C" void _ReleaseSpinLock(long *);
 # pragma intrinsic(_AcquireSpinLockCount, _ReleaseSpinLock)
@@ -191,20 +191,24 @@
   }
 
   /* _trylock returns -1 on EINVAL, 0 if could not lock, +1 if could lock */
-#ifdef __WATCOMC__
+#if defined(__WATCOMC__)
   static inline int fastlock_trylock(fastlock_t *l) {
     extern int fastlock_getlockstatus(fastlock_t *l);
     #pragma aux fastlock_getlockstatus = "mov eax, 1" "xchg eax, [edx]" parm [edx] value [eax] modify exact [eax];
 
     return fastlock_getlockstatus(l) ^ 1;
   }
+#elif defined(_MSC_VER)
+  extern "C" long _InterlockedExchange(volatile long * Target, long Value);
+  #pragma intrinsic(_InterlockedExchange)
+  static inline int fastlock_trylock(fastlock_t *l) {
+    return _InterlockedExchange(l, 1) ^ 1;
+  }
 #else
   static inline int fastlock_trylock(fastlock_t *l) {
     int lacquired = 0;
 
-# if defined(_MSC_VER)
-    lacquired = _InterlockedExchange(l, 1) ^ 1;
-# elif defined(__GNUC__)
+# if defined(__GNUC__)
     /* note: no 'lock' prefix even on SMP since xchg is always atomic */
     asm volatile("movl  $1,%0 \n\t" \
                  "xchgl %0,%1 \n\t" \
@@ -231,7 +235,7 @@
 
     return 0;
   }
-#endif // __WATCOMC__
+#endif
 
   static inline void fastlock_unlock(fastlock_t *l) {
     *l = 0;
