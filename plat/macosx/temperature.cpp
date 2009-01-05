@@ -34,7 +34,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.4 2008/04/26 01:09:13 kakace Exp $
+ *  $Id: temperature.cpp,v 1.5 2009/01/05 22:39:35 kakace Exp $
  */
 
 #include <string.h>
@@ -235,6 +235,8 @@ typedef struct {
 
 static UInt32 _SMCread(UInt32 key, io_connect_t connection)
 {
+#if !defined(__x86_64__)
+// IOConnectMethodStructureIStructureO() not defined in 64-bit mode
   SMCIO_t smc_input;
   SMCIO_t smc_output;
   IOItemCount input_size = sizeof(SMCIO_t);
@@ -271,7 +273,7 @@ static UInt32 _SMCread(UInt32 key, io_connect_t connection)
       }
     }
   }
-
+#endif
   return 0;
 }
 
