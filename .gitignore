@@ -1,11 +1,18 @@
+cvslogs
+.ilist
+
 Makefile
+buildvars.mk
+
 dnetc
 dnetc.1
 dnetc*.tar.gz
 dnetc*.zip
 dnetc*.lha
 
+dnetc.ini
 buff-in.*
 buff-out.*
 ckpoint
 logfile*.log
+trace.out
