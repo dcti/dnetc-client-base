@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.100 2009/01/01 08:44:24 jlawson Exp $
+# $Id: makefile.vc,v 1.101 2009/01/05 08:37:45 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -23,6 +23,8 @@ HAVE_OGR_PASS2=0
 !ifndef PROCESSOR_ARCHITECTURE
 PROCESSOR_ARCHITECTURE = x86
 !endif # default to x86
+
+!message Build environment for architecture: $(PROCESSOR_ARCHITECTURE)
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "ALPHA"
 OPTS_CC_CPU = -DNTALPHA 
@@ -84,8 +86,9 @@ ZIPEXTRAS = docs/readme.1st \
 #          == disable stack checks ("cl -?")
 # -Gf == eliminates duplicate strings
 # -Gy == enable function-level linking
-# -GR- ==disable RTTI
-# -GX- ==disable synchronous exception handling
+# -GR- == disable RTTI
+# -GX- == disable synchronous exception handling (VC6)
+# -EHs-c- == disable synchronous exception handling (VS2003)
 # -GA == optimize code for windows application
 #
 # -Og == global optimizations
@@ -106,11 +109,11 @@ OPTS_MSVC = -nologo -D__WIN32__ \
             -W4 -WX -GR- -GX- -GA -GF -GM -Gy \
             -Dsnprintf=_snprintf -DHAVE_SNPRINTF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG)
-	    ## *** +++++++++++++++++++++++++++++++++++++++++
-OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib bufferoverflowu.lib
+            ## *** +++++++++++++++++++++++++++++++++++++++++
+OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
             ## *** SOMETHING IS BROKEN IF YOU NEED MORE
-	    ## *** THAN advapi+user32+kernel32+gdi32 ***
-	    ## *** +++++++++++++++++++++++++++++++++++++++++
+            ## *** THAN advapi+user32+kernel32+gdi32 ***
+            ## *** +++++++++++++++++++++++++++++++++++++++++
 OPTS_LINK = /nologo /incremental:no \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
@@ -130,6 +133,13 @@ OPTS_MSVC = $(OPTS_MSVC:-WX=)
 
 !if "$(PROCESSOR_ARCHITECTURE)" != "AMD64"
 OPTS_LINK = $(OPTS_LINK) /warn:1 
+!endif
+
+
+!if ( [plat\win\msvcver.cmd] >= 14 )
+OPTS_MSVC = $(OPTS_MSVC:-GX-=-EHs-c-)
+OPTS_LIBS = $(OPTS_LIBS) bufferoverflowu.lib
+OPTS_LINK = $(OPTS_LINK:/warn:1=)
 !endif
 
 
@@ -431,7 +441,7 @@ $(VC_CHECK):
         $(CUDA_BIN_PATH)\nvcc -v -c -O2 -Xcompiler "$(OPTS_MSVC)" -D__WIN32__ -D_M_IX86 -DNDEBUG -Icommon -DLURK -Iplat/win -o $(@:/=\) $<
 
 cudart.dll: $(CUDA_BIN_PATH)\cudart.dll
-	copy /y $** $@
+        copy /y $** $@
 !endif
 
 {$(RC572SRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
