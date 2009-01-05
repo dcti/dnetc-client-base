@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.12 2009/01/02 16:59:42 kakace Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.13 2009/01/05 04:25:06 jlawson Exp $"
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)
@@ -45,6 +45,8 @@
 
   #elif defined(_MSC_VER)
 
+    #pragma warning(push)
+    #pragma warning(disable:4035)       // no return value
     static __forceinline int __CNTLZ__(register SCALAR i)
     {
         __asm {
@@ -57,6 +59,7 @@
         // return value in eax
     }
     #define __CNTLZ(x) (__CNTLZ__(x))
+    #pragma warning(pop)
 
   #endif  /* compiler */
 #elif (SCALAR_BITS == 64)
