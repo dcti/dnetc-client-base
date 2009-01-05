@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.146 2009/01/04 04:36:20 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.147 2009/01/05 08:38:15 jlawson Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -311,6 +311,9 @@ void Go_mt( void * parm )
 #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   if (thrparams->realthread)
   {
+    #if defined(_MSC_VER) && (_MSC_VER < 1299)
+    typedef DWORD DWORD_PTR;
+    #endif
     DWORD_PTR LAffinity, LProcessAffinity, LSystemAffinity;
     OSVERSIONINFO osver;
     unsigned int numthreads = thrparams->numthreads;
