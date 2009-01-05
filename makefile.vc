@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.101 2009/01/05 08:37:45 jlawson Exp $
+# $Id: makefile.vc,v 1.102 2009/01/05 09:08:36 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -80,6 +80,14 @@ ZIPEXTRAS = docs/readme.1st \
 
 # --------------------------------------------
 
+# a little blurb about compiler versions
+#   cl 12.00.xxxx = Visual Studio 6 (VC6/VC98)
+#   cl 13.00.xxxx = Visual Studio.NET 2002 (VC7.0)
+#   cl 13.10.xxxx = Visual Studio.NET 2003 (VC7.1)
+#   cl 14.00.xxxx = Visual Studio 2005 (VC8)
+#   cl 15.00.xxxx = Visual Studio 2008 (VC9)
+
+
 # a little blurb about options
 #
 # -Gs<num> == control stack probes (DevStudio docs)
@@ -87,8 +95,9 @@ ZIPEXTRAS = docs/readme.1st \
 # -Gf == eliminates duplicate strings
 # -Gy == enable function-level linking
 # -GR- == disable RTTI
-# -GX- == disable synchronous exception handling (VC6)
-# -EHs-c- == disable synchronous exception handling (VS2003)
+# -GM  == ??? (undocumented? removed in VC8)
+# -GX- == disable synchronous exception handling (VC6/VC7)
+# -EHs-c- == disable synchronous exception handling (Vc8)
 # -GA == optimize code for windows application
 #
 # -Og == global optimizations
@@ -138,6 +147,7 @@ OPTS_LINK = $(OPTS_LINK) /warn:1
 
 !if ( [plat\win\msvcver.cmd] >= 14 )
 OPTS_MSVC = $(OPTS_MSVC:-GX-=-EHs-c-)
+OPTS_MSVC = $(OPTS_MSVC:-GM =)
 OPTS_LIBS = $(OPTS_LIBS) bufferoverflowu.lib
 OPTS_LINK = $(OPTS_LINK:/warn:1=)
 !endif
