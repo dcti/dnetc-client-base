@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_init.cpp,v 1.8 2009/01/01 13:37:14 andreasb Exp $
+ * $Id: ogrng_init.cpp,v 1.9 2009/01/05 04:36:28 jlawson Exp $
  */
 
 #include <stdlib.h>     /* calloc */
@@ -130,7 +130,7 @@ int ogr_init_choose(void)
     for (m = 1; m < CHOOSE_MARKS; m++) {
        unsigned long wo = CHOOSE_MARKS * set + m;
        unsigned long ro = (CHOOSE_MARKS - 1) * set + (m - 1);
-       array[wo] = array[wo - 1] + ogrng_choose_datas[ro];
+       array[wo] = (u16)(array[wo - 1] + ogrng_choose_datas[ro]);
     }
   }
 
@@ -244,7 +244,7 @@ static void cache_limits(u16* pDatas, int nMarks)
             }
          }
 
-         table[depth] = (limit < 0) ? 0 : (u16)limit;
+         table[depth] = (u16)(limit < 0 ? 0 : limit);
       }
    }
 }
