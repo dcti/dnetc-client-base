@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.47 2009/01/04 23:50:34 teichp Exp $
+Version change log: $Id: CHANGES.txt,v 1.48 2009/01/05 01:10:33 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -39,6 +39,7 @@ Version change log: $Id: CHANGES.txt,v 1.47 2009/01/04 23:50:34 teichp Exp $
             fix: all: Combined OGR-NG stubs no longer appear to restart (#4083)
             imp: all: Summarized benchmark results (#4108)
             new: arm: OGR-NG ASM cores
+            fix: x86: Various AMD CPU Detections (#4074 & #4120)
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core

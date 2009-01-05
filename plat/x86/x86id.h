@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.h,v 1.4 2008/12/30 20:58:45 andreasb Exp $
+ * $Id: x86id.h,v 1.5 2009/01/05 01:10:33 snikkel Exp $
  */
 
 #ifndef client_x86id_H
@@ -83,6 +83,14 @@ enum AmdModel16 {
    AMDM16_LAST_MODEL = AMDM16_PHENOM
 };
 
+enum AmdModel17 {
+   AMDM17_UNKNOWN = AMDM16_LAST_MODEL + 1,
+   AMDM17_SEMPRON,                 /* AMD Sempron(tm) SI- */
+   AMDM17_TURION_X2_ULTRA_MOBILE,  /* AMD Turion(tm) X2 Ultra Dual-Core Mobile ZM- */
+   AMDM17_TURION_X2_MOBILE,        /* AMD Turion(tm) X2 Dual-Core Mobile RM- */
+   AMDM17_ATHLON_X2,               /* AMD Athlon(tm) X2 Dual-Core QL- */
+   AMDM17_LAST_MODEL = AMDM17_ATHLON_X2
+};
 
 const char* x86GetVendorName(u32);
 u32         x86GetDetectedType(void);

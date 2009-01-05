@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.12 2009/01/01 08:44:24 jlawson Exp $
+ * $Id: x86id.cpp,v 1.13 2009/01/05 01:10:33 snikkel Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
@@ -508,6 +508,31 @@ static u32 x86GetAmdId(u32 maxfunc)
             brandid = AMDM16_PHENOM;
           else
             brandid = AMDM16_UNKNOWN;
+        }
+        model = 0;    /* Scrub the model number (irrelevant) */
+      }
+      else if (family == 17) {
+        int code = 0;
+        int pkg  = 0;
+
+        if (maxfunc >= 0x80000001U) {
+          code = (infos.regs.ebx >> 11) & 0x0F;    /* AMD:string1 */
+          pkg  = (infos.regs.ebx >> 28) & 0x0F;
+        }
+
+        if (maxfunc >= 0x80000008U) {
+          x86cpuid(0x80000008U, &infos);
+          code |= (infos.regs.ecx & 0xFF) << 4;    /* Create a composite code with AMD:NC */
+        }
+
+        if(pkg == 2) {
+  	  switch (code) {   /* Code := Nibble1=NC, Nibble2=string1 */
+             case 0x00: brandid = AMDM17_SEMPRON; break;
+             case 0x10: brandid = AMDM17_TURION_X2_ULTRA_MOBILE; break;
+             case 0x11: brandid = AMDM17_TURION_X2_MOBILE; break;
+             case 0x12: brandid = AMDM17_ATHLON_X2; break;
+             default:   brandid = AMDM17_UNKNOWN; break;
+          }
         }
         model = 0;    /* Scrub the model number (irrelevant) */
       }
