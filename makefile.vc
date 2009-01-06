@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.103 2009/01/06 08:20:05 jlawson Exp $
+# $Id: makefile.vc,v 1.104 2009/01/06 08:24:25 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -115,7 +115,7 @@ ZIPEXTRAS = docs/readme.1st \
 # -Ox == -Og -Oi -Ot -Oy -Ob1 -Gs
 
 OPTS_MSVC = -nologo -D__WIN32__ \
-            -W4 -WX -GR- -GX- -GA -GF -GM -Gy \
+            -W4 -GR- -GA -GF -Gy \
             -Dsnprintf=_snprintf -DHAVE_SNPRINTF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG)
             ## *** +++++++++++++++++++++++++++++++++++++++++
