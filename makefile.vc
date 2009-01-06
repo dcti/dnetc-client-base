@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.102 2009/01/05 09:08:36 jlawson Exp $
+# $Id: makefile.vc,v 1.103 2009/01/06 08:20:05 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -97,7 +97,7 @@ ZIPEXTRAS = docs/readme.1st \
 # -GR- == disable RTTI
 # -GM  == ??? (undocumented? removed in VC8)
 # -GX- == disable synchronous exception handling (VC6/VC7)
-# -EHs-c- == disable synchronous exception handling (Vc8)
+# -EHs-c- == disable synchronous exception handling (VC8)
 # -GA == optimize code for windows application
 #
 # -Og == global optimizations
@@ -133,24 +133,16 @@ OPTS_LIBS = $(OPTS_LIBS) $(CUDA_LIB_PATH)\cudart.lib
 ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda cudart.dll
 !endif
 
-!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-OPTS_MSVC = $(OPTS_MSVC:-GM=)
-OPTS_MSVC = $(OPTS_MSVC:-WX=)
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-OPTS_MSVC = $(OPTS_MSVC:-WX=)
-!endif
 
-!if "$(PROCESSOR_ARCHITECTURE)" != "AMD64"
+!if ( [plat\win\msvcver.cmd] >= 14 )
+OPTS_MSVC = $(OPTS_MSVC) -EHs-c-
+OPTS_LIBS = $(OPTS_LIBS) bufferoverflowu.lib
+!else
+OPTS_MSVC = $(OPTS_MSVC) -GX- -GM
 OPTS_LINK = $(OPTS_LINK) /warn:1 
 !endif
 
-
-!if ( [plat\win\msvcver.cmd] >= 14 )
-OPTS_MSVC = $(OPTS_MSVC:-GX-=-EHs-c-)
-OPTS_MSVC = $(OPTS_MSVC:-GM =)
-OPTS_LIBS = $(OPTS_LIBS) bufferoverflowu.lib
-OPTS_LINK = $(OPTS_LINK:/warn:1=)
-!endif
+#OPTS_MSVC = $(OPTS_MSVC) -WX
 
 
 # --------------------------------------------
