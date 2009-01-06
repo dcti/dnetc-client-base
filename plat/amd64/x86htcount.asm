@@ -7,9 +7,13 @@
 ; 
 ; Written for distributed.net by Steven Nikkel, Nov 2003
 ; 
-; $Id: x86htcount.asm,v 1.1 2009/01/01 08:40:40 jlawson Exp $
+; $Id: x86htcount.asm,v 1.2 2009/01/06 07:47:53 jlawson Exp $
 ;
 ; return u32
+
+
+BITS 64
+
 
 %ifndef __OMF__
   %ifdef OS2
@@ -35,29 +39,29 @@ __CODESECT__
 _x86htcount:            
 x86htcount: 
 
-  push ebx
-  push ecx
-  push edx
-  push esi
-  push edi
+  push rbx
+  push rcx
+  push rdx
+  push rsi
+  push rdi
 
   mov esi, 0h
 
   ; See if CPUID instruction is supported ...
   ; ... Get copies of EFLAGS into eax and ecx
-  pushf
-  pop eax
+  pushfq
+  pop rax
   mov ecx, eax
 
   ; ... Toggle the ID bit in one copy and store
   ;     to the EFLAGS reg
   xor eax, 200000h
-  push eax
-  popf
+  push rax
+  popfq
 
   ; ... Get the (hopefully modified) EFLAGS
-  pushf
-  pop eax
+  pushfq
+  pop rax
 
   ; ... Compare and test result
   cmp ecx, eax
@@ -77,10 +81,10 @@ NotSupported:
 Return:
   mov eax, esi
 
-  pop edi
-  pop esi
-  pop edx
-  pop ecx
-  pop ebx
+  pop rdi
+  pop rsi
+  pop rdx
+  pop rcx
+  pop rbx
 
   ret
