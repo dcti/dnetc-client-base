@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.48 2009/01/05 01:10:33 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.49 2009/01/09 23:47:08 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -40,6 +40,7 @@ Version change log: $Id: CHANGES.txt,v 1.48 2009/01/05 01:10:33 snikkel Exp $
             imp: all: Summarized benchmark results (#4108)
             new: arm: OGR-NG ASM cores
             fix: x86: Various AMD CPU Detections (#4074 & #4120)
+            imp: x86: Intel Core i7 detection (#4118)
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core
