@@ -7,7 +7,7 @@
 #include "ansi/ogrp2-32.h"
 
 const char *ogr_ppc_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.10 2008/12/30 20:58:43 andreasb Exp $"; }
+return "@(#)$Id: ogr-ppc.cpp,v 1.11 2009/01/12 04:32:50 mfeiri Exp $"; }
 
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
 
@@ -36,15 +36,6 @@ return "@(#)$Id: ogr-ppc.cpp,v 1.10 2008/12/30 20:58:43 andreasb Exp $"; }
     #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
     #define OGROPT_ALTERNATE_CYCLE                1 /* 0-2 - 'yes'           */
     #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      1 /* 0/1 - 'yes'           */
-
-  #elif defined(__MRC__)
-
-    #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - MrC is better   */
-    #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
-    #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'  (default) */
-    #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - 'no'  (default) */
-    #define OGROPT_ALTERNATE_CYCLE                1 /* 0-2 - 'yes'           */
-    #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      0 /* 0/1 - MrC is better   */
 
   #elif defined(__APPLE_CC__)
 

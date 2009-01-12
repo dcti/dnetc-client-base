@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.107 2009/01/12 01:51:08 mfeiri Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.108 2009/01/12 04:32:50 mfeiri Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -669,7 +669,6 @@
         defined(__xlC__) || defined(__XLC121__))       ) || \
       (defined(__SUNPRO_CC)                            ) || \
       (defined(__IBMCPP__)                             ) || \
-      (defined(__DECCXX)                               ) || \
       (defined(__TURBOC__)   && (__TURBOC__ <= 0x400)  )
     /*
      Some compilers don't yet support bool internally.
@@ -840,7 +839,7 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
-#elif defined(__MWERKS__) || defined(__MRC__) || defined(__MOTO__)
+#elif defined(__MWERKS__)
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned long long ui64;

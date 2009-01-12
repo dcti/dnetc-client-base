@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.348 2009/01/12 01:51:09 mfeiri Exp $
+# @(#)$Id: configure,v 1.349 2009/01/12 04:32:50 mfeiri Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -440,7 +440,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       if [ "X$3" = "Xaltivec" ]; then
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
       fi
-      if [ "$TARGET_CC" != "mwcc" ]; then   # CodeWarrior (MacOS)
+      if [ "$TARGET_CC" != "mwcc" ]; then   # CodeWarrior (BeOS)
         # KOGE optimized cores
         HAVE_KOGE_PPC_CORES="1"
         if [ "$1" = "aix" ]; then
@@ -1103,11 +1103,6 @@ fi
 # non-GCC
 # ----------------------------------------------------------------------
 
-#-- Sparc, Sun CC
-
-OPTS_CC_SPARC='-fast -xO4 -xtarget=ultra1/140 -DASM_SPARC'
-OPTS_AS_ULTRA="-xarch=v8plusa"
-
 #-- MIPS, Irix MIPSpro compilers
 
 # ABI specific options
@@ -1127,12 +1122,6 @@ OPTS_MIPSPRO_CCFLAGS_32="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_32}"
 OPTS_MIPSPRO_CCFLAGS_64="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_64}"
 OPTS_LD_MIPSPRO_32="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_32}"
 OPTS_LD_MIPSPRO_64="${OPTS_MIPSPRO_CCFLAGS} ${OPTS_MIPSPRO_ABI_64}"
-
-#-- Alpha, DEC cc
-
-OPTS_CC_ALPHA_EV4='-O4 -tune ev4 -inline all'
-OPTS_CC_ALPHA_EV5='-O4 -tune ev5 -inline all'
-OPTS_CC_ALPHA='-O4 -fast -arch ev56 -tune ev56 -inline all'
 
 #-- PPC, IBM xlC
 

@@ -10,7 +10,7 @@
 
 #ifndef IMPLEMENT_CELL_CORES /* Included twice for PPU and SPU */
 const char *ogr_vec_cpp(void) {
-return "@(#)$Id: ogr-vec.cpp,v 1.11 2008/12/30 20:58:44 andreasb Exp $"; }
+return "@(#)$Id: ogr-vec.cpp,v 1.12 2009/01/12 04:32:50 mfeiri Exp $"; }
 #endif
 
 #include "ansi/ogrp2.h"
@@ -73,13 +73,6 @@ struct Level {
 
   #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'            */
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         1 /* 0/1 - 'yes' (default) */
-  #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
-  #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - irrelevant      */
-
-#elif defined(__MRC__)
-
-  #define OGROPT_HAVE_OGR_CYCLE_ASM             0 /* 0-2 - 'no'            */
-  #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - 'no'            */
   #define OGROPT_NO_FUNCTION_INLINE             0 /* 0/1 - 'no'  (default) */
   #define OGROPT_CYCLE_CACHE_ALIGN              0 /* 0/1 - irrelevant      */
 
