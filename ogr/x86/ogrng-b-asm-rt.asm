@@ -515,5 +515,3 @@ exit:
 	pop	ebx
 	emms
 	ret
-
-	end
