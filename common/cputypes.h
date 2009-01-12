@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.108 2009/01/12 04:32:50 mfeiri Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.109 2009/01/12 14:49:19 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -574,7 +574,7 @@
   #include <sys/resource.h> /* WIF*() macros */
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
-#elif ((CLIENT_OS == OS_LINUX) && \
+#elif (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOSX)) && \
   ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)))
   /* Necessary for streams to work correctly */
   #define HAVE_POSIX_THREADS
