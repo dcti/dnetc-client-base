@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.346 2009/01/06 09:36:19 jlawson Exp $
+# @(#)$Id: configure,v 1.347 2009/01/12 01:41:11 mfeiri Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -59,8 +59,6 @@ TARGET_AS="as"
 TARGET_ASFLAGS=""
 TARGET_NASM="nasm"     #<- set this to "" if you have no nasm
 TARGET_NASM_FMT="elf"
-TARGET_YASM="yasm"     #<- set this to "" if you have no yasm
-TARGET_YASM_FMT="elf"
 TARGET_STRIP="strip"
 TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
 TARGET_IS_CROSSCOMPILE=""
@@ -75,7 +73,6 @@ TARGET_STREAM_DRIVER_INSTALL_PREFIX=""
 TARGET_ADDSRCS=""
 TARGET_ADDASMS=""
 TARGET_ADDNASMS=""
-TARGET_ADDYASMS=""
 TARGET_ADDPPUCORES=""
 TARGET_ADDSPUCORES=""
 TARGET_ADDOBJS=""
@@ -545,22 +542,14 @@ add_sources() # $1=os, $2=arch, $3=custom
   elif [ "$2" = "amd64" ]; then
     TARGET_ADDSRCS="$TARGET_ADDSRCS plat/x86/x86id.cpp"
     TARGET_HDIRS="$TARGET_HDIRS ./plat/x86"
-    if [ "X$TARGET_YASM" = "X" -o "X$TARGET_YASM_FMT" = "X" ]; then #no YASM
-      echo You need YASM to build.
-      exit 1
-    else
-      TARGET_ADDYASMS="$TARGET_ADDYASMS plat/amd64/x86rdtsc.asm"
-    fi
+    TARGET_ADDNASMS="$TARGET_ADDNASMS plat/amd64/x86rdtsc.asm"
 
     # -------------- rc5-72 --------------
     if [ "$HAVE_RC5_72" = "1" ]; then
-      if [ "X$TARGET_YASM" != "X" -a "X$TARGET_YASM_FMT" != "X" ]; then
-        # -- yasm/rc5 --
-        #DEFAULT_RC5_72="0"     # don't add the ansi cores
-        TARGET_ADDYASMS="$TARGET_ADDYASMS \
-                         rc5-72/amd64/r72-snjl.asm \
-                         rc5-72/amd64/r72-kbe.asm"
-      fi
+      #DEFAULT_RC5_72="0"     # don't add the ansi cores
+      TARGET_ADDNASMS="$TARGET_ADDNASMS \
+                       rc5-72/amd64/r72-snjl.asm \
+                       rc5-72/amd64/r72-kbe.asm"
     fi # HAVE_RC5_72
 
     if [ "$HAVE_OGR" = "1" ]; then
@@ -2468,6 +2457,8 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
         TARGET_LDFLAGS="-framework IOKit -framework CoreFoundation"
 
+
+        TARGET_NASM="nasm"
         # To use nasm's macho output, you will need a custom patch:
         # http://sf.net/project/shownotes.php?release_id=337548
         TARGET_NASM_FMT="macho"
@@ -2549,7 +2540,8 @@ case "$1" in
 
     *linux-amd64)               # generic. works everywhere
         infer_arch_and_version "Linux"
-        TARGET_YASM_FMT="elf"
+        TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
         TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
         TARGET_CC="gcc"
         generate_gcc_opts "amd64" "linux"
@@ -3036,23 +3028,8 @@ if [ "$TARGET_NASM_FMT" = "elf" ]; then
 elif [ "$TARGET_NASM_FMT" = "obj" ]; then
   TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__OMF__"
 else
-  TARGET_NASMFLAGS="$TARGET_NASMFLAGS -d__AOUT__" #for both aout and aoutb
+  TARGET_NASMFLAGS="$TARGET_NASMFLAGS" #other formats (e.g. macho, aout) dont need special treatment
 fi
-
-#
-# Finalize the YASM compilation options.
-#
-if [ -z "$TARGET_YASM_FMT" ]; then
-  TARGET_YASM_FMT="elf"
-fi
-TARGET_YASMFLAGS="-f $TARGET_YASM_FMT -m amd64 -p nasm -r nasm"
-#if [ "$TARGET_YASM_FMT" = "elf" ]; then
-#  TARGET_YASMFLAGS="$TARGET_YASMFLAGS -d__ELF__"
-#elif [ "$TARGET_YASM_FMT" = "obj" ]; then
-#  TARGET_YASMFLAGS="$TARGET_YASMFLAGS -d__OMF__"
-#else
-#  TARGET_YASMFLAGS="$TARGET_YASMFLAGS -d__AOUT__" #for both aout and aoutb
-#fi
 
 
 #
@@ -3122,17 +3099,6 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
   echo "Scanning output NASM dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} nasm"
   for target in ${TARGET_ADDNASMS}; do
-      TARGETOBJECT=`basename $target .asm`
-      TARGETOBJECT=output/`basename $target .asm`.o
-      echo "  $target -> $TARGETOBJECT"
-      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
-      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
-  done
-fi
-if [ -n "${TARGET_ADDYASMS}" ]; then
-  echo "Scanning output YASM dependencies..."
-  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} yasm"
-  for target in ${TARGET_ADDYASMS}; do
       TARGETOBJECT=`basename $target .asm`
       TARGETOBJECT=output/`basename $target .asm`.o
       echo "  $target -> $TARGETOBJECT"
@@ -3304,8 +3270,6 @@ echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
-echo "YASM = ${TARGET_YASM}" >> Makefile
-echo "YASMFLAGS = ${TARGET_YASMFLAGS}" >> Makefile
 if [ "${BUILDNAME}" = "linux-cellbe" ]; then
   echo "SPUCC = ${TARGET_SPUCC}" >> Makefile
   echo "SPUAS = ${TARGET_SPUAS}" >> Makefile
@@ -3490,8 +3454,6 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "nasm" ]; then
       TARGETTYP="$target"
-    elif [ "${target}" = "yasm" ]; then
-      TARGETTYP="$target"
     elif [ "${target}" = "spuasm" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "r72spuwrapper" ]; then
@@ -3608,24 +3570,6 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       fi
       echo "$target:	${TARGETSRC}" >> Makefile
       echo "	\${NASM} \${NASMFLAGS} ${incswitch} ${TARGETSRC} -o $target" >> Makefile
-      echo "" >> Makefile
-      TARGETSRC=""
-    # ------------------------------------
-    elif [ "${TARGETTYP}" = "yasm" ]; then
-      dirlist=`echo "${TARGETSRC}"|tr '/' ' '`
-      incswitch=""
-      prevdir=""
-      for subdir in $dirlist; do
-        if [ -n "$prevdir" ]; then
-          incswitch="$incswitch$prevdir/"
-        fi
-        prevdir="$subdir"
-      done
-      if [ -d "$incswitch" ]; then
-        incswitch="-I $incswitch"
-      fi
-      echo "$target:	${TARGETSRC}" >> Makefile
-      echo "	\${YASM} \${YASMFLAGS} ${incswitch} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
