@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.106 2009/01/01 12:38:17 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.107 2009/01/12 01:51:08 mfeiri Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -424,8 +424,10 @@
      #define CLIENT_CPU    CPU_CUDA
    #elif defined(__ppc__) || defined (__ppc64__)
      #define CLIENT_CPU    CPU_POWERPC
-   #elif defined(__i386__) || defined(__x86_64__)
+   #elif defined(__i386__) || defined(ASM_X86)
      #define CLIENT_CPU    CPU_X86
+   #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
+     #define CLIENT_CPU    CPU_AMD64
    #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */
