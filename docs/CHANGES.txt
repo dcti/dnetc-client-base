@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.49 2009/01/09 23:47:08 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.50 2009/01/21 21:09:52 snake Exp $
 ==========================================================================
 
 2.9100
@@ -41,6 +41,8 @@ Version change log: $Id: CHANGES.txt,v 1.49 2009/01/09 23:47:08 snikkel Exp $
             new: arm: OGR-NG ASM cores
             fix: x86: Various AMD CPU Detections (#4074 & #4120)
             imp: x86: Intel Core i7 detection (#4118)
+            new: sparc64: Added support for openbsd-sparc64
+            fix: sparc64: fixed netbsd-sparc64 target
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core
