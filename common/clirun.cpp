@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.147 2009/01/05 08:38:15 jlawson Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.148 2009/01/22 19:44:58 kakace Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1692,16 +1692,16 @@ int ClientRun( Client *client )
     {
       int i = 0;
       SetGlobalPriority( client->priority );
+      if (isPaused)
+        NonPolledSleep(1);
+
       while ((i++)<5
             && !__CheckClearIfRefillNeeded(thread_data_table,0)
             && !CheckExitRequestTriggerNoIO()
             && ModeReqIsSet(-1)==0)
       {
         ClientEventSyncPost(CLIEVENT_CLIENT_RUNIDLE, &i, sizeof(i));
-        if (isPaused)
-          NonPolledSleep(1);
-        else
-          sleep(1);
+        sleep(1);
         #if defined(DYN_TIMESLICE_SHOWME)
         __dyn_timeslice_showme(thread_data_table);
         #endif
