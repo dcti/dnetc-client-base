@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.13 2009/01/21 21:31:17 snake Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.14 2009/01/22 15:08:55 snake Exp $"; }
 
 //#define TRACE
 
@@ -131,6 +131,10 @@ int InitializeCoreTable_ogr_ng(int first_time)
         #endif
       #elif (CLIENT_CPU == CPU_VAX)
         ogrng_get_dispatch_table();
+      #elif (CLIENT_CPU == CPU_ARM)
+        ogrng_get_dispatch_table();
+        ogrng_get_dispatch_table_arm1();
+        ogrng_get_dispatch_table_arm2();
       #elif (CLIENT_CPU == CPU_SPARC)
         #if (SIZEOF_LONG == 8)
           ogrng64_get_dispatch_table();
