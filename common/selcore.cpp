@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.118 2008/12/31 15:09:47 kakace Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.119 2009/01/23 18:08:57 stream Exp $"; }
 
 //#define TRACE
 
@@ -405,6 +405,8 @@ static long __bench_or_test( int which,
     selcorestatics.corenum[cont_i] = corenum;
 
     /* Summarize the results if multiple cores have been benchmarked (#4108) */
+#if (CLIENT_CPU != CPU_CELLBE)
+    /* Not applicable for Cell due to PPU/SPU core selection hacks */
     if (in_corenum < 0 && fastest >= 0 && bestrate > 0) {
       long percent = 100 * refrate / bestrate;
 
@@ -428,6 +430,7 @@ static long __bench_or_test( int which,
         }
       }
     }
+#endif // CPU_CELLBE
 
 #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
     if (rc > 0 && cont_i == RC5 && 
