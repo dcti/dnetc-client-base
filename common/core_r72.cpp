@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.29 2009/01/09 23:47:09 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.30 2009/01/25 15:04:08 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -598,7 +598,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
   #error CLIENT_OS may only be used for sub-selects (only if neccessary)
     cindex = 1; // now we use ansi-2pipe
   #elif (CLIENT_CPU == CPU_CUDA)
-    //cindex = 0; // 1-pipe 64-threads should be a good default
+    cindex = 0; // 1-pipe 64-threads
   #endif
 
   return cindex;
