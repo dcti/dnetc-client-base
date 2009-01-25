@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.156 2008/12/31 16:46:39 andreasb Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.157 2009/01/25 15:05:08 andreasb Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -20,7 +20,7 @@
 #define PREFERREDBLOCKSIZE_DEFAULT       1
 #endif
 #define PREFERREDBLOCKSIZE_MIN           1
-#define PREFERREDBLOCKSIZE_MAX           268435456
+#define PREFERREDBLOCKSIZE_MAX           1024
 #define BUFFER_DEFAULT_IN_BASENAME  "buff-in"
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
