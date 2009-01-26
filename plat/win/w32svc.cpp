@@ -7,12 +7,17 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.7 2008/12/30 20:58:44 andreasb Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.8 2009/01/26 05:04:06 jlawson Exp $"; }
 
 //#define TRACE
 
 #include "cputypes.h"
 #include "unused.h"     /* DNETC_UNUSED_* */
+
+#if (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_WIN64) /* win16 no longer supported */
+#error Unsupported OS type.
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <string.h>
@@ -61,7 +66,7 @@ return "@(#)$Id: w32svc.cpp,v 1.7 2008/12/30 20:58:44 andreasb Exp $"; }
   #elif (PROXYTYPE == PROXY_PERSONAL)
   #define SERVICEFOR "personal proxy"
   #else
-  #error PROXYTPE but not PROXY_FULL|PERSONAL|MASTER?
+  #error Unrecognized PROXYTYPE.
   #endif
   const char *NTSERVICEIDS[]={"dnetd"/*oct99*/,"bovproxy"/*old*/,"bovproxy"/*old*/};
   const char *W9xSERVICEKEY = ""; // don't support 9x for proxy
@@ -156,7 +161,6 @@ static long __winGetVersion(void)
 
 /* ---------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_WIN32)
 static const char *__constructerrmsg(const char *leadin, DWORD errnum,
                               char *msgbuffer, unsigned int buflen)
 {
@@ -176,28 +180,26 @@ static const char *__constructerrmsg(const char *leadin, DWORD errnum,
   }
   return (const char *)&msgbuffer[0];
 }
-#endif
 
 
 /* ---------------------------------------------------------- */
 
+// Not static because also called by w32pre.cpp
 int __GetMyModuleFilename(char *buffer, unsigned int len)
 {
   if (buffer && len)
   {
-    #if (!defined(PROXYTYPE) || (CLIENT_OS != OS_WIN32))
-    /*
+    #if defined(PROXYTYPE)
+    return GetModuleFileName( NULL, buffer, (WORD)len );
+    #else
     //we do it this way for two reasons:
     // win16) we don't have the instance handle here
     //        [we /could/ get the hInst from winGetInstanceHandle() though]
-    // win32) the client may have been stubbed with conshim, so
+    // win32/win64) the client may have been stubbed with conshim, so
     //        GetModuleHandle() would return the name of the temp file.
     //        [we /could/ get the name from the environment though]
-    */
     extern int winGetMyModuleFilename(char *, unsigned int); /* w32pre.cpp */
     return winGetMyModuleFilename(buffer, len);
-    #else
-    return GetModuleFileName( NULL, buffer, (WORD)len );
     #endif
   }
   return 0;
@@ -282,9 +284,7 @@ static void __print_message( const char *message, int iserror )
     return;
   }
   #endif
-  #if (CLIENT_OS != OS_WIN32)
-  #define TRACE_LASTERROR(x) /* nothing */
-  #else
+
   #define TRACE_LASTERROR(x) trace_lasterror x
   static char __debug_name_buffer[64];
   static const char *debug_getsvcStatusName(DWORD svcstatus)
@@ -345,151 +345,8 @@ static void __print_message( const char *message, int iserror )
     LocalFree( lpMsgBuf );
     return;
   }
-  #endif
+
 #endif
-
-/* ---------------------------------------------------------- */
-
-static int __win31InstallDeinstallClient( int which, int quietly )
-{
-  int retcode = -1;
-  const char *boxmsg = NULL;
-  #if (defined(PROXYTYPE))
-  boxmsg = "-install and -uninstall are not supported for win16 proxy";
-  #else
-  unsigned int pathlen;
-  char fullpath[MAX_PATH+1];
-  if (__GetMyModuleFilename(fullpath, sizeof(fullpath))==0)
-    boxmsg = "Unable to obtain full path to exe name.";
-  else if (__winGetVersion() >= 400) //should not get here
-    boxmsg = "Invalid windows version for Win16 -install or -deinstall";
-  else if ((pathlen = strlen(fullpath)) >= 127)
-    boxmsg = "Path to executable is too long to -install or -deinstall";
-  else
-  {
-    char inibuffer[1024];
-    char *option = "run";
-    char *entry = NULL;
-    strlwr(fullpath);
-
-    if (( GetProfileString("windows", option, "",
-             inibuffer, sizeof(inibuffer)-1)) != 0)
-    {
-      strlwr( inibuffer );
-      entry = strstr( inibuffer, fullpath );
-      while (entry)
-      {
-        if (entry[pathlen]=='\t' || entry[pathlen]==' ' && entry[pathlen]==0)
-        {
-          if (entry == inibuffer || *(entry-1)=='\t' || *(entry-1)==' ')
-            break;
-        }
-        entry = strstr( entry+1, fullpath );
-      }
-      if (entry)
-        GetProfileString("windows",option,"",inibuffer, sizeof(inibuffer)-1);
-    }
-    if (entry == NULL && ( GetProfileString("windows", "load", "",
-             inibuffer, sizeof(inibuffer)-1)) != 0)
-    {
-      option = "load";
-      strlwr( inibuffer );
-      entry = strstr( inibuffer, fullpath );
-      while (entry)
-      {
-        if (entry[pathlen]=='\t' || entry[pathlen]==' ' && entry[pathlen]==0)
-        {
-          if (entry == inibuffer || *(entry-1)=='\t' || *(entry-1)==' ')
-            break;
-        }
-        entry = strstr( entry+1, fullpath );
-      }
-      if (entry)
-        GetProfileString("windows",option,"",inibuffer, sizeof(inibuffer)-1);
-    }
-
-    if (which == 0) /* IsInstalled() */
-    {
-      retcode = ((entry == NULL) ? (0) : (1));
-    }
-    else if (entry == NULL && which < 0) /* Uninstall() */
-    {
-      boxmsg = "This client is not installed. Cannot uninstall.";
-    }
-    else if (entry)
-    {
-      char *q=entry+pathlen;
-      while (*q == ' ' || *q == '\t')
-        q++;
-      memmove( entry, q, (q-entry) );
-      if ( WriteProfileString( "windows", option, inibuffer ))
-      {
-        retcode = 0;
-        if (which < 0)
-          boxmsg = "The distributed.net client has been successfully uninstalled.";
-      }
-      else
-      {
-        retcode = -1;
-        if (retcode < 0) /* Uninstall() */
-          boxmsg = "The distributed.net client could not be uninstalled.";
-        else
-          boxmsg = "The existing distributed.net client could not be uninstalled\n"
-                   "prior to install.";
-        which = -1; /* don't let it fall into Install() */
-      }
-    }
-    if (which > 0) /* Install() */
-    {
-      unsigned int maxlen;
-      option = "run";
-      maxlen = pathlen + GetProfileString("windows", option,
-                                "", inibuffer, sizeof(inibuffer)-1);
-      if (maxlen > (127-2))
-      {
-        option = "load";
-        maxlen = pathlen + GetProfileString("windows", option, "",
-                                inibuffer, sizeof(inibuffer)-1);
-      }
-      if (maxlen > (127-2))
-      {
-        retcode = -1;
-        boxmsg = "Insufficient space in WIN.INI load/run "
-                 "entries to -install";
-      }
-      else
-      {
-        pathlen = strlen( inibuffer );
-        while ((pathlen > 0) &&
-               (inibuffer[pathlen-1]==' ' || inibuffer[pathlen-1]=='\t'))
-          inibuffer[--pathlen]=0;
-        maxlen = 0;
-        while (inibuffer[maxlen]==' ' || inibuffer[maxlen]=='\t')
-          maxlen++;
-        if (maxlen > 0)
-          memmove((void *)&inibuffer[0],(void *)&inibuffer[maxlen],pathlen);
-        if (inibuffer[0])
-          strcat( inibuffer, " ");
-        strcat( inibuffer, fullpath );
-        if ( WriteProfileString( "windows", option, inibuffer ))
-        {
-          boxmsg = "The distributed.net client has been installed successfully.";
-          retcode = 0;
-        }
-        else
-        {
-          boxmsg = "Unable to update WIN.INI for -install.";
-          retcode = -1;
-        }
-      }
-    }
-  }
-  #endif //!PROXYTYPE
-
-  if (quietly==0 && boxmsg!=NULL)
-    __print_message( boxmsg, (retcode < 0) );
-  return retcode;
-}
 
 /* ---------------------------------------------------------- */
 
@@ -507,10 +364,9 @@ static int __DoModeService( int mode, int argc, char **argv )
 
   if (__winGetVersion() < 400) /* win16 */
   {
-    if (mode == SVC_CSD_MODE_ISINSTALLED) /* check */
-      isinstalled = __win31InstallDeinstallClient(0,1);
+    isinstalled = -1;       // not supported anymore.
   }
-  #if (CLIENT_OS == OS_WIN32)
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   else if (__winGetVersion() >= 2000) /* NT */
   {
     SC_HANDLE myService, scm;
@@ -550,7 +406,9 @@ static int __DoModeService( int mode, int argc, char **argv )
       CloseServiceHandle(scm);
     }
   }
-  else if (__winGetVersion() >= 400 && W9xSERVICEKEY[0]!=0) /* Win9x */
+  #endif
+  #if (CLIENT_OS == OS_WIN32)
+  else if (__winGetVersion() >= 400 && W9xSERVICEKEY[0] != 0) /* Win9x */
   {
     HKEY srvkey = NULL;
     TRACE_OUT((+1,"opening HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\RunServices\n" ));
@@ -648,22 +506,27 @@ int win32CliDetectRunningService(void) /* <0=err, 0=no, >0=yes */
 
 /* ---------------------------------------------------------- */
 
-int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
-{                    /* quiet is used internally by the service itself */
+//! Remove the service installation of the client.
+/*!
+ * This removal does not actually delete any files; it only 
+ * de-registers the startup of the client as a service.
+ *
+ * \param quiet used internally by the service itself
+ * \return On error, a negative value.  Otherwise zero on 
+ *    successfully uninstalled, or possibly no action because
+ *    the client was not installed as a service.
+ */
+int win32CliUninstallService(int quiet)
+{
   int retcode = -1;
   const char *msg = "A distributed.net "SERVICEFOR" could not be uninstalled";
 
   if (__winGetVersion() < 400) /* win16 */
   {
-    retcode = __win31InstallDeinstallClient(-1,quiet);
+    retcode = -1;     // not supported anymore.
     msg = NULL;
   }
-  #if (CLIENT_OS != OS_WIN32)
-  else
-  {
-    msg = "A 32bit "SERVICEFOR" is required for -install and -uninstall";
-  }
-  #else
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   else if (__winGetVersion() >= 2000) /* NT */
   {
     SC_HANDLE myService, scm;
@@ -678,7 +541,7 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
     {
       retcode = 0;
       unsigned int i;
-      for (i=0;i<(sizeof(NTSERVICEIDS)/sizeof(NTSERVICEIDS[0]));i++)
+      for (i = 0; i < (sizeof(NTSERVICEIDS)/sizeof(NTSERVICEIDS[0])); i++)
       {
         myService = OpenService(scm, NTSERVICEIDS[i], SERVICE_ALL_ACCESS);
         if (myService)
@@ -709,7 +572,7 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
         }
         else
         {
-          for (i=0;i<(sizeof(NTSERVICEIDS)/sizeof(NTSERVICEIDS[0]));i++)
+          for (i = 0; i < (sizeof(NTSERVICEIDS)/sizeof(NTSERVICEIDS[0])); i++)
           {
             myService = OpenService(scm, NTSERVICEIDS[i], SERVICE_ALL_ACCESS|DELETE);
             if (myService)
@@ -740,7 +603,9 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
       CloseServiceHandle(scm);
     }
   }
-  else if (__winGetVersion() >= 400 && W9xSERVICEKEY[0]!=0) /* Win9x */
+  #endif
+  #if (CLIENT_OS == OS_WIN32)
+  else if (__winGetVersion() >= 400 && W9xSERVICEKEY[0] !=0 ) /* Win9x */
   {
     HKEY srvkey;
 
@@ -798,7 +663,7 @@ int win32CliUninstallService(int quiet) /* <0=err, 0=ok(or notinstalled) */
   if (msg && !quiet)
     __print_message( msg, (retcode < 0) );
 
-  return(retcode);
+  return retcode;
 }
 
 /* ---------------------------------------------------------- */
@@ -939,16 +804,9 @@ int win32CliInstallService(int quiet)
   if (__winGetVersion() < 400) /* win16 */
   {
     msg = NULL;
-    retcode = __win31InstallDeinstallClient(+1,quiet);
+    retcode = -1;   // not supported anymore
   }
-  #if (CLIENT_OS != OS_WIN32)
-  else
-  {
-    strcpy( buffer, "A 16bit "SERVICEFOR" cannot be installed as a "
-                    "service on a 32bit OS" );
-    msg = &buffer[0];
-  }
-  #else
+  #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   else if (__winGetVersion() >= 2000) /* NT */
   {
     SC_HANDLE myService, scm;
@@ -1092,7 +950,9 @@ int win32CliInstallService(int quiet)
     }
     TRACE_OUT((-1,"end NT section\n" ));
   }
-  else if (__winGetVersion() >= 400 && W9xSERVICEKEY[0]!=0) /* Win9x */
+  #endif
+  #if (CLIENT_OS == OS_WIN32)
+  else if (__winGetVersion() >= 400 && W9xSERVICEKEY[0] != 0) /* Win9x */
   {
     // proxy service on Win9x not supported, nor desirable.
     TRACE_OUT((+1,"begin win9x section\n" ));
@@ -1159,13 +1019,17 @@ int win32CliInstallService(int quiet)
 
 /* ---------------------------------------------------------- */
 
-int win32CliSendServiceControlMessage(int msg) /* <0=err, 0=none running, >0=msg sent */
+//! Send a message back to Windows to acknowledge our state.
+/*!
+ * \return <0=err, 0=none running, >0=msg sent.
+ */
+int win32CliSendServiceControlMessage(int msg)
 {
   int retcode = -1;
   msg = msg;
-#if (CLIENT_OS == OS_WIN32)
+
   int no_ack_needed  = 0;
-  DWORD ack_state[2] = {SERVICE_START_PENDING,SERVICE_START_PENDING};
+  DWORD ack_state[2] = {SERVICE_START_PENDING, SERVICE_START_PENDING};
   if (msg == SERVICE_CONTROL_PARAMCHANGE) //translate win2k only cmd
   {
     msg = CLIENT_SERVICE_CONTROL_RESTART; //to one available on all
@@ -1188,7 +1052,7 @@ int win32CliSendServiceControlMessage(int msg) /* <0=err, 0=none running, >0=msg
         {SERVICE_CONTROL_PAUSE,   SERVICE_PAUSED,  SERVICE_PAUSE_PENDING},
         {SERVICE_CONTROL_CONTINUE,SERVICE_RUNNING, SERVICE_CONTINUE_PENDING}
       };
-      for (acc=0; acc<(sizeof(acccond)/sizeof(acccond[0])); acc++)
+      for (acc = 0; acc < (sizeof(acccond)/sizeof(acccond[0])); acc++)
       {
         if ( (acccond[acc][0]) == (DWORD)msg )
         {
@@ -1209,7 +1073,7 @@ int win32CliSendServiceControlMessage(int msg) /* <0=err, 0=none running, >0=msg
       unsigned int i;
       int foundcount = 0, stoppedcount = 0;
       retcode = 0;
-      for (i=0;i<(sizeof(NTSERVICEIDS)/sizeof(NTSERVICEIDS[0]));i++)
+      for (i = 0; i < ( sizeof(NTSERVICEIDS)/sizeof(NTSERVICEIDS[0])); i++)
       {
         SC_HANDLE myService = OpenService(scm, NTSERVICEIDS[i], SERVICE_ALL_ACCESS);
         if (myService)
@@ -1245,7 +1109,7 @@ int win32CliSendServiceControlMessage(int msg) /* <0=err, 0=none running, >0=msg
       CloseServiceHandle(scm);
     }
   }
-#endif
+
   return retcode;
 }
 
@@ -1257,9 +1121,7 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
   {
     int init_ok = 1;
     char *oargv[3];
-    #if (CLIENT_OS != OS_WIN32)
-    char *filename = argv[0];
-    #else
+
     HANDLE hmutex;
     SECURITY_ATTRIBUTES sa;
     char filename[260];
@@ -1288,7 +1150,7 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
       if (GetLastError() == 0)
         init_ok = 1;
     }
-    #endif
+    
     argv    = oargv;
     argv[0] = filename;
     argv[1] = "-hide";
@@ -1300,7 +1162,7 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
     {
       win32cli_servicified = 1;
       TRACE_OUT((+1,"main(2,{\"%s\",\"-hide\",NULL})\n", filename ));
-      #if ((CLIENT_OS == OS_WIN32) && defined(SLEEP_ON_SERVICE_START))
+      #if defined(SLEEP_ON_SERVICE_START)
       /* sleep a bit to allow other services, fs mounts, etc to kick in */
       /* we've posted that we're running so keep an eye out for STOP reqs */
       {
@@ -1315,13 +1177,11 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
       win32cli_servicified = 0;
     }
 
-    #if (CLIENT_OS == OS_WIN32)
     if (hmutex)
     {
       ReleaseMutex( hmutex );
       CloseHandle( hmutex );
     }
-    #endif
   }
   TRACE_OUT((-1,"ended ServiceMain()\n"));
   return;
@@ -1329,7 +1189,6 @@ static void ServiceMain(int argc, char *argv[], int (*cmain)(int, char **))
 
 /* ---------------------------------------------------------- */
 
-#if (CLIENT_OS == OS_WIN32)
 static BOOL __SetServiceStatus(SERVICE_STATUS_HANDLE hServiceStatus,
                                LPSERVICE_STATUS lpServiceStatus)
 {
@@ -1339,6 +1198,8 @@ static BOOL __SetServiceStatus(SERVICE_STATUS_HANDLE hServiceStatus,
   TRACE_OUT((-1,"SetServiceStatus() => %s\n", ((success)?("ok"):("failed")) ));
   return success;
 }
+
+/* ---------------------------------------------------------- */
 
 #if 1
   #define SetServiceBits(a,b,c,d) /* nothing */
@@ -1363,7 +1224,9 @@ BOOL __stdcall SetServiceBits( IN SERVICE_STATUS_HANDLE    hServiceStatus,
 }
 #endif
 
-void __stdcall ServiceCtrlHandler(DWORD controlCode)
+/* ---------------------------------------------------------- */
+
+static void __stdcall ServiceCtrlHandler(DWORD controlCode)
 {
   static SERVICE_STATUS_HANDLE serviceStatusHandle = 0;
   DWORD svc_bits = 0x3FC00000; /* some arbitrary bits */
@@ -1578,10 +1441,14 @@ void __stdcall ServiceCtrlHandler(DWORD controlCode)
   TRACE_OUT((-1,"ServiceCtrlHandler(%ld) [%s]\n", controlCode, debug_getsvcControlCodeName(controlCode) ));
   return;
 }
-struct { int (*proc)(int, char **); } ntsvc = {0};
+
+/* ---------------------------------------------------------- */
+
+static struct { int (*proc)(int, char **); } ntsvc = {0};
+
 static void WINAPI _NTServiceMain(DWORD Argc, LPTSTR *Argv)
 {
-  TRACE_OUT((+1,"started _NTServiceMain(%d,{\"%s\",...})\n",Argc,Argv[0]));
+  TRACE_OUT((+1,"started _NTServiceMain(%d,{\"%s\",...})\n", Argc, Argv[0]));
 
   win32cli_servicified = 1; /* turn on for ctrlhandler */
   ServiceCtrlHandler(SERVICE_CONTROL_INTERROGATE); /* set RUNNING */
@@ -1591,7 +1458,8 @@ static void WINAPI _NTServiceMain(DWORD Argc, LPTSTR *Argv)
 
   TRACE_OUT((-1,"ended _NTServiceMain\n" ));
 }
-#endif
+
+/* ---------------------------------------------------------- */
 
 int win32CliInitializeService(int argc, char *argv[],
                               int (*realmain)(int, char **) )
@@ -1609,7 +1477,12 @@ int win32CliInitializeService(int argc, char *argv[],
   */
   if (!is_started && realmain)
   {
-    if (__winGetVersion() < 2000) /* not NT */
+    if (__winGetVersion() < 400) /* win16 */
+    {
+      // not supported anymore
+    }
+    #if (CLIENT_OS == OS_WIN32)
+    else if (__winGetVersion() < 2000) /* not NT */
     {
       TRACE_OUT((+1,"non-winnt win32CliInitializeService()\n" ));
       if (!getenv("dnet.svcify") && IsShellRunning())
@@ -1623,9 +1496,6 @@ int win32CliInitializeService(int argc, char *argv[],
       else if ((argc < 2) || (!argv) || strcmp(argv[1], "-svcrun") == 0
                                      || strcmp(argv[1], "-hide") == 0 )
       {
-        #if (CLIENT_OS != OS_WIN32)
-        is_started = 1;
-        #endif
         HMODULE kernl = GetModuleHandle("KERNEL32");
         if (kernl)
         {
@@ -1646,8 +1516,9 @@ int win32CliInitializeService(int argc, char *argv[],
       }
       TRACE_OUT((-1,"non-winnt win32CliInitializeService()\n" ));
     }
-    #if (CLIENT_OS == OS_WIN32)
-    else //if (__winGetVersion() >= 2000) /* NT */
+    #endif
+    #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
+    else if (__winGetVersion() >= 2000) /* NT */
     {
       TRACE_OUT((+1,"beginning winNT section.\n" ));
       int startable = -1; /* dunno */
