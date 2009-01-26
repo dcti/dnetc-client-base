@@ -11,14 +11,16 @@
 */
 
 const char *w32pre_cpp(void) {
-return "@(#)$Id: w32pre.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
+return "@(#)$Id: w32pre.cpp,v 1.3 2009/01/26 05:05:32 jlawson Exp $"; }
 
 #include "cputypes.h"  //CLIENT_OS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
 #ifndef MAX_PATH     //for win16
 #define MAX_PATH 256 //don't make it less than 256
 #endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,6 +39,8 @@ static struct
   char **argv;
 } prestatics = {NULL,0,0,NULL};
 
+/* ---------------------------------------------------- */
+
 HINSTANCE winGetInstanceHandle(void) { return prestatics.hInstance; }
 int winSetInstanceShowCmd(int nshow) { return (prestatics.nCmdShow = nshow); }
 int winGetInstanceShowCmd(void)      { return prestatics.nCmdShow; }
@@ -45,13 +49,20 @@ char **winGetInstanceArgv(void)      { return prestatics.argv; }
 
 /* ---------------------------------------------------- */
 
+//! Get the name of the executable.
+/*!
+ * \param buffer Output buffer to receive the filename.
+ * \param len Maximum size of the buffer (in bytes).
+ * \return Returns the number of bytes used, excluding 
+ *      the terminating null.
+ */
 int winGetMyModuleFilename(char *buffer, unsigned int len)
 {
   if (buffer && len)
   {  
     if (prestatics.argv && len > 1)
     {
-      strncpy(buffer,prestatics.argv[0],len);
+      strncpy(buffer, prestatics.argv[0], len);
       buffer[len-1] = '\0';
       return strlen(buffer);
     }
@@ -136,7 +147,7 @@ static int __setgetappnameevar(char *inoutbuf, unsigned int inoutbufsize)
     if (nameLen != evarLen)   /* have a filename? */
     {                        
       if ((appName[evarLen+1] != ':') /* have drive spec */
-          && (appName[evarLen]!='\\' || appName[evarLen+1]!='\\')) /* UNC */
+          && (appName[evarLen] != '\\' || appName[evarLen+1] != '\\')) /* UNC */
         nameLen = evarLen;  /* not canonical, so fail */
       else if (GetFileAttributes( &appName[evarLen] ) == 0xFFFFFFFF)
         nameLen = evarLen;  /* file doesn't exist, so fail */
@@ -150,9 +161,9 @@ static int __setgetappnameevar(char *inoutbuf, unsigned int inoutbufsize)
   else /* no or incomplete apppath, use the default */
   {
     strncpy( &appName[evarLen], inoutbuf, (sizeof(appName)-evarLen));
-    appName[sizeof(appName)-1] = '\0';
+    appName[sizeof(appName) - 1] = '\0';
   }
-  if (putenv( appName )!=0) /* broadcast it to the rest of the application */
+  if (putenv( appName ) != 0) /* broadcast it to the rest of the application */
   {
     MessageBox(NULL,"Not enough memory to initialize environment", 
                     appName, MB_ICONHAND|MB_OK);
@@ -194,17 +205,17 @@ static void __auto_fixup_dnetc_scr_ver(const char *modfn)
     if (which == 0)
     {
       pathlen = strlen(modfn);
-      while (pathlen>0 && modfn[pathlen-1]!='/' && 
-             modfn[pathlen-1]!='\\' && modfn[pathlen-1]!=':')
+      while (pathlen > 0 && modfn[pathlen - 1] != '/' && 
+             modfn[pathlen-1] != '\\' && modfn[pathlen - 1] != ':')
         pathlen--;
       strcpy( ssfullpath, modfn );
       ssfullpath[pathlen] = '\0';
       modfn += pathlen;
     }
     else if (which == 1)
-      pathlen = GetWindowsDirectory(ssfullpath,sizeof(ssfullpath));
+      pathlen = GetWindowsDirectory(ssfullpath, sizeof(ssfullpath));
     else
-      pathlen = GetSystemDirectory(ssfullpath,sizeof(ssfullpath));
+      pathlen = GetSystemDirectory(ssfullpath, sizeof(ssfullpath));
 
     if (pathlen)
     {
@@ -247,7 +258,7 @@ int winClientPrelude(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   #if (CLIENT_OS == OS_WIN32)
   __auto_fixup_dnetc_scr_ver(argbuff);
-  if (__setgetappnameevar( argbuff, sizeof(argbuff) )!=0)
+  if (__setgetappnameevar( argbuff, sizeof(argbuff) ) != 0)
     return -1;
   #endif
 
@@ -264,43 +275,43 @@ int winClientPrelude(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                                &argv[0], (sizeof(argv)/sizeof(argv[0])) );
 
   /* the following .options are for internal use by the installer */
-  if (__SSMAIN && argc > 1 && strcmp(argv[1], ".scr")==0)
+  if (__SSMAIN && argc > 1 && strcmp(argv[1], ".scr") == 0)
   {
     WriteDCTIProfileString( "ScreenSaver", "launch", argv[0] );
     lpszCmdLine = strstr(lpszCmdLine, argv[1]) + 4;
     return (*__SSMAIN)(hInstance, hPrevInstance, lpszCmdLine, nCmdShow);
   }
-  else if (argc > 3 && strcmp(argv[1], ".exever")==0)
+  else if (argc > 3 && strcmp(argv[1], ".exever") == 0)
   {
     argv[1] = argv[0];
     return install_cmd_exever( argc-1, &argv[1] );
   }
-  else if (argc > 3 && strcmp(argv[1], ".copyfile")==0)
+  else if (argc > 3 && strcmp(argv[1], ".copyfile") == 0)
   {
     argv[1] = argv[0];
     return install_cmd_copyfile( argc-1, &argv[1] );
   }
-  else if (argc > 1 && strcmp(argv[1], ".svcstart")==0)
+  else if (argc > 1 && strcmp(argv[1], ".svcstart") == 0)
   {                                           /* *installed* client */
     argv[1] = argv[0];
     return win32CliStartService( argc-1, &argv[1] ); /* <0=err, 0=ok */
   }                                                   
-  else if (argc > 1 && strcmp(argv[1], ".shutdown")==0)
+  else if (argc > 1 && strcmp(argv[1], ".shutdown") == 0)
   {
     return w32PostRemoteWCMD( DNETC_WCMD_SHUTDOWN ); // <0=err (none there),
   }                                                  // 0=ok, >0=failed
-  else if (argc > 1 && strcmp(argv[1], ".svcinstall")==0)
+  else if (argc > 1 && strcmp(argv[1], ".svcinstall") == 0)
   {
     return win32CliInstallService(1); /* <0=err, 0=ok */
   }
-  else if (argc > 1 && strcmp(argv[1], ".svcuninstall")==0)
+  else if (argc > 1 && strcmp(argv[1], ".svcuninstall") == 0)
   {
     return win32CliUninstallService(1); /* <0=err, 0=ok(or not installed) */
   }
 
   WriteDCTIProfileString( 0, "MRUClient", argv[0] );
   
-  if ( win32CliInitializeService(argc,argv,realmain) == 0) /* started ok */
+  if ( win32CliInitializeService(argc, argv, realmain) == 0) /* started ok */
     return 0;  /* service started so quit here */
 
   return (*realmain)( argc, argv );
