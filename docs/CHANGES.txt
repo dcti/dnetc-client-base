@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.51 2009/01/25 15:48:46 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.52 2009/01/26 05:10:57 jlawson Exp $
 ==========================================================================
 
 2.9100
@@ -43,6 +43,7 @@ Version change log: $Id: CHANGES.txt,v 1.51 2009/01/25 15:48:46 andreasb Exp $
             new: arm: OGR-NG ASM cores
             new: sparc64: Added support for openbsd-sparc64
             fix: sparc64: fixed netbsd-sparc64 target
+            fix: win64: installation and execution as service (#4130)
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core
@@ -292,7 +293,7 @@ Version change log: $Id: CHANGES.txt,v 1.51 2009/01/25 15:48:46 andreasb Exp $
             new: os2: "pause-when-running" enabled
             new: os2: more command line options (-shutdown, ...)
             new: x86: rc5-72 assembly cores by Samuel Seay
-            new: x86: rc5-72 assembly cores by DÈcio Luiz Gazzoni Filho
+            new: x86: rc5-72 assembly cores by Decio Luiz Gazzoni Filho
 
 2.9000-475  new: all: contest rc5-72
             chg: all: new buffer format (incompatible with previous 
