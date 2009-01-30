@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.195 2008/12/31 00:49:38 kakace Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.196 2009/01/30 01:22:01 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -732,6 +732,13 @@ static int __InternalLoadState( InternalProblem *thisprob,
             }
         }
 
+      if (thisprob->priv_data.contestwork.bigcrypto.key.hi > 0xff) {
+        Log("Corrupted key: %02X:%08X:%08X, packet discarded", 
+            thisprob->priv_data.contestwork.bigcrypto.key.hi,
+            thisprob->priv_data.contestwork.bigcrypto.key.mid,
+            thisprob->priv_data.contestwork.bigcrypto.key.lo);
+        return -1;
+      }
       thisprob->priv_data.rc5_72unitwork.L0.hi  = thisprob->priv_data.contestwork.bigcrypto.key.hi;
       thisprob->priv_data.rc5_72unitwork.L0.mid =
           thisprob->priv_data.contestwork.bigcrypto.key.mid +
