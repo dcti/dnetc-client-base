@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.358 2009/01/30 01:14:21 snikkel Exp $
+# @(#)$Id: configure,v 1.359 2009/01/31 20:26:16 kakace Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2112,11 +2112,13 @@ case "$1" in
 
     *macosx-ppc)                # [mfeiri] (MACH 3.x based: MacOS X, Darwin)
         generate_gcc_opts "ppc" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic"
+        TARGET_plat="-mmacosx-version-min=10.1 -isysroot /Developer/SDKs/MacOSX10.3.9.sdk -arch ppc"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
+        TARGET_LDFLAGS="$TARGET_plat"
         TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
-        TARGET_ASFLAGS="-force_cpusubtype_ALL"
+        TARGET_ASFLAGS="-force_cpusubtype_ALL -arch ppc"
         TARGET_GENMAN=""
         add_sources "macosx" "ppc" "altivec"
         ;;
