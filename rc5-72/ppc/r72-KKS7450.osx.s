@@ -37,9 +37,12 @@
 ;#	Estimated keyrate : 10695.2 keys/s/MHz
 ;#	Benchmark : 10687.8 keys/s/MHz (374 clock cycles)
 ;#
-;# $Id: r72-KKS7450.osx.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
+;# $Id: r72-KKS7450.osx.s,v 1.4 2009/01/31 20:18:21 kakace Exp $
 ;#
 ;# $Log: r72-KKS7450.osx.s,v $
+;# Revision 1.4  2009/01/31 20:18:21  kakace
+;# Work around a spurious bug in XCode 3+
+;#
 ;# Revision 1.3  2007/10/22 16:48:36  jlawson
 ;# overwrite head with contents of release-2-90xx
 ;#
@@ -304,7 +307,7 @@ _rc5_72_unit_func_KKS7450:
 		stw		r6,wKeyMid(r1)
 		stw		r7,wKeyLo(r1)
 
-		lwz		r5,check_count(r3)	;# Prepare vCheck vector
+		lwz		r5,check_count(r3)	;# Prepare vCheck vector.
 		lwz		r6,check_hi(r3)
 		lwz		r7,check_mid(r3)
 		lwz		r8,check_lo(r3)
@@ -313,7 +316,7 @@ _rc5_72_unit_func_KKS7450:
 		stw		r7,wChkMid(r1)
 		stw		r8,wChkLo(r1)
 
-		lwz		r5,plain_lo(r3)		;# Prepare vText vector
+		lwz		r5,plain_lo(r3)		;# Prepare vText vector.
 		lwz		r6,plain_hi(r3)
 		lwz		r7,cypher_lo(r3)
 		lwz		r8,cypher_hi(r3)
@@ -322,7 +325,7 @@ _rc5_72_unit_func_KKS7450:
 		stw		r7,wCypherLo(r1)
 		stw		r8,wCypherHi(r1)
 
-		li		r5,0				;# Initialize vCst0123 vector
+		li		r5,0				;# Initialize vCst0123 vector.
 		li		r6,1
 		li		r7,2
 		li		r8,3
