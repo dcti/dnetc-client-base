@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.34 2009/02/01 11:36:09 andreasb Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.35 2009/02/01 13:29:44 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -307,7 +307,7 @@ static const char * (*ident_table[])(void) =
   #endif
 #if (CLIENT_OS == OS_LINUX)
   li_inst_c,
-  resolv_c,
+//resolv_c, // only used in some configrations
 #endif
 #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
   x86id_cpp,
