@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,7 +7,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.8 2009/01/26 05:04:06 jlawson Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.9 2009/02/01 11:21:11 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -71,20 +71,22 @@ return "@(#)$Id: w32svc.cpp,v 1.8 2009/01/26 05:04:06 jlawson Exp $"; }
   const char *NTSERVICEIDS[]={"dnetd"/*oct99*/,"bovproxy"/*old*/,"bovproxy"/*old*/};
   const char *W9xSERVICEKEY = ""; // don't support 9x for proxy
 #else
-  #define SERVICEFOR  "client"
   #include "triggers.h" //RaiseExitRequestTrigger()
   #include "modereq.h"  //ModeReq(MODEREQ_FETCH|MODEREQ_FLUSH)
   extern int CheckRestartRequestTriggerNoIO(void);
+  #if (CLIENT_CPU == CPU_CUDA)
+  #define SERVICEFOR  "CUDA-client"
+  const char *NTSERVICEIDS[]={"dnetc-CUDA"/*feb09*/};
+  const char *W9xSERVICEKEY = "";
+  #else
+  #define SERVICEFOR  "client"
   const char *NTSERVICEIDS[]={"dnetc"/*oct99*/,"rc5desnt"/*Oct98*/,"bovrc5nt"/*ancient*/};
   const char *W9xSERVICEKEY = "distributed.net client";
+  #endif
 #endif /* PROXYTYPE or not */
 const char *APPDESCRIP = "distributed.net "SERVICEFOR;
 
-#if (CLIENT_CPU == CPU_CUDA)
-#define SERVICEMUTEX "distributed.net "SERVICEFOR" CUDA mutex"
-#else
 #define SERVICEMUTEX "distributed.net "SERVICEFOR" service mutex"
-#endif
 
 /* ---------------------------------------------------------- */
 
