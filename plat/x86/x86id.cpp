@@ -1,14 +1,16 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.13 2009/01/05 01:10:33 snikkel Exp $
+ * $Id: x86id.cpp,v 1.14 2009/02/01 11:36:32 andreasb Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
  *    http://sandpile.org/   
  */
+const char *x86id_cpp(void) {
+return "@(#)$Id: x86id.cpp,v 1.14 2009/02/01 11:36:32 andreasb Exp $"; }
 
 #include <string.h>
 #include <stdio.h>

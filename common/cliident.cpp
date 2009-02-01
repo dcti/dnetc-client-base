@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.33 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.34 2009/02/01 11:36:09 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -39,16 +39,18 @@ return "@(#)$Id: cliident.cpp,v 1.33 2008/12/30 20:58:41 andreasb Exp $"; }
 #include "clisync.h"
 #include "clitime.h"
 #include "cmdline.h"
+#include "confmenu.h"
 #include "confopt.h"
 #include "confrwv.h"
 #include "console.h"
+#include "coremem.h"
 #include "cpucheck.h"
 #include "disphelp.h"
 #include "iniread.h"
 #include "logstuff.h"
 #include "lurk.h"
 #include "mail.h"
-#include "memfile.h"
+//#include "memfile.h"
 #include "modereq.h"
 #include "netbase.h"
 #include "netconn.h"
@@ -83,16 +85,22 @@ return "@(#)$Id: cliident.cpp,v 1.33 2008/12/30 20:58:41 andreasb Exp $"; }
 #if (CLIENT_OS == OS_NEXTSTEP)
 #include "next_sup.h"
 #endif
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+#include "x86id.h"
+#endif
+#if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
+#include "ogr.h"
+#endif
 
 static const char *h_ident_table[] =
 {
   (const char *)__BASE64_H__,
   (const char *)__BASEINCS_H__,
   (const char *)__BENCH_H__,
-  (const char *)__BUFFUPD_H__,
   (const char *)__BUFFBASE_H__,
-  (const char *)__CHECKPT_H__,
+  (const char *)__BUFFUPD_H__,
   (const char *)__CCOREIO_H__,
+  (const char *)__CHECKPT_H__,
   (const char *)__CLICDATA_H__,
   (const char *)__CLIENT_H__,
   (const char *)__CLIEVENT_H__,
@@ -100,9 +108,11 @@ static const char *h_ident_table[] =
   (const char *)__CLISYNC_H__,
   (const char *)__CLITIME_H__,
   (const char *)__CMDLINE_H__,
+  (const char *)__CONFMENU_H__,
   (const char *)__CONFOPT_H__,
   (const char *)__CONFRWV_H__,
   (const char *)__CONSOLE_H__,
+  (const char *)__COREMEM_H__,
   (const char *)__CPUCHECK_H__,
   (const char *)__CPUTYPES_H__,
   (const char *)__DISPHELP_H__,
@@ -115,10 +125,10 @@ static const char *h_ident_table[] =
   (const char *)__NETBASE_H__,
   (const char *)__NETCONN_H__,
   (const char *)__PACK_H__,
+  (const char *)__PACK0_H__,
   (const char *)__PACK1_H__,
   (const char *)__PACK4_H__,
   (const char *)__PACK8_H__,
-  (const char *)__PACK0_H__,
   (const char *)__PATHWORK_H__,
   (const char *)__POLLSYS_H__,
   (const char *)__PROBFILL_H__,
@@ -148,6 +158,18 @@ static const char *h_ident_table[] =
   #if (CLIENT_OS == OS_NEXTSTEP)
   (const char *)__NEXT_SUP_H__,
   #endif
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+  (const char *)__X86ID_H__,
+#endif
+#if defined(HAVE_RC5_72_CORES)
+#endif
+#if defined(HAVE_OGR_PASS2)
+  (const char *)__OGR_H__,
+#endif
+#if defined(HAVE_OGR_CORES)
+  (const char *)__OGR_NG_H__,
+  (const char *)__OGR_INTERFACE_H__,
+#endif
   (const char *)0
 };
 
@@ -155,11 +177,12 @@ extern const char *base64_cpp(void);
 extern const char *bench_cpp(void);
 extern const char *buffbase_cpp(void);
 extern const char *buffpub_cpp(void);
+extern const char *buffupd_cpp(void);
 extern const char *checkpt_cpp(void);
 extern const char *clicdata_cpp(void);
 extern const char *client_cpp(void);
 extern const char *clievent_cpp(void);
-//extern const char *cliident_cpp(void);
+extern const char *cliident_cpp(void);
 extern const char *clirun_cpp(void);
 extern const char *clitime_cpp(void);
 extern const char *cmdline_cpp(void);
@@ -167,7 +190,7 @@ extern const char *confmenu_cpp(void);
 extern const char *confopt_cpp(void);
 extern const char *confrwv_cpp(void);
 extern const char *console_cpp(void);
-extern const char *convdes_cpp(void);
+extern const char *coremem_cpp(void);
 extern const char *cpucheck_cpp(void);
 extern const char *disphelp_cpp(void);
 extern const char *iniread_cpp(void);
@@ -184,6 +207,7 @@ extern const char *probfill_cpp(void);
 extern const char *problem_cpp(void);
 extern const char *probman_cpp(void);
 extern const char *projdata_cpp(void);
+extern const char *random_cpp(void);
 extern const char *selcore_cpp(void);
 extern const char *selftest_cpp(void);
 extern const char *setprio_cpp(void);
@@ -202,6 +226,27 @@ extern const char *os2inst_cpp(void);
 #if (CLIENT_OS == OS_NEXTSTEP)
 extern const char *next_sup_cpp(void);
 #endif
+#if (CLIENT_OS == OS_LINUX)
+extern "C" const char *li_inst_c(void);
+extern "C" const char *resolv_c(void);
+#endif
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+extern const char *x86id_cpp(void);
+#endif
+#if defined(HAVE_RC5_72_CORES)
+extern const char *core_r72_cpp(void);
+extern const char *stress_r72_cpp(void);
+#endif
+#if defined(HAVE_OGR_PASS2)
+extern const char *core_ogr_cpp(void);
+extern const char *ogr_dat_cpp(void);
+#endif
+#if defined(HAVE_OGR_CORES)
+extern const char *core_ogr_ng_cpp(void);
+extern const char *ogr_sup_cpp(void);
+extern const char *ogrng_dat_cpp(void);
+extern const char *ogrng_init_cpp(void);
+#endif
 
 static const char * (*ident_table[])(void) =
 {
@@ -209,6 +254,7 @@ static const char * (*ident_table[])(void) =
   bench_cpp,
   buffbase_cpp,
   buffpub_cpp,
+  buffupd_cpp,
   checkpt_cpp,
   clicdata_cpp,
   client_cpp,
@@ -221,6 +267,7 @@ static const char * (*ident_table[])(void) =
   confopt_cpp,
   confrwv_cpp,
   console_cpp,
+  coremem_cpp,
   cpucheck_cpp,
   disphelp_cpp,
   iniread_cpp,
@@ -239,6 +286,7 @@ static const char * (*ident_table[])(void) =
   problem_cpp,
   probman_cpp,
   projdata_cpp,
+  random_cpp,
   selcore_cpp,
   selftest_cpp,
   setprio_cpp,
@@ -257,6 +305,28 @@ static const char * (*ident_table[])(void) =
   #if (CLIENT_OS == OS_NEXTSTEP)
   next_sup_cpp,
   #endif
+#if (CLIENT_OS == OS_LINUX)
+  li_inst_c,
+  resolv_c,
+#endif
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+  x86id_cpp,
+#endif
+#if defined(HAVE_RC5_72_CORES)
+  core_r72_cpp,
+  stress_r72_cpp,
+#endif
+#if defined(HAVE_OGR_PASS2)
+  core_ogr_cpp,
+  ogr_sup_cpp,
+  ogr_dat_cpp,
+#endif
+#if defined(HAVE_OGR_CORES)
+  core_ogr_ng_cpp,
+  ogr_sup_cpp,
+  ogrng_dat_cpp,
+  ogrng_init_cpp,
+#endif
   ((const char * (*)(void))0)
 };
 
@@ -304,15 +374,24 @@ static const char *split_line( char *buffer, const char *p1, unsigned int bufsiz
 
 void CliIdentifyModules(void)
 {
-  unsigned int idline = sizeof(h_ident_table); /* squelch warning */
-  for (idline = 0; idline < (sizeof(ident_table)/sizeof(ident_table[0])); idline++)
+  const char *p;
+  unsigned int pos;
+  const unsigned int cppidcount = (sizeof(ident_table)/sizeof(ident_table[0]));
+  const unsigned int hidcount = (sizeof(h_ident_table)/sizeof(h_ident_table[0]));
+  char buffer[80];
+
+  for (pos = 0; pos < (cppidcount + hidcount); pos++)
   {
-    if (ident_table[idline])
+    p = ((const char *)0);
+    if (pos < cppidcount)
     {
-      char buffer[80];
-      if (split_line( buffer, (*ident_table[idline])(), sizeof(buffer)))
-        LogScreenRaw( "%s\n", buffer );
+      if (ident_table[pos])
+        p = (*ident_table[pos])();
     }
+    else
+      p = h_ident_table[pos-cppidcount];
+    if (split_line( buffer, p, sizeof(buffer)))
+      LogScreenRaw( "%s\n", buffer );
   }
   return;
 }

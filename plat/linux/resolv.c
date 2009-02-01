@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2000-2003 - All Rights Reserved
+ * Copyright distributed.net 2000-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,7 +13,6 @@
  * has 'host', and that too can be bypassed (described below).
  *
  * Created Aug 2 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: resolv.c,v 1.5 2007/10/22 16:48:30 jlawson Exp $
  *
  * The functions exported from here will first check if a bypass
  * (described below) has been provided.
@@ -88,6 +87,9 @@
  *     be thread-safe (ie, to use thread-local-storage) and you don't want
  *     to adjust __get_local_hostent_data() below.
 */
+const char *resolv_c(void) {
+return "@(#)$Id: resolv.c,v 1.6 2009/02/01 11:36:12 andreasb Exp $"; }
+
 #if defined(__linux__) && defined(__STRICT_ANSI__)
 #undef __STRICT_ANSI__ /* headers won't prototype popen()/usleep() otherwise */
 #endif

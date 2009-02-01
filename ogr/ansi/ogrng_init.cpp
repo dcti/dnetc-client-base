@@ -2,9 +2,9 @@
  * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * $Id: ogrng_init.cpp,v 1.9 2009/01/05 04:36:28 jlawson Exp $
  */
+const char *ogrng_init_cpp(void) {
+return "@(#)$Id: ogrng_init.cpp,v 1.10 2009/02/01 11:36:12 andreasb Exp $"; }
 
 #include <stdlib.h>     /* calloc */
 #include "clisync.h"    /* fastlock_* */

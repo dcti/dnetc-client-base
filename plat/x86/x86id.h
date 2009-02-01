@@ -1,13 +1,10 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * $Id: x86id.h,v 1.5 2009/01/05 01:10:33 snikkel Exp $
  */
-
-#ifndef client_x86id_H
-#define client_x86id_H
+#ifndef __X86ID_H__
+#define __X86ID_H__ "@(#)$Id: x86id.h,v 1.6 2009/02/01 11:36:32 andreasb Exp $"
 
 
 /* Extended CPU ID format :
@@ -102,4 +99,4 @@ void        x86ShowInfos(void);
     extern "C" u32 x86ident_haveioperm; /* default is zero, referenced in cpucheck.cpp */
 #endif
 
-#endif	/* client_x86id_H */
+#endif	/* __X86ID_H__ */
