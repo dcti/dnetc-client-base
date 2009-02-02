@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.154 2009/01/09 23:47:08 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.155 2009/02/02 02:03:33 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1129,11 +1129,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0F10000, 0xFFFF000, CPU_F_I686,    9, "Quad Core Opteron" },
         { 0x1010000, 0xFFFF000, CPU_F_I686,    9, "Embedded Opteron" },
         { 0x1110000, 0xFFFF000, CPU_F_I686,    9, "Phenom" },
-        { 0x1210000, 0xFFFF000, CPU_F_I686,    9, "Athlon Unknown (Model 17)" }, /* (#4074) */
-        { 0x1310000, 0xFFFF000, CPU_F_I686,    9, "Sempron" },
-        { 0x1410000, 0xFFFF000, CPU_F_I686,    9, "Turion X2 Ultra Mobile" },
-        { 0x1510000, 0xFFFF000, CPU_F_I686,    9, "Turion X2 Mobile" },
-        { 0x1610000, 0xFFFF000, CPU_F_I686,    9, "Athlon X2" },
+        { 0x1211000, 0xFFFF000, CPU_F_I686,    9, "Athlon Unknown (Model 17)" }, /* (#4074) */
+        { 0x1311000, 0xFFFF000, CPU_F_I686,    9, "Sempron" },
+        { 0x1411000, 0xFFFF000, CPU_F_I686,    9, "Turion X2 Ultra Mobile" },
+        { 0x1511000, 0xFFFF000, CPU_F_I686,    9, "Turion X2 Mobile" },
+        { 0x1611000, 0xFFFF000, CPU_F_I686,    9, "Athlon X2" },
         { 0x0000000,         0,          0,    0, NULL       }
       }; internalxref = &amdxref[0];
       if ((dettype & 0xFFFFFF0) == 0x0400)        /* no such AMD ident */
