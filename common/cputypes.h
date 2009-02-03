@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.109 2009/01/12 14:49:19 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.110 2009/02/03 16:45:08 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -260,6 +260,8 @@
     #define CLIENT_CPU     CPU_68K
   #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
     #define CLIENT_CPU     CPU_AMD64
+  #elif defined(ASM_HPPA) || defined(__hppa__)
+    #define CLIENT_CPU     CPU_PA_RISC
   #endif
 #elif defined(bsdi)
   #ifndef __unix__ /* should already be defined */
@@ -275,7 +277,7 @@
   #define __unix__
   #endif
   #define CLIENT_OS_NAME   "DragonFly"
-  #define CLIENT_CPU       CPU_X86 /* no other CPU for now */
+  #define CLIENT_CPU       CPU_X86 /* no other CPU for now, amd64 will come */
   #define CLIENT_OS        OS_DRAGONFLY
 #elif defined(__QNX__)
   #ifndef __unix__ /* should already be defined */
