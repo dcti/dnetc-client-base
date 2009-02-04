@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.361 2009/02/03 17:28:22 snake Exp $
+# @(#)$Id: configure,v 1.362 2009/02/04 04:20:36 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -1771,15 +1771,14 @@ case "$1" in
         add_sources "netbsd" "mips"
         ;;
 
-    *openbsd-mipseb)             # snake, OpenBSD on SGIs
+    *openbsd-sgi)             # snake, actually -mips , but SGI specific
         TARGET_CC="g++"
         generate_gcc_opts "mips" "openbsd"
-        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_CCFLAGS="$OPTS_GCC -DSINGLE_CRUNCHER_ONLY" # no SMP for now
         TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="openbsd-mipseb"
-        add_sources "openbsd" "mips"
+        TARGET_TARBALL="openbsd-sgi"
+        add_sources "openbsd" "mips64" # only 64bit CPUs are supported
         ;;
 
     #*ultrix-mips-gcc)          # For mips based DEC Ultrix machines

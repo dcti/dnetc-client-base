@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.53 2009/02/03 17:05:45 snake Exp $
+Version change log: $Id: CHANGES.txt,v 1.54 2009/02/04 04:24:23 snake Exp $
 ==========================================================================
 
 2.9100
@@ -45,6 +45,7 @@ Version change log: $Id: CHANGES.txt,v 1.53 2009/02/03 17:05:45 snake Exp $
             fix: sparc64: fixed netbsd-sparc64 target
             fix: win64: installation and execution as service (#4130)
             new: hppa: Added support for openbsd-hppa
+            new: mips: Added support for openbsd-sgi
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core
