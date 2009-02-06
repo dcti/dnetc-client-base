@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.79 2008/12/30 23:05:18 andreasb Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.80 2009/02/06 05:42:51 jlawson Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -384,7 +384,7 @@ void GenerateManPage( void )
 
     fprintf(manp,".Sh \"SEE ALSO\"\n"
                  ".Pp\n"
-                 "Client documentation: %s.txt and http://www.distributed.net/FAQ/\n",
+                 "Client documentation: %s.txt and http://faq.distributed.net/\n",
                  appname);
     fprintf(manp,".Sh AUTHOR\n"
                  "distributed.net\n"
@@ -409,7 +409,7 @@ void DisplayHelp( const char * unrecognized_option )
   static const char *helpheader[] =
   {
     "distributed.net v" CLIENT_VERSIONSTRING " client for " CLIENT_OS_NAME,
-    "Visit http://www.distributed.net/FAQ/ for in-depth command line help",
+    "Visit http://faq.distributed.net/ for in-depth command line help",
     "-------------------------------------------------------------------------"
   };
 
