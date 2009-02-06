@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_H__
-#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.16.2.1 2004/08/08 19:24:29 kakace Exp $"
+#define __OGR_H__ "@(#)$Id: ogr.h,v 1.2.4.16.2.2 2009/02/06 06:20:12 jlawson Exp $"
 
 #include <limits.h>
 #if (UINT_MAX < 0xfffffffful)
@@ -157,7 +157,7 @@ struct WorkStub {       /* size is 28 */
   };
 #else   
 /* Vector (PPC/AltiVec) implementation
-** Since ogr.cpp (thus ogr.h) is included from ppc/ogr-vec.cpp, we can relie
+** Since ogr.cpp (thus ogr.h) is included from ppc/ogr-vec.cpp, we can rely
 ** upon OGROPT_OGR_CYCLE_ALTIVEC to enable vector declarations.
 ** VECTOR is defined in ppc/ogr-vec.cpp
 */
