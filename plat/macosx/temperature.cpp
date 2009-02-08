@@ -34,7 +34,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.5 2009/01/05 22:39:35 kakace Exp $
+ *  $Id: temperature.cpp,v 1.6 2009/02/08 22:39:54 mfeiri Exp $
  */
 
 #include <string.h>
@@ -235,22 +235,24 @@ typedef struct {
 
 static UInt32 _SMCread(UInt32 key, io_connect_t connection)
 {
-#if !defined(__x86_64__)
-// IOConnectMethodStructureIStructureO() not defined in 64-bit mode
   SMCIO_t smc_input;
   SMCIO_t smc_output;
-  IOItemCount input_size = sizeof(SMCIO_t);
-  IOByteCount output_size = sizeof(SMCIO_t);
+  size_t input_size = sizeof(SMCIO_t);
+  size_t output_size = sizeof(SMCIO_t);
 
   memset(&smc_input, 0, sizeof(SMCIO_t));
   memset(&smc_output, 0, sizeof(SMCIO_t));
 
   smc_input.key = key;
   smc_input.cmd = SMC_READ_KEYINFO;
-	
+
+#if defined(__x86_64__)
+  if (kIOReturnSuccess == IOConnectCallStructMethod(connection, 2, 
+    &smc_input, input_size, &smc_output, &output_size)) {
+#else
   if (kIOReturnSuccess == IOConnectMethodStructureIStructureO(connection, 2, 
     input_size, &output_size, &smc_input, &smc_output)) {
-
+#endif
     smc_input.cmd = SMC_READ_KEY;
     smc_input.size = smc_output.size;
     smc_input.type = smc_output.type;
@@ -258,8 +260,13 @@ static UInt32 _SMCread(UInt32 key, io_connect_t connection)
     if (smc_input.size == 0)
       return 0;         // Unknown key.
 
+#if defined(__x86_64__)
+    if (kIOReturnSuccess == IOConnectCallStructMethod(connection, 2, 
+      &smc_input, input_size, &smc_output, &output_size)) {
+#else
     if (kIOReturnSuccess == IOConnectMethodStructureIStructureO(connection, 2, 
       input_size, &output_size, &smc_input, &smc_output)) {
+#endif
       switch (smc_input.type) {
         case 0x75693332: /* ui32 */
           return ntohl(*((UInt32 *)&smc_output.data));
@@ -273,7 +280,6 @@ static UInt32 _SMCread(UInt32 key, io_connect_t connection)
       }
     }
   }
-#endif
   return 0;
 }
 
