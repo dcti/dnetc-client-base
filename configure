@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.366 2009/02/16 18:42:56 snake Exp $
+# @(#)$Id: configure,v 1.367 2009/02/16 19:27:15 oliver Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -81,6 +81,7 @@ TARGET_ADDSPUCORES=""
 TARGET_ADDOBJS=""
 TARGET_INTOBJS=""
 TARGET_ADDCUDASRCS=""
+TARGET_ADDALTIVECSRCS=""
 
 # Certain source files need to be compiled without optimization
 # to get a working client. *sigh* This flag will get set in the
@@ -417,7 +418,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       DEFAULT_OGRNG="0"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
       if [ "X$3" = "Xaltivec" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogrng-vec.cpp"
+        TARGET_ADDALTIVECSRCS="$TARGET_ADDALTIVECSRCS $OGR/ppc/ogrng-vec.cpp"
       fi
       HAVE_FLEGE_PPC_CORES="1"
       if [ "$HAVE_FLEGE_PPC_CORES" = "0" ]; then
@@ -441,7 +442,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
 
       if [ "X$3" = "Xaltivec" ]; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
+        TARGET_ADDALTIVECSRCS="$TARGET_ADDALTIVECSRCS $OGR/ppc/ogr-vec.cpp"
       fi
       if [ "$TARGET_CC" != "mwcc" ]; then   # CodeWarrior (BeOS)
         # KOGE optimized cores
@@ -461,6 +462,21 @@ add_sources() # $1=os, $2=arch, $3=custom
         fi
       fi
     fi # HAVE_OGR_P2
+
+    if [ "X$3" = "Xaltivec" ]; then
+      if [ "${1}" = "macosx" ]; then
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -faltivec -DHAVE_ALTIVEC"
+      elif [ "${1}" = "morphos" ]; then
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -fvec -DHAVE_ALTIVEC"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -fvec"
+      else
+        # Use -maltivec only with required modules as newer GCC versions will
+        # use Altivec registers everywhere (so would crash on non-Altivec cpus)
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -mabi=altivec -DHAVE_ALTIVEC"
+        TARGET_ASFLAGS="$TARGET_ASFLAGS -maltivec"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -mabi=altivec"
+      fi
+    fi
   #-----------------------------------------------------------------
   elif [ "$2" = "arm" ]; then
     if [ "$HAVE_RC5_72" = 1 ]; then
@@ -582,7 +598,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
       TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/FLEGE_scalar.gas.s"
       if [ "X$3" = "Xaltivec" ] ; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogrng-vec.cpp"
+        TARGET_ADDALTIVECSRCS="$TARGET_ADDALTIVECSRCS $OGR/ppc/ogrng-vec.cpp"
         TARGET_ADDASMS="$TARGET_ADDASMS $OGR/ppc/FLEGE_hybrid.gas.s"
       fi
       # PPE + SPE pairs
@@ -599,7 +615,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ppc/ogr-ppc.cpp"
 
       if [ "X$3" = "Xaltivec" ] ; then
-        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/ppc/ogr-vec.cpp"
+        TARGET_ADDALTIVECSRCS="$TARGET_ADDALTIVECSRCS $OGR/ppc/ogr-vec.cpp"
       fi
       # KOGE optimized cores
       HAVE_KOGE_PPC_CORES="1"
@@ -612,6 +628,12 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_OGRSPUWRAPPER="ogr/cellbe/ogr-cell-spe-wrapper.c"
       TARGET_ADDOGRSPUCORES="cellv1"
     fi # HAVE_OGR_P2
+
+    if [ "X$3" = "Xaltivec" ]; then
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -mabi=altivec -maltivec -DHAVE_ALTIVEC"
+      TARGET_ASFLAGS="$TARGET_ASFLAGS -maltivec"
+      TARGET_LDFLAGS="$TARGET_LDFLAGS -mabi=altivec -maltivec"
+    fi
 
   #-----------------------------------------------------------------
   elif [ "$2" = "cuda" ]; then
@@ -987,7 +1009,7 @@ generate_gcc_opts() {
         opts272="$OPTS_GCC272 -O6 -DASM_PPC -funroll-loops"
         opts295="$OPTS_GCC295 -O3 -DASM_PPC -funroll-loops"
         opts310="$OPTS_GCC310 -O3 -DASM_PPC -funroll-loops"
-        if [ "${2}" = "macosx" ]; then
+        if [ "${2}" = "macosx" -o "${2}" = "amigaos" ]; then
           # All cores are asm-optimized : We don't need strong optimizations.
           opts330="$OPTS_GCC310 -Os -DASM_PPC"
           opts400="$OPTS_GCC400 -O2 -DASM_PPC"
@@ -2108,9 +2130,8 @@ case "$1" in
     *linux-ppc)	                # [myshkin] linux-ppc
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec"
+        TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
-	TARGET_ASFLAGS="-maltivec"
         TARGET_LIBS=""
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-ppc"
@@ -2121,7 +2142,6 @@ case "$1" in
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "netbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
-        #TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec"
         TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -2133,7 +2153,7 @@ case "$1" in
     *macosx-ppc)                # [mfeiri] (MACH 3.x based: MacOS X, Darwin)
         generate_gcc_opts "ppc" "macosx"
         TARGET_plat="-mmacosx-version-min=10.1 -isysroot /Developer/SDKs/MacOSX10.3.9.sdk -arch ppc"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -faltivec -mdynamic-no-pic $TARGET_plat"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -mdynamic-no-pic $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
@@ -2222,8 +2242,8 @@ case "$1" in
     # ubuntu has some broken ppu32-xxx, use generic form. (un)comment if necessary.
 #        TARGET_CC="ppu32-g++"
 #        TARGET_LD="ppu32-g++"
-        TARGET_CC="ppu-g++ -m32 -mabi=altivec -maltivec"
-        TARGET_LD="ppu-g++ -m32 -mabi=altivec -maltivec"
+        TARGET_CC="ppu-g++ -m32"
+        TARGET_LD="ppu-g++ -m32"
 
         TARGET_AS="ppu32-as"
         TARGET_STRIP="ppu-strip"
@@ -2232,9 +2252,8 @@ case "$1" in
         TARGET_SPUSTRIP="spu-strip"
         TARGET_PPUEMBEDSPU="ppu-embedspu"
         generate_gcc_opts "ppc" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -maltivec -mabi=altivec -DDYN_TIMESLICE"
+        TARGET_CCFLAGS="$OPTS_GCC -DDYN_TIMESLICE"
         TARGET_LDFLAGS="-static"
-	TARGET_ASFLAGS="-maltivec"
         TARGET_LIBS="-lspe2 -lpthread -lrt"
         TARGET_DOCFILES="docs/readme.cell"   #platform specific docfile
         TARGET_TARBALL="linux-cellbe"
@@ -2878,11 +2897,10 @@ case "$1" in
     *amigaos-ppc)               # [oliver] <oliver@futaura.co.uk>
         TARGET_AS="ppc-amigaos-gas"
         TARGET_CC="ppc-amigaos-g++"
-        TARGET_ASFLAGS=""
         generate_gcc_opts "ppc" "amigaos"
         TARGET_CCFLAGS="$OPTS_GCC -I./ -I./plat/amigaos/guilib -mcrt=clib2-ts \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -DDYN_TIMESLICE -D__USE_INLINE__ -maltivec -mabi=altivec -mvrsave=yes"
+                        -DDYN_TIMESLICE -D__USE_INLINE__ -mvrsave"
         TARGET_LDFLAGS="-mcrt=clib2-ts"
         TARGET_TARBALL="amigaos-ppc"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
@@ -2933,12 +2951,11 @@ case "$1" in
     *morphos-ppc)               # [piru] <sintonen@iki.fi>
         TARGET_AS="ppc-rom-as"
         TARGET_CC="ppc-morphos-g++"
-        TARGET_ASFLAGS=""
         generate_gcc_opts "ppc" "morphos"
         TARGET_CCFLAGS="-xc++ $OPTS_GCC -noixemul -DNO_MIAMI -mmultiple -mstring \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -I./ -I./plat/amigaos/guilib/morphos/ -DDYN_TIMESLICE -fvec"
-        TARGET_LDFLAGS="-noixemul -fvec"
+                        -I./ -I./plat/amigaos/guilib/morphos/ -DDYN_TIMESLICE"
+        TARGET_LDFLAGS="-noixemul"
         TARGET_TARBALL="morphos-ppc"
         TARGET_DOCFILES="docs/readme.morphos"   #platform specific docfile
         TARGET_STRIP="ppc-morphos-strip --remove-section .comment"
@@ -3249,6 +3266,17 @@ if [ -n "${TARGET_ADDCUDASRCS}" ]; then
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
   done
 fi
+if [ -n "${TARGET_ADDALTIVECSRCS}" ]; then
+  echo "Scanning additional Altivec C/C++ dependencies..."
+  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ccvec"
+  for target in ${TARGET_ADDALTIVECSRCS}; do
+      TARGETOBJECT=`basename $target .c`
+      TARGETOBJECT=output/`basename $TARGETOBJECT .cpp`.o
+      echo "  ${target} -> ${TARGETOBJECT}"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
+  done
+fi
 
 #
 # Generate the targets for supplementary resource files.
@@ -3487,6 +3515,8 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "cc" ]; then
       TARGETTYP="$target"
+    elif [ "${target}" = "ccvec" ]; then
+      TARGETTYP="$target"
     elif [ "${target}" = "as" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "nasm" ]; then
@@ -3517,7 +3547,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
     elif [ "${TARGETSRC}X" = "X" ]; then
       TARGETSRC="$target"
     # ------------------------------------
-    elif [ "${TARGETTYP}" = "cc" -o "${TARGETTYP}" = "cc-decunix" ]; then
+    elif [ "${TARGETTYP}" = "cc" -o "${TARGETTYP}" = "ccvec" -o "${TARGETTYP}" = "cc-decunix" ]; then
       CCFLAGS_SELECT="\${CCFLAGS}"
       case "internal-${TARGETSRC}" in
         internal-*.c)
@@ -3578,6 +3608,16 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           echo "	\${CC} -c \${POWERFLAGS} -D_AIXALL ${TARGETSRC} -o output/ogr_power.o" >> Makefile
           echo "" >> Makefile
           CCFLAGS_SELECT="\${PPC601FLAGS}"
+        fi
+      fi
+      if [ "${TARGETTYP}" = "ccvec" ]; then
+        if [ "${BUILDNAME}" = "ppc-macosx" -o \
+             "${BUILDNAME}" = "ppc-morphos" -o \
+             "${BUILDNAME}" = "linux-cellbe" ]; then
+          # Do nothing extra, as all modules compiled with Altivec compiler switches on
+          CCFLAGS_SELECT="${CCFLAGS_SELECT}"
+        else
+          CCFLAGS_SELECT="${CCFLAGS_SELECT} -maltivec"
         fi
       fi
       deplist=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`

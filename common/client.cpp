@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.264 2009/01/01 12:24:55 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.265 2009/02/16 19:27:15 oliver Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -241,7 +241,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
         LogScreenRaw( "RC5-72 PowerPC assembly by Malcolm Howell and Didier Levet\n"
                       "Enhancements for 604e CPUs by Roberto Ragusa\n");
         #endif
-        #if defined(__VEC__) || defined(__ALTIVEC__)
+        #if defined(HAVE_ALTIVEC)
           #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
             LogScreenRaw( "RC5-72 Altivec and OGR assembly by Didier Levet\n");
           #else

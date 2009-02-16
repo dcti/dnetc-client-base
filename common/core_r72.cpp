@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.30 2009/01/25 15:04:08 andreasb Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.31 2009/02/16 19:27:17 oliver Exp $"; }
 
 //#define TRACE
 
@@ -21,10 +21,6 @@ return "@(#)$Id: core_r72.cpp,v 1.30 2009/01/25 15:04:08 andreasb Exp $"; }
 #include "probman.h"   // GetManagedProblemCount()
 #include "triggers.h"  // CheckExitRequestTriggerNoIO()
 #include "util.h"      // TRACE_OUT, DNETC_UNUSED_*
-
-#if (CLIENT_OS == OS_MORPHOS)
-#define __ALTIVEC__ 1 /* crude hack till we have real gcc-altivec */
-#endif
 
 #if defined(HAVE_RC5_72_CORES)
 
@@ -70,14 +66,14 @@ extern "C" s32 CDECL rc5_72_unit_func_mh603e_addi( RC5_72UnitWork *, u32 *, void
 extern "C" s32 CDECL rc5_72_unit_func_mh604e_addi( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS2pipes( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS604e( RC5_72UnitWork *, u32 *, void *);
-# if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+# if defined(HAVE_ALTIVEC) /* OS+compiler support altivec */
 extern "C" s32 CDECL rc5_72_unit_func_KKS7400( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS7450( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_KKS970( RC5_72UnitWork *, u32 *, void *);
 # endif
 #elif (CLIENT_CPU == CPU_CELLBE)
 extern "C" s32 CDECL rc5_72_unit_func_cellv1_spe( RC5_72UnitWork *, u32 *, void *);
-# if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+# if defined(HAVE_ALTIVEC) /* OS+compiler support altivec */
 extern "C" s32 CDECL rc5_72_unit_func_cellv1_ppe( RC5_72UnitWork *, u32 *, void *);
 # endif
 #elif (CLIENT_CPU == CPU_SPARC)
@@ -243,7 +239,7 @@ int apply_selcore_substitution_rules_rc572(int cindex)
 #if (CLIENT_CPU == CPU_POWERPC)
   int have_vec = 0;
 
-# if defined(__VEC__) || defined(__ALTIVEC__)
+# if defined(HAVE_ALTIVEC)
   /* OS+compiler support altivec */
   have_vec = GetProcessorFeatureFlags() & CPU_F_ALTIVEC;
 # endif
@@ -390,7 +386,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         default:     cindex =-1; break; // no default
       }
 
-      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+      #if defined(HAVE_ALTIVEC) /* OS+compiler support altivec */
       // Note : KKS 7540 (AltiVec) is now set as default for any unknown CPU ID
       // since new CPUs are likely to be improved G4/G5 class CPUs.
       if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
@@ -428,7 +424,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         default:     cindex =-1; break; // no default
       }
 
-      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+      #if defined(HAVE_ALTIVEC) /* OS+compiler support altivec */
       if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
         switch ( detected_type & 0xffff) // only compare the low PVR bits
@@ -757,7 +753,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
           unit_func.gen_72 = rc5_72_unit_func_KKS604e;
           pipeline_count = 2;
           break;
-      #if defined(__VEC__) || defined(__ALTIVEC__)
+      #if defined(HAVE_ALTIVEC)
       case 3:
           unit_func.gen_72 = rc5_72_unit_func_KKS7400;
           pipeline_count = 4;
@@ -777,7 +773,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_mh604e_addi;
         pipeline_count = 1;
         break;
-      #if defined(__VEC__) || defined(__ALTIVEC__)
+      #if defined(HAVE_ALTIVEC)
       #if 0     // Disabled (kakace)
       case 7:
           unit_func.gen_72 = rc5_72_unit_func_KKS970;
@@ -787,7 +783,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       #endif
      // -----------
     #elif (CLIENT_CPU == CPU_CELLBE)
-      #if defined(__VEC__) || defined(__ALTIVEC__)
+      #if defined(HAVE_ALTIVEC)
       case 0:
         unit_func.gen_72 = rc5_72_unit_func_cellv1_ppe;
         pipeline_count = 4;

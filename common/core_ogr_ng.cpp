@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.15 2009/02/03 17:03:49 snake Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.16 2009/02/16 19:27:17 oliver Exp $"; }
 
 //#define TRACE
 
@@ -37,7 +37,7 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.15 2009/02/03 17:03:49 snake Exp $"; }
     #if defined(HAVE_I64) && !defined(HAVE_FLEGE_PPC_CORES)
     CoreDispatchTable *ogrng64_get_dispatch_table(void);
     #endif
-    #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
+    #if defined(HAVE_ALTIVEC) /* compiler supports AltiVec */
     CoreDispatchTable *vec_ogrng_get_dispatch_table(void);
     #endif
     #if (CLIENT_CPU == CPU_CELLBE)
@@ -107,7 +107,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
         #if defined(HAVE_I64) && !defined(HAVE_FLEGE_PPC_CORES)
           ogrng64_get_dispatch_table();
         #endif
-        #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
+        #if defined(HAVE_ALTIVEC) /* compiler supports AltiVec */
           vec_ogrng_get_dispatch_table();
         #endif
         #if (CLIENT_CPU == CPU_CELLBE)
@@ -356,7 +356,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
     {
       cindex = 0;                       /* PPC-scalar */
 
-      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+      #if defined(HAVE_ALTIVEC) /* OS+compiler support altivec */
       if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
         cindex = 1;     // PPC-vector
@@ -430,7 +430,7 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
   /* ================================================================== */
 
 #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
-  #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
+  #if defined(HAVE_ALTIVEC) /* compiler+OS supports AltiVec */
   if (coresel == 1)                               /* PPC Vector/Hybrid */
      unit_func.ogr = vec_ogrng_get_dispatch_table();
   #endif

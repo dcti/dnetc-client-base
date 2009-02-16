@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.12 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.13 2009/02/16 19:27:16 oliver Exp $"; }
 
 //#define TRACE
 
@@ -38,7 +38,7 @@ return "@(#)$Id: core_ogr.cpp,v 1.12 2008/12/30 20:58:41 andreasb Exp $"; }
     */
     extern "C" CoreDispatchTable *ogr64_get_dispatch_table(void);
     #endif
-    #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
+    #if defined(HAVE_ALTIVEC) /* compiler supports AltiVec */
     extern "C" CoreDispatchTable *vec_ogr_get_dispatch_table(void);
     #endif
     #if (CLIENT_CPU == CPU_CELLBE)
@@ -107,7 +107,7 @@ int InitializeCoreTable_ogr(int first_time)
         #if defined(HAVE_I64) && !defined(HAVE_KOGE_PPC_CORES)
           ogr64_get_dispatch_table();
         #endif
-        #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler supports AltiVec */
+        #if defined(HAVE_ALTIVEC) /* compiler supports AltiVec */
           vec_ogr_get_dispatch_table();
         #endif
         #if (CLIENT_CPU == CPU_CELLBE)
@@ -356,7 +356,7 @@ int selcoreGetPreselectedCoreForProject_ogr()
     {
       cindex = 0;                       /* PPC-scalar */
 
-      #if defined(__VEC__) || defined(__ALTIVEC__) /* OS+compiler support altivec */
+      #if defined(HAVE_ALTIVEC) /* OS+compiler support altivec */
       if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
         cindex = 1;     // PPC-vector
@@ -499,7 +499,7 @@ int selcoreSelectCore_ogr(unsigned int threadindex, int *client_cpuP,
   /* ================================================================== */
 
 #if (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
-  #if defined(__VEC__) || defined(__ALTIVEC__) /* compiler+OS supports AltiVec */
+  #if defined(HAVE_ALTIVEC) /* compiler+OS supports AltiVec */
   if (coresel == 1)                               /* PPC Vector/Hybrid */
     unit_func.ogr = vec_ogr_get_dispatch_table();
   #endif
