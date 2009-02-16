@@ -11,7 +11,7 @@ else
   lha -q x plat/amigaos/tools/icons.lha T:
 fi
 mv /T/${2} /T/${3}
-mv /T/drawer.info /T/${3}.info
+mv /T/${3}/drawer.info /T/${3}.info
 if [ "$3" = "dnetc_mos" ]; then
   cp -p dnetc dnetcgui.library /T/${3}
 elif [ "$3" = "dnetc" ]; then
