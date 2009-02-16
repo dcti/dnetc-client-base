@@ -15,7 +15,7 @@ STRIP   = ppc-amigaos-strip -R.comment
 CFLAGS	= -O2 -fomit-frame-pointer -fno-exceptions -fstrict-aliasing -I. -I../../../plat/amigaos -D__USE_INLINE__ -D__USE_BASETYPE__ -mcrt=clib2-ts
 LDFLAGS	= -nostartfiles -mcrt=clib2-ts
 LDLIBS	=
-OBJDIR  = ../../../output.os4
+OBJDIR  = ../../../output
 OBJS	= $(OBJDIR)/LibBase.o $(OBJDIR)/main.o $(OBJDIR)/prefs.o $(OBJDIR)/dnetcgui_68k.o
 
 #
