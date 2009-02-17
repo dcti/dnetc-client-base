@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.371 2009/02/17 19:22:48 pstadt Exp $
+# @(#)$Id: configure,v 1.372 2009/02/17 20:30:03 pstadt Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -549,8 +549,23 @@ add_sources() # $1=os, $2=arch, $3=custom
 #      fi
     fi # HAVE_OGR_P2
   #-----------------------------------------------------------------
+  elif [ "$2" = "s390" -o "$2" = "s390x" ]; then
+    if [ "$HAVE_OGR" = "1" ]; then
+      if [ "$2" = "s390x" ]; then
+        DEFAULT_OGRNG="0"     # don't add the ansi core
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
+      fi # s390x
+
+    fi
+    if [ "$HAVE_OGR_P2" = "1" ]; then
+      if [ "$2" = "s390x" ]; then
+        DEFAULT_OGR="0"       # don't add the ansi core
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogrp2-64.cpp"
+      fi # s390x
+    fi # HAVE_OGR_P2
+  #-----------------------------------------------------------------
   elif [ "$2" = "88k" -o "$2" = "sh4" -o "$2" = "vax" \
-      -o "$2" = "s390" -o "$2" = "s390x" -o "$2" = "generic" \
+      -o "$2" = "generic" \
       -o "$2" = "power" ]; then
     : # pure ansi targets. (2 pipeline RC5 core) ==> DEFAULT
   #-----------------------------------------------------------------

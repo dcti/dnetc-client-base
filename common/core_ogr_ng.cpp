@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.16 2009/02/16 19:27:17 oliver Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.17 2009/02/17 20:30:04 pstadt Exp $"; }
 
 //#define TRACE
 
@@ -74,6 +74,8 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.16 2009/02/16 19:27:17 oliver Exp $"; }
 #elif (CLIENT_CPU == CPU_AMD64)
     CoreDispatchTable *ogrng64_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+    CoreDispatchTable *ogrng64_get_dispatch_table(void); 
+#elif (CLIENT_CPU == CPU_S390X) && (SIZEOF_LONG == 8)
     CoreDispatchTable *ogrng64_get_dispatch_table(void); 
 #elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
     CoreDispatchTable *ogrng64_get_dispatch_table(void); 
@@ -147,7 +149,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
       #elif (CLIENT_CPU == CPU_S390)
         ogrng_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_S390X)
-        ogrng_get_dispatch_table();
+        ogrng64_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_I64)
         ogrng_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_PA_RISC)
@@ -510,6 +512,9 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
     coresel = 0;
   }
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
+  unit_func.ogr = ogrng64_get_dispatch_table();
+  coresel = 0;
+#elif (CLIENT_CPU == CPU_S390X) && (SIZEOF_LONG == 8)
   unit_func.ogr = ogrng64_get_dispatch_table();
   coresel = 0;
 #elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
