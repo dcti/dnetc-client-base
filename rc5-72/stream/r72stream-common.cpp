@@ -8,86 +8,59 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.5 2009/01/02 04:02:32 andreasb Exp $
+ * $Id: r72stream-common.cpp,v 1.6 2009/02/19 09:38:26 andreasb Exp $
 */
 
 #include "r72stream-common.h"
 
-//Key increment
-void key_incr(unsigned *hi, unsigned *mid, unsigned *lo, unsigned incr)
+static u32 swap32(u32 a)
 {
-#if 0
-  _asm {
-    mov esi,[hi]
-    mov eax,[esi]
-    add eax,incr
-    mov byte ptr [esi],al
-    shr eax,8
-    mov esi,[mid]
-    mov ebx,[esi]
-    mov edi,[lo]
-    mov edx,[edi]
-    bswap ebx
-    bswap edx
-    add ebx,eax
-    adc edx,0
-    bswap ebx
-    bswap edx
-    mov     [esi],ebx
-    mov     [edi],edx
-  }
-#else
-#warning PLEASE PROVIDE A PORTABLE IMPLEMENTATION
-#endif
+  u32 t=(a>>24)|(a<<24);
+  t|=(a&0x00ff0000)>>8;
+  t|=(a&0x0000ff00)<<8;
+  return t;
+}
+
+//Key increment
+
+void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr)
+{
+  *hi+=incr;
+  u32 ad=*hi>>8;
+  if(*hi<incr)
+    ad+=0x01000000;
+  u32 t_m=swap32(*mid)+ad;
+  u32 t_l=swap32(*lo);
+  if(t_m<ad)
+    t_l++;
+
+  *hi=*hi&0xff;
+  *mid=swap32(t_m);
+  *lo=swap32(t_l);
 }
 
 //Subtract two keys, use only mid & hi, since the result is always less than 40 bits
 u32 sub72(u32 t_hi, u32 t_mid, u32 s_hi, u32 s_mid)
 {
-  u32 res;
-
-#if 0
-  _asm {
-    mov al,byte ptr [t_hi]
-    sub al, byte ptr [s_hi]     ; hi
-    mov edx,[t_mid]
-    bswap edx
-    mov edi,[s_mid]
-    bswap edi
-    sbb edx,edi
-    shl edx,8
-    mov dl,al
-    mov res,edx
-  }
-#else
-#warning PLEASE PROVIDE A PORTABLE IMPLEMENTATION
-#endif
-  return res;
+  u32 res_h=t_hi-s_hi;
+  u32 res_m=swap32(t_mid)-swap32(s_mid);
+  if(res_h>t_hi)
+    res_m--;
+  res_m=(res_m<<8)+(res_h&0xff);
+  return res_m;
 }
 
 //Compare two keys
 u32 cmp72(u32 o1h, u32 o1m, u32 o1l, u32 o2h, u32 o2m, u32 o2l)
 {
   u32 _o1l,_o2l,_o1m,_o2m;
-#if 0
-  _asm {
-    mov eax,o1l
-    mov ebx,o2l
-    bswap eax
-    bswap ebx
-    mov _o1l,eax
-    mov _o2l,ebx
 
-    mov eax,o1m
-    mov ebx,o2m
-    bswap eax
-    bswap ebx
-    mov _o1m,eax
-    mov _o2m,ebx
-  }
-#else
-#warning PLEASE PROVIDE A PORTABLE IMPLEMENTATION
-#endif
+  _o1l=swap32(o1l);
+  _o2l=swap32(o2l);
+
+  _o1m=swap32(o1m);
+  _o2m=swap32(o2m);
+
   if(_o2l>_o1l)
     return 1;
   else
