@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.3 2009/01/02 03:25:28 andreasb Exp $
+ * $Id: amdstream_context.h,v 1.4 2009/02/19 23:19:28 andreasb Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -18,6 +18,7 @@
 #include "cputypes.h"
 
 #include <cal.h>
+#include <cal_ext_counter.h>
 
 
 #define AMD_STREAM_MAX_GPUS 16
@@ -47,11 +48,20 @@ typedef struct {
   CALint domainSizeX;
   unsigned maxIters;
 
+  CALcounter idleCounter;
+
   u32 coreID;
   bool active;
 } stream_context_t;
 
 extern stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 extern int amdstream_numDevices;
+
+extern PFNCALCTXCREATECOUNTER calCtxCreateCounterExt;
+extern PFNCALCTXDESTROYCOUNTER calCtxDestroyCounterExt;
+extern PFNCALCTXBEGINCOUNTER calCtxBeginCounterExt;
+extern PFNCALCTXENDCOUNTER calCtxEndCounterExt;
+extern PFNCALCTXGETCOUNTER calCtxGetCounterExt;
+extern bool amdstream_usePerfCounters;
 
 #endif // AMD_STREAM_CONTEXT_H

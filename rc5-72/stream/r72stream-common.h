@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.5 2009/01/02 04:02:32 andreasb Exp $
+ * $Id: r72stream-common.h,v 1.6 2009/02/19 23:19:29 andreasb Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "logstuff.h"  // LogScreen()
+#include "pollsys.h"   // NonPolledUsleep()
 
 #define CORE_IL4    0
 #define CORE_IL4C   1

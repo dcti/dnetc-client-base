@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.8 2009/01/02 03:25:28 andreasb Exp $
+ * $Id: amdstream_setup.cpp,v 1.9 2009/02/19 23:19:28 andreasb Exp $
 */
 
 #include "amdstream_setup.h"
@@ -16,9 +16,18 @@
 #include "logstuff.h"
 
 #include <calcl.h>
+#include <cal_ext.h>
+#include <cal_ext_counter.h>
 
 stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 int amdstream_numDevices = -1;
+
+PFNCALCTXCREATECOUNTER calCtxCreateCounterExt;
+PFNCALCTXDESTROYCOUNTER calCtxDestroyCounterExt;
+PFNCALCTXBEGINCOUNTER calCtxBeginCounterExt;
+PFNCALCTXENDCOUNTER calCtxEndCounterExt;
+PFNCALCTXGETCOUNTER calCtxGetCounterExt;
+bool amdstream_usePerfCounters = false;
 
 void AMDStreamInitialize()
 {
@@ -42,6 +51,33 @@ void AMDStreamInitialize()
   }
   if(amdstream_numDevices>AMD_STREAM_MAX_GPUS)
     amdstream_numDevices=AMD_STREAM_MAX_GPUS;
+
+  calCtxCreateCounterExt=NULL;
+  calCtxDestroyCounterExt=NULL;
+  calCtxBeginCounterExt=NULL;
+  calCtxEndCounterExt=NULL;
+  calCtxGetCounterExt=NULL;
+  amdstream_usePerfCounters=false;
+  if (calExtSupported((CALextid)CAL_EXT_COUNTERS) == CAL_RESULT_OK)
+  {
+    if (calExtGetProc((CALextproc*)&calCtxCreateCounterExt, (CALextid)CAL_EXT_COUNTERS, "calCtxCreateCounter")==CAL_RESULT_OK)
+    {
+      if (calExtGetProc((CALextproc*)&calCtxDestroyCounterExt, (CALextid)CAL_EXT_COUNTERS, "calCtxDestroyCounter")==CAL_RESULT_OK)
+      {
+        if (calExtGetProc((CALextproc*)&calCtxBeginCounterExt, (CALextid)CAL_EXT_COUNTERS, "calCtxBeginCounter")==CAL_RESULT_OK)
+        {
+          if (calExtGetProc((CALextproc*)&calCtxEndCounterExt, (CALextid)CAL_EXT_COUNTERS, "calCtxEndCounter")==CAL_RESULT_OK)
+          {
+            if (calExtGetProc((CALextproc*)&calCtxGetCounterExt, (CALextid)CAL_EXT_COUNTERS, "calCtxGetCounter")==CAL_RESULT_OK)
+            {
+              amdstream_usePerfCounters=true;
+            }
+          }
+        }
+      }
+    }
+  }
+
   for(int i=0; i<AMD_STREAM_MAX_GPUS; i++) {
     CContext[i].active=false;
     CContext[i].coreID=CORE_NONE;
@@ -56,6 +92,7 @@ void AMDStreamInitialize()
     CContext[i].outputRes0=0;
     CContext[i].obj=NULL;
     CContext[i].image=NULL;
+    CContext[i].idleCounter=0;
 
     if(i<amdstream_numDevices) {
       // Opening device
@@ -69,7 +106,7 @@ void AMDStreamInitialize()
 
       CContext[i].domainSizeX=32;
       CContext[i].domainSizeY=32;
-      CContext[i].maxIters=512;
+      CContext[i].maxIters=256;
     }
   }
 }

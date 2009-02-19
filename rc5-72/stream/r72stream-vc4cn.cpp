@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.5 2009/01/02 04:12:45 andreasb Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.6 2009/02/19 23:19:29 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -28,22 +28,22 @@ bool init_rc5_72_il4_nand(u32 Device)
     case CAL_TARGET_600:
       CContext[Device].domainSizeX=56;
       CContext[Device].domainSizeY=56;
-      CContext[Device].maxIters=1024;
+      CContext[Device].maxIters=128;
       break;
     case CAL_TARGET_610:
       CContext[Device].domainSizeX=32;
       CContext[Device].domainSizeY=32;
-      CContext[Device].maxIters=256;
+      CContext[Device].maxIters=64;
       break;
     case CAL_TARGET_630:
       CContext[Device].domainSizeX=56;
       CContext[Device].domainSizeY=56;
-      CContext[Device].maxIters=512;
+      CContext[Device].maxIters=128;
       break;
     case CAL_TARGET_670:
       CContext[Device].domainSizeX=56;
       CContext[Device].domainSizeY=56;
-      CContext[Device].maxIters=1024;
+      CContext[Device].maxIters=256;
       break;
     case CAL_TARGET_7XX:
       //TODO:domainSize
@@ -51,19 +51,19 @@ bool init_rc5_72_il4_nand(u32 Device)
     case CAL_TARGET_770:
       CContext[Device].domainSizeX=88;
       CContext[Device].domainSizeY=88;
-      CContext[Device].maxIters=2048;
+      CContext[Device].maxIters=512;
       break;
     case CAL_TARGET_710:
       //TODO:domainSize
       CContext[Device].domainSizeX=80;
       CContext[Device].domainSizeY=80;
-      CContext[Device].maxIters=512;
+      CContext[Device].maxIters=128;
       break;
     case CAL_TARGET_730:
       //TODO:domainSize
       CContext[Device].domainSizeX=80;
       CContext[Device].domainSizeY=80;
-      CContext[Device].maxIters=512;
+      CContext[Device].maxIters=128;
       break;
     default:
       break;
@@ -93,6 +93,7 @@ bool init_rc5_72_il4_nand(u32 Device)
   //-------------------------------------------------------------------------
   // Allocating and initializing resources
   //-------------------------------------------------------------------------
+
   // Input and output resources
   CContext[Device].outputRes0=0;
   CALresult r;
@@ -120,6 +121,10 @@ bool init_rc5_72_il4_nand(u32 Device)
     LogScreen("Failed to allocate constant buffer.\n");
     return false;
   }
+
+  if(amdstream_usePerfCounters)
+    if (calCtxCreateCounterExt(&(CContext[Device].idleCounter), CContext[Device].ctx, CAL_COUNTER_IDLE) != CAL_RESULT_OK)
+      CContext[Device].idleCounter=0;
 
   // Creating module using compiled image
   calModuleLoad(&CContext[Device].module, CContext[Device].ctx, CContext[Device].image);
@@ -168,6 +173,7 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 
   while(itersNeeded) {
     unsigned iters,rest;
+    bool perfC=0;
 
     iters=itersNeeded/RunSize;
     if(iters>=maxIters)
@@ -210,10 +216,25 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 
     // Event to check completion of the program
     CALevent e = 0;
+
+    //Start idle counter
+    perfC=false;
+    if(amdstream_usePerfCounters) {
+      if (calCtxBeginCounterExt(CContext[deviceID].ctx, CContext[deviceID].idleCounter) == CAL_RESULT_OK)
+        perfC=true;
+    }
+    if(!perfC)
+      LogScreen("Perf counter error!\n");
+
     calCtxRunProgram(&e, CContext[deviceID].ctx, CContext[deviceID].func, &domain);
+    calCtxIsEventDone(CContext[deviceID].ctx, e);
+    NonPolledUSleep(30000); //30ms
 
     // Checking whether the execution of the program is complete or not
     while (calCtxIsEventDone(CContext[deviceID].ctx, e) == CAL_RESULT_PENDING) ;
+
+    if(perfC)
+      calCtxEndCounterExt(CContext[deviceID].ctx, CContext[deviceID].idleCounter);
 
     //Check the results
     unsigned *o0;
@@ -248,6 +269,20 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
       }
     }
     calResUnmap(CContext[deviceID].outputRes0);
+
+    if(iters==CContext[deviceID].maxIters)
+    {
+      if(perfC) {
+        CALfloat idlePercentage;
+        if (calCtxGetCounterExt(&idlePercentage, CContext[deviceID].ctx, CContext[deviceID].idleCounter) == CAL_RESULT_OK)
+          if((idlePercentage>0.02f)||(idlePercentage<0.01f)) {
+            float delta=(idlePercentage-0.017f)+1.f;
+            CContext[deviceID].maxIters*=delta;
+            if(CContext[deviceID].maxIters<2)
+              CContext[deviceID].maxIters=2;
+          }
+      }
+    }
 
     unsigned itersDone=(iters-1)*RunSize+rest;
     kiter-=itersDone;
