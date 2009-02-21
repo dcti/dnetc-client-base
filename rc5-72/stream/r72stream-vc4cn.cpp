@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.6 2009/02/19 23:19:29 andreasb Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.7 2009/02/21 01:44:08 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -173,7 +173,7 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 
   while(itersNeeded) {
     unsigned iters,rest;
-    bool perfC=0;
+    bool perfC;
 
     iters=itersNeeded/RunSize;
     if(iters>=maxIters)
@@ -223,15 +223,22 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
       if (calCtxBeginCounterExt(CContext[deviceID].ctx, CContext[deviceID].idleCounter) == CAL_RESULT_OK)
         perfC=true;
     }
-    if(!perfC)
-      LogScreen("Perf counter error!\n");
 
+    ui64 _start;
+    _start=CliUsecClock();
     calCtxRunProgram(&e, CContext[deviceID].ctx, CContext[deviceID].func, &domain);
     calCtxIsEventDone(CContext[deviceID].ctx, e);
-    NonPolledUSleep(30000); //30ms
+    if(iters==CContext[deviceID].maxIters)
+      NonPolledUSleep(25000);  //25ms
+    else
+      NonPolledUSleep(25000*iters/CContext[deviceID].maxIters);
 
     // Checking whether the execution of the program is complete or not
-    while (calCtxIsEventDone(CContext[deviceID].ctx, e) == CAL_RESULT_PENDING) ;
+    ui64 _busy, _finish, busy_counter=0;
+    _busy=CliUsecClock();
+    while (calCtxIsEventDone(CContext[deviceID].ctx, e) == CAL_RESULT_PENDING)
+      busy_counter++;
+    _finish=CliUsecClock();
 
     if(perfC)
       calCtxEndCounterExt(CContext[deviceID].ctx, CContext[deviceID].idleCounter);
@@ -272,15 +279,19 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 
     if(iters==CContext[deviceID].maxIters)
     {
-      if(perfC) {
-        CALfloat idlePercentage;
-        if (calCtxGetCounterExt(&idlePercentage, CContext[deviceID].ctx, CContext[deviceID].idleCounter) == CAL_RESULT_OK)
-          if((idlePercentage>0.02f)||(idlePercentage<0.01f)) {
-            float delta=(idlePercentage-0.017f)+1.f;
-            CContext[deviceID].maxIters*=delta;
-            if(CContext[deviceID].maxIters<2)
-              CContext[deviceID].maxIters=2;
+      CALfloat idlePercentage;
+      if(busy_counter==0) {
+        if(perfC) {
+          if (calCtxGetCounterExt(&idlePercentage, CContext[deviceID].ctx, CContext[deviceID].idleCounter) == CAL_RESULT_OK) {
+            if(idlePercentage>0.02f) {
+              float delta=(idlePercentage-0.01f)*0.75f+1.f;
+              CContext[deviceID].maxIters*=delta;
+            }
           }
+        }
+      } else {
+        double delta=(double)(_busy-_start)/(double)(_finish-_start)-0.005;
+        CContext[deviceID].maxIters*=delta;
       }
     }
 
