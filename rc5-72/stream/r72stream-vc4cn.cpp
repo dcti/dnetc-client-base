@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.7 2009/02/21 01:44:08 andreasb Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.8 2009/02/21 02:07:16 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -145,6 +145,10 @@ bool init_rc5_72_il4_nand(u32 Device)
   calCtxSetMem(CContext[Device].ctx, CContext[Device].constName, CContext[Device].constMem);
 
   CContext[Device].coreID=CORE_IL4N;
+
+  //Sla
+  //CContext[Device].filter[0]=CContext[Device].filter[1]=CContext[Device].maxIters;
+  //Sla
   return true;
 }
 
@@ -169,16 +173,15 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
   unsigned width=CContext[deviceID].domainSizeX;
   unsigned height=CContext[deviceID].domainSizeY;
   unsigned RunSize=width*height;
-  u32 maxIters=CContext[deviceID].maxIters;
 
   while(itersNeeded) {
     unsigned iters,rest;
     bool perfC;
 
     iters=itersNeeded/RunSize;
-    if(iters>=maxIters)
+    if(iters>=CContext[deviceID].maxIters)
     {
-      iters=maxIters;
+      iters=CContext[deviceID].maxIters;
       rest=RunSize;
     } else
     {
@@ -224,14 +227,15 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
         perfC=true;
     }
 
-    ui64 _start;
-    _start=CliUsecClock();
     calCtxRunProgram(&e, CContext[deviceID].ctx, CContext[deviceID].func, &domain);
     calCtxIsEventDone(CContext[deviceID].ctx, e);
+
+    ui64 _start;
+    _start=CliUsecClock();
     if(iters==CContext[deviceID].maxIters)
-      NonPolledUSleep(25000);  //25ms
+      NonPolledUSleep(30000);  //30ms
     else
-      NonPolledUSleep(25000*iters/CContext[deviceID].maxIters);
+      NonPolledUSleep(30000*iters/CContext[deviceID].maxIters);
 
     // Checking whether the execution of the program is complete or not
     ui64 _busy, _finish, busy_counter=0;
@@ -284,7 +288,7 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
         if(perfC) {
           if (calCtxGetCounterExt(&idlePercentage, CContext[deviceID].ctx, CContext[deviceID].idleCounter) == CAL_RESULT_OK) {
             if(idlePercentage>0.02f) {
-              float delta=(idlePercentage-0.01f)*0.75f+1.f;
+              float delta=(idlePercentage-0.01f)+1.f;
               CContext[deviceID].maxIters*=delta;
             }
           }
@@ -300,5 +304,9 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     key_incr(&rc5_72unitwork->L0.hi,&rc5_72unitwork->L0.mid,&rc5_72unitwork->L0.lo,itersDone*4);
     itersNeeded-=itersDone;
   }
+
+  /* tell the client about the optimal timeslice increment for this core
+     (with current parameters) */
+  rc5_72unitwork->optimal_timeslice_increment = RunSize*4*CContext[deviceID].maxIters*35; //1s
   return RESULT_NOTHING;
 }
