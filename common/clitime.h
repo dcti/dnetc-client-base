@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.33 2009/02/21 01:24:51 andreasb Exp $"
+#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.34 2009/02/21 02:40:27 andreasb Exp $"
 
 #include "baseincs.h" /* struct timeval */
 
@@ -37,11 +37,6 @@ int CliGetMonotonicClock( struct timeval *tv );
 
 // Wrapper around CliGetMonotonicClock() to return time since client start.
 int CliClock( struct timeval *tv );
-
-#ifdef HAVE_I64
-// Wrapper around CliClock, returns usec count since client start as 64bit value.
-si64 CliUsecClock();
-#endif
 
 // Get thread/process (user) time. Returns 0=ok, -1 if error/not-supported
 int CliGetThreadUserTime( struct timeval *tv );

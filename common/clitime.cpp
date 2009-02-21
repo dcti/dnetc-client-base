@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.69 2009/02/21 01:24:51 andreasb Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.70 2009/02/21 02:40:27 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -317,17 +317,6 @@ int CliClock(struct timeval *tv)
   }
   return 0;
 }
-
-#ifdef HAVE_I64
-// Wrapper around CliClock, returns usec count since client start as 64bit value.
-si64 CliUsecClock()
-{
-  struct timeval tv;
-  if (CliClock(&tv) < 0)
-    return -1;
-  return (si64)tv.tv_sec * 1000000 + tv.tv_usec;
-}
-#endif
 
 /* --------------------------------------------------------------------- */
 // only used if clock can't be used

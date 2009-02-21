@@ -8,7 +8,7 @@
  * PanAm
  * Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.8 2009/02/21 02:07:16 andreasb Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.9 2009/02/21 02:40:28 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -230,19 +230,19 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     calCtxRunProgram(&e, CContext[deviceID].ctx, CContext[deviceID].func, &domain);
     calCtxIsEventDone(CContext[deviceID].ctx, e);
 
-    ui64 _start;
-    _start=CliUsecClock();
+    struct timeval tv_ctx_start, tv_ctx_busy, tv_ctx_finish;
+    CliTimer(&tv_ctx_start);
     if(iters==CContext[deviceID].maxIters)
       NonPolledUSleep(30000);  //30ms
     else
       NonPolledUSleep(30000*iters/CContext[deviceID].maxIters);
 
     // Checking whether the execution of the program is complete or not
-    ui64 _busy, _finish, busy_counter=0;
-    _busy=CliUsecClock();
+    ui64 busy_counter=0;
+    CliTimer(&tv_ctx_busy);
     while (calCtxIsEventDone(CContext[deviceID].ctx, e) == CAL_RESULT_PENDING)
       busy_counter++;
-    _finish=CliUsecClock();
+    CliTimer(&tv_ctx_finish);
 
     if(perfC)
       calCtxEndCounterExt(CContext[deviceID].ctx, CContext[deviceID].idleCounter);
@@ -294,7 +294,11 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
           }
         }
       } else {
-        double delta=(double)(_busy-_start)/(double)(_finish-_start)-0.005;
+        CliTimerDiff(&tv_ctx_busy, &tv_ctx_busy, &tv_ctx_finish);
+        CliTimerDiff(&tv_ctx_finish, &tv_ctx_start, &tv_ctx_finish);
+        double ctx_busywait = (double)tv_ctx_busy.tv_sec * 1000.0 + (double)tv_ctx_busy.tv_usec / 1000.0;
+        double ctx_elapsed = (double)tv_ctx_finish.tv_sec * 1000.0 + (double)tv_ctx_finish.tv_usec / 1000.0;
+        double delta=ctx_busywait/ctx_elapsed-0.005;
         CContext[deviceID].maxIters*=delta;
       }
     }
