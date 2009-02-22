@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.17 2009/02/17 20:30:04 pstadt Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.18 2009/02/22 17:58:40 pstadt Exp $"; }
 
 //#define TRACE
 
@@ -230,6 +230,10 @@ const char **corenames_for_contest_ogr_ng()
   #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
       "FLEGE-64 2.0",
   #elif (CLIENT_CPU == CPU_SPARC)
+      "FLEGE 2.0",
+  #elif (CLIENT_CPU == CPU_S390X) && (SIZEOF_LONG == 8)
+      "FLEGE-64 2.0",
+  #elif (CLIENT_CPU == CPU_S390)
       "FLEGE 2.0",
   #elif (CLIENT_CPU == CPU_MIPS) && (SIZEOF_LONG == 8)
       "FLEGE-64 2.0",
