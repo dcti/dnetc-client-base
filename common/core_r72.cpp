@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.31 2009/02/16 19:27:17 oliver Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.32 2009/02/22 17:43:57 pstadt Exp $"; }
 
 //#define TRACE
 
@@ -55,6 +55,10 @@ extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm3( RC5_72UnitWork *, u32 *, void *);
+#elif (CLIENT_CPU == CPU_S390X)
+extern "C" s32 rc5_72_unit_func_ansi_1_s390x_gcc32( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 rc5_72_unit_func_ansi_2_s390x_gcc32( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 rc5_72_unit_func_ansi_4_s390x_gcc32( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
 extern "C" s32 CDECL rc5_72_unit_func_060_mh_2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_030_mh_1( RC5_72UnitWork *, u32 *, void *);
@@ -156,6 +160,13 @@ const char **corenames_for_contest_rc572()
       "StrongARM 1-pipe",
       "ARM 2/3/6/7 1-pipe",
       "XScale 1-pipe",
+  #elif (CLIENT_CPU == CPU_S390X)
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
+      "ANSI 4-pipe gcc32",
+      "ANSI 2-pipe gcc32",
+      "ANSI 1-pipe gcc32",
   #elif (CLIENT_CPU == CPU_68K) && (defined(__GCC__) || defined(__GNUC__))
       "MH 1-pipe 68020/030",
       "MH 1-pipe 68000/040",
@@ -893,6 +904,21 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
        case 5:
          unit_func.gen_72 = rc5_72_unit_func_anbe_2;
          pipeline_count = 2;
+         break;
+     #endif
+     // -----------
+     #if (CLIENT_CPU == CPU_S390X)
+       case 3:
+         unit_func.gen_72 = rc5_72_unit_func_ansi_4_s390x_gcc32;
+         pipeline_count = 4;
+         break;
+       case 4:
+         unit_func.gen_72 = rc5_72_unit_func_ansi_2_s390x_gcc32;
+         pipeline_count = 2;
+         break;
+       case 5:
+         unit_func.gen_72 = rc5_72_unit_func_ansi_1_s390x_gcc32;
+         pipeline_count = 1;
          break;
      #endif
      // -----------
