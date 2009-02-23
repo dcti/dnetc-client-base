@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-  return "@(#)$Id: modereq.cpp,v 1.44 2009/02/23 04:01:48 chandleg Exp $";
+  return "@(#)$Id: modereq.cpp,v 1.45 2009/02/23 04:30:02 chandleg Exp $";
 }
 
 //#define TRACE
@@ -166,12 +166,20 @@ int ModeReqRun(Client *client)
   int retval = 0;
 
   /* This exits if we don't see a CPU we want,
-     Also saves us from floating point exceptions on GPU clients */
+     Also saves us from floating point exceptions on GPU clients 
+
   static int cpucount = GetNumberOfDetectedProcessors();
   if (cpucount<=0)
     {
       return 0;
     }
+
+  This needs to be commented until I can find why the code dumps undefined symbol stuff on 
+  linux-x86...
+  modereq.cpp:(.text+0x231): undefined reference to `__cxa_guard_acquire'
+  modereq.cpp:(.text+0x24b): undefined reference to `__cxa_guard_release'
+
+  */
 
   if (++modereq.isrunning == 1)
   {
