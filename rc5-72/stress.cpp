@@ -5,7 +5,7 @@
 */
 
 const char *stress_r72_cpp(void) {
-return "@(#)$Id: stress.cpp,v 1.2 2007/10/22 16:48:33 jlawson Exp $"; }
+return "@(#)$Id: stress.cpp,v 1.3 2009/02/23 03:31:31 chandleg Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"
@@ -17,6 +17,7 @@ return "@(#)$Id: stress.cpp,v 1.2 2007/10/22 16:48:33 jlawson Exp $"; }
 #include "selftest.h"
 #include "ansi/rotate.h"
 #include "ccoreio.h"
+#include "cpucheck.h"      // GetNumberOfDetectedProcessors();
 
 
 /*
@@ -625,6 +626,14 @@ static long __test_4(void)
 long StressRC5_72(void)
 {
   long result = 1L;
+
+  /* This exits if we don't see a CPU we want,
+     Also saves us from floating point exceptions on GPU clients */
+  static int cpucount = GetNumberOfDetectedProcessors();
+  if (cpucount<=0)
+    {
+      return 0;
+    }
 
   if (!IsProblemLoadPermitted(-1, RC5_72))
     return 0;

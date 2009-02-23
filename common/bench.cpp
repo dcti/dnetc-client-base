@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.64 2008/12/30 20:58:40 andreasb Exp $";
+  return "@(#)$Id: bench.cpp,v 1.65 2009/02/23 03:31:30 chandleg Exp $";
 }
 
 //#define TRACE
@@ -22,6 +22,7 @@ const char *bench_cpp(void) {
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
 #include "util.h"      // TRACE_OUT
+#include "cpucheck.h"      // GetNumberOfDetectedProcessors();
 
 #define TBENCHMARK_CALIBRATION 0x80
 
@@ -44,6 +45,7 @@ void BenchResetStaticVars(void)
 /* BenchGetBestRate() is always per-processor */
 unsigned long BenchGetBestRate(unsigned int contestid)
 {
+
   TRACE_OUT((+1, "BenchGetBestRate(%d)\n", contestid));
   if (contestid < CONTEST_COUNT)
   {
@@ -69,7 +71,8 @@ unsigned long BenchGetBestRate(unsigned int contestid)
 
 static inline void __BenchSetBestRate(unsigned int contestid, unsigned long rate)
 {
-  TRACE_OUT((0, "__BenchSetBestRate(%d, %ld)\n", contestid, rate));
+  TRACE_OUT((0, "__BenchSetBestRate(%d, %ld)\n", contestid, 
+rate));
   if (contestid < CONTEST_COUNT)
   {
     if (rate > bestrate_tab[contestid])
@@ -83,6 +86,13 @@ static inline void __BenchSetBestRate(unsigned int contestid, unsigned long rate
 /* TBenchmark() is always per-processor */
 long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 {
+  /* This exits if we don't see a CPU we want,
+     Also saves us from floating point exceptions on GPU clients */
+  static int cpucount = GetNumberOfDetectedProcessors();
+  if (cpucount<=0)
+    {  
+      return 0;
+    }
   /* non-preemptive os minimum yields per second */
   struct { int yps, did_adjust; } non_preemptive_os;
   long retvalue = -1L; /* assume error */
