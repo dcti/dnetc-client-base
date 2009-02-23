@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.119 2009/01/23 18:08:57 stream Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.120 2009/02/23 01:07:02 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -425,7 +425,14 @@ static long __bench_or_test( int which,
         }
         else {
           Log("Core #%d is significantly faster than the default core.\n"
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_AMD_STREAM)
               "Please file a bug report along with the output of\n-cpuinfo.\n",
+#else
+              "The CUDA core selection has been made as a tradeoff between core speed\n"
+              "and responsiveness of the graphical desktop.\n"
+              "Please file a bug report along with the output of -cpuinfo\n"
+              "only if the the faster core selection does not degrade graphics performance.\n",
+#endif
               fastest);
         }
       }
