@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.65 2009/02/23 03:31:30 chandleg Exp $";
+  return "@(#)$Id: bench.cpp,v 1.66 2009/02/23 03:59:38 chandleg Exp $";
 }
 
 //#define TRACE
@@ -22,7 +22,6 @@ const char *bench_cpp(void) {
 #include "clievent.h"  // event post etc.
 #include "bench.h"     // ourselves
 #include "util.h"      // TRACE_OUT
-#include "cpucheck.h"      // GetNumberOfDetectedProcessors();
 
 #define TBENCHMARK_CALIBRATION 0x80
 
@@ -86,13 +85,6 @@ rate));
 /* TBenchmark() is always per-processor */
 long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 {
-  /* This exits if we don't see a CPU we want,
-     Also saves us from floating point exceptions on GPU clients */
-  static int cpucount = GetNumberOfDetectedProcessors();
-  if (cpucount<=0)
-    {  
-      return 0;
-    }
   /* non-preemptive os minimum yields per second */
   struct { int yps, did_adjust; } non_preemptive_os;
   long retvalue = -1L; /* assume error */
