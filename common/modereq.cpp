@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-  return "@(#)$Id: modereq.cpp,v 1.43 2008/12/30 20:58:41 andreasb Exp $";
+  return "@(#)$Id: modereq.cpp,v 1.44 2009/02/23 04:01:48 chandleg Exp $";
 }
 
 //#define TRACE
@@ -165,6 +165,14 @@ int ModeReqRun(Client *client)
 {
   int retval = 0;
 
+  /* This exits if we don't see a CPU we want,
+     Also saves us from floating point exceptions on GPU clients */
+  static int cpucount = GetNumberOfDetectedProcessors();
+  if (cpucount<=0)
+    {
+      return 0;
+    }
+
   if (++modereq.isrunning == 1)
   {
     int restart = ((modereq.reqbits & MODEREQ_RESTART) != 0);
@@ -281,6 +289,7 @@ int ModeReqRun(Client *client)
       }
       if ((bits & (MODEREQ_TEST | MODEREQ_TEST_ALLCORE)) != 0)
       {
+
         int testfailed = 0;
         do
         {
@@ -321,6 +330,7 @@ int ModeReqRun(Client *client)
       }
       if ((bits & (MODEREQ_STRESS | MODEREQ_STRESS_ALLCORE)) != 0)
       {
+
         int testfailed = 0;
         do
         {
