@@ -1,6 +1,6 @@
 
  distributed.net client for ATI FireStream-compatible GPUs
- document revision $Id: readme.stream,v 1.1 2009/02/22 23:15:15 chandleg Exp $
+ document revision $Id: readme.stream,v 1.2 2009/02/23 00:05:19 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -25,7 +25,7 @@
     <http://ati.amd.com/technology/streamcomputing/sdkdwnld.html>
 
     You will need to obtain both the SDK and the FireStream Driver for your
-    kernel. {linux}
+    kernel. {Linux}
 
     At the moment, our FireStream clients only provide support for RC5-72.
     Due to the nature of OGR, it is difficult to parallelize in a way
@@ -39,7 +39,7 @@
 
  2.0  Prerequisites -------------------------------------------------
 
-    On a linux host there are several requirements that need to be met
+    On a Linux host there are several requirements that need to be met
     to run the FireStream client.
 
     1) The FireStream kernel module must be downloaded and built against
@@ -56,7 +56,7 @@
        loaded, X/Xorg can be started.
 
     3) The AMD/ATI Stream SDK or runtime libraries must be installed on
-       the system.  Ths installation notes can be found at:
+       the system.  The installation notes can be found at:
        <http://www2.ati.com/sdkdwnld/readme_install_sdk_32.txt>
        <http://www2.ati.com/sdkdwnld/readme_install_sdk_64.txt>
        For a non-RPM based system, {Slackware, or source builds 
@@ -111,7 +111,7 @@
     the ATI website and download and install the FireStream SDK/Runtime
     libraries.
 
-    If you have an onboard FireStream compaitble card such as a Radeon 
+    If you have an onboard FireStream compatible card such as a Radeon 
     HD 3200 or HD 3300, and an additional stream-capable card, and you
     are seeing massively slow performance, your onboard video is likely
     the main device in your X/Xorg config.  As stated in the Prerequisites 
@@ -124,7 +124,7 @@
     of your motherboard and select something other than "Onboard" or 
     "OnChipVGA" or "OVGA", normally this would be "PCI-E".  
 
-    NOTE: This will effectivly disable your onboard video!  This will
+    NOTE: This will effectively disable your onboard video!  This will
           also change the PCI device lists in the X/Xorg detection.
           Your x11.conf or xorg.conf will most likely have to be updated
           to reflect the changes.  BE SURE TO MAKE SURE YOUR SYSTEM DOES
@@ -156,7 +156,7 @@
       change that to:
         dd if=$0 of=/tmp/${TMP}.tar.gz bs=1 skip=16393 >& /dev/null
    5) What the first part of that does is make sure that "rpm" does 
-      not check to see if it is ok to install the RPMs. 
+      not check to see if it is OK to install the RPMs. 
       The second part changes the removal of the binary part of the
       shar.  The offset changed by 9 characters, because be added 9
       characters to the file.
