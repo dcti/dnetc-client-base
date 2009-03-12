@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-  return "@(#)$Id: modereq.cpp,v 1.45 2009/02/23 04:30:02 chandleg Exp $";
+  return "@(#)$Id: modereq.cpp,v 1.46 2009/03/12 01:49:28 andreasb Exp $";
 }
 
 //#define TRACE
@@ -167,19 +167,15 @@ int ModeReqRun(Client *client)
 
   /* This exits if we don't see a CPU we want,
      Also saves us from floating point exceptions on GPU clients 
-
-  static int cpucount = GetNumberOfDetectedProcessors();
-  if (cpucount<=0)
-    {
-      return 0;
-    }
-
-  This needs to be commented until I can find why the code dumps undefined symbol stuff on 
-  linux-x86...
-  modereq.cpp:(.text+0x231): undefined reference to `__cxa_guard_acquire'
-  modereq.cpp:(.text+0x24b): undefined reference to `__cxa_guard_release'
-
   */
+  if ((modereq.reqbits & MODEREQ_NEEDS_CPU_MASK) != 0)
+  {
+    static int cpucount = -99;
+    if (cpucount == -99)
+      cpucount = GetNumberOfDetectedProcessors();
+    if (cpucount <= 0)
+      return 0;
+  }
 
   if (++modereq.isrunning == 1)
   {

@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -14,7 +14,7 @@
 */
 
 #ifndef __MODEREQ_H__
-#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.25 2008/12/30 20:58:41 andreasb Exp $"
+#define __MODEREQ_H__ "@(#)$Id: modereq.h,v 1.26 2009/03/12 01:49:28 andreasb Exp $"
 
 #define MODEREQ_IDENT              0x00000001
 #define MODEREQ_CPUINFO            0x00000002
@@ -39,6 +39,7 @@
 #define MODEREQ_RESTART            0x00020000 /* restart client after mode processing */
 #define MODEREQ_VERSION            0x00040000
 #define MODEREQ_ALL                0x0007FFFF /* mask of all - needed internally */
+#define MODEREQ_NEEDS_CPU_MASK     (MODEREQ_BENCHMARK_MASK | MODEREQ_TEST_MASK | MODEREQ_STRESS_MASK) /* can't run without a CPU */
 
 
 /* get mode bit(s). if modemask is -1, all bits are returned */
