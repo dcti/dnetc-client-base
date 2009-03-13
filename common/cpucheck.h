@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.19 2008/12/30 20:58:41 andreasb Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.20 2009/03/13 01:37:32 andreasb Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -40,6 +40,7 @@
 
 //return number of processors detected (by the hardware/from the OS)
 //returns -1 if detection is not supported.
+//returns 0 if a required co-processor (e.g. GPU) was not found
 int GetNumberOfDetectedProcessors( void );
 
 //currently returns GetNumberOfDetectedProcessors()

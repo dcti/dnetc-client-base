@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.156 2009/02/20 15:12:47 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.157 2009/03/13 01:37:31 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -77,7 +77,9 @@ return "@(#)$Id: cpucheck.cpp,v 1.156 2009/02/20 15:12:47 snikkel Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
-int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
+// returns -1 if not supported
+// returns 0 if required co-processor (e.g. GPU) was not found
+int GetNumberOfDetectedProcessors( void )
 {
   static int cpucount = -2;
 
@@ -93,7 +95,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
         cpucount = 0;
       if (cpucount <= 0) {
         LogScreen("No CUDA-supported GPU found.\n");
-        cpucount = 0;
+        cpucount = -99;
       }
     }
     #elif (CLIENT_CPU == CPU_AMD_STREAM)
@@ -101,7 +103,7 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       cpucount=getAMDStreamDeviceCount();
       if (cpucount<=0) {
         LogScreen("No AMD STREAM-compatible device found.\n");
-        cpucount = 0;
+        cpucount = -99;
       }
     }
     #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
@@ -299,7 +301,10 @@ int GetNumberOfDetectedProcessors( void )  //returns -1 if not supported
       for (i = 0; i < nprocs; i++)
         if (TMP_ENG_ONLINE == tmp_ctl(TMP_QUERY, i)) cpucount++;
     #endif
-    if (cpucount < 1)  //not supported
+
+    if (cpucount == -99)  // required co-processor (e.g. GPU) was not found
+      cpucount = 0;
+    else if (cpucount < 1)  // not supported
       cpucount = -1;
   }
 
