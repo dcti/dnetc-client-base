@@ -25,7 +25,7 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.89 2009/03/13 01:35:40 andreasb Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.90 2009/03/13 01:47:41 andreasb Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
 /* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */
@@ -33,27 +33,15 @@
 /* DO NOT USE C++ style comments ('//') in this file! */
 
 #define CLIENT_MAJOR_VER       2
-#define CLIENT_MAJOR_VER_HEX   0x02   /* needed for macos version resource */
 #define CLIENT_CONTEST         91
-#define CLIENT_CONTEST_HEX     0x5B   /* needed for macos version resource */
 #define CLIENT_BUILD           03
-#define CLIENT_BUILD_HEX       0x03   /* needed for macos version resource */
 #define CLIENT_BUILD_FRAC      510
-#define CLIENT_BUILD_FRAC_HEX  0x01FE /* needed for macos version resource */
 #define CLIENT_VERSIONSTRING   "2.9103-510"
 
 /* combined version used in packets etc. ... */
 #define CLIENT_VERSION         ( (((u32)(CLIENT_CONTEST))    * 1000000UL) +  \
                                  (((u32)(CLIENT_BUILD))      *   10000UL) +  \
                                  (((u32)(CLIENT_BUILD_FRAC)) *       1UL) )
-
-/* sanity check */
-#if (CLIENT_MAJOR_VER  != CLIENT_MAJOR_VER_HEX) || \
-    (CLIENT_CONTEST    != CLIENT_CONTEST_HEX) || \
-    (CLIENT_BUILD      != CLIENT_BUILD_HEX) || \
-    (CLIENT_BUILD_FRAC != CLIENT_BUILD_FRAC_HEX)
-#error inconsistency between dec and hex version number parts
-#endif
 
 #endif /* __VERSION_H__ */
 
