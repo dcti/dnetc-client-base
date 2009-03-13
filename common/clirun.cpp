@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.148 2009/01/22 19:44:58 kakace Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.149 2009/03/13 01:38:43 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1417,7 +1417,7 @@ int ClientRun( Client *client )
     {
       TRACE_OUT((0,"doing GetNumberOfDetectedProcessors()\n"));
       numcrunchers = GetNumberOfDetectedProcessors(); /* cpucheck.cpp */
-      if (numcrunchers < 1)
+      if (numcrunchers < 0)
       {
         LogScreen( CLIENT_OS_NAME " does not support SMP or\n"
                   "does not support processor count detection.\n"
