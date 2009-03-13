@@ -12,7 +12,7 @@ Version bump guide:
   | | |   `----- Changes in /common/ code, or simply a significant number
   | | |          of bug fixes, gets a "build fraction" change.
   | | `--------- New cores, for any platform, will be accompanied by a
-  | |            "build version" change, ie 2.7103.x to 2.7104.x.
+  | |            "build version" change, ie 2.7103.x to 2.7104.x+1.
   | |            New significant feature(s) also increment build version.
   | `----------- A "client contest" change follows a code freeze at which
   |              point the client is assumed to be stable. Code that
@@ -23,12 +23,15 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.54 2009/02/04 04:24:23 snake Exp $
+Version change log: $Id: CHANGES.txt,v 1.55 2009/03/13 01:35:39 andreasb Exp $
 ==========================================================================
 
 2.9100
 ------
-2.9103-509  new: rc5-72: support for requesting larger packets (#3918)
+2.9103-510  imp: all: gracefully handle lack of a supported cpu/gpu
+
+2.9103-509  *** minimal version that supports OGR-27 and beyond ***
+            new: rc5-72: support for requesting larger packets (#3918)
             new: stream: RC5-72 core for AMD stream video cards (#4099)
             imp: x86: Intel Atom (#4080)
             imp: x86: Pentium III detection (#4121)
@@ -39,13 +42,13 @@ Version change log: $Id: CHANGES.txt,v 1.54 2009/02/04 04:24:23 snake Exp $
             fix: linux: Improved OGR-NG cache management (#4076)
             imp: all: Print combined OGR-NG stubs with more details (#4082)
             fix: all: Combined OGR-NG stubs no longer appear to restart (#4083)
-            imp: all: Summarized benchmark results (#4108)
             new: arm: OGR-NG ASM cores
+            imp: all: Summarized benchmark results (#4108)
+            new: hppa: Added support for openbsd-hppa
+            new: mips: Added support for openbsd-sgi
             new: sparc64: Added support for openbsd-sparc64
             fix: sparc64: fixed netbsd-sparc64 target
             fix: win64: installation and execution as service (#4130)
-            new: hppa: Added support for openbsd-hppa
-            new: mips: Added support for openbsd-sgi
 
 2.9102-508  new: x86: OGR-NG mmx core
             new: cellbe: OGR-NG SPU C core

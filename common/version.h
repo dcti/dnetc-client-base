@@ -1,6 +1,6 @@
 /* -*-C-*-
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -25,7 +25,7 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.88 2008/12/30 20:58:42 andreasb Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.89 2009/03/13 01:35:40 andreasb Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
 /* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */
@@ -38,9 +38,9 @@
 #define CLIENT_CONTEST_HEX     0x5B   /* needed for macos version resource */
 #define CLIENT_BUILD           03
 #define CLIENT_BUILD_HEX       0x03   /* needed for macos version resource */
-#define CLIENT_BUILD_FRAC      509
-#define CLIENT_BUILD_FRAC_HEX  0x01FD /* needed for macos version resource */
-#define CLIENT_VERSIONSTRING   "2.9103-509"
+#define CLIENT_BUILD_FRAC      510
+#define CLIENT_BUILD_FRAC_HEX  0x01FE /* needed for macos version resource */
+#define CLIENT_VERSIONSTRING   "2.9103-510"
 
 /* combined version used in packets etc. ... */
 #define CLIENT_VERSION         ( (((u32)(CLIENT_CONTEST))    * 1000000UL) +  \
