@@ -23,12 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.57 2009/03/24 01:38:34 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.58 2009/03/24 03:06:01 andreasb Exp $
 ==========================================================================
 
 2.9100
 ------
 2.9104-510  imp: all: gracefully handle lack of a supported cpu/gpu
+            imp: gpgpu: raise rc5-72 buffer limit to 10000
+            new: cuda: switch to CUDA 2.1
             imp: cuda: bundle libcudart.so.2 with the client release
 
 2.9103-509  *** minimal version that supports OGR-27 and beyond ***

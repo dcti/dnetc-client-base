@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-  return "@(#)$Id: buffbase.cpp,v 1.41 2008/12/30 20:58:40 andreasb Exp $";
+  return "@(#)$Id: buffbase.cpp,v 1.42 2009/03/24 03:06:00 andreasb Exp $";
 }
 
 //#define TRACE
@@ -445,9 +445,13 @@ static unsigned long __get_threshold_limit(unsigned int contest)
     /* Allow for 14 days of work */
     unsigned int rate;
     rate = nominal_rate_for_contest(contest) * 14;
-    if (rate == 0)
+    if (rate == 0) {
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM) || (CLIENT_CPU == CPU_CELLBE)
+      rate = 10000;
+#else
       rate = 1000;
-    else {
+#endif
+    } else {
       /* A bit of rounding */
       if (rate < 100)
         rate = 10 * ((rate + 5) / 10);
