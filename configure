@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.375 2009/03/23 22:56:38 andreasb Exp $
+# @(#)$Id: configure,v 1.376 2009/03/24 01:33:15 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -67,6 +67,7 @@ TARGET_CUDA_INSTALL_PATH=""
 else
 TARGET_CUDA_INSTALL_PATH="/usr/local/cuda"
 fi
+TARGET_CUDA_VERSION="2.0"
 TARGET_NVCC="${TARGET_CUDA_INSTALL_PATH:+${TARGET_CUDA_INSTALL_PATH}/bin/}nvcc"
 TARGET_STREAMSDK_INSTALL_PREFIX="/usr/local/amdcal"
 #TARGET_STREAMSDK_INSTALL_PREFIX="/tmp/ati/amdcal/usr/local/amdcal"
@@ -3018,6 +3019,7 @@ case "$1" in
         TARGET_LIBS="-lcudart -lstdc++ -lrt"
         TARGET_TARBALL="linux-${inferred_arch}-cuda"
         TARGET_DOCFILES="docs/readme.linux docs/readme.cuda"   #platform specific docfile
+        TARGET_LIBFILES="plat/cuda/CUDA_Toolkit_EULA_081215.pdf ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.2 ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.$TARGET_CUDA_VERSION"
         TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "cuda"
         ;;
@@ -3036,8 +3038,9 @@ case "$1" in
         TARGET_NASM_FMT="macho"
 
         TARGET_LIBS="$TARGET_LIBS -lcudart"
-        TARGET_DOCFILES="docs/readme.cuda"   #platform specific docfile
         TARGET_TARBALL="macosx-x86-cuda"
+        TARGET_DOCFILES="docs/readme.cuda"   #platform specific docfile
+        TARGET_LIBFILES="plat/cuda/CUDA_Toolkit_EULA_081215.pdf ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.2 ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.$TARGET_CUDA_VERSION"
         add_sources "macosx" "cuda"
         ;;
 
@@ -3385,6 +3388,7 @@ echo "ADDOBJS = ${TARGET_ADDOBJS}" >> Makefile
 echo "INTOBJS = ${TARGET_INTOBJS}" >> Makefile
 echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
+echo "LIBFILES = ${TARGET_LIBFILES}" >> Makefile
 echo "NVCC = ${TARGET_NVCC}" >>Makefile   
 echo "NVCCFLAGS = \${CFLAGS}" >> Makefile   
 if [ "$TARGET_USES_GNUMAKE" = "yes" ]; then
@@ -3410,7 +3414,7 @@ if [ "$BUILDNAME" = "x86-os2" ]; then
         # should be more generic... pfeffi 2002-11-03
         echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS} output/dnetc.res" >> Makefile
 else
-        echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS}" >> Makefile
+        echo "${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}:	\${ALLOBJS} \${ADDOBJS} Makefile" >> Makefile
 fi
 echo "	\${LD} \${LDFLAGS} \${ALLOBJS} \${ADDOBJS} \${LIBS} -o ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 echo "	\${STRIP} ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
@@ -3442,6 +3446,7 @@ if [ -n "$TARGET_TARBALL" ]; then
       echo "	mkdir $FULLTARNAME" >> Makefile
       echo "	mkdir $FULLTARNAME/docs" >> Makefile
       echo "	for file in ${TARGET_BINNAME} \${DOCFILES} ; do cp \$\$file $FULLTARNAME/\$\$file ; done" >> Makefile
+      echo "	if test -n \"\${LIBFILES}\" ; then mkdir $FULLTARNAME/lib; for file in \${LIBFILES} ; do cp -a \$\$file $FULLTARNAME/lib/ ; done ; fi" >> Makefile
       echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
       echo "	rm -rf $FULLTARNAME" >> Makefile
     elif [ "$TARGET_ARCTYPE" = "lha" ]; then

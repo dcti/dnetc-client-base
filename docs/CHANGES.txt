@@ -23,12 +23,13 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.55 2009/03/13 01:35:39 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.56 2009/03/24 01:33:15 andreasb Exp $
 ==========================================================================
 
 2.9100
 ------
 2.9103-510  imp: all: gracefully handle lack of a supported cpu/gpu
+            imp: cuda: bundle libcudart.so.2 with the client release
 
 2.9103-509  *** minimal version that supports OGR-27 and beyond ***
             new: rc5-72: support for requesting larger packets (#3918)

@@ -1,6 +1,6 @@
 
  distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.8 2008/12/30 12:42:51 andreasb Exp $
+ document revision $Id: readme.cuda,v 1.9 2009/03/24 01:33:16 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -88,6 +88,12 @@
     and download the "CUDA toolkit 2.0" first.  After installing, you
     may need to either set your LD_LIBRARY_PATH environment variable
     to its lib directory prior to running dnetc.
+
+    For your convenience a copy of the required library (Linux:
+    libcudart.so.2; Mac OS X: libcudart.???; Windows: cudart.dll)
+    is provided in the lib/ subdirectory of the client archive.
+    You may need to either set your LD_LIBRARY_PATH environment
+    variable to this lib directory prior to running dnetc.
 
 
     In systems with dual nVidia cards, you must ensure that SLI is
