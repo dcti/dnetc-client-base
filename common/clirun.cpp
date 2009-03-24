@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.149 2009/03/13 01:38:43 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.150 2009/03/24 12:14:09 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -456,6 +456,12 @@ void Go_mt( void * parm )
       run = ProblemRun(thisprob);
       //fprintf(stderr,"thisprob->Run() = %d\n", run);
       thrparams->is_suspended = 1;
+
+      if (run < 0) // core failure, probably unspported system configuration, terminate
+      {
+        thrparams->do_exit = 1;
+        RaiseExitRequestTrigger();
+      }
 
       runtime_usec = 0xfffffffful; /* assume time was bad */
       if (!thisprob->pub_data.last_runtime_is_invalid)
