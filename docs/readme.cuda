@@ -1,6 +1,6 @@
 
  distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.11 2009/03/24 14:51:18 andreasb Exp $
+ document revision $Id: readme.cuda,v 1.12 2009/03/24 18:05:47 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -88,7 +88,7 @@
     
 
     For your convenience a copy of the required CUDA 2.1 runtime
-    library (Linux: libcudart.so.2; Mac OS X: libcudart.???;
+    library (Linux: libcudart.so.2; Mac OS X: libcudart.dylib;
     Windows: cudart.dll) is bundled with the client. For Linux and
     Mac OS X these libraries are located in the lib/ subdirectory.
 
