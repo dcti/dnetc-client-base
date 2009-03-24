@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.377 2009/03/24 02:56:26 andreasb Exp $
+# @(#)$Id: configure,v 1.378 2009/03/24 14:30:26 nerf Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3446,7 +3446,7 @@ if [ -n "$TARGET_TARBALL" ]; then
       echo "	mkdir $FULLTARNAME" >> Makefile
       echo "	mkdir $FULLTARNAME/docs" >> Makefile
       echo "	for file in ${TARGET_BINNAME} \${DOCFILES} ; do cp \$\$file $FULLTARNAME/\$\$file ; done" >> Makefile
-      echo "	if test -n \"\${LIBFILES}\" ; then mkdir $FULLTARNAME/lib; for file in \${LIBFILES} ; do cp -a \$\$file $FULLTARNAME/lib/ ; done ; fi" >> Makefile
+      echo "	if test -n \"\${LIBFILES}\" ; then mkdir $FULLTARNAME/lib; for file in \${LIBFILES} ; do cp -p \$\$file $FULLTARNAME/lib/ ; done ; fi" >> Makefile
       echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
       echo "	rm -rf $FULLTARNAME" >> Makefile
     elif [ "$TARGET_ARCTYPE" = "lha" ]; then
