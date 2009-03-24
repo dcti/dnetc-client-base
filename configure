@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.378 2009/03/24 14:30:26 nerf Exp $
+# @(#)$Id: configure,v 1.379 2009/03/24 15:04:30 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3013,7 +3013,7 @@ case "$1" in
         TARGET_CC="gcc"
         generate_gcc_opts "${inferred_arch}" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -I/usr/include/cuda -DCUDA -DDYN_TIMESLICE"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
         TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
         TARGET_LIBS="-lcudart -lstdc++ -lrt"
@@ -3027,7 +3027,7 @@ case "$1" in
     *macosx-cuda)               # Mac OS X, Darwin plus CUDA
         generate_gcc_opts "x86" "macosx"
         TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -I/usr/include/cuda -DCUDA -DDYN_TIMESLICE"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
         #TARGET_CCFLAGS="$TARGET_CCFLAGS -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
 
