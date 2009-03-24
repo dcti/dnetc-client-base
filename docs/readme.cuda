@@ -1,6 +1,6 @@
 
  distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.10 2009/03/24 02:56:26 andreasb Exp $
+ document revision $Id: readme.cuda,v 1.11 2009/03/24 14:51:18 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -59,9 +59,8 @@
 
  3.0  Troubleshooting and Known issues ------------------------------
 
-    We recommend using the nVidia driver version 180.xx (for use with
-    CUDA 2.1). Driver version 178.xx and older won't work because they 
-    have no support for CUDA 2.1.
+    The required nVidia driver version is 180.xx (for use with
+    CUDA 2.1). Driver version 178.xx and older won't work.
 
 
     On Windows Vista platforms, the CUDA client will not be able to
@@ -88,19 +87,15 @@
     the /dev/nvidiactl control file.
     
 
-    If you are unable to execute the dnetc binary because of a missing
-    libcudart.so library, you will need to visit the nVidia website
-    and download the "CUDA toolkit 2.1" first.  After installing, you
-    FIXME: the library is now bundled, no need to install the toolkit.
-    may need to either set your LD_LIBRARY_PATH environment variable
-    to its lib directory prior to running dnetc.
+    For your convenience a copy of the required CUDA 2.1 runtime
+    library (Linux: libcudart.so.2; Mac OS X: libcudart.???;
+    Windows: cudart.dll) is bundled with the client. For Linux and
+    Mac OS X these libraries are located in the lib/ subdirectory.
 
-    For your convenience a copy of the required library (Linux:
-    libcudart.so.2; Mac OS X: libcudart.???; Windows: cudart.dll)
-    is provided in the lib/ subdirectory of the client archive.
-    You may need to either set your LD_LIBRARY_PATH environment
-    variable to this lib directory prior to running dnetc.
-    TODO: VERIFY, CLEANUP, FIX FOR ALL PORTS
+    If you are unable to execute the dnetc binary because of a missing
+    libcudart.so library, you have to set your LD_LIBRARY_PATH
+    environment variable to include the lib subdirectory of the
+    extracted client archive prior to running dnetc.
 
 
     In systems with dual nVidia cards, you must ensure that SLI is
