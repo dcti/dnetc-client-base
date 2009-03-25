@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.32 2009/02/22 17:43:57 pstadt Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.33 2009/03/25 09:12:00 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -101,7 +101,6 @@ extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s0( RC5_72UnitWork *, u32 *, voi
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s1( RC5_72UnitWork *, u32 *, void * );
 #elif (CLIENT_CPU == CPU_AMD_STREAM)
 extern "C" s32 CDECL rc5_72_unit_func_il4( RC5_72UnitWork *, u32 *, void * );
-extern "C" s32 CDECL rc5_72_unit_func_il4c( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_il4_nand( RC5_72UnitWork *, u32 *, void * );
 #endif
 
@@ -865,10 +864,6 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         coresel = 0; // yes, we explicitly set coresel in the default case !
       break;               
       case 1:
-        unit_func.gen_72 = rc5_72_unit_func_il4c;
-        pipeline_count = 4;
-      break;               
-      case 2:
         unit_func.gen_72 = rc5_72_unit_func_il4_nand;
         pipeline_count = 4;
       break;               
