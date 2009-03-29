@@ -4,11 +4,9 @@
  * Any other distribution or use of this source violates copyright.
  *
  * Special thanks for help in testing this core to:
- * Alexander Kamashev
- * PanAm
- * Alexei Chupyatov
+ * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.6 2009/02/19 23:19:29 andreasb Exp $
+ * $Id: r72stream-common.h,v 1.7 2009/03/29 20:02:27 andreasb Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -28,12 +26,11 @@
 #include "logstuff.h"  // LogScreen()
 #include "pollsys.h"   // NonPolledUsleep()
 
-#define CORE_IL4    0
-#define CORE_IL4C   1
+
+#define CORE_IL4    1
 #define CORE_IL4N   2
 
-u32 sub72(u32 t_hi, u32 t_mid, u32 s_hi, u32 s_mid);
 u32 cmp72(u32 o1h, u32 o1m, u32 o1l, u32 o2h, u32 o2m, u32 o2l);
-void key_incr(unsigned *hi, unsigned *mid, unsigned *lo, unsigned incr);
+void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
 
 #endif

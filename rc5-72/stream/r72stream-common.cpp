@@ -4,16 +4,14 @@
  * Any other distribution or use of this source violates copyright.
  *
  * Special thanks for help in testing this core to:
- * Alexander Kamashev
- * PanAm
- * Alexei Chupyatov
+ * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.6 2009/02/19 09:38:26 andreasb Exp $
+ * $Id: r72stream-common.cpp,v 1.7 2009/03/29 20:02:27 andreasb Exp $
 */
 
 #include "r72stream-common.h"
 
-static u32 swap32(u32 a)
+static inline u32 swap32(u32 a)
 {
   u32 t=(a>>24)|(a<<24);
   t|=(a&0x00ff0000)>>8;
@@ -22,7 +20,6 @@ static u32 swap32(u32 a)
 }
 
 //Key increment
-
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr)
 {
   *hi+=incr;
@@ -39,16 +36,6 @@ void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr)
   *lo=swap32(t_l);
 }
 
-//Subtract two keys, use only mid & hi, since the result is always less than 40 bits
-u32 sub72(u32 t_hi, u32 t_mid, u32 s_hi, u32 s_mid)
-{
-  u32 res_h=t_hi-s_hi;
-  u32 res_m=swap32(t_mid)-swap32(s_mid);
-  if(res_h>t_hi)
-    res_m--;
-  res_m=(res_m<<8)+(res_h&0xff);
-  return res_m;
-}
 
 //Compare two keys
 u32 cmp72(u32 o1h, u32 o1m, u32 o1l, u32 o2h, u32 o2m, u32 o2l)
