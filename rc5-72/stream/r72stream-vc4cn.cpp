@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.10 2009/03/29 20:02:27 andreasb Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.11 2009/03/29 22:43:29 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -223,8 +223,8 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     calCtxRunProgram(&e, CContext[deviceID].ctx, CContext[deviceID].func, &domain);
     calCtxIsEventDone(CContext[deviceID].ctx, e);
 
-    struct timeval tv_ctx_start, tv_ctx_busy, tv_ctx_finish;
-    CliTimer(&tv_ctx_start);
+    hirestimer_type ctx_start, ctx_busy, ctx_finish;
+    HiresTimerGet(&ctx_start);
 
     if(iters==CContext[deviceID].maxIters)
       NonPolledUSleep(15000);   //15ms
@@ -234,12 +234,12 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     // Checking whether the execution of the program is complete or not
     u32 busy_counter=0;
 
-    CliTimer(&tv_ctx_busy);
+    HiresTimerGet(&ctx_busy);
 
     while (calCtxIsEventDone(CContext[deviceID].ctx, e) == CAL_RESULT_PENDING)
       busy_counter=1;
 
-    CliTimer(&tv_ctx_finish);
+    HiresTimerGet(&ctx_finish);
 
     if(perfC)
       calCtxEndCounterExt(CContext[deviceID].ctx, CContext[deviceID].idleCounter);
@@ -293,13 +293,7 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
           }
         }
       } else {
-
-        CliTimerDiff(&tv_ctx_busy, &tv_ctx_busy, &tv_ctx_finish);
-        CliTimerDiff(&tv_ctx_finish, &tv_ctx_start, &tv_ctx_finish);
-        double ctx_busywait = (double)tv_ctx_busy.tv_sec * 1000.0 + (double)tv_ctx_busy.tv_usec / 1000.0;
-        double ctx_elapsed = (double)tv_ctx_finish.tv_sec * 1000.0 + (double)tv_ctx_finish.tv_usec / 1000.0;
-        double delta=ctx_busywait/ctx_elapsed-0.005;
-
+        double delta = HiresTimerDiff(ctx_busy, ctx_start) / HiresTimerDiff(ctx_finish, ctx_start);
         CContext[deviceID].maxIters*=delta;
         if(CContext[deviceID].maxIters==0)
           CContext[deviceID].maxIters=1;
