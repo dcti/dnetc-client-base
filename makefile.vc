@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.105 2009/03/24 01:33:15 andreasb Exp $
+# $Id: makefile.vc,v 1.106 2009/03/29 11:07:52 andreasb Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -507,7 +507,7 @@ makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
 !if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win64-amd64.zip
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86-cuda.zip
+	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86-cuda21.zip
 !else
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86.zip
 !endif
