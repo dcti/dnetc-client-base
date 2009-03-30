@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.11 2009/03/29 22:43:29 andreasb Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.12 2009/03/30 01:08:41 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -34,13 +34,13 @@ bool init_rc5_72_il4_nand(u32 Device)
       CContext[Device].maxIters=64;
       break;
     case CAL_TARGET_630:
-      CContext[Device].domainSizeX=64;
-      CContext[Device].domainSizeY=54;
-      CContext[Device].maxIters=128;
+      CContext[Device].domainSizeX=24;
+      CContext[Device].domainSizeY=24;
+      CContext[Device].maxIters=256;
       break;
     case CAL_TARGET_670:
-      CContext[Device].domainSizeX=64;
-      CContext[Device].domainSizeY=16;
+      CContext[Device].domainSizeX=32;
+      CContext[Device].domainSizeY=32;
       CContext[Device].maxIters=300;
       break;
     case CAL_TARGET_7XX:
@@ -48,8 +48,8 @@ bool init_rc5_72_il4_nand(u32 Device)
       break;
     case CAL_TARGET_770:
       CContext[Device].domainSizeX=128;
-      CContext[Device].domainSizeY=80;
-      CContext[Device].maxIters=512;
+      CContext[Device].domainSizeY=128;
+      CContext[Device].maxIters=100;
       break;
     case CAL_TARGET_710:
       //TODO:domainSize
@@ -166,8 +166,6 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
   u32 height=CContext[deviceID].domainSizeY;
   u32 RunSize=width*height;
 
-  //LogScreen("%u ITERS (%u)\n",kiter,kiter/RunSize);
-
   while(itersNeeded) {
     u32 iters,rest;
 
@@ -228,8 +226,6 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 
     if(iters==CContext[deviceID].maxIters)
       NonPolledUSleep(15000);   //15ms
-    else
-      NonPolledUSleep(15000*iters/CContext[deviceID].maxIters);
 
     // Checking whether the execution of the program is complete or not
     u32 busy_counter=0;
@@ -248,6 +244,7 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     unsigned *o0;
     calResMap((CALvoid**)&o0, &pitch, CContext[deviceID].outputRes0, 0);
 
+    u32 last_CMC=0;
     for(u32 i=0; i<height; i++) {
       u32 idx=i*pitch;
       for(u32 j=0; j<width; j++) {
@@ -257,19 +254,28 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
           u32 CMC_iter=(((o0[idx+j]>>2)&0x0000ffff)-1)*RunSize;
           u32 CMC_hit=(CMC_iter+i*width+j)*4+(o0[idx+j]&0x00000003);
 
+          u32 hi,mid,lo;
+          hi=rc5_72unitwork->L0.hi;
+          mid=rc5_72unitwork->L0.mid;
+          lo=rc5_72unitwork->L0.lo;
+
+          key_incr(&hi,&mid,&lo,CMC_hit);
+          if(last_CMC<=CMC_hit) {
+            rc5_72unitwork->check.hi=hi;
+            rc5_72unitwork->check.mid=mid;
+            rc5_72unitwork->check.lo=lo;
+            last_CMC=CMC_hit;
+          }
+
           rc5_72unitwork->check.count+=CMC_count;
-          rc5_72unitwork->check.hi=rc5_72unitwork->L0.hi;
-          rc5_72unitwork->check.mid=rc5_72unitwork->L0.mid;
-          rc5_72unitwork->check.lo=rc5_72unitwork->L0.lo;
-          key_incr(&rc5_72unitwork->check.hi,&rc5_72unitwork->check.mid,&rc5_72unitwork->check.lo,CMC_hit);
 
           if(o0[idx+j]&0x80000000) {            //full match
 
             *iterations -= (kiter*4-CMC_hit);
 
-            rc5_72unitwork->L0.hi=rc5_72unitwork->check.hi;
-            rc5_72unitwork->L0.mid=rc5_72unitwork->check.mid;
-            rc5_72unitwork->L0.lo=rc5_72unitwork->check.lo;
+            rc5_72unitwork->L0.hi=hi;
+            rc5_72unitwork->L0.mid=mid;
+            rc5_72unitwork->L0.lo=lo;
 
             calResUnmap(CContext[deviceID].outputRes0);
 
@@ -294,9 +300,11 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
         }
       } else {
         double delta = HiresTimerDiff(ctx_busy, ctx_start) / HiresTimerDiff(ctx_finish, ctx_start);
+        if(delta<0.2)
+          delta=0.2;
         CContext[deviceID].maxIters*=delta;
-        if(CContext[deviceID].maxIters==0)
-          CContext[deviceID].maxIters=1;
+        if(CContext[deviceID].maxIters<3)
+          CContext[deviceID].maxIters=3;
       }
     }
 

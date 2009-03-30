@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.7 2009/03/29 20:02:27 andreasb Exp $
+ * $Id: r72stream-common.cpp,v 1.8 2009/03/30 01:08:41 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -34,29 +34,4 @@ void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr)
   *hi=*hi&0xff;
   *mid=swap32(t_m);
   *lo=swap32(t_l);
-}
-
-
-//Compare two keys
-u32 cmp72(u32 o1h, u32 o1m, u32 o1l, u32 o2h, u32 o2m, u32 o2l)
-{
-  u32 _o1l,_o2l,_o1m,_o2m;
-
-  _o1l=swap32(o1l);
-  _o2l=swap32(o2l);
-
-  _o1m=swap32(o1m);
-  _o2m=swap32(o2m);
-
-  if(_o2l>_o1l)
-    return 1;
-  else
-  if(_o2l==_o1l) {
-    if(_o2m>_o1m)
-      return 1;
-    else
-    if((_o2m==_o1m)&&(o2h>o1h))
-      return 1;
-  }
-  return 0;
 }
