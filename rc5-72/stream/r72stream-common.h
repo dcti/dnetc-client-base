@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.8 2009/03/29 22:43:29 andreasb Exp $
+ * $Id: r72stream-common.h,v 1.9 2009/03/30 00:56:11 andreasb Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -32,7 +32,6 @@
 #endif
 
 
-#define CORE_IL4    1
 #define CORE_IL4N   2
 
 u32 cmp72(u32 o1h, u32 o1m, u32 o1l, u32 o2h, u32 o2m, u32 o2l);
