@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.151 2009/04/01 15:49:23 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.152 2009/04/01 16:04:10 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -459,6 +459,7 @@ void Go_mt( void * parm )
 
       if (run < 0) // core failure, probably unspported system configuration, terminate
       {
+        Log("Terminating: cruncher %d reported error %d", threadnum, run);
         thrparams->do_exit = 1;
         RaiseExitRequestTrigger();
       }
@@ -1425,7 +1426,7 @@ int ClientRun( Client *client )
       numcrunchers = GetNumberOfDetectedProcessors(); /* cpucheck.cpp */
       if (numcrunchers < 0)
       {
-        LogScreen( CLIENT_OS_NAME " does not support SMP or\n"
+        LogScreen( CLIENT_OS_NAME_EXTENDED " does not support SMP or\n"
                   "does not support processor count detection.\n"
                   "A single processor machine is assumed.\n");
         numcrunchers = 1;

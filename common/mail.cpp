@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,7 +7,7 @@
  * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.47 2008/12/13 13:26:49 andreasb Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.48 2009/04/01 16:04:10 andreasb Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
@@ -573,7 +573,7 @@ static int smtp_send_message_header( void * net,
   {
     sprintf( buffer, "\r\nDate: %s"
         "\r\nX-Mailer: distributed.net v"CLIENT_VERSIONSTRING
-           " client for "CLIENT_OS_NAME, rfc822Date( buffer + 256 ) );
+           " client for "CLIENT_OS_NAME_EXTENDED, rfc822Date( buffer + 256 ) );
     if ( put_smtp_line( net, buffer, strlen( buffer ) ) )
       errcode = -1;
   }

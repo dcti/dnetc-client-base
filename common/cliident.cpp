@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.35 2009/02/01 13:29:44 andreasb Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.36 2009/04/01 16:04:10 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -540,7 +540,7 @@ int CliIsDevelVersion(void)
 
 const char *CliGetFullVersionDescriptor(void)
 {
-  static char buffer[10+32+sizeof("v"CLIENT_VERSIONSTRING"-XXX-99071523-*dev* client for "CLIENT_OS_NAME)];
+  static char buffer[10+32+sizeof("v"CLIENT_VERSIONSTRING"-XXX-99071523-*dev* client for "CLIENT_OS_NAME_EXTENDED)];
   struct timeval tv; tv.tv_usec = 0;
   tv.tv_sec = CliGetNewestModuleTime();
   sprintf( buffer, "%s v" CLIENT_VERSIONSTRING "-"
@@ -557,7 +557,7 @@ const char *CliGetFullVersionDescriptor(void)
          "%c"  /* limited release or dev branch or public release */
          "-%s" /* date is in bugzilla format yymmddhh */
          "%s"  /* "-*dev*" or "" */
-         " for "CLIENT_OS_NAME,
+         " for "CLIENT_OS_NAME_EXTENDED,
          utilGetAppName(),
          ((ConIsGUI())?('G'):('C')),
          ((CliIsDevelVersion())?('L'):('R')),

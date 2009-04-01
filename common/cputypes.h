@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.112 2009/04/01 15:49:26 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.113 2009/04/01 16:04:10 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -520,6 +520,28 @@
     #error "Unknown CPU/OS detected in cputypes.h"
     #error "fix common/cputypes.h and/or compiler command line -Defines"
   #endif
+#endif
+
+#if (CLIENT_CPU == CPU_CUDA)
+  #include <cuda.h>
+  #if (CUDA_VERSION == 2000)
+    #define CLIENT_OS_NAME_EXTENDED "CUDA 2.0 on " CLIENT_OS_NAME
+  #elif (CUDA_VERSION == 2010)
+    #define CLIENT_OS_NAME_EXTENDED "CUDA 2.1 on " CLIENT_OS_NAME
+  #else
+    #define CLIENT_OS_NAME_EXTENDED "CUDA on " CLIENT_OS_NAME
+  #endif
+#endif
+
+#if (CLIENT_CPU == CPU_ATI_STREAM)
+  #if (0)
+  #else
+    #define CLIENT_OS_NAME_EXTENDED "ATI Stream on " CLIENT_OS_NAME
+  #endif
+#endif
+
+#if !defined(CLIENT_OS_NAME_EXTENDED)
+  #define CLIENT_OS_NAME_EXTENDED   CLIENT_OS_NAME
 #endif
 
 /* ----------------------------------------------------------------- */

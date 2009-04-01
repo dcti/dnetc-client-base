@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.59 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.60 2009/04/01 16:04:10 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -567,10 +567,10 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   /* CFGTXT( */
 #if (CLIENT_OS == OS_RISCOS)
   "The priority option is ignored on this machine. The distributed.net client\n"
-  "for "CLIENT_OS_NAME" dynamically adjusts its process priority.\n"
+  "for "CLIENT_OS_NAME_EXTENDED" dynamically adjusts its process priority.\n"
 #elif (CLIENT_OS == OS_WIN16) //|| (CLIENT_OS==OS_WIN32)
   "The priority option is ignored on this machine. distributed.net clients\n"
-  "for "CLIENT_OS_NAME" always run at lowest ('idle') priority.\n"
+  "for "CLIENT_OS_NAME_EXTENDED" always run at lowest ('idle') priority.\n"
 #elif (CLIENT_OS == OS_NETWARE)
   "The priority option for the distributed.net client for NetWare is directly\n"
   "proportionate to the rate at which the client yields.\n"

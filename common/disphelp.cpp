@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.80 2009/02/06 05:42:51 jlawson Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.81 2009/04/01 16:04:10 andreasb Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -181,11 +181,11 @@ void GenerateManPage( void )
     for (pos=0;buffer[pos];pos++)
       buffer[pos]=(char)toupper(buffer[pos]);
     fprintf(manp, ".Dt %s 1\n", buffer );
-    //fprintf(manp, ".Os "CLIENT_OS_NAME"\n");
+    //fprintf(manp, ".Os "CLIENT_OS_NAME_EXTENDED"\n");
     fprintf(manp, ".Sh NAME\n");
     fprintf(manp, ".Nm %s\n", appname);
     fprintf(manp, ".Nd distributed.net distributed computing client for "
-                    CLIENT_OS_NAME"\n" );
+                    CLIENT_OS_NAME_EXTENDED"\n" );
 
     fprintf(manp, ".Sh SYNOPSIS\n");
     fprintf(manp, ".Nm %s\n", appname);
@@ -408,7 +408,7 @@ void DisplayHelp( const char * unrecognized_option )
 
   static const char *helpheader[] =
   {
-    "distributed.net v" CLIENT_VERSIONSTRING " client for " CLIENT_OS_NAME,
+    "distributed.net v" CLIENT_VERSIONSTRING " client for " CLIENT_OS_NAME_EXTENDED,
     "Visit http://faq.distributed.net/ for in-depth command line help",
     "-------------------------------------------------------------------------"
   };

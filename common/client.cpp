@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.266 2009/04/01 15:49:21 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.267 2009/04/01 16:04:10 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -227,7 +227,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
   {
     if (level == 0)
     {
-      LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME " "
+      LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME_EXTENDED " "
                     "Copyright 1997-2009, distributed.net\n");
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
