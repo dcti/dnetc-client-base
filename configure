@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.384 2009/03/30 04:12:46 chandleg Exp $
+# @(#)$Id: configure,v 1.385 2009/04/01 15:38:52 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3109,6 +3109,12 @@ if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
   ${TARGET_STRIP} testplat
 else
   cc common/testplat.cpp -o testplat
+fi
+echo "Checking test program..."
+./testplat build_dependancies common/client.cpp > /dev/null
+if [ $? -ne 0 ]; then
+  echo "Execution failed.  Check your library search path."
+  exit 1
 fi
 
 #
