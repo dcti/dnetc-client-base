@@ -1,6 +1,6 @@
 
  distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.12 2009/03/24 18:05:47 andreasb Exp $
+ document revision $Id: readme.cuda,v 1.13 2009/04/01 17:27:04 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -36,14 +36,16 @@
 
     This client requires nVidia CUDA-capable hardware and appropriate
     drivers to be installed.  For a list of GPU hardware that supports
-    CUDA, see <http://en.wikipedia.org/wiki/CUDA#Supported_GPUs> 
+    CUDA, see <http://en.wikipedia.org/wiki/CUDA#Supported_GPUs>
 
-    When installing the CUDA drivers, be sure to download
-    the version for CUDA 2.1 (and not version 2.0 nor 1.1).  Visit
-    <http://www.nvidia.com/object/cuda_get.html>
+    When installing the CUDA drivers, be sure to download the version
+    matching the client build: 2.1 for Linux, 2.0 for Max OS X.
+    There are separate CUDA 2.0 and CUDA 2.1 builds available for
+    Windows, please use the matching driver version!
+    Visit <http://www.nvidia.com/object/cuda_get.html>
 
     It is not neccessary to install the CUDA Toolkit as a copy of the
-    CUDA runtime library from CUDA Toolkit 2.1 is bundled with the client.
+    CUDA runtime library from CUDA Toolkit is bundled with the client.
     You may have to adjust environment variables so that the library is
     found, see below.
 
@@ -59,8 +61,9 @@
 
  3.0  Troubleshooting and Known issues ------------------------------
 
-    The required nVidia driver version is 180.xx (for use with
-    CUDA 2.1). Driver version 178.xx and older won't work.
+    The required nVidia driver version is 180.xx for use with CUDA 2.1
+    and 178.xx for CUDA 2.0. While newer drivers might work, older
+    versions definitively won't work.
 
 
     On Windows Vista platforms, the CUDA client will not be able to
@@ -85,17 +88,18 @@
     access, so you will need to ensure that your UNIX user is a
     member of it.  If uncertain, view the file permissions of
     the /dev/nvidiactl control file.
-    
 
-    For your convenience a copy of the required CUDA 2.1 runtime
+
+    For your convenience a copy of the required CUDA runtime
     library (Linux: libcudart.so.2; Mac OS X: libcudart.dylib;
     Windows: cudart.dll) is bundled with the client. For Linux and
     Mac OS X these libraries are located in the lib/ subdirectory.
 
     If you are unable to execute the dnetc binary because of a missing
-    libcudart.so library, you have to set your LD_LIBRARY_PATH
-    environment variable to include the lib subdirectory of the
-    extracted client archive prior to running dnetc.
+    libcudart.so library, you have to set your LD_LIBRARY_PATH environment
+    variable (on Linux) or DYLD_LIBRARY_PATH (on Mac OS X) to include
+    the 'lib' subdirectory of the extracted client archive prior to
+    running dnetc.
 
 
     In systems with dual nVidia cards, you must ensure that SLI is

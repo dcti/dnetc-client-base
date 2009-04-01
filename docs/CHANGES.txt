@@ -23,16 +23,18 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.60 2009/04/01 15:49:29 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.61 2009/04/01 17:27:04 andreasb Exp $
 ==========================================================================
 
 2.9100
 ------
-2.9104-510  imp: all: gracefully handle lack of a supported cpu/gpu
+2.9104-510  imp: all: handle lack of a supported cpu/gpu more gracefully
             imp: gpgpu: terminate on unsupported driver/library installations
             imp: gpgpu: raise rc5-72 buffer limit to 10000
-            new: cuda: switch to CUDA 2.1
-            imp: cuda: bundle libcudart.so.2 with the released client
+            new: cuda: switch to CUDA 2.1 (Linux and Windows only)
+            new: cuda: bundle runtime library (libcudart.so.2/libcudart.dylib/
+                       cudart.dll) with the released client
+            imp: cuda: log errors to logfile (if enabled)
 
 2.9103-509  *** minimal version that supports OGR-27 and beyond ***
             new: rc5-72: support for requesting larger packets (#3918)
