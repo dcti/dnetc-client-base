@@ -1,6 +1,6 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 2001-2008 - All Rights Reserved
+ * Copyright distributed.net 2001-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.15 2009/01/05 04:24:37 jlawson Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.16 2009/04/01 15:49:23 andreasb Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -182,7 +182,7 @@
     return 1;
   }
 
-#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)
+#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
 
   typedef volatile long fastlock_t;
 

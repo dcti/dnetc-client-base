@@ -1,6 +1,6 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.105 2009/02/16 19:27:17 oliver Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.106 2009/04/01 15:49:27 andreasb Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -147,7 +147,7 @@ struct problem_publics
   int is_random;                 /* set if problem was RC5 'random'      */
   int is_benchmark;              /* set if problem is benchmark          */
 
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
   int threadnum;                 /* sets which GPU to use                */
 #endif
 

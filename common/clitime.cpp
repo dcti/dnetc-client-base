@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.70 2009/02/21 02:40:27 andreasb Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.71 2009/04/01 15:49:24 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -818,7 +818,7 @@ int CliGetThreadUserTime( struct timeval *tv )
 #elif (CLIENT_CPU == CPU_CELLBE)
   DNETC_UNUSED_PARAM(tv);
   return -1;
-#elif (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)
+#elif (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
   DNETC_UNUSED_PARAM(tv);
   return -1;
 #elif defined(HAVE_GETRUSAGE) && defined(THREADS_HAVE_OWN_ACCOUNTING)

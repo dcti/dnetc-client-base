@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.111 2009/02/04 04:20:36 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.112 2009/04/01 15:49:26 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -38,7 +38,7 @@
 #define CPU_X86_64      CPU_AMD64 /* old GNU name before AMD announced AMD64 */
 #define CPU_CELLBE	18
 #define CPU_CUDA	19
-#define CPU_AMD_STREAM	20
+#define CPU_ATI_STREAM	20
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -115,8 +115,8 @@
     #define CLIENT_CPU     CPU_POWERPC
   #elif defined (CUDA)
     #define CLIENT_CPU     CPU_CUDA
-  #elif defined(AMD_STREAM)
-    #define CLIENT_CPU     CPU_AMD_STREAM
+  #elif defined(ATI_STREAM)
+    #define CLIENT_CPU     CPU_ATI_STREAM
   #elif (!defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)) /* win16 */ \
         || (defined(__WINDOWS386__)) /* standard 32bit client built for win16 */
     #define CLIENT_CPU     CPU_X86
@@ -167,8 +167,8 @@
   #endif
   #if defined(CUDA) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
     #define CLIENT_CPU     CPU_CUDA
-  #elif defined(AMD_STREAM) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
-    #define CLIENT_CPU     CPU_AMD_STREAM
+  #elif defined(ATI_STREAM) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
+    #define CLIENT_CPU     CPU_ATI_STREAM
   #elif defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(ASM_SH4) /* cross compile, ergo don't use __sh__ */
@@ -530,7 +530,7 @@
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
-     (CLIENT_CPU == CPU_AMD_STREAM) || \
+     (CLIENT_CPU == CPU_ATI_STREAM) || \
      ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_WIN32) || \
      (CLIENT_OS == OS_DEC_UNIX))))
    #define CORES_SUPPORT_SMP
@@ -579,7 +579,7 @@
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
 #elif (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOSX)) && \
-  ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)))
+  ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)))
   /* Necessary for streams to work correctly */
   #define HAVE_POSIX_THREADS
   #define _POSIX_THREADS_SUPPORTED
@@ -647,8 +647,8 @@
   #endif
   #if (CLIENT_CPU == CPU_CUDA)
   #error "FORK and CUDA don't work together - can't use multiple GPUs"
-  #elif (CLIENT_CPU == CPU_AMD_STREAM)
-  #error "FORK and AMD STREAM probably don't work together"
+  #elif (CLIENT_CPU == CPU_ATI_STREAM)
+  #error "FORK and ATI Stream probably don't work together"
   #endif
 #else
   typedef int THREADID;

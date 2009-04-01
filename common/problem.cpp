@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.196 2009/01/30 01:22:01 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.197 2009/04/01 15:49:26 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -1248,7 +1248,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
 
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
       thisprob->priv_data.rc5_72unitwork.threadnum = thisprob->pub_data.threadnum;
 #endif     
       SAVE_CLIENT_OS_CONTEXT

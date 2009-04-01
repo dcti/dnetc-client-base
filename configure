@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.385 2009/04/01 15:38:52 andreasb Exp $
+# @(#)$Id: configure,v 1.386 2009/04/01 15:49:20 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2614,7 +2614,6 @@ case "$1" in
 
 ###### AMD 64
 
-
     *linux-amd64)               # generic. works everywhere
         infer_arch_and_version "Linux"
         TARGET_NASM="yasm"
@@ -3005,6 +3004,7 @@ case "$1" in
         ;;
 
 ###### CUDA
+
     *linux-cuda*)               
         infer_arch_and_version "Linux"
         TARGET_AS="gcc -c"         
@@ -3044,16 +3044,17 @@ case "$1" in
         add_sources "macosx" "cuda"
         ;;
 
-###### AMD stream
+###### ATI Stream
+
     *linux-stream*)               
         infer_arch_and_version "Linux"
         TARGET_AS="gcc -c"         
         TARGET_CC="gcc"
         generate_gcc_opts "${inferred_arch}" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_STREAMSDK_INSTALL_PREFIX:+-I$TARGET_STREAMSDK_INSTALL_PREFIX/include} -DAMD_STREAM -DDYN_TIMESLICE"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_STREAMSDK_INSTALL_PREFIX:+-I$TARGET_STREAMSDK_INSTALL_PREFIX/include} -DATI_STREAM -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_STREAM_DRIVER_INSTALL_PREFIX:+-L$TARGET_STREAM_DRIVER_INSTALL_PREFIX/lib -Wl,-rpath -Wl,$TARGET_STREAM_DRIVER_INSTALL_PREFIX/lib}" # HACK!
+        #TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_STREAM_DRIVER_INSTALL_PREFIX:+-L$TARGET_STREAM_DRIVER_INSTALL_PREFIX/lib -Wl,-rpath -Wl,$TARGET_STREAM_DRIVER_INSTALL_PREFIX/lib}" # HACK!
         TARGET_LIBS="-laticalrt -laticalcl -lstdc++ -lrt"
         TARGET_TARBALL="linux-${inferred_arch}-stream"
         TARGET_DOCFILES="docs/readme.linux docs/readme.stream"   #platform specific docfile

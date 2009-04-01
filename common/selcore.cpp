@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1998-2008 - All Rights Reserved
+ * Copyright distributed.net 1998-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.120 2009/02/23 01:07:02 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.121 2009/04/01 15:49:28 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -425,7 +425,7 @@ static long __bench_or_test( int which,
         }
         else {
           Log("Core #%d is significantly faster than the default core.\n"
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_AMD_STREAM)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
               "Please file a bug report along with the output of\n-cpuinfo.\n",
 #else
               "The CUDA core selection has been made as a tradeoff between core speed\n"

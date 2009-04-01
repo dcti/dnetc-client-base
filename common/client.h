@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.157 2009/01/25 15:05:08 andreasb Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.158 2009/04/01 15:49:22 andreasb Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -14,7 +14,7 @@
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
 
-#if (CLIENT_CPU == CPU_CELLBE) || (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM)
+#if (CLIENT_CPU == CPU_CELLBE) || (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
 #define PREFERREDBLOCKSIZE_DEFAULT       64
 #else
 #define PREFERREDBLOCKSIZE_DEFAULT       1

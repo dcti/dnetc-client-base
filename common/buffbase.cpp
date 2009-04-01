@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-  return "@(#)$Id: buffbase.cpp,v 1.42 2009/03/24 03:06:00 andreasb Exp $";
+  return "@(#)$Id: buffbase.cpp,v 1.43 2009/04/01 15:49:21 andreasb Exp $";
 }
 
 //#define TRACE
@@ -446,7 +446,7 @@ static unsigned long __get_threshold_limit(unsigned int contest)
     unsigned int rate;
     rate = nominal_rate_for_contest(contest) * 14;
     if (rate == 0) {
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_AMD_STREAM) || (CLIENT_CPU == CPU_CELLBE)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_CELLBE)
       rate = 10000;
 #else
       rate = 1000;

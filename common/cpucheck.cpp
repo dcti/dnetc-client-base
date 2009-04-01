@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.157 2009/03/13 01:37:31 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.158 2009/04/01 15:49:25 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -54,7 +54,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.157 2009/03/13 01:37:31 andreasb Exp $"; }
 #include <cuda_runtime.h>
 #endif
 
-#if (CLIENT_CPU == CPU_AMD_STREAM)
+#if (CLIENT_CPU == CPU_ATI_STREAM)
 #include "amdstream_info.h"
 #endif
 
@@ -98,11 +98,11 @@ int GetNumberOfDetectedProcessors( void )
         cpucount = -99;
       }
     }
-    #elif (CLIENT_CPU == CPU_AMD_STREAM)
+    #elif (CLIENT_CPU == CPU_ATI_STREAM)
     {
       cpucount=getAMDStreamDeviceCount();
       if (cpucount<=0) {
-        LogScreen("No AMD STREAM-compatible device found.\n");
+        LogScreen("No ATI Stream compatible device found.\n");
         cpucount = -99;
       }
     }
@@ -2109,7 +2109,7 @@ static long __GetRawProcessorID(const char **cpuname)
 
 /* ---------------------------------------------------------------------- */
 
-#if (CLIENT_CPU == CPU_AMD_STREAM)
+#if (CLIENT_CPU == CPU_ATI_STREAM)
 static inline long __GetRawProcessorID(const char **cpuname)
 {
   return getAMDStreamRawProcessorID(cpuname);
@@ -2129,7 +2129,7 @@ long GetProcessorType(int quietly)
       (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
       (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
       (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
-      (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_AMD_STREAM)
+      (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM)
   {
     const char *cpuname = NULL;
     long rawid = __GetRawProcessorID(&cpuname);
@@ -2214,7 +2214,7 @@ unsigned int GetProcessorFrequency()
     cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
     freq = deviceProp.clockRate / 1000;
 
-  #elif (CLIENT_CPU == CPU_AMD_STREAM)
+  #elif (CLIENT_CPU == CPU_ATI_STREAM)
     freq = getAMDStreamDeviceFreq();
 
   #elif (CLIENT_OS == OS_MACOSX)
@@ -2463,7 +2463,7 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
     (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
     (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
-    (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_AMD_STREAM)
+    (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM)
   long rawid = __GetRawProcessorID(&cpuid_s);
   if (rawid == -1L || rawid == -2L)
     cpuid_s = ((rawid==-1)?("?\n\t(identification failed)"):
