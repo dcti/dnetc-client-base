@@ -6,11 +6,12 @@
  *
  * With modifications by Greg Childers
  *
- * $Id: r72cuda.h,v 1.13 2008/12/22 11:46:33 andreasb Exp $
+ * $Id: r72cuda.h,v 1.14 2009/04/01 15:35:27 andreasb Exp $
 */
 
 #include "ccoreio.h"
 #include "clitime.h"
+#include "logstuff.h"
 #include "sleepdef.h"
 
 /* -------------------------------------------------------------------------- */
