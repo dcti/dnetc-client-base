@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.18 2009/02/22 17:58:40 pstadt Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.19 2009/04/02 12:14:16 stream Exp $"; }
 
 //#define TRACE
 
@@ -66,6 +66,7 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.18 2009/02/22 17:58:40 pstadt Exp $"; }
     #else
       CoreDispatchTable *ogrng_get_dispatch_table_asm1(void); //B (asm #1)
       CoreDispatchTable *ogrng_get_dispatch_table_mmx(void);  //C (asm #2)
+      CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse2(void);  //D (asm #3)
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
     CoreDispatchTable *ogrng_get_dispatch_table(void);
@@ -102,6 +103,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
           ogrng_get_dispatch_table_asm1();
         #ifdef HAVE_I64
           ogrng_get_dispatch_table_mmx();
+          ogrng_get_dispatch_table_cj1_sse2();
         #endif
         #endif
       #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
@@ -189,6 +191,7 @@ const char **corenames_for_contest_ogr_ng()
       #else
       "rt-asm-generic",
       "rt-asm-mmx",
+      "cj-asm-sse2",
       #endif
   #elif (CLIENT_CPU == CPU_AMD64)
       "FLEGE-64 2.0",
@@ -300,13 +303,15 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
 #  if defined(HAVE_I64)
 #    if (SIZEOF_LONG < 8)   /* classic x86-32 */
        unsigned feature = GetProcessorFeatureFlags();
+       if ((feature & CPU_F_SSE2) == 0 && cindex == 3) /* If no SSE2, try MMX */
+         cindex = 2;
        if ((feature & CPU_F_MMX) == 0 && cindex == 2) /* MMX for MMX core */
          cindex = 1;
 #    else                   /* x86-64 */
 #    endif
 #  else /* No 64-bit support in compiler */
 #    if (SIZEOF_LONG < 8)   /* classic x86-32 */
-       if (cindex == 2)  /* mmx core requires 64-bits types */
+       if (cindex == 2 || cindex == 3)  /* mmx/sse cores requires 64-bits types */
          cindex = 1;
 #    endif
 #  endif
@@ -377,7 +382,9 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
         cindex = 1;  /* 64-bit core */
       #else
         #if defined(HAVE_I64)
-          if (detected_flags & CPU_F_MMX)
+          if (detected_flags & CPU_F_SSE2)
+            cindex = 3; /* sse asm core */
+          else if (detected_flags & CPU_F_MMX)
             cindex = 2; /* mmx asm core */
           else
             cindex = 1;  /* no mmx - generic asm core */
@@ -498,6 +505,8 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
   #ifdef HAVE_I64
     else if (coresel == 2)
       unit_func.ogr = ogrng_get_dispatch_table_mmx();
+    else if (coresel == 3)
+      unit_func.ogr = ogrng_get_dispatch_table_cj1_sse2();
   #endif
     else
       unit_func.ogr = ogrng_get_dispatch_table();

@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.106 2009/04/01 15:49:27 andreasb Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.107 2009/04/02 12:14:16 stream Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -47,9 +47,10 @@
        #define CORE_MEM_ALIGNMENT 4
      #endif
   #else
-     #if CORE_MEM_ALIGNMENT < 3
+     // For x86, alignment must be 8 for MMX core and 16 for SSE.
+     #if CORE_MEM_ALIGNMENT < 4
        #undef CORE_MEM_ALIGNMENT
-       #define CORE_MEM_ALIGNMENT 3
+       #define CORE_MEM_ALIGNMENT 4
      #endif
   #endif
 #endif
