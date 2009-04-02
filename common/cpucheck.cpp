@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.158 2009/04/01 15:49:25 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.159 2009/04/02 07:29:47 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -89,10 +89,18 @@ int GetNumberOfDetectedProcessors( void )
     #if (CLIENT_CPU == CPU_CUDA)
     {
       cudaDeviceProp deviceProp;
-      cudaGetDeviceCount(&cpucount);
-      cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
-      if (strstr(deviceProp.name, "Emulation") != NULL)
+      cudaError_t rc = cudaGetDeviceCount(&cpucount);
+      if (rc != cudaSuccess)
+      {
         cpucount = 0;
+      }
+      else
+      {
+        rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+        if (rc != cudaSuccess || (deviceProp.major == 9999 && deviceProp.minor == 9999))
+          cpucount = 0;
+      }
+
       if (cpucount <= 0) {
         LogScreen("No CUDA-supported GPU found.\n");
         cpucount = -99;
@@ -2093,9 +2101,37 @@ static long __GetRawProcessorID(const char **cpuname)
 static long __GetRawProcessorID(const char **cpuname)
 {
   static char namebuf[40];
+  static int cpucount;
+
+  cudaError_t rc = cudaGetDeviceCount(&cpucount);
+  if (rc != cudaSuccess)
+  {
+    if (cpuname)
+    {
+      LogScreen("CUDA initialization failure.\n");
+      *cpuname = '\0';
+    }
+
+    return -1;
+  }
+
   cudaDeviceProp deviceProp;
         
-  cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+  rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+
+  if (rc != cudaSuccess)
+  {
+    cpucount = 0;
+  }
+
+  if (cpucount <= 0)
+  {
+    if (cpuname)
+      *cpuname = '\0';
+
+    return -1;
+  }
+
   snprintf(namebuf, sizeof(namebuf), "%.29s (%d MPs)", deviceProp.name, deviceProp.multiProcessorCount);
 
   if (cpuname)
@@ -2211,8 +2247,15 @@ unsigned int GetProcessorFrequency()
   #if (CLIENT_CPU == CPU_CUDA)
     cudaDeviceProp deviceProp;
         
-    cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
-    freq = deviceProp.clockRate / 1000;
+    cudaError_t rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+    if (rc != cudaSuccess || (deviceProp.major == 9999 && deviceProp.minor == 9999))
+    {
+      freq = 0;
+    }
+    else
+    {
+      freq = deviceProp.clockRate / 1000;
+    }
 
   #elif (CLIENT_CPU == CPU_ATI_STREAM)
     freq = getAMDStreamDeviceFreq();
