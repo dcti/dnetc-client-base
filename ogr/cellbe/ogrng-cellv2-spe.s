@@ -13,6 +13,12 @@
 	;# After scheduling and reordering, code look like complete mess. So be it.
 	;#
 
+	;# History:
+	;#
+	;# 2009-04-05: Store of new 'limit' is delayed. It can be stored before PUSH_LEVEL
+	;# and when core exits. Same for 'mark'. +450 Knodes.
+	;#
+
 	;#
 	;# Known non-optimal things:
 	;#    1) Calculation of 's' has long dependency chain. Most of codepathes
@@ -260,9 +266,7 @@ no_for_loop:
 	# if (depth == oState->maxdepthm1) {  goto exit; }
 
 	or		$new_distV0, $distV0, $listV0	# distV0 = vec_or(distV0, listV0); (precalc)
-	stqd		$mark, 96($lev)
-	nop
-	brnz		$cond_depth_maxm1, do_exit
+	brnz		$cond_depth_maxm1, save_mark_and_exit
 
 	#  PUSH_LEVEL_UPDATE_STATE(lev);
 	#  lev->comp = comp;
@@ -275,7 +279,7 @@ no_for_loop:
 	shufb		$grpid_vector, $new_distV0, $new_distV0, $consth_0x0001 # copy high 16 bits of dist0 to all slots for vector compare
 
 	rotmi		$temp,  $new_distV0, -12	# 12345678 => 00012345
-	lnop
+	stqd		$limit, 112($lev)		# delayed lev->limit = limit
 	
 	ori		$distV0, $new_distV0, 0		# copy preloaded distV0
 	stqd		$compV0, 64($lev)		# lev->comp[0].v = compV0;
@@ -284,10 +288,10 @@ no_for_loop:
 	stqd		$compV1, 80($lev)		# lev->comp[1].v = compV1;
 
 	or		$compV0, $compV0, $distV0	# compV0 = vec_or(compV0, distV0);
-	stqd		$listV0, 0($lev)		# lev->list[0].v = listV0;
+	stqd		$mark, 96($lev)			# lev->mark = mark (delayed)
 
 	xor		$hash_mul16, $temp, $hash_mul16	# 123 ^ 345
-	lnop
+	stqd		$listV0, 0($lev)		# lev->list[0].v = listV0;
 	
 	or		$compV1, $compV1, $distV1	# compV1 = vec_or(compV1, distV1);
 	stqd		$listV1, 16($lev)		# lev->list[1].v = listV1;
@@ -362,7 +366,8 @@ fetch_pvalues:
 
 	brnz		$cond_depth_hd, update_limit
 
-	stqd		$limit, 112($lev)
+	# store of limit delayed
+
 .L_1:
 	brnz		$nodes, for_loop_clz_ready
 	br		save_mark_and_exit
@@ -392,16 +397,16 @@ update_limit:
 	selb		$temp, $temp, $temp2, $cond_depth_hd2	;# use temp or "temp -= ..."
 
 	cgt		$cond_limit_temp, $limit, $temp		;# if (limit > temp)
+	lnop
 	selb		$limit, $limit, $temp, $cond_limit_temp ;#   limit = temp;
 	
-	stqd		$limit, 112($lev)
+	# Store of limit delayed
 .L_2:
 	brnz		$nodes, for_loop_clz_ready
 	
 save_mark_and_exit:
 	stqd		$mark, 96($lev)
-
-do_exit:
+	stqd		$limit, 112($lev)
 	# SAVE_FINAL_STATE(lev);
 	stqd		$listV0, 0($lev)
 	stqd		$listV1, 16($lev)
@@ -463,7 +468,7 @@ break_for:
 	# while (depth > oState->stopdepth);
 .L33:
 	brnz		$cond_depth_stopdepth, outer_loop_comp0_ready
-	br		do_exit
+	br		save_mark_and_exit
 
 fetch_new_pchoose:
 	;#
