@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.159 2009/04/02 07:29:47 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.160 2009/04/07 08:54:32 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -52,6 +52,7 @@ return "@(#)$Id: cpucheck.cpp,v 1.159 2009/04/02 07:29:47 andreasb Exp $"; }
 
 #if (CLIENT_CPU == CPU_CUDA)
 #include <cuda_runtime.h>
+#include "cuda_info.h"
 #endif
 
 #if (CLIENT_CPU == CPU_ATI_STREAM)
@@ -88,20 +89,7 @@ int GetNumberOfDetectedProcessors( void )
     cpucount = -1;
     #if (CLIENT_CPU == CPU_CUDA)
     {
-      cudaDeviceProp deviceProp;
-      cudaError_t rc = cudaGetDeviceCount(&cpucount);
-      if (rc != cudaSuccess)
-      {
-        cpucount = 0;
-      }
-      else
-      {
-        rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
-        if (rc != cudaSuccess || (deviceProp.major == 9999 && deviceProp.minor == 9999))
-          cpucount = 0;
-      }
-
-      if (cpucount <= 0) {
+      if ((cpucount = GetNumberOfDetectedCUDAGPUs()) <= 0) {
         LogScreen("No CUDA-supported GPU found.\n");
         cpucount = -99;
       }

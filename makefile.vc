@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.108 2009/04/07 08:16:26 andreasb Exp $
+# $Id: makefile.vc,v 1.109 2009/04/07 08:54:32 andreasb Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -268,7 +268,8 @@ CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
             $(OUTPUTPATH)/x86rdtsc.obj       \
             $(OUTPUTPATH)/x86htcount.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-CHIP_OBJS = $(OUTPUTPATH)/cuda_setup.obj
+CHIP_OBJS = $(OUTPUTPATH)/cuda_setup.obj     \
+            $(OUTPUTPATH)/cuda_info.obj
 !endif
 
 # --------------------------------- RC5-72 -------------------------
