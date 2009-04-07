@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.107 2009/04/02 12:15:55 stream Exp $
+# $Id: makefile.vc,v 1.108 2009/04/07 08:16:26 andreasb Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -44,7 +44,7 @@ CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 HAVE_OGR_CORES = 0
 OPTS_CC_CPU =
 OPTS_M_PLAT = IX86
-CHIPSRCPATH = plat/x86
+CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 .SUFFIXES : .cu
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
@@ -267,6 +267,8 @@ CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
             $(OUTPUTPATH)/x86id.obj          \
             $(OUTPUTPATH)/x86rdtsc.obj       \
             $(OUTPUTPATH)/x86htcount.obj
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+CHIP_OBJS = $(OUTPUTPATH)/cuda_setup.obj
 !endif
 
 # --------------------------------- RC5-72 -------------------------

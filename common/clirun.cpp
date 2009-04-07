@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.152 2009/04/01 16:04:10 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.153 2009/04/07 08:16:27 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -35,6 +35,10 @@ return "@(#)$Id: clirun.cpp,v 1.152 2009/04/01 16:04:10 andreasb Exp $"; }
 #include "clievent.h"  // ClientEventSyncPost() and constants
 #include "coremem.h"   // cmem_alloc(), cmem_free()
 #include "bench.h"     // BenchResetStaticVars()
+
+#if (CLIENT_CPU == CPU_CUDA)
+#include "cuda_setup.h"         // InitializeCUDA();
+#endif
 
 // --------------------------------------------------------------------------
 
@@ -1329,6 +1333,7 @@ static int GetMaxCrunchersPermitted( void )
 /* ---------------------------------------------------------------------- */
 
 // returns:
+//    -3 = exit by error (no required co-processor found)
 //    -2 = exit by error (all contests closed)
 //    -1 = exit by error (critical)
 //     0 = exit for unknown reason
@@ -1372,6 +1377,7 @@ int ClientRun( Client *client )
   //
   // Initialization: (order is important, 'F' denotes code that can fail)
   // 1.    UndoCheckpoint() (it is not affected by TimeToQuit)
+  // 1a.F  Initialize co-processors
   // 2.    Determine number of problems
   // 3. F  Create problem table (InitializeProblemManager())
   // 4. F  Load (or try to load) that many problems (needs number of problems)
@@ -1402,6 +1408,19 @@ int ClientRun( Client *client )
       checkpointsDisabled = 1;
     }
   }
+
+  // --------------------------------------
+  // Do co-processor specific initialization
+  // --------------------------------------
+
+  #if (CLIENT_CPU == CPU_CUDA)
+  if (InitializeCUDA() != 0)
+  {
+    Log("Unable to initialize CUDA.");
+    TimeToQuit = 1;
+    exitcode = -3;
+  }
+  #endif
 
   // --------------------------------------
   // Determine the number of problems to work with. Number is used everywhere.
