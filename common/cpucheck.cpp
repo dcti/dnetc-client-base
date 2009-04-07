@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.160 2009/04/07 08:54:32 andreasb Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.161 2009/04/07 09:23:31 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -51,7 +51,6 @@ return "@(#)$Id: cpucheck.cpp,v 1.160 2009/04/07 08:54:32 andreasb Exp $"; }
 #endif
 
 #if (CLIENT_CPU == CPU_CUDA)
-#include <cuda_runtime.h>
 #include "cuda_info.h"
 #endif
 
@@ -2086,48 +2085,9 @@ static long __GetRawProcessorID(const char **cpuname)
 /* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_CUDA)
-static long __GetRawProcessorID(const char **cpuname)
+static inline long __GetRawProcessorID(const char **cpuname)
 {
-  static char namebuf[40];
-  static int cpucount;
-
-  cudaError_t rc = cudaGetDeviceCount(&cpucount);
-  if (rc != cudaSuccess)
-  {
-    if (cpuname)
-    {
-      LogScreen("CUDA initialization failure.\n");
-      *cpuname = '\0';
-    }
-
-    return -1;
-  }
-
-  cudaDeviceProp deviceProp;
-        
-  rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
-
-  if (rc != cudaSuccess)
-  {
-    cpucount = 0;
-  }
-
-  if (cpucount <= 0)
-  {
-    if (cpuname)
-      *cpuname = '\0';
-
-    return -1;
-  }
-
-  snprintf(namebuf, sizeof(namebuf), "%.29s (%d MPs)", deviceProp.name, deviceProp.multiProcessorCount);
-
-  if (cpuname)
-    *cpuname = &namebuf[0];
-
-  // FIXME: we need some ID to distinguish different cards
-  // for now the register count is enough to decide whether 256-thread cores are feasible
-  return deviceProp.regsPerBlock;
+  return GetRawCUDAGPUID(cpuname);
 }
 #endif
 
@@ -2233,21 +2193,9 @@ unsigned int GetProcessorFrequency()
   unsigned int freq = 0;   /* Unknown */
 
   #if (CLIENT_CPU == CPU_CUDA)
-    cudaDeviceProp deviceProp;
-        
-    cudaError_t rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
-    if (rc != cudaSuccess || (deviceProp.major == 9999 && deviceProp.minor == 9999))
-    {
-      freq = 0;
-    }
-    else
-    {
-      freq = deviceProp.clockRate / 1000;
-    }
-
+    freq = GetCUDAGPUFrequency();
   #elif (CLIENT_CPU == CPU_ATI_STREAM)
     freq = getAMDStreamDeviceFreq();
-
   #elif (CLIENT_OS == OS_MACOSX)
     int mib[2] = {CTL_HW, HW_CPU_FREQ};
     unsigned long frequency;
