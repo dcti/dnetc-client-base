@@ -1,10 +1,18 @@
 ;
 ; Assembly core for OGR-NG, SSE2 version. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse2-asm.asm,v 1.1 2009/04/02 12:14:33 stream Exp $
+; $Id: ogrng-cj1-sse2-asm.asm,v 1.2 2009/04/07 09:36:38 andreasb Exp $
 ;
 ; NOTE: Requires *ALL* DIST, LIST and COMP bitmaps to start on 16 byte boundaries.
+; Designed for Pentium M and later 
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
+;
+; 2009-04-05: Rewrote lookup of first zero bit
+;             Removed special case for 64th bit is the zero bit
+;             Changed xorpd to pxor
+;             Rewrote shift by 64 bits
+;             Fixed potential bug where wrong values of list were saved after stop depth is reached
+;             Resulted in 2% speedup
 ;
 ; 2009-03-30: Initial SSE2 version. Converted bitmap operations from MMX to SSE2
 ;             Optimised register usage to keep mark, depth and limit in general registers
@@ -19,7 +27,7 @@
 %ifdef __NASM_VER__
 	cpu	p4	; NASM doesnt know feature flags but accepts sse2 in p4
 %else
-	cpu	586 mmx sse2	; mmx is not part of i586
+	cpu	586 mmx sse sse2	; mmx is not part of i586
 %endif
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
@@ -117,7 +125,7 @@ ogr_cycle_256_cj1_sse2:
 	mov	eax, [eax+oState_stopdepth]
 	mov	[work_stopdepth], eax
 
-%define mm_0		mm0
+%define mm_one		mm0
 %define mm_1		mm1
 %define mm_2		mm2
 %define mm_newbit	mm3
@@ -146,6 +154,9 @@ ogr_cycle_256_cj1_sse2:
 	setl	al
 	movd	mm_newbit, eax
 
+	mov	eax, 1
+	movd	mm_one, eax
+
 	; mm0..mm3 = comp
 	; mm4 = newbit
 
@@ -173,34 +184,32 @@ do_loop_split:
 
 for_loop:
 	; REGISTER - end
-	; esi = comp0 low/high
 	; eax = inverse shift amount (location of 0)
 	; ecx = shift amount (ecx - eax)
 
+	; TODO if using SSE4.1 can use: pextrd	esi, xmm_comp0, 1
 	pshuflw	xmm_temp_b, xmm_comp0, 11101110b
 
-	;      if (comp0 < (SCALAR)~1) {
+	;      if (comp0 == (SCALAR)~0) {
 
-	mov	ecx, 32
-	movd	esi, xmm_temp_b
-	xor	esi, 0FFFFFFFFh		; implies 'not esi'
+	movd	eax, xmm_temp_b
+	xor	eax, 0FFFFFFFFh		; implies 'not eax'
 	je	use_high_word		; ENTERED: 0x????????(??%), taken: ??%
-	bsr	eax, esi
+	bsr	eax, eax
+	mov	ecx, 32
 	sub	ecx, eax		; s = ecx-bsr
 	add	eax, 32	; = ss
 	jmp found_shift
 
+	align	16
 use_high_word:
-	movd	esi, xmm_comp0
-	cmp	esi, 0FFFFFFFEh
-	jnb	comp0_ge_fffe		; ENTERED: 0x????????(??%), taken: ??%
-	not	esi
-	mov	ecx, 64			; add ecx, 32 ??? shorter but no gain
-	bsr	eax, esi
+	movd	eax, xmm_comp0
+	xor	eax, 0FFFFFFFFh		; implies 'not eax'
+	je	full_shift		; ENTERED: 0x????????(??%), taken: ??%
+	bsr	eax, eax
+	mov	ecx, 64
 	sub	ecx, eax		; s = ecx-bsr
-	jmp found_shift
 
-	align 16
 found_shift:
 	; REGISTER - start
 	; eax = inverse shift amount (location of 0)
@@ -251,7 +260,7 @@ found_shift:
 
 	psllq	xmm_comp0, xmm_temp_s
 	psllq	xmm_comp2, xmm_temp_s
-	xorpd	xmm_temp_s, xmm_temp_s	;using xmm_temp_s as a source of 0's
+	pxor	xmm_temp_s, xmm_temp_s	;using xmm_temp_s as a source of 0's
 
 	psrlq	xmm_temp_a, xmm_temp_ss
 	psrlq	xmm_temp_b, xmm_temp_ss
@@ -329,8 +338,8 @@ after_if:
 	; eax = temp
 	; esi = choose array mem location
 
-	movd	eax, xmm_temp_a ; dist 0
 	mov	esi, [param_pchoose]
+	movd	eax, xmm_temp_a ; dist 0
 	shr	eax, CHOOSE_DIST_BITS
 	shl	eax, 5
 	add	eax, edx		; depth
@@ -346,19 +355,17 @@ skip_if_depth:
 	; REGISTER - usage
 	; eax = temp
 
-	mov	eax, 1		; newbit = 1 (delayed)
-	movd	mm_newbit, eax
+	sub	dword [work_nodes], 1
+
+	movq	mm_newbit, mm_one		; newbit = 1 (delayed)
 
 	;      if (--nodes <= 0) {
-
-	sub	dword [work_nodes], 1
 	jg	for_loop	; ENTERED: 0x0513FD14(44.72%), taken 99.99%
 
 	;        goto exit;
 	jmp	exit
 
 	align	16
-
 continue_if_depth:
 	; REGISTER - usage
 	; ecx = dist0
@@ -404,8 +411,7 @@ limitok:
 	jmp	skip_if_depth
 
 	align	16
-
-comp0_ge_fffe:
+full_shift:
 	; REGISTER - start
 	; esi = comp0 (high)
 
@@ -418,34 +424,30 @@ comp0_ge_fffe:
 	cmp	ebx, edi ; limit (==lev->limit)
 	jg	break_for		; ENTERED: 0x03B4F5EB(32.64%), taken 66.70%
 
-	;        if (comp0 == ~0u) {
-	;          COMP_LEFT_LIST_RIGHT_WORD(lev);
-	;          continue;
-	;        }
-	;        COMP_LEFT_LIST_RIGHT_WORD(lev);
-
-	cmp	esi,0ffffffffH		; if (comp0 == ~0u)
+	;      COMP_LEFT_LIST_RIGHT_WORD(lev);
+	;      continue;
 
 	; COMP_LEFT_LIST_RIGHT_WORD(lev);
 	; !!!
 
-	shufpd	xmm_list2, xmm_list2, 1	; swaps high and low
 	movq2dq	xmm_temp_s, mm_newbit
+
+	pslldq	xmm_list2, 8
 	movhlps	xmm_list2, xmm_list0
 
-	; list0 = Low(List0), newbit
-	punpcklqdq	xmm_list0, xmm_temp_s	; shift newbit into top half
-	shufpd	xmm_list0, xmm_list0, 1	; swaps high and low
+	pslldq	xmm_list0, 8
+	movsd	xmm_list0, xmm_temp_s
 
-	; comp left
-	movlhps	xmm_temp_b, xmm_comp2	; Shift Low(comp2) into High(b)
 	pxor	xmm_temp_a, xmm_temp_a
-	punpckhqdq	xmm_comp0, xmm_temp_b
 	pxor	mm_newbit, mm_newbit	; Clear newbit
-	punpckhqdq	xmm_comp2, xmm_temp_a
 
-	je	for_loop		; ENTERED: 0x013BFDCE(10.87%), taken 97.10%
-	jmp	after_if
+	psrldq	xmm_comp0, 8
+	movlhps	xmm_comp0, xmm_comp2
+
+	psrldq	xmm_comp2, 8
+	movlhps	xmm_comp2, xmm_temp_a
+
+	jmp	for_loop
 
 	align	16
 break_for:
@@ -471,6 +473,9 @@ break_for:
 	mov	edi, [ebp+level_limit-ebp_shift]
 
 	jl	do_loop_split		; ENTERED: 0x0513FCC2(44.72%), taken 99.99%
+
+	movdqa	xmm_list0, cur(list, 0)
+	movdqa	xmm_list2, cur(list, 2)
 
 exit:
 	;  SAVE_FINAL_STATE(lev);
