@@ -18,6 +18,8 @@
 	;# 2009-04-05: Store of new 'limit' is delayed. It can be stored before PUSH_LEVEL
 	;# and when core exits. Same for 'mark'. +450 Knodes.
 	;#
+	;# 2009-04-10: Reordered shifts in main loop to avoid few dependency stalls.
+	;# +450 Knodes.
 
 	;#
 	;# Known non-optimal things:
@@ -216,40 +218,41 @@ outer_loop_comp0_ready:
 	# (nops are hidden in dependency between 'clz' and 'a')
 	
 for_loop_clz_ready:
-	nop
-	hbr		.L_fl, $addr_is_forloop
+
+	sfi		$inv_s, $s, 128			# inv_s = 128 -s
+	shlqbybi	$ones_shl_s, $V_ONES, $s	# selMask_s
 
 	#  if ((mark += s) > limit) { break; }
-
 	a		$mark, $mark, $s
-	shlqbybi	$ones_shl_s,   $V_ONES,       $s	# selMask_s
+	hbr		.L_fl, $addr_is_forloop
 
 	# Use free clocks in dependency chain to precalculate
 
-	sfi		$inv_s, $s, 128				# inv_s = 128 -s
-	shlqbybi	$new_compV1, $compV1, $s
+	nop
+	shlqbybi	$ones_shl_inv, $V_ONES, $inv_s	# selMask_inv (use free clock again)
 
 	cgt		$cond_mark_limit, $mark, $limit
+	shlqbybi	$new_compV1, $compV1, $s
 
-	shlqbybi	$ones_shl_inv, $V_ONES,       $inv_s	# selMask_inv (use free clock again)
+	shlqbi		$ones_shl_s, $ones_shl_s, $s
 
-	shlqbi		$ones_shl_s,   $ones_shl_s,   $s
 	brnz		$cond_mark_limit, break_for
+
+	shlqbi		$ones_shl_inv, $ones_shl_inv, $inv_s
 
 	# COMP_LEFT_LIST_RIGHT(lev, s);
 
 	shlqbi		$new_compV1, $new_compV1, $s
-	shlqbi		$ones_shl_inv, $ones_shl_inv, $inv_s
 	selb		$listV1, $listV0, $listV1, $ones_shl_s
 	selb		$listV0, $newbit, $listV0, $ones_shl_s
 	selb		$compV0, $compV0, $compV1, $ones_shl_inv
-	rotqbybi	$listV0, $listV0, $inv_s
-	nop
 	rotqbybi	$listV1, $listV1, $inv_s
-	ori		$compV1, $new_compV1, 0
+	rotqbybi	$listV0, $listV0, $inv_s
 	rotqbybi	$compV0, $compV0, $s
-	rotqbi		$listV0, $listV0, $inv_s
+	ori		$compV1, $new_compV1, 0
 	rotqbi		$listV1, $listV1, $inv_s
+	nop
+	rotqbi		$listV0, $listV0, $inv_s
 	il		$newbit, 0				# newbit = 0
 	rotqbi		$compV0, $compV0, $s
 
