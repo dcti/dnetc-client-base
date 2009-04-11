@@ -15,11 +15,16 @@
 
 	;# History:
 	;#
-	;# 2009-04-05: Store of new 'limit' is delayed. It can be stored before PUSH_LEVEL
+	;# 2009-04-05:
+	;#    Store of new 'limit' is delayed. It can be stored before PUSH_LEVEL
 	;# and when core exits. Same for 'mark'. +450 Knodes.
 	;#
-	;# 2009-04-10: Reordered shifts in main loop to avoid few dependency stalls.
-	;# +450 Knodes.
+	;# 2009-04-10:
+	;#    Reordered shifts in main loop to avoid few dependency stalls. +450 Knodes.
+	;#    Rewriten POP_LEVEL to avoid dependency on --lev.
+	;#    Two lnops in for_loop increased speed a bit, but I don't know why.
+	;# (If you'll add another two lnops to following two commands, speed will decrease
+	;# back. Weird.)
 
 	;#
 	;# Known non-optimal things:
@@ -204,7 +209,9 @@ for_loop:
 	# a version with return values 1..32 (32 for both -2 and -1)
 
 	nor		$s, $compV0, $compV0	# ~comp0
+	lnop					# with these 2 lnops a bit faster??? caching issues???
 	ceqi		$cond_comp0_minus1, $compV0, -1
+	lnop
 	rotmi		$s, $s, -1		# magic shift
 	selb		$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
 
@@ -267,7 +274,6 @@ no_for_loop:
 
 	# lev->mark = mark;
 	# if (depth == oState->maxdepthm1) {  goto exit; }
-
 	or		$new_distV0, $distV0, $listV0	# distV0 = vec_or(distV0, listV0); (precalc)
 	brnz		$cond_depth_maxm1, save_mark_and_exit
 
@@ -433,40 +439,39 @@ save_mark_and_exit:
 	.align		3
 
 break_for:
-	;#
-	;# I wasn't able to get much out of this part (e.g. --lev can be calculated
-	;# in advance). Probably branch hit is very close to branch.
-	;# Even if few clocks are gained in code they'll be lost during branch.
-	;#
 	;# ~comp0 is must be preloaded at the end of this part.
 
 	# --lev;
 	# --depth;
-	ai		$lev, $lev, -128
-	hbrr		.L33, outer_loop_comp0_ready
 	ai		$depth, $depth, -1
-	fsmbi		$newbit, 0		# newbit = 0
+	hbrr		.L33, outer_loop_comp0_ready
 
 	# POP_LEVEL(lev);
-
-	lqd		$compV0, 64($lev)
-	lqd		$compV1, 80($lev)
-	cgt		$cond_depth_stopdepth, $depth, $stopdepth
-	lqd		$listV0, 0($lev)
-	lqd		$listV1, 16($lev)
-
 	# copy loop header from outer_loop (placed here to break dependency)
 	# and finish POP_LEVEL
 	# meantime, prepare ~comp0 using free slots
-	
-	lqd		$limit, 112($lev)	# int limit = lev->limit;
+	# decrement of lev delayed to avoid dependency, "-128" added directly to offset
+
+	lqd		$compV0, 64-128($lev)
+	lqd		$listV0, 0-128($lev)
+	lqd		$listV1, 16-128($lev)
+	lqd		$compV1, 80-128($lev)
+	cgt		$cond_depth_stopdepth, $depth, $stopdepth
+	lqd		$limit, 112-128($lev)	# int limit = lev->limit;
+	lqd		$mark,  96-128($lev)	# int mark  = lev->mark;
 		nor	$s, $compV0, $compV0	# ~comp0
-		ceqi	$cond_comp0_minus1, $compV0, -1
 	andc		$distV0, $distV0, $listV0
-		rotqmbii $s, $s, -1		# magic shift (use slot 1)
-		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
-	lqd		$mark,  96($lev)	# int mark  = lev->mark;
+		lnop
 	andc		$distV1, $distV1, $listV1
+		rotqmbii $s, $s, -1		# magic shift (use slot 1)
+
+		ceqi	$cond_comp0_minus1, $compV0, -1
+	fsmbi		$newbit, 0		# newbit = 0
+
+	ai		$lev, $lev, -128	# finally, --lev
+		lnop
+	
+		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
 
 	# while (depth > oState->stopdepth);
 .L33:
