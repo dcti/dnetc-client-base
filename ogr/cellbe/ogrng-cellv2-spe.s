@@ -17,14 +17,15 @@
 	;#
 	;# 2009-04-05:
 	;#    Store of new 'limit' is delayed. It can be stored before PUSH_LEVEL
-	;# and when core exits. Same for 'mark'. +450 Knodes.
+	;# and when core exits. Same for 'mark'.
 	;#
 	;# 2009-04-10:
-	;#    Reordered shifts in main loop to avoid few dependency stalls. +450 Knodes.
+	;#    Reordered shifts in main loop to avoid few dependency stalls.
 	;#    Rewriten POP_LEVEL to avoid dependency on --lev.
 	;#    Two lnops in for_loop increased speed a bit, but I don't know why.
 	;# (If you'll add another two lnops to following two commands, speed will decrease
 	;# back. Weird.)
+	;#    Rewriten extraction of u16 limit from vectorized cache to break dependencies.
 
 	;#
 	;# Known non-optimal things:
@@ -32,13 +33,12 @@
 	;# will preload 's' "in background", at least partially, but it's not
 	;# possible in inner loop which is too short and 'compV0' is ready
 	;# only in the end of it.
-	;#    2) 'break_for' path has some optimization possibilities. E.g. '--lev'
-	;# can be calculated before jump to 'break_for' using free slot, decreasing
-	;# dep. length inside 'break_for'. 1-2 clock can be gained, but it will not
-	;# make core faster. Probably problem is in jump - branch hint is too close
-	;# to branch instruction. If we'll put this code block above main loop to
-	;# eliminate jump, it'll conflict with 'for_loop' codepath. I didn't tested
-	;# this case, try it if you like.
+
+	.data
+	.align	4
+
+data_vec_to_u16_shuf:
+	.int		0x1E1F1011, 0x12131415, 0x16171819, 0x1A1B1C1D
 
 	.text
 	.align	3
@@ -60,6 +60,7 @@
 	.set	consth_0x0001,		11	# halfwords
 	.set	V_ONES,			12	# ones in all bits
 	.set	const_0x0FF0,		13
+	.set	const_vec_to_u16_shuf,	14
 
 	.set	p_gkeyvectors,		15
 	.set	p_grvalues,		16
@@ -141,6 +142,7 @@ ogr_cycle_256_test:
 	ilh		$consth_0x0001, 0x0001
 	ila		$const_ffff,	65535
 	ila		$const_0x0FF0,  0x0FF0
+	lqa		$const_vec_to_u16_shuf, data_vec_to_u16_shuf
 	ila		$p_grinsertpos, group_insertpos
 	ila		$p_grvalues,	group_values
 	ila		$p_gkeyvectors,	group_keysvectors
@@ -195,7 +197,7 @@ ogr_cycle_256_test:
 	lqd		$limit, 112($lev)	# int limit = lev->limit;
 	lqd		$mark,  96($lev)	# int mark  = lev->mark;
 
-	nop
+;#	This label must be aligned - insert nops if necessary
 
 for_loop:
 
@@ -338,7 +340,9 @@ no_for_loop:
 		rotmi	$s, $s, -1		# magic shift
 	gbh		$temp, $element		# spu_gather(...)
 		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
+	hbrr		.L_1, for_loop_clz_ready
 	clz		$element, $temp		# spu_cntlz(...)
+	lnop
 
 	# if (element == 8) /* 32 zeros => Out of bounds => no match */
 
@@ -349,10 +353,8 @@ no_for_loop:
 	# return group_values[hash][element][index_in32];
 
 	shli		$element, $element, 6		# 2D: element * 32 * 2
-	hbrr		.L_1, for_loop_clz_ready
-	a		$pvalues, $pvalues, $element	# final byte offset
 	lnop
-	a		$temp, $pvalues, $p_grvalues	# full address (for shift)
+	a		$pvalues, $pvalues, $element	# final byte offset
 	lqx		$tempvector, $pvalues, $p_grvalues	# get data at full address
 fetch_pvalues:
 
@@ -364,16 +366,15 @@ fetch_pvalues:
 	# finish load of 'limit'
 
 	cgt		$cond_depth_hd,  $depth, $half_depth
+	rotqby		$pvalues, $const_vec_to_u16_shuf, $pvalues # create shuffle mask from byte address
 	cgt		$cond_depth_hd2, $depth, $half_depth2
-	ai		$temp, $temp, 14			# prepare u16 shift to PS
-	andc		$cond_depth_hd,  $cond_depth_hd, $cond_depth_hd2
 	ai		$nodes, $nodes, -1
-		lnop
+	andc		$cond_depth_hd,  $cond_depth_hd, $cond_depth_hd2
+	and		$pvalues, $const_ffff, $pvalues		# set upper word of shuffle mask to zero
 		clz	$s, $s					# precount s (clz)!
-	rotqby		$tempvector, $tempvector, $temp		# shift result to PS
-	and		$limit, $const_ffff, $tempvector	# u16 -> u32
-
+	;# Note: limit is not ready yet, operation delayed in update_limit
 	brnz		$cond_depth_hd, update_limit
+	shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
 
 	# store of limit delayed
 
@@ -398,7 +399,10 @@ update_limit:
 	hbrr		.L_2, for_loop_clz_ready
 
 	cgt		$cond_depth_hd2, $half_depth2, $depth	;# if (depth < oState->half_depth2)
+	;# Complete delayed fetch of limit
+	shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
 	clz		$temp2, $temp2
+	lnop
 	ai		$temp2, $temp2, 1			;# temp2 = LOOKUP_FIRSTBLANK
 	
 	sf		$temp, $temp, $maxlen_m1		;# temp  = ... (ready)
@@ -528,13 +532,13 @@ fetch_new_pchoose:
 	# prepare element full address for fetch below
 
 	a		$temp, $depth, $depth	# convert last index to bytes
-	a		$temp, $temp, $pvalues	# full byte address
+	a		$pvalues, $temp, $pvalues	# full byte address
 
 	# mfc_read_tag_status_all();
 
 	wrch		$ch23, $const_2
 	rdch		$temp2, $ch24
 
-	lqd		$tempvector, 0($temp)
+	lqd		$tempvector, 0($pvalues)
 
-	br		fetch_pvalues	# byte address in temp, values in tempvector
+	br		fetch_pvalues	# byte address in pvalues, values in tempvector
