@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.20 2009/04/13 03:58:19 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.21 2009/04/13 18:41:04 stream Exp $"; }
 
 //#define TRACE
 
@@ -405,7 +405,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
           /* Same for MMX */
           if (cindex == -1 && (detected_flags & CPU_F_MMX))
             cindex = 2;  /* mmx asm core */
-          else
+          if (cindex == -1)
             cindex = 1;  /* no mmx - generic asm core */
         #else
           cindex = 1; /* no 64-bit support - generic asm core */
