@@ -1,36 +1,20 @@
 ;
-; Assembly core for OGR-NG, SSE2 version. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse2-asm.asm,v 1.3 2009/04/13 03:58:21 stream Exp $
-;
-; NOTE: Requires *ALL* DIST, LIST and COMP bitmaps to start on 16 byte boundaries.
-; Designed for Pentium M and later 
+; Assembly core for OGR-NG, SSE version tuned for K8. Based on MMX assembly core (ogrng-b-asm-rt.asm).
+; $Id: ogrng-cj1-sse-k8-asm.asm,v 1.1 2009/04/13 03:58:20 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
-; 2009-04-12: Changed some branches into conditional moves
-;             Removed some redundant operations
+; 2009-04-12: Initial SSE version. Tuned for Athlon 64 (K8).
+;             Rewrote lookup of first zero bit
+;             Changed mmx movq and shuffle into a sse shuffle and moved calculation to before the jump into "for_loop"
+;             Minor general optimisations, removal of redundant instructions
+;             Changed some branches into conditional moves
 ;
-; 2009-04-05: Rewrote lookup of first zero bit
-;             Removed special case for 64th bit is the zero bit
-;             Changed xorpd to pxor
-;             Rewrote shift by 64 bits
-;             Fixed potential bug where wrong values of list were saved after stop depth is reached
-;             Resulted in 2% speedup
-;
-; 2009-03-30: Initial SSE2 version. Converted bitmap operations from MMX to SSE2
-;             Optimised register usage to keep mark, depth and limit in general registers
-;             Precomputed some of the memory offset calculations being done in the main loop
-;             General optimisation of the math to reduce instructions
-;
-; Possible improvements:
-; * Align stack to 16 byte boundary
-; * Vary choose array cache size
-; * Arrange the choose array for better cache hits, depth as most significant index perhaps?
 
 %ifdef __NASM_VER__
-	cpu	p4	; NASM doesnt know feature flags but accepts sse2 in p4
+	cpu	p3	; NASM doesnt know feature flags but accepts mmx and sse in p3
 %else
-	cpu	586 mmx sse sse2	; mmx is not part of i586
+	cpu	586 mmx sse; mmx and sse are not part of i586
 %endif
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
@@ -45,25 +29,26 @@
 	[SECTION .text]
 %endif
 
-	global	_ogr_cycle_256_cj1_sse2, ogr_cycle_256_cj1_sse2
+	global	_ogr_cycle_256_cj1_sse_k8, ogr_cycle_256_cj1_sse_k8
 
 	%define CHOOSE_DIST_BITS	16     ; /* number of bits to take into account  */
 
-_ogr_cycle_256_cj1_sse2:
-ogr_cycle_256_cj1_sse2:
+_ogr_cycle_256_cj1_sse_k8:
+ogr_cycle_256_cj1_sse_k8:
 
 	%define regsavesize	10h	; 4 registers saved
-	%define worksize	30h
+	%define worksize	30h	; For some reason using 30h instead of 20h improves performance...
 
-	%define work_halfdepth				esp+00h
-	%define work_halfdepth2				esp+04h
-	%define work_nodes					esp+08h
-	%define work_maxlen_m1				esp+0Ch
-	%define work_half_depth_mark_addr	esp+10h
-	%define work_maxdepth_m1			esp+14h
-	%define work_stopdepth				esp+18h
+	%define work_depth					esp+00h
+	%define work_halfdepth				esp+04h
+	%define work_halfdepth2				esp+08h
+	%define work_nodes					esp+0Ch
+	%define work_maxlen_m1				esp+10h
+	%define work_half_depth_mark_addr	esp+14h
+	%define work_maxdepth_m1			esp+18h
+	%define work_stopdepth				esp+1Ch
 
-	%define param_oState	esp+regsavesize+worksize+04h
+	%define	param_oState	esp+regsavesize+worksize+04h
 	%define param_pnodes	esp+regsavesize+worksize+08h
 	%define param_pchoose	esp+regsavesize+worksize+0Ch
 
@@ -74,14 +59,14 @@ ogr_cycle_256_cj1_sse2:
 	%define oState_half_depth2	10h
 
 	%define oState_stopdepth	18h
-	%define oState_depth		1Ch
+	%define	oState_depth		1Ch
 	%define oState_Levels		20h
 
 ; It's possible to put ebp (current level) a little forward and reference
 ; elements as 'ebp-nn' and 'ebp+nn' (with signed byte offsets) to avoid
 ; long command 'ebp+nnnnnnnn' (dword offset).
 	%define ebp_shift		128	; may be up to 128
-	%define sizeof_level	112	; (32*3+8 + 8)
+	%define sizeof_level	104	; (32*3+8)
 	%define level_list		00h
 	%define level_dist		20h
 	%define level_comp		40h
@@ -98,8 +83,9 @@ ogr_cycle_256_cj1_sse2:
 	sub	esp, worksize
 
 	mov	ebx, [param_oState]
-	mov	edx, [ebx+oState_depth]
-	imul	eax, edx, sizeof_level
+	mov	ecx, [ebx+oState_depth]
+	mov	[work_depth], ecx	; depth = oState->depth (cached for SETUP_TOP_STATE)
+	imul	eax, ecx, sizeof_level
 	lea	ebp, [eax+ebx+oState_Levels+ebp_shift]	; lev = &oState->Levels[oState->depth]
 	mov	eax, [param_pnodes]
 	mov	eax, [eax]
@@ -117,48 +103,29 @@ ogr_cycle_256_cj1_sse2:
 	mov	[work_halfdepth2], eax	; halfdepth2 = oState->half_depth2
 
 	mov	eax, [ebx+oState_max]
-	sub	eax, 1
+	dec	eax
 	mov	[work_maxlen_m1], eax	; maxlen_m1 = oState->max - 1
 
-	mov	eax, [param_oState]
-	mov	eax, [eax+oState_maxdepthm1]
-	mov	[work_maxdepth_m1], eax
-
-	mov	eax, [param_oState]
-	mov	eax, [eax+oState_stopdepth]
-	mov	[work_stopdepth], eax
-
-%define mm_one		mm0
-%define mm_1		mm1
-%define mm_2		mm2
+%define mm_comp0	mm0
+%define mm_comp1	mm1
+%define mm_comp2	mm2
 %define mm_newbit	mm3
-%define mm_4		mm4
-%define mm_5		mm5
-%define mm_6		mm6
-%define mm_7		mm7
-
-%define xmm_temp_s	xmm0	; Shared by newbit
-%define xmm_temp_ss	xmm1
-%define xmm_list0	xmm2
-%define xmm_list2	xmm3
-%define xmm_comp0	xmm4
-%define xmm_comp2	xmm5
-%define xmm_temp_a	xmm6	; holds dist0 after PUSH_LEVEL_UPDATE_STATE
-%define xmm_temp_b	xmm7
+%define mm_temp_a	mm4
+%define mm_temp_b	mm5
+%define mm_temp_s	mm6
+%define mm_temp_ss	mm7
 
 	; SETUP_TOP_STATE(lev);
 	; !!!
-	movdqa	xmm_comp0, cur(comp, 0)
-	movdqa	xmm_comp2, cur(comp, 2)
-
+	movq	mm_comp0, cur(comp, 0)	; SCALAR comp0 = lev->comp[0];
+	movq	mm_comp1, cur(comp, 1)
+	movq	mm_comp2, cur(comp, 2)
+	; movq	mm3, cur(comp, 3)	; comp[3] not cached!
 	; int newbit = (depth < oState->maxdepthm1) ? 1 : 0;
 	xor	eax, eax
-	cmp	edx, [ebx+oState_maxdepthm1]
+	cmp	ecx, [ebx+oState_maxdepthm1]	; depth still in ecx
 	setl	al
 	movd	mm_newbit, eax
-
-	mov	eax, 1
-	movd	mm_one, eax
 
 	; mm0..mm3 = comp
 	; mm4 = newbit
@@ -167,7 +134,10 @@ ogr_cycle_256_cj1_sse2:
 	mov	ebx, [ebp+level_mark-ebp_shift]	; mark  = lev->mark;
 	mov	edi, [ebp+level_limit-ebp_shift]
 
-	align	16
+	; Prepare ecx, esi for find leading zero
+	pshufw	mm_temp_a, mm_comp0, 11101110b
+	movd	ecx, mm_temp_a
+	movd	esi, mm_comp0
 
 ; Jump probabilies calculated from summary statistic of 'dnetc -test'.
 ; Main loop was entered 0x0B5ACBE2 times. For each jump, we measured
@@ -175,41 +145,29 @@ ogr_cycle_256_cj1_sse2:
 ; means importance of this code path) and probability of this jump to
 ; be taken (for branch prediction of important jumps).
 
-	; REGISTER - globals
-	; ebx = mark
-	; edi = limit
-	; edx = work depth
-	; ebp = stack location
-
+	align	16
 do_loop_split:
-	movdqa	xmm_list0, cur(list, 0)
-	movdqa	xmm_list2, cur(list, 2)
-
 for_loop:
+
 	; REGISTER - end
 	; eax = inverse shift amount (location of 0)
 	; ecx = shift amount (ecx - eax)
 
-	; TODO if using SSE4.1 can use: pextrd	eax, xmm_comp0, 1
-	pshuflw	xmm_temp_b, xmm_comp0, 11101110b
-
 	;      if (comp0 == (SCALAR)~0) {
 
-	movd	eax, xmm_temp_b
-	xor	eax, 0FFFFFFFFh		; implies 'not eax'
+	xor	ecx, 0FFFFFFFFh		; implies 'not ecx'
 	je	use_high_word		; ENTERED: 0x????????(??%), taken: ??%
-	bsr	eax, eax
+	bsr	eax, ecx
 	mov	ecx, 32
 	sub	ecx, eax		; s = ecx-bsr
 	add	eax, 32	; = ss
-	jmp found_shift
+	jmp	found_shift
 
 	align	16
 use_high_word:
-	movd	eax, xmm_comp0
-	xor	eax, 0FFFFFFFFh		; implies 'not eax'
+	xor	esi, 0FFFFFFFFh		; implies 'not esi'
 	je	full_shift		; ENTERED: 0x????????(??%), taken: ??%
-	bsr	eax, eax
+	bsr	eax, esi
 	mov	ecx, 64
 	sub	ecx, eax		; s = ecx-bsr
 
@@ -222,69 +180,71 @@ found_shift:
 	;          break;
 	;        }
 	add	ebx, ecx
-	cmp	ebx, edi	; limit (==lev->limit)
+	cmp	ebx, edi ; limit (==lev->limit)
 	jg	break_for		; ENTERED: 0x07A5D5F7(67.35%), taken 30-34%
 
 	;        COMP_LEFT_LIST_RIGHT(lev, s);
 	; !!!
 
-	movd	xmm_temp_s, ecx
+	movd	mm_temp_ss, eax		; mm7 = ss
+	movd	mm_temp_s, ecx		; mm6 = s
 
-	; newbit + list goes right and comp goes left
+	; newbit + list goes right
 
-	; copy of list for shifting left
-	movdqa	xmm_temp_a, xmm_list0
-	psrlq	xmm_list0, xmm_temp_s
-	movdqa	xmm_temp_b, xmm_list2
+	psllq	mm_newbit, mm_temp_ss	; insert newbit
+	movq	mm_temp_a, cur(list, 0)
+	movq	mm_temp_b, mm_temp_a	; list[0] cached in mm_temp_b
+	psrlq	mm_temp_a, mm_temp_s
+	por	mm_newbit, mm_temp_a
+	movq	cur(list, 0), mm_newbit
 
-	movd	xmm_temp_ss, eax
+	movq	mm_temp_a, cur(list, 1)
+	movq	mm_newbit, mm_temp_a	; list[1] cached in mm_newbit
+	psllq	mm_temp_b, mm_temp_ss
+	psrlq	mm_temp_a, mm_temp_s
+	por	mm_temp_b, mm_temp_a
+	movq	cur(list, 1), mm_temp_b
 
-	psrlq	xmm_list2, xmm_temp_s
+	movq	mm_temp_a, cur(list, 2)
+	movq	mm_temp_b, mm_temp_a	; list[2] cached in mm_tempb
+	psllq	mm_newbit, mm_temp_ss
+	psrlq	mm_temp_a, mm_temp_s
+	por	mm_newbit, mm_temp_a
+	movq	cur(list, 2), mm_newbit
 
-	; WARNING xmm_temp_s now contains newbit
-	movq2dq	xmm_temp_s, mm_newbit
-
-	psllq	xmm_temp_a, xmm_temp_ss
-	psllq	xmm_temp_b, xmm_temp_ss
-	psllq	xmm_temp_s, xmm_temp_ss
-
-	shufpd	xmm_temp_s, xmm_temp_a, 0	; select Low(a), Low(s)
-	shufpd	xmm_temp_a, xmm_temp_b, 1	; select Low(b), High(a)
-
-	por	xmm_list0, xmm_temp_s
-	por	xmm_list2, xmm_temp_a
+	movq	mm_temp_a, cur(list, 3)
+	psllq	mm_temp_b, mm_temp_ss
+	psrlq	mm_temp_a, mm_temp_s
+	por	mm_temp_b, mm_temp_a
+	movq	cur(list, 3), mm_temp_b
 
 	; comp goes left
 
-	; xmm_temp_s restored to normal purpose
-	movd	xmm_temp_s, ecx
-	movdqa	xmm_temp_a, xmm_comp0
-	movdqa	xmm_temp_b, xmm_comp2
-
-	psllq	xmm_comp0, xmm_temp_s
-	psllq	xmm_comp2, xmm_temp_s
-	pxor	xmm_temp_s, xmm_temp_s	;using xmm_temp_s as a source of 0's
-
-	psrlq	xmm_temp_a, xmm_temp_ss
-	psrlq	xmm_temp_b, xmm_temp_ss
-
-	shufpd	xmm_temp_a, xmm_temp_b, 1	; select Low(b), High(a)
-	shufpd	xmm_temp_b, xmm_temp_s, 1	; select Low(s), High(b)
-
-	por	xmm_comp0, xmm_temp_a
-	por	xmm_comp2, xmm_temp_b
-
-	pxor	mm_newbit, mm_newbit		; newbit = 0, this instruction is not needed yet removing it makes the core run slower...
+	movq	mm_temp_a, mm_comp1
+	psllq	mm_comp0, mm_temp_s
+	movq	mm_temp_b, mm_comp2
+	psrlq	mm_temp_a, mm_temp_ss
+	movq	mm_newbit, cur(comp, 3)
+	por	mm_comp0, mm_temp_a
+	movq	mm_temp_a, mm_newbit
+	psllq	mm_comp1, mm_temp_s
+	psrlq	mm_temp_b, mm_temp_ss
+	por	mm_comp1, mm_temp_b
+	psllq	mm_comp2, mm_temp_s
+	psrlq	mm_newbit, mm_temp_ss
+	por	mm_comp2, mm_newbit
+	psllq	mm_temp_a, mm_temp_s
+	movq	cur(comp, 3), mm_temp_a
 
 after_if:
-	; REGISTER - usage
-	; eax = temp
+	; ebx = mark
 
 	;      if (depth == oState->maxdepthm1) {
 	;        goto exit;         /* Ruler found */
 	;      }
-	mov	eax, [work_maxdepth_m1]
-	cmp	eax, edx
+	mov	eax, [param_oState]
+	mov	eax, [eax+oState_maxdepthm1]
+	cmp	eax, [work_depth]
 	je	exit			; ENTERED: 0x0513FD1B(44.72%), taken: 0%
 
 	;      PUSH_LEVEL_UPDATE_STATE(lev);
@@ -294,31 +254,34 @@ after_if:
 	; **   COMP[lev+1] = (COMP[lev] | DIST[lev+1])
 	; **   newbit = 1;
 
-	; Save our loaded values
-	movdqa	xmm_temp_a, cur(dist, 0)
-	movdqa	xmm_temp_b, cur(dist, 2)
-	movdqa	cur(list, 0), xmm_list0
-	movdqa	cur(list, 2), xmm_list2
+	movq	cur(comp, 0), mm_comp0
+	movq	cur(comp, 1), mm_comp1
+	movq	cur(comp, 2), mm_comp2
 
-	; **   LIST[lev+1] = LIST[lev]	; No need as we keep list in registers
-;	movdqa	next(list, 0), xmm_list0
-;	movdqa	next(list, 2), xmm_list2
+	movq	mm_temp_b, cur(list, 0)
+	movq	next(list, 0), mm_temp_b
+	por	mm_temp_b, cur(dist, 0)		; dist0 ready in mm_temp_b
+	movq	next(dist, 0), mm_temp_b
+	por	mm_comp0, mm_temp_b
 
-	; **   DIST[lev+1] = (DIST[lev] | LIST[lev+1])
-	movdqa	cur(comp, 0), xmm_comp0
-	por	xmm_temp_a, xmm_list0
-	movdqa	cur(comp, 2), xmm_comp2
-	por	xmm_temp_b, xmm_list2
-	movdqa	next(dist, 0), xmm_temp_a
-	por	xmm_comp0, xmm_temp_a
-	movdqa	next(dist, 2), xmm_temp_b
+	movq	mm_temp_a, cur(list, 1)
+	movq	next(list, 1), mm_temp_a
+	por	mm_temp_a, cur(dist, 1)
+	movq	next(dist, 1), mm_temp_a
+	por	mm_comp1, mm_temp_a
 
-	; **   COMP[lev+1] = (COMP[lev] | DIST[lev+1])
-	por	xmm_comp2, xmm_temp_b
-;	movdqa	next(comp, 0), xmm_comp0	; No need as we keep comp in registers
-;	movdqa	next(comp, 2), xmm_comp2
+	movq	mm_temp_a, cur(list, 2)
+	movq	next(list, 2), mm_temp_a
+	por	mm_temp_a, cur(dist, 2)
+	movq	next(dist, 2), mm_temp_a
+	por	mm_comp2, mm_temp_a
 
-	pshuflw	xmm_temp_a, xmm_temp_a, 11101110b	; Fill xmm_temp_a with dist0
+	movq	mm_temp_a, cur(list, 3)
+	movq	next(list, 3), mm_temp_a
+	por	mm_temp_a, cur(dist, 3)
+	movq	next(dist, 3), mm_temp_a
+	por	mm_temp_a, cur(comp, 3)
+	movq	next(comp, 3), mm_temp_a
 
 ;	!! delay init !!
 ;	newbit = 1
@@ -330,19 +293,21 @@ after_if:
 	;      lev++;
 	add	ebp, sizeof_level
 
+	punpckhdq mm_temp_b, mm_temp_b	; dist0 >> 32
+
 	;      depth++;
+	mov	edx, [work_depth]
 	add	edx, 1
+	mov	[work_depth], edx
 
 	; /* Compute the maximum position for the next level */
 	; #define choose(dist,seg) pchoose[(dist >> (SCALAR_BITS-CHOOSE_DIST_BITS)) * 32 + (seg)]
 	; limit = choose(dist0, depth);
 
-	; REGISTER - usage
-	; eax = temp
-	; esi = choose array mem location
+	movd	ecx, mm_temp_b		; dist0 in ecx
 
 	mov	esi, [param_pchoose]
-	movd	eax, xmm_temp_a ; dist 0
+	mov	eax, ecx ; dist 0
 	shr	eax, CHOOSE_DIST_BITS
 	shl	eax, 5
 	add	eax, edx		; depth
@@ -350,19 +315,23 @@ after_if:
 
 	;      if (depth > oState->half_depth && depth <= oState->half_depth2) {
 	;;;      if (depth > halfdepth && depth <= halfdepth2) {
-
-	cmp	edx, [work_halfdepth2]
+	mov	eax, [work_depth]
+	cmp	eax, [work_halfdepth2]
 	jle	continue_if_depth	; ENTERED: 0x0513FD14(44.72%), NOT taken 97.02%
 
 skip_if_depth:
-	; REGISTER - usage
-	; eax = temp
 
-	sub	dword [work_nodes], 1
+	; Prepare ecx, esi for find leading zero
+	pshufw	mm_temp_a, mm_comp0, 11101110b
+	movd	ecx, mm_temp_a
+	movd	esi, mm_comp0
 
-	movq	mm_newbit, mm_one		; newbit = 1 (delayed)
+	mov	eax, 1		; newbit = 1 (delayed)
+	movd	mm_newbit, eax
 
 	;      if (--nodes <= 0) {
+
+	dec	dword [work_nodes]
 	jg	for_loop	; ENTERED: 0x0513FD14(44.72%), taken 99.99%
 
 	;        goto exit;
@@ -370,33 +339,29 @@ skip_if_depth:
 
 	align	16
 continue_if_depth:
-	; REGISTER - usage
-	; ecx = dist0
-	; esi = temp
-	; eax = temp
-
-	cmp	edx, [work_halfdepth]
+	cmp	eax, [work_halfdepth]
 	jle	skip_if_depth		; ENTERED: 0x????????(??.??%), taken 0.5%
 
 ;        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
 ;;        int temp = oState->max - 1 - oState->Levels[halfdepth].mark;
 
-	mov	esi, [work_maxlen_m1]
 	mov	eax, [work_half_depth_mark_addr]
+	mov	esi, [work_maxlen_m1]
 	sub	esi, [eax]
 
 ;        if (depth < oState->half_depth2) {
-	cmp	edx, [work_halfdepth2]
+	mov	eax, [work_depth]
+	cmp	eax, [work_halfdepth2]
 	jge	update_limit_temp	; ENTERED: 0x00267D08(1.32%), taken 78.38%
 
 ;          temp -= LOOKUP_FIRSTBLANK(dist0); // "33" version
 ;;;        temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
+;;;        (we already have upper part of dist0 in ecx)
 
-	movd	ecx, xmm_temp_a		; move dist0 in ecx
 	not	ecx
+	mov	edx, -1
 	bsr	eax, ecx
-	mov	ecx, -1
-	cmovz	eax, ecx
+	cmovz	eax, edx
 
 	add	esi, eax
 	sub	esi, 32
@@ -412,9 +377,6 @@ update_limit_temp:
 
 	align	16
 full_shift:
-	; REGISTER - start
-	; esi = comp0 (high)
-
 	;      else {         /* s >= SCALAR_BITS */
 
 	;        if ((mark += SCALAR_BITS) > limit) {
@@ -430,43 +392,56 @@ full_shift:
 	; COMP_LEFT_LIST_RIGHT_WORD(lev);
 	; !!!
 
-	movq2dq	xmm_temp_s, mm_newbit
+	; newbit + list goes right
+	movq	mm_temp_a,  cur(list, 0)
+	movq	mm_temp_b,  cur(list, 1)
+	movq	mm_temp_s,  cur(list, 2)
+	movq	cur(list, 0), mm_newbit
+	movq	cur(list, 1), mm_temp_a
+	movq	cur(list, 2), mm_temp_b
+	movq	cur(list, 3), mm_temp_s
+	pxor	mm_newbit, mm_newbit		; newbit = 0
 
-	pslldq	xmm_list2, 8
-	movhlps	xmm_list2, xmm_list0
+	; Prepare ecx, esi for find leading zero
+	pshufw	mm_temp_a, mm_comp1, 11101110b
+	movd	ecx, mm_temp_a
+	movd	esi, mm_comp1
 
-	pslldq	xmm_list0, 8
-	movsd	xmm_list0, xmm_temp_s
+	; comp goes left			; 01 23 45 67 --
+	movq	mm_comp0, mm_comp1
+	movq	mm_comp1, mm_comp2
+	movq	mm_comp2, cur(comp, 3)
+	movq	cur(comp, 3), mm_newbit		; newbit is zero
 
-	pxor	xmm_temp_a, xmm_temp_a
-	pxor	mm_newbit, mm_newbit	; Clear newbit
-
-	psrldq	xmm_comp0, 8
-	movlhps	xmm_comp0, xmm_comp2
-
-	psrldq	xmm_comp2, 8
-	movlhps	xmm_comp2, xmm_temp_a
-
-	jmp	for_loop
+	jmp	for_loop		; ENTERED: 0x013BFDCE(10.87%), taken 97.10%
 
 	align	16
 break_for:
 
+	mov	eax, [param_oState]
+
 	;    lev--;
 	sub	ebp, sizeof_level
+
 	;    depth--;
-	sub	edx, 1
+	dec	dword [work_depth]
+
 	;    POP_LEVEL(lev);
 	; !!!
-
-	movdqa	xmm_comp0, cur(comp, 0)
-	movdqa	xmm_comp2, cur(comp, 2)
+	movq	mm_comp0, cur(comp, 0)	; SCALAR comp0 = lev->comp[0];
+	movq	mm_comp1, cur(comp, 1)
+	movq	mm_comp2, cur(comp, 2)
 
 	pxor	mm_newbit, mm_newbit	;      newbit = 0;
 
 	;  } while (depth > oState->stopdepth);
-	mov	eax, [work_stopdepth]
-	cmp	eax, edx
+	mov	eax, [eax+oState_stopdepth]
+	cmp	eax, [work_depth]
+
+	; Prepare ecx, esi for find leading zero
+	pshufw	mm_temp_a, mm_comp0, 11101110b
+	movd	ecx, mm_temp_a
+	movd	esi, mm_comp0
 
 	; split loop header
 	mov	ebx, [ebp+level_mark-ebp_shift]	; mark  = lev->mark;
@@ -474,17 +449,12 @@ break_for:
 
 	jl	do_loop_split		; ENTERED: 0x0513FCC2(44.72%), taken 99.99%
 
-	movdqa	xmm_list0, cur(list, 0)
-	movdqa	xmm_list2, cur(list, 2)
-
 exit:
 	;  SAVE_FINAL_STATE(lev);
 	; !!!
-
-	movdqa	cur(list, 0), xmm_list0
-	movdqa	cur(list, 2), xmm_list2
-	movdqa	cur(comp, 0), xmm_comp0
-	movdqa	cur(comp, 2), xmm_comp2
+	movq	cur(comp, 0), mm_comp0
+	movq	cur(comp, 1), mm_comp1
+	movq	cur(comp, 2), mm_comp2
 
 	;      lev->mark = mark;
 	mov	[ebp+level_mark-ebp_shift], ebx
@@ -494,7 +464,7 @@ exit:
 	mov	eax, [work_nodes]
 	sub	[ebx], eax
 
-	mov	eax, edx	; return depth;
+	mov	eax, [work_depth]	; return depth;
 
 	add	esp, worksize
 	pop	ebp

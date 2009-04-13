@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.19 2009/04/02 12:14:16 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.20 2009/04/13 03:58:19 stream Exp $"; }
 
 //#define TRACE
 
@@ -67,6 +67,8 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.19 2009/04/02 12:14:16 stream Exp $"; }
       CoreDispatchTable *ogrng_get_dispatch_table_asm1(void); //B (asm #1)
       CoreDispatchTable *ogrng_get_dispatch_table_mmx(void);  //C (asm #2)
       CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse2(void);  //D (asm #3)
+      CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse_p4(void);  //E (asm #4)
+      CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse_k8(void);  //F (asm #5)
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
     CoreDispatchTable *ogrng_get_dispatch_table(void);
@@ -104,6 +106,8 @@ int InitializeCoreTable_ogr_ng(int first_time)
         #ifdef HAVE_I64
           ogrng_get_dispatch_table_mmx();
           ogrng_get_dispatch_table_cj1_sse2();
+          ogrng_get_dispatch_table_cj1_sse_p4();
+          ogrng_get_dispatch_table_cj1_sse_k8();
         #endif
         #endif
       #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
@@ -192,6 +196,8 @@ const char **corenames_for_contest_ogr_ng()
       "rt-asm-generic",
       "rt-asm-mmx",
       "cj-asm-sse2",
+      "cj-asm-sse-p4",
+      "cj-asm-sse-k8",
       #endif
   #elif (CLIENT_CPU == CPU_AMD64)
       "FLEGE-64 2.0",
@@ -303,15 +309,17 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
 #  if defined(HAVE_I64)
 #    if (SIZEOF_LONG < 8)   /* classic x86-32 */
        unsigned feature = GetProcessorFeatureFlags();
-       if ((feature & CPU_F_SSE2) == 0 && cindex == 3) /* If no SSE2, try MMX */
+       if (cindex == 3 && !(feature & CPU_F_SSE2)) /* Core 3 need SSE2 */
+         cindex = 2; /* If no SSE2, try MMX */
+       if (cindex >= 4 && !(feature & CPU_F_SSE)) /* Cores 4,5 need SSE */
          cindex = 2;
-       if ((feature & CPU_F_MMX) == 0 && cindex == 2) /* MMX for MMX core */
+       if (cindex == 2 && !(feature & CPU_F_MMX)) /* MMX for MMX core */
          cindex = 1;
 #    else                   /* x86-64 */
 #    endif
 #  else /* No 64-bit support in compiler */
 #    if (SIZEOF_LONG < 8)   /* classic x86-32 */
-       if (cindex == 2 || cindex == 3)  /* mmx/sse cores requires 64-bits types */
+       if (cindex >= 2)  /* mmx/sse cores requires 64-bits types */
          cindex = 1;
 #    endif
 #  endif
@@ -382,10 +390,21 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
         cindex = 1;  /* 64-bit core */
       #else
         #if defined(HAVE_I64)
-          if (detected_flags & CPU_F_SSE2)
-            cindex = 3; /* sse asm core */
-          else if (detected_flags & CPU_F_MMX)
-            cindex = 2; /* mmx asm core */
+          /* Some CPU types may require SSE core even if SSE2 is available but slow */
+          if (detected_flags & CPU_F_SSE)
+          {
+            switch (detected_type)
+            {
+              case 0x09: cindex = 5; break; /* AMD: sse-k8. selection untested. */
+              case 0x0B: cindex = 4; break; /* P4:  sse-p4 */
+            }
+          }
+          /* If core not set above and SSE2 exist, try it */
+          if (cindex == -1 && (detected_flags & CPU_F_SSE2))
+            cindex = 3;  /* generic sse asm core for fast sse2 like core2 */
+          /* Same for MMX */
+          if (cindex == -1 && (detected_flags & CPU_F_MMX))
+            cindex = 2;  /* mmx asm core */
           else
             cindex = 1;  /* no mmx - generic asm core */
         #else
@@ -507,6 +526,10 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
       unit_func.ogr = ogrng_get_dispatch_table_mmx();
     else if (coresel == 3)
       unit_func.ogr = ogrng_get_dispatch_table_cj1_sse2();
+    else if (coresel == 4)
+      unit_func.ogr = ogrng_get_dispatch_table_cj1_sse_p4();
+    else if (coresel == 5)
+      unit_func.ogr = ogrng_get_dispatch_table_cj1_sse_k8();
   #endif
     else
       unit_func.ogr = ogrng_get_dispatch_table();

@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.109 2009/04/07 08:54:32 andreasb Exp $
+# $Id: makefile.vc,v 1.110 2009/04/13 03:58:19 stream Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -364,6 +364,10 @@ OGRNG_OBJS =                         \
         $(OUTPUTPATH)/ogrng-b-asm-rt.obj \
         $(OUTPUTPATH)/ogrng-cj1-sse2.obj    \
         $(OUTPUTPATH)/ogrng-cj1-sse2-asm.obj \
+        $(OUTPUTPATH)/ogrng-cj1-sse-p4.obj    \
+        $(OUTPUTPATH)/ogrng-cj1-sse-p4-asm.obj \
+        $(OUTPUTPATH)/ogrng-cj1-sse-k8.obj    \
+        $(OUTPUTPATH)/ogrng-cj1-sse-k8-asm.obj \
         $(OUTPUTPATH)/ogrng_init.obj \
         $(OUTPUTPATH)/ogrng_dat.obj
 !else
