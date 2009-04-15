@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1998-2008 - All Rights Reserved
+ * Copyright distributed.net 1998-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,15 +8,18 @@
 */ 
 
 #ifndef __W32CONS_H__
-#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.4 2008/12/30 20:58:44 andreasb Exp $"
+#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.5 2009/04/15 09:49:27 andreasb Exp $"
+
+#include "cputypes.h"
 
 /* ********* DO NOT EVER CHANGE THE W32CLI_*_NAME defines ********** */
-#if (CLIENT_CPU == CPU_CUDA)
-#define W32CLI_MUTEX_NAME       "Bovine RC5/DES Win32-Cuda Client"
+#if ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM))
+#define W32CLI_MUTEX_NAME       "Bovine RC5/DES Win32-GPU Client"
+#define W32CLI_CONSOLE_NAME     "distributed.net GPU client"
 #else
 #define W32CLI_MUTEX_NAME       "Bovine RC5/DES Win32 Client"
-#endif
 #define W32CLI_CONSOLE_NAME     "distributed.net client"
+#endif
 #define W32CLI_OLD_CONSOLE_NAME "distributed.net RC5DES client"
 #define W32CLI_SSATOM_NAME      "distributed.net ScreenSaver"
 
