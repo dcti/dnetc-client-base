@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers
  *
- * $Id: r72cuda.h,v 1.14 2009/04/01 15:35:27 andreasb Exp $
+ * $Id: r72cuda.h,v 1.15 2009/04/15 19:00:25 thejet Exp $
 */
 
 #include "ccoreio.h"
@@ -19,8 +19,10 @@
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 const int min_sleep_interval = 15000;   // microseconds
+const int max_sleep_iterations = 150;
 #else
 const int min_sleep_interval = 100;     // microseconds
+const int max_sleep_iterations = 22500;
 #endif
 
 // choices are -1 = busy wait, 0 = simple sleep loop, 1 = adaptive sleep loop, 2 = gpu timed sleep

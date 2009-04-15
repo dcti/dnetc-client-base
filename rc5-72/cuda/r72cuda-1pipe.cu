@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-1pipe.cu,v 1.24 2009/04/01 15:35:27 andreasb Exp $
+ * $Id: r72cuda-1pipe.cu,v 1.25 2009/04/15 19:00:25 thejet Exp $
 */
 
 #include <stdio.h>
@@ -219,7 +219,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
     if (waitmode == 0) {
       int slept;
-      for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
+      for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
         NonPolledUSleep(min_sleep_interval);
       //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
     } else if (waitmode == 1) {
@@ -227,7 +227,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       long expected = 0, elapsed = 0;
       int slept = 0;
       if (best_time <= 0) {
-        for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
+        for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
           NonPolledUSleep(min_sleep_interval);
         //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
       } else {
@@ -237,7 +237,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
           NonPolledUSleep(expected / 2);
           ++slept;
         }
-        while (cudaEventQuery(stop) == cudaErrorNotReady) {
+        while (cudaEventQuery(stop) == cudaErrorNotReady && slept <= max_sleep_iterations) {
           CliTimerDiff(&tv_core_elapsed, &tv_core_start, NULL);
           elapsed = tv_core_elapsed.tv_sec * 1000000 + tv_core_elapsed.tv_usec;
           long sleep_now = (expected - elapsed) / 2;
@@ -268,7 +268,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       long expected = 0, elapsed = 0;
       int slept = 0;
       if (best_time <= 0) {
-        for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady; ++slept)
+        for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
           NonPolledUSleep(min_sleep_interval);
         //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
       } else {
@@ -306,7 +306,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
     /* Copy the match_found variable to the host */
     if( cudaMemcpy((void *)&match_found, (void *)cuda_match_found, sizeof(u8), cudaMemcpyDeviceToHost) != (cudaError_t) CUDA_SUCCESS ) {
-      failed = "cudaEventSynchronize";
+      failed = "cudaMemcpy";
       goto error_exit;
     }
 
