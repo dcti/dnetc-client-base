@@ -1,6 +1,6 @@
 ;
 ; Assembly core for OGR-NG, SSE2 version. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse2-asm.asm,v 1.4 2009/04/16 07:11:19 andreasb Exp $
+; $Id: ogrng-cj1-sse2-asm.asm,v 1.5 2009/04/16 07:23:25 andreasb Exp $
 ;
 ; NOTE: Requires *ALL* DIST, LIST and COMP bitmaps to start on 16 byte boundaries.
 ; Designed for Pentium M and later 
@@ -8,6 +8,7 @@
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
 ; 2009-04-14: Changed some branches into conditional moves
+;             Changed branches from signed to unsigned to allow macro uop fusion on Core2
 ;             Removed some redundant operations
 ;
 ; 2009-04-05: Rewrote lookup of first zero bit
@@ -222,7 +223,7 @@ found_shift:
 	;        }
 	add	ebx, ecx
 	cmp	ebx, edi	; limit (==lev->limit)
-	jg	break_for		; ENTERED: 0x07A5D5F7(67.35%), taken 30-34%
+	ja	break_for		; ENTERED: 0x07A5D5F7(67.35%), taken 30-34%
 
 	;        COMP_LEFT_LIST_RIGHT(lev, s);
 	; !!!
@@ -351,7 +352,7 @@ after_if:
 	;;;      if (depth > halfdepth && depth <= halfdepth2) {
 
 	cmp	edx, [work_halfdepth2]
-	jle	continue_if_depth	; ENTERED: 0x0513FD14(44.72%), NOT taken 97.02%
+	jbe	continue_if_depth	; ENTERED: 0x0513FD14(44.72%), NOT taken 97.02%
 
 skip_if_depth:
 	; REGISTER - usage
@@ -375,7 +376,7 @@ continue_if_depth:
 	; eax = temp
 
 	cmp	edx, [work_halfdepth]
-	jle	skip_if_depth		; ENTERED: 0x????????(??.??%), taken 0.5%
+	jbe	skip_if_depth		; ENTERED: 0x????????(??.??%), taken 0.5%
 
 ;        int temp = maxlen_m1 - oState->Levels[oState->half_depth].mark;
 ;;        int temp = oState->max - 1 - oState->Levels[halfdepth].mark;
@@ -386,7 +387,7 @@ continue_if_depth:
 
 ;        if (depth < oState->half_depth2) {
 	cmp	edx, [work_halfdepth2]
-	jge	update_limit_temp	; ENTERED: 0x00267D08(1.32%), taken 78.38%
+	jae	update_limit_temp	; ENTERED: 0x00267D08(1.32%), taken 78.38%
 
 ;          temp -= LOOKUP_FIRSTBLANK(dist0); // "33" version
 ;;;        temp -= LOOKUP_FIRSTBLANK(dist0 & -((SCALAR)1 << 32));
@@ -421,7 +422,7 @@ full_shift:
 	;        }
 	add	ebx, 64
 	cmp	ebx, edi ; limit (==lev->limit)
-	jg	break_for		; ENTERED: 0x03B4F5EB(32.64%), taken 66.70%
+	ja	break_for		; ENTERED: 0x03B4F5EB(32.64%), taken 66.70%
 
 	;      COMP_LEFT_LIST_RIGHT_WORD(lev);
 	;      continue;
@@ -461,13 +462,13 @@ break_for:
 
 	;  } while (depth > oState->stopdepth);
 	mov	eax, [work_stopdepth]
-	cmp	eax, edx
 
 	; split loop header
 	mov	ebx, [ebp+level_mark-ebp_shift]	; mark  = lev->mark;
 	mov	edi, [ebp+level_limit-ebp_shift]
 
-	jl	do_loop_split		; ENTERED: 0x0513FCC2(44.72%), taken 99.99%
+	cmp	eax, edx
+	jb	do_loop_split		; ENTERED: 0x0513FCC2(44.72%), taken 99.99%
 
 	movdqa	xmm_list0, cur(list, 0)
 	movdqa	xmm_list2, cur(list, 2)
