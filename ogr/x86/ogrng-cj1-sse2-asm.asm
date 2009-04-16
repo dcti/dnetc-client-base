@@ -1,13 +1,13 @@
 ;
 ; Assembly core for OGR-NG, SSE2 version. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse2-asm.asm,v 1.3 2009/04/13 03:58:21 stream Exp $
+; $Id: ogrng-cj1-sse2-asm.asm,v 1.4 2009/04/16 07:11:19 andreasb Exp $
 ;
 ; NOTE: Requires *ALL* DIST, LIST and COMP bitmaps to start on 16 byte boundaries.
 ; Designed for Pentium M and later 
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
-; 2009-04-12: Changed some branches into conditional moves
+; 2009-04-14: Changed some branches into conditional moves
 ;             Removed some redundant operations
 ;
 ; 2009-04-05: Rewrote lookup of first zero bit
@@ -167,8 +167,6 @@ ogr_cycle_256_cj1_sse2:
 	mov	ebx, [ebp+level_mark-ebp_shift]	; mark  = lev->mark;
 	mov	edi, [ebp+level_limit-ebp_shift]
 
-	align	16
-
 ; Jump probabilies calculated from summary statistic of 'dnetc -test'.
 ; Main loop was entered 0x0B5ACBE2 times. For each jump, we measured
 ; number of times this jump was reached (percents from main loop
@@ -181,6 +179,7 @@ ogr_cycle_256_cj1_sse2:
 	; edx = work depth
 	; ebp = stack location
 
+	align	16
 do_loop_split:
 	movdqa	xmm_list0, cur(list, 0)
 	movdqa	xmm_list2, cur(list, 2)
@@ -274,7 +273,7 @@ found_shift:
 	por	xmm_comp0, xmm_temp_a
 	por	xmm_comp2, xmm_temp_b
 
-	pxor	mm_newbit, mm_newbit		; newbit = 0, this instruction is not needed yet removing it makes the core run slower...
+	pxor	mm_newbit, mm_newbit		; newbit = 0, this instruction is not needed yet removing it makes the core run slower on E3110 and E5420 but faster on E6850
 
 after_if:
 	; REGISTER - usage
@@ -430,22 +429,18 @@ full_shift:
 	; COMP_LEFT_LIST_RIGHT_WORD(lev);
 	; !!!
 
-	movq2dq	xmm_temp_s, mm_newbit
-
 	pslldq	xmm_list2, 8
+	movq2dq	xmm_temp_s, mm_newbit
 	movhlps	xmm_list2, xmm_list0
 
 	pslldq	xmm_list0, 8
-	movsd	xmm_list0, xmm_temp_s
-
-	pxor	xmm_temp_a, xmm_temp_a
-	pxor	mm_newbit, mm_newbit	; Clear newbit
+	por	xmm_list0, xmm_temp_s
 
 	psrldq	xmm_comp0, 8
+	pxor	mm_newbit, mm_newbit	; Clear newbit
 	movlhps	xmm_comp0, xmm_comp2
 
 	psrldq	xmm_comp2, 8
-	movlhps	xmm_comp2, xmm_temp_a
 
 	jmp	for_loop
 
