@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.62 2009/04/16 07:30:37 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.63 2009/04/21 12:20:17 stream Exp $
 ==========================================================================
 
 2.9100
@@ -36,6 +36,7 @@ Version change log: $Id: CHANGES.txt,v 1.62 2009/04/16 07:30:37 andreasb Exp $
                        cudart.dll) with the released client
             imp: cuda: log errors to logfile (if enabled)
             new: x86: three OGR-NG SSE2 ASM cores from Craig Johnston (#4177)
+	    imp: cellbe: faster OGR-NG SPU ASM core
 
 2.9103-509  *** minimal version that supports OGR-27 and beyond ***
             new: rc5-72: support for requesting larger packets (#3918)
