@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.9 2008/12/30 20:58:44 andreasb Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.10 2009/04/21 18:00:41 thejet Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -7884,30 +7884,6 @@ int w32ConGetType(void)
   }
   //full GUI should return 'G';
   return 0;
-}
-
-/* ------------------------------------------------ */
-
-int printf(const char *format,...)
-{
-  va_list arglist;
-  int retlen; char *buf;
-  va_start (arglist, format);
-  buf = (char *)malloc(8192);
-  retlen = -1;
-  if (buf)
-  {
-    retlen = vsprintf(buf, format, arglist );
-    if (retlen > 0)
-    {
-      if (constatics.hwndList[0] || constatics.devpipe || constatics.nativecons)
-        w32ConOut(buf);
-      else
-        w32ConOutModal(buf);
-    }
-    free((void *)buf);
-  }
-  return retlen;
 }
 
 /* ------------------------------------------------ */
