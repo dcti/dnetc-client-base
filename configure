@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.391 2009/04/13 03:58:19 stream Exp $
+# @(#)$Id: configure,v 1.392 2009/04/23 13:56:32 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3463,8 +3463,11 @@ if [ -n "$TARGET_TARBALL" ]; then
       echo "	-rm -rf $FULLTARNAME" >> Makefile
       echo "	mkdir $FULLTARNAME" >> Makefile
       echo "	mkdir $FULLTARNAME/docs" >> Makefile
-      echo "	for file in ${TARGET_BINNAME} \${DOCFILES} ; do cp \$\$file $FULLTARNAME/\$\$file ; done" >> Makefile
-      echo "	if test -n \"\${LIBFILES}\" ; then mkdir $FULLTARNAME/lib; for file in \${LIBFILES} ; do \$(CP) -p \$\$file $FULLTARNAME/lib/ ; done ; fi" >> Makefile
+      echo "	for file in ${TARGET_BINNAME} \${DOCFILES} ; do \$(CP) \$\$file $FULLTARNAME/\$\$file ; done" >> Makefile
+      if test -n "${TARGET_LIBFILES}"; then
+        echo "	mkdir $FULLTARNAME/lib" >> Makefile
+        echo "	for file in \${LIBFILES} ; do \$(CP) -p \$\$file $FULLTARNAME/lib/ ; done" >> Makefile
+      fi
       echo "	tar -cvf - $FULLTARNAME | gzip -9 > $FULLTARNAME.tar.gz" >> Makefile
       echo "	rm -rf $FULLTARNAME" >> Makefile
     elif [ "$TARGET_ARCTYPE" = "lha" ]; then
