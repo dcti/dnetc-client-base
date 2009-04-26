@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.113 2009/04/01 16:04:10 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.114 2009/04/26 12:11:20 andreasb Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -524,10 +524,15 @@
 
 #if (CLIENT_CPU == CPU_CUDA)
   #include <cuda.h>
+  #if defined(EXPECTED_CUDA_VERSION) && ((EXPECTED_CUDA_VERSION) != (CUDA_VERSION))
+    #error "CUDA version mismatch"
+  #endif
   #if (CUDA_VERSION == 2000)
     #define CLIENT_OS_NAME_EXTENDED "CUDA 2.0 on " CLIENT_OS_NAME
   #elif (CUDA_VERSION == 2010)
     #define CLIENT_OS_NAME_EXTENDED "CUDA 2.1 on " CLIENT_OS_NAME
+  #elif (CUDA_VERSION == 2020)
+    #define CLIENT_OS_NAME_EXTENDED "CUDA 2.2 on " CLIENT_OS_NAME
   #else
     #define CLIENT_OS_NAME_EXTENDED "CUDA on " CLIENT_OS_NAME
   #endif

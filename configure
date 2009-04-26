@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.393 2009/04/26 01:20:53 andreasb Exp $
+# @(#)$Id: configure,v 1.394 2009/04/26 12:11:20 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -771,6 +771,46 @@ infer_arch_and_version() { # $1=OS name to be expected from uname -s
     echo "$1 targets can only be built on $1"
     exit 1
   fi
+}
+
+# -------------------------------------------------------------------
+
+inferred_cuda_version=""
+inferred_cuda_major=0
+inferred_cuda_minor=0
+infer_cuda_version() { # $1=configure target
+  # check if a version was given explicitely
+  case "internal-$1" in
+    internal-*-cuda20)
+      inferred_cuda_version="2.0"
+      ;;
+    internal-*-cuda21)
+      inferred_cuda_version="2.1"
+      ;;
+    internal-*-cuda22)
+      inferred_cuda_version="2.2"
+      ;;
+    internal-*-cuda)
+      for _ver in $TARGET_CUDA_VERSION 2.2 2.1 2.0
+      do
+        if [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}" ]; then
+          inferred_cuda_version="$_ver"
+          break
+        fi
+	unset _ver
+      done
+      ;;
+  esac
+
+  test -n "$inferred_cuda_version" || inferred_cuda_version="$TARGET_CUDA_VERSION"
+  test -n "$inferred_cuda_version" || inferred_cuda_version="0.0"
+
+  inferred_cuda_major="`echo $inferred_cuda_version | cut -d. -f1`"
+  inferred_cuda_minor="`echo $inferred_cuda_version | cut -d. -f2`"
+
+  TARGET_CUDA_VERSION="${inferred_cuda_major}.${inferred_cuda_minor}"
+  inferred_cuda_version_expected="${inferred_cuda_major}0${inferred_cuda_minor}0"
+  inferred_cuda_tarball_suffix="-cuda${inferred_cuda_major}${inferred_cuda_minor}"
 }
 
 # -------------------------------------------------------------------
@@ -3016,7 +3056,8 @@ case "$1" in
 
 ###### CUDA
 
-    *linux-cuda*)               
+    *linux-cuda*)               # use -cuda20 or -cuda21 to specify CUDA version
+        infer_cuda_version "$1"
         infer_arch_and_version "Linux"
         TARGET_AS="gcc -c"         
         TARGET_CC="gcc"
@@ -3024,22 +3065,24 @@ case "$1" in
         generate_gcc_opts "${inferred_arch}" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DEXPECTED_CUDA_VERSION=${inferred_cuda_version_expected}"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=\(50*86400\)"
         TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
         TARGET_LIBS="-lcudart -lrt"
-        TARGET_CUDA_VERSION="2.1"
-        TARGET_TARBALL="linux-${inferred_arch}-cuda21"
+        TARGET_TARBALL="linux-${inferred_arch}${inferred_cuda_tarball_suffix}"
         TARGET_DOCFILES="docs/readme.linux docs/readme.cuda"   #platform specific docfile
         TARGET_LIBFILES="plat/cuda/CUDA_Toolkit_EULA_081215.pdf ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.2 ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.$TARGET_CUDA_VERSION"
         TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "cuda"
         ;;
 
-    *macosx-cuda)               # Mac OS X, Darwin plus CUDA
+    *macosx-cuda*)              # Mac OS X, Darwin plus CUDA, use -cuda20 or -cuda21 to specify CUDA version
+        TARGET_CUDA_VERSION="2.0"  # default, can't autodetect by looking at file names
+        infer_cuda_version "$1"
         generate_gcc_opts "x86" "macosx"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
-        #TARGET_CCFLAGS="$TARGET_CCFLAGS -DCUDA -DDYN_TIMESLICE"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DEXPECTED_CUDA_VERSION=${inferred_cuda_version_expected}"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=\(50*86400\)"
 
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
@@ -3049,7 +3092,7 @@ case "$1" in
         TARGET_NASM_FMT="macho"
 
         TARGET_LIBS="$TARGET_LIBS -lcudart"
-        TARGET_TARBALL="macosx-x86-cuda20"
+        TARGET_TARBALL="macosx-x86${inferred_cuda_tarball_suffix}"
         TARGET_DOCFILES="docs/readme.cuda"   #platform specific docfile
         TARGET_LIBFILES="plat/cuda/CUDA_Toolkit_EULA_081215.pdf ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.dylib"
         add_sources "macosx" "cuda"
