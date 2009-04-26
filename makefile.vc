@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.111 2009/04/21 18:00:40 thejet Exp $
+# $Id: makefile.vc,v 1.112 2009/04/26 01:20:53 andreasb Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -128,7 +128,7 @@ OPTS_LINK = /nologo /incremental:no \
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH) -DBETA -DBETA_PERIOD=2419200
+OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH) -DBETA -DBETA_PERIOD="(50*86400)"
 OPTS_LIBS = $(OPTS_LIBS) version.lib $(CUDA_LIB_PATH)\cudart.lib
 ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda plat\cuda\CUDA_Toolkit_EULA_081215.pdf cudart.dll
 !endif

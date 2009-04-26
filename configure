@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.392 2009/04/23 13:56:32 andreasb Exp $
+# @(#)$Id: configure,v 1.393 2009/04/26 01:20:53 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3024,7 +3024,7 @@ case "$1" in
         generate_gcc_opts "${inferred_arch}" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=\(50*86400\)"
         TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
         TARGET_LIBS="-lcudart -lrt"
         TARGET_CUDA_VERSION="2.1"
@@ -3040,7 +3040,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
         #TARGET_CCFLAGS="$TARGET_CCFLAGS -DCUDA -DDYN_TIMESLICE"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=\(50*86400\)"
 
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
@@ -3064,7 +3064,7 @@ case "$1" in
         generate_gcc_opts "${inferred_arch}" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_STREAMSDK_INSTALL_PREFIX:+-I$TARGET_STREAMSDK_INSTALL_PREFIX/include} -DATI_STREAM -DDYN_TIMESLICE"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=2419200"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=\(28*86400\)"
         #TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_STREAM_DRIVER_INSTALL_PREFIX:+-L$TARGET_STREAM_DRIVER_INSTALL_PREFIX/lib -Wl,-rpath -Wl,$TARGET_STREAM_DRIVER_INSTALL_PREFIX/lib}" # HACK!
         TARGET_LIBS="-laticalrt -laticalcl -lrt"
         TARGET_TARBALL="linux-${inferred_arch}-stream"
