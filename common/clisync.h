@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.16 2009/04/01 15:49:23 andreasb Exp $"
+#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.17 2009/04/26 14:30:28 stream Exp $"
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
@@ -202,7 +202,19 @@
   extern "C" long _InterlockedExchange(volatile long * Target, long Value);
   #pragma intrinsic(_InterlockedExchange)
   static inline int fastlock_trylock(fastlock_t *l) {
+#if _MSC_VER <= 1200
+    /*
+     * Workaround for VS 6.0. It has ugly bug in codegen, probably when
+     * optimizing for speed Default definition of fastlock_trylock()
+     * will generate following code:
+     *   mov    eax, 1
+     *   xchg   eax, [ecx]
+     *   xor    eax, eax    <== !BUG! codegen think that eax still contain 1
+     */
+    return _InterlockedExchange(l, 1) == 0;
+#else
     return _InterlockedExchange(l, 1) ^ 1;
+#endif
   }
 #else
   static inline int fastlock_trylock(fastlock_t *l) {
