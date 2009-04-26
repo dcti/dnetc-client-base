@@ -1,8 +1,10 @@
 ;
 ; Assembly core for OGR-NG, SSE version tuned for P4. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse-p4-asm.asm,v 1.1 2009/04/13 03:58:21 stream Exp $
+; $Id: ogrng-cj1-sse-p4-asm.asm,v 1.2 2009/04/26 04:24:14 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
+;
+; 2009-04-23: Aligned stack to 16 bytes
 ;
 ; 2009-04-12: Initial SSE version. Tuned for Pentium 4.
 ;             Using 16 byte aligned bitmaps
@@ -38,16 +40,20 @@ _ogr_cycle_256_cj1_sse_p4:
 ogr_cycle_256_cj1_sse_p4:
 
 	%define regsavesize	10h	; 4 registers saved
-	%define worksize	20h
+	%define worksize	30h
 
-	%define work_depth					esp+00h
+	%define work_depth				esp+00h
 	%define work_halfdepth				esp+04h
 	%define work_halfdepth2				esp+08h
-	%define work_nodes					esp+0Ch
+	%define work_nodes				esp+0Ch
 	%define work_maxlen_m1				esp+10h
-	%define work_half_depth_mark_addr	esp+14h
-
-	%define	param_oState	esp+regsavesize+worksize+04h
+	%define work_half_depth_mark_addr		esp+14h
+	%define work_oState				esp+18h
+	%define work_pnodes				esp+1Ch
+	%define work_pchoose				esp+20h
+	%define work_oldesp				esp+24h
+	
+	%define param_oState	esp+regsavesize+worksize+04h
 	%define param_pnodes	esp+regsavesize+worksize+08h
 	%define param_pchoose	esp+regsavesize+worksize+0Ch
 
@@ -81,12 +87,26 @@ ogr_cycle_256_cj1_sse_p4:
 	push	ebp			; note: regsavesize bytes pushed
 	sub	esp, worksize
 
+	; Grab all paramaters
 	mov	ebx, [param_oState]
+	mov	eax, [param_pnodes]
+	mov	ecx, [param_pchoose]
+
+	; Align stack to 16 bytes
+	mov	edx, esp
+	and	esp, 0xFFFFFFF0
+	mov	[work_oldesp], edx
+
+	; write the paramters in the aligned work space
+	mov	[work_oState], ebx
+	mov	[work_pnodes], eax
+	mov	[work_pchoose], ecx
+
 	mov	ecx, [ebx+oState_depth]
 	mov	[work_depth], ecx	; depth = oState->depth (cached for SETUP_TOP_STATE)
 	imul	eax, ecx, sizeof_level
 	lea	ebp, [eax+ebx+oState_Levels+ebp_shift]	; lev = &oState->Levels[oState->depth]
-	mov	eax, [param_pnodes]
+	mov	eax, [work_pnodes]
 	mov	eax, [eax]
 	mov	[work_nodes], eax	; nodes = *pnodes
 
@@ -138,14 +158,13 @@ ogr_cycle_256_cj1_sse_p4:
 	mov	ebx, [ebp+level_mark-ebp_shift]	; mark  = lev->mark;
 	mov	edi, [ebp+level_limit-ebp_shift]
 
-	align	16
-
 ; Jump probabilies calculated from summary statistic of 'dnetc -test'.
 ; Main loop was entered 0x0B5ACBE2 times. For each jump, we measured
 ; number of times this jump was reached (percents from main loop
 ; means importance of this code path) and probability of this jump to
 ; be taken (for branch prediction of important jumps).
 
+	align	16
 do_loop_split:
 for_loop:
 
@@ -244,7 +263,7 @@ after_if:
 	;      if (depth == oState->maxdepthm1) {
 	;        goto exit;         /* Ruler found */
 	;      }
-	mov	eax, [param_oState]
+	mov	eax, [work_oState]
 	mov	eax, [eax+oState_maxdepthm1]
 	cmp	eax, [work_depth]
 	je	exit			; ENTERED: 0x0513FD1B(44.72%), taken: 0%
@@ -315,7 +334,7 @@ after_if:
 	shr	eax, CHOOSE_DIST_BITS
 	shl	eax, 5
 	add	eax, edx		; depth
-	mov	edx, [param_pchoose]
+	mov	edx, [work_pchoose]
 	movzx	edi, word [edx+eax*2]
 
 	;      if (depth > oState->half_depth && depth <= oState->half_depth2) {
@@ -341,7 +360,6 @@ skip_if_depth:
 	jmp	exit
 
 	align	16
-
 continue_if_depth:
 	cmp	eax, [work_halfdepth]
 	jle	skip_if_depth		; ENTERED: 0x????????(??.??%), taken 0.5%
@@ -380,7 +398,6 @@ update_limit_temp:
 	jmp	skip_if_depth
 
 	align	16
-
 full_shift:
 	;      else {         /* s >= SCALAR_BITS */
 
@@ -441,7 +458,7 @@ break_for:
 	movd	esi, mm_comp0
 
 	;  } while (depth > oState->stopdepth);
-	mov	edx, [param_oState]
+	mov	edx, [work_oState]
 	mov	edx, [edx+oState_stopdepth]
 	cmp	edx, [work_depth]
 
@@ -462,12 +479,13 @@ exit:
 	mov	[ebp+level_mark-ebp_shift], ebx
 	mov	[ebp+level_limit-ebp_shift], edi
 
-	mov	ebx, [param_pnodes]	; *pnodes -= nodes;
+	mov	ebx, [work_pnodes]	; *pnodes -= nodes;
 	mov	eax, [work_nodes]
 	sub	[ebx], eax
 
 	mov	eax, [work_depth]	; return depth;
 
+	mov	esp, [work_oldesp]
 	add	esp, worksize
 	pop	ebp
 	pop	edi

@@ -1,8 +1,10 @@
 ;
 ; Assembly core for OGR-NG, SSE version tuned for K8. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse-k8-asm.asm,v 1.1 2009/04/13 03:58:20 stream Exp $
+; $Id: ogrng-cj1-sse-k8-asm.asm,v 1.2 2009/04/26 04:24:14 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
+;
+; 2009-04-23: Aligned stack to 16 bytes
 ;
 ; 2009-04-12: Initial SSE version. Tuned for Athlon 64 (K8).
 ;             Rewrote lookup of first zero bit
@@ -37,18 +39,22 @@ _ogr_cycle_256_cj1_sse_k8:
 ogr_cycle_256_cj1_sse_k8:
 
 	%define regsavesize	10h	; 4 registers saved
-	%define worksize	30h	; For some reason using 30h instead of 20h improves performance...
+	%define worksize	30h
 
-	%define work_depth					esp+00h
+	%define work_depth				esp+00h
 	%define work_halfdepth				esp+04h
 	%define work_halfdepth2				esp+08h
-	%define work_nodes					esp+0Ch
+	%define work_nodes				esp+0Ch
 	%define work_maxlen_m1				esp+10h
-	%define work_half_depth_mark_addr	esp+14h
+	%define work_half_depth_mark_addr		esp+14h
 	%define work_maxdepth_m1			esp+18h
 	%define work_stopdepth				esp+1Ch
+	%define work_oState				esp+20h
+	%define work_pnodes				esp+24h
+	%define work_pchoose				esp+28h
+	%define work_oldesp				esp+2Ch
 
-	%define	param_oState	esp+regsavesize+worksize+04h
+	%define param_oState	esp+regsavesize+worksize+04h
 	%define param_pnodes	esp+regsavesize+worksize+08h
 	%define param_pchoose	esp+regsavesize+worksize+0Ch
 
@@ -82,12 +88,26 @@ ogr_cycle_256_cj1_sse_k8:
 	push	ebp			; note: regsavesize bytes pushed
 	sub	esp, worksize
 
+	; Grab all paramaters
 	mov	ebx, [param_oState]
+	mov	eax, [param_pnodes]
+	mov	ecx, [param_pchoose]
+
+	; Align stack to 16 bytes
+	mov	edx, esp
+	and	esp, 0xFFFFFFF0
+	mov	[work_oldesp], edx
+
+	; write the paramters in the aligned work space
+	mov	[work_oState], ebx
+	mov	[work_pnodes], eax
+	mov	[work_pchoose], ecx
+
 	mov	ecx, [ebx+oState_depth]
 	mov	[work_depth], ecx	; depth = oState->depth (cached for SETUP_TOP_STATE)
 	imul	eax, ecx, sizeof_level
 	lea	ebp, [eax+ebx+oState_Levels+ebp_shift]	; lev = &oState->Levels[oState->depth]
-	mov	eax, [param_pnodes]
+	mov	eax, [work_pnodes]
 	mov	eax, [eax]
 	mov	[work_nodes], eax	; nodes = *pnodes
 
@@ -242,7 +262,7 @@ after_if:
 	;      if (depth == oState->maxdepthm1) {
 	;        goto exit;         /* Ruler found */
 	;      }
-	mov	eax, [param_oState]
+	mov	eax, [work_oState]
 	mov	eax, [eax+oState_maxdepthm1]
 	cmp	eax, [work_depth]
 	je	exit			; ENTERED: 0x0513FD1B(44.72%), taken: 0%
@@ -306,7 +326,7 @@ after_if:
 
 	movd	ecx, mm_temp_b		; dist0 in ecx
 
-	mov	esi, [param_pchoose]
+	mov	esi, [work_pchoose]
 	mov	eax, ecx ; dist 0
 	shr	eax, CHOOSE_DIST_BITS
 	shl	eax, 5
@@ -418,7 +438,7 @@ full_shift:
 	align	16
 break_for:
 
-	mov	eax, [param_oState]
+	mov	eax, [work_oState]
 
 	;    lev--;
 	sub	ebp, sizeof_level
@@ -460,12 +480,13 @@ exit:
 	mov	[ebp+level_mark-ebp_shift], ebx
 	mov	[ebp+level_limit-ebp_shift], edi
 
-	mov	ebx, [param_pnodes]	; *pnodes -= nodes;
+	mov	ebx, [work_pnodes]	; *pnodes -= nodes;
 	mov	eax, [work_nodes]
 	sub	[ebx], eax
 
 	mov	eax, [work_depth]	; return depth;
 
+	mov	esp, [work_oldesp]
 	add	esp, worksize
 	pop	ebp
 	pop	edi

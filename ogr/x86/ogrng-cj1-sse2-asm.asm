@@ -1,11 +1,13 @@
 ;
 ; Assembly core for OGR-NG, SSE2 version. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse2-asm.asm,v 1.5 2009/04/16 07:23:25 andreasb Exp $
+; $Id: ogrng-cj1-sse2-asm.asm,v 1.6 2009/04/26 04:24:14 stream Exp $
 ;
 ; NOTE: Requires *ALL* DIST, LIST and COMP bitmaps to start on 16 byte boundaries.
 ; Designed for Pentium M and later 
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
+;
+; 2009-04-23: Aligned stack to 16 bytes
 ;
 ; 2009-04-14: Changed some branches into conditional moves
 ;             Changed branches from signed to unsigned to allow macro uop fusion on Core2
@@ -24,7 +26,6 @@
 ;             General optimisation of the math to reduce instructions
 ;
 ; Possible improvements:
-; * Align stack to 16 byte boundary
 ; * Vary choose array cache size
 ; * Arrange the choose array for better cache hits, depth as most significant index perhaps?
 
@@ -58,11 +59,15 @@ ogr_cycle_256_cj1_sse2:
 
 	%define work_halfdepth				esp+00h
 	%define work_halfdepth2				esp+04h
-	%define work_nodes					esp+08h
+	%define work_nodes				esp+08h
 	%define work_maxlen_m1				esp+0Ch
-	%define work_half_depth_mark_addr	esp+10h
+	%define work_half_depth_mark_addr		esp+10h
 	%define work_maxdepth_m1			esp+14h
 	%define work_stopdepth				esp+18h
+	%define work_oState				esp+1Ch
+	%define work_pnodes				esp+20h
+	%define work_pchoose				esp+24h
+	%define work_oldesp				esp+28h
 
 	%define param_oState	esp+regsavesize+worksize+04h
 	%define param_pnodes	esp+regsavesize+worksize+08h
@@ -98,11 +103,25 @@ ogr_cycle_256_cj1_sse2:
 	push	ebp			; note: regsavesize bytes pushed
 	sub	esp, worksize
 
+	; Grab all paramaters
 	mov	ebx, [param_oState]
+	mov	eax, [param_pnodes]
+	mov	ecx, [param_pchoose]
+
+	; Align stack to 16 bytes
+	mov	edx, esp
+	and	esp, 0xFFFFFFF0
+	mov	[work_oldesp], edx
+
+	; write the paramters in the aligned work space
+	mov	[work_oState], ebx
+	mov	[work_pnodes], eax
+	mov	[work_pchoose], ecx
+
 	mov	edx, [ebx+oState_depth]
 	imul	eax, edx, sizeof_level
 	lea	ebp, [eax+ebx+oState_Levels+ebp_shift]	; lev = &oState->Levels[oState->depth]
-	mov	eax, [param_pnodes]
+	mov	eax, [work_pnodes]
 	mov	eax, [eax]
 	mov	[work_nodes], eax	; nodes = *pnodes
 
@@ -121,11 +140,11 @@ ogr_cycle_256_cj1_sse2:
 	sub	eax, 1
 	mov	[work_maxlen_m1], eax	; maxlen_m1 = oState->max - 1
 
-	mov	eax, [param_oState]
+	mov	eax, [work_oState]
 	mov	eax, [eax+oState_maxdepthm1]
 	mov	[work_maxdepth_m1], eax
 
-	mov	eax, [param_oState]
+	mov	eax, [work_oState]
 	mov	eax, [eax+oState_stopdepth]
 	mov	[work_stopdepth], eax
 
@@ -341,7 +360,7 @@ after_if:
 	; eax = temp
 	; esi = choose array mem location
 
-	mov	esi, [param_pchoose]
+	mov	esi, [work_pchoose]
 	movd	eax, xmm_temp_a ; dist 0
 	shr	eax, CHOOSE_DIST_BITS
 	shl	eax, 5
@@ -486,12 +505,13 @@ exit:
 	mov	[ebp+level_mark-ebp_shift], ebx
 	mov	[ebp+level_limit-ebp_shift], edi
 
-	mov	ebx, [param_pnodes]	; *pnodes -= nodes;
+	mov	ebx, [work_pnodes]	; *pnodes -= nodes;
 	mov	eax, [work_nodes]
 	sub	[ebx], eax
 
 	mov	eax, edx	; return depth;
 
+	mov	esp, [work_oldesp]
 	add	esp, worksize
 	pop	ebp
 	pop	edi
