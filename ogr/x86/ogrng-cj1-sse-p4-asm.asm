@@ -1,10 +1,10 @@
 ;
 ; Assembly core for OGR-NG, SSE version tuned for P4. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse-p4-asm.asm,v 1.2 2009/04/26 04:24:14 stream Exp $
+; $Id: ogrng-cj1-sse-p4-asm.asm,v 1.3 2009/04/26 14:56:10 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
-; 2009-04-23: Aligned stack to 16 bytes
+; 2009-04-23: Aligned stack to 64 bytes (need for old P4s)
 ;
 ; 2009-04-12: Initial SSE version. Tuned for Pentium 4.
 ;             Using 16 byte aligned bitmaps
@@ -92,9 +92,9 @@ ogr_cycle_256_cj1_sse_p4:
 	mov	eax, [param_pnodes]
 	mov	ecx, [param_pchoose]
 
-	; Align stack to 16 bytes
+	; Align stack to 64 bytes
 	mov	edx, esp
-	and	esp, 0xFFFFFFF0
+	and	esp, -64
 	mov	[work_oldesp], edx
 
 	; write the paramters in the aligned work space
