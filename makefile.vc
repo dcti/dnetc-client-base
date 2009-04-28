@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.114 2009/04/28 05:55:57 jlawson Exp $
+# $Id: makefile.vc,v 1.115 2009/04/28 08:25:10 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -518,9 +518,9 @@ rebuild: clean all
 !if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 ZIPSUFFIX = win64-amd64
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-!if ( [plat\win\cudaver.cmd] == 2010 )
+!if ( [cmd /c plat\win\cudaver.cmd] == 2010 )
 ZIPSUFFIX = win32-x86-cuda21
-!elseif ( [plat\win\cudaver.cmd] == 2000 )
+!elseif ( [cmd /c plat\win\cudaver.cmd] == 2000 )
 ZIPSUFFIX = win32-x86-cuda20
 !else
 ZIPSUFFIX = win32-x86-cuda
