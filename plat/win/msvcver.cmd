@@ -12,7 +12,7 @@ for /f "eol=. tokens=6-8 usebackq " %%i in (`cmd /c "cl.exe /D 2>&1 | findstr Ve
   if "%%j"=="Version" set msvcversion=%%k
 )
 if "%msvcversion%"=="" goto notfound
-exit /b %msvcversion:~0,2%
+exit %msvcversion:~0,2%
 
 :notfound
-exit /b 0
+exit 0
