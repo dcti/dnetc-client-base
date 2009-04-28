@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.22 2009/04/26 14:57:29 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.23 2009/04/28 13:51:59 stream Exp $"; }
 
 //#define TRACE
 
@@ -402,6 +402,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
             {
               case 0x09: cindex = 5; break; /* AMD: sse-k8. Wrong for sure. Too many different AMDs covered by type 9 */
               case 0x0B: cindex = 4; break; /* P4:  sse-p4 */
+              case 0x0D: cindex = 5; break; /* Pentium M: -k8 */
               case 0x13: cindex = 5; break; /* P4-Willamette: -k8 but -k8 and -p4 are very close */
             }
           }
