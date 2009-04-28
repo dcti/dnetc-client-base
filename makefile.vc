@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.112 2009/04/26 01:20:53 andreasb Exp $
+# $Id: makefile.vc,v 1.113 2009/04/28 03:44:56 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -139,9 +139,11 @@ OPTS_MSVC = $(OPTS_MSVC) -EHs-c- -GS- -wd4996
 !elseif ( [plat\win\msvcver.cmd] >= 14 )
 OPTS_MSVC = $(OPTS_MSVC) -EHs-c-
 OPTS_LIBS = $(OPTS_LIBS) bufferoverflowu.lib
-!else
+!elseif ( [plat\win\msvcver.cmd] >= 12 )
 OPTS_MSVC = $(OPTS_MSVC) -GX- -GM
 OPTS_LINK = $(OPTS_LINK) /warn:1 
+!else
+!error Failed to detect MSVC version.
 !endif
 
 #OPTS_MSVC = $(OPTS_MSVC) -WX
