@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.115 2009/04/28 08:25:10 jlawson Exp $
+# $Id: makefile.vc,v 1.116 2009/04/28 15:50:51 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -30,21 +30,25 @@ PROCESSOR_ARCHITECTURE = x86
 OPTS_CC_CPU = -DNTALPHA 
 OPTS_M_PLAT = ALPHA
 OPTS_AS = -Gy -Zi -O1
+ZIPSUFFIX = win32-alpha
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OPTS_CC_CPU = 
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+ZIPSUFFIX = win32-x86
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 OPTS_CC_CPU = -D_AMD64_ -GS-
 OPTS_M_PLAT = AMD64
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+ZIPSUFFIX = win64-amd64
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
 # This assumes 32-bit Windows since there's no advantage to using 64-bit
 HAVE_OGR_CORES = 0
 OPTS_CC_CPU =
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+# The ZIPSUFFIX for CUDA is set down below.
 .SUFFIXES : .cu
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
@@ -131,7 +135,19 @@ OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH) -DBETA -DBETA_PERIOD="(50*86400)"
 OPTS_LIBS = $(OPTS_LIBS) version.lib $(CUDA_LIB_PATH)\cudart.lib
 ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda plat\cuda\CUDA_Toolkit_EULA_081215.pdf cudart.dll
+
+!if ( [cmd /c plat\win\cudaver.cmd] == 2010 )
+ZIPSUFFIX = win32-x86-cuda21
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2010
+!elseif ( [cmd /c plat\win\cudaver.cmd] == 2000 )
+ZIPSUFFIX = win32-x86-cuda20
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2000
+!else
+!error Could not detect CUDA version.
 !endif
+
+!endif
+
 
 
 !if ( [plat\win\msvcver.cmd] >= 15 )
@@ -514,20 +530,6 @@ superclean: clean
 rebuild: clean all
 
 # --------------------------------------------
-
-!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-ZIPSUFFIX = win64-amd64
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-!if ( [cmd /c plat\win\cudaver.cmd] == 2010 )
-ZIPSUFFIX = win32-x86-cuda21
-!elseif ( [cmd /c plat\win\cudaver.cmd] == 2000 )
-ZIPSUFFIX = win32-x86-cuda20
-!else
-ZIPSUFFIX = win32-x86-cuda
-!endif
-!else
-ZIPSUFFIX = win32-x86
-!endif
 
 makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
 	zip dnetcXXX-win32-x86.zip $**
