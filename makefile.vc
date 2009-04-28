@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.113 2009/04/28 03:44:56 jlawson Exp $
+# $Id: makefile.vc,v 1.114 2009/04/28 05:55:57 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -515,13 +515,22 @@ rebuild: clean all
 
 # --------------------------------------------
 
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+ZIPSUFFIX = win64-amd64
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+!if ( [plat\win\cudaver.cmd] == 2010 )
+ZIPSUFFIX = win32-x86-cuda21
+!elseif ( [plat\win\cudaver.cmd] == 2000 )
+ZIPSUFFIX = win32-x86-cuda20
+!else
+ZIPSUFFIX = win32-x86-cuda
+!endif
+!else
+ZIPSUFFIX = win32-x86
+!endif
+
 makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
 	zip dnetcXXX-win32-x86.zip $**
-!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
-	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win64-amd64.zip
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86-cuda21.zip
-!else
-	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-win32-x86.zip
-!endif
+	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-$(ZIPSUFFIX).zip
+
 
