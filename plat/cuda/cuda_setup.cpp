@@ -3,7 +3,7 @@
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: cuda_setup.cpp,v 1.2 2009/04/15 19:06:47 thejet Exp $
+* $Id: cuda_setup.cpp,v 1.3 2009/04/28 04:58:30 jlawson Exp $
 */
 
 #include "cuda_setup.h"
@@ -25,7 +25,7 @@ int InitializeCUDA()
 
     #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64))
     const char nvcudaFileName[] = "nvcuda.dll";
-    const char verPath[] = "\\";
+    char verPath[] = "\\";
 
     HMODULE module = LoadLibraryEx(&nvcudaFileName[0], NULL, 0);
     if(!module)
