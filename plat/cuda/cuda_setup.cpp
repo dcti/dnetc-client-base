@@ -3,16 +3,16 @@
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: cuda_setup.cpp,v 1.3 2009/04/28 04:58:30 jlawson Exp $
+* $Id: cuda_setup.cpp,v 1.4 2009/04/29 08:52:35 andreasb Exp $
 */
 
 #include "cuda_setup.h"
 #include "cputypes.h"
-#include "version.h"   // CLIENT_CONTEST, CLIENT_BUILD, CLIENT_BUILD_FRAC
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "logstuff.h"
 
 #include <cuda.h>
+#include <cuda_runtime.h>
 
 // returns 0 on success
 // i.e. a supported GPU + driver version + CUDA version was found
@@ -31,7 +31,7 @@ int InitializeCUDA()
     if(!module)
     {
       retval = CUDA_SETUP_MISSING_NVCUDA_DLL;
-      Log( "Unable to locate CUDA module handle\n" );
+      Log("Unable to locate CUDA module handle");
     }
     else
     {
@@ -40,7 +40,7 @@ int InitializeCUDA()
       if(dwLen <= 0 || dwLen >= MAX_PATH)
       {
         retval = CUDA_SETUP_INVALID_NVCUDA_PATH;
-        Log( "Unable to retrieve CUDA module file name\n" );
+        Log("Unable to retrieve CUDA module file name");
       }
       else
       {
@@ -64,7 +64,7 @@ int InitializeCUDA()
                 DWORD dwRightMost = LOWORD(lpFfi->dwFileVersionLS);
 
                 char buffer[64];
-                snprintf( buffer, sizeof(buffer), "nvcuda.dll Version: %d.%d.%d.%d\n" , dwLeftMost, dwSecondLeft, dwSecondRight, dwRightMost ); 
+                snprintf(buffer, sizeof(buffer), "nvcuda.dll Version: %d.%d.%d.%d" , dwLeftMost, dwSecondLeft, dwSecondRight, dwRightMost);
 
                 Log( buffer );
 
@@ -72,13 +72,13 @@ int InitializeCUDA()
                 if (!(dwSecondRight > 11 || (dwSecondRight == 11 && dwRightMost >= 8120)))
                 {
                   retval = CUDA_SETUP_INVALID_DRIVER_REVISION;
-                  Log( "This CUDA 2.1 client requires driver revision 181.20 or later\n" );
+                  Log("This CUDA 2.1 client requires driver revision 181.20 or later");
                 }
                 #else
                 if (!(dwSecondRight > 11 || (dwSecondRight == 11 && dwRightMost >= 7735)))
                 {
                   retval = CUDA_SETUP_INVALID_DRIVER_REVISION;
-                  Log( "This CUDA 2.0 client requires driver revision 177.35 or later\n" );
+                  Log("This CUDA 2.0 client requires driver revision 177.35 or later");
                 }
                 #endif
                 else
@@ -90,7 +90,7 @@ int InitializeCUDA()
             else
             {
               retval = CUDA_SETUP_NO_FILE_VERSION;
-              Log( "Unable to read CUDA file version\n" );
+              Log("Unable to read CUDA file version");
             }
 
             delete [] pBuffer;
@@ -100,7 +100,7 @@ int InitializeCUDA()
         else
         {
           retval = CUDA_SETUP_NO_FILE_VERSION;
-          Log( "Unable to read CUDA file version size\n" );
+          Log("Unable to read CUDA file version size");
         }
       }
     }
@@ -114,6 +114,30 @@ int InitializeCUDA()
     retval = 0;
 
     #endif
+
+    // try creating CUDA stream and event, may fail on library/driver mismatch
+
+    if (retval == 0) {
+      cudaStream_t stream;
+      if (cudaStreamCreate(&stream) != cudaSuccess) {
+        retval = CUDA_SETUP_STREAM_FAILURE;
+      } else if (cudaStreamDestroy(stream) != cudaSuccess) {
+        retval = CUDA_SETUP_STREAM_FAILURE;
+      }
+      if (retval)
+        Log("Unable to create CUDA stream");
+    }
+
+    if (retval == 0) {
+      cudaEvent_t event;
+      if (cudaEventCreate(&event) != cudaSuccess) {
+        retval = CUDA_SETUP_EVENT_FAILURE;
+      } else if (cudaEventDestroy(event) != cudaSuccess) {
+        retval = CUDA_SETUP_EVENT_FAILURE;
+      }
+      if (retval)
+        Log("Unable to create CUDA event");
+    }
   }
 
   return retval;
