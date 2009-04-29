@@ -3,7 +3,7 @@
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: cuda_setup.cpp,v 1.4 2009/04/29 08:52:35 andreasb Exp $
+* $Id: cuda_setup.cpp,v 1.5 2009/04/29 09:30:20 andreasb Exp $
 */
 
 #include "cuda_setup.h"
@@ -118,7 +118,7 @@ int InitializeCUDA()
     // try creating CUDA stream and event, may fail on library/driver mismatch
 
     if (retval == 0) {
-      cudaStream_t stream;
+      cudaStream_t stream = -1;
       if (cudaStreamCreate(&stream) != cudaSuccess) {
         retval = CUDA_SETUP_STREAM_FAILURE;
       } else if (cudaStreamDestroy(stream) != cudaSuccess) {
@@ -129,7 +129,7 @@ int InitializeCUDA()
     }
 
     if (retval == 0) {
-      cudaEvent_t event;
+      cudaEvent_t event = -1;
       if (cudaEventCreate(&event) != cudaSuccess) {
         retval = CUDA_SETUP_EVENT_FAILURE;
       } else if (cudaEventDestroy(event) != cudaSuccess) {
