@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: cuda_info.cpp,v 1.2 2009/04/07 09:23:31 andreasb Exp $
+ * $Id: cuda_info.cpp,v 1.3 2009/04/29 08:53:18 andreasb Exp $
 */
 
 #include "cuda_info.h"
@@ -39,7 +39,6 @@ int GetNumberOfDetectedCUDAGPUs()
 long GetRawCUDAGPUID(const char **cpuname)
 {
   static char namebuf[40];
-  static int cpucount;
 
   namebuf[0] = '\0';
   if (cpuname)
@@ -64,10 +63,10 @@ long GetRawCUDAGPUID(const char **cpuname)
 unsigned int GetCUDAGPUFrequency()
 {
   unsigned int freq = 0;
-  if (GetNumberOfDetectedCUDAGPUs() > 0) {
+  if (GetNumberOfDetectedCUDAGPUs() >= 0) {
     cudaDeviceProp deviceProp;
     cudaError_t rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
-    if (rc == cudaSuccess && (deviceProp.major != 9999 && deviceProp.minor != 9999))
+    if (rc == cudaSuccess)
       freq = deviceProp.clockRate / 1000;
   }
   return freq;
