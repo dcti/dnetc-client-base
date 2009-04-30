@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.121 2009/04/01 15:49:28 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.122 2009/04/30 10:38:22 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -408,7 +408,7 @@ static long __bench_or_test( int which,
 #if (CLIENT_CPU != CPU_CELLBE)
     /* Not applicable for Cell due to PPU/SPU core selection hacks */
     if (in_corenum < 0 && fastest >= 0 && bestrate > 0) {
-      long percent = 100 * refrate / bestrate;
+      double percent = 100.0 * (double)refrate / (double)bestrate;
 
       Log("%s benchmark summary :\n"
           "Default core : #%d (%s)\n"
