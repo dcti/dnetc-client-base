@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-1pipe.cu,v 1.27 2009/04/29 09:30:20 andreasb Exp $
+ * $Id: r72cuda-1pipe.cu,v 1.28 2009/05/02 12:15:04 andreasb Exp $
 */
 
 #include <stdio.h>
@@ -86,7 +86,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
   cudaStream_t core = -1;
   cudaEvent_t start = -1, stop = -1;
-  cudaError_t last_error;
+  cudaError_t cuda_error, last_error;
 
 #ifdef DISPLAY_TIMESTAMPS
   int64_t current_ts;
@@ -100,29 +100,29 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
   //fprintf(stderr, "\r\nRC5 cuda: iterations=%i (%i*%i+%i)\r\n", *iterations, *iterations / optimal_process_amount, optimal_process_amount, *iterations % optimal_process_amount);
 
-  if (cudaGetDevice(&currentdevice) != cudaSuccess) {
+  if ((cuda_error = cudaGetDevice(&currentdevice)) != cudaSuccess) {
     failed = "cudaGetDevice";
     goto error_exit;
   }
 
   if (currentdevice != device) {
-    if (cudaSetDevice(device) != cudaSuccess) {
+    if ((cuda_error = cudaSetDevice(device)) != cudaSuccess) {
       failed = "cudaSetDevice";
       goto error_exit;
     }
   }
 
-  if (cudaStreamCreate(&core) != cudaSuccess || core == -1) {
+  if ((cuda_error = cudaStreamCreate(&core)) != cudaSuccess || core == -1) {
     failed = "cudaStreamCreate";
     goto error_exit;
   }
 
-  if (cudaEventCreate(&start) != cudaSuccess || start == -1) {
+  if ((cuda_error = cudaEventCreate(&start)) != cudaSuccess || start == -1) {
     failed = "cudaEventCreate";
     goto error_exit;
   }
 
-  if (cudaEventCreate(&stop) != cudaSuccess || stop == -1) {
+  if ((cuda_error = cudaEventCreate(&stop)) != cudaSuccess || stop == -1) {
     failed = "cudaEventCreate";
     goto error_exit;
   }
@@ -134,7 +134,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   /* --------------------------------------------- */
 
   /* Allocate the cuda_match_found variable */
-  if (cudaMalloc((void **)&cuda_match_found, sizeof(u8)) != cudaSuccess) {
+  if ((cuda_error = cudaMalloc((void **)&cuda_match_found, sizeof(u8))) != cudaSuccess) {
     failed = "cudaMalloc: cuda_match_found";
     goto error_exit;
   }
@@ -146,7 +146,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     goto error_exit;
   }
 
-  if (cudaMalloc((void **)&cuda_results, grid_dim * num_threads * sizeof(u8)) != cudaSuccess) {
+  if ((cuda_error = cudaMalloc((void **)&cuda_results, grid_dim * num_threads * sizeof(u8))) != cudaSuccess) {
     failed = "cudaMalloc: cuda_results";
     goto error_exit;
   }
@@ -165,13 +165,13 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     u32 match_count = 0;
 
     /* Clear the match_found variable */
-    if (cudaMemset(cuda_match_found, 0, sizeof(u8)) != cudaSuccess) {
+    if ((cuda_error = cudaMemset(cuda_match_found, 0, sizeof(u8))) != cudaSuccess) {
       failed = "cudaMemset: cuda_match_found";
       goto error_exit;
     }
 
     /* Clear the results array */
-    if (cudaMemset(cuda_results, 0, grid_dim * num_threads * sizeof(u8)) != cudaSuccess) {
+    if ((cuda_error = cudaMemset(cuda_results, 0, grid_dim * num_threads * sizeof(u8))) != cudaSuccess) {
       failed = "cudaMemset: cuda_results";
       goto error_exit;
     }
@@ -187,7 +187,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     if (waitmode == 1) {
       CliTimer(&tv_core_start);
     } else if (waitmode == 2) {
-      if (cudaEventRecord(start, core) != cudaSuccess) {
+      if ((cuda_error = cudaEventRecord(start, core)) != cudaSuccess) {
         failed = "cudaEventRecord";
         goto error_exit;
       }
@@ -202,11 +202,11 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     last_error = cudaGetLastError();
     if (last_error != cudaSuccess) {
       retval = -1;
-      Log("RC5 CUDA CORE ERROR [%d]: %s", device, cudaGetErrorString(last_error));
+      Log("RC5 CUDA CORE ERROR [%d]: %s\n", device, cudaGetErrorString(last_error));
       goto error_exit;
     }
 
-    if (cudaEventRecord(stop, core) != cudaSuccess) {
+    if ((cuda_error = cudaEventRecord(stop, core)) != cudaSuccess) {
       failed = "cudaEventRecord";
       goto error_exit;
     }
@@ -219,7 +219,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
     if (waitmode == 0) {
       int slept;
-      for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
+      for (slept = 0; (cuda_error = cudaEventQuery(stop)) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
         NonPolledUSleep(min_sleep_interval);
       //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
     } else if (waitmode == 1) {
@@ -227,7 +227,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       long expected = 0, elapsed = 0;
       int slept = 0;
       if (best_time <= 0) {
-        for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
+        for (slept = 0; (cuda_error = cudaEventQuery(stop)) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
           NonPolledUSleep(min_sleep_interval);
         //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
       } else {
@@ -237,13 +237,13 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
           NonPolledUSleep(expected / 2);
           ++slept;
         }
-        while (cudaEventQuery(stop) == cudaErrorNotReady && slept <= max_sleep_iterations) {
+        while ((cuda_error = cudaEventQuery(stop)) == cudaErrorNotReady && slept <= max_sleep_iterations) {
           CliTimerDiff(&tv_core_elapsed, &tv_core_start, NULL);
           elapsed = tv_core_elapsed.tv_sec * 1000000 + tv_core_elapsed.tv_usec;
           long sleep_now = (expected - elapsed) / 2;
           //fprintf(stderr, "\rRC5 cuda: sleep_now=%d\n", sleep_now);
           if (sleep_now < min_sleep_interval) {
-            if (cudaEventSynchronize(stop) != cudaSuccess) {
+            if ((cuda_error = cudaEventSynchronize(stop)) != cudaSuccess) {
               failed = "cudaEventSynchronize";
               goto error_exit;
             }
@@ -264,11 +264,10 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       //fprintf(stderr, "\rRC5 cuda: slept=%d best_time=%ld elapsed=%ld process_amount=%d\n", slept, best_time, elapsed, process_amount);
     } else if (waitmode == 2) {
       long best_time = rc5_72unitwork->best_time;
-      float gpu_time;
       long expected = 0, elapsed = 0;
       int slept = 0;
       if (best_time <= 0) {
-        for (slept = 0; cudaEventQuery(stop) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
+        for (slept = 0; (cuda_error = cudaEventQuery(stop)) == cudaErrorNotReady && slept <= max_sleep_iterations; ++slept)
           NonPolledUSleep(min_sleep_interval);
         //fprintf(stderr, "\rRC5 cuda: slept=%d process_amount=%d\n", slept, process_amount);
       } else {
@@ -281,13 +280,14 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
           ++slept;
         }
       }
-      if (cudaEventSynchronize(stop) != cudaSuccess) {
+      if ((cuda_error = cudaEventSynchronize(stop)) != cudaSuccess) {
         failed = "cudaEventSynchronize";
         goto error_exit;
       }
       if (process_amount == optimal_process_amount) {
         // update best speed
-        if (cudaEventElapsedTime(&gpu_time,start,stop) != cudaSuccess) {
+        float gpu_time;
+        if ((cuda_error = cudaEventElapsedTime(&gpu_time, start, stop)) != cudaSuccess) {
           failed = "cudaEventElapsedTime";
           goto error_exit;
         }
@@ -298,14 +298,14 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
       }
       //fprintf(stderr, "\rRC5 cuda: slept=%d best_time=%ld elapsed=%ld process_amount=%d\n", slept, best_time, elapsed, process_amount);
     } else {
-      if (cudaEventSynchronize(stop) != cudaSuccess) {
+      if ((cuda_error = cudaEventSynchronize(stop)) != cudaSuccess) {
         failed = "cudaEventSynchronize";
         goto error_exit;
       }
     }
 
     /* Copy the match_found variable to the host */
-    if (cudaMemcpy((void *)&match_found, (void *)cuda_match_found, sizeof(u8), cudaMemcpyDeviceToHost) != cudaSuccess) {
+    if ((cuda_error = cudaMemcpy((void *)&match_found, (void *)cuda_match_found, sizeof(u8), cudaMemcpyDeviceToHost)) != cudaSuccess) {
       failed = "cudaMemcpy";
       goto error_exit;
     }
@@ -322,7 +322,7 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     if(match_found) {
 
       /* Copy the results[] array to the host */
-      if (cudaMemcpy((void *)results, (void *)cuda_results, (process_amount + pipeline_count - 1) / pipeline_count * sizeof(u8), cudaMemcpyDeviceToHost) != cudaSuccess) {
+      if ((cuda_error = cudaMemcpy((void *)results, (void *)cuda_results, (process_amount + pipeline_count - 1) / pipeline_count * sizeof(u8), cudaMemcpyDeviceToHost)) != cudaSuccess) {
         failed = "cudaMemcpy: cuda_results";
         goto error_exit;
       }
@@ -377,7 +377,9 @@ error_exit:
   if (failed) {
     retval = -1;
     last_error = cudaGetLastError();
-    Log("RC5 CUDA ERROR [%d]: '%s' (%s)\r\n", device, cudaGetErrorString(last_error), failed);
+    Log("RC5 CUDA ERROR [%d]: #%d '%s' (%s)\n", device, cuda_error, cudaGetErrorString(cuda_error), failed);
+    if (cuda_error != last_error)
+      Log("RC5 CUDA ERROR [%d]: #%d '%s' (%s)\n", device, last_error, cudaGetErrorString(last_error), failed);
   }
 
 #ifdef DISPLAY_TIMESTAMPS
