@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.24 2009/04/30 16:57:08 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.25 2009/05/08 16:47:31 kakace Exp $"; }
 
 //#define TRACE
 
@@ -223,8 +223,8 @@ const char **corenames_for_contest_ogr_ng()
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     #ifdef HAVE_FLEGE_PPC_CORES
       /* Optimized ASM cores */
-      "KOGE 3.0 Scalar",
-      "KOGE 3.0 Hybrid",            /* altivec only */
+      "KOGE 3.1 Scalar",
+      "KOGE 3.1 Hybrid",            /* altivec only */
     #else
       "FLEGE 2.0 Scalar-32",
       "FLEGE 2.0 Hybrid",           /* altivec only */
