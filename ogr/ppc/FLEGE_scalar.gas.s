@@ -7,7 +7,7 @@
 ;# Code designed for G3 (MPC750)
 ;# Written by Didier Levet <kakace@distributed.net>
 ;#
-;# $Id: FLEGE_scalar.gas.s,v 1.2 2008/12/29 23:41:09 kakace Exp $
+;# $Id: FLEGE_scalar.gas.s,v 1.3 2009/05/08 16:32:52 kakace Exp $
 ;#
 ;#============================================================================
 ;# Special notes :
@@ -1428,8 +1428,8 @@ L_UpdateLevel:
     stw       r7,mark(r3)               ;# Store the current mark
     addi      r3,r3,SIZEOF_LEVEL        ;# ++Levels
     lhzx      r8,r14,r5                 ;# load the limit
-    bgt+      cr1,L_CheckCnt            ;# Depth > MidSegB
-    ble-      cr7,L_CheckCnt            ;# Depth <= MidSegA
+    bgt+      cr1,L_LoopBack            ;# Depth > MidSegB
+    ble-      cr7,L_LoopBack            ;# Depth <= MidSegA
 
 L_GetLimit:
     ;# Compute the limit within the middle segment.
@@ -1444,19 +1444,21 @@ L_GetLimit:
     lwz       r15,maxLenM1(r1)          ;# maxlen - 1
     lwz       r14,mark(r14)             ;# Levels[MidSegA].mark
     sub       r14,r15,r14               ;# temp
-    beq       cr1,L_CheckCnt            ;# Depth == MidSegB
+    beq       cr1,L_MinFunc             ;# Depth == MidSegB
 
-    ;# Compute middle mark limit (depth < MidSegB
+    ;# Compute middle mark limit (depth < MidSegB)
     not       r15,r13                   ;# ~dist0
     cntlzw    r15,r15                   ;# FFZ(dist0)
     addi      r15,r15,1
     sub       r14,r14,r15               ;# temp -= FFZ(dist0)
 
-L_CheckCnt:
+L_MinFunc:
     subfc     r15,r8,r14
     subfe     r14,r14,r14
     and       r15,r15,r14
     add       r8,r8,r15                 ;# limit = min(temp, limit)
+
+L_LoopBack:
     ;# cr0 := nodes <= 0
     li        r13,1                     ;# newbit = 1
     stw       r8,limit(r3)              ;# store the limit
