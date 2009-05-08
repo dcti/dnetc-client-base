@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.10 2009/01/02 16:59:42 kakace Exp $
+ * $Id: ogrng_codebase.cpp,v 1.11 2009/05/08 16:33:50 kakace Exp $
  */
 
 #include <string.h>   /* memset */
@@ -518,8 +518,8 @@ static void __dump(const struct OgrLevel *lev, int depth)
 #if (OGRNG_BITMAPS_WORDS == 2)
   #if defined(__VEC__) || defined(__ALTIVEC__)
     printf("list=%:08vlx %:08vlx\n", lev->list[0], lev->list[1]);
-    printf("dist=%:08vlx %:08vlx\n", lev->distV[0], lev->dist[1]);
-    printf("comp=%:08vlx %:08vlx\n", lev->compV[0], lev->compV[1]);
+    printf("dist=%:08vlx %:08vlx\n", lev->dist[0], lev->dist[1]);
+    printf("comp=%:08vlx %:08vlx\n", lev->comp[0], lev->comp[1]);
   #else
     #error fixme : Debugging vector bitmaps without vector support ?!?
   #endif
