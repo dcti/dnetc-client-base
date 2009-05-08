@@ -23,11 +23,13 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.63 2009/04/21 12:20:17 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.64 2009/05/08 16:40:46 kakace Exp $
 ==========================================================================
 
 2.9100
 ------
+2.9105-511  fix: ppc: Fixed scalar and hybrid OGR-NG cores (#4187)
+
 2.9104-510  imp: all: handle lack of a supported cpu/gpu more gracefully
             imp: gpgpu: terminate on unsupported driver/library installations
             imp: gpgpu: raise rc5-72 buffer limit to 10000
