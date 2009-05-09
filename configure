@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.394 2009/04/26 12:11:20 andreasb Exp $
+# @(#)$Id: configure,v 1.395 2009/05/09 09:37:52 piru Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3720,7 +3720,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       fi
       if [ "${TARGETTYP}" = "ccvec" ]; then
         if [ "${BUILDNAME}" = "ppc-macosx" -o \
-             "${BUILDNAME}" = "ppc-morphos" -o \
+             "${BUILDNAME}" = "morphos-ppc" -o \
              "${BUILDNAME}" = "linux-cellbe" ]; then
           # Do nothing extra, as all modules compiled with Altivec compiler switches on
           CCFLAGS_SELECT="${CCFLAGS_SELECT}"
