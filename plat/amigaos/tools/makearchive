@@ -7,11 +7,12 @@
 
 if [ "$3" = "dnetc_mos" ]; then
   lha -q x plat/amigaos/tools/icons_mos.lha T:
+   mv /T/drawer.info /T/${3}.info
 else
   lha -q x plat/amigaos/tools/icons.lha T:
+  mv /T/${2}/drawer.info /T/${3}.info
 fi
 mv /T/${2} /T/${3}
-mv /T/${3}/drawer.info /T/${3}.info
 if [ "$3" = "dnetc_mos" ]; then
   cp -p dnetc dnetcgui.library /T/${3}
 elif [ "$3" = "dnetc" ]; then
