@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.6 2008/12/30 20:58:45 andreasb Exp $"; }
+return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.7 2009/05/16 08:41:51 stream Exp $"; }
 
 #ifndef CORE_NAME
 #define CORE_NAME cellv1
@@ -13,8 +13,9 @@ return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.6 2008/12/30 20:58:45 andreasb Exp
 #include "ccoreio.h"
 #include "r72-cell.h"
 #include <libspe2.h>
-#include <cstdlib>
-#include <cstring>
+#include <stddef.h>  // offsetof
+#include <stdlib.h>  // abort
+#include <string.h>
 #include "logstuff.h"
 
 #define PPE_WRAPPER_FUNCTION(name) PPE_WRAPPER_FUNCTION2(name)
@@ -35,6 +36,7 @@ extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
 
 /* Todo: move this function to platform-specific separate file */
 spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program);
+void              ps3_kernel_bug(void);
 
 s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
@@ -47,8 +49,10 @@ s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *
   unsigned          thread_index = 99; // todo. enough hacks.
 
   STATIC_ASSERT(sizeof(RC5_72UnitWork) == 44);
-  STATIC_ASSERT(sizeof(CellR72CoreArgs) == 64);
-  STATIC_ASSERT(offsetof(CellR72CoreArgs, signature) == 48);
+  STATIC_ASSERT(offsetof(CellR72CoreArgs, rc5_72unitwork) == 16);
+  STATIC_ASSERT(offsetof(CellR72CoreArgs, iterations    ) == 16 + 44);
+  STATIC_ASSERT(offsetof(CellR72CoreArgs, sign2         ) == 16 + 48);
+  STATIC_ASSERT(sizeof(CellR72CoreArgs) == 16 + 48 + 16);
 
   /* One-time init of static exchange buffer */
   if (myCellR72CoreArgs_void == NULL)
@@ -63,9 +67,10 @@ s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *
   CellR72CoreArgs* myCellR72CoreArgs = (CellR72CoreArgs*)myCellR72CoreArgs_void;
 
   // Copy function arguments to CellR72CoreArgs struct
+          myCellR72CoreArgs->sign1      = SIGN_PPU_TO_SPU_1;
   memcpy(&myCellR72CoreArgs->rc5_72unitwork, rc5_72unitwork, sizeof(RC5_72UnitWork));
           myCellR72CoreArgs->iterations = *iterations;
-	  myCellR72CoreArgs->signature  = CELL_RC5_72_SIGNATURE;
+          myCellR72CoreArgs->sign2      = SIGN_PPU_TO_SPU_2;
 
   context = ps3_assign_context_to_program(&SPE_WRAPPER_FUNCTION(CORE_NAME));
   retval  = spe_context_run(context, &entry, 0, (void*)myCellR72CoreArgs, NULL, &stop_info);
@@ -74,16 +79,46 @@ s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *
     Log("Alert SPE#%d: spe_context_run() returned %d\n", thread_index, retval);
     abort();
   }
-
-  __asm__ __volatile__ ("sync" : : : "memory");
-
-  // Fetch return value of the SPE core
-  if (stop_info.stop_reason == SPE_EXIT)
-    retval = stop_info.result.spe_exit_code;
-  else
+  if (myCellR72CoreArgs->sign1 != SIGN_SPU_TO_PPU_1)
   {
-    Log("Alert: SPE#%d exit status is %d\n", thread_index, stop_info.stop_reason);
-    retval = -1;
+    Log("R72-SPE#%d: core returned bad head signature! (expected: 0x%08X, returned: 0x%08X)\n",
+        thread_index, SIGN_SPU_TO_PPU_1, myCellR72CoreArgs->sign1);
+    ps3_kernel_bug();
+  }
+  if (myCellR72CoreArgs->sign2 != SIGN_SPU_TO_PPU_2)
+  {
+    Log("R72-SPE#%d: core returned bad tail signature! (expected: 0x%08X, returned: 0x%08X)\n",
+        thread_index, SIGN_SPU_TO_PPU_2, myCellR72CoreArgs->sign2);
+    ps3_kernel_bug();
+  }
+
+  // Check SPU thread exit status (must be normal exit)
+  if (stop_info.stop_reason != SPE_EXIT)
+  {
+    Log("R72-SPE#%d: abnormal SPU thread exit status (%d)\n", thread_index, stop_info.stop_reason);
+    abort();
+  }
+
+  // Fetch and validate return value of the SPE core
+  retval = stop_info.result.spe_exit_code;
+  if (retval != RESULT_WORKING && retval != RESULT_NOTHING && retval != RESULT_FOUND)
+  {
+    Log("R72-SPE%d: abnormal exit code (%d) from SPU thread!\n", thread_index, retval);
+
+    /* magic numbers meaning internal core errors */
+    const char *msg;
+    switch (retval)
+    {
+      case RETVAL_ERR_BAD_SIGN1:     msg = "passed bad head signature"; break;
+      case RETVAL_ERR_BAD_SIGN2:     msg = "passed bad tail signature"; break;
+      case RETVAL_ERR_TRASHED_SIGN1: msg = "head signature corrupted during processing"; break;
+      case RETVAL_ERR_TRASHED_SIGN2: msg = "tail signature corrupted during processing"; break;
+      default:                       msg = NULL; break;
+    }
+    if (msg)
+      Log("R72-SPE%d: possible reason: %s\n", thread_index, msg);
+      
+    ps3_kernel_bug();
   }
 
   // Copy data from CellR72CoreArgs struct back to the function arguments
@@ -158,3 +193,11 @@ spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program)
   
   return cached_context;
 }
+
+void ps3_kernel_bug(void)
+{
+  Log("This may be caused by kernel bug in SPU scheduler (spufs)\n");
+  Log("See readme.cell for more information and possible solutions.\n");
+  abort();
+}
+

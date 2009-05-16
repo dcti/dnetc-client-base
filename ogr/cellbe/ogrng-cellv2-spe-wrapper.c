@@ -5,7 +5,7 @@
 */
 /*
 const char *ogrng_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cellv2-spe-wrapper.c,v 1.2 2008/12/30 20:58:43 andreasb Exp $"; }
+return "@(#)$Id: ogrng-cellv2-spe-wrapper.c,v 1.3 2009/05/16 08:39:15 stream Exp $"; }
 */
 
 #include <spu_intrinsics.h>
@@ -56,8 +56,9 @@ int main(unsigned long long speid, addr64 argp, addr64 envp)
   // Check size of structures, these offsets must match assembly
   STATIC_ASSERT(sizeof(struct OgrLevel) == 6*16+16+16);
   STATIC_ASSERT(sizeof(struct OgrState) == 2*16 + 8*16*29);
-  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 2*16 + 8*16*29 + 16 + 16 + 16);
-  STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 32);
+  STATIC_ASSERT(sizeof(CellOGRCoreArgs) == 16 + 2*16 + 8*16*29 + 16 + 16 + 16);
+  STATIC_ASSERT(offsetof(CellOGRCoreArgs, state       ) == 16);
+  STATIC_ASSERT(offsetof(CellOGRCoreArgs, state.Levels) == 16 + 32);
   STATIC_ASSERT(sizeof(u16) == 2); /* DMA fetches of pchoose */
   
   (void) speid; (void) envp;
@@ -68,6 +69,19 @@ int main(unsigned long long speid, addr64 argp, addr64 envp)
   // Fetch arguments from main memory
   mfc_get(&myCellOGRCoreArgs, argp.a32[1], sizeof(CellOGRCoreArgs), DMA_ID, 0, 0);
   mfc_read_tag_status_all();
+
+  s32 retval;
+  /* check for memory corruption in incoming arguments */
+  if (myCellOGRCoreArgs.sign1 != SIGN_PPU_TO_SPU_1)
+  {
+    retval = RETVAL_ERR_BAD_SIGN1;
+    goto done;
+  }
+  if (myCellOGRCoreArgs.sign2 != SIGN_PPU_TO_SPU_2)
+  {
+    retval = RETVAL_ERR_BAD_SIGN2;
+    goto done;
+  }
 
   // Prepare arguments to be passed to the core
   struct OgrState* state = &myCellOGRCoreArgs.state;
@@ -83,14 +97,23 @@ int main(unsigned long long speid, addr64 argp, addr64 envp)
 
   // Call the core
 //  s32 retval = SPE_CORE_FUNCTION(CORE_NAME) (state, pnodes, ogr_choose_dat);
-  s32 retval;
   if (*pnodes) /* core will not handle nodes == 0 */
     myCellOGRCoreArgs.ret_depth = ogr_cycle_256_test(state, pnodes, upchoose);
-  retval = 0;
+
+  // Check for memory corruption after core exit
+  if (myCellOGRCoreArgs.sign1 != SIGN_PPU_TO_SPU_1)
+    retval = RETVAL_ERR_TRASHED_SIGN1;
+  else if (myCellOGRCoreArgs.sign2 != SIGN_PPU_TO_SPU_2)
+    retval = RETVAL_ERR_TRASHED_SIGN2;
+  else
+    retval = 0;
 
   update_groups_stats();
 
+done:
   // Update changes in main memory
+  myCellOGRCoreArgs.sign1 = SIGN_SPU_TO_PPU_1;
+  myCellOGRCoreArgs.sign2 = SIGN_SPU_TO_PPU_2;
   mfc_put(&myCellOGRCoreArgs, argp.a32[1], sizeof(CellOGRCoreArgs), DMA_ID, 0, 0);
   mfc_read_tag_status_all();
 

@@ -28,12 +28,28 @@ struct OgrLevel {
   #include "ansi/ogrng_codebase.cpp" /* Get "State" structure and basic code */
 #endif
 
+#define SIGN_PPU_TO_SPU_1   0xDEADFACE
+#define SIGN_PPU_TO_SPU_2   0xC0FFEE11
+#define SIGN_SPU_TO_PPU_1   0xFEEDBEEF
+#define SIGN_SPU_TO_PPU_2   0xC0DAC01A
+
+/* Return codes for internal bugchecks. (OGR-NG-cycle normal exit code is always zero) */
+
+#define RETVAL_ERR_BAD_SIGN1      55
+#define RETVAL_ERR_BAD_SIGN2      66
+#define RETVAL_ERR_TRASHED_SIGN1  77
+#define RETVAL_ERR_TRASHED_SIGN2  88
+
 typedef struct
 {
+  u32 sign1, pad1[3]; /* force padding of 'state' to 16 */
+  
   struct OgrState state;
   int pnodes;
   int ret_depth;
   u32 upchoose;
+  
+  u32 sign2;
   
   u32 cache_misses;  /* have to load new element */
   u32 cache_hits;    /* cached data used */
