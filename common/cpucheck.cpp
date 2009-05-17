@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.163 2009/04/30 16:57:08 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.164 2009/05/17 11:19:39 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1110,7 +1110,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006060, 0xFFFFFF0, CPU_F_I686,    9, "K7-6 (Athlon XP/MP/4 or Duron)" }, // Palomino core, 256K L2
         { 0x0006070, 0xFFFFFF0, CPU_F_I686,    9, "Duron (Morgan)"  }, // Morgan core = Palomino core w/ 64K L2
         { 0x0006080, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP or Sempron (Thoroughbred)" },
-        { 0x00060A0, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP/XP-M or Sempron (Barton)" },
+        { 0x00060A0, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP/XP-M or Sempron (Barton)" },   // OGR-NG: OK (-k8)
         { 0x000F000, 0xFFFF000, CPU_F_I686,    9, "Athlon (Model 15)" },
         { 0x010F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64" },
         { 0x020F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core" },
@@ -1220,6 +1220,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0E0F010, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon (Foster)" },
         /* Pentium 4 model 2 : 130 nm */
         { 0x080F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
+        /* (#4177) conflict: 2.0GHz 1090F027 need OGR-NG -p4, 2.8Ghz 1090F029 need -k8 */
+        { 0x090F027, 0xFFFFFFF, CPU_F_I686, 0x17, "Pentium 4 (Northwood)" },
         { 0x090F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Pentium 4 (Northwood)" },
         { 0x0A0F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Celeron 4 (Northwood)" },
         { 0x0B0F020, 0xFFFFFF0, CPU_F_I686, 0x17, "Xeon (Prestonia)" },  /* (#4186) */
