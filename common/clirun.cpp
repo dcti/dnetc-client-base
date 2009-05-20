@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.153 2009/04/07 08:16:27 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.154 2009/05/20 18:30:31 stream Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -461,12 +461,38 @@ void Go_mt( void * parm )
       //fprintf(stderr,"thisprob->Run() = %d\n", run);
       thrparams->is_suspended = 1;
 
+/*
+ * The code below is incorrect and has been commented out (bug #4189) because:
+ * 
+ * 1) ProblemRun() WILL return -1 if problem reload is in progress (old block
+ * unloaded but new one is not loaded yet). This normal behavior necessary to
+ * avoid race conditions.
+ *
+ * 2) ProblemRun() will NOT pass negative return codes from cores to upper 
+ * level anyway. It will return previous return code (core_prob->priv_data.last_resultcode) 
+ * instead. So this code is just useless.
+ *
+ * Then we need to introduce more error codes than just retval<0 :
+ * 
+ * CORE_ERROR_RETRY == -1  the non-fatal problem (1), no action is needed
+ * CORE_ERROR_REINITIALIZE    in case we find a solution to reinitialize CUDA
+ * after certain problems
+ * CORE_FATAL_ERROR   there is no known way to recover, so terminate the client,
+ * should be used for current CUDA cores
+ * 
+ * And a solution has to be found to propagate core error codes upwards. (2)
+ * It mean that ProblemRun() must be seriously and VERY CAREFULLY rewritten.
+ * Do not forget about race conditions.
+ */
+
+#if 0
       if (run < 0) // core failure, probably unspported system configuration, terminate
       {
-        Log("Terminating: cruncher %d reported error %d", threadnum, run);
+        Log("Terminating: cruncher %d reported error %d\n", threadnum, run);
         thrparams->do_exit = 1;
         RaiseExitRequestTrigger();
       }
+#endif
 
       runtime_usec = 0xfffffffful; /* assume time was bad */
       if (!thisprob->pub_data.last_runtime_is_invalid)
@@ -1416,7 +1442,7 @@ int ClientRun( Client *client )
   #if (CLIENT_CPU == CPU_CUDA)
   if (InitializeCUDA() != 0)
   {
-    Log("Unable to initialize CUDA.");
+    Log("Unable to initialize CUDA.\n");
     TimeToQuit = 1;
     exitcode = -3;
   }

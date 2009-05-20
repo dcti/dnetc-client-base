@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.66 2009/02/23 03:59:38 chandleg Exp $";
+  return "@(#)$Id: bench.cpp,v 1.67 2009/05/20 18:30:31 stream Exp $";
 }
 
 //#define TRACE
@@ -346,7 +346,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
         {
           LogScreen("\r");
           if (run != -3) /* break */
-            Log("%s: Benchmark failed (error: %d).", contname, run );
+            Log("%s: Benchmark failed (error: %d).\n", contname, run );
         }
       }
       ProblemRetrieveState(thisprob, NULL, NULL, 1, 0); //purge the problem
