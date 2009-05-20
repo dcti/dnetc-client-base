@@ -1,6 +1,6 @@
 
  distributed.net client for the PlayStation 3/Cell Broadband Engine
- document revision $Id: readme.cell,v 1.6 2008/12/30 12:42:51 andreasb Exp $
+ document revision $Id: readme.cell,v 1.7 2009/05/20 18:17:02 stream Exp $
 
  Welcome to the distributed.net client.
 
@@ -45,7 +45,8 @@
     The PlayStation 3's processor, Cell, was designed by the STI
     (Sony/Toshiba/IBM) joint venture. It is composed of a PowerPC main
     processor (PPE) and up to 8 co-processors, called Synergistic Processing
-    Elements or SPEs, all clocked at 3.2 GHz. As shipped in the
+    Elements or SPEs, all clocked at 3.2 GHz. (SPU is a synonym to SPE,
+    meaning Synergistic Processing Unit). As shipped in the
     PlayStation 3, Cell has one of its SPEs disabled, so that only 7 SPEs
     are accessible to most games. Moreover, when running an alternative
     operating system such as Linux, the hypervisor reserves one of the SPEs,
@@ -67,7 +68,7 @@
     file, and further crunchers will always use the "Cell v1 SPE" core. The 
     client will auto-detect the number of physical Cell processors and start 
     1 PPE core for each physical processor and 1 SPE core for each of the 
-    usuable SPE processors detected.
+    usable SPE processors detected.
 
     It is also possible to manually specify any combination of PPE and SPE
     cores on Cell hardware as follows:
@@ -96,7 +97,10 @@
     in conjunction with the workaround above for SPE cores, running multiple
     PPE crunchers in a single Cell is disabled in this client.
 
- 2.0  Troubleshooting and Known issues ------------------------------
+ 3.0  Troubleshooting and Known issues ------------------------------
+
+
+  3.1   Missing SPU support -----------------------------------------
 
     Some CellBE Linux distributions (such as old Ubuntu Linux) may receive
     errors such as:
@@ -111,3 +115,81 @@
         mkdir /spu
         mount /spu
 
+
+  3.2   Bugs in SPU scheduler ----------------------------------------
+
+    SPU scheduler, spufs, it a new and very complicated part of linux
+    kernel. It's like a kernel inside kernel. Unfortunately, this mean
+    that lot of bugs still exist in it. A distributed.net client, which
+    fully utilizes all available SPU resources, is very vulnerable to
+    these bugs.
+
+    We found that some versions of kernel have critical bug when preemptive
+    scheduling of SPU threads. It appears only when number of SPU threads
+    in all processes is more then number of physical SPUs. For example,
+    if your system is running a single copy of distributed.net client,
+    everything will be fine. But if you'll run another program which uses SPU
+    (e.g. SPU-accelerated mplayer - "mplayer-ps3", or even a second copy of
+    distributed.net client in "-test" or "-bench" mode), bug will eventually
+    appear.
+
+    This bug lead to random corruption of memory area used by SPU core. You
+    may notice that client quickly completes lot of extremely short stubs -
+    usually with length of 0 stat units.
+
+    Speaking technically, look like spufs incorrectly saves DMA state during
+    rescheduling. SPU program continues to run thinking that DMA transfer was
+    complete. Really, it was not, and memory which should contain core work
+    data really contains a garbage.
+
+    Since version 2.9105.511-b2, client is able to detect this problem.
+    Signatures in the beginning and end of work are used to check that all
+    data really has been transferred to SPU. If not, client will print
+    messages like this (the exit code and reason may differ):
+
+        OGRNG-SPE99: non-zero exit code (66) from SPU thread!
+        OGRNG-SPE99: possible reason: passed bad tail signature
+        This may be caused by kernel bug in SPU scheduler (spufs)
+        See readme.cell for more information and possible solutions.
+
+    Affected cruncher process will be terminated (we cannot trust it after
+    memory corruption). Since number of SPE threads will be decreased, your
+    system will work stable again, but without one cruncher, meaning lesser
+    key/node rate. Affected stub will be saved in last known good state
+    during termination or restart of client, so it's progress will be not lost.
+
+    If your kernel is affected and you've seen an error message described
+    above, first we recommend to upgrade, if possible, either your linux 
+    distribution either kernel only (see notes on kernel versions below).
+
+    If upgrade is not possible, we suggest to avoid usage of other SPU-enabled
+    programs (like mplayer-ps3) while client is running.
+
+    Advanced users may decrease number of crunchers as described in section
+    2.0. Select number of crunchers = 6 and client will run 1 PPE plus 5 SPE
+    threads. One SPE will be free for other tasks. It's possible to create
+    a special configuration or command file to run this "light" client when
+    you need to use other SPE-enabled program.
+    
+    Please remember that even if client can detect this bug and recover, 
+    another application could be affected too with unpredictable results.
+
+
+    Unfortunately it's not known exactly which kernel versions are affected.
+    Kernel version number may be meaningless because latest version of
+    PS3-specific parts could be taken directly from developer's repositories
+    no matter which version of mainstream kernel is used. The information
+    below is a result of my own experiments.
+
+    Ubuntu 7.10 Gutsy, kernel 2.6.22-16 - seems to work, never seen any bogus
+    results although I've used mplayer-ps3 very often.
+
+    Ubuntu 8.04 Hardy, kernel 2.6.24-24 - probably affected but not tested
+    because whole system is unusable (kernel detects only 96 Mb of memory).
+
+    Ubuntu 8.10 Intrepid, kernel 2.6.25-2 - affected.
+
+    It's expected that systems based on kernel 2.6.26 like Ubuntu Jaunty will
+    be not affected. At least official changelog between kernels 2.6.25 and
+    2.6.26 contains about 10 spufs bugfixes, and almost each of these errors
+    may lead to bug described here. But it wasn't tested yet.
