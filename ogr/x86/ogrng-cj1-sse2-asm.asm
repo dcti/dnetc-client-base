@@ -1,6 +1,6 @@
 ;
 ; Assembly core for OGR-NG, SSE2 version. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse2-asm.asm,v 1.6 2009/04/26 04:24:14 stream Exp $
+; $Id: ogrng-cj1-sse2-asm.asm,v 1.7 2009/05/31 23:33:20 mfeiri Exp $
 ;
 ; NOTE: Requires *ALL* DIST, LIST and COMP bitmaps to start on 16 byte boundaries.
 ; Designed for Pentium M and later 
@@ -29,11 +29,7 @@
 ; * Vary choose array cache size
 ; * Arrange the choose array for better cache hits, depth as most significant index perhaps?
 
-%ifdef __NASM_VER__
-	cpu	p4	; NASM doesnt know feature flags but accepts sse2 in p4
-%else
-	cpu	586 mmx sse sse2	; mmx is not part of i586
-%endif
+cpu	p4
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
 	[SECTION _DATA USE32 ALIGN=16 CLASS=DATA]

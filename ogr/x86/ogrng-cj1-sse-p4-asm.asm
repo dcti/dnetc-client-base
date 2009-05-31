@@ -1,6 +1,6 @@
 ;
 ; Assembly core for OGR-NG, SSE version tuned for P4. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse-p4-asm.asm,v 1.3 2009/04/26 14:56:10 stream Exp $
+; $Id: ogrng-cj1-sse-p4-asm.asm,v 1.4 2009/05/31 23:33:20 mfeiri Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
@@ -14,11 +14,7 @@
 ;             Changed some branches into conditional moves
 ;
 
-%ifdef __NASM_VER__
-	cpu	p3	; NASM doesnt know feature flags but accepts mmx and sse in p3
-%else
-	cpu	586 mmx sse; mmx and sse are not part of i586
-%endif
+cpu	p3
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
 	[SECTION _DATA USE32 ALIGN=16 CLASS=DATA]
