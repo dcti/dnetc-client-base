@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.37 2008/12/30 20:58:42 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.38 2009/06/03 11:29:21 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -367,6 +367,27 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         if (sps.ACLineStatus == 0) /* AC power is offline */
           return 1; /* yes, we are on battery */
         /* third condition is 0xff ("unknown"), so fall through */
+      }
+    }
+    #elif (CLIENT_OS == OS_LINUX) && ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64))
+    {
+      // requires the ac kernel module
+      int fd = open("/sys/class/power_supply/AC/online", O_RDONLY);
+      if (fd == -1) {
+      } else {
+        char buffer[16];
+        ssize_t readsz = read( fd, buffer, sizeof(buffer));
+        close(fd);
+        if (readsz > 0 && ((size_t)readsz) < sizeof(buffer)) {
+          int online;
+          buffer[readsz-1] = '\0';
+          if (sscanf(buffer, "%d\n", &online) == 1) {
+            if (online == 1)
+              return 0; // AC online
+            else if (online == 0)
+              return 1; // AC offline
+          }
+        }
       }
     }
     #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86)

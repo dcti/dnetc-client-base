@@ -23,13 +23,14 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.65 2009/05/20 18:17:02 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.66 2009/06/03 11:29:22 andreasb Exp $
 ==========================================================================
 
 2.9100
 ------
 2.9105-511  fix: ppc: Fixed scalar and hybrid OGR-NG cores (#4187)
             imp: cellbe: detect linux kernel SPU scheduler (spufs) bugs
+            new: linux: runs-on-battery-power detection via sysfs
 
 2.9104-510  imp: all: handle lack of a supported cpu/gpu more gracefully
             imp: gpgpu: terminate on unsupported driver/library installations
