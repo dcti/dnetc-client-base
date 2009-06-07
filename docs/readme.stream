@@ -1,6 +1,6 @@
 
  distributed.net client for ATI FireStream-compatible GPUs
- document revision $Id: readme.stream,v 1.2 2009/02/23 00:05:19 andreasb Exp $
+ document revision $Id: readme.stream,v 1.3 2009/06/07 17:09:27 chandleg Exp $
 
  Welcome to the distributed.net client.
 
@@ -20,16 +20,11 @@
     drivers to be installed.  For a list of GPU hardware that supports
     FireStream, see <http://en.wikipedia.org/wiki/FireStream#Hardware> 
 
-    When installing the FireStream drivers and toolkit, be sure to download
-    the latest version, currently this is Beta 1.3.0.  Visit:
-    <http://ati.amd.com/technology/streamcomputing/sdkdwnld.html>
+    With this version of the client you no longer need the FireStream drivers
+    or the SDK.  If you want them it is an option you can pursue.
 
-    You will need to obtain both the SDK and the FireStream Driver for your
-    kernel. {Linux}
-
-    At the moment, our FireStream clients only provide support for RC5-72.
-    Due to the nature of OGR, it is difficult to parallelize in a way
-    that can make use of the FireStream architecture.
+    You will need at least do download the ATI Catalyst Drivers for Linux,
+    which will install the shared libraries you need and your Kernel Driver.  {Linux}
 
     Our FireStream clients also only execute crunchers on the GPU.  In order
     to utilize the CPUs on your computer, you will need to download
@@ -45,29 +40,18 @@
     1) The FireStream kernel module must be downloaded and built against
        your running kernel's sources.  This driver will be called "fglrx".
 
-       NOTE: This is the same name of the standard Radeon driver, and it
-             WILL REPLACE the Radeon drivers from ATI.  
-
-       This kernel module provides run time hook-ins for the FireStream 
-       libraries, and the Radeon drivers do not.  This will also replace
+       This is contained in the Catalyst Drivers, NOTE: this will replace
        your X/Xorg drivers.
 
     2) The FireStream kernel module must be loaded.  Once the driver is
        loaded, X/Xorg can be started.
 
-    3) The AMD/ATI Stream SDK or runtime libraries must be installed on
-       the system.  The installation notes can be found at:
-       <http://www2.ati.com/sdkdwnld/readme_install_sdk_32.txt>
-       <http://www2.ati.com/sdkdwnld/readme_install_sdk_64.txt>
-       For a non-RPM based system, {Slackware, or source builds 
-       instructions on how to install these are below}
-
     4) X/Xorg must be running.  Due to some reason which is not obvious 
        to me, the only way to connect to the resources of the card is 
        through a combination of the X/Xorg drivers and the kernel module.
 
-       NOTE: The driver in use also MUST be fglrx from the amdstream 
-             drivers from AMD/ATI.
+       NOTE: The driver in use also MUST be fglrx from either the Catalyst
+             or FireStream Drivers.
        NOTE: The primary interface for X/Xorg MUST be the card you want
              to use as a stream device.  The client doesn't support 
              Crossfire or multi-GPU yet.
@@ -94,7 +78,7 @@
  4.0  Troubleshooting and Known issues ------------------------------
 
     This client was built against the latest ATI Stream SDK that 
-    was available.  That version was 1.3.0 and marked as a beta by
+    was available.  That version was 1.4.0 and marked as a beta by
     AMD/ATI.  There are known problems with this SDK/API at the time
     this was built so every expectation is that newer ones will play
     much nicer with the system.  The client should also be updated and
@@ -107,9 +91,8 @@
     it MUST be running with the fglrx kernel and X/Xorg drivers loaded.
 
     If you are unable to execute the dnetc binary because of a missing
-    "libamdcalrt.so" or "libamdcalcl.so" library, you will need to visit
-    the ATI website and download and install the FireStream SDK/Runtime
-    libraries.
+    "libaticalrt.so" or "libaticalcl.so" library, you will need to visit
+    the ATI website and download and install a later driver.
 
     If you have an onboard FireStream compatible card such as a Radeon 
     HD 3200 or HD 3300, and an additional stream-capable card, and you
@@ -161,7 +144,4 @@
       shar.  The offset changed by 9 characters, because be added 9
       characters to the file.
    6) Run each of the two files that you just modified.
-
-
-
 
