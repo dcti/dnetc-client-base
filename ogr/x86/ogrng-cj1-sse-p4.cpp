@@ -27,6 +27,10 @@ extern "C" int CDECL ogr_cycle_256_cj1_sse_p4(struct OgrState *oState, int *pnod
 
 static int ogr_cycle_256(struct OgrState *oState, int *pnodes, const u16* pchoose)
 {
+    /* Check that size of cruncher thread work area is correct */
+
+    STATIC_ASSERT(sizeof(struct OgrState) <= OGRNG_PROBLEM_SIZE);
+
     /* Check structures layout and alignment to match assembly */
 
     STATIC_ASSERT(offsetof(struct OgrState, max)         == 0 );
