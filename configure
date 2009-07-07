@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.396 2009/06/02 10:21:18 andreasb Exp $
+# @(#)$Id: configure,v 1.397 2009/07/07 17:44:08 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3066,7 +3066,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DEXPECTED_CUDA_VERSION=${inferred_cuda_version_expected}"
-        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=\(50*86400\)"
+        TARGET_CCFLAGS="$TARGET_CCFLAGS -DBETA -DBETA_PERIOD=$(( 50*86400 ))"
         TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
         TARGET_LIBS="-lcudart -lrt"
         TARGET_TARBALL="linux-${inferred_arch}${inferred_cuda_tarball_suffix}"
