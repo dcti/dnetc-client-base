@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.117 2009/07/10 06:13:37 jlawson Exp $
+# $Id: makefile.vc,v 1.118 2009/07/26 09:22:06 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -136,15 +136,12 @@ OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH) -DBETA -DBETA_PERIOD="(50*86400)"
 OPTS_LIBS = $(OPTS_LIBS) version.lib $(CUDA_LIB_PATH)\cudart.lib
 ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda plat\cuda\CUDA_Toolkit_EULA_081215.pdf cudart.dll
 
-!if ( [cmd /c plat\win\cudaver.cmd] == 2010 )
-ZIPSUFFIX = win32-x86-cuda21
-OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2010
+!if ( [cmd /c plat\win\cudaver.cmd] == 2030 )
+ZIPSUFFIX = win32-x86-cuda23
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2030
 !elseif ( [cmd /c plat\win\cudaver.cmd] == 2020 )
 ZIPSUFFIX = win32-x86-cuda22
 OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2020
-!elseif ( [cmd /c plat\win\cudaver.cmd] == 2000 )
-ZIPSUFFIX = win32-x86-cuda20
-OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2000
 !else
 !error Could not detect CUDA version.
 !endif
