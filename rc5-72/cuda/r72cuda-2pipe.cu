@@ -6,13 +6,17 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-2pipe.cu,v 1.28 2009/04/29 09:30:20 andreasb Exp $
+ * $Id: r72cuda-2pipe.cu,v 1.29 2009/07/26 09:23:23 jlawson Exp $
 */
 
 #include <stdio.h>
 #include <cuda.h>
 #include "r72cuda.h"
 #include "r72cuda-helper.cu"
+
+#if !defined(CUDA_VERSION) || (CUDA_VERSION < 2020)
+#error Only CUDA SDK version 2.2 or higher are supported.
+#endif
 
 #ifdef __cplusplus
 extern "C" s32 CDECL rc5_72_unit_func_cuda_2_64( RC5_72UnitWork *, u32 *, void * );
