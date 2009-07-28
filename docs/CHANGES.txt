@@ -23,11 +23,13 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.66 2009/06/03 11:29:22 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.67 2009/07/28 07:50:40 jlawson Exp $
 ==========================================================================
 
 2.9100
 ------
+2.9105-512  fix: cuda: version increment to identify compiler bug (#4201)
+
 2.9105-511  fix: ppc: Fixed scalar and hybrid OGR-NG cores (#4187)
             imp: cellbe: detect linux kernel SPU scheduler (spufs) bugs
             new: linux: runs-on-battery-power detection via sysfs
