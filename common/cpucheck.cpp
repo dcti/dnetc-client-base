@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.165 2009/07/05 17:56:03 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.166 2009/07/30 13:15:54 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1225,7 +1225,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x090F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Pentium 4 (Northwood)" },
         { 0x0A0F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Celeron 4 (Northwood)" },
         { 0x0B0F020, 0xFFFFFF0, CPU_F_I686, 0x17, "Xeon (Prestonia)" },  /* (#4186) */
-        { 0x0C0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Xeon MP (Gallatin)" },
+        { 0x0C0F020, 0xFFFFFF0, CPU_F_I686, 0x17, "Xeon MP (Gallatin)" }, /* (#4209) */
         { 0x0E0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Mobile Pentium 4-M (Northwood)" },
         { 0x0F0F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Mobile Celeron 4 (Northwood)" },
         /* The following CPUs no longer have a BrandID field from Intel */
