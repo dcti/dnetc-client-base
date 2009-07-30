@@ -7,7 +7,7 @@
  *  one 32-bit scalar part (left side), and two 128-bit vector parts, thus the
  *  "hybrid" name.
  *
- * $Id: ogrng-vec.cpp,v 1.5 2008/06/29 11:07:19 stream Exp $
+ * $Id: ogrng-vec.cpp,v 1.6 2009/07/30 16:53:48 stream Exp $
 */
 
 #include "ansi/ogrng.h"
@@ -204,7 +204,7 @@ typedef vector unsigned int v32_t;
   }
   #endif
 
-
+  #include <stddef.h> // offsetof
   static int ogr_cycle_256(struct OgrState *oState, int *pnodes,
                            const u16* pchoose)
   {
@@ -212,6 +212,21 @@ typedef vector unsigned int v32_t;
     vector unsigned char val = vec_splat_u8(0);
     vector unsigned char one = vec_splat_u8(1);
     int i;
+    
+    STATIC_ASSERT(sizeof(struct OgrLevel) == 112);
+    STATIC_ASSERT(offsetof(struct OgrLevel, list)  == 0);
+    STATIC_ASSERT(offsetof(struct OgrLevel, dist)  == 32);
+    STATIC_ASSERT(offsetof(struct OgrLevel, comp)  == 64);
+    STATIC_ASSERT(offsetof(struct OgrLevel, mark)  == 96);
+    STATIC_ASSERT(offsetof(struct OgrLevel, limit) == 100);
+    
+    STATIC_ASSERT(offsetof(struct OgrState, max)         == 0);
+    STATIC_ASSERT(offsetof(struct OgrState, maxdepthm1)  == 8);
+    STATIC_ASSERT(offsetof(struct OgrState, half_depth)  == 12);
+    STATIC_ASSERT(offsetof(struct OgrState, half_depth2) == 16);
+    STATIC_ASSERT(offsetof(struct OgrState, stopdepth)   == 24);
+    STATIC_ASSERT(offsetof(struct OgrState, depth)       == 28);
+    STATIC_ASSERT(offsetof(struct OgrState, Levels)      == 32);
 
     for (i = 0; i < 32; i++) {
       vecShift[i] = val;
