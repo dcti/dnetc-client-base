@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.166 2009/07/30 13:15:54 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.167 2009/07/30 16:50:42 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2338,7 +2338,7 @@ unsigned int GetProcessorFrequency()
       }
     }
   #elif  (CLIENT_OS == OS_LINUX) && \
-        ((CLIENT_CPU == CPU_POWERPPC) || (CLIENT_CPU == CPU_CELLBE))
+        ((CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE))
     FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
     if ( cpuinfo )
     {
