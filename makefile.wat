@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.45 2009/01/01 12:24:55 andreasb Exp $
+## $Id: makefile.wat,v 1.46 2009/07/30 07:19:00 jlawson Exp $
 ##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
@@ -158,7 +158,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %dependall=# makefile.wat common/version.h  # remake everything if these change
 %ZIPFILE  =# blank for auto
 %BUILDNUM =               #autodetected
-%DOCFILES =docs\$(BASENAME).txt docs\CHANGES.txt docs\readme.1st
+%DOCFILES =docs\$(BASENAME).txt docs\CHANGES.txt
                           #list of files in ./docs to include in the zip
 %READMETXT=               #this file will be copied to docs\readme.txt
 %ZIPPER   =zip.exe        # a zip file won't be made if not defined

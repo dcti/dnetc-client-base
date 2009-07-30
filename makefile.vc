@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.118 2009/07/26 09:22:06 jlawson Exp $
+# $Id: makefile.vc,v 1.119 2009/07/30 07:19:00 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -77,7 +77,7 @@ EXECOMPRESSOR2 =
 
 # --------------------------------------------
 
-ZIPEXTRAS = docs/readme.1st \
+ZIPEXTRAS = \
 	docs/readme.win32.html \
 	docs/dnetc.txt \
 	docs/CHANGES.txt
