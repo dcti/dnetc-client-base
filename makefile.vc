@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.119 2009/07/30 07:19:00 jlawson Exp $
+# $Id: makefile.vc,v 1.120 2009/08/08 18:26:21 snikkel Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -372,6 +372,10 @@ OGRNG_OBJS =
 OGRNG_OBJS =                         \
         $(OUTPUTPATH)/ogr_sup.obj \
         $(OUTPUTPATH)/ogrng-64.obj   \
+        $(OUTPUTPATH)/ogrng64-cj1-generic.obj    \
+        $(OUTPUTPATH)/ogrng64-cj1-generic-asm.obj \
+        $(OUTPUTPATH)/ogrng64-cj1-sse2.obj    \
+        $(OUTPUTPATH)/ogrng64-cj1-sse2-asm.obj \
         $(OUTPUTPATH)/ogrng_init.obj \
         $(OUTPUTPATH)/ogrng_dat.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
@@ -436,6 +440,12 @@ $(VC_CHECK):
 
 {$(RC572SRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(RC572SRCPATH:/=\)\amd64\ $(**:/=\)
+
+{$(OGRSRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
+        yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(OGRSRCPATH:/=\)\amd64\ $(**:/=\)
+
+{$(OGRSRCPATH)/amd64}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS $(**:/=\)

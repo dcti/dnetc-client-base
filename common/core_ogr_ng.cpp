@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.26 2009/05/17 11:19:39 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.27 2009/08/08 18:26:22 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -76,6 +76,8 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.26 2009/05/17 11:19:39 stream Exp $"; }
     CoreDispatchTable *ogrng_get_dispatch_table_arm2(void);
 #elif (CLIENT_CPU == CPU_AMD64)
     CoreDispatchTable *ogrng64_get_dispatch_table(void);
+    CoreDispatchTable *ogrng64_get_dispatch_table_cj1_generic(void);
+    CoreDispatchTable *ogrng64_get_dispatch_table_cj1_sse2(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
     CoreDispatchTable *ogrng64_get_dispatch_table(void); 
 #elif (CLIENT_CPU == CPU_S390X) && (SIZEOF_LONG == 8)
@@ -152,6 +154,8 @@ int InitializeCoreTable_ogr_ng(int first_time)
       #elif (CLIENT_CPU == CPU_AMD64)
         //ogr_get_dispatch_table();
         ogrng64_get_dispatch_table();
+        ogrng64_get_dispatch_table_cj1_generic();
+        ogrng64_get_dispatch_table_cj1_sse2();
       #elif (CLIENT_CPU == CPU_S390)
         ogrng_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_S390X)
@@ -201,6 +205,8 @@ const char **corenames_for_contest_ogr_ng()
       #endif
   #elif (CLIENT_CPU == CPU_AMD64)
       "FLEGE-64 2.0",
+      "cj-asm-generic",
+      "cj-asm-sse2",
   #elif (CLIENT_CPU == CPU_ARM)
       "FLEGE 2.0",
       "FLEGE 2.0 ARMv3",
@@ -541,8 +547,15 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
       unit_func.ogr = ogrng_get_dispatch_table();
   #endif
 #elif (CLIENT_CPU == CPU_AMD64)
-  unit_func.ogr = ogrng64_get_dispatch_table();
-  coresel = 0;
+  if (coresel == 1)
+    unit_func.ogr = ogrng64_get_dispatch_table_cj1_generic();
+  else if (coresel == 2)
+    unit_func.ogr = ogrng64_get_dispatch_table_cj1_sse2();
+  else
+  {
+    unit_func.ogr = ogrng64_get_dispatch_table();
+    coresel = 0;
+  }
 #elif (CLIENT_CPU == CPU_ARM)
   if (coresel == 1)
     unit_func.ogr = ogrng_get_dispatch_table_arm1();
