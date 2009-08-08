@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.37 2009/04/30 16:57:08 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.38 2009/08/08 18:48:40 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -151,9 +151,6 @@ const char **corenames_for_contest_rc572()
   #elif (CLIENT_CPU == CPU_AMD64)
       "SNJL 3-pipe",
       "KBE-64 3-pipe",
-      "ANSI 4-pipe",
-      "ANSI 2-pipe",
-      "ANSI 1-pipe",
   #elif (CLIENT_CPU == CPU_ARM)
       "StrongARM 1-pipe",
       "ARM 2/3/6/7 1-pipe",
@@ -521,6 +518,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x09: cindex = 1; break; // K8               == KBE-64 3-pipe
         case 0x0B: cindex = 1; break; // Pentium 4        == KBE-64 3-pipe
         case 0x12: cindex = 1; break; // Core 2           == KBE-64 3-pipe
+        case 0x14: cindex = 1; break; // Atom             == KBE-64 3-pipe
         default:   cindex =-1; break; // no default
       }
     }
@@ -733,22 +731,9 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         pipeline_count = 3;
         break;
       case 1:
+      default:
         unit_func.gen_72 = rc5_72_unit_func_kbe;
         pipeline_count = 3;
-        break;
-      case 2:
-        unit_func.gen_72 = rc5_72_unit_func_ansi_4;
-        pipeline_count = 4;
-        break;
-      case 3:
-        unit_func.gen_72 = rc5_72_unit_func_ansi_2;
-        pipeline_count = 2;
-        break;
-      case 4:
-      default:
-        unit_func.gen_72 = rc5_72_unit_func_ansi_1;
-        pipeline_count = 1;
-        coresel = 4; // yes, we explicitly set coresel in the default case !
         break;
     // -----------
     #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
