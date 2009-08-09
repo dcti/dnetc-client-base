@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.28 2009/08/08 18:48:39 snikkel Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.29 2009/08/09 15:30:38 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -436,6 +436,10 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
   // ===============================================================
   #elif (CLIENT_CPU == CPU_AMD64)
     {
+      switch (detected_type)
+      {
+        case 0x09: cindex = 1; break; /* AMD: generic (#4214) */
+      }
       /* If core not set and SSE2 exists */
       if (cindex == -1 && (detected_flags & CPU_F_SSE2))
         cindex = 2;  /* sse2 core */
