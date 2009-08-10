@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.69 2009/08/09 15:35:20 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.70 2009/08/10 22:11:32 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -33,6 +33,7 @@ Version change log: $Id: CHANGES.txt,v 1.69 2009/08/09 15:35:20 snikkel Exp $
             chg: amd64: drop ansi rc5-72 cores
             chg: amd64: rc5-72 core selection for Atom
             fix: amd64: ogr core selection for Athlon (#4214)
+            fix: amd64: rc5-72 core selection for Core i7 (#3817)
 
 2.9105-512  fix: cuda: version increment to identify compiler bug (#4201)
 

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.38 2009/08/08 18:48:40 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.39 2009/08/10 22:11:32 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -519,6 +519,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x0B: cindex = 1; break; // Pentium 4        == KBE-64 3-pipe
         case 0x12: cindex = 1; break; // Core 2           == KBE-64 3-pipe
         case 0x14: cindex = 1; break; // Atom             == KBE-64 3-pipe
+        case 0x15: cindex = 0; break; // Intel Core i7    == SNJL 3-pipe (#3817)
         default:   cindex =-1; break; // no default
       }
     }
