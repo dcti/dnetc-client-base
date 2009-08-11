@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.39 2009/08/10 22:11:32 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.40 2009/08/11 17:50:34 sla Exp $"; }
 
 //#define TRACE
 
@@ -101,6 +101,7 @@ extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s0( RC5_72UnitWork *, u32 *, voi
 extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s1( RC5_72UnitWork *, u32 *, void * );
 #elif (CLIENT_CPU == CPU_ATI_STREAM)
 extern "C" s32 CDECL rc5_72_unit_func_il4_nand( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_il4a_nand( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 
@@ -206,7 +207,8 @@ const char **corenames_for_contest_rc572()
       "CUDA 1-pipe 64-thd sleep 100us",
       "CUDA 1-pipe 64-thd sleep dynamic",
   #elif (CLIENT_CPU == CPU_ATI_STREAM)
-      "IL 4-pipe c nand",
+      "IL 4-pipe c",
+      "IL 4-pipe c alt",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -604,7 +606,25 @@ int selcoreGetPreselectedCoreForProject_rc572()
   #elif (CLIENT_CPU == CPU_CUDA)
     cindex = 0; // 1-pipe 64-threads
   #elif (CLIENT_CPU == CPU_ATI_STREAM)
-    cindex = 0; // IL 4-pipe c nand
+    switch (detected_type)
+    {
+      case 0: 		    // R600 GPU ISA
+      case 1:		    // R610 GPU ISA
+      case 2:		    // R630 GPU ISA
+      case 3:		    // R670 GPU ISA
+       cindex = 1;	    // IL 4-pipe alt
+       break;
+
+      case 4: 		    // R700 class GPU ISA
+      case 5: 		    // RV770 GPU ISA
+      case 6: 		    // RV710 GPU ISA
+      case 7: 		    // RV730 GPU ISA
+       cindex = 0;	    // IL 4-pipe
+       break;
+    
+      default:
+      cindex = 0; 	    // IL 4-pipe
+    }
   #endif
 
   return cindex;
@@ -848,7 +868,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       default:
         unit_func.gen_72 = rc5_72_unit_func_il4_nand;
         pipeline_count = 4;
-        coresel = 0; // yes, we explicitly set coresel in the default case !
+      break;               
+      case 1:             
+        unit_func.gen_72 = rc5_72_unit_func_il4a_nand;
+        pipeline_count = 4;
       break;               
     // -----------
      #else /* the ansi cores */

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.122 2009/04/30 10:38:22 andreasb Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.123 2009/08/11 17:50:34 sla Exp $"; }
 
 //#define TRACE
 
@@ -428,7 +428,7 @@ static long __bench_or_test( int which,
 #if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
               "Please file a bug report along with the output of\n-cpuinfo.\n",
 #else
-              "The CUDA core selection has been made as a tradeoff between core speed\n"
+              "The GPU core selection has been made as a tradeoff between core speed\n"
               "and responsiveness of the graphical desktop.\n"
               "Please file a bug report along with the output of -cpuinfo\n"
               "only if the the faster core selection does not degrade graphics performance.\n",
