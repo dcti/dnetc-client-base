@@ -1,11 +1,12 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.120 2009/08/08 18:26:21 snikkel Exp $
+# $Id: makefile.vc,v 1.121 2009/08/11 18:14:44 sla Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
 #PROCESSOR_ARCHITECTURE = cuda
+#PROCESSOR_ARCHITECTURE = ATI_STREAM
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -50,6 +51,13 @@ OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 # The ZIPSUFFIX for CUDA is set down below.
 .SUFFIXES : .cu
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
+HAVE_OGR_CORES = 0
+OPTS_CC_CPU =
+OPTS_M_PLAT = IX86
+CHIPSRCPATH = plat
+#CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+ZIPSUFFIX = ati_stream
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
@@ -148,7 +156,10 @@ OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2020
 
 !endif
 
-
+!if "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
+OPTS_MSVC = $(OPTS_MSVC) -I"$(CALROOT)include" -Iplat\stream -Iplat\x86 -DBETA -DBETA_PERIOD="(50*86400)"
+OPTS_LIBS = $(OPTS_LIBS) "$(CALROOT)lib\xp32\aticalcl.lib" "$(CALROOT)lib\xp32\aticalrt.lib"
+!endif
 
 !if ( [plat\win\msvcver.cmd] >= 15 )
 OPTS_MSVC = $(OPTS_MSVC) -EHs-c- -GS- -wd4996
@@ -324,6 +335,15 @@ RC5_72_OBJS =                             \
         $(OUTPUTPATH)/r72cuda-2pipe.obj   \
         $(OUTPUTPATH)/r72cuda-4pipe.obj 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DCUDA -DDYN_TIMESLICE
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
+RC5_72_OBJS =                             \
+        $(OUTPUTPATH)/r72stream-common.obj   \
+        $(OUTPUTPATH)/r72stream-vc4cn.obj   \
+        $(OUTPUTPATH)/r72stream-vc4cna.obj   \
+        $(OUTPUTPATH)/amdstream_info.obj \
+        $(OUTPUTPATH)/amdstream_setup.obj 
+
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE
 !else
 !error No RC5-72 cores for this architecture.
 !endif
@@ -483,6 +503,20 @@ $(VC_CHECK):
 
 cudart.dll: $(CUDA_BIN_PATH)\cudart.dll
         copy /y $** $@
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
+
+{$(CHIPSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+
+{$(CHIPSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(CHIPSRCPATH)/stream}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(RC572SRCPATH)/stream}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 !endif
 
 {$(RC572SRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
