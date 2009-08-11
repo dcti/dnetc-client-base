@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.401 2009/08/08 18:48:39 snikkel Exp $
+# @(#)$Id: configure,v 1.402 2009/08/11 13:12:17 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -794,8 +794,11 @@ infer_cuda_version() { # $1=configure target
     internal-*-cuda22)
       inferred_cuda_version="2.2"
       ;;
+    internal-*-cuda23)
+      inferred_cuda_version="2.3"
+      ;;
     internal-*-cuda)
-      for _ver in $TARGET_CUDA_VERSION 2.2 2.1 2.0
+      for _ver in $TARGET_CUDA_VERSION 2.3 2.2 2.1 2.0
       do
         if [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}" ]; then
           inferred_cuda_version="$_ver"
