@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.10 2009/03/30 01:08:41 andreasb Exp $
+ * $Id: r72stream-common.h,v 1.11 2009/08/11 17:19:31 sla Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -25,16 +25,20 @@
 
 #include "logstuff.h"  // LogScreen()
 #include "pollsys.h"   // NonPolledUsleep()
+#include "clisync.h"   // fastlock
+#include "triggers.h"  // RaiseExitRequestTrigger()
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 
+#define CORE_IL4N   1
+#define CORE_IL4NA  2
 
-#define CORE_IL4N   2
 
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
+CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target);
 
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
@@ -44,6 +48,19 @@ typedef ui64 hirestimer_type;
 inline void HiresTimerGet(hirestimer_type * t)
 {
   QueryPerformanceCounter((LARGE_INTEGER *)t);
+}
+
+inline double HiresTimerGetResolution()
+{
+  LARGE_INTEGER f;
+  double fr_d;
+  ui64 fr;
+
+  QueryPerformanceFrequency(&f);
+  fr=f.HighPart; fr<<=32; fr+=f.LowPart;
+  fr_d=(double)fr/1000.f;
+
+   return fr_d;
 }
 
 //returns ???
@@ -66,6 +83,12 @@ inline double HiresTimerDiff(const hirestimer_type t1, const hirestimer_type t2)
   CliTimerDiff(&diff, &t1, &t2);
   return (double)diff.tv_sec * 1000.0 + (double)diff.tv_usec / 1000.0;
 }
+
+inline double HiresTimerGetResolution()
+{
+  return 1.f;
+}
+
 #endif
 
 #endif

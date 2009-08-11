@@ -6,16 +6,19 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.13 2009/08/11 17:19:31 sla Exp $
+ * $Id: r72stream-vc4cna.cpp,v 1.1 2009/08/11 17:19:31 sla Exp $
 */
 
 #include "r72stream-common.h"
-#include "r72stream-vc4cn_il.cpp"
-#include "r72stream-vc4cng_il.cpp"
+#include <triggers.h>
+#include "r72stream-vc4cna_il.cpp"
+#include "r72stream-vc4nag_il.cpp "
 
-static bool init_rc5_72_il4_nand(u32 Device)
+
+//#define VERBOSE 1
+static bool init_rc5_72_il4a_nand(u32 Device)
 {
-  if(CContext[Device].coreID!=CORE_IL4N)
+  if(CContext[Device].coreID!=CORE_IL4NA)
     AMDStreamReinitializeDevice(Device);
 
   if(!CContext[Device].active)
@@ -70,6 +73,9 @@ static bool init_rc5_72_il4_nand(u32 Device)
 
   CALresult result;
   result=calCtxCreate(&CContext[Device].ctx, CContext[Device].device);
+#ifdef VERBOSE
+  LogScreen("Thread %u: creating context\n",Device);
+#endif
   if(result!=CAL_RESULT_OK)
   {
 		LogScreen("Thread %u: creating context failed! Reason:%u\n",Device,result);
@@ -78,19 +84,19 @@ static bool init_rc5_72_il4_nand(u32 Device)
 
 	CContext[Device].globalRes0=0;
 	if(CContext[Device].attribs.memExport) {
-	calResAllocRemote2D(&CContext[Device].globalRes0, &CContext[Device].device, 1, 64,
+		calResAllocRemote2D(&CContext[Device].globalRes0, &CContext[Device].device, 1, 64,
                            1, CAL_FORMAT_UINT_1, CAL_RESALLOC_GLOBAL_BUFFER);
-  }
+	}
   
   //-------------------------------------------------------------------------
   // Compiling Device Program
   //-------------------------------------------------------------------------
 	if(!CContext[Device].globalRes0)
 		result=compileProgram(&CContext[Device].ctx,&CContext[Device].image,&CContext[Device].module0,
-			(CALchar *)il4_nand_src,CContext[Device].attribs.target);
+			(CALchar *)il4a_nand_src,CContext[Device].attribs.target);
 	else
 		result=compileProgram(&CContext[Device].ctx,&CContext[Device].image,&CContext[Device].module0,
-			(CALchar *)il4_nand_src_g,CContext[Device].attribs.target);
+			(CALchar *)il4ag_nand_src,CContext[Device].attribs.target);
 		
   if ( result!= CAL_RESULT_OK)
   {
@@ -101,9 +107,13 @@ static bool init_rc5_72_il4_nand(u32 Device)
   //-------------------------------------------------------------------------
   // Allocating and initializing resources
   //-------------------------------------------------------------------------
+#ifdef VERBOSE
+  LogScreen("Thread %u: allocatin buffers\n",Device);
+#endif
 
  // Input and output resources
   CContext[Device].outputRes0=0;
+  CALresult r;
   if(CContext[Device].attribs.cachedRemoteRAM>0)
 		calResAllocRemote2D(&CContext[Device].outputRes0, &CContext[Device].device, 1, CContext[Device].domainSizeX,
                               CContext[Device].domainSizeY, CAL_FORMAT_UINT_1, CAL_RESALLOC_CACHEABLE);
@@ -118,7 +128,7 @@ static bool init_rc5_72_il4_nand(u32 Device)
   }
 
   // Constant resource
-  if(calResAllocRemote1D(&CContext[Device].constRes0, &CContext[Device].device, 1, 3, CAL_FORMAT_UINT_4, 0)!=CAL_RESULT_OK)
+	if(calResAllocRemote1D(&CContext[Device].constRes0, &CContext[Device].device, 1, 3, CAL_FORMAT_UINT_4, 0)!=CAL_RESULT_OK)
   {
     LogScreen("Failed to allocate constant buffer\n");
     return false;
@@ -145,20 +155,29 @@ static bool init_rc5_72_il4_nand(u32 Device)
   calCtxSetMem(CContext[Device].ctx, CContext[Device].outName0, CContext[Device].outputMem0);
   calCtxSetMem(CContext[Device].ctx, CContext[Device].constName0, CContext[Device].constMem0);
 
-  CContext[Device].coreID=CORE_IL4N;
+  CContext[Device].coreID=CORE_IL4NA;
 
   return true;
 }
 
 #ifdef __cplusplus
-extern "C" s32 rc5_72_unit_func_il4_nand (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_il4a_nand (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
 
-static bool FillConstantBuffer(CALresource res, u32 runsize, u32 iters, u32 rest, float width, 
+static bool FillConstantBuffer(CALresource res, CALresource globalRes, u32 runsize, u32 iters, u32 rest, float width, 
 							   RC5_72UnitWork *rc5_72unitwork, u32 keyIncrement) 
 {
     u32* constPtr = NULL;
     CALuint pitch = 0;
+
+	//Clear global buffer
+	if(globalRes) {
+	    if(calResMap((CALvoid**)&constPtr, &pitch, globalRes, 0)!=CAL_RESULT_OK)
+			return false;
+		constPtr[0]=0;
+	    if(calResUnmap(globalRes)!=CAL_RESULT_OK)
+			return false;
+	}
 
     if(calResMap((CALvoid**)&constPtr, &pitch, res, 0)!=CAL_RESULT_OK)
 		return false;
@@ -260,17 +279,21 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
 	return 0;
 }
 
-s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+
+s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
 	u32 deviceID=rc5_72unitwork->threadnum;
 	u32 iter_c=*iterations;
 	RC5_72UnitWork rc5_72unitwork_c;
 	memcpy(&rc5_72unitwork_c,rc5_72unitwork,sizeof(RC5_72UnitWork));
 
-  if (CContext[deviceID].coreID!=CORE_IL4N)
+  if (CContext[deviceID].coreID!=CORE_IL4NA)
   {
-    init_rc5_72_il4_nand(deviceID);
-    if(CContext[deviceID].coreID!=CORE_IL4N) {
+#ifdef VERBOSE
+	  LogScreen("Thread %u: initializing...\n", deviceID);
+#endif
+	  init_rc5_72_il4a_nand(deviceID);
+    if(CContext[deviceID].coreID!=CORE_IL4NA) {
 		RaiseExitRequestTrigger();
 		return -1;        //еrr
     }
@@ -287,24 +310,13 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
   u32 iters0=1;
   u32 rest0=0;
 
-//#define VERBOSE 1
+  bool perfC;
+
 #ifdef VERBOSE
   LogScreen("Tread %u: %u ITERS (%u), maxiters=%u\n",deviceID, kiter,kiter/RunSize,CContext[deviceID].maxIters);
 #endif
   double fr_d=HiresTimerGetResolution();
   hirestimer_type cstart, cend;
-
-  //Clear global buffer
-  if(CContext[deviceID].globalRes0) {
-    u32* gPtr = NULL;
-    CALuint pitch = 0;
-    if(calResMap((CALvoid**)&gPtr, &pitch, CContext[deviceID].globalRes0, 0)==CAL_RESULT_OK)
-    {
-	gPtr[0]=0;
-	calResUnmap(CContext[deviceID].globalRes0);
-    }
-  }
-
   while(itersNeeded) {
 		iters0=itersNeeded/RunSize;
 		if(iters0>=CContext[deviceID].maxIters) {
@@ -317,8 +329,11 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 		itersNeeded-=(iters0-1)*RunSize+rest0;
 
 		//fill constant buffer
-		if(!FillConstantBuffer(CContext[deviceID].constRes0,RunSize, iters0, rest0, (float)width, rc5_72unitwork,0))
+		if(!FillConstantBuffer(CContext[deviceID].constRes0, CContext[deviceID].globalRes0,RunSize, iters0, rest0, (float)width, rc5_72unitwork,0))
 		{
+#ifdef VERBOSE
+			LogScreen("Readback: error\n");
+#endif
 			NonPolledUSleep(50000);		//Lost connection to driver
 			*iterations=iter_c;
 			memcpy(rc5_72unitwork,&rc5_72unitwork_c,sizeof(RC5_72UnitWork));
@@ -345,13 +360,14 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 #ifdef VERBOSE 
 		LogScreen("Thread %u: Time %lf ms, c=%u\n",deviceID,(double)(cend-cstart)/fr_d, busy_c);
 #endif
-		if((d>15.5)&&(busy_c>1))	//
+		if((d>15.5)&&(busy_c>1))	//Уменьшим количество 
 		{
 			u32 delta;
-			if(d>30.)
-				delta=(u32)CContext[deviceID].maxIters*0.3f;
+			//Если лишняя задержка составила >2 запланированных раундов, то уменьшаем на 50%, иначе - на 10%
+			if(d>60)
+				delta=CContext[deviceID].maxIters*0.3f;
 			else
-				delta=(u32)CContext[deviceID].maxIters*0.1f;
+				delta=CContext[deviceID].maxIters*0.1f;
 			if(delta==0)
 				delta=1;
 			if(delta>=CContext[deviceID].maxIters)
@@ -366,14 +382,15 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 			if((busy_c<=1)&&(d<15.5))
 			{
 				u32 delta;
-				delta=(u32)CContext[deviceID].maxIters*0.02f;
+				delta=CContext[deviceID].maxIters*0.02f;
 				if(delta==0)
 					delta=1;
 				CContext[deviceID].maxIters+=delta;
 #ifdef VERBOSE
 				LogScreen("Thread %u:idle, delta=%u\n",deviceID,busy_c,delta);
 #endif
-			} 
+			}
+
 		//Check the results
 		u32 CMC;
 		s32 read_res=ReadResultsFromGPU(CContext[deviceID].outputRes0, CContext[deviceID].globalRes0, width, height, rc5_72unitwork, &CMC);
@@ -383,6 +400,9 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
 		}
 		if (read_res<0)
 		{
+#ifdef VERBOSE
+			LogScreen("Readback: error\n");
+#endif
 			NonPolledUSleep(50000);		//Lost connection to driver
 			*iterations=iter_c;
 			memcpy(rc5_72unitwork,&rc5_72unitwork_c,sizeof(RC5_72UnitWork));
@@ -398,8 +418,5 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
   /* tell the client about the optimal timeslice increment for this core 
      (with current parameters) */
   rc5_72unitwork->optimal_timeslice_increment = RunSize*4*CContext[deviceID].maxIters;
-#ifdef VERBOSE
-  LogScreen("Tread %u: exiting\n",deviceID);
-#endif
   return RESULT_NOTHING;
 }
