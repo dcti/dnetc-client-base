@@ -4,11 +4,9 @@
  * Any other distribution or use of this source violates copyright.
  *
  * Special thanks for help in testing this core to:
- * Alexander Kamashev
- * PanAm
- * Alexei Chupyatov
+ * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.h,v 1.6 2009/01/02 03:25:28 andreasb Exp $
+ * $Id: amdstream_setup.h,v 1.7 2009/08/11 17:27:34 sla Exp $
 */
 
 #ifndef AMD_STREAM_SETUP_H

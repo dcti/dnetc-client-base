@@ -4,11 +4,9 @@
  * Any other distribution or use of this source violates copyright.
  *
  * Special thanks for help in testing this core to:
- * Alexander Kamashev
- * PanAm
- * Alexei Chupyatov
+ * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.4 2009/02/19 23:19:28 andreasb Exp $
+ * $Id: amdstream_context.h,v 1.5 2009/08/11 17:27:34 sla Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -31,17 +29,19 @@ typedef struct {
   CALcontext ctx;
 
   CALresource outputRes0;
-  CALresource constRes;
+  CALresource constRes0;
+  CALresource globalRes0;
 
-  CALmodule module;
+  CALmodule module0;
 
   CALmem outputMem0;
-  CALmem constMem;
+  CALmem constMem0;
+  CALmem globalMem0;
 
-  CALfunc func;
-  CALname outName0, constName;
+  CALfunc func0;
+  CALname outName0, constName0;
+  CALname globalName0;
 
-  CALobject obj;
   CALimage image;
 
   CALint domainSizeY;
@@ -56,12 +56,5 @@ typedef struct {
 
 extern stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 extern int amdstream_numDevices;
-
-extern PFNCALCTXCREATECOUNTER calCtxCreateCounterExt;
-extern PFNCALCTXDESTROYCOUNTER calCtxDestroyCounterExt;
-extern PFNCALCTXBEGINCOUNTER calCtxBeginCounterExt;
-extern PFNCALCTXENDCOUNTER calCtxEndCounterExt;
-extern PFNCALCTXGETCOUNTER calCtxGetCounterExt;
-extern bool amdstream_usePerfCounters;
 
 #endif // AMD_STREAM_CONTEXT_H
