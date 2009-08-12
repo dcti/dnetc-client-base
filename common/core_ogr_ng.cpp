@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.29 2009/08/09 15:30:38 snikkel Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.30 2009/08/12 10:29:32 stream Exp $"; }
 
 //#define TRACE
 
@@ -411,6 +411,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
               case 0x0D: cindex = 5; break; /* Pentium M: -k8 */
               case 0x13: cindex = 5; break; /* P4-Willamette: -k8 but -k8 and -p4 are very close */
               case 0x17: cindex = 4; break; /* P4:  sse-p4 (but different rc5-72 core) (#4186) */
+              case 0x19: cindex = 5; break; /* AMD: same as type 9 (but different rc5-72 core) (#4193) */
             }
           }
           /* If core not set above and SSE2 exist, try it */

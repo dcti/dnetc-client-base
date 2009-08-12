@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.169 2009/08/12 04:03:28 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.170 2009/08/12 10:29:33 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1119,12 +1119,25 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x050F000, 0xFFFF000, CPU_F_I686,    9, "Opteron" },
         { 0x060F000, 0xFFFF000, CPU_F_I686,    9, "Athlon XP-M" },
         { 0x070F000, 0xFFFF000, CPU_F_I686,    9, "Athlon XP" },
+        /*
+         * Core selection becomes a mess because modern CPUs cannot be divided into groups.
+         * CPU's sharing same RC5-72 core can use different OGR-NG cores, and vice versa.
+         * Things could be even worse if we'll have more projects.
+         *
+         * Current pseudo-groups for different combinations of RC5-72 and OGR-NG cores:
+         *   0x13 - P4-based (RC5-72 core #7), OGR-NG core -k8
+         *   0x14 - Atom
+         *   0x15 - Core i7/Xeon
+         *   0x16 - AMD-based (RC5-72 GO 2-pipe, #6) but similar to Intel Core CPUs, with fast SSE (OGR-NG SSE2 core) 
+         *   0x17 - P4-based (RC5-72 core #7), OGR-NG core -p4
+         *   0x18 - unused
+         *   0x19 - AMD but RC5-72 GO-2b, #11. Same as type 0x09 for others (-k8 in OGR-NG)
+         */
         { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Sempron" },
-        { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron" },
+        { 0x090F000, 0xFFFF000, CPU_F_I686, 0x19, "Sempron" },
         { 0x0A0F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 FX" },
         { 0x0B0F000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
         { 0x0C0F000, 0xFFFF000, CPU_F_I686,    9, "Turion 64 X2 Mobile Technology" },
-        /* class 0x16 - similar to Intel Core CPUs, with fast SSE (OGR-NG SSE2 core) */
         { 0x0D10000, 0xFFFF000, CPU_F_I686, 0x16, "Athlon (Model 16)" }, /* (#4120,#4196) */
         { 0x0E10000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
         { 0x0F10000, 0xFFFF000, CPU_F_I686, 0x16, "Quad Core Opteron" },

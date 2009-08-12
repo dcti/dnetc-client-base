@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.121 2009/08/11 18:14:44 sla Exp $
+# $Id: makefile.vc,v 1.122 2009/08/12 10:29:32 stream Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -325,6 +325,7 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-ss2.obj    \
         $(OUTPUTPATH)/r72-go2.obj    \
         $(OUTPUTPATH)/r72-go2a.obj   \
+        $(OUTPUTPATH)/r72-go2b.obj   \
         $(OUTPUTPATH)/r72-sgp3.obj   \
         $(OUTPUTPATH)/r72-ma4.obj    \
         $(OUTPUTPATH)/r72-mmx.obj
