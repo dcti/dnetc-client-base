@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.170 2009/08/12 10:29:33 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.171 2009/08/13 18:13:26 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -963,6 +963,12 @@ static long __GetRawProcessorID(const char **cpuname) {
 /* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+static unsigned long x86corehints;
+unsigned long GetProcessorCoreHints(void)
+{
+  return x86corehints;
+}
+
 // whattoret 0:detectedtype, 'c':simpleid, 'f':featureflags
 long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 {
@@ -977,7 +983,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     const char *vendorname = NULL;
     int vendorid; u32 dettype; 
     struct cpuxref { u32 cpuid, mask, cpufeatures, simpleid;
-                     const char *cpuname; } *internalxref = NULL;
+                     const char *cpuname; u32 hints; } *internalxref = NULL;
 
     #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
     if (winGetVersion() < 2000) /* win95 permits inb()/outb() */
@@ -1113,7 +1119,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00060A0, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP/XP-M or Sempron (Barton)" },   // OGR-NG: OK (-k8)
         { 0x000F000, 0xFFFF000, CPU_F_I686,    9, "Athlon (Model 15)" },
         { 0x010F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64" },
-        { 0x020F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core" },
+        { 0x020F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core", CH_R72_X86_GO2B }, /* (#4193) */
         { 0x030F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Athlon 64" },
         { 0x040F000, 0xFFFF000, CPU_F_I686,    9, "Turion 64 Mobile Technology" },
         { 0x050F000, 0xFFFF000, CPU_F_I686,    9, "Opteron" },
@@ -1124,17 +1130,18 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          * CPU's sharing same RC5-72 core can use different OGR-NG cores, and vice versa.
          * Things could be even worse if we'll have more projects.
          *
+         * Please add new values only for real CPU families. Use 'core hints'
+         * instead to override settings for some CPUs in the family.
+         *
          * Current pseudo-groups for different combinations of RC5-72 and OGR-NG cores:
          *   0x13 - P4-based (RC5-72 core #7), OGR-NG core -k8
          *   0x14 - Atom
          *   0x15 - Core i7/Xeon
          *   0x16 - AMD-based (RC5-72 GO 2-pipe, #6) but similar to Intel Core CPUs, with fast SSE (OGR-NG SSE2 core) 
          *   0x17 - P4-based (RC5-72 core #7), OGR-NG core -p4
-         *   0x18 - unused
-         *   0x19 - AMD but RC5-72 GO-2b, #11. Same as type 0x09 for others (-k8 in OGR-NG)
          */
         { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Sempron" },
-        { 0x090F000, 0xFFFF000, CPU_F_I686, 0x19, "Sempron" },
+        { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron",           CH_R72_X86_GO2B }, /* (#4193) */
         { 0x0A0F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 FX" },
         { 0x0B0F000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
         { 0x0C0F000, 0xFFFF000, CPU_F_I686,    9, "Turion 64 X2 Mobile Technology" },
@@ -1198,8 +1205,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0027000, 0x00FF000, CPU_F_I686, 0xFF, "Itanium II DC (Montecito)" },
         /* The following CPUs have a BrandID field from Intel */
         /* Coppermine - 0.18u */
-        { 0x0106080, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron (Coppermine)" },
-        { 0x0206080, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Coppermine)" },
+        { 0x0106080, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron (Coppermine)",         CH_R72_X86_GO2B }, /* (#4193) */
+        { 0x0206080, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Coppermine)",     CH_R72_X86_GO2B }, /* (#4193) */
         { 0x0306080, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III Xeon (Coppermine)" },
         /* Banias - 0.13u */
         { 0x0406090, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium M (Banias)" },
@@ -1211,14 +1218,14 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x02060A0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Cascades)" },
         { 0x03060A0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III Xeon (Cascades)" },
         /* Tualatin - 0.13u */
-	{ 0x02060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Tualatin)" }, /* (#4121) */
-        { 0x03060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron (Tualatin)" },
+        { 0x02060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Tualatin)",   CH_R72_X86_GO2B }, /* (#4121,#4193) */
+        { 0x03060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron (Tualatin)",       CH_R72_X86_GO2B }, /* (#4193) */
         { 0x04060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III (Tualatin)" },
         { 0x06060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Pentium III M (Tualatin)" },
         { 0x07060B0, 0xFFFFFF0, CPU_F_I686, 0x0E, "Celeron M (Tualatin)" },
         /* Dothan - 0.09u */
         { 0x12060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Celeron M (Dothan)" },
-        { 0x16060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium M (Dothan)" },
+        { 0x16060D0, 0xFFFFFF0, CPU_F_I686, 0x0D, "Pentium M (Dothan)", CH_R72_X86_GO2B }, /* (#4193) */
         /* Some P4-class CPUs wants RC5-72 core #7,
            they're marked as type 13 for OGR-NG core -k8
                          and type 17 for OGR-NG core -p4
@@ -1247,11 +1254,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x000F040, 0x00FFFF0, CPU_F_I686, 0x0B, "Pentium 4/D/4-M/Celeron/Xeon" },
         /* Pentium 4 model 6 :  65 nm */
         { 0x000F060, 0x00FFFF0, CPU_F_I686, 0x0B, "Pentium 4/D/4-M/Celeron/Xeon" },
-        { 0x00060E0, 0x00FFFF0, CPU_F_I686, 0x0D, "Core" },
-        { 0x00060F0, 0x00FFFF0, CPU_F_I686, 0x12, "Core 2/Xeon" },
+        { 0x00060E0, 0x00FFFF0, CPU_F_I686, 0x0D, "Core",        CH_R72_X86_GO2B }, /* (#4193) */
+        { 0x00060F0, 0x00FFFF0, CPU_F_I686, 0x12, "Core 2/Xeon", CH_R72_X86_GO2B }, /* (#4193) */
         { 0x0006160, 0x00FFFF0, CPU_F_I686, 0xFF, "Celeron" },              /* 65 nm */
         { 0x0006170, 0xFFFFFF0, CPU_F_I686, 0x12, "Core 2/Extreme/Xeon" },  /* 45 nm */
-        { 0x00061A0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i7/Xeon" },  /* (#4118,4198) */
+        { 0x00061A0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i7/Xeon" },  /* (#4118,#4198,#4193) */
         { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
@@ -1267,6 +1274,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         {
           simpleid     = internalxref[pos].simpleid;
           featureflags = internalxref[pos].cpufeatures;
+          x86corehints = internalxref[pos].hints;
           detectedtype = dettype;
           if ( internalxref[pos].cpuname )
           {

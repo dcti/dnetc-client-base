@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.42 2009/08/12 10:54:54 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.43 2009/08/13 18:13:26 stream Exp $"; }
 
 //#define TRACE
 
@@ -448,7 +448,10 @@ int selcoreGetPreselectedCoreForProject_rc572()
       if (detected_type >= 0)
       {
         #if !defined(HAVE_NO_NASM)
-        switch (detected_type)
+        unsigned long hints = GetProcessorCoreHints();
+        if (hints & CH_R72_X86_GO2B) /* force go-2b */
+          cindex = 11;
+        else switch (detected_type)
         {
           case 0x00: cindex = (have_mmx?9   // P5 MMX     == MMX 4-pipe 
                                        :2); // P5         == DG 2-pipe
@@ -475,10 +478,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x12: cindex =10; break; // Intel Core 2   == GO 2-pipe-a (untested!)
           case 0x13: cindex = 7; break; // Other Pentium 4 == SGP 3-pipe
           case 0x14: cindex = 6; break; // Intel Atom     == GO 2-pipe (#4080)
-          case 0x15: cindex = 6; break; // Intel Core i7  == GO 2-pipe (#4118)
+          case 0x15: cindex =11; break; // Intel Core i7  == GO 2-pipe-b (#4193)
           case 0x16: cindex = 6; break; // AMD Opteron
           case 0x17: cindex = 7; break; // Variation of 0x13 with another OGR-NG core (#4186)
-          case 0x19: cindex =11; break; // AMD-based CPUs with GO-2b (#4193)
           default:   cindex =-1; break; // no default
         }
         #else
