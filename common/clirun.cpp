@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.154 2009/05/20 18:30:31 stream Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.155 2009/08/15 00:51:56 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -656,7 +656,11 @@ void Go_mt( void * parm )
     }
     if (!thrparams->realthread)
     {
-      RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
+      /* delay re-registration if we are currently paused */
+      if (thrparams->do_suspend)
+        EnqueuePolledProcedure( (void (*)(void *))Go_mt, parm, 0 );
+      else
+        RegPolledProcedure( (void (*)(void *))Go_mt, parm, NULL, 0 );
       break;
     }
     #if (CLIENT_OS == OS_NETWARE) && defined(THREAD_RESTART_INTERVAL_TICKS)
