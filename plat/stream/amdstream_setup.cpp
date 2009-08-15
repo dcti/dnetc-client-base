@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.10 2009/08/11 17:27:34 sla Exp $
+ * $Id: amdstream_setup.cpp,v 1.11 2009/08/15 02:44:36 andreasb Exp $
 */
 
 #include "amdstream_setup.h"
@@ -40,7 +40,7 @@ void AMDStreamInitialize()
     }
     amdstream_numDevices = numDevices;
   }
-  
+
   InitMutex();
   if(amdstream_numDevices>AMD_STREAM_MAX_GPUS)
     amdstream_numDevices=AMD_STREAM_MAX_GPUS;
@@ -70,18 +70,18 @@ void AMDStreamInitialize()
 
     if(i<amdstream_numDevices) {
       // Opening device
-	calDeviceOpen(&dev, i);
-	CContext[i].device=dev;
+      calDeviceOpen(&dev, i);
+      CContext[i].device=dev;
 
-	// Querying device attribs
-	CContext[i].attribs.struct_size = sizeof(CALdeviceattribs);
-	if(calDeviceGetAttribs(&CContext[i].attribs, i)!=CAL_RESULT_OK)
-        	continue;
-	CContext[i].active=true;
+      // Querying device attribs
+      CContext[i].attribs.struct_size = sizeof(CALdeviceattribs);
+      if(calDeviceGetAttribs(&CContext[i].attribs, i)!=CAL_RESULT_OK)
+        continue;
+      CContext[i].active=true;
 
-	CContext[i].domainSizeX=32;
-	CContext[i].domainSizeY=32;
-	CContext[i].maxIters=256;
+      CContext[i].domainSizeX=32;
+      CContext[i].domainSizeY=32;
+      CContext[i].maxIters=256;
     }
   }
 }
@@ -139,7 +139,7 @@ void AMDStreamReinitializeDevice(int Device)
 
   if(ATIstream_GPUname)
   {
-	  free(ATIstream_GPUname);
-	  ATIstream_GPUname=0L;
+    free(ATIstream_GPUname);
+    ATIstream_GPUname=0L;
   }
 }

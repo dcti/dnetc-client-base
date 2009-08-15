@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.11 2009/08/11 17:19:31 sla Exp $
+ * $Id: r72stream-common.h,v 1.12 2009/08/15 02:44:35 andreasb Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -60,7 +60,7 @@ inline double HiresTimerGetResolution()
   fr=f.HighPart; fr<<=32; fr+=f.LowPart;
   fr_d=(double)fr/1000.f;
 
-   return fr_d;
+  return fr_d;
 }
 
 //returns ???
