@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.38 2009/06/03 11:29:21 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.39 2009/08/15 00:48:28 andreasb Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -29,6 +29,7 @@ return "@(#)$Id: triggers.cpp,v 1.38 2009/06/03 11:29:21 andreasb Exp $"; }
 #include "clitime.h"   // CliClock()
 #include "util.h"      // TRACE and utilxxx()
 #include "logstuff.h"  // LogScreen()
+#include "pollsys.h"   // RegQueuedPolledProcedures()
 #include "triggers.h"  // keep prototypes in sync
 
 /* ----------------------------------------------------------------------- */
@@ -1025,6 +1026,11 @@ int CheckPauseRequestTrigger(void)
             ("Running again after pause")), trigstatics.cputemp.lothresh / 100, 
             trigstatics.cputemp.lothresh % 100);
       }
+      if (trigstatics.pausetrig.laststate == 0)
+      {
+        /* no longer paused, release all polled procedures that have been on hold */
+        RegQueuedPolledProcedures();
+      }
     }
   }
   --trigstatics.pausetrig.incheck;
@@ -1292,7 +1298,7 @@ static void __init_signal_handlers( int doingmodes )
 
 // =======================================================================
 
-static const char *_init_trigfile(const char *fn, char *buffer, unsigned int bufsize )
+static const char *_init_trigfile(const char *fn, char *buffer, size_t bufsize )
 {
   if (buffer && bufsize)
   {
@@ -1302,7 +1308,7 @@ static const char *_init_trigfile(const char *fn, char *buffer, unsigned int buf
         fn++;
       if (*fn)
       {
-        unsigned int len = strlen(fn);
+        size_t len = strlen(fn);
         while (len > 0 && isspace(fn[len-1]))
           len--;
         if (len && len < (bufsize-1))
