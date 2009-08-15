@@ -23,20 +23,24 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.71 2009/08/12 10:29:34 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.72 2009/08/15 02:21:29 andreasb Exp $
 ==========================================================================
 
 2.9100
 ------
 2.9106-513  new: amd64: two new asm ogr64 cores added and selected 
                         as default (#4183)
+            new: x86: new rc5-72 go-2b core (#4193)
             chg: amd64: drop ansi rc5-72 cores
             chg: amd64: rc5-72 core selection for Atom
             fix: amd64: ogr core selection for Athlon (#4214)
             fix: amd64: rc5-72 core selection for Core i7 (#3817)
-            new: x86: new rc5-72 go-2b core (#4193)
+            imp: cuda: support CUDA 2.3
+            fix: some: busy loop in polling subsystem while paused (#4148)
 
 2.9105-512  fix: cuda: version increment to identify compiler bug (#4201)
+            chg: cuda: switch to CUDA 2.2
+            chg: cuda: drop support for buggy toolkit 2.0/2.1
 
 2.9105-511  fix: ppc: Fixed scalar and hybrid OGR-NG cores (#4187)
             imp: cellbe: detect linux kernel SPU scheduler (spufs) bugs
