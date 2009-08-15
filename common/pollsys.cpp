@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -40,7 +40,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-  return "@(#)$Id: pollsys.cpp,v 1.20 2008/12/30 20:58:42 andreasb Exp $";
+  return "@(#)$Id: pollsys.cpp,v 1.21 2009/08/15 00:46:25 andreasb Exp $";
 }
 
 #include "baseincs.h"  /* NULL, malloc */
@@ -82,6 +82,8 @@ static struct
   unsigned int regcount;
   struct polldata *nextrun[MAX_POLL_RUNLEVEL+1];
 } pollsysdata = { NULL, 0, {NULL}};
+
+static struct polldata *pollsysdatapaused = NULL;
 
 
 /* ---------------------------------------------------------------------- */
@@ -234,6 +236,13 @@ int DeinitializePolling(void)
     if (!thisp && thatp)
       free((void *)(thatp));
   }
+
+  while ((thisp = pollsysdatapaused) != NULL)
+  {
+    pollsysdatapaused = thisp->next;
+    free(thisp);
+  }
+
   return 0;
 }
 
@@ -367,6 +376,31 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
 
   --isrunning;
   return;
+}
+
+// enqueue but don't register, yet
+int EnqueuePolledProcedure( auto void (*proc)(void *), void *arg,
+                            unsigned int priority )
+{
+  struct polldata *thisp = (struct polldata *)(malloc( sizeof(struct polldata) ));
+  thisp->next = pollsysdatapaused;
+  thisp->priority = priority;
+  thisp->proc = proc;
+  thisp->arg = arg;
+  pollsysdatapaused = thisp;
+  return 0;
+}
+
+// register everything queued
+int RegQueuedPolledProcedures()
+{
+  struct polldata *thisp;
+  while ((thisp = pollsysdatapaused) != NULL)
+  {
+    pollsysdatapaused = thisp->next;
+    RegPolledProcedure(thisp->proc, thisp->arg, NULL, thisp->priority);
+    free(thisp);
+  }
 }
 
 // PolledSleep() and PolledUSleep() are automatic/default replacements for

@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __POLLSYS_H__
-#define __POLLSYS_H__ "@(#)$Id: pollsys.h,v 1.9 2008/12/30 20:58:42 andreasb Exp $"
+#define __POLLSYS_H__ "@(#)$Id: pollsys.h,v 1.10 2009/08/15 00:46:26 andreasb Exp $"
 
 #include "clitime.h"  /* needed for timeval struct */
 
@@ -23,7 +23,6 @@ int InitializePolling(void);
  * procedures registered with a high priority have an interval long enough
  * to allow procedures with a low(er) priority to run.
 */
-
 int RegPolledProcedure( auto void (*proc)(void *), void *arg,
                         struct timeval *interval, unsigned int priority );
 
@@ -32,6 +31,15 @@ int RegPolledProcedure( auto void (*proc)(void *), void *arg,
  * RegPolledProcedure(). Procedures are auto unregistered when executed.
 */
 int UnregPolledProcedure( int handle );
+
+/*
+ * EnqueuePolledProcedure() pre-registers a procedure like
+ * RegPolledProcedure() does, but execution in the polled loop is delayed
+ * until RegQueuedPolledProcedures() is called
+*/
+int EnqueuePolledProcedure( auto void (*proc)(void *), void *arg,
+                            unsigned int priority );
+int RegQueuedPolledProcedures();
 
 /*
  * PolledSleep() and PolledUSleep() are automatic/default replacements for
