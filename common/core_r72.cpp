@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.43 2009/08/13 18:13:26 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.44 2009/08/16 19:45:54 stream Exp $"; }
 
 //#define TRACE
 
@@ -474,8 +474,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x0F: cindex = 7; break; // Via C3 Nehemiah == SGP 3-pipe (#3621)
           case 0x10: cindex = 5; break; // Cyrix Model 5  == SS 2-pipe (#3580)
           case 0x11: cindex = 4; break; // Cyrix Model 6  == DG 3-pipe alt (#3809)
-//        case 0x12: cindex = 7; break; // Intel Core 2   == SGP 3-pipe (#3969)
-          case 0x12: cindex =10; break; // Intel Core 2   == GO 2-pipe-a (untested!)
+          case 0x12: cindex =11; break; // Intel Core 2   == GO 2-pipe-b (#4193)
           case 0x13: cindex = 7; break; // Other Pentium 4 == SGP 3-pipe
           case 0x14: cindex = 6; break; // Intel Atom     == GO 2-pipe (#4080)
           case 0x15: cindex =11; break; // Intel Core i7  == GO 2-pipe-b (#4193)
