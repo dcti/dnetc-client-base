@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.198 2009/05/20 18:30:31 stream Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.199 2009/09/17 23:27:35 andreasb Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -731,13 +731,25 @@ static int __InternalLoadState( InternalProblem *thisprob,
               thisprob->pub_data.was_reset = 1;
             }
         }
-
       if (thisprob->priv_data.contestwork.bigcrypto.key.hi > 0xff) {
         Log("Corrupted key: %02X:%08X:%08X, packet discarded\n", 
             thisprob->priv_data.contestwork.bigcrypto.key.hi,
             thisprob->priv_data.contestwork.bigcrypto.key.mid,
             thisprob->priv_data.contestwork.bigcrypto.key.lo);
         return -1;
+      }
+      if (thisprob->priv_data.contestwork.bigcrypto.key.hi == 0 &&
+          thisprob->priv_data.contestwork.bigcrypto.key.mid == 0 &&
+          thisprob->priv_data.contestwork.bigcrypto.key.lo == 0 &&
+	  thisprob->priv_data.contestwork.bigcrypto.iterations.hi == 5120 &&
+	  thisprob->priv_data.contestwork.bigcrypto.iterations.lo == 0) {
+	// do not do wildcard tests here, should never match any not-yet-known dummy packet
+        Log("RC5-72: Dummy packet %02X:%08X:%08X:%d*2^32 discarded\n", 
+            thisprob->priv_data.contestwork.bigcrypto.key.hi,
+            thisprob->priv_data.contestwork.bigcrypto.key.mid,
+            thisprob->priv_data.contestwork.bigcrypto.key.lo,
+	    thisprob->priv_data.contestwork.bigcrypto.iterations.hi);
+	return -1;
       }
       thisprob->priv_data.rc5_72unitwork.L0.hi  = thisprob->priv_data.contestwork.bigcrypto.key.hi;
       thisprob->priv_data.rc5_72unitwork.L0.mid =
