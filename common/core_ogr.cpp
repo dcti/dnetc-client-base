@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1998-2008 - All Rights Reserved
+ * Copyright distributed.net 1998-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_cpp(void) {
-return "@(#)$Id: core_ogr.cpp,v 1.13 2009/02/16 19:27:16 oliver Exp $"; }
+return "@(#)$Id: core_ogr.cpp,v 1.14 2009/09/17 20:15:58 andreasb Exp $"; }
 
 //#define TRACE
 

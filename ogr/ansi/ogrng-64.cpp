@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 2002-2008 - All Rights Reserved
+ * Copyright distributed.net 2002-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng-64.cpp,v 1.7 2009/01/01 08:44:24 jlawson Exp $
+ * $Id: ogrng-64.cpp,v 1.8 2009/09/17 20:16:00 andreasb Exp $
 */
 
 #include "ansi/ogrng-64.h"

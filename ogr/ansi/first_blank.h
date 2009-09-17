@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 1999-2008 - All Rights Reserved
+ * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: first_blank.h,v 1.4 2009/01/02 16:59:42 kakace Exp $
+ * $Id: first_blank.h,v 1.5 2009/09/17 20:15:59 andreasb Exp $
  */
 
 

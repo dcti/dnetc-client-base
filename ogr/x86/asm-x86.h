@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2008 - All Rights Reserved
+ * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.13 2009/01/05 04:25:06 jlawson Exp $"
+#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.14 2009/09/17 20:16:01 andreasb Exp $"
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)
