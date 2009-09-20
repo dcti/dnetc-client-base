@@ -23,11 +23,13 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.73 2009/09/20 11:21:08 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.74 2009/09/20 22:46:55 andreasb Exp $
 ==========================================================================
 
 2.9100
 ------
+2.9106-514  
+
 2.9106-513  new: amd64: two new asm ogr64 cores added and selected 
                         as default (#4183)
             new: x86: new rc5-72 go-2b core (#4193)
