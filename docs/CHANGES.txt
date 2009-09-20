@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.72 2009/08/15 02:21:29 andreasb Exp $
+Version change log: $Id: CHANGES.txt,v 1.73 2009/09/20 11:21:08 stream Exp $
 ==========================================================================
 
 2.9100
@@ -37,6 +37,7 @@ Version change log: $Id: CHANGES.txt,v 1.72 2009/08/15 02:21:29 andreasb Exp $
             fix: amd64: rc5-72 core selection for Core i7 (#3817)
             imp: cuda: support CUDA 2.3
             fix: some: busy loop in polling subsystem while paused (#4148)
+            imp: ppc: recognize more PowerPC processors
 
 2.9105-512  fix: cuda: version increment to identify compiler bug (#4201)
             chg: cuda: switch to CUDA 2.2
