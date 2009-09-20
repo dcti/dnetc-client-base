@@ -40,7 +40,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-  return "@(#)$Id: pollsys.cpp,v 1.21 2009/08/15 00:46:25 andreasb Exp $";
+  return "@(#)$Id: pollsys.cpp,v 1.22 2009/09/20 10:54:11 stream Exp $";
 }
 
 #include "baseincs.h"  /* NULL, malloc */
@@ -401,6 +401,7 @@ int RegQueuedPolledProcedures()
     RegPolledProcedure(thisp->proc, thisp->arg, NULL, thisp->priority);
     free(thisp);
   }
+  return 0;
 }
 
 // PolledSleep() and PolledUSleep() are automatic/default replacements for
