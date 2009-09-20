@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.404 2009/08/15 02:31:04 andreasb Exp $
+# @(#)$Id: configure,v 1.405 2009/09/20 11:26:35 stream Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2214,10 +2214,24 @@ case "$1" in
         generate_gcc_opts "ppc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
-        TARGET_LIBS=""
+        TARGET_LIBS="-lrt"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="linux-ppc"
         add_sources "linux" "ppc" "altivec"
+        ;;
+
+    *linux-ppc-uclibc*)         # using uClibc
+        # need uClibc toolchain in the path, see buildroot.uclibc.org
+        TARGET_AS="powerpc-linux-as"
+        TARGET_CC="powerpc-linux-g++"
+        generate_gcc_opts "ppc" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix docs/readme.uclib"   #platform specific docfile
+        TARGET_TARBALL="linux-ppc-uclibc"
+        TARGET_USES_GNUMAKE="yes"
+        add_sources "uclibc" "ppc" "altivec"
         ;;
 
     *netbsd-ppc)                # [snake] for Macs, PPC-Amiga etc.
