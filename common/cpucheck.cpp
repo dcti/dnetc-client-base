@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.172 2009/08/16 19:45:54 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.173 2009/09/20 11:19:50 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -487,35 +487,58 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x0004, "604"                 },
       {    0x0006, "603e"                },
       {    0x0007, "603r/603ev"          }, //ev=0x0007, r=0x1007
-      {    0x0008, "740/750 (G3)"        },
+      {    0x0008, "740/745/750/755 (G3)" },
       {    0x0009, "604e"                },
-      {    0x000A, "604ev"               },
+      {    0x000A, "604r/604ev"          },
       {    0x000C, "7400 (G4)"           },
       {    0x0020, "403G/403GC/403GCX"   },
       {    0x0039, "970 (G5)"            },
       {    0x003C, "970FX (G5)"          }, // XServe G5. See bug #3675
       {    0x0044, "970MP (G5)"          }, // Dual core
-      {    0x0050, "821"                 },
+      {    0x0045, "970GX (G5)"          },
+      {    0x0050, "821/8xx"             },
       {    0x0070, "Cell Broadband Engine" },
       {    0x0080, "860"                 },
-      {    0x0081, "8240"                },
+      {    0x0081, "82xx"                },
+      {    0x0082, "G2_LE"               },
+      {    0x0083, "e300c1"              },
+      {    0x0084, "e300c2"              },
+      {    0x0085, "e300c3"              },
+      {    0x0086, "e300c4"              },
+      {    0x1291, "405EX/EXr"           },
+      {    0x1302, "460EX/GT"            },
+      {    0x2001, "Virtex-II Pro/-4 FX" },
       {    0x4011, "405GP"               },
       {    0x4012, "440GP"               },
+      {    0x4013, "STB03xxx"            },
+      {    0x40B1, "NP4GS3"              },
+      {    0x4141, "NP405H"              },
+      {    0x4151, "405EZ"               },
+      {    0x4161, "NP405L"              },
+      {    0x4181, "STB04xxx"            },
       {    0x41F1, "405LP"               },
       {    0x4222, "440EP/440GR"         },
       {    0x5091, "405GPr"              },
       {    0x5121, "405EP"               },
+      {    0x5151, "STBx25xx"            },
       {    0x51B2, "440GX"               },
       {    0x5322, "440SP"               },
+      {    0x5342, "440SPe"              }, // !!! last digit guessed (trusted value is 0x534x)
       {    0x7000, "750FX"               },
+      {    0x7FF2, "440 in Virtex-5 FXT" },
       {    0x8000, "7441/7450/7451 (G4)" },
       {    0x8001, "7445/7455 (G4)"      },
       {    0x8002, "7447/7457 (G4)"      },
       {    0x8003, "7447A (G4)"          },
       {    0x8004, "7448 (G4)"           },
       {    0x800C, "7410 (G4)"           },
+      {    0x8020, "e500"                },
+      {    0x8021, "e500v2"              },
+      {    0x8023, "e500mc"              },
       {    0x8081, "5200 (G2)"           },
       {    0x8082, "5200 (G2-LE)"        },
+//    {    0x810x, "e200z5"              }, // last digit of rid???
+//    {    0x811x, "e200z6"              }, // last digit of rid???
       { NONPVR(1), "620"                 }, //not PVR based
       { NONPVR(2), "630"                 }, //not PVR based
       { NONPVR(3), "A35"                 }, //not PVR based
@@ -523,6 +546,9 @@ static long __GetRawProcessorID(const char **cpuname)
       { NONPVR(5), "RS64III"             }, //not PVR based
       {    0x0800, "POWER_4"             }, //not PVR based
       {    0x2000, "POWER_5"             }, //not PVR based
+
+      // unknown rid - please find and use real one
+      { NONPVR(1000), "440GRX/EPX"       },
     };
 
   #if (CLIENT_OS == OS_AIX)
@@ -629,9 +655,9 @@ static long __GetRawProcessorID(const char **cpuname)
           static struct 
            { const char *sig;  int rid; } sigs[] = {
            /*
-           last update Jun 13/2000 from 
-           http://lxr.linux.no/source/arch/ppc/kernel/setup.c?v=2.3.99-pre5;a=ppc
-           */
+            * last update Sep 20/2009 from linux kernel 2.6.29.4
+            * (arch/ppc/kernel/cputable.c)
+            */
            { "601",             0x0001  },
            { "603",             0x0003  },
            { "604",             0x0004  },
@@ -643,6 +669,7 @@ static long __GetRawProcessorID(const char **cpuname)
            { "750",             0x0008  },
            { "750CX",           0x0008  },
            { "750CXe",          0x0008  }, /* >= 2.6.11 */
+           { "750CL",           0x0008  },
            { "750FX",           0x0008  }, /* PVR coreid is actually 0x7000 */
            { "750GX",           0x0008  }, /* PVR coreid is actually 0x7000 */
            { "750P",            0x0008  },
@@ -653,14 +680,53 @@ static long __GetRawProcessorID(const char **cpuname)
            { "7400",            0x000C  },
            { "7400 (1.1)",      0x000C  },
            { "403G",            0x0020  },
+           { "403G ??",         0x0020  },
            { "403GC",           0x0020  },
            { "403GCX",          0x0020  },
            { "821",             0x0050  },
+           { "8xx",             0x0050  },
            { "860",             0x0080  },
            { "8240",            0x0081  },
            { "82xx",            0x0081  },
            { "8280",            0x0082  },
+           { "G2_LE",           0x0082  },
+           { "e300c1",          0x0083  },
+           { "e300c2",          0x0084  },
+           { "e300c3",          0x0085  },
+           { "e300c4",          0x0086  },
+           { "405EX",           0x1291  },
+           { "405EXr",          0x1291  },
+           { "460EX",           0x1302  },
+           { "460GT",           0x1302  },
+           { "Virtex-II Pro",   0x2001  },
+           { "Virtex-4 FX",     0x2001  },
            { "405GP",           0x4011  },
+           { "440GP Rev. B",    0x4012  },
+           { "440GP Rev. C",    0x4012  },
+           { "STB03xxx",        0x4013  },
+           { "NP4GS3",          0x40B1  },
+           { "NP405H",          0x4141  },
+           { "405EZ",           0x4151  },
+           { "NP405L",          0x4161  },
+           { "STB04xxx",        0x4181  },
+           { "405LP",           0x41F1  },
+           { "440GR Rev. A",    0x4222  },
+           { "440GR Rev. B",    0x4222  },
+           { "440EP Rev. A",    0x4222  },
+           { "440EP Rev. B",    0x4222  },
+           { "440EP Rev. C",    0x4222  },
+           { "405GPr",          0x5091  },
+           { "405EP",           0x5121  },
+           { "STBx25xx",        0x5151  },
+           { "440GX Rev. A",    0x51B2  },
+           { "440GX Rev. B",    0x51B2  },
+           { "440GX Rev. C",    0x51B2  },
+           { "440GX Rev. F",    0x51B2  },
+           { "440SP Rev. A",    0x5322  },
+           { "440SPe Rev. A",   0x5342  },
+           { "440SPe Rev. B",   0x5342  },
+           { "440SPe Rev. C",   0x5342  },
+           { "440 in Virtex-5 FXT", 0x7FF2 },
            { "7441",            0x8000  },
            { "7450",            0x8000  },
            { "7451",            0x8000  },
@@ -672,10 +738,20 @@ static long __GetRawProcessorID(const char **cpuname)
            { "7410",            0x800C  },
            { "7447A",           0x8003  },
            { "7448",            0x8004  },
+           { "e500",            0x8020  },
+           { "e500v2",          0x8021  },
+           { "e500mc",          0x8023  },
+//         { "e200z5",          0x810x  },
+//         { "e200z6",          0x811x  },
            { "PPC970",          0x0039  },
            { "PPC970FX",        0x003C  },
            { "PPC970MP",        0x0044  },
-           { "Cell Broadband Engine", 0x0070  }
+           { "PPC970GX",        0x0045  },
+           { "Cell Broadband Engine", 0x0070  },
+           // Must find true rid's for these 
+           { "440GRX",       NONPVR(1000) },
+           { "440EPX",       NONPVR(1000) }
+
            };
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
