@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.10 2009/08/15 02:44:35 andreasb Exp $
+ * $Id: r72stream-common.cpp,v 1.11 2009/09/23 17:03:31 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -56,9 +56,9 @@ unsigned char* Decompress(unsigned char *inbuf, unsigned length)
   outbuf=(unsigned char*)malloc(BUFFER_INCREMENT);
   if(outbuf==NULL)
     return NULL;
-
+	
   while(todo) {
-    if(*inbuf&0x80)     //compressed
+    if(*inbuf&0x80)    //compressed
     {
       unsigned len=*inbuf&0x7f;
 
@@ -75,7 +75,7 @@ unsigned char* Decompress(unsigned char *inbuf, unsigned length)
         outbuf[used]=outbuf[used-off];
         used++;
       }
-    }else       //plain
+    }else    //plain
     {
       unsigned len=*inbuf&0x7f;
       if(buflen<=(used+len)) {
@@ -96,7 +96,7 @@ unsigned char* Decompress(unsigned char *inbuf, unsigned length)
 }
 
 
-CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target)
+CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool globalFlag)
 {
   CALobject s_obj=0;
   CALresult result;
@@ -109,8 +109,25 @@ CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CA
   free(decoded_src);
   if(decompressed_src==NULL)
     return CAL_RESULT_ERROR;
+
+  //replace '#' with appropriate symbol
+  char *p,*tempB;
+  tempB=(char*)malloc(strlen((const char*)decompressed_src)+1);
+  if(!tempB)
+    return CAL_RESULT_ERROR;
+  strcpy(tempB,(const char*)decompressed_src);
+  do{
+    p=strchr(tempB,'#');
+    if(p) 
+      if(globalFlag)
+        *p=' ';
+      else {
+        *p=';';
+        *(p+1)=';';		//TODO:HACK!!
+      }
+  }while(p);
   fastlock_lock(&ATIstream_cMutex);
-  result=calclCompile(&s_obj, CAL_LANGUAGE_IL, (CALchar*)decompressed_src, target);
+  result=calclCompile(&s_obj, CAL_LANGUAGE_IL, (CALchar*)tempB, target);
   if(result==CAL_RESULT_OK)
   {
     result=calclLink(image, &s_obj, 1);
@@ -121,5 +138,6 @@ CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CA
 
   fastlock_unlock(&ATIstream_cMutex);
   free(decompressed_src);
+  free(tempB);
   return result;
 }

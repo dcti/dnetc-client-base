@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.12 2009/08/15 02:44:35 andreasb Exp $
+ * $Id: r72stream-common.h,v 1.13 2009/09/23 17:03:31 sla Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -38,8 +38,7 @@
 
 
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
-CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target);
-
+CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool);
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 // CliTimer does not have fine resolution as required by the core
