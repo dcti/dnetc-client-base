@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.123 2009/08/15 02:31:05 andreasb Exp $
+# $Id: makefile.vc,v 1.124 2009/09/23 17:08:44 sla Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -57,7 +57,7 @@ OPTS_CC_CPU =
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat
 #CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
-ZIPSUFFIX = ati_stream
+ZIPSUFFIX = win32-x86-ATI_stream
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
