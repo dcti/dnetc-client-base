@@ -6,11 +6,11 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cna.cpp,v 1.3 2009/09/23 17:03:31 sla Exp $
+ * $Id: r72stream-vc4cna.cpp,v 1.4 2009/09/29 23:38:32 andreasb Exp $
 */
 
 #include "r72stream-common.h"
-#include "r72stream-vc4nag_il.cpp "
+#include "r72stream-vc4nag_il.cpp"
 
 static bool init_rc5_72_il4a_nand(u32 Device)
 {
