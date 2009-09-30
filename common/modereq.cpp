@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-  return "@(#)$Id: modereq.cpp,v 1.46 2009/03/12 01:49:28 andreasb Exp $";
+  return "@(#)$Id: modereq.cpp,v 1.47 2009/09/30 12:41:18 stream Exp $";
 }
 
 //#define TRACE
@@ -173,7 +173,7 @@ int ModeReqRun(Client *client)
     static int cpucount = -99;
     if (cpucount == -99)
       cpucount = GetNumberOfDetectedProcessors();
-    if (cpucount <= 0)
+    if (cpucount == 0)  // -1 is OK when OS doesn't support detection
       return 0;
   }
 
