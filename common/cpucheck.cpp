@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.173 2009/09/20 11:19:50 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.174 2009/09/30 09:37:18 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1194,7 +1194,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006080, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP or Sempron (Thoroughbred)" },
         { 0x00060A0, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP/XP-M or Sempron (Barton)" },   // OGR-NG: OK (-k8)
         { 0x000F000, 0xFFFF000, CPU_F_I686,    9, "Athlon (Model 15)" },
-        { 0x010F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64" },
+        { 0x010F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64",              CH_R72_X86_GO2B }, /* (#4193) */
         { 0x020F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core", CH_R72_X86_GO2B }, /* (#4193) */
         { 0x030F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Athlon 64" },
         { 0x040F000, 0xFFFF000, CPU_F_I686,    9, "Turion 64 Mobile Technology" },
@@ -1220,8 +1220,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron",           CH_R72_X86_GO2B }, /* (#4193) */
         { 0x0A0F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 FX" },
         { 0x0B0F000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
-        { 0x0C0F000, 0xFFFF000, CPU_F_I686,    9, "Turion 64 X2 Mobile Technology" },
-        { 0x0D10000, 0xFFFF000, CPU_F_I686, 0x16, "Athlon (Model 16)" }, /* (#4120,#4196) */
+        { 0x0C0F000, 0xFFFF000, CPU_F_I686,    9, "Turion 64 X2 Mobile Technology", CH_R72_X86_GO2B }, /* (#4193) */
+        { 0x0D10000, 0xFFFF000, CPU_F_I686, 0x16, "Athlon (Model 16)", CH_R72_X86_GO2B }, /* (#4120,#4196,#4193) */
         { 0x0E10000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
         { 0x0F10000, 0xFFFF000, CPU_F_I686, 0x16, "Quad Core Opteron" },
         { 0x1010000, 0xFFFF000, CPU_F_I686,    9, "Embedded Opteron" },
