@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.5 2009/08/15 02:44:35 andreasb Exp $
+ * $Id: amdstream_info.cpp,v 1.6 2009/10/01 16:05:20 sla Exp $
 */
 
 #include "amdstream_info.h"
@@ -56,6 +56,9 @@ static const char* GetNameById(u32 id)
     break;
   case CAL_TARGET_730:
     name = "RV730";
+    break;
+  case 8: //RV870
+    name = "RV870";
     break;
   default:
     break;
