@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.3 2008/12/30 13:24:41 andreasb Exp $
+ Document revision $Id: readme.morphos,v 1.4 2009/10/02 20:53:10 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -24,7 +24,7 @@
 
      - MorphOS 0.4 or greater.
      - PowerPC 603e or greater.
-     - Altivec cores require G4 and MorphOS 1.5.
+     - Altivec cores require G4 and MorphOS 2.0 or newer.
      - A TCP stack compatible with AmiTCP 3.0 or newer.
        There are several, such as Miami(Dx) or Genesis.
 
