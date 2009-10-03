@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.174 2009/09/30 09:37:18 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.175 2009/10/03 05:40:39 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1131,7 +1131,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         {  0x6070, 0xFFF0, CPU_F_I586, 0x0C, "C3 (Samuel 2) / Eden ESP (Ezra)" },
         {  0x6080, 0xFFF0, CPU_F_I586, 0x0C, "C3 (Ezra-T)" },
         {  0x6090, 0xFFF0, CPU_F_I586, 0x0F, "C3 / C3-M (Nehemiah)" },
-        {  0x60A0, 0xFFF0, CPU_F_I586, 0x0A, "C7 (Esther)" },
+        {  0x60A0, 0xFFF0, CPU_F_I686, 0x0A, "C7-D/M (Model A)" }, /* OGR-NG: sse or force mmx? */
+        {  0x60D0, 0xFFF0, CPU_F_I686, 0x0A, "C7-D/M (Model D)" }, /* (#4226, OGR-mmx!) */
         {  0x0000,      0,          0,    0, NULL }
       }; internalxref = &centaurxref[0];
     }
