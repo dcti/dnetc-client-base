@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.39 2009/08/15 00:48:28 andreasb Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.40 2009/10/07 19:52:41 stream Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -874,7 +874,6 @@ int CheckPauseRequestTrigger(void)
                    & ~TRIGPAUSEBY_APPACTIVE)!=0)?("Pause level lowered"):
               ("Running again after pause")),
               __mangle_pauseapp_name(pp[idx],1 /* unmangle */) );
-          trigstatics.pausetrig.laststate &= ~TRIGPAUSEBY_APPACTIVE;
           trigstatics.pausetrig.trigger &= ~TRIGPAUSEBY_APPACTIVE;
           trigstatics.lastactivep = 0;
           nowcleared = idx;
