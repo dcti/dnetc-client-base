@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.77 2009/10/03 17:34:40 sla Exp $
+Version change log: $Id: CHANGES.txt,v 1.78 2009/10/07 20:03:55 stream Exp $
 ==========================================================================
 
 2.9100
@@ -32,6 +32,8 @@ Version change log: $Id: CHANGES.txt,v 1.77 2009/10/03 17:34:40 sla Exp $
                       cpu count detection.
             imp: x86: Via C7-D/M Model D detection.
             fix: stream: rc5-72 added Catalyst 9.9 support
+            fix: some: one thread stays asleep in 'pause when running' (#4248)
+
 2.9106-513  new: amd64: two new asm ogr64 cores added and selected 
                         as default (#4183)
             new: x86: new rc5-72 go-2b core (#4193)
