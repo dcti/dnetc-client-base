@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.78 2009/10/07 20:03:55 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.79 2009/10/07 23:43:35 umccullough Exp $
 ==========================================================================
 
 2.9100
@@ -33,6 +33,8 @@ Version change log: $Id: CHANGES.txt,v 1.78 2009/10/07 20:03:55 stream Exp $
             imp: x86: Via C7-D/M Model D detection.
             fix: stream: rc5-72 added Catalyst 9.9 support
             fix: some: one thread stays asleep in 'pause when running' (#4248)
+            fix: haiku: ps output changed, preventing shutdown of other dnetc
+                      instances (#4173)
 
 2.9106-513  new: amd64: two new asm ogr64 cores added and selected 
                         as default (#4183)
