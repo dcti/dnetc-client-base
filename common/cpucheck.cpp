@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.175 2009/10/03 05:40:39 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.176 2009/10/08 02:14:12 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1949,6 +1949,7 @@ static long __GetRawProcessorID(const char **cpuname)
   {22, "UltraSPARC-IV+", "UltraSPARC-IV+"}, /* unconfirmed, .09u adds 2MB L2 cache, external L3 doubled to 32MB */
   {23, "UltraSPARC-T1", "UltraSPARC-T1"},
   {23, "UltraSPARC-T2", "UltraSPARC-T2"}, /* unconfirmed */
+  {23, "UltraSPARC-T2+", "UltraSPARC-T2+"}, /* #4250 */
   {24, "SPARC64-IV", "SPARC64-IV"},
   {25, "SPARC64-V", "SPARC64-V"},
   {26, "SPARC64-VI", "SPARC64-VI"}, /* untested, no data */
