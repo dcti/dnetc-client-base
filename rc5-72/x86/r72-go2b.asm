@@ -117,6 +117,8 @@ defwork save_esp
     nop
 %endmacro
 
+; NASM needs help to generate optimized nop padding
+%ifdef __NASM_VER__
 %macro k7align 1
     %assign unal ($-startseg)&(%1-1)
     %if unal
@@ -138,6 +140,9 @@ defwork save_esp
 	%endif
     %endif
 %endmacro
+%else
+    %define k7align align
+%endif
 
 ; register allocation for the key setup blocks
 %define A1	eax
