@@ -26,6 +26,10 @@
 	;# (If you'll add another two lnops to following two commands, speed will decrease
 	;# back. Weird.)
 	;#    Rewriten extraction of u16 limit from vectorized cache to break dependencies.
+	;#
+	;# 2009-10-20:
+	;#    Get rid of "outer_loop" and "for_loop_clz_ready" labels and their jumps.
+	;# This code is copied now. It also allowed additional scheduling optimizations.
 
 	;#
 	;# Known non-optimal things:
@@ -217,8 +221,6 @@ for_loop:
 	rotmi		$s, $s, -1		# magic shift
 	selb		$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
 
-outer_loop_comp0_ready:
-
 	clz		$s, $s			# get it
 	lnop
 	
@@ -226,14 +228,18 @@ outer_loop_comp0_ready:
 	# These two nops may look ugly but really cpu time is not used
 	# (nops are hidden in dependency between 'clz' and 'a')
 	
-for_loop_clz_ready:
+;# for_loop_clz_ready:
 
+.macro	for_loop_clz_ready_part1
 	sfi		$inv_s, $s, 128			# inv_s = 128 -s
 	shlqbybi	$ones_shl_s, $V_ONES, $s	# selMask_s
+.endm
+
+.macro	for_loop_clz_ready_part2  lab
 
 	#  if ((mark += s) > limit) { break; }
 	a		$mark, $mark, $s
-	hbr		.L_fl, $addr_is_forloop
+	hbr		\lab, $addr_is_forloop
 
 	# Use free clocks in dependency chain to precalculate
 
@@ -268,8 +274,12 @@ for_loop_clz_ready:
 	# if (spu_extract(save_compV0, 0) == (SCALAR)~0) { continue; }
 
 	ceq		$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
-.L_fl:
+\lab:
 	bi		$addr_is_forloop
+.endm
+
+	for_loop_clz_ready_part1
+	for_loop_clz_ready_part2 .L_fl
 	
 	.align		3
 no_for_loop:
@@ -340,9 +350,9 @@ no_for_loop:
 		rotmi	$s, $s, -1		# magic shift
 	gbh		$temp, $element		# spu_gather(...)
 		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
-	hbrr		.L_1, for_loop_clz_ready
 	clz		$element, $temp		# spu_cntlz(...)
-	lnop
+		clz	$s, $s					# precount s (clz)!
+		lnop
 
 	# if (element == 8) /* 32 zeros => Out of bounds => no match */
 
@@ -354,7 +364,9 @@ no_for_loop:
 
 	shli		$element, $element, 6		# 2D: element * 32 * 2
 	lnop
+	;# 3 clocks lost here
 	a		$pvalues, $pvalues, $element	# final byte offset
+	;# 2 clocks lost here
 	lqx		$tempvector, $pvalues, $p_grvalues	# get data at full address
 fetch_pvalues:
 
@@ -367,20 +379,65 @@ fetch_pvalues:
 
 	cgt		$cond_depth_hd,  $depth, $half_depth
 	rotqby		$pvalues, $const_vec_to_u16_shuf, $pvalues # create shuffle mask from byte address
+
 	cgt		$cond_depth_hd2, $depth, $half_depth2
-	ai		$nodes, $nodes, -1
+	lnop
+
+	for_loop_clz_ready_part1
+
 	andc		$cond_depth_hd,  $cond_depth_hd, $cond_depth_hd2
+	hbr		.L_fl2, $addr_is_forloop
+
 	and		$pvalues, $const_ffff, $pvalues		# set upper word of shuffle mask to zero
-		clz	$s, $s					# precount s (clz)!
+	shlqbybi	$ones_shl_inv, $V_ONES, $inv_s	# selMask_inv (use free clock again)
+
 	;# Note: limit is not ready yet, operation delayed in update_limit
+	ai		$nodes, $nodes, -1
 	brnz		$cond_depth_hd, update_limit
 	shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
 
 	# store of limit delayed
 
-.L_1:
-	brnz		$nodes, for_loop_clz_ready
-	br		save_mark_and_exit
+	brz		$nodes, save_mark_and_exit
+
+	;# modifed version of for_loop_clz_ready_part2 code
+	;# hbr and one shift pushed up so it was possible to reorder instructions better.
+
+	#  if ((mark += s) > limit) { break; }
+	a		$mark, $mark, $s
+	shlqbi		$ones_shl_s, $ones_shl_s, $s
+
+	nop
+	shlqbybi	$new_compV1, $compV1, $s
+
+	cgt		$cond_mark_limit, $mark, $limit
+	shlqbi		$ones_shl_inv, $ones_shl_inv, $inv_s
+
+	# COMP_LEFT_LIST_RIGHT(lev, s);
+
+	;# it's ok to corrupt listV1 before jump - it's reloaded in break_for (POP_LEVEL)
+	selb		$listV1, $listV0, $listV1, $ones_shl_s
+	brnz		$cond_mark_limit, break_for
+
+	selb		$listV0, $newbit, $listV0, $ones_shl_s
+	shlqbi		$new_compV1, $new_compV1, $s
+	selb		$compV0, $compV0, $compV1, $ones_shl_inv
+	rotqbybi	$listV1, $listV1, $inv_s
+	rotqbybi	$listV0, $listV0, $inv_s
+	rotqbybi	$compV0, $compV0, $s
+	ori		$compV1, $new_compV1, 0
+	rotqbi		$listV1, $listV1, $inv_s
+	nop
+	rotqbi		$listV0, $listV0, $inv_s
+	il		$newbit, 0				# newbit = 0
+	rotqbi		$compV0, $compV0, $s
+
+	# if (spu_extract(save_compV0, 0) == (SCALAR)~0) { continue; }
+
+	ceq		$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
+.L_fl2:
+	bi		$addr_is_forloop
+
 
 	.align		3	
 update_limit:
@@ -390,19 +447,15 @@ update_limit:
 	;# ~comp0 already preloaded at upper layer.
 	;#
 
-	nop
-	lqd		$temp, 128($lev_half_depth)	# offsetof(Levels) added here
-
 	# while $temp is loading (6 clocks), calc other things
 
 	nor		$temp2, $distV0, $distV0
-	hbrr		.L_2, for_loop_clz_ready
+	lqd		$temp, 128($lev_half_depth)	# offsetof(Levels) added here
 
 	cgt		$cond_depth_hd2, $half_depth2, $depth	;# if (depth < oState->half_depth2)
 	;# Complete delayed fetch of limit
 	shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
 	clz		$temp2, $temp2
-	lnop
 	ai		$temp2, $temp2, 1			;# temp2 = LOOKUP_FIRSTBLANK
 	
 	sf		$temp, $temp, $maxlen_m1		;# temp  = ... (ready)
@@ -410,12 +463,14 @@ update_limit:
 	selb		$temp, $temp, $temp2, $cond_depth_hd2	;# use temp or "temp -= ..."
 
 	cgt		$cond_limit_temp, $limit, $temp		;# if (limit > temp)
-	lnop
 	selb		$limit, $limit, $temp, $cond_limit_temp ;#   limit = temp;
 	
 	# Store of limit delayed
-.L_2:
-	brnz		$nodes, for_loop_clz_ready
+
+	brz		$nodes, save_mark_and_exit
+
+	for_loop_clz_ready_part2  .L_fl3
+
 	
 save_mark_and_exit:
 	stqd		$mark, 96($lev)
@@ -448,7 +503,6 @@ break_for:
 	# --lev;
 	# --depth;
 	ai		$depth, $depth, -1
-	hbrr		.L33, outer_loop_comp0_ready
 
 	# POP_LEVEL(lev);
 	# copy loop header from outer_loop (placed here to break dependency)
@@ -457,6 +511,7 @@ break_for:
 	# decrement of lev delayed to avoid dependency, "-128" added directly to offset
 
 	lqd		$compV0, 64-128($lev)
+	nop
 	lqd		$listV0, 0-128($lev)
 	lqd		$listV1, 16-128($lev)
 	lqd		$compV1, 80-128($lev)
@@ -473,14 +528,18 @@ break_for:
 	fsmbi		$newbit, 0		# newbit = 0
 
 	ai		$lev, $lev, -128	# finally, --lev
-		lnop
 	
 		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
 
+		clz		$s, $s			# get it
+
 	# while (depth > oState->stopdepth);
-.L33:
-	brnz		$cond_depth_stopdepth, outer_loop_comp0_ready
-	br		save_mark_and_exit
+
+	brz		$cond_depth_stopdepth, save_mark_and_exit
+
+	for_loop_clz_ready_part1
+	for_loop_clz_ready_part2  .L_fl1
+
 
 fetch_new_pchoose:
 	;#
@@ -541,4 +600,5 @@ fetch_new_pchoose:
 
 	lqd		$tempvector, 0($pvalues)
 
-	br		fetch_pvalues	# byte address in pvalues, values in tempvector
+	# byte address in pvalues, values in tempvector
+	br		fetch_pvalues
