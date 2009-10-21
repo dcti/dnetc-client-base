@@ -30,7 +30,7 @@
 	;# (If you'll add another two lnops to following two commands, speed
 	;# will decrease back. Weird.)
 	;#    Rewriten extraction of u16 limit from vectorized cache to break
-	; dependencies.
+	;# dependencies.
 	;#
 	;# 2009-10-20:
 	;#    Get rid of "outer_loop" and "for_loop_clz_ready" labels and their
