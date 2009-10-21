@@ -10,33 +10,50 @@
 	;#    2) Assembly SPU core for OGR-P2 by Decio (ogr-cellv1-spe.s) - 
 	;# describes lot of useful SPU programming and optimization tricks.
 	;#
-	;# After scheduling and reordering, code look like complete mess. So be it.
+	;# This assembly code, in general, uses same algorithm as C version.
+	;# (ogrng-cell-spe-wrapper.c). Instructions were manually choosen
+	;# and reordered for best pipeline and dual-execution usage. Also,
+	;# speculative calculations 'in advance' are widely used. The code now
+	;# looks like complete mess. So be it.
 	;#
 
 	;# History:
 	;#
 	;# 2009-04-05:
-	;#    Store of new 'limit' is delayed. It can be stored before PUSH_LEVEL
-	;# and when core exits. Same for 'mark'.
+	;#    Store of new 'limit' is delayed. It can be stored before
+	;# PUSH_LEVEL and when core exits. Same for 'mark'.
 	;#
 	;# 2009-04-10:
 	;#    Reordered shifts in main loop to avoid few dependency stalls.
 	;#    Rewriten POP_LEVEL to avoid dependency on --lev.
 	;#    Two lnops in for_loop increased speed a bit, but I don't know why.
-	;# (If you'll add another two lnops to following two commands, speed will decrease
-	;# back. Weird.)
-	;#    Rewriten extraction of u16 limit from vectorized cache to break dependencies.
+	;# (If you'll add another two lnops to following two commands, speed
+	;# will decrease back. Weird.)
+	;#    Rewriten extraction of u16 limit from vectorized cache to break
+	; dependencies.
 	;#
 	;# 2009-10-20:
-	;#    Get rid of "outer_loop" and "for_loop_clz_ready" labels and their jumps.
-	;# This code is copied now. It also allowed additional scheduling optimizations.
+	;#    Get rid of "outer_loop" and "for_loop_clz_ready" labels and their
+	;# jumps. This code is copied now. It also allowed additional scheduling
+	;# optimizations.
 
 	;#
 	;# Known non-optimal things:
+	;#
 	;#    1) Calculation of 's' has long dependency chain. Most of codepathes
 	;# will preload 's' "in background", at least partially, but it's not
 	;# possible in inner loop which is too short and 'compV0' is ready
 	;# only in the end of it.
+	;#
+	;#    2) The cache is a pain in the back. Since SPU has only 256 KBytes
+	;# of memory, the 'choose' array is dynamically cached, using circular
+	;# algorithm to purge out old entries (check C source to understand it).
+	;# For some types of stubs, cache overflows often, slowing real
+	;# (not benchmark!) performance greatly. Even in shortest codepath,
+	;# cache lookup procedure is a long sequence of slow and dependent
+	;# instructions - lot of clocks are lost here and, I'm afraid, nothing
+	;# can be done.
+	;#
 
 	.data
 	.align	4
@@ -79,7 +96,6 @@ data_vec_to_u16_shuf:
 	.set	distV0,			24
 	.set	distV1,			25
 	.set	newbit,			26
-	
 
 	# cached oState
 
@@ -223,12 +239,12 @@ for_loop:
 
 	clz		$s, $s			# get it
 	lnop
-	
-	# If clz can be hidden, then do this and jump to label below.
-	# These two nops may look ugly but really cpu time is not used
-	# (nops are hidden in dependency between 'clz' and 'a')
-	
-;# for_loop_clz_ready:
+
+	;# Sequence above is not optimal. For codepaths other then inner
+	;# loop, it's recommended to avoid jump to 'for_loop'. Distribute these
+	;# instrutions between other code using free clocks/slots and finally
+	;# use for_loop_clz_ready_*. macro. Even better, if these macros are
+	;# distributed too.
 
 .macro	for_loop_clz_ready_part1
 	sfi		$inv_s, $s, 128			# inv_s = 128 -s
@@ -444,8 +460,7 @@ update_limit:
 	;#
 	;# Visited in less then 3% cases and not so important
 	;#
-	;# ~comp0 already preloaded at upper layer.
-	;#
+	;# Caller already prepared $s and executed for_loop_clz_ready_part1
 
 	# while $temp is loading (6 clocks), calc other things
 
@@ -498,16 +513,14 @@ save_mark_and_exit:
 	.align		3
 
 break_for:
-	;# ~comp0 is must be preloaded at the end of this part.
 
 	# --lev;
 	# --depth;
 	ai		$depth, $depth, -1
 
 	# POP_LEVEL(lev);
-	# copy loop header from outer_loop (placed here to break dependency)
+	# copy loop header from for_loop to break dependencies
 	# and finish POP_LEVEL
-	# meantime, prepare ~comp0 using free slots
 	# decrement of lev delayed to avoid dependency, "-128" added directly to offset
 
 	lqd		$compV0, 64-128($lev)
