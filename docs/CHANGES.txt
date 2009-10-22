@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.80 2009/10/08 02:17:52 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.81 2009/10/22 17:06:52 stream Exp $
 ==========================================================================
 
 2.9100
@@ -36,6 +36,7 @@ Version change log: $Id: CHANGES.txt,v 1.80 2009/10/08 02:17:52 snikkel Exp $
             fix: haiku: ps output changed, preventing shutdown of other dnetc
                       instances (#4173)
             imp: sparc/solaris: UltraSPARC-T2+ detection (#4250)
+            imp: cellbe: faster OGR-NG SPU ASM core
 
 2.9106-513  new: amd64: two new asm ogr64 cores added and selected 
                         as default (#4183)
@@ -64,7 +65,7 @@ Version change log: $Id: CHANGES.txt,v 1.80 2009/10/08 02:17:52 snikkel Exp $
                        cudart.dll) with the released client
             imp: cuda: log errors to logfile (if enabled)
             new: x86: three OGR-NG SSE2 ASM cores from Craig Johnston (#4177)
-	    imp: cellbe: faster OGR-NG SPU ASM core
+            imp: cellbe: faster OGR-NG SPU ASM core
 
 2.9103-509  *** minimal version that supports OGR-27 and beyond ***
             new: rc5-72: support for requesting larger packets (#3918)
