@@ -25,7 +25,7 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__ "@(#)$Id: version.h,v 1.95 2009/09/20 22:46:55 andreasb Exp $"
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.96 2009/10/24 03:58:37 stream Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
 /* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */
@@ -34,9 +34,9 @@
 
 #define CLIENT_MAJOR_VER       2
 #define CLIENT_CONTEST         91
-#define CLIENT_BUILD           06
-#define CLIENT_BUILD_FRAC      514
-#define CLIENT_VERSIONSTRING   "2.9106-514"
+#define CLIENT_BUILD           07
+#define CLIENT_BUILD_FRAC      515
+#define CLIENT_VERSIONSTRING   "2.9107-515"
 
 /* combined version used in packets etc. ... */
 #define CLIENT_VERSION         ( (((u32)(CLIENT_CONTEST))    * 1000000UL) +  \
