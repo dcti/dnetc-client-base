@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.176 2009/10/08 02:14:12 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.177 2009/10/29 04:49:07 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2612,6 +2612,9 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     }
     if (features & CPU_F_SSE4_2) {
       strcat( namebuf, "SSE4.2 ");
+    }
+    if (features & CPU_F_LZCNT) {
+      strcat( namebuf, "LZCNT ");
     }
   #else
     sprintf(namebuf, "%ld\n\tname: %s", rawid, cpuid_s );

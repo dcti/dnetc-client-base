@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.21 2009/08/13 18:13:26 stream Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.22 2009/10/29 04:44:33 snikkel Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -30,6 +30,7 @@
   #define CPU_F_SSE4_1          (0x00080000L)
   #define CPU_F_SSE4_2          (0x00100000L)
   #define CPU_F_SSSE3           (0x00200000L)
+  #define CPU_F_LZCNT		(0x00400000L)
 
 // "core hint": ability to override core selection for some CPUs in the family
   #define CH_R72_X86_GO2B       (0x00000001L)

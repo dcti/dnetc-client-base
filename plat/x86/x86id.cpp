@@ -3,14 +3,14 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.14 2009/02/01 11:36:32 andreasb Exp $
+ * $Id: x86id.cpp,v 1.15 2009/10/29 04:44:32 snikkel Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
  *    http://sandpile.org/   
  */
 const char *x86id_cpp(void) {
-return "@(#)$Id: x86id.cpp,v 1.14 2009/02/01 11:36:32 andreasb Exp $"; }
+return "@(#)$Id: x86id.cpp,v 1.15 2009/10/29 04:44:32 snikkel Exp $"; }
 
 #include <string.h>
 #include <stdio.h>
@@ -45,6 +45,7 @@ union PageInfos {
 
 /* 0x00000001:ECX */
 #define X86_HAS_SSE3      (1 <<  0)
+#define X86_HAS_LZCNT     (1 <<  5)
 #define X86_HAS_SSSE3     (1 <<  9)
 #define X86_HAS_SSE4_1    (1 << 19)
 #define X86_HAS_SSE4_2    (1 << 20)
@@ -825,6 +826,10 @@ u32 x86GetFeatures(void)
         if ((flags & CYRIX_HAS_MMX_EXT) != 0) {
           features |= CPU_F_CYRIX_MMX_PLUS;
         }
+      }
+
+      if ((flags & X86_HAS_LZCNT) != 0) {
+        features |= CPU_F_LZCNT;
       }
     }
   }
