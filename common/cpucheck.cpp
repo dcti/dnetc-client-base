@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.177 2009/10/29 04:49:07 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.178 2009/11/03 12:58:54 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1226,7 +1226,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0E10000, 0xFFFF000, CPU_F_I686,    9, "Dual Core Opteron" },
         { 0x0F10000, 0xFFFF000, CPU_F_I686, 0x16, "Quad Core Opteron" },
         { 0x1010000, 0xFFFF000, CPU_F_I686,    9, "Embedded Opteron" },
-        { 0x1110000, 0xFFFF000, CPU_F_I686, 0x16, "Phenom" }, /* (#4196) */
+        { 0x1110000, 0xFFFF000, CPU_F_I686, 0x16, "Phenom",            CH_R72_X86_GO2B }, /* (#4196) */
         { 0x1211000, 0xFFFF000, CPU_F_I686,    9, "Athlon (Model 17)" }, /* (#4074) */
         { 0x1311000, 0xFFFF000, CPU_F_I686,    9, "Sempron" },
         { 0x1411000, 0xFFFF000, CPU_F_I686,    9, "Turion X2 Ultra Mobile" },
