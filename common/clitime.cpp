@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *clitime_cpp(void) {
-return "@(#)$Id: clitime.cpp,v 1.72 2009/10/24 01:06:03 snikkel Exp $"; }
+return "@(#)$Id: clitime.cpp,v 1.73 2009/11/04 23:22:28 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"   /* for timeval, time, clock, sprintf, gettimeofday */
@@ -609,8 +609,10 @@ int CliGetMonotonicClock( struct timeval *tv )
 
           if (fscanf(fp, "%d.%d.%d", &major, &minor, &version) == 2)
           {
-            /* clock_gettime is supported in Linux 2.6 and beyond */
-            if (major > 2 || (major == 2 && minor >= 6 && version >= 18))
+            /* clock_gettime is supported in Linux 2.6 and beyond 
+             * useful in 2.6.18 and greater */
+            if (major > 2 || (major == 2 && minor > 6) ||
+              (major == 2 && minor == 6 && version >= 18))
               supports_clock_gettime = 1;
             else
               supports_clock_gettime = 0;
