@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __POLLSYS_H__
-#define __POLLSYS_H__ "@(#)$Id: pollsys.h,v 1.10 2009/08/15 00:46:26 andreasb Exp $"
+#define __POLLSYS_H__ "@(#)$Id: pollsys.h,v 1.11 2009/11/10 06:43:33 jlawson Exp $"
 
 #include "clitime.h"  /* needed for timeval struct */
 
@@ -23,7 +23,7 @@ int InitializePolling(void);
  * procedures registered with a high priority have an interval long enough
  * to allow procedures with a low(er) priority to run.
 */
-int RegPolledProcedure( auto void (*proc)(void *), void *arg,
+int RegPolledProcedure( void (*proc)(void *), void *arg,
                         struct timeval *interval, unsigned int priority );
 
 /*
@@ -37,7 +37,7 @@ int UnregPolledProcedure( int handle );
  * RegPolledProcedure() does, but execution in the polled loop is delayed
  * until RegQueuedPolledProcedures() is called
 */
-int EnqueuePolledProcedure( auto void (*proc)(void *), void *arg,
+int EnqueuePolledProcedure( void (*proc)(void *), void *arg,
                             unsigned int priority );
 int RegQueuedPolledProcedures();
 
