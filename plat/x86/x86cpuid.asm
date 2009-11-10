@@ -7,7 +7,7 @@
 ; Written by Didier Levet <kakace@distributed.net>, mostly derived from
 ; x86ident.asm written by Cyrus Patel.
 ;
-; $Id: x86cpuid.asm,v 1.2 2008/03/28 23:39:48 kakace Exp $
+; $Id: x86cpuid.asm,v 1.3 2009/11/10 06:44:51 jlawson Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -438,5 +438,3 @@ _cx4x86:        mov     ah, 40h        ; 486 class CPU
                 jmp     _end           ; model 0=Cx486SLC/DLC/SRx/DRx,
                                        ; model 1=Cx486S/DX/DX2/DX4, 4=MediaGX
 
-                endp
-                end

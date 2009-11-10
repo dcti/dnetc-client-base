@@ -7,7 +7,7 @@
 ; Written by Didier Levet <kakace@distributed.net>, mostly derived from
 ; x86ident.asm written by Cyrus Patel.
 ;
-; $Id: x86cpuid.asm,v 1.1 2009/01/01 08:40:40 jlawson Exp $
+; $Id: x86cpuid.asm,v 1.2 2009/11/10 06:45:28 jlawson Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -129,5 +129,3 @@ x86getid:       mov     eax, -1         ; cpuid instruction is supported.
 
 ;----------------------------------------------------------------------
 
-                endp
-                end
