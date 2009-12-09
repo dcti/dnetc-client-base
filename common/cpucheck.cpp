@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.178 2009/11/03 12:58:54 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.179 2009/12/09 18:47:54 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -479,7 +479,7 @@ static long __GetRawProcessorID(const char **cpuname)
   ** note: always use PVR IDs :
   ** http://www.freescale.com/files/archives/doc/support_info/PPCPVR.pdf
   */
-  struct { long rid;
+  static struct { long rid;
            const char *name; }
     cpuridtable[] = {
       {    0x0001, "601"                 },
@@ -555,7 +555,7 @@ static long __GetRawProcessorID(const char **cpuname)
   if (detectedtype == -2L) {
     if (_system_configuration.architecture != POWER_RS) {
       unsigned int i;
-      struct { long imp;
+      static struct { long imp;
                long rid; }
         cpumap[] = {
           { POWER_601,             1 },
@@ -761,12 +761,14 @@ static long __GetRawProcessorID(const char **cpuname)
             {
               detectedtype = (long)sigs[n].rid;
               /* 7400, 7410, 7450, 7455 (G4), 970, 970FX (G5),Cell */
+#if 0
               if (detectedtype == 0x000C ||
                   detectedtype == 0x0039 ||
                   detectedtype == 0x003C ||
                   detectedtype == 0x0044 ||
                   detectedtype == 0x0070 ||
                   detectedtype & 0x8000)
+#endif
               {
                 if (memcmp( &p[l], ", altivec supported", 19)==0)
                   isaltivec = 1;
@@ -2616,6 +2618,8 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     if (features & CPU_F_LZCNT) {
       strcat( namebuf, "LZCNT ");
     }
+  #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
+    sprintf(namebuf, "%08lX\n\tname: %s", rawid, cpuid_s );
   #else
     sprintf(namebuf, "%ld\n\tname: %s", rawid, cpuid_s );
   #endif
