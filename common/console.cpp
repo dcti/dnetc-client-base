@@ -14,7 +14,7 @@
  * ----------------------------------------------------------------------
 */
 const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.82 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: console.cpp,v 1.83 2009/12/24 17:38:38 snake Exp $"; }
 
 /* -------------------------------------------------------------------- */
 
@@ -731,7 +731,8 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_DEC_UNIX) || (CLIENT_OS == OS_MACOSX) || \
         (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_PS2LINUX) || \
         ( (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ ) ) || \
-        (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_HAIKU)
+        (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_HAIKU) || \
+        ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 8))
     /* good for any flavour? */
     struct winsize winsz;
     winsz.ws_col = winsz.ws_row = 0;
@@ -740,9 +741,9 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       width   = winsz.ws_col;
       height  = winsz.ws_row;
     }
-  #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
-        (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-        (CLIENT_OS == OS_DRAGONFLY)
+  #elif ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ < 8)) || \
+        (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OPENBSD) || \
+        (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_DRAGONFLY)
     struct ttysize winsz;
     winsz.ts_lines = winsz.ts_cols = winsz.ts_xxx = winsz.ts_yyy = 0;
     ioctl (fileno(stdout), TIOCGWINSZ, &winsz);
