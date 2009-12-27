@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.83 2009/12/27 05:43:05 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.84 2009/12/27 06:42:52 jlawson Exp $
 ==========================================================================
 
 2.9100
@@ -31,6 +31,7 @@ Version change log: $Id: CHANGES.txt,v 1.83 2009/12/27 05:43:05 snikkel Exp $
 
 2.9107-516  imp: add cpu/os id to client request packets
                  for improved client control
+            chg: cuda,stream: remove beta expiry
 
 2.9107-515  imp: cellbe: faster OGR-NG SPU ASM core
 

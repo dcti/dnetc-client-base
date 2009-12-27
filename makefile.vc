@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.124 2009/09/23 17:08:44 sla Exp $
+# $Id: makefile.vc,v 1.125 2009/12/27 06:42:48 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -140,7 +140,7 @@ OPTS_LINK = /nologo /incremental:no \
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH) -DBETA -DBETA_PERIOD="(50*86400)"
+OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH)
 OPTS_LIBS = $(OPTS_LIBS) version.lib $(CUDA_LIB_PATH)\cudart.lib
 ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda plat\cuda\cudatoolkit_eula.txt cudart.dll
 
@@ -157,7 +157,7 @@ OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2020
 !endif
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
-OPTS_MSVC = $(OPTS_MSVC) -I"$(CALROOT)include" -Iplat\stream -Iplat\x86 -DBETA -DBETA_PERIOD="(50*86400)"
+OPTS_MSVC = $(OPTS_MSVC) -I"$(CALROOT)include" -Iplat\stream -Iplat\x86
 OPTS_LIBS = $(OPTS_LIBS) "$(CALROOT)lib\xp32\aticalcl.lib" "$(CALROOT)lib\xp32\aticalrt.lib"
 !endif
 
