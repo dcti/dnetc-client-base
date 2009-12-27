@@ -1,6 +1,6 @@
 /*
  * SMC Code inspired by Naoki Hiroshima (http://n.h7a.org/hacks/rubycocoa/smc.rb)
- * Copyright distributed.net 2003-2008 - All Rights Reserved
+ * Copyright distributed.net 2003-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -34,7 +34,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.6 2009/02/08 22:39:54 mfeiri Exp $
+ *  $Id: temperature.cpp,v 1.7 2009/12/27 13:52:34 andreasb Exp $
  */
 
 #include <string.h>

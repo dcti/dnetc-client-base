@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1999-2008 - All Rights Reserved
+ * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,7 +7,7 @@
  *  one 32-bit scalar part (left side), and two 128-bit vector parts, thus the
  *  "hybrid" name.
  *
- * $Id: ogrng-vec.cpp,v 1.6 2009/07/30 16:53:48 stream Exp $
+ * $Id: ogrng-vec.cpp,v 1.7 2009/12/27 13:52:28 andreasb Exp $
 */
 
 #include "ansi/ogrng.h"

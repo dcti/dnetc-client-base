@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1998-2005 - All Rights Reserved
+ * Copyright distributed.net 1998-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 const char *stress_r72_cpp(void) {
-return "@(#)$Id: stress.cpp,v 1.4 2009/02/23 04:00:23 chandleg Exp $"; }
+return "@(#)$Id: stress.cpp,v 1.5 2009/12/27 13:52:41 andreasb Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"

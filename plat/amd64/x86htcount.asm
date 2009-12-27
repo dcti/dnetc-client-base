@@ -1,5 +1,5 @@
 ; 
-; Copyright distributed.net 2003-2004 - All Rights Reserved
+; Copyright distributed.net 2003-2009 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
@@ -7,7 +7,7 @@
 ; 
 ; Written for distributed.net by Steven Nikkel, Nov 2003
 ; 
-; $Id: x86htcount.asm,v 1.2 2009/01/06 07:47:53 jlawson Exp $
+; $Id: x86htcount.asm,v 1.3 2009/12/27 13:52:32 andreasb Exp $
 ;
 ; return u32
 

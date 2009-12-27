@@ -1,5 +1,5 @@
 ;
-; Copyright distributed.net 1998-2008 - All Rights Reserved
+; Copyright distributed.net 1998-2009 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
@@ -7,7 +7,7 @@
 ; Written by Didier Levet <kakace@distributed.net>, mostly derived from
 ; x86ident.asm written by Cyrus Patel.
 ;
-; $Id: x86cpuid.asm,v 1.3 2009/11/10 06:44:51 jlawson Exp $
+; $Id: x86cpuid.asm,v 1.4 2009/12/27 13:52:40 andreasb Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:

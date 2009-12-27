@@ -1,11 +1,11 @@
 /* 
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 /*
 const char *ogrng_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-ppe-common.cpp,v 1.3 2009/05/16 08:39:14 stream Exp $"; }
+return "@(#)$Id: ogrng-cell-ppe-common.cpp,v 1.4 2009/12/27 13:52:22 andreasb Exp $"; }
 */
 
 #include <libspe2.h>

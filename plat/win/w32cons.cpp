@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1998-2008 - All Rights Reserved
+ * Copyright distributed.net 1998-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.10 2009/04/21 18:00:41 thejet Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.11 2009/12/27 13:52:36 andreasb Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
