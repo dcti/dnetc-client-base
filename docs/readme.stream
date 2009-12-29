@@ -1,6 +1,6 @@
 
  distributed.net client for ATI FireStream-compatible GPUs
- document revision $Id: readme.stream,v 1.3 2009/06/07 17:09:27 chandleg Exp $
+ document revision $Id: readme.stream,v 1.4 2009/12/29 06:04:06 chandleg Exp $
 
  Welcome to the distributed.net client.
 
@@ -77,13 +77,6 @@
 
  4.0  Troubleshooting and Known issues ------------------------------
 
-    This client was built against the latest ATI Stream SDK that 
-    was available.  That version was 1.4.0 and marked as a beta by
-    AMD/ATI.  There are known problems with this SDK/API at the time
-    this was built so every expectation is that newer ones will play
-    much nicer with the system.  The client should also be updated and
-    tested periodically to make sure it is still compatible.
-
     On Linux platforms, YOU WILL SEE errors when running the 
     client on a text-mode system without X11 (init level 3 not 5).
     As noted in the Prerequisites section X/Xorg MUST be running for
@@ -122,26 +115,8 @@
           you can hit: ctrl-backspace then ctrl-alt-del right afterwards.
           This will kill X and issue an init 6.
 
-   If you have a non-RPM based system, and need to install the SDK, here 
-   are the instructions I have:
-   1) Download the SDK.  It should be a gzipped tar.
-   2) Untar the SDK.
-   3) Two files should exist now: 
-      amdstream-brook-{something}.run
-      amdstream-cal-{something}.run
-   4) You will need to edit these files, vi seems to be safe.
-      Inside each file you will see a line that says:
-        RPM="rpm -ivh "
-      change that to:
-        RPM="rpm --nodeps -ivh "
-      You will also see a line that says:
-        dd if=$0 of=/tmp/${TMP}.tar.gz bs=1 skip=16384 >& /dev/null
-      change that to:
-        dd if=$0 of=/tmp/${TMP}.tar.gz bs=1 skip=16393 >& /dev/null
-   5) What the first part of that does is make sure that "rpm" does 
-      not check to see if it is OK to install the RPMs. 
-      The second part changes the removal of the binary part of the
-      shar.  The offset changed by 9 characters, because be added 9
-      characters to the file.
-   6) Run each of the two files that you just modified.
 
+    If you are having trouble with upgrading the drivers to a newer 
+    version , feel free to email: chandleg@distributed.net.   ATI's 
+    support is pretty lacking.  BEWARE, I don't check my mail as often
+    as I should ;)
