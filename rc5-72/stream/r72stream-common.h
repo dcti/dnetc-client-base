@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.13 2009/09/23 17:03:31 sla Exp $
+ * $Id: r72stream-common.h,v 1.14 2009/12/30 15:04:52 sla Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -35,6 +35,7 @@
 
 #define CORE_IL4N   1
 #define CORE_IL4NA  2
+#define CORE_IL42T  3
 
 
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
