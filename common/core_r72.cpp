@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.45 2009/09/30 09:38:17 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.46 2009/12/30 14:57:33 sla Exp $"; }
 
 //#define TRACE
 
@@ -103,6 +103,7 @@ extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s1( RC5_72UnitWork *, u32 *, voi
 #elif (CLIENT_CPU == CPU_ATI_STREAM)
 extern "C" s32 CDECL rc5_72_unit_func_il4_nand( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_il4a_nand( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_il4_2t( RC5_72UnitWork *, u32 *, void * );
 #endif
 
 
@@ -211,6 +212,7 @@ const char **corenames_for_contest_rc572()
   #elif (CLIENT_CPU == CPU_ATI_STREAM)
       "IL 4-pipe c",
       "IL 4-pipe c alt",
+      "IL 4-pipe 2 threads",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -622,6 +624,8 @@ int selcoreGetPreselectedCoreForProject_rc572()
       case 5: 		    // RV770 GPU ISA
       case 6: 		    // RV710 GPU ISA
       case 7: 		    // RV730 GPU ISA
+      case 8: 		    // RV830 GPU ISA
+      case 9: 		    // RV870 GPU ISA
        cindex = 0;	    // IL 4-pipe
        break;
     
@@ -878,6 +882,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       break;               
       case 1:             
         unit_func.gen_72 = rc5_72_unit_func_il4a_nand;
+        pipeline_count = 4;
+      break;               
+      case 2:             
+        unit_func.gen_72 = rc5_72_unit_func_il4_2t;
         pipeline_count = 4;
       break;               
     // -----------
