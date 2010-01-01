@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.409 2009/12/27 06:42:48 jlawson Exp $
+# @(#)$Id: configure,v 1.410 2010/01/01 06:20:29 jlawson Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -708,7 +708,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS \
                           rc5-72/stream/r72stream-common.cpp \
                           rc5-72/stream/r72stream-vc4cn.cpp \
-                          rc5-72/stream/r72stream-vc4cna.cpp"
+                          rc5-72/stream/r72stream-vc4cna.cpp \
+                          rc5-72/stream/r72stream-2th.cpp"
     fi # HAVE_RC5_72
 
   #-----------------------------------------------------------------
@@ -806,7 +807,7 @@ infer_cuda_version() { # $1=configure target
           inferred_cuda_version="$_ver"
           break
         fi
-	unset _ver
+        unset _ver
       done
       ;;
   esac
@@ -1119,12 +1120,12 @@ generate_gcc_opts() {
 
     *internal-alpha*)
         opts272="$OPTS_GCC272 -O6 -DASM_ALPHA -static -funroll-loops"
-	if [ "$2" = "freebsd" ]; then
-	  # 2.95 optimizer is broken on FreeBSD/alpha :-(
+        if [ "$2" = "freebsd" ]; then
+          # 2.95 optimizer is broken on FreeBSD/alpha :-(
           opts295="$OPTS_GCC295 -O1 -DASM_ALPHA -funroll-loops"
-	else
+        else
           opts295="$OPTS_GCC295 -O3 -DASM_ALPHA -funroll-loops"
-	fi
+        fi
         opts310="$OPTS_GCC310 -O3 -DASM_ALPHA -funroll-loops"
         optarch=`echo "$1" | sed 's/.*alpha/ev/'`
         if [ "$optarch" != "ev" ]; then
@@ -1147,9 +1148,9 @@ generate_gcc_opts() {
 
     *internal-amd64|internal-x86_64)
         opts310="$OPTS_GCC310 -O2 -DASM_AMD64 \
-	    -m64 -mfpmath=sse -mno-3dnow -mno-mmx -fforce-addr \
-	    -falign-functions=5 -falign-loops=4 -funroll-loops"
-	;;
+            -m64 -mfpmath=sse -mno-3dnow -mno-mmx -fforce-addr \
+            -falign-functions=5 -falign-loops=4 -funroll-loops"
+        ;;
 
     *) # no default needed (internal)
         ;;
@@ -1256,62 +1257,62 @@ OPTS_WATCOMCC="-DASM_X86 -Osax -4 -mf"
 #
 # ---- speed sensitive things come last ----
 COMMON_SRCS="\
-	     common/iniread.cpp     \
-	     common/buffbase.cpp    \
-	     common/mail.cpp        \
-	     common/random.cpp      \
-	     common/clicdata.cpp    \
-	     common/clitime.cpp     \
-	     common/disphelp.cpp    \
-	     common/clievent.cpp    \
-	     common/cpucheck.cpp    \
-	     common/pathwork.cpp    \
-	     common/cliident.cpp    \
-	     common/logstuff.cpp    \
-	     common/triggers.cpp    \
-	     common/coremem.cpp     \
-	     common/selcore.cpp     \
-	     common/cmdline.cpp     \
-	     common/selftest.cpp    \
-	     common/pollsys.cpp     \
-	     common/setprio.cpp     \
-	     common/console.cpp     \
-	     common/modereq.cpp     \
-	     common/confmenu.cpp    \
-	     common/confrwv.cpp     \
-	     common/confopt.cpp     \
-	     common/checkpt.cpp     \
-	     common/util.cpp        \
-	     common/base64.cpp      \
-	     common/netbase.cpp     \
-	     common/netconn.cpp     \
-	     common/client.cpp      \
-	     common/projdata.cpp    \
+             common/iniread.cpp     \
+             common/buffbase.cpp    \
+             common/mail.cpp        \
+             common/random.cpp      \
+             common/clicdata.cpp    \
+             common/clitime.cpp     \
+             common/disphelp.cpp    \
+             common/clievent.cpp    \
+             common/cpucheck.cpp    \
+             common/pathwork.cpp    \
+             common/cliident.cpp    \
+             common/logstuff.cpp    \
+             common/triggers.cpp    \
+             common/coremem.cpp     \
+             common/selcore.cpp     \
+             common/cmdline.cpp     \
+             common/selftest.cpp    \
+             common/pollsys.cpp     \
+             common/setprio.cpp     \
+             common/console.cpp     \
+             common/modereq.cpp     \
+             common/confmenu.cpp    \
+             common/confrwv.cpp     \
+             common/confopt.cpp     \
+             common/checkpt.cpp     \
+             common/util.cpp        \
+             common/base64.cpp      \
+             common/netbase.cpp     \
+             common/netconn.cpp     \
+             common/client.cpp      \
+             common/projdata.cpp    \
                                \
-	     common/bench.cpp       \
-	     common/probman.cpp     \
-	     common/probfill.cpp    \
-	     common/clirun.cpp      \
-	     common/problem.cpp" #speed sensitive things come last
+             common/bench.cpp       \
+             common/probman.cpp     \
+             common/probfill.cpp    \
+             common/clirun.cpp      \
+             common/problem.cpp" #speed sensitive things come last
 
 # conditional addition if files are present
 #
 if [ -f "common/scram.cpp" -o -f "common/scram.h" -o \
      -f "common/buffpriv.cpp" -o -f "common/buffupd.cpp" ]; then
 COMMON_SRCS="common/buffpriv.cpp \
-	     common/scram.cpp    \
-	     common/buffupd.cpp  \
-	     ${COMMON_SRCS}"
+             common/scram.cpp    \
+             common/buffupd.cpp  \
+             ${COMMON_SRCS}"
 else
 COMMON_SRCS="common/buffpub.cpp \
-	     ${COMMON_SRCS}"
+             ${COMMON_SRCS}"
 fi
 if [ -f "common/minihttp.cpp" -o -f "common/netio.cpp" -o \
      -f "common/xmlserve.cpp" ]; then
 COMMON_SRCS="common/minihttp.cpp \
-	     common/netio.cpp    \
-	     common/xmlserve.cpp \
-	     ${COMMON_SRCS}"
+             common/netio.cpp    \
+             common/xmlserve.cpp \
+             ${COMMON_SRCS}"
 TARGET_CCFLAGS="$TARGET_CCFLAGS -DXMLSERVE"
 fi
 #
@@ -1320,7 +1321,7 @@ fi
 if [ "$HAVE_RC5_72" = "1" ]; then
 COMMON_SRCS="common/core_r72.cpp \
              ${COMMON_SRCS}      \
-	     rc5-72/stress.cpp"
+             rc5-72/stress.cpp"
 fi # HAVE_RC5_72
 if [ "$HAVE_OGR" = "1" ]; then
 COMMON_SRCS="common/core_ogr_ng.cpp ${COMMON_SRCS}"
@@ -2185,28 +2186,28 @@ case "$1" in
         ;;
 
     *solaris-amd64)             # gcc
-	TARGET_CC="gcc"
+        TARGET_CC="gcc"
         TARGET_NASM="yasm"
         TARGET_NASM_FMT="elf64"
-	generate_gcc_opts "amd64" "solaris"
-	TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
-	TARGET_LDFLAGS="-m64"
-	TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
-	TARGET_DOCFILES="docs/readme._ix"
-	TARGET_TARBALL="solaris10-amd64"
-	add_sources "solaris" "amd64"
-	;;
+        generate_gcc_opts "amd64" "solaris"
+        TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
+        TARGET_LDFLAGS="-m64"
+        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="solaris10-amd64"
+        add_sources "solaris" "amd64"
+        ;;
 
     *solaris-amd64-suncc)       # sun cc
-	TARGET_CC="sunCC"
+        TARGET_CC="sunCC"
         OPTS_CC_SOLARIS="-fast -m64 -DASM_AMD64"
-	TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
-	TARGET_LDFLAGS="-m64"
-	TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
-	TARGET_DOCFILES="docs/readme._ix"
-	TARGET_TARBALL="solaris10-amd64"
-	add_sources "solaris" "amd64"
-	;;
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
+        TARGET_LDFLAGS="-m64"
+        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="solaris10-amd64"
+        add_sources "solaris" "amd64"
+        ;;
 
 ###### PowerPC/POWER
 
@@ -2277,8 +2278,8 @@ case "$1" in
         # so we have to use gas for cores
         TARGET_AS="gas"
         TARGET_CC="g++"
- 	TARGET_LDFLAGS="$TARGET_LDFLAGS -static-libgcc "
-	TARGET_GENMAN=
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static-libgcc "
+        TARGET_GENMAN=
         generate_gcc_opts "ppc" "aix"
 
         # gcc's < 3.2 used -mthreads
@@ -2289,7 +2290,7 @@ case "$1" in
 
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "aix" "ppc"
-	TARGET_TARBALL="aix-ppc"
+        TARGET_TARBALL="aix-ppc"
         ;;
 
     *aix-power-gcc)
@@ -2460,16 +2461,16 @@ case "$1" in
     *netware6-x86*)             # using LibC [jbgill]
         TARGET_NASM_FMT="elf"
         TARGET_CC="gcc"        #build on Linux with gcc cross compiler for netware       
-	TARGET_LD="gcc"
-	TARGET_AS="gcc -c"
-	TARGET_BINNAME_SUFFIX=".nlm"
-	TARGET_IS_CROSSCOMPILE=1
-	TARGET_STRIP="touch"
-	generate_gcc_opts "x86" "netware6"
+        TARGET_LD="gcc"
+        TARGET_AS="gcc -c"
+        TARGET_BINNAME_SUFFIX=".nlm"
+        TARGET_IS_CROSSCOMPILE=1
+        TARGET_STRIP="touch"
+        generate_gcc_opts "x86" "netware6"
         TARGET_CCFLAGS="$OPTS_GCC -D_NETWARE6_ -D_POSIX_SOURCE -DNOTERMIOS"
         TARGET_LIBS=""
-	TARGET_GENMAN=
-	TARGET_LDFLAGS="-Wl,--def-file,plat/netware/netware6.def"
+        TARGET_GENMAN=
+        TARGET_LDFLAGS="-Wl,--def-file,plat/netware/netware6.def"
         TARGET_TARBALL="netware6-x86"
         TARGET_DOCFILES="docs/readme.nw6"   #platform specific docfile
         add_sources "netware6" "x86"
@@ -2483,7 +2484,7 @@ case "$1" in
                                 # FreeBSD amd64-elf 6,7, snake
         # note: do NOT include the major version number in the make target:
         # use "configure freebsd-x86" , "configure freebsd-sparc" etc.
-		# major version number is automatically appended in TARBALL
+        # major version number is automatically appended in TARBALL
         infer_arch_and_version "FreeBSD"
         inferred_bf=""
         if [ $inferred_ver_major -lt 3 ]; then
@@ -3139,15 +3140,15 @@ case "$1" in
 
 ###### Unknown
     *list)
-	egrep "^[ ]*\*" $0 | grep -v internal | more
-	echo ""
-	exit 1
-	;;
+        egrep "^[ ]*\*" $0 | grep -v internal | more
+        echo ""
+        exit 1
+        ;;
     *) # do not list with 'list' (internal)
-	echo "Unknown target platform \"$1\" specified."
-	echo "Run with 'list' as an argument to see available platforms."
-	echo ""
-	exit 1
+        echo "Unknown target platform \"$1\" specified."
+        echo "Run with 'list' as an argument to see available platforms."
+        echo ""
+        exit 1
 esac
 echo "Platform target for \"$1\" recognized."
 
