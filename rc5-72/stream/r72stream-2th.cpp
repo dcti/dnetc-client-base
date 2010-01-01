@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-2th.cpp,v 1.1 2009/12/30 15:49:18 sla Exp $
+ * $Id: r72stream-2th.cpp,v 1.2 2010/01/01 09:09:16 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -443,7 +443,7 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 				RaiseExitRequestTrigger();
 				return -1;        //err
 			}
-			if(iters_finished!=((iters0)&0x3f) /*6 lower bits*/)	//Something bad happened during program execution
+			if(iters_finished!=((iters0-(rest0==0))&0x3f) /*6 lower bits*/)	//Something bad happened during program execution
 			{
 				Log("GPU: unexpected program stop!\n");
 				Log("Expected: %x, got:%x!\n",iters0&0x3f,iters_finished);
@@ -514,7 +514,7 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 				RaiseExitRequestTrigger();
 				return -1;        //err
 			}
-			if(iters_finished!=((iters1)&0x3f) /*6 lower bits*/)	//Something bad happened during program execution
+			if(iters_finished!=((iters1-(rest1==0))&0x3f) /*6 lower bits*/)	//Something bad happened during program execution
 			{
 				Log("GPU: unexpected program stop!\n");
 				Log("Expected: %x, got:%x!\n",iters1&0x3f,iters_finished);
