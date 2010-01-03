@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.126 2009/12/30 15:02:24 sla Exp $
+# $Id: makefile.vc,v 1.127 2010/01/03 05:20:55 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -57,7 +57,7 @@ OPTS_CC_CPU =
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat
 #CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
-ZIPSUFFIX = win32-x86-ATI_stream
+ZIPSUFFIX = win32-x86-stream
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
@@ -579,6 +579,5 @@ rebuild: clean all
 
 makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
 	zip dnetcXXX-win32-x86.zip $**
-	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i-$(ZIPSUFFIX).zip
-
+	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i$(BUILDNUM_APPEND)-$(ZIPSUFFIX).zip
 
