@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.5 2009/08/11 17:27:34 sla Exp $
+ * $Id: amdstream_context.h,v 1.6 2010/01/03 10:00:22 sla Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -28,19 +28,19 @@ typedef struct {
   CALdeviceattribs attribs;
   CALcontext ctx;
 
-  CALresource outputRes0;
-  CALresource constRes0;
-  CALresource globalRes0;
+  CALresource outputRes0, outputRes1;
+  CALresource constRes0, constRes1;
+  CALresource globalRes0, globalRes1;
 
-  CALmodule module0;
+  CALmodule module0, module1;
 
-  CALmem outputMem0;
-  CALmem constMem0;
-  CALmem globalMem0;
+  CALmem outputMem0, outputMem1;
+  CALmem constMem0, constMem1;
+  CALmem globalMem0, globalMem1;
 
-  CALfunc func0;
-  CALname outName0, constName0;
-  CALname globalName0;
+  CALfunc func0, func1;
+  CALname outName0, constName0, outName1, constName1;
+  CALname globalName0, globalName1;
 
   CALimage image;
 
@@ -55,6 +55,6 @@ typedef struct {
 } stream_context_t;
 
 extern stream_context_t CContext[AMD_STREAM_MAX_GPUS];
-extern int amdstream_numDevices;
+extern int atistream_numDevices;
 
 #endif // AMD_STREAM_CONTEXT_H
