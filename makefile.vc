@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.127 2010/01/03 05:20:55 jlawson Exp $
+# $Id: makefile.vc,v 1.128 2010/01/03 10:20:10 sla Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -345,7 +345,7 @@ RC5_72_OBJS =                             \
         $(OUTPUTPATH)/amdstream_info.obj \
         $(OUTPUTPATH)/amdstream_setup.obj 
 
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE -DDYN_TIMESLICE -D_CRT_SECURE_NO_WARNINGS
 !else
 !error No RC5-72 cores for this architecture.
 !endif
