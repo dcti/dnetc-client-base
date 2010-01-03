@@ -5,7 +5,7 @@
 */
 
 const char *stress_r72_cpp(void) {
-return "@(#)$Id: stress.cpp,v 1.5 2009/12/27 13:52:41 andreasb Exp $"; }
+return "@(#)$Id: stress.cpp,v 1.6 2010/01/03 10:46:19 sla Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"
@@ -365,9 +365,12 @@ static long __test_2(void)
       if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0) == 0) {
         pipes = thisprob->pub_data.pipeline_count;
 
-        ProblemRun(thisprob);
-        if (CheckExitRequestTrigger())
-          success = 0L;
+		do {
+			if (CheckExitRequestTrigger()) {
+				success = 0L;
+				break;
+			}
+		}while(ProblemRun(thisprob) == RESULT_WORKING);
 
         resultcode = ProblemRetrieveState(thisprob, &contestwork, NULL, 1, 0);
 
@@ -470,9 +473,12 @@ static long __test_3(void)
         if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0) == 0) {
           pipes = thisprob->pub_data.pipeline_count;
 
-          ProblemRun(thisprob);
-          if (CheckExitRequestTrigger())
-            success = 0L;
+		  do {
+			  if (CheckExitRequestTrigger()) {
+				  success = 0L;
+				  break;
+			  }
+		  }while(ProblemRun(thisprob) == RESULT_WORKING);
 
           resultcode = ProblemRetrieveState(thisprob, &contestwork, NULL, 1, 0);
 
@@ -552,11 +558,42 @@ static long __test_4(void)
     do {
       u32 basekey = KEYBASE_LO + iters;
 
-      ProblemRun(thisprob);
-      if (CheckExitRequestTrigger())
-        success = 0L;
+      ProblemInfo info;
+	  u32 itersDonehi, itersDonelo, remoteconn=0, itersdone;
 
-      if (thisprob->pub_data.runtime_sec >= sec) {
+	  do{
+		  if (CheckExitRequestTrigger())
+		  {
+			  success = 0L;
+			  break;
+		  }
+		  if (ProblemGetInfo(thisprob, &info, P_INFO_DCOUNT) == -1)
+		  {
+			  success = 0L;
+			  break;
+		  }
+		  itersDonehi=info.dcounthi; itersDonelo=info.dcountlo;
+		  ProblemRun(thisprob);
+		  if (ProblemGetInfo(thisprob, &info, P_INFO_DCOUNT) == -1)
+		  {
+			  success = 0L;
+			  break;
+		  }
+		  if((itersDonehi-info.dcounthi)||(itersDonelo-info.dcountlo))
+			  break;
+		  remoteconn=1;
+	  }while(1);
+	  if(remoteconn) {
+	    LogScreen("\rRC5-72: Restarting stress-test 4\n");
+		iters = 0;
+	    cmc_key.hi = cmc_key.mid = cmc_key.lo = cmc_count = 0;
+		ProblemFree(thisprob);
+		thisprob = ProblemAlloc();
+		ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0);
+		continue;
+	  }
+
+	  if (thisprob->pub_data.runtime_sec >= sec) {
         unsigned long perc = (iters / 120 * 100) / (maxkeys / 120);
         LogScreen("\rRC5-72: Stress-test 4 - %lu%%", perc);
         sec = thisprob->pub_data.runtime_sec + 1;
