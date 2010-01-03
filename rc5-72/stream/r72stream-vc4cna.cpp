@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cna.cpp,v 1.5 2009/09/30 16:41:05 sla Exp $
+ * $Id: r72stream-vc4cna.cpp,v 1.6 2010/01/03 10:42:44 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -295,9 +295,8 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
 s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
   u32 deviceID=rc5_72unitwork->threadnum;
-//  u32 iter_c=*iterations;
-//  RC5_72UnitWork rc5_72unitwork_c;
-//  memcpy(&rc5_72unitwork_c,rc5_72unitwork,sizeof(RC5_72UnitWork));
+  RC5_72UnitWork tmp_unit;
+
 
   if (CContext[deviceID].coreID!=CORE_IL4NA)
   {
@@ -307,6 +306,20 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       return -1;        //arr
     }
   }
+
+  if(checkRemoteConnectionFlag())
+  {
+    NonPolledUSleep(500*1000);	//sleep 0.5 sec 
+	*iterations=0;
+	return RESULT_WORKING;
+  }
+  if(CContext[deviceID].coreID==CORE_NONE)
+  {
+	*iterations=0;
+	return RESULT_WORKING;
+  }
+	
+  memcpy(&tmp_unit, rc5_72unitwork, sizeof(RC5_72UnitWork));
 
   u32 kiter =(*iterations)/4;
 
@@ -337,9 +350,13 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       calResUnmap(CContext[deviceID].globalRes0);
     }else
     {
-      Log("Failed to map global buffer!\n");
-      RaiseExitRequestTrigger();
-      return -1;        //err
+		if(setRemoteConnectionFlag()) {
+			*iterations=0;
+			return RESULT_WORKING;
+		}
+		Log("Failed to map global buffer!\n");
+		RaiseExitRequestTrigger();
+		return -1;        //err
     }
   }
 
@@ -362,23 +379,28 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       //fill constant buffer
       if(!FillConstantBuffer(CContext[deviceID].constRes0,RunSize, iters0, rest0, (float)width, rc5_72unitwork,0))
       {
-//      NonPolledUSleep(50000);  //Lost connection to driver
-//      *iterations=iter_c;
-//      memcpy(rc5_72unitwork,&rc5_72unitwork_c,sizeof(RC5_72UnitWork));
-
-//      return RESULT_WORKING;
-        Log("Internal error!\n");
-        RaiseExitRequestTrigger();
-        return -1;        //err
+		if(setRemoteConnectionFlag()) {
+			memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+			*iterations=0;
+			return RESULT_WORKING;
+		}
+		Log("Internal error!\n");
+		RaiseExitRequestTrigger();
+		return -1;        //err
       }
 
       CALdomain domain = {0, 0, width, height};
       result=calCtxRunProgram(&e0, CContext[deviceID].ctx, CContext[deviceID].func0, &domain);
       if((result!=CAL_RESULT_OK)&&(result!=CAL_RESULT_PENDING))
       {
-        Log("Error running GPU program\n");
-        RaiseExitRequestTrigger();
-        return -1;        //err
+		if(setRemoteConnectionFlag()) {
+			memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+			*iterations=0;
+			return RESULT_WORKING;
+		}
+		Log("Error running GPU program\n");
+		RaiseExitRequestTrigger();
+		return -1;        //err
       }
 		
       // Checking whether the execution of the program is complete or not
@@ -395,9 +417,14 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       }
       if(result!=CAL_RESULT_OK)
       {
-        Log("Error waiting for GPU program to finish!\n");
-        RaiseExitRequestTrigger();
-        return -1;        //err
+		if(setRemoteConnectionFlag()) {
+			memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+			*iterations=0;
+			return RESULT_WORKING;
+		}
+		Log("Error while waiting for GPU program to finish!\n");
+		RaiseExitRequestTrigger();
+		return -1;        //err
       }
       HiresTimerGet(&cend);
       double d=HiresTimerDiff(cend, cstart)/fr_d;
@@ -442,19 +469,19 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
         }
        if (read_res<0)
        {
-//			NonPolledUSleep(50000);		//Lost connection to driver
-//			*iterations=iter_c;
-//			memcpy(rc5_72unitwork,&rc5_72unitwork_c,sizeof(RC5_72UnitWork));
-
-//			return RESULT_WORKING;
-         Log("Internal error!\n");
-         RaiseExitRequestTrigger();
-         return -1;        //err
+		   if(setRemoteConnectionFlag()) {
+			   memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+			   *iterations=0;
+			   return RESULT_WORKING;
+		   }
+		   Log("Internal error!\n");
+		   RaiseExitRequestTrigger();
+		   return -1;        //err
        }
        if(iters_finished!=((iters0-(rest0==0))&0x3f) /*6 lower bits*/)	//Something bad happend during program execution
        {
          Log("GPU: unexpected program stop!\n");
-         Log("Expected: %x, got:%x!\n",iters0,iters_finished);
+         Log("Expected: %x, got:%x!\n",iters0-(rest0==0),iters_finished);
          RaiseExitRequestTrigger();
          return -1;        //err
        }

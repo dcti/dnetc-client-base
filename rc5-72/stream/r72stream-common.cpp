@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.11 2009/09/23 17:03:31 sla Exp $
+ * $Id: r72stream-common.cpp,v 1.12 2010/01/03 10:42:44 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -40,9 +40,52 @@ void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr)
 
 
 fastlock_t ATIstream_cMutex;
+fastlock_t ATIstream_RDPMutex;
+
+int ati_RC_error;
 void InitMutex()
 {
   fastlock_init(&ATIstream_cMutex);
+  fastlock_init(&ATIstream_RDPMutex);
+  ati_RC_error=0;
+}
+
+u32 setRemoteConnectionFlag()
+{
+	if(isRemoteSession())
+	{
+		fastlock_lock(&ATIstream_RDPMutex);
+		if(!ati_RC_error)
+		{
+			LogScreen("Remote connection is active. Paused\n");
+			ati_RC_error=1;
+		}
+		fastlock_unlock(&ATIstream_RDPMutex);
+		return 1;
+	}
+	return 0;
+}
+
+u32 checkRemoteConnectionFlag()
+{
+  if(ati_RC_error)
+  {
+	  if(isRemoteSession())
+		return 1;
+  	  
+	  fastlock_lock(&ATIstream_RDPMutex);
+	  if(ati_RC_error)
+	  {
+		LogScreen("Remote connection is no longer active. Resuming\n");
+
+		for(int i=0;i<AMD_STREAM_MAX_GPUS;i++)
+			CContext[i].coreID=CORE_NONE;
+		ati_RC_error=0;
+	  }
+	  fastlock_unlock(&ATIstream_RDPMutex);
+	  return 0;
+  }
+  return 0;
 }
 
 #define BUFFER_INCREMENT 32768

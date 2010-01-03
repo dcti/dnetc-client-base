@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.14 2009/12/30 15:04:52 sla Exp $
+ * $Id: r72stream-common.h,v 1.15 2010/01/03 10:42:44 sla Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -41,6 +41,9 @@
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
 CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool);
 
+u32 checkRemoteConnectionFlag();
+u32 setRemoteConnectionFlag();
+
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 // CliTimer does not have fine resolution as required by the core
 typedef ui64 hirestimer_type;
@@ -68,6 +71,12 @@ inline double HiresTimerDiff(const hirestimer_type t1, const hirestimer_type t2)
 {
   return (double)(t1 < t2 ? t2 - t1 : t1 - t2);
 }
+
+inline u32 isRemoteSession()
+{
+	return GetSystemMetrics(SM_REMOTESESSION);
+}
+
 #else
 typedef struct timeval hirestimer_type;
 
@@ -88,6 +97,8 @@ inline double HiresTimerGetResolution()
 {
   return 1.f;
 }
+
+#define isRemoteSession() 0
 
 #endif
 

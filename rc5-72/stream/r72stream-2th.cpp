@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-2th.cpp,v 1.2 2010/01/01 09:09:16 sla Exp $
+ * $Id: r72stream-2th.cpp,v 1.3 2010/01/03 10:39:47 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -354,6 +354,7 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
 s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
 	u32 deviceID=rc5_72unitwork->threadnum;
+	RC5_72UnitWork tmp_unit;
 
   if (CContext[deviceID].coreID!=CORE_IL42T)
   {
@@ -363,6 +364,20 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 		return -1;        //årr
     }
   }
+
+  if(checkRemoteConnectionFlag())
+  {
+    NonPolledUSleep(500*1000);	//sleep 0.5 sec 
+	*iterations=0;
+	return RESULT_WORKING;
+  }
+  if(CContext[deviceID].coreID==CORE_NONE)
+  {
+	*iterations=0;
+	return RESULT_WORKING;
+  }
+	
+  memcpy(&tmp_unit, rc5_72unitwork, sizeof(RC5_72UnitWork));
 
   u32 kiter =(*iterations)/4;
 
@@ -392,11 +407,16 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 		calResUnmap(CContext[deviceID].globalRes0);
     }else
 	{
+		if(setRemoteConnectionFlag()) {
+			*iterations=0;
+			return RESULT_WORKING;
+		}
 		Log("Failed to map global buffer!\n");
 		RaiseExitRequestTrigger();
 		return -1;        //err
 	}
   }
+
   if((CContext[deviceID].attribs.memExport!=0)&&(CContext[deviceID].globalRes1!=0)) {
     u32* gPtr = NULL;
     CALuint pitch = 0;
@@ -406,6 +426,10 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 		calResUnmap(CContext[deviceID].globalRes1);
     }else
 	{
+		if(setRemoteConnectionFlag()) {
+			*iterations=0;
+			return RESULT_WORKING;
+		}
 		Log("Failed to map global buffer!\n");
 		RaiseExitRequestTrigger();
 		return -1;        //err
@@ -415,6 +439,7 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
   CALresult result;
   RC5_72UnitWork unit0;
   memcpy(&unit0,rc5_72unitwork,sizeof(RC5_72UnitWork));		//make a local copy of the work unit for convinience
+
   do{
 	    //Make sure there is no overflow in core output
 		if(CContext[deviceID].maxIters>65535)
@@ -425,7 +450,12 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING);
 			if(result!=CAL_RESULT_OK)
 			{
-				Log("Error waiting for GPU program to finish!\n");
+				if(setRemoteConnectionFlag()) {
+					memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+					*iterations=0;
+					return RESULT_WORKING;
+				}
+				Log("Error while waiting for GPU program to finish!\n");
 				RaiseExitRequestTrigger();
 				return -1;        //err
 			}
@@ -439,6 +469,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			}
 			if (read_res<0)
 			{
+				if(setRemoteConnectionFlag()) {
+					memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+					*iterations=0;
+					return RESULT_WORKING;
+				}
 				Log("Internal error!\n");
 				RaiseExitRequestTrigger();
 				return -1;        //err
@@ -446,7 +481,7 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			if(iters_finished!=((iters0-(rest0==0))&0x3f) /*6 lower bits*/)	//Something bad happened during program execution
 			{
 				Log("GPU: unexpected program stop!\n");
-				Log("Expected: %x, got:%x!\n",iters0&0x3f,iters_finished);
+				Log("Expected: %x, got:%x!\n",(iters0-(rest0==0))&0x3f,iters_finished);
 				RaiseExitRequestTrigger();
 				return -1;        //err
 			}
@@ -471,6 +506,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			//fill constant buffer
 			if(!FillConstantBuffer(CContext[deviceID].constRes0,RunSize, iters0, rest0, (float)width, &unit0,0))
 			{
+				if(setRemoteConnectionFlag()) {
+					memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+					*iterations=0;
+					return RESULT_WORKING;
+				}
 				Log("Internal error!\n");
 				RaiseExitRequestTrigger();
 				return -1;        //err
@@ -480,6 +520,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			result=calCtxRunProgram(&e0, CContext[deviceID].ctx, CContext[deviceID].func0, &domain);
 			if((result!=CAL_RESULT_OK)&&(result!=CAL_RESULT_PENDING))
 			{
+				if(setRemoteConnectionFlag()) {
+					memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+					*iterations=0;
+					return RESULT_WORKING;
+				}
 				Log("Error running GPU program\n");
 				RaiseExitRequestTrigger();
 				return -1;        //err
@@ -496,6 +541,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			while((result=calCtxIsEventDone(CContext[deviceID].ctx, e1)) == CAL_RESULT_PENDING);
 			if(result!=CAL_RESULT_OK)
 			{
+				if(setRemoteConnectionFlag()) {
+					memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+					*iterations=0;
+					return RESULT_WORKING;
+				}
 				Log("Error while waiting for GPU program to finish!\n");
 				RaiseExitRequestTrigger();
 				return -1;        //err
@@ -510,6 +560,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			}
 			if (read_res<0)
 			{
+				if(setRemoteConnectionFlag()) {
+					memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+					*iterations=0;
+					return RESULT_WORKING;
+				}
 				Log("Internal error!\n");
 				RaiseExitRequestTrigger();
 				return -1;        //err
@@ -533,12 +588,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 				if(d<31.)
 				{
 					CContext[deviceID].maxIters++;
-//					printf("delay=%lf, maxiters=%u\n",d,CContext[deviceID].maxIters);
 				}
 				else 
 					if(d>34.){
 						u32 delta=0;
-						if(CContext[deviceID].maxIters>44.)
+						if(d>44.)
 							delta=CContext[deviceID].maxIters>>1;
 						else
 							delta=1;
@@ -546,7 +600,6 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 							CContext[deviceID].maxIters-=delta;
 						else
 							CContext[deviceID].maxIters=1;
-//						printf("delay=%lf, maxiters=%u\n",d,CContext[deviceID].maxIters);
 					}
 			}
 		} 
@@ -564,6 +617,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			//fill constant buffer
 			if(!FillConstantBuffer(CContext[deviceID].constRes1,RunSize, iters1, rest1, (float)width, &unit0,0))
 			{
+				if(setRemoteConnectionFlag()) {
+					memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+					*iterations=0;
+					return RESULT_WORKING;
+				}
 				Log("Internal error!\n");
 				RaiseExitRequestTrigger();
 				return -1;        //err
@@ -573,6 +631,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 			result=calCtxRunProgram(&e1, CContext[deviceID].ctx, CContext[deviceID].func1, &domain);
 			if((result!=CAL_RESULT_OK)&&(result!=CAL_RESULT_PENDING))
 			{
+				if(setRemoteConnectionFlag()) {
+					memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+					*iterations=0;
+					return RESULT_WORKING;
+				}
 				Log("Error running GPU program\n");
 				RaiseExitRequestTrigger();
 				return -1;        //err
