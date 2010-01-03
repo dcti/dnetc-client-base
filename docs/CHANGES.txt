@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.85 2010/01/03 05:02:21 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.86 2010/01/03 18:24:54 jlawson Exp $
 ==========================================================================
 
 2.9100
@@ -32,7 +32,8 @@ Version change log: $Id: CHANGES.txt,v 1.85 2010/01/03 05:02:21 jlawson Exp $
 2.9107-516  imp: add cpu/os id to client request packets
                  for improved client control
             chg: cuda,stream: remove beta expiry
-            new: ATI Stream 2th core, fix #4278
+            new: stream: new rc5-72 2th core, fix #4278
+	    fix: stream: Win RDP connection crash #4235
 
 2.9107-515  imp: cellbe: faster OGR-NG SPU ASM core
 
