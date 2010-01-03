@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.6 2009/10/01 16:05:20 sla Exp $
+ * $Id: amdstream_info.cpp,v 1.7 2010/01/03 10:04:30 sla Exp $
 */
 
 #include "amdstream_info.h"
@@ -18,7 +18,7 @@ char *ATIstream_GPUname=0L;
 
 u32 getAMDStreamDeviceCount()
 {
-  return amdstream_numDevices;
+  return atistream_numDevices;
 }
 
 unsigned getAMDStreamDeviceFreq()

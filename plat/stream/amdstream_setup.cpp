@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.11 2009/08/15 02:44:36 andreasb Exp $
+ * $Id: amdstream_setup.cpp,v 1.12 2010/01/03 10:02:33 sla Exp $
 */
 
 #include "amdstream_setup.h"
@@ -18,16 +18,18 @@
 #include <stdlib.h>
 
 stream_context_t CContext[AMD_STREAM_MAX_GPUS];
-int amdstream_numDevices = -1;
+int atistream_numDevices = -1;
+
+extern int ati_RC_error;
 
 void InitMutex();
 
 void AMDStreamInitialize()
 {
-  if (amdstream_numDevices >= 0)
+  if (atistream_numDevices >= 0)
     return;
 
-  amdstream_numDevices=0;
+  atistream_numDevices=0;
   calInit();
   {
     CALuint numDevices;
@@ -38,12 +40,14 @@ void AMDStreamInitialize()
 //      LogScreen("No supported devices found!");
       return;
     }
-    amdstream_numDevices = numDevices;
+    atistream_numDevices = numDevices;
   }
 
   InitMutex();
-  if(amdstream_numDevices>AMD_STREAM_MAX_GPUS)
-    amdstream_numDevices=AMD_STREAM_MAX_GPUS;
+  if(atistream_numDevices>AMD_STREAM_MAX_GPUS)
+    atistream_numDevices=AMD_STREAM_MAX_GPUS;
+
+  ati_RC_error=0;
 
   CALdevice dev;
   for(int i=0; i<AMD_STREAM_MAX_GPUS; i++) {
@@ -68,7 +72,7 @@ void AMDStreamInitialize()
     CContext[i].image=0L;
     CContext[i].idleCounter=0;
 
-    if(i<amdstream_numDevices) {
+    if(i<atistream_numDevices) {
       // Opening device
       calDeviceOpen(&dev, i);
       CContext[i].device=dev;
