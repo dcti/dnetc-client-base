@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-2th.cpp,v 1.4 2010/01/04 02:57:58 andreasb Exp $
+ * $Id: r72stream-2th.cpp,v 1.5 2010/01/04 03:56:15 jlawson Exp $
 */
 
 #include "r72stream-common.h"
@@ -90,7 +90,7 @@ static bool init_rc5_72_il4_2t(u32 Device)
   // Compiling Device Program
   //-------------------------------------------------------------------------
   result=compileProgram(&CContext[Device].ctx,&CContext[Device].image,&CContext[Device].module0,
-                        (CALchar *)il4_nand_src_g,CContext[Device].attribs.target,
+    const_cast<CALchar *>(il4_nand_src_g),CContext[Device].attribs.target,
                         (CContext[Device].attribs.memExport!=0)&&(CContext[Device].globalRes0!=0));
 
   if ( result!= CAL_RESULT_OK)
@@ -100,7 +100,7 @@ static bool init_rc5_72_il4_2t(u32 Device)
   }
 
   result=compileProgram(&CContext[Device].ctx,&CContext[Device].image,&CContext[Device].module1,
-                        (CALchar *)il4_nand_src_g,CContext[Device].attribs.target,
+    const_cast<CALchar *>(il4_nand_src_g),CContext[Device].attribs.target,
                         (CContext[Device].attribs.memExport!=0)&&(CContext[Device].globalRes1!=0));
 
   if ( result!= CAL_RESULT_OK)
@@ -395,7 +395,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
   LogScreen("Tread %u: %u ITERS (%u), maxiters=%u\n",deviceID, kiter,kiter/RunSize,CContext[deviceID].maxIters);
 #endif
   double fr_d=HiresTimerGetResolution();
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
   hirestimer_type cstart=0, cend;
+#else
+  hirestimer_type cstart={0,0}, cend;
+#endif
 
   //Clear global buffers
   if((CContext[deviceID].attribs.memExport!=0)&&(CContext[deviceID].globalRes0!=0)) {
@@ -581,7 +585,12 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
       kiter-=itersDone;
       key_incr(&rc5_72unitwork->L0.hi,&rc5_72unitwork->L0.mid,&rc5_72unitwork->L0.lo,itersDone*4);
       iters1=0;
+			int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 );
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if(cstart!=0)
+#else
+                        if (cstart.tv_sec != 0 || cstart.tv_usec != 0)
+#endif
       {
         HiresTimerGet(&cend);
         double d=HiresTimerDiff(cend, cstart)/fr_d;
@@ -648,8 +657,14 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     if(itersNeeded) {
       HiresTimerGet(&cstart);
       NonPolledUSleep(30000);
-    }else
+		}else {
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       cstart=0;
+#else
+			cstart.tv_sec = 0;
+			cstart.tv_usec = 0;
+#endif
+		}
   } while(iters0||iters1);
 
   /* tell the client about the optimal timeslice increment for this core
