@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cna.cpp,v 1.7 2010/01/04 02:57:59 andreasb Exp $
+ * $Id: r72stream-vc4cna.cpp,v 1.8 2010/01/04 03:14:29 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -76,7 +76,7 @@ static bool init_rc5_72_il4a_nand(u32 Device)
   result=calCtxCreate(&CContext[Device].ctx, CContext[Device].device);
   if(result!=CAL_RESULT_OK)
   {
-    LogScreen("Thread %u: creating context failed! Reason:%u\n",Device,result);
+    Log("Thread %u: creating context failed! Reason:%u\n",Device,result);
     return false;
   }
 
@@ -256,7 +256,7 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
           u32 CMC_iter=(((output>>2)&0x0000ffff)-1)*width*height;
           u32 CMC_hit=(CMC_iter+i*width+j)*4+(output&0x00000003);
 
-          //  LogScreen("Partial match found\n");
+          // LogScreen("Partial match found\n");
           u32 hi,mid,lo;
           hi=rc5_72unitwork->L0.hi;
           mid=rc5_72unitwork->L0.mid;
@@ -297,13 +297,12 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
   u32 deviceID=rc5_72unitwork->threadnum;
   RC5_72UnitWork tmp_unit;
 
-
   if (CContext[deviceID].coreID!=CORE_IL4NA)
   {
     init_rc5_72_il4a_nand(deviceID);
     if(CContext[deviceID].coreID!=CORE_IL4NA) {
       RaiseExitRequestTrigger();
-      return -1;        //arr
+      return -1;
     }
   }
 
@@ -412,7 +411,7 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     CALresult result;
     while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) {
       if(!busy_c)
-        NonPolledUSleep(15000);     //15ms
+        NonPolledUSleep(15000);  //15ms
       busy_c++;
     }
     if(result!=CAL_RESULT_OK)
@@ -476,14 +475,15 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       }
       Log("Internal error!\n");
       RaiseExitRequestTrigger();
-      return -1;             //err
+      return -1;
     }
-    if(iters_finished!=((iters0-(rest0==0))&0x3f) /*6 lower bits*/)     //Something bad happend during program execution
+    if(iters_finished!=((iters0-(rest0==0))&0x3f) /*6 lower bits*/)
     {
+      // Something bad happend during program execution
       Log("GPU: unexpected program stop!\n");
-      Log("Expected: %x, got:%x!\n",iters0-(rest0==0),iters_finished);
+      Log("Expected: %x, got:%x! Iters:%u MAXiters:%d rest:%u\n",iters0-(rest0==0),iters_finished,iters0,CContext[deviceID].maxIters,rest0);
       RaiseExitRequestTrigger();
-      return -1;           //err
+      return -1;
     }
 
     unsigned itersDone=(iters0-1)*RunSize+rest0;

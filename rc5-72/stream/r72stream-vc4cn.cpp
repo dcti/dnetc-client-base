@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.18 2010/01/04 02:57:58 andreasb Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.19 2010/01/04 03:14:29 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -302,7 +302,7 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     init_rc5_72_il4_nand(deviceID);
     if(CContext[deviceID].coreID!=CORE_IL4N) {
       RaiseExitRequestTrigger();
-      return -1;          //årr
+      return -1;
     }
   }
 
@@ -332,6 +332,7 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
   u32 rest0=0;
 
 //#define VERBOSE 1
+
 #ifdef VERBOSE
   LogScreen("Tread %u: %u ITERS (%u), maxiters=%u\n",deviceID, kiter,kiter/RunSize,CContext[deviceID].maxIters);
 #endif
@@ -474,14 +475,15 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
       }
       Log("Internal error!\n");
       RaiseExitRequestTrigger();
-      return -1;          //err
+      return -1;
     }
-    if(iters_finished!=((iters0-(rest0==0))&0x3f) /*6 lower bits*/) //Something bad happend during program execution
+    if(iters_finished!=((iters0-(rest0==0))&0x3f) /*6 lower bits*/)
     {
+      // Something bad happend during program execution
       Log("GPU: unexpected program stop!\n");
       Log("Expected: %x, got:%x! Iters:%u MAXiters:%d rest:%u\n",iters0-(rest0==0),iters_finished,iters0,CContext[deviceID].maxIters,rest0);
       RaiseExitRequestTrigger();
-      return -1;        //err
+      return -1;
     }
 
     unsigned itersDone=(iters0-1)*RunSize+rest0;
