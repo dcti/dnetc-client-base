@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-2th.cpp,v 1.5 2010/01/04 03:56:15 jlawson Exp $
+ * $Id: r72stream-2th.cpp,v 1.6 2010/01/04 04:05:45 jlawson Exp $
 */
 
 #include "r72stream-common.h"
@@ -14,14 +14,13 @@
 
 static bool init_rc5_72_il4_2t(u32 Device)
 {
-  if(CContext[Device].coreID!=CORE_IL42T)
+  if(CContext[Device].coreID != CORE_IL42T)
     AMDStreamReinitializeDevice(Device);
 
-  if(!CContext[Device].active)
-  {
+  if(!CContext[Device].active) {
     Log("Thread %u: Device is not supported\n", Device);
     return false;
-  } else{
+  } else {
     switch(CContext[Device].attribs.target) {
     case CAL_TARGET_600:
       CContext[Device].domainSizeX=56;
@@ -247,7 +246,7 @@ static bool FillConstantBuffer(CALresource res, u32 runsize, u32 iters, u32 rest
   u32* constPtr = NULL;
   CALuint pitch = 0;
 
-  if(calResMap((CALvoid**)&constPtr, &pitch, res, 0)!=CAL_RESULT_OK)
+  if(calResMap((CALvoid**)&constPtr, &pitch, res, 0) != CAL_RESULT_OK)
     return false;
 
   u32 hi,mid,lo;
@@ -257,25 +256,25 @@ static bool FillConstantBuffer(CALresource res, u32 runsize, u32 iters, u32 rest
 
   key_incr(&hi,&mid,&lo,keyIncrement*4);
 
-  //cb0[0]					//key_hi,key_mid,key_lo,granularity
+  //cb0[0]                                      //key_hi,key_mid,key_lo,granularity
   constPtr[0]=hi;
   constPtr[1]=mid;
   constPtr[2]=lo;
   constPtr[3]=runsize*4;
 
-  //cb0[1]					//plain_lo,plain_hi,cypher_lo,cypher_hi
+  //cb0[1]                                      //plain_lo,plain_hi,cypher_lo,cypher_hi
   constPtr[4]=rc5_72unitwork->plain.lo;
   constPtr[5]=rc5_72unitwork->plain.hi;
   constPtr[6]=rc5_72unitwork->cypher.lo;
   constPtr[7]=rc5_72unitwork->cypher.hi;
 
-  //cb0[2]					//iters,rest,width
+  //cb0[2]                                      //iters,rest,width
   constPtr[8]=constPtr[11]=iters;
   constPtr[9]=rest;
   float *f;
   f=(float*)&constPtr[10]; *f=width;
 
-  if(calResUnmap(res)!=CAL_RESULT_OK)
+  if(calResUnmap(res) != CAL_RESULT_OK)
     return false;
   return true;
 }
@@ -304,9 +303,9 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
 
   u32 last_CMC=0;
   *iters_done=(o0[0]&0x7e000000)>>25;
-  if(found)
+  if(found) {
     for(u32 i=0; i<height; i++) {
-      u32 idx=i*pitch;
+      u32 idx = i*pitch;
       for(u32 j=0; j<width; j++) {
         if(o0[idx+j]&0x1ffffff)                   //partial match
         {
@@ -315,7 +314,7 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
           u32 CMC_iter=(((output>>2)&0x0000ffff)-1)*width*height;
           u32 CMC_hit=(CMC_iter+i*width+j)*4+(output&0x00000003);
 
-          //			LogScreen("Partial match found\n");
+          //                    LogScreen("Partial match found\n");
           u32 hi,mid,lo;
           hi=rc5_72unitwork->L0.hi;
           mid=rc5_72unitwork->L0.mid;
@@ -345,7 +344,9 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
         }
       }
     }
-  if(calResUnmap(res)!=CAL_RESULT_OK) {
+  }
+
+  if(calResUnmap(res) != CAL_RESULT_OK) {
     return -1;
   }
   return 0;
@@ -405,12 +406,10 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
   if((CContext[deviceID].attribs.memExport!=0)&&(CContext[deviceID].globalRes0!=0)) {
     u32* gPtr = NULL;
     CALuint pitch = 0;
-    if(calResMap((CALvoid**)&gPtr, &pitch, CContext[deviceID].globalRes0, 0)==CAL_RESULT_OK)
-    {
+    if(calResMap((CALvoid**)&gPtr, &pitch, CContext[deviceID].globalRes0, 0)==CAL_RESULT_OK) {
       gPtr[0]=0;
       calResUnmap(CContext[deviceID].globalRes0);
-    }else
-    {
+    } else {
       if(setRemoteConnectionFlag()) {
         *iterations=0;
         return RESULT_WORKING;
@@ -421,15 +420,13 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     }
   }
 
-  if((CContext[deviceID].attribs.memExport!=0)&&(CContext[deviceID].globalRes1!=0)) {
+  if((CContext[deviceID].attribs.memExport != 0)&&(CContext[deviceID].globalRes1 != 0)) {
     u32* gPtr = NULL;
     CALuint pitch = 0;
-    if(calResMap((CALvoid**)&gPtr, &pitch, CContext[deviceID].globalRes1, 0)==CAL_RESULT_OK)
-    {
+    if(calResMap((CALvoid**)&gPtr, &pitch, CContext[deviceID].globalRes1, 0) == CAL_RESULT_OK) {
       gPtr[0]=0;
       calResUnmap(CContext[deviceID].globalRes1);
-    }else
-    {
+    } else {
       if(setRemoteConnectionFlag()) {
         *iterations=0;
         return RESULT_WORKING;
@@ -446,13 +443,14 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 
   do {
     //Make sure there is no overflow in core output
-    if(CContext[deviceID].maxIters>65535)
-      CContext[deviceID].maxIters=65535;
+    if(CContext[deviceID].maxIters > 65535) {
+      CContext[deviceID].maxIters = 65535;
+    }
 
     if(iters0)      //check the results of GPU thread #0
     {
-      while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) ;
-      if(result!=CAL_RESULT_OK)
+      while((result = calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) ;
+      if(result != CAL_RESULT_OK)
       {
         if(setRemoteConnectionFlag()) {
           memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
@@ -522,11 +520,11 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 
       CALdomain domain = {0, 0, width, height};
       result=calCtxRunProgram(&e0, CContext[deviceID].ctx, CContext[deviceID].func0, &domain);
-      if((result!=CAL_RESULT_OK)&&(result!=CAL_RESULT_PENDING))
+      if((result != CAL_RESULT_OK) && (result != CAL_RESULT_PENDING))
       {
         if(setRemoteConnectionFlag()) {
           memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
-          *iterations=0;
+          *iterations = 0;
           return RESULT_WORKING;
         }
         Log("Error running GPU program\n");
@@ -585,30 +583,30 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
       kiter-=itersDone;
       key_incr(&rc5_72unitwork->L0.hi,&rc5_72unitwork->L0.mid,&rc5_72unitwork->L0.lo,itersDone*4);
       iters1=0;
-			int CliTimerDiff( struct timeval *result, const struct timeval *tv1, const struct timeval *tv2 );
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       if(cstart!=0)
 #else
-                        if (cstart.tv_sec != 0 || cstart.tv_usec != 0)
+      if (cstart.tv_sec != 0 || cstart.tv_usec != 0)
 #endif
       {
         HiresTimerGet(&cend);
         double d=HiresTimerDiff(cend, cstart)/fr_d;
-        if(d<31.)
-        {
+        if(d < 31.0) {
           CContext[deviceID].maxIters++;
-        }
-        else
-        if(d>34.) {
-          u32 delta=0;
-          if(d>44.)
-            delta=CContext[deviceID].maxIters>>1;
-          else
-            delta=1;
-          if(delta<CContext[deviceID].maxIters)
-            CContext[deviceID].maxIters-=delta;
-          else
-            CContext[deviceID].maxIters=1;
+        } else {
+          if(d > 34.0) {
+            u32 delta=0;
+            if (d > 44.0) {
+              delta=CContext[deviceID].maxIters>>1;
+            } else {
+              delta=1;
+            }
+            if(delta < CContext[deviceID].maxIters) {
+              CContext[deviceID].maxIters -= delta;
+            } else {
+              CContext[deviceID].maxIters = 1;
+            }
+          }
         }
       }
     }
@@ -618,7 +616,7 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
       if(iters1>=CContext[deviceID].maxIters) {
         iters1=CContext[deviceID].maxIters;
         rest1=RunSize;
-      } else  {
+      } else {
         rest1=itersNeeded-iters1*RunSize;
         iters1++;
       }
@@ -637,8 +635,8 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
       }
 
       CALdomain domain = {0, 0, width, height};
-      result=calCtxRunProgram(&e1, CContext[deviceID].ctx, CContext[deviceID].func1, &domain);
-      if((result!=CAL_RESULT_OK)&&(result!=CAL_RESULT_PENDING))
+      result = calCtxRunProgram(&e1, CContext[deviceID].ctx, CContext[deviceID].func1, &domain);
+      if((result != CAL_RESULT_OK) && (result != CAL_RESULT_PENDING))
       {
         if(setRemoteConnectionFlag()) {
           memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
@@ -654,19 +652,18 @@ s32 rc5_72_unit_func_il4_2t(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
       key_incr(&unit0.L0.hi,&unit0.L0.mid,&unit0.L0.lo,((iters1-1)*RunSize+rest1)*4);        //Увеличиваем текущий, выбраный для расчета блок на количество отправленных ключей
       itersNeeded-=(iters1-1)*RunSize+rest1;
     }
-    if(itersNeeded) {
+    if (itersNeeded) {
       HiresTimerGet(&cstart);
       NonPolledUSleep(30000);
-		}else {
+    } else {
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
       cstart=0;
 #else
-			cstart.tv_sec = 0;
-			cstart.tv_usec = 0;
+      cstart.tv_sec = 0;
+      cstart.tv_usec = 0;
 #endif
-		}
+    }
   } while(iters0||iters1);
-
   /* tell the client about the optimal timeslice increment for this core
      (with current parameters) */
   rc5_72unitwork->optimal_timeslice_increment = RunSize*4*CContext[deviceID].maxIters;
