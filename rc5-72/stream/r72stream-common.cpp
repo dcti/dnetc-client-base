@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.13 2010/01/04 02:57:58 andreasb Exp $
+ * $Id: r72stream-common.cpp,v 1.14 2010/01/04 04:13:23 jlawson Exp $
 */
 
 #include "r72stream-common.h"
@@ -101,35 +101,35 @@ unsigned char* Decompress(unsigned char *inbuf, unsigned length)
     return NULL;
 
   while(todo) {
-    if(*inbuf&0x80)    //compressed
-    {
+    if(*inbuf & 0x80) {    //compressed
       unsigned len=*inbuf&0x7f;
 
-      if(buflen<=(used+len)) {
-        buflen+=BUFFER_INCREMENT;
-        outbuf=(unsigned char*)realloc(outbuf,buflen);
+      if(buflen <= (used+len)) {
+        buflen += BUFFER_INCREMENT;
+        outbuf = (unsigned char*)realloc(outbuf,buflen);
         if(outbuf==NULL)
           break;
       }
 
       unsigned off=*(inbuf+1)+*(inbuf+2)*256;
-      inbuf+=3; todo-=3;
+      inbuf += 3;
+      todo -= 3;
       for( ; len>0; len--) {
-        outbuf[used]=outbuf[used-off];
+        outbuf[used] = outbuf[used-off];
         used++;
       }
-    }else    //plain
-    {
+    } else {  //plain
       unsigned len=*inbuf&0x7f;
-      if(buflen<=(used+len)) {
-        buflen+=BUFFER_INCREMENT;
-        outbuf=(unsigned char*)realloc(outbuf,buflen);
+      if(buflen <= (used+len)) {
+        buflen += BUFFER_INCREMENT;
+        outbuf = (unsigned char*)realloc(outbuf,buflen);
         if(outbuf==NULL)
           break;
       }
-      todo--; inbuf++;
+      todo--;
+      inbuf++;
       for( ; len>0; len--) {
-        outbuf[used++]=*inbuf;
+        outbuf[used++] = *inbuf;
         inbuf++; todo--;
       }
     }
@@ -160,21 +160,22 @@ CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CA
     return CAL_RESULT_ERROR;
   strcpy(tempB,(const char*)decompressed_src);
   do {
-    p=strchr(tempB,'#');
-    if(p)
-      if(globalFlag)
-        *p=' ';
-      else {
-        *p=';';
-        *(p+1)=';';     //TODO:HACK!!
+    p = strchr(tempB,'#');
+    if(p) {
+      if(globalFlag) {
+        *p = ' ';
+      } else {
+        *p = ';';
+        *(p+1) = ';';     //TODO:HACK!!
       }
+    }
   } while(p);
   fastlock_lock(&ATIstream_cMutex);
-  result=calclCompile(&s_obj, CAL_LANGUAGE_IL, (CALchar*)tempB, target);
-  if(result==CAL_RESULT_OK)
+  result = calclCompile(&s_obj, CAL_LANGUAGE_IL, (CALchar*)tempB, target);
+  if(result == CAL_RESULT_OK)
   {
     result=calclLink(image, &s_obj, 1);
-    if(result==CAL_RESULT_OK)
+    if(result == CAL_RESULT_OK)
       calModuleLoad(module, *ctx, *image);
     calclFreeObject(s_obj);
   }
