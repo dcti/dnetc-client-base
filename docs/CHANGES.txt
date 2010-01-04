@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.86 2010/01/03 18:24:54 jlawson Exp $
+Version change log: $Id: CHANGES.txt,v 1.87 2010/01/04 20:37:58 stream Exp $
 ==========================================================================
 
 2.9100
@@ -32,14 +32,15 @@ Version change log: $Id: CHANGES.txt,v 1.86 2010/01/03 18:24:54 jlawson Exp $
 2.9107-516  imp: add cpu/os id to client request packets
                  for improved client control
             chg: cuda,stream: remove beta expiry
-            new: stream: new rc5-72 2th core, fix #4278
-	    fix: stream: Win RDP connection crash #4235
+            new: stream: new rc5-72 2th core (#4278)
+            fix: stream: Win RDP connection crash (#4235)
+            chg: x86: default rc5-72 core selection for some cpus (#4193)
 
 2.9107-515  imp: cellbe: faster OGR-NG SPU ASM core
 
 2.9106-514  fix: all: cannot run test or bench if OS doesn't support
                       cpu count detection.
-            imp: x86: Via C7-D/M Model D detection.
+            imp: x86: Via C7-D/M Model D detection (#4246)
             fix: stream: rc5-72 added Catalyst 9.9 support
             fix: some: one thread stays asleep in 'pause when running' (#4248)
             fix: haiku: ps output changed, preventing shutdown of other dnetc
