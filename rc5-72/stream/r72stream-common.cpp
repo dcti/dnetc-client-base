@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.12 2010/01/03 10:42:44 sla Exp $
+ * $Id: r72stream-common.cpp,v 1.13 2010/01/04 02:57:58 andreasb Exp $
 */
 
 #include "r72stream-common.h"
@@ -52,38 +52,38 @@ void InitMutex()
 
 u32 setRemoteConnectionFlag()
 {
-	if(isRemoteSession())
-	{
-		fastlock_lock(&ATIstream_RDPMutex);
-		if(!ati_RC_error)
-		{
-			LogScreen("Remote connection is active. Paused\n");
-			ati_RC_error=1;
-		}
-		fastlock_unlock(&ATIstream_RDPMutex);
-		return 1;
-	}
-	return 0;
+  if(isRemoteSession())
+  {
+    fastlock_lock(&ATIstream_RDPMutex);
+    if(!ati_RC_error)
+    {
+      LogScreen("Remote connection is active. Paused\n");
+      ati_RC_error=1;
+    }
+    fastlock_unlock(&ATIstream_RDPMutex);
+    return 1;
+  }
+  return 0;
 }
 
 u32 checkRemoteConnectionFlag()
 {
   if(ati_RC_error)
   {
-	  if(isRemoteSession())
-		return 1;
-  	  
-	  fastlock_lock(&ATIstream_RDPMutex);
-	  if(ati_RC_error)
-	  {
-		LogScreen("Remote connection is no longer active. Resuming\n");
+    if(isRemoteSession())
+      return 1;
 
-		for(int i=0;i<AMD_STREAM_MAX_GPUS;i++)
-			CContext[i].coreID=CORE_NONE;
-		ati_RC_error=0;
-	  }
-	  fastlock_unlock(&ATIstream_RDPMutex);
-	  return 0;
+    fastlock_lock(&ATIstream_RDPMutex);
+    if(ati_RC_error)
+    {
+      LogScreen("Remote connection is no longer active. Resuming\n");
+
+      for(int i=0; i<AMD_STREAM_MAX_GPUS; i++)
+        CContext[i].coreID=CORE_NONE;
+      ati_RC_error=0;
+    }
+    fastlock_unlock(&ATIstream_RDPMutex);
+    return 0;
   }
   return 0;
 }
@@ -99,7 +99,7 @@ unsigned char* Decompress(unsigned char *inbuf, unsigned length)
   outbuf=(unsigned char*)malloc(BUFFER_INCREMENT);
   if(outbuf==NULL)
     return NULL;
-	
+
   while(todo) {
     if(*inbuf&0x80)    //compressed
     {
@@ -159,16 +159,16 @@ CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CA
   if(!tempB)
     return CAL_RESULT_ERROR;
   strcpy(tempB,(const char*)decompressed_src);
-  do{
+  do {
     p=strchr(tempB,'#');
-    if(p) 
+    if(p)
       if(globalFlag)
         *p=' ';
       else {
         *p=';';
-        *(p+1)=';';		//TODO:HACK!!
+        *(p+1)=';';     //TODO:HACK!!
       }
-  }while(p);
+  } while(p);
   fastlock_lock(&ATIstream_cMutex);
   result=calclCompile(&s_obj, CAL_LANGUAGE_IL, (CALchar*)tempB, target);
   if(result==CAL_RESULT_OK)

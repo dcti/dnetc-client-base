@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.15 2010/01/03 10:42:44 sla Exp $
+ * $Id: r72stream-common.h,v 1.16 2010/01/04 02:57:58 andreasb Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -74,7 +74,7 @@ inline double HiresTimerDiff(const hirestimer_type t1, const hirestimer_type t2)
 
 inline u32 isRemoteSession()
 {
-	return GetSystemMetrics(SM_REMOTESESSION);
+  return GetSystemMetrics(SM_REMOTESESSION);
 }
 
 #else
