@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.7 2010/01/03 10:04:30 sla Exp $
+ * $Id: amdstream_info.cpp,v 1.8 2010/01/07 09:01:08 sla Exp $
 */
 
 #include "amdstream_info.h"
@@ -59,6 +59,9 @@ static const char* GetNameById(u32 id)
     break;
   case 8: //RV870
     name = "RV870";
+    break;
+  case 9: //RV840
+    name = "RV840";
     break;
   default:
     break;
