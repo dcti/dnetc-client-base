@@ -8,7 +8,7 @@
 */
 
 const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.8 2008/12/30 20:58:44 andreasb Exp $"; }
+return "@(#)$Id: w32ss.cpp,v 1.9 2010/02/01 20:06:43 stream Exp $"; }
 
 #include "cputypes.h"
 #include "unused.h"     /* DNETC_UNUSED_* */
@@ -51,6 +51,17 @@ static char szAlternateAppName[64] = {0};
 #define SSGetProfileString(e,d,b,l) GetDCTIProfileString(szSSIniSect,e,d,b,l)
 #define SSWriteProfileInt(e,v)    WriteDCTIProfileInt(szSSIniSect,e,v)
 #define SSGetProfileInt(e,d)        GetDCTIProfileInt(szSSIniSect,e,d)
+
+/* ---------------------------------------------------- */
+
+static HINSTANCE __SSGetInstance(HWND hWnd)
+{
+#if (CLIENT_OS == OS_WIN64)
+  return (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
+#else
+  return (HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE);
+#endif
+}
 
 /* ---------------------------------------------------- */
 
@@ -558,7 +569,7 @@ static BOOL CALLBACK __SSFreeProcessEnumWinProcNT(HWND hwnd,LPARAM lParam)
 static BOOL CALLBACK __SSFreeProcessEnumWinProc(HWND hwnd,LPARAM lParam)
 {
    HINSTANCE thatpid, searchpid = (HINSTANCE)lParam;
-   thatpid = (HINSTANCE)GetWindowLong(hwnd,GWL_HINSTANCE);
+   thatpid = __SSGetInstance(hwnd);
    if (thatpid == searchpid)
      PostMessage(hwnd, WM_CLOSE, 0, 0);
    return TRUE;
@@ -602,7 +613,7 @@ int SSFreeProcess( void *handle, int withShutdown )
       {
         int i;
         struct w16ProcessTrack *pidtrack = (struct w16ProcessTrack *)handle;
-        UINT hTimer = SetTimer(NULL,0, 500, NULL);
+        UINT_PTR hTimer = SetTimer(NULL,0, 500, NULL);
         for (i=0;i<3;i++)
         {
           MSG msg; char buffer[MAX_PATH+1];
@@ -792,7 +803,7 @@ void *SSLaunchProcess( const char *filename, const char *args,
 
         if (waitMode)
         {
-          UINT hTimer = SetTimer(NULL,0, 250, NULL);
+          UINT_PTR hTimer = SetTimer(NULL,0, 250, NULL);
           #if (CLIENT_OS != OS_WIN32) && (CLIENT_OS != OS_WIN64)
           int orefcount = -1;
           int os32file32 = 0;
@@ -1734,7 +1745,7 @@ static int _ConstructSSList(HWND hwnd, int *oseltype, const char *selname)
     int curtype; char *basename;
     char ourfile[MAX_PATH+2];
 
-    if (GetModuleFileName((HINSTANCE)GetWindowLong(hwnd,GWL_HINSTANCE),
+    if (GetModuleFileName(__SSGetInstance(hwnd),
                           ourfile,sizeof(ourfile)) == 0)
       ourfile[0] = '\0';
     else if ((basename = strrchr(ourfile, '\\')) != NULL)
@@ -1912,7 +1923,7 @@ static HWND SSGenChild(HWND hParentWnd)
     wc.lpfnWndProc = (WNDPROC)SSGenChildWndProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
-    wc.hInstance = 0; //(HINSTANCE)GetWindowLong( hParentWnd,GWL_HINSTANCE);
+    wc.hInstance = 0; //__SSGetInstance(hParentWnd);
     wc.hIcon = NULL;
     wc.hCursor = NULL;
     wc.hbrBackground = NULL; //(HBRUSH)GetStockObject(BLACK_BRUSH); //NULL
@@ -1938,7 +1949,7 @@ static void SSUnGenChild(HWND hChildWnd)
 {
   if (hChildWnd)
   {
-    HINSTANCE hInst = (HINSTANCE)GetWindowLong( hChildWnd,GWL_HINSTANCE);
+    HINSTANCE hInst = __SSGetInstance(hChildWnd);
     if (IsWindow(hChildWnd))
       DestroyWindow(hChildWnd);
     UnregisterClass("ssGenChild1",hInst);
@@ -2142,7 +2153,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
           memset((void *)&ofn,0,sizeof(ofn));
           ofn.lStructSize = sizeof(ofn);
           ofn.hwndOwner = dialog;
-          //ofn.hInstance = (HINSTANCE)GetWindowLong(dialog,GWL_HINSTANCE);
+          //ofn.hInstance = __SSGetInstance(dialog);
           ofn.lpstrFilter =
                         "distributed.net clients\0dnetc.exe;rc5des*.exe;\0"
                         "All Executable Files\0*.EXE;*.COM\0\0";
@@ -2266,8 +2277,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
           _MapSSList(sslistWnd, &newtype, fullpath );
            SSWriteProfileInt( "type", newtype );
           SSWriteProfileString( "file", fullpath );
-          SSDoSaver( (HINSTANCE)GetWindowLong(dialog,GWL_HINSTANCE),
-                          GetDesktopWindow() );
+          SSDoSaver( __SSGetInstance(dialog), GetDesktopWindow() );
           SSWriteProfileInt( "type", lasttype );
           SSWriteProfileString( "file", lastname );
 

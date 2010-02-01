@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.11 2009/12/27 13:52:36 andreasb Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.12 2010/02/01 20:06:43 stream Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -2141,10 +2141,7 @@ LRESULT CALLBACK __w16AboutBox( HWND dialog, UINT msg, WPARAM wParam, LPARAM lPa
 
 static void __launch_about_box(HWND hParent)
 {
-  #ifndef GWL_HINSTANCE
-  #define GWL_HINSTANCE (-6)
-  #endif
-  HINSTANCE hInst = (HINSTANCE)GetWindowLong(hParent, GWL_HINSTANCE);
+  HINSTANCE hInst = winGetInstanceHandle();
   if ( hInst )
   {
     if (FindResource( hInst, MAKEINTRESOURCE(1), RT_DIALOG ))
@@ -4564,10 +4561,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
     }
     case WM_CREATE:
     {
-      #ifndef GWL_HINSTANCE
-      #define GWL_HINSTANCE (-6)
-      #endif
-      HINSTANCE hinst = (HINSTANCE)GetWindowLong(hwnd,GWL_HINSTANCE);
+      HINSTANCE hinst = winGetInstanceHandle();
       #if defined(__WINDOWS_386__)
       struct WM_CREATE_DATA far *conscreate_data = ((WM_CREATE_DATA far *)0);
       #else
@@ -4718,7 +4712,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
           if (_LoadImage != NULL)
           {
             hIcon = (HICON)(*_LoadImage)(
-                       (HINSTANCE)GetWindowLong(hwnd,GWL_HINSTANCE),
+                       winGetInstanceHandle(),
                          MAKEINTRESOURCE(1), IMAGE_ICON,
                            GetSystemMetrics(SM_CXSMICON),
                            GetSystemMetrics(SM_CYSMICON), 0 );
@@ -5277,7 +5271,7 @@ static LRESULT __w16WindowFuncInternal(int nestinglevel, HWND hwnd,
             if (nCmdShow != SW_HIDE)
             {
               console->rate_view.hwnd = CreateDialogParam(
-                            (HINSTANCE)GetWindowLong(hwnd, GWL_HINSTANCE),
+                            winGetInstanceHandle(),
                             MAKEINTRESOURCE(GRAPH_DIALOG),
                             hwnd, (DLGPROC)console->rate_view.func,
                             (LPARAM)hwnd );

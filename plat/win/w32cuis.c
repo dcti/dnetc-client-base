@@ -16,7 +16,7 @@
  * The pipe shim itself is generic and will work without changes with any
  * backend that SetStdHandle()s the 'advertised' pipe ends.
  *
- * $Id: w32cuis.c,v 1.3 2007/10/22 16:48:32 jlawson Exp $
+ * $Id: w32cuis.c,v 1.4 2010/02/01 20:06:43 stream Exp $
 */
 
 /* #define HAVE_EXEC_AS_TEMPFILE */  /* davehart's solution */
@@ -943,7 +943,8 @@ static DWORD __exec_with_pipes(const char *filename) /* cyp's solution */
                               }
                               else if (c == '2') /* advertise cmd window */
                               {
-                                unsigned long pos, l = 0;
+                                unsigned long pos;
+                                ULONG_PTR l = 0;
                                 for (pos = 3; intcmdbuf[pos]; pos++)
                                 {
                                   l *= 10;
