@@ -1,6 +1,6 @@
 ;
-; Assembly core for OGR-NG, SSE2 version.
-; $Id: ogrng-cj1-sse2-asm.asm,v 1.8 2010/02/02 05:35:29 stream Exp $
+; Assembly core for OGR-NG, SSE2 with LZCNT version.
+; $Id: ogrng-cj1-sse2-lzcnt-asm.asm,v 1.1 2010/02/02 05:35:36 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
@@ -15,12 +15,13 @@ cpu	p4
 	[SECTION .text]
 %endif
 
+%define use_lzcnt
 %include "ogrng-cj1-sse2-base.asm"
 
-global	_ogr_cycle_256_cj1_sse2
-global	ogr_cycle_256_cj1_sse2
-_ogr_cycle_256_cj1_sse2:
-ogr_cycle_256_cj1_sse2:
+global	_ogr_cycle_256_cj1_sse2_lzcnt
+global	ogr_cycle_256_cj1_sse2_lzcnt
+_ogr_cycle_256_cj1_sse2_lzcnt:
+ogr_cycle_256_cj1_sse2_lzcnt:
 
 	header
 	body 1

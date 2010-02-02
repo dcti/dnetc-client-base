@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.34 2010/01/20 19:37:44 andreasb Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.35 2010/02/02 05:35:06 stream Exp $"; }
 
 //#define TRACE
 
@@ -69,6 +69,8 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.34 2010/01/20 19:37:44 andreasb Exp $"; }
       CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse2(void);  //D (asm #3)
       CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse_p4(void);  //E (asm #4)
       CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse_k8(void);  //F (asm #5)
+      CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse41(void);  //G (asm #6)
+      CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse2_lzcnt(void);  //H (asm #7)
     #endif
 #elif (CLIENT_CPU == CPU_ARM)
     CoreDispatchTable *ogrng_get_dispatch_table(void);
@@ -78,6 +80,7 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.34 2010/01/20 19:37:44 andreasb Exp $"; }
     CoreDispatchTable *ogrng64_get_dispatch_table(void);
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_generic(void);
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_sse2(void);
+    CoreDispatchTable *ogrng64_get_dispatch_table_cj1_sse2_lzcnt(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
     CoreDispatchTable *ogrng64_get_dispatch_table(void); 
 #elif (CLIENT_CPU == CPU_S390X) && (SIZEOF_LONG == 8)
@@ -110,6 +113,8 @@ int InitializeCoreTable_ogr_ng(int first_time)
           ogrng_get_dispatch_table_cj1_sse2();
           ogrng_get_dispatch_table_cj1_sse_p4();
           ogrng_get_dispatch_table_cj1_sse_k8();
+          ogrng_get_dispatch_table_cj1_sse41();
+          ogrng_get_dispatch_table_cj1_sse2_lzcnt();
         #endif
         #endif
       #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
@@ -156,6 +161,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
         ogrng64_get_dispatch_table();
         ogrng64_get_dispatch_table_cj1_generic();
         ogrng64_get_dispatch_table_cj1_sse2();
+        ogrng64_get_dispatch_table_cj1_sse2_lzcnt();
       #elif (CLIENT_CPU == CPU_S390)
         ogrng_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_S390X)
@@ -207,11 +213,14 @@ const char **corenames_for_contest_ogr_ng()
       "cj-asm-sse2",
       "cj-asm-sse-p4",
       "cj-asm-sse-k8",
+      "cj-asm-sse4.1",
+      "cj-asm-sse2-lzcnt",
       #endif
   #elif (CLIENT_CPU == CPU_AMD64)
       "FLEGE-64 2.0",
       "cj-asm-generic",
       "cj-asm-sse2",
+      "cj-asm-sse2-lzcnt",
   #elif (CLIENT_CPU == CPU_ARM)
       "FLEGE 2.0",
       "FLEGE 2.0 ARMv3",
@@ -320,10 +329,16 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
 #  if defined(HAVE_I64)
 #    if (SIZEOF_LONG < 8)   /* classic x86-32 */
        unsigned feature = GetProcessorFeatureFlags();
-       if (cindex == 3 && !(feature & CPU_F_SSE2)) /* Core 3 need SSE2 */
-         cindex = 2; /* If no SSE2, try MMX */
-       if (cindex >= 4 && !(feature & CPU_F_SSE)) /* Cores 4,5 need SSE */
+       if (cindex == 7 && !(feature & CPU_F_LZCNT)) /* Core 7 needs LZCNT */
+         cindex = 3; /* If no LZCNT, try SSE2 */
+       if (cindex == 6 && !(feature & CPU_F_SSE4_1)) /* Core 6 needs SSE4.1 */
+         cindex = 3; /* If no SSE4.1, try SSE2 */
+       if (cindex == 5 && !(feature & CPU_F_SSE)) /* Core 5 needs SSE */
          cindex = 2;
+       if (cindex == 4 && !(feature & CPU_F_SSE)) /* Core 4 needs SSE */
+         cindex = 2;
+       if (cindex == 3 && !(feature & CPU_F_SSE2)) /* Core 3 needs SSE2 */
+         cindex = 2; /* If no SSE2, try MMX */
        if (cindex == 2 && !(feature & CPU_F_MMX)) /* MMX for MMX core */
          cindex = 1;
 #    else                   /* x86-64 */
@@ -334,6 +349,10 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
          cindex = 1;
 #    endif
 #  endif
+# elif (CLIENT_CPU == CPU_AMD64)
+  unsigned feature = GetProcessorFeatureFlags();
+  if (cindex == 3 && !(feature & CPU_F_LZCNT)) /* Core 3 needs LZCNT */
+    cindex = 2; /* If no LZCNT, try SSE2 */
 #endif
   return cindex;
 }
@@ -561,6 +580,10 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
       unit_func.ogr = ogrng_get_dispatch_table_cj1_sse_p4();
     else if (coresel == 5)
       unit_func.ogr = ogrng_get_dispatch_table_cj1_sse_k8();
+    else if (coresel == 6)
+      unit_func.ogr = ogrng_get_dispatch_table_cj1_sse41();
+    else if (coresel == 7)
+      unit_func.ogr = ogrng_get_dispatch_table_cj1_sse2_lzcnt();
   #endif
     else
       unit_func.ogr = ogrng_get_dispatch_table();
@@ -570,6 +593,8 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
     unit_func.ogr = ogrng64_get_dispatch_table_cj1_generic();
   else if (coresel == 2)
     unit_func.ogr = ogrng64_get_dispatch_table_cj1_sse2();
+  else if (coresel == 3)
+    unit_func.ogr = ogrng64_get_dispatch_table_cj1_sse2_lzcnt();
   else
   {
     unit_func.ogr = ogrng64_get_dispatch_table();

@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.128 2010/01/03 10:20:10 sla Exp $
+# $Id: makefile.vc,v 1.129 2010/02/02 05:35:05 stream Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -398,6 +398,8 @@ OGRNG_OBJS =                         \
         $(OUTPUTPATH)/ogrng64-cj1-generic-asm.obj \
         $(OUTPUTPATH)/ogrng64-cj1-sse2.obj    \
         $(OUTPUTPATH)/ogrng64-cj1-sse2-asm.obj \
+        $(OUTPUTPATH)/ogrng64-cj1-sse2-lzcnt.obj    \
+        $(OUTPUTPATH)/ogrng64-cj1-sse2-lzcnt-asm.obj \
         $(OUTPUTPATH)/ogrng_init.obj \
         $(OUTPUTPATH)/ogrng_dat.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
@@ -414,6 +416,10 @@ OGRNG_OBJS =                         \
         $(OUTPUTPATH)/ogrng-cj1-sse-p4-asm.obj \
         $(OUTPUTPATH)/ogrng-cj1-sse-k8.obj    \
         $(OUTPUTPATH)/ogrng-cj1-sse-k8-asm.obj \
+        $(OUTPUTPATH)/ogrng-cj1-sse41.obj    \
+        $(OUTPUTPATH)/ogrng-cj1-sse41-asm.obj \
+        $(OUTPUTPATH)/ogrng-cj1-sse2-lzcnt.obj    \
+        $(OUTPUTPATH)/ogrng-cj1-sse2-lzcnt-asm.obj \
         $(OUTPUTPATH)/ogrng_init.obj \
         $(OUTPUTPATH)/ogrng_dat.obj
 !else

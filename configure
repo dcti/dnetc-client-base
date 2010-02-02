@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.411 2010/01/14 00:33:55 mikereed Exp $
+# @(#)$Id: configure,v 1.412 2010/02/02 05:35:04 stream Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -248,12 +248,16 @@ add_sources() # $1=os, $2=arch, $3=custom
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogrng-cj1-sse2.cpp"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogrng-cj1-sse-p4.cpp"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogrng-cj1-sse-k8.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogrng-cj1-sse41.cpp"
+        TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/x86/ogrng-cj1-sse2-lzcnt.cpp"
         TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS"
         TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-a-asm-rt.asm"
         TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-b-asm-rt.asm"
         TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-cj1-sse2-asm.asm"
         TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-cj1-sse-p4-asm.asm"
         TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-cj1-sse-k8-asm.asm"
+        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-cj1-sse41-asm.asm"
+        TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/x86/ogrng-cj1-sse2-lzcnt-asm.asm"
       fi
     fi # HAVE_OGR
 
@@ -605,8 +609,10 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/amd64/ogrng64-cj1-generic.cpp"
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/amd64/ogrng64-cj1-sse2.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR/amd64/ogrng64-cj1-sse2-lzcnt.cpp"
       TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/amd64/ogrng64-cj1-generic-asm.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/amd64/ogrng64-cj1-sse2-asm.asm"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/amd64/ogrng64-cj1-sse2-lzcnt-asm.asm"
     fi
 
     if [ "$HAVE_OGR_P2" = "1" ]; then

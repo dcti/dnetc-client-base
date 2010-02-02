@@ -23,11 +23,13 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.87 2010/01/04 20:37:58 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.88 2010/02/02 05:35:12 stream Exp $
 ==========================================================================
 
 2.9100
 ------
+
+2.9108-517  imp: x86: new OGR-NG 32- and 64-bit cores (#4256)
 
 2.9107-516  imp: add cpu/os id to client request packets
                  for improved client control
