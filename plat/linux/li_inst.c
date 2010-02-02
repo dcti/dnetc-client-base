@@ -8,9 +8,6 @@
  * Created Aug 23 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
 */
-const char *li_inst_c(void) {
-return "@(#)$Id: li_inst.c,v 1.6 2009/02/01 11:36:12 andreasb Exp $"; }
-
 #define __NO_STRING_INLINES /* work around bugs in glibc bits/string2.h */
 
 #include <stdio.h>
@@ -24,6 +21,9 @@ return "@(#)$Id: li_inst.c,v 1.6 2009/02/01 11:36:12 andreasb Exp $"; }
 #ifdef __cplusplus /* to ensure gcc -lang switches don't mess this up */
 extern "C" {
 #endif
+const char *li_inst_c(void) {
+return "@(#)$Id: li_inst.c,v 1.7 2010/02/02 05:32:02 stream Exp $"; }
+
 int linux_uninstall(const char *basename, int quietly);
 int linux_install(const char *basename, int argc, const char *argv[], 
                   int quietly); /* argv[1..(argc-1)] are boot options */
