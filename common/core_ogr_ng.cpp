@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.35 2010/02/02 05:35:06 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.36 2010/02/02 11:35:14 stream Exp $"; }
 
 //#define TRACE
 
@@ -353,6 +353,8 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
   unsigned feature = GetProcessorFeatureFlags();
   if (cindex == 3 && !(feature & CPU_F_LZCNT)) /* Core 3 needs LZCNT */
     cindex = 2; /* If no LZCNT, try SSE2 */
+  if (cindex == 2 && !(feature & CPU_F_SSE2))  /* Core 2 needs SSE2 */
+    cindex = 1; /* If no SSE2, try generic */
 #endif
   return cindex;
 }
@@ -420,8 +422,11 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
         cindex = 1;  /* 64-bit core */
       #else
         #if defined(HAVE_I64)
+          /* Assume LZCNT is the best for all CPUs which support it? */
+          if (detected_flags & CPU_F_LZCNT)
+            cindex = 7;
           /* Some CPU types may require SSE core even if SSE2 is available but slow */
-          if (detected_flags & CPU_F_SSE)
+          if (cindex == -1 && (detected_flags & CPU_F_SSE))
           {
             /*
              * Sometimes it's very difficult to choose between -p4 and -k8 cores:
@@ -465,11 +470,16 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
       {
         case 0x09: cindex = 1; break; /* AMD: generic (#4214) */
       }
-      /* If core not set and SSE2 exists */
-      if (cindex == -1 && (detected_flags & CPU_F_SSE2))
-        cindex = 2;  /* sse2 core */
-      else if (cindex == -1)
-        cindex = 1;  /* generic asm core */
+      if (cindex == -1)
+      {
+        /* Assume that LZCNT+SSE2 is better then plain SSE2 everywhere */
+        if      (detected_flags & CPU_F_LZCNT)
+          cindex = 3;
+        else if (detected_flags & CPU_F_SSE2)
+          cindex = 2;  /* sse2 core */
+        else
+          cindex = 1;  /* generic asm core */
+       }
     }
   // ===============================================================
   #endif
