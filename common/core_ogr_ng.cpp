@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.36 2010/02/02 11:35:14 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.37 2010/02/04 07:39:53 stream Exp $"; }
 
 //#define TRACE
 
@@ -425,6 +425,9 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
           /* Assume LZCNT is the best for all CPUs which support it? */
           if (detected_flags & CPU_F_LZCNT)
             cindex = 7;
+          /* SSE 4.1 - enable for all supported CPUs or just for group 0x12 (Core2) ? */
+          if (cindex == -1 && (detected_flags & CPU_F_SSE4_1))
+            cindex = 6;
           /* Some CPU types may require SSE core even if SSE2 is available but slow */
           if (cindex == -1 && (detected_flags & CPU_F_SSE))
           {
