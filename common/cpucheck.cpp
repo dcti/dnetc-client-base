@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.180 2010/01/04 20:37:58 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.181 2010/02/05 02:00:25 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1244,7 +1244,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
       /* the following information has been collected from the 
          "AP-485 Intel Processor Identification and the CPUID Instruction"
          manual available at 
-         http://www.intel.com/design/xeon/applnots/241618.htm
+         http://www.intel.com/support/processors/sb/cs-009861.htm
          and several "Intel XYZ Processor Specification Update" documents
          available from http://www.intel.com/design/processor/index.htm */
       static struct cpuxref intelxref[]={
@@ -1339,6 +1339,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006170, 0xFFFFFF0, CPU_F_I686, 0x12, "Core 2/Extreme/Xeon" },  /* 45 nm */ /* (#4193) */
         { 0x00061A0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i7/Xeon" },  /* (#4118,#4198,#4193) */
         { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
+        { 0x00061E0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i5/i7" },  /* (#4271) */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
