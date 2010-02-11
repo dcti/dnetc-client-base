@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.199 2009/09/17 23:27:35 andreasb Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.200 2010/02/11 06:11:07 snikkel Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -492,7 +492,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 
 #ifdef HAVE_RC5_72_CORES
 // FIXME: need code to update this value
-static int rc5_72_random_subspace = 1337;
+static int rc5_72_random_subspace = 1340;
 #endif
 
 static int __gen_random_work(unsigned int contestid, ContestWork * work)
