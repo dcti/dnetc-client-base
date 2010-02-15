@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.98 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.99 2010/02/15 19:44:26 stream Exp $"; }
 
 //#define TRACE
 
@@ -48,6 +48,34 @@ static const char *__getprojsectname( unsigned int ci )
 
 /* ------------------------------------------------------------------------ */
 
+// Update a config variable which was changed on-the fly (e.g. random subspace
+// change detected or global information received from keyserver.
+static int ConfigUpdateOnTheFly( Client *client,
+                                 int (*WriteHandler)(const char *fn, int contestid, u32 value),
+                                 int contestid, u32 value )
+{
+  int did_write = 0;
+
+  if (client->stopiniio == 0 && client->nodiskbuffers == 0)
+  {
+    const char *fn = GetFullPathForFilename( client->inifilename );
+    if ( access( fn, 0 ) == 0 ) /* we also do not write these settings */
+    {                           /* if the .ini doesn't already exist */
+      did_write = WriteHandler(fn, contestid, value);
+
+      if (did_write)
+      {
+        /* prevent our own writes from kicking off a restart */
+        OverrideNextConffileChangeTrigger();
+      }  
+    } /* if ( access( fn, 0 ) == 0 ) */
+  } /* if (client->stopiniio == 0 && client->nodiskbuffers == 0) */
+
+  return did_write;
+}
+
+/* ------------------------------------------------------------------------ */
+
 // these options are special and reflect "authoritative" information from
 // a proxy. They are in separate functions to "protect" them.
 static void ConfigReadUniversalNews( Client *client, const char *fn )
@@ -55,40 +83,63 @@ static void ConfigReadUniversalNews( Client *client, const char *fn )
   if (!fn) fn = GetFullPathForFilename( client->inifilename );
   //client->rc564closed is necessary to supress generation of randoms
   client->scheduledupdatetime = GetPrivateProfileIntB(OPTSECT_NET,"scheduledupdatetime", 0, fn);
+#ifdef HAVE_RC5_72_CORES
+  // out-of-bounds default value (0xFFFF) will force hard-coded defaults
+  ProblemSetRandomSubspace(client, RC5_72, GetPrivateProfileIntB(__getprojsectname(RC5_72), "random-subspace", 0xFFFF, fn), 0);
+#endif
   return;  
 }
 
 
 //ConfigWriteServerNews() may *only* be called from buffer update 
 //(otherwise the ini will end up with data that is not authoritative)
+static int WriteScheduledUpdateHandler( const char *fn, int contest_unused, u32 scheduledupdatetime )
+{
+  int did_write = 0;
+  (void) contest_unused;
+
+  /* got a new scheduled update time? */
+  if (scheduledupdatetime != GetPrivateProfileIntB(OPTSECT_NET,"scheduledupdatetime", 0, fn))
+  {
+    if (scheduledupdatetime == 0)
+      WritePrivateProfileStringB(OPTSECT_NET, "scheduledupdatetime", NULL, fn );
+    else
+      WritePrivateProfileIntB(OPTSECT_NET, "scheduledupdatetime", scheduledupdatetime, fn );
+    did_write = 1;
+  }
+
+  return did_write;
+}
+
 void ConfigWriteUniversalNews( Client *client )
 {
-  if (client->stopiniio == 0 && client->nodiskbuffers == 0)
-  {
-    const char *fn = GetFullPathForFilename( client->inifilename );
-    if ( access( fn, 0 ) == 0 ) /* we also do not write these settings */
-    {                           /* if the .ini doesn't already exist */
-      int did_write = 0;
-
-      /* got a new scheduled update time? */
-      if (client->scheduledupdatetime != GetPrivateProfileIntB(OPTSECT_NET,"scheduledupdatetime", 0, fn))
-      {
-        if (client->scheduledupdatetime == 0)
-          WritePrivateProfileStringB(OPTSECT_NET, "scheduledupdatetime", NULL, fn );
-        else
-          WritePrivateProfileIntB(OPTSECT_NET, "scheduledupdatetime", client->scheduledupdatetime, fn );
-        did_write = 1;
-      }
-
-      if (did_write)
-      {
-        /* prevent our own writes from kicking off a restart */
-        OverrideNextConffileChangeTrigger();
-      }  
-
-    } /* if ( access( fn, 0 ) == 0 ) */
-  } /* if (client->stopiniio == 0 && client->nodiskbuffers == 0) */
+  ConfigUpdateOnTheFly(client, WriteScheduledUpdateHandler, -1, client->scheduledupdatetime);
   return;
+}
+
+static int WriteRandomSubspaceHandler( const char *fn, int contestid, u32 subspace )
+{
+  int did_write = 0;
+
+  switch (contestid)
+  {
+#ifdef HAVE_RC5_72_CORES
+  // this code could be common for all projects
+  case RC5_72:
+    WritePrivateProfileIntB(__getprojsectname(contestid), "random-subspace", subspace, fn );
+    did_write = 1;
+    break;
+#endif
+  default:
+    break;
+  }
+
+  return did_write;
+}
+
+int ConfigWriteRandomSubspace( Client *client, int contestid, u32 subspace )
+{
+  return ConfigUpdateOnTheFly(client, WriteRandomSubspaceHandler, contestid, subspace);
 }
 
 /* ------------------------------------------------------------------------ */

@@ -5,7 +5,7 @@
 */
 
 const char *stress_r72_cpp(void) {
-return "@(#)$Id: stress.cpp,v 1.7 2010/01/03 18:39:50 jlawson Exp $"; }
+return "@(#)$Id: stress.cpp,v 1.8 2010/02/15 19:44:33 stream Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"
@@ -220,6 +220,7 @@ static void __init_contest(ContestWork *contestwork, u32 iters)
   contestwork->bigcrypto.keysdone.hi   = 0;
   contestwork->bigcrypto.iterations.lo = iters;
   contestwork->bigcrypto.iterations.hi = 0;
+  contestwork->bigcrypto.randomsubspace = 0xffff; /* invalid, tests don't propagate random subspaces */
 }
 
 
@@ -281,7 +282,7 @@ static long __test_1(void)
     thisprob = ProblemAlloc();
     if (thisprob) {
       __cypher_text(&contestwork, &matchkey, iters);
-      if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0) == 0) {
+      if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL) == 0) {
         pipes = thisprob->pub_data.pipeline_count;
 
         ProblemRun(thisprob);
@@ -362,7 +363,7 @@ static long __test_2(void)
       /* kludge : Convert a full match into a partial match */
       contestwork.bigcrypto.cypher.hi = ~contestwork.bigcrypto.cypher.hi;
 
-      if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0) == 0) {
+      if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL) == 0) {
         pipes = thisprob->pub_data.pipeline_count;
 
         do {
@@ -470,7 +471,7 @@ static long __test_3(void)
       thisprob = ProblemAlloc();
       if (thisprob) {
         __cypher_text(&contestwork, &matchkey, iters);
-        if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0) == 0) {
+        if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL) == 0) {
           pipes = thisprob->pub_data.pipeline_count;
 
           do {
@@ -552,14 +553,14 @@ static long __test_4(void)
   ** partial matches (one or more in each run) will fail this test.
   */
 
-  if (thisprob && ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0) == 0) {
+  if (thisprob && ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL) == 0) {
     u32 sec = 0;
     pipes = thisprob->pub_data.pipeline_count;
     do {
       u32 basekey = KEYBASE_LO + iters;
 
       ProblemInfo info;
-      u32 itersDonehi, itersDonelo, remoteconn=0, itersdone;
+      u32 itersDonehi, itersDonelo, remoteconn=0;
 
       do {
         if (CheckExitRequestTrigger()) {
@@ -588,7 +589,7 @@ static long __test_4(void)
         cmc_key.hi = cmc_key.mid = cmc_key.lo = cmc_count = 0;
         ProblemFree(thisprob);
         thisprob = ProblemAlloc();
-        ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0);
+        ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL);
         continue;
       }
 

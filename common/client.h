@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.158 2009/04/01 15:49:22 andreasb Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.159 2010/02/15 19:44:26 stream Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "problem.h"  /* WorkRecord, CONTEST_COUNT */
@@ -29,7 +29,7 @@
 
 // ------------------
 
-typedef struct
+typedef struct Client_struct
 {
   /* non-user-configurable */
   int  nonewblocks;

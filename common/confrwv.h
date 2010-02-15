@@ -6,10 +6,11 @@
 */
 
 #ifndef __CONFRWV_H__
-#define __CONFRWV_H__ "@(#)$Id: confrwv.h,v 1.19 2007/10/22 16:48:25 jlawson Exp $"
+#define __CONFRWV_H__ "@(#)$Id: confrwv.h,v 1.20 2010/02/15 19:44:26 stream Exp $"
 
 int  ConfigRead(Client *client);
 int  ConfigWrite(Client *client);
 void ConfigWriteUniversalNews( Client *client );
+int  ConfigWriteRandomSubspace( Client *client, int contestid, u32 subspace );
 
 #endif /* __CONFRWV_H__ */

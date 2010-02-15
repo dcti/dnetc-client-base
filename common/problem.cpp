@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.200 2010/02/11 06:11:07 snikkel Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.201 2010/02/15 19:44:27 stream Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -34,6 +34,7 @@ return "@(#)$Id: problem.cpp,v 1.200 2010/02/11 06:11:07 snikkel Exp $"; }
 #include "triggers.h" //RaiseExitRequestTrigger()
 #include "clisync.h"  //synchronisation primitives
 #include "coremem.h"  //cmem_alloc() and cmem_free()
+#include "confrwv.h"  //ConfigWriteRandomSubspace()
 #include "problem.h"  //ourselves
 
 #if (CLIENT_OS == OS_QNX)
@@ -437,6 +438,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
       work->bigcrypto.keysdone.hi = ( 0 );
       work->bigcrypto.iterations.lo = ( 0 );
       work->bigcrypto.iterations.hi = ( 1 );
+      work->bigcrypto.randomsubspace = 0xffff; /* invalid, benchmarks don't propagate random subspaces */
       return contestid;
     }
     #endif
@@ -491,9 +493,45 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 /* ------------------------------------------------------------------- */
 
 #ifdef HAVE_RC5_72_CORES
-// FIXME: need code to update this value
-static int rc5_72_random_subspace = 1340;
+static unsigned rc5_72_random_subspace = 1340;
 #endif
+
+/*
+ * Set random subspace/seed necessary to generate random blocks.
+ * \param updateini must be 1 if we want to store new value to .ini file
+ * and must be 0 for silent initialization during .ini file reading.
+ */
+void ProblemSetRandomSubspace(Client *client, unsigned contestid, u32 subspace, int updateini)
+{
+  switch (contestid)
+  {
+#ifdef HAVE_RC5_72_CORES
+  case RC5_72:
+    // acceptable range is below 0x1000
+    // 0 is valid number but there is a high chance to get it due to some bug
+    // from incompletely manually initialized block, so it's rejected too.
+    // Log("Current: %u, set: %u\n", rc5_72_random_subspace, subspace);
+    if (subspace != 0 && subspace < 0x1000 && subspace != rc5_72_random_subspace)
+    {
+      rc5_72_random_subspace = subspace;
+      // could set flag here and make code below common for all projects
+      if (updateini)
+      {
+        int updated = 0;
+
+        if (client && ConfigWriteRandomSubspace(client, contestid, subspace))
+          updated = 1;
+
+        Log("%s: Switched to random subspace %u (%s)\n", 
+            CliGetContestNameFromID(contestid), subspace, (updated ? "stored" : "in memory"));
+      }
+    }
+    break;
+#endif
+  default:
+    break;
+  }
+}
 
 static int __gen_random_work(unsigned int contestid, ContestWork * work)
 {
@@ -593,7 +631,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
                       const ContestWork * work, unsigned int contestid,
                       u32 _iterations, int expected_cputype,
                       int expected_corenum, int expected_os,
-                      int expected_build )
+                      int expected_build, Client *client )
 {
   ContestWork for_magic;
   int genned_random = 0, genned_benchmark = 0;
@@ -691,11 +729,10 @@ static int __InternalLoadState( InternalProblem *thisprob,
   #if defined(HAVE_CRYPTO_V2)
   case RC5_72:
     {
-      if (!thisprob->pub_data.is_random && (work->bigcrypto.randomsubspace < 0x1000))
-      {
-        rc5_72_random_subspace = work->bigcrypto.randomsubspace;
-        // FIXME: permanently store this in client->... and dnetc.ini
-      }
+      // try to update random subspace (validation done inside function)
+      // all internally generated blocks (random, test, bench) must set
+      // bigcrypto.randomsubspace to invalid value (0xFFFF)
+      ProblemSetRandomSubspace(client, RC5_72, work->bigcrypto.randomsubspace, 1);
 
       // copy over the state information
       thisprob->priv_data.contestwork.bigcrypto.key.hi = ( work->bigcrypto.key.hi );
@@ -919,6 +956,9 @@ static int __InternalLoadState( InternalProblem *thisprob,
 /* LoadState() and RetrieveState() work in pairs. A LoadState() without
    a previous RetrieveState(,,purge) will fail, and vice-versa.
 
+   \param client is necessary for random subspace handling/random block
+   generation. It could be NULL in other cases.
+
    return values:  0 OK
                   -1 error -> retry
                   -2 error -> abort
@@ -927,7 +967,7 @@ int ProblemLoadState( void *__thisprob,
                       const ContestWork * work, unsigned int contestid,
                       u32 _iterations, int expected_cputype,
                       int expected_corenum, int expected_os,
-                      int expected_build )
+                      int expected_build, Client *client )
 {
   InternalProblem *temp_prob = __pick_probptr(__thisprob, PICKPROB_TEMP);
   InternalProblem *main_prob = __pick_probptr(__thisprob, PICKPROB_MAIN);
@@ -944,7 +984,7 @@ int ProblemLoadState( void *__thisprob,
 
   res = __InternalLoadState( temp_prob, work, contestid, _iterations,
                              expected_cputype, expected_corenum, expected_os,
-                             expected_build );
+                             expected_build, client );
   if (res != 0)
   {
     return (res<0)?(res):(-1);

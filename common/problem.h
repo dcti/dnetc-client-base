@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.107 2009/04/02 12:14:16 stream Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.108 2010/02/15 19:44:27 stream Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -181,13 +181,16 @@ typedef struct
 // LoadState() and RetrieveState() work in pairs. A LoadState() without
 // a previous RetrieveState(,,purge) will fail, and vice-versa.
 
+struct Client_struct; // forward reference
+
 #define CONTESTWORK_MAGIC_RANDOM    ((const ContestWork *)0)
 #define CONTESTWORK_MAGIC_BENCHMARK ((const ContestWork *)1)
 int ProblemLoadState( void *__thisprob,
                       const ContestWork * work, unsigned int _contest, 
                       u32 _iterations, int expected_cpunum, 
                       int expected_corenum,
-                      int expected_os, int expected_buildfrac );
+                      int expected_os, int expected_buildfrac,
+                      struct Client_struct *client );
 
 // Retrieve state from internal structures.
 // state is invalid (will generate errors) once the state is purged.
@@ -265,6 +268,9 @@ const char *ProblemComputeRate( unsigned int contestid,
                                 u32 secs, u32 usecs, u32 iterhi, u32 iterlo, 
                                 u32 *ratehi, u32 *ratelo,
                                 char *ratebuf, unsigned int ratebufsz ); 
+
+/* Set seed/subspace for random blocks */
+void ProblemSetRandomSubspace(struct Client_struct *client, unsigned contestid, u32 value, int updateini);
 
 int WorkGetSWUCount( const ContestWork *work,
                      int rescode, unsigned int contestid,

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.68 2009/09/17 20:15:58 andreasb Exp $";
+  return "@(#)$Id: bench.cpp,v 1.69 2010/02/15 19:44:26 stream Exp $";
 }
 
 //#define TRACE
@@ -176,7 +176,7 @@ long TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   if (thisprob)
   {
     if ( ProblemLoadState( thisprob, CONTESTWORK_MAGIC_BENCHMARK,
-                           contestid, tslice, 0, 0, 0, 0) == 0)
+                           contestid, tslice, 0, 0, 0, 0, NULL) == 0)
     {
       const char *contname = CliGetContestNameFromID(contestid);
       int silent = 1, run = RESULT_WORKING; u32 bestlo = 0, besthi = 0;

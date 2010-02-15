@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.101 2009/09/17 20:15:58 andreasb Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.102 2010/02/15 19:44:27 stream Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -254,6 +254,7 @@ long SelfTest( unsigned int contest )
           contestwork.bigcrypto.keysdone.hi = ( 0 );
           contestwork.bigcrypto.iterations.lo = ( 0x00020000L ); // 17 bits instead of 16
           contestwork.bigcrypto.iterations.hi = ( 0 );
+          contestwork.bigcrypto.randomsubspace = ( 0xFFFF ); // not defined (invalid)
           break;
         }
         #endif
@@ -327,7 +328,7 @@ long SelfTest( unsigned int contest )
         #endif
 
         if (ProblemLoadState( thisprob, &contestwork,
-                              contest, tslice, 0, 0, 0, 0 ) == 0)
+                              contest, tslice, 0, 0, 0, 0, NULL ) == 0)
         {
           ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (void *)thisprob, -1 );
           do

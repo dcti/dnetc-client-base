@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.96 2008/12/30 20:58:42 andreasb Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.97 2010/02/15 19:44:27 stream Exp $"; }
 
 //#define TRACE
 
@@ -758,7 +758,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
       /* hadn't been purged, or the contest isn't available or ... */
 
       res = ProblemLoadState( thisprob, work, *loaded_for_contest, timeslice,
-                    expected_cpu, expected_core, expected_os, expected_build );
+                    expected_cpu, expected_core, expected_os, expected_build, client );
 
       if (res != 0)
       {
