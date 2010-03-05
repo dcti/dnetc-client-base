@@ -1,16 +1,17 @@
 /*
- * Copyright 2008 Vyacheslav Chupyatov <goteam@mail.ru>
+ * Copyright 2008-2010 Vyacheslav Chupyatov <goteam@mail.ru>
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.20 2010/01/07 09:04:33 sla Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.21 2010/03/05 13:17:23 sla Exp $
 */
 
 #include "r72stream-common.h"
 #include "r72stream-vc4cng_il.cpp"
+#include "r72stream-vc4_bitalign.cpp"
 
 static bool init_rc5_72_il4_nand(u32 Device)
 {
@@ -95,6 +96,10 @@ static bool init_rc5_72_il4_nand(u32 Device)
   // Compiling Device Program
   //-------------------------------------------------------------------------
   result=compileProgram(&CContext[Device].ctx,&CContext[Device].image,&CContext[Device].module0,
+                        (CALchar *)il4_bitalign_src,CContext[Device].attribs.target,CContext[Device].globalRes0);
+
+  if ( result!= CAL_RESULT_OK)
+    result=compileProgram(&CContext[Device].ctx,&CContext[Device].image,&CContext[Device].module0,
                         (CALchar *)il4_nand_src_g,CContext[Device].attribs.target,CContext[Device].globalRes0);
 
   if ( result!= CAL_RESULT_OK)

@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cna.cpp,v 1.9 2010/01/07 09:04:33 sla Exp $
+ * $Id: r72stream-vc4cna.cpp,v 1.10 2010/03/05 13:17:23 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -413,12 +413,17 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     u32 busy_c=0;
     if(iters0!=CContext[deviceID].maxIters)
       busy_c=2;
+
     CALresult result;
-    while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) {
-      if(!busy_c)
-        NonPolledUSleep(15000);  //15ms
-      busy_c++;
-    }
+    if(isCalCtxWaitForEventsSupported)
+      result=calCtxWaitForEvents(CContext[deviceID].ctx, &e0, 1, 0);
+    else
+      while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) {
+        if(!busy_c)
+          NonPolledUSleep(15000);  //15ms
+        busy_c++;
+      }
+
     if(result!=CAL_RESULT_OK)
     {
       if(setRemoteConnectionFlag()) {
@@ -435,36 +440,40 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
 #ifdef VERBOSE
     LogScreen("Thread %u: Time %lf ms, c=%u\n",deviceID,(double)(cend-cstart)/fr_d, busy_c);
 #endif
-    if((d>15.5)&&(busy_c>1))
+    if(isCalCtxWaitForEventsSupported)
     {
-      u32 delta;
-      if(d>60.)
-        delta=(u32)CContext[deviceID].maxIters*0.3f;
-      else
-        delta=(u32)CContext[deviceID].maxIters*0.1f;
-      if(delta==0)
-        delta=1;
-      if(delta>=CContext[deviceID].maxIters)
-        CContext[deviceID].maxIters=1;
-      else
-        CContext[deviceID].maxIters-=delta;
-
-#ifdef VERBOSE
-      LogScreen("Thread %u:Busy_c=%u, delta=%u\n",deviceID,busy_c,delta);
-#endif
+      if(d>10.5)
+        if(CContext[deviceID].maxIters>1)
+          CContext[deviceID].maxIters--;
+      if(d<9.5)
+        CContext[deviceID].maxIters++;
     }else
-    if((busy_c<=1)&&(d<15.5))
     {
-      u32 delta;
-      delta=(u32)CContext[deviceID].maxIters*0.02f;
-      if(delta==0)
-        delta=1;
-      CContext[deviceID].maxIters+=delta;
-#ifdef VERBOSE
-      LogScreen("Thread %u:idle, delta=%u\n",deviceID,busy_c,delta);
-#endif
+      if((d>15.5)&&(busy_c>1))
+      {
+        u32 delta;
+        if(d>60.)
+          delta=(u32)CContext[deviceID].maxIters*0.3f;
+        else
+          delta=(u32)CContext[deviceID].maxIters*0.1f;
+        if(delta==0)
+          delta=1;
+        if(delta>=CContext[deviceID].maxIters)
+          CContext[deviceID].maxIters=1;
+        else
+          CContext[deviceID].maxIters-=delta;
+      }else
+      if((busy_c<=1)&&(d<15.5))
+      {
+        u32 delta;
+        delta=(u32)CContext[deviceID].maxIters*0.02f;
+        if(delta==0)
+          delta=1;
+        CContext[deviceID].maxIters+=delta;
+      }
     }
-    //Check the results
+
+    //Check results
     u32 CMC, iters_finished;
     s32 read_res=ReadResultsFromGPU(CContext[deviceID].outputRes0, CContext[deviceID].globalRes0, width, height, rc5_72unitwork, &CMC, &iters_finished);
     if (read_res==1) {
