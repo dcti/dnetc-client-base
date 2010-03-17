@@ -36,6 +36,11 @@
 	;#    Get rid of "outer_loop" and "for_loop_clz_ready" labels and their
 	;# jumps. This code is copied now. It also allowed additional scheduling
 	;# optimizations.
+	;#
+	;# 2010-03-17:
+	;#    Keep cached comp0 from previous level in register (save it during
+	;# PUSH_LEVEL). Thus we can immediately start calculating CLZ etc. on it
+	;# combining with rest of POP_LEVEL code in free slots.
 
 	;#
 	;# Known non-optimal things:
@@ -114,6 +119,7 @@ data_vec_to_u16_shuf:
 	.set	mark,			36
 	.set	nodes,			37
 	.set	s,			38
+	.set	comp0_prevlev,		39
 
 	# temp variables, short-lived
 
@@ -207,6 +213,8 @@ ogr_cycle_256_test:
 	lqd		$distV1, 48($lev)
 	lqd		$compV0, 64($lev)
 	lqd		$compV1, 80($lev)
+	nop
+	lqd		$comp0_prevlev, 64-128($lev)
 
 	# Levels[oState->half_depth] used below
 	# note: offsetof(Levels) not added here
@@ -251,7 +259,7 @@ for_loop:
 	shlqbybi	$ones_shl_s, $V_ONES, $s	# selMask_s
 .endm
 
-.macro	for_loop_clz_ready_part2  lab
+.macro	for_loop_clz_ready_part2_head  lab
 
 	#  if ((mark += s) > limit) { break; }
 	a		$mark, $mark, $s
@@ -261,7 +269,9 @@ for_loop:
 
 	nop
 	shlqbybi	$ones_shl_inv, $V_ONES, $inv_s	# selMask_inv (use free clock again)
+.endm
 
+.macro	for_loop_clz_ready_part2_body  lab
 	cgt		$cond_mark_limit, $mark, $limit
 	shlqbybi	$new_compV1, $compV1, $s
 
@@ -295,7 +305,8 @@ for_loop:
 .endm
 
 	for_loop_clz_ready_part1
-	for_loop_clz_ready_part2 .L_fl
+	for_loop_clz_ready_part2_head .L_fl
+	for_loop_clz_ready_part2_body .L_fl
 	
 	.align		3
 no_for_loop:
@@ -319,7 +330,7 @@ no_for_loop:
 	stqd		$limit, 112($lev)		# delayed lev->limit = limit
 	
 	ori		$distV0, $new_distV0, 0		# copy preloaded distV0
-	stqd		$compV0, 64($lev)		# lev->comp[0].v = compV0;
+	rotqbyi		$comp0_prevlev, $compV0, 0	# copy via odd pipeline, store delayed
 
 	or		$distV1, $distV1, $listV1	# distV1 = vec_or(distV1, listV1);
 	stqd		$compV1, 80($lev)		# lev->comp[1].v = compV1;
@@ -342,7 +353,10 @@ no_for_loop:
 
 	and		$hash_mul16, $hash_mul16, $const_0x0FF0	# ... (123 ^ 345) & ((GROUPS_COUNT-1) * 16)
 							# hash*16 to access array[hash],
+	stqd		$comp0_prevlev, 64($lev)	# lev->comp[0].v = compV0; (delayed)
+
 	ai		$depth, $depth, 1	# ++depth;
+	lnop
 
 	shli		$pvalues, $hash_mul16, 5	# 1D: hash * 8 * 32 * 2  [ (hash * 16) * 32 ]
 	lqx		$keyvector, $hash_mul16, $p_gkeyvectors	# keyvector = group_keysvectors[hash]
@@ -484,9 +498,11 @@ update_limit:
 
 	brz		$nodes, save_mark_and_exit
 
-	for_loop_clz_ready_part2  .L_fl3
+	for_loop_clz_ready_part2_head  .L_fl3
+	for_loop_clz_ready_part2_body  .L_fl3
 
-	
+save_mark_and_exit_dec_lev:
+	ai		$lev, $lev, -128	# finally, --lev
 save_mark_and_exit:
 	stqd		$mark, 96($lev)
 	stqd		$limit, 112($lev)
@@ -516,42 +532,55 @@ break_for:
 
 	# --lev;
 	# --depth;
-	ai		$depth, $depth, -1
 
 	# POP_LEVEL(lev);
 	# copy loop header from for_loop to break dependencies
 	# and finish POP_LEVEL
 	# decrement of lev delayed to avoid dependency, "-128" added directly to offset
 
-	lqd		$compV0, 64-128($lev)
-	nop
+		nor	$s, $comp0_prevlev, $comp0_prevlev	# ~ (comp0 from previous level already here!)
 	lqd		$listV0, 0-128($lev)
+
+		ceqi	$cond_comp0_minus1, $comp0_prevlev, -1
 	lqd		$listV1, 16-128($lev)
-	lqd		$compV1, 80-128($lev)
-	cgt		$cond_depth_stopdepth, $depth, $stopdepth
-	lqd		$limit, 112-128($lev)	# int limit = lev->limit;
-	lqd		$mark,  96-128($lev)	# int mark  = lev->mark;
-		nor	$s, $compV0, $compV0	# ~comp0
-	andc		$distV0, $distV0, $listV0
-		lnop
-	andc		$distV1, $distV1, $listV1
+
+	ai		$depth, $depth, -1
 		rotqmbii $s, $s, -1		# magic shift (use slot 1)
 
-		ceqi	$cond_comp0_minus1, $compV0, -1
-	fsmbi		$newbit, 0		# newbit = 0
-
-	ai		$lev, $lev, -128	# finally, --lev
-	
 		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
+	lqd		$mark,  96-128($lev)	# int mark  = lev->mark;
+
+	cgt		$cond_depth_stopdepth, $depth, $stopdepth
+	lqd		$limit, 112-128($lev)	# int limit = lev->limit;
+
+	ori		$compV0, $comp0_prevlev, 0	# copy comp0 to true place
+	lqd		$compV1, 80-128($lev)
 
 		clz		$s, $s			# get it
+	lqd		$comp0_prevlev, 64-128-128($lev)	# prefetch comp0 from one more level below
+
+	andc		$distV0, $distV0, $listV0
+	fsmbi		$newbit, 0		# newbit = 0
+
+		for_loop_clz_ready_part1
 
 	# while (depth > oState->stopdepth);
 
-	brz		$cond_depth_stopdepth, save_mark_and_exit
+	andc		$distV1, $distV1, $listV1
+	brz		$cond_depth_stopdepth, save_mark_and_exit_dec_lev	# --lev delayed!
 
-	for_loop_clz_ready_part1
-	for_loop_clz_ready_part2  .L_fl1
+	# together with reordered part2-head
+	
+	#  if ((mark += s) > limit) { break; }
+	a		$mark, $mark, $s
+	hbr		.L_fl1, $addr_is_forloop
+
+	# Use free clocks in dependency chain to precalculate
+
+	ai		$lev, $lev, -128	# finally, --lev
+	shlqbybi	$ones_shl_inv, $V_ONES, $inv_s	# selMask_inv (use free clock again)
+
+	for_loop_clz_ready_part2_body  .L_fl1
 
 
 fetch_new_pchoose:
