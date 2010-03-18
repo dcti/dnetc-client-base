@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-2th.cpp,v 1.8 2010/03/05 13:17:23 sla Exp $
+ * $Id: r72stream-2th.cpp,v 1.9 2010/03/18 19:16:41 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -63,8 +63,8 @@ static bool init_rc5_72_il4_2t(u32 Device)
       CContext[Device].maxIters=30;
       break;
     case 8: //RV870
-      CContext[Device].domainSizeX=728;
-      CContext[Device].domainSizeY=728;
+      CContext[Device].domainSizeX=1024;
+      CContext[Device].domainSizeY=1024;
       CContext[Device].maxIters=4;
       break;
     case 9: //RV840
