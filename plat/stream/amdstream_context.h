@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.6 2010/01/03 10:00:22 sla Exp $
+ * $Id: amdstream_context.h,v 1.7 2010/03/18 18:56:49 sla Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -56,5 +56,9 @@ typedef struct {
 
 extern stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 extern int atistream_numDevices;
+
+typedef CALresult (CALAPIENTRYP PFNCALCTXWAITFOREVENTS)(CALcontext ctx, CALevent *event, CALuint num, CALuint flags);
+extern PFNCALCTXWAITFOREVENTS calCtxWaitForEvents;
+extern u32 isCalCtxWaitForEventsSupported;
 
 #endif // AMD_STREAM_CONTEXT_H

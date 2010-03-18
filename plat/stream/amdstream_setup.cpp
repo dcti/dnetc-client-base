@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.12 2010/01/03 10:02:33 sla Exp $
+ * $Id: amdstream_setup.cpp,v 1.13 2010/03/18 18:56:49 sla Exp $
 */
 
 #include "amdstream_setup.h"
@@ -19,6 +19,10 @@
 
 stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 int atistream_numDevices = -1;
+
+PFNCALCTXWAITFOREVENTS calCtxWaitForEvents;
+u32 isCalCtxWaitForEventsSupported;
+
 
 extern int ati_RC_error;
 
@@ -37,7 +41,6 @@ void AMDStreamInitialize()
     if(calDeviceGetCount(&numDevices)!=CAL_RESULT_OK)
       return;
     if(numDevices==0) {
-//      LogScreen("No supported devices found!");
       return;
     }
     atistream_numDevices = numDevices;
@@ -83,11 +86,16 @@ void AMDStreamInitialize()
         continue;
       CContext[i].active=true;
 
-      CContext[i].domainSizeX=32;
-      CContext[i].domainSizeY=32;
-      CContext[i].maxIters=256;
+      CContext[i].domainSizeX=256;
+      CContext[i].domainSizeY=256;
+      CContext[i].maxIters=16;
     }
   }
+
+  isCalCtxWaitForEventsSupported=0;
+  if (calExtSupported((CALextid)0x8009) == CAL_RESULT_OK)
+    if (calExtGetProc((CALextproc*)&calCtxWaitForEvents, (CALextid)0x8009, "calCtxWaitForEvents") == CAL_RESULT_OK)
+      isCalCtxWaitForEventsSupported=1;
 }
 
 void AMDStreamReinitializeDevice(int Device)
