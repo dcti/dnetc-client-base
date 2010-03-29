@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.92 2010/03/17 18:22:06 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.93 2010/03/29 22:28:27 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -34,6 +34,7 @@ Version change log: $Id: CHANGES.txt,v 1.92 2010/03/17 18:22:06 stream Exp $
             imp: rc5-72: random subspace prefix could be stored in .ini file
             imp: stream: faster rc5-72 core for HD5xxx GPUs
             imp: cellbe: faster OGR-NG SPU ASM core
+            imp: x86: identification for celeron tulatin (#4289)
 
 2.9107-516  imp: add cpu/os id to client request packets
                  for improved client control
