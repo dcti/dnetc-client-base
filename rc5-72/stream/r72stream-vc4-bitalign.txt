@@ -39,7 +39,7 @@ dcl_literal l26, 0x0,0x1,0x2,0x3
 dcl_literal l27, 0xff,0x00ff0000,0x0000ff00,3
 dcl_literal l28, 8,24,2,29
 dcl_literal l29, 8.0,0x12,0x4,0x80000000
-dcl_literal l30, 23,0xfc,0,0
+dcl_literal l30, 23,0xfc,0xff00ff00,0x00ff00ff
 
 ;Временные ключи:
 	;r100.x=key_hi,r100.y=key_mid,r100.z=key_lo
@@ -87,12 +87,10 @@ dcl_literal l30, 23,0xfc,0,0
 		ior	r50.w,r50.z,r50.w
 		ior	r50.x,r50.x,r50.w			;bswap mid
 
-		mov	r50.y,r50.x						;t3=t
-	
 		ushr	r51.x,r100.x,l28.x				;(hi>>8)
+		icarry	r51.y,r50.x,r51.x
 		iadd	r50.x,r50.x,r51.x				;t+=(hi>>8)
 
-		ult		r51.y,r50.x,r50.y				;if(t<t3)
 		if_logicalnz	r51.y
 			;Нужна обработка lo - маловероятно
 			ishl	r52.x,r100.z,l28.y		;t=(lo<<24)|(lo>>24);
@@ -124,19 +122,13 @@ dcl_literal l30, 23,0xfc,0,0
 			ior	r100.z,r53.x,r53.z		;bswap lo		
 		endif
 		;упаковываем mid
-		ishl	r50.y,r50.x,l28.y
-		ushr	r50.z,r50.x,l28.y
+		bytealign r50.y,r50.x,r50.x,l26.y
+		bytealign r50.z,r50.x,r50.x,l26.w
 
-		iand	r51.x,r50.x,l27.y
-		iand	r51.y,r50.x,l27.z
+		iand	r50.y,r50.y,l30.z
+		iand	r50.z,r50.z,l30.w
 
-		ushr	r50.w,r51.x,l28.x
-		ishl	r50.x,r51.y,l28.x
-
-		ior	r50.y,r50.z,r50.y
-		ior	r50.w,r50.x,r50.w
-		ior	r100.y,r50.y,r50.w				;bswap mid
-
+		ior	r100.y,r50.y,r50.z				;bswap mid
 		iand	r100.x,r100.x,l27.x
 
 		;Преобразовываем key_hi,key_mid,key_lo
@@ -1148,7 +1140,7 @@ dcl_literal l30, 23,0xfc,0,0
 
 		continue_logicalz r12.x
 
-		#mov	#g[0].x,l26.y
+		mov	g[0].x,l26.y
 
 		;L1=ROTL(L1+S24+L0,S24+L0)
 		iadd	r55,r34,r0
