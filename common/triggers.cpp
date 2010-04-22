@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.40 2009/10/07 19:52:41 stream Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.41 2010/04/22 19:21:54 sla Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -693,6 +693,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
 s32 macosx_cputemp();
 #elif (CLIENT_OS == OS_DEC_UNIX)
 extern "C" int dunix_cputemp();
+#elif (CLIENT_CPU == CPU_ATI_STREAM)
+int stream_cputemp();
 #endif
 
 static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
@@ -718,6 +720,8 @@ static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       else {
         cputemp = cputemp * 100 + 15;   // Convert to fixed-point format
       }
+    #elif (CLIENT_CPU == CPU_ATI_STREAM)
+      cputemp = stream_cputemp();
     #elif 0 /* other client_os */
       cputemp = fooyaddablahblahbar();
     #endif

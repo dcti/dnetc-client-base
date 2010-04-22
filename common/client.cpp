@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.267 2009/04/01 16:04:10 andreasb Exp $"; }
+return "@(#)$Id: client.cpp,v 1.268 2010/04/22 19:21:53 sla Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -32,6 +32,7 @@ return "@(#)$Id: client.cpp,v 1.267 2009/04/01 16:04:10 andreasb Exp $"; }
 
 #if (CLIENT_CPU == CPU_ATI_STREAM)
 #include "amdstream_setup.h" // AMDStreamInitialize();
+#include "adl.h"             // Thermal control functions
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -485,6 +486,10 @@ static int ClientMain( int argc, char *argv[] )
 
   free((void *)client);
   DeinitializeTimers();
+
+  #if (CLIENT_CPU == CPU_ATI_STREAM)
+  ADLdeinit();
+  #endif
 
   TRACE_OUT((-1,"Client.Main()\n"));
   return retcode;

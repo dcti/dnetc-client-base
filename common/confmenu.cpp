@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.68 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.69 2010/04/22 19:21:53 sla Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -610,7 +610,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   ((client->watchcputempthresh)?(NULL):("n/a"));
-      #if (CLIENT_OS != OS_MACOSX) && (CLIENT_OS != OS_DEC_UNIX)
+      #if (CLIENT_OS != OS_MACOSX) && (CLIENT_OS != OS_DEC_UNIX) && (CLIENT_CPU != CPU_ATI_STREAM)
       conf_options[CONF_PAUSEIFCPUTEMPHIGH].disabledtext=
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   "n/a [only supported on MacOS/PPC]";

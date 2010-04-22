@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.129 2010/02/02 05:35:05 stream Exp $
+# $Id: makefile.vc,v 1.130 2010/04/22 19:23:55 sla Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -343,7 +343,8 @@ RC5_72_OBJS =                             \
         $(OUTPUTPATH)/r72stream-vc4cna.obj   \
         $(OUTPUTPATH)/r72stream-2th.obj   \
         $(OUTPUTPATH)/amdstream_info.obj \
-        $(OUTPUTPATH)/amdstream_setup.obj 
+        $(OUTPUTPATH)/amdstream_setup.obj \
+        $(OUTPUTPATH)/adl.obj        
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE -DDYN_TIMESLICE -D_CRT_SECURE_NO_WARNINGS
 !else
