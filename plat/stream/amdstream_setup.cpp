@@ -6,13 +6,14 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.13 2010/03/18 18:56:49 sla Exp $
+ * $Id: amdstream_setup.cpp,v 1.14 2010/04/22 19:09:21 sla Exp $
 */
 
 #include "amdstream_setup.h"
 #include "amdstream_context.h"
 #include "amdstream_info.h"
 #include "logstuff.h"
+#include "adl.h"
 
 #include <calcl.h>
 #include <stdlib.h>
@@ -96,6 +97,8 @@ void AMDStreamInitialize()
   if (calExtSupported((CALextid)0x8009) == CAL_RESULT_OK)
     if (calExtGetProc((CALextproc*)&calCtxWaitForEvents, (CALextid)0x8009, "calCtxWaitForEvents") == CAL_RESULT_OK)
       isCalCtxWaitForEventsSupported=1;
+
+  ADLinit();
 }
 
 void AMDStreamReinitializeDevice(int Device)

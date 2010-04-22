@@ -6,11 +6,13 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.h,v 1.7 2009/08/11 17:27:34 sla Exp $
+ * $Id: amdstream_setup.h,v 1.8 2010/04/22 19:09:21 sla Exp $
 */
 
 #ifndef AMD_STREAM_SETUP_H
 #define AMD_STREAM_SETUP_H
+
+#define AMD_STREAM_MAX_GPUS 16
 
 void AMDStreamInitialize();
 void AMDStreamReinitializeDevice(int Device);

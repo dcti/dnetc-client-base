@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.7 2010/03/18 18:56:49 sla Exp $
+ * $Id: amdstream_context.h,v 1.8 2010/04/22 19:09:21 sla Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -18,8 +18,6 @@
 #include <cal.h>
 #include <cal_ext_counter.h>
 
-
-#define AMD_STREAM_MAX_GPUS 16
 
 #define CORE_NONE   0xffffffff
 
