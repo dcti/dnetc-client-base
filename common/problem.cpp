@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.201 2010/02/15 19:44:27 stream Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.202 2010/04/24 08:12:43 stream Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -892,6 +892,12 @@ static int __InternalLoadState( InternalProblem *thisprob,
         thisprob->pub_data.was_reset = 1;
         thisprob->priv_data.contestwork.ogr_ng.workstub.worklength = thisprob->priv_data.contestwork.ogr_ng.workstub.stub.length;
         thisprob->priv_data.contestwork.ogr_ng.nodes.hi = thisprob->priv_data.contestwork.ogr_ng.nodes.lo = 0;
+        /* Restore last diff of collapsed stub (#4290) */
+        if (thisprob->priv_data.contestwork.ogr_ng.workstub.collapsed != 0)
+        {
+          thisprob->priv_data.contestwork.ogr_ng.workstub.stub.diffs[thisprob->priv_data.contestwork.ogr_ng.workstub.stub.length - 1] =
+            thisprob->priv_data.contestwork.ogr_ng.workstub.collapsed;
+        }
       }
     }
 
@@ -1187,22 +1193,8 @@ static int Run_OGR_NG( InternalProblem *thisprob, /* already validated */
 
   RESTORE_CLIENT_OS_CONTEXT
 
-  /*
-   * We'll calculate and return true number of core iterations for timesling.
-   * This number may be NOT equal to number of actually processed OGR nodes,
-   * which is returned in 'nodes'. See ogr.cpp for details about node caching.
-   *
-   * Following code based on kakace' rules:
-   *   a) if cruncher_is_time_constrained is true, core MUST exit after
-   *      processing exactly requested number of iterations; returned number
-   *      of nodes is ignored due to node caching.
-   *   b) if cruncher_is_time_constrained is false, core MUST NOT cache nodes
-   *      and value in 'nodes' MUST be true number of iterations done.
-   * If core failed to follow these rules due to coding errors or optimization,
-   * things may became unpredictable.
-   */
-  if (!thisprob->pub_data.cruncher_is_time_constrained)
-    *iterationsP = (u32)nodes; /* with t.c., iter. count not changed */
+  /* OGR-NG cores always return true amount of nodes processed */
+  *iterationsP = (u32)nodes;
 
   u32 newnodeslo = thisprob->priv_data.contestwork.ogr_ng.nodes.lo + nodes;
   if (newnodeslo < thisprob->priv_data.contestwork.ogr_ng.nodes.lo) {
