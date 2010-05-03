@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.22 2010/03/18 19:16:41 sla Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.23 2010/05/03 05:01:38 stream Exp $
 */
 
 #include "r72stream-common.h"
@@ -458,9 +458,9 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
       {
         u32 delta;
         if(d>60.)
-          delta=(u32)CContext[deviceID].maxIters*0.3f;
+          delta=(u32)(CContext[deviceID].maxIters*0.3f);
         else
-          delta=(u32)CContext[deviceID].maxIters*0.1f;
+          delta=(u32)(CContext[deviceID].maxIters*0.1f);
         if(delta==0)
           delta=1;
         if(delta>=CContext[deviceID].maxIters)
@@ -471,7 +471,7 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
       if((busy_c<=1)&&(d<15.5))
       {
         u32 delta;
-        delta=(u32)CContext[deviceID].maxIters*0.02f;
+        delta=(u32)(CContext[deviceID].maxIters*0.02f);
         if(delta==0)
           delta=1;
         CContext[deviceID].maxIters+=delta;
