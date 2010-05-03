@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.14 2010/04/22 19:09:21 sla Exp $
+ * $Id: amdstream_setup.cpp,v 1.15 2010/05/03 04:51:20 stream Exp $
 */
 
 #include "amdstream_setup.h"
@@ -84,7 +84,21 @@ void AMDStreamInitialize()
       // Querying device attribs
       CContext[i].attribs.struct_size = sizeof(CALdeviceattribs);
       if(calDeviceGetAttribs(&CContext[i].attribs, i)!=CAL_RESULT_OK)
-        continue;
+      {
+        /* SDK 2.1 incompatibility?
+         * Structure size in .h is 0x58 but Windows 7 Radeon HD2600 driver
+         * rejects values above 0x50. Try again with smaller structure size.
+         *
+         * In this case, numberOfShaderEngines and targetRevision are undefined
+         * (they're not used in our code anyway).
+         */
+        if (CContext[i].attribs.struct_size <= 0x50)
+          continue;
+        memset(&CContext[i].attribs, 0xEE, sizeof(CALdeviceattribs)); // 0xEEEEEEEE in undefined fields
+        CContext[i].attribs.struct_size = 0x50;
+        if(calDeviceGetAttribs(&CContext[i].attribs, i)!=CAL_RESULT_OK)
+          continue;
+      }
       CContext[i].active=true;
 
       CContext[i].domainSizeX=256;
