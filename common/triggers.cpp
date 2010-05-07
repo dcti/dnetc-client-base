@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.41 2010/04/22 19:21:54 sla Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.42 2010/05/07 05:13:24 snikkel Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -713,9 +713,16 @@ static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     s32 cputemp = -1;
     #if (CLIENT_OS == OS_MACOSX)
       cputemp = macosx_cputemp();
+      if (cputemp < 0) {
+        trigstatics.cputemp.hithresh=0; // disable checking on failure
+        trigstatics.cputemp.lothresh=0;
+        trigstatics.cputemp.marking_high = 0;
+      }
     #elif (CLIENT_OS == OS_DEC_UNIX)
       if ((cputemp = dunix_cputemp()) < 0) {
         trigstatics.cputemp.hithresh=0; // disable checking on failure
+        trigstatics.cputemp.lothresh=0;
+        trigstatics.cputemp.marking_high = 0;
       }
       else {
         cputemp = cputemp * 100 + 15;   // Convert to fixed-point format
@@ -731,6 +738,14 @@ static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       trigstatics.cputemp.marking_high = 1;
     else if (cputemp < lowthresh)
       trigstatics.cputemp.marking_high = 0;
+  }
+  else if (highthresh < lowthresh) /* values are invalid */
+  {
+    Log("Temperature monitoring disabled (high < low threshold).\n");
+    trigstatics.cputemp.hithresh=0; // disable checking on failure
+    trigstatics.cputemp.lothresh=0;
+    trigstatics.cputemp.marking_high = 0;
+    return -1;
   }
   return trigstatics.cputemp.marking_high;
 }

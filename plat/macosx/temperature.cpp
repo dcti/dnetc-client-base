@@ -34,7 +34,7 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.7 2009/12/27 13:52:34 andreasb Exp $
+ *  $Id: temperature.cpp,v 1.8 2010/05/07 05:13:25 snikkel Exp $
  */
 
 #include <string.h>
@@ -369,6 +369,7 @@ SInt32 macosx_cputemp(void) {
     else {
       Log("Temperature monitoring disabled (no sensor found)\n");
       source = 0;
+      temp = -1;
     }
     return temp;
 }
