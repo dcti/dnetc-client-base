@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.182 2010/03/29 22:28:28 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.183 2010/05/09 10:40:03 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2683,6 +2683,9 @@ void DisplayProcessorInformation(void)
 
   #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     x86ShowInfos();
+  #endif
+  #if (CLIENT_CPU == CPU_ATI_STREAM)
+    AMDStreamPrintExtendedGpuInfo();
   #endif
   return;
 }
