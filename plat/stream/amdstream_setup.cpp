@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.15 2010/05/03 04:51:20 stream Exp $
+ * $Id: amdstream_setup.cpp,v 1.16 2010/05/09 10:47:37 stream Exp $
 */
 
 #include "amdstream_setup.h"
@@ -24,151 +24,177 @@ int atistream_numDevices = -1;
 PFNCALCTXWAITFOREVENTS calCtxWaitForEvents;
 u32 isCalCtxWaitForEventsSupported;
 
+void AMDInitMutex();
 
-extern int ati_RC_error;
-
-void InitMutex();
-
-void AMDStreamInitialize()
+static void ati_diagnose(CALresult result, const char *where, u32 DeviceIndex, const char *errmsg)
 {
-  if (atistream_numDevices >= 0)
-    return;
+  Log("Error %s on GPU %u\n", where, DeviceIndex);
+  Log("Error code %u, message: %s\n", result, errmsg);
+}
 
-  atistream_numDevices=0;
-  calInit();
+CALresult ati_verbose(CALresult result, const char *where, u32 DeviceIndex)
+{
+  if (result != CAL_RESULT_OK)
   {
-    CALuint numDevices;
-    // Finding number of devices
-    if(calDeviceGetCount(&numDevices)!=CAL_RESULT_OK)
-      return;
-    if(numDevices==0) {
-      return;
-    }
-    atistream_numDevices = numDevices;
+    ati_diagnose(result, where, DeviceIndex, calGetErrorString());
+    if (atistream_numDevices > 1)
+      Log("(message could be wrong in multi-threaded environments)\n");
   }
+  return result;
+}
 
-  InitMutex();
-  if(atistream_numDevices>AMD_STREAM_MAX_GPUS)
-    atistream_numDevices=AMD_STREAM_MAX_GPUS;
+CALresult ati_verbose_cl(CALresult result, const char *where, u32 DeviceIndex)
+{
+  if (result != CAL_RESULT_OK)
+  {
+    ati_diagnose(result, where, DeviceIndex, calclGetErrorString());
+    // compiler is mutex-protected so no warnings about multiple threads
+  }
+  return result;
+}
 
-  ati_RC_error=0;
+int AMDStreamInitialize()
+{
+  CALuint numDevices;
+  unsigned i;
 
-  CALdevice dev;
-  for(int i=0; i<AMD_STREAM_MAX_GPUS; i++) {
-    CContext[i].active=false;
-    CContext[i].coreID=CORE_NONE;
+  if (atistream_numDevices >= 0)
+    return atistream_numDevices;
 
-    CContext[i].constMem0=0;
-    CContext[i].outputMem0=0;
-    CContext[i].globalMem0=0;
+  AMDInitMutex();
+  atistream_numDevices = 0;
 
-    CContext[i].constName0=0;
-    CContext[i].outName0=0;
-    CContext[i].globalName0=0;
+  // Initialize CAL (global)
+  if (CAL_RESULT_OK != ati_verbose( calInit(), "initializing CAL", 0 ))
+    return 0;
 
-    CContext[i].constRes0=0;
-    CContext[i].outputRes0=0;
-    CContext[i].globalRes0=0;
+  // Query number of devices
+  if (CAL_RESULT_OK != ati_verbose( calDeviceGetCount(&numDevices), "querying number of devices", 0 ))
+    return 0;
+  if (numDevices > AMD_STREAM_MAX_GPUS)
+    numDevices = AMD_STREAM_MAX_GPUS;
 
-    CContext[i].ctx=0;
-    CContext[i].device=0;
-    CContext[i].module0=0;
-    CContext[i].image=0L;
-    CContext[i].idleCounter=0;
+  // Open each device and get it's capabilities
+  for (i = 0; i < numDevices; i++)
+  {
+    stream_context_t *dev = &CContext[i];
+    CALresult result;
 
-    if(i<atistream_numDevices) {
-      // Opening device
-      calDeviceOpen(&dev, i);
-      CContext[i].device=dev;
+    // Open device
+    if (CAL_RESULT_OK != ati_verbose( calDeviceOpen(&dev->device, i), "opening device", i ))
+      continue;
 
-      // Querying device attribs
-      CContext[i].attribs.struct_size = sizeof(CALdeviceattribs);
-      if(calDeviceGetAttribs(&CContext[i].attribs, i)!=CAL_RESULT_OK)
+    // Query device attribs
+    dev->attribs.struct_size = sizeof(CALdeviceattribs);
+    result = calDeviceGetAttribs(&dev->attribs, i);
+    if (result != CAL_RESULT_OK)
+    {
+      /* SDK 2.1 incompatibility?
+       * Structure size in .h is 0x58 but Windows 7 Radeon HD2600 driver
+       * rejects values above 0x50. Try again with smaller structure size.
+       *
+       * In this case, numberOfShaderEngines and targetRevision are undefined
+       * (they're not used in our code anyway).
+       */
+      if (dev->attribs.struct_size > 0x50)
       {
-        /* SDK 2.1 incompatibility?
-         * Structure size in .h is 0x58 but Windows 7 Radeon HD2600 driver
-         * rejects values above 0x50. Try again with smaller structure size.
-         *
-         * In this case, numberOfShaderEngines and targetRevision are undefined
-         * (they're not used in our code anyway).
-         */
-        if (CContext[i].attribs.struct_size <= 0x50)
-          continue;
-        memset(&CContext[i].attribs, 0xEE, sizeof(CALdeviceattribs)); // 0xEEEEEEEE in undefined fields
-        CContext[i].attribs.struct_size = 0x50;
-        if(calDeviceGetAttribs(&CContext[i].attribs, i)!=CAL_RESULT_OK)
-          continue;
+        memset(&dev->attribs, 0xEE, sizeof(CALdeviceattribs)); // 0xEEEEEEEE in undefined fields
+        dev->attribs.struct_size = 0x50;
+        result = calDeviceGetAttribs(&CContext[i].attribs, i);
       }
-      CContext[i].active=true;
-
-      CContext[i].domainSizeX=256;
-      CContext[i].domainSizeY=256;
-      CContext[i].maxIters=16;
     }
+    if (CAL_RESULT_OK != ati_verbose( result, "querying device attributes", i ))
+      continue;
+
+    dev->active      = true;
+    dev->domainSizeX = 256;
+    dev->domainSizeY = 256;
+    dev->maxIters    = 16;
   }
 
-  isCalCtxWaitForEventsSupported=0;
+  isCalCtxWaitForEventsSupported = 0;
   if (calExtSupported((CALextid)0x8009) == CAL_RESULT_OK)
     if (calExtGetProc((CALextproc*)&calCtxWaitForEvents, (CALextid)0x8009, "calCtxWaitForEvents") == CAL_RESULT_OK)
-      isCalCtxWaitForEventsSupported=1;
+      isCalCtxWaitForEventsSupported = 1;
 
   ADLinit();
+
+  // Postpone initialization of atistream_numDevices to shut up ati_verbose() complains
+  // about multi-threaded environment during initalization.
+  atistream_numDevices = numDevices;
+
+  return numDevices;
+}
+
+static void ati_zap_resource(CALresource *pRes, const char *where, int Device)
+{
+  if (*pRes)
+  {
+    ati_verbose( calResFree(*pRes), where, Device );
+    *pRes = 0;
+  }
+}
+
+static void ati_zap_mem(CALmem *pMem, CALcontext ctx, const char *where, int Device)
+{
+  if (*pMem)
+  {
+    ati_verbose( calCtxReleaseMem(ctx, *pMem), where, Device );
+    *pMem = 0;
+  }
+}
+
+static void ati_zap_module(CALmodule *pModule, CALcontext ctx, const char *where, int Device)
+{
+  if (*pModule)
+  {
+    ati_verbose( calModuleUnload(ctx, *pModule), where, Device );
+    *pModule = 0;
+  }
 }
 
 void AMDStreamReinitializeDevice(int Device)
 {
+  stream_context_t *dev = &CContext[Device];
+
+  // Creation: CALdevice -> CALcontext, CALresource;
+  //           CALcontext, CALresource -> CALmem;
+  //           CALcontext, CALimage -> CALmodule;
+  // Deinitialize in reverse order
+
   // Unloading the module
-  if(CContext[Device].module0)
-  {
-    calModuleUnload(CContext[Device].ctx, CContext[Device].module0);
-    CContext[Device].module0=0;
-  }
+  ati_zap_module(&dev->module0, dev->ctx, "unloading module0", Device);
+  ati_zap_module(&dev->module1, dev->ctx, "unloading module1", Device);
 
   // Freeing compiled program binary
-  if(CContext[Device].image) {
-    calclFreeImage(CContext[Device].image);
-    CContext[Device].image=0L;
+  if (dev->image)
+  {
+    ati_verbose( calclFreeImage(dev->image), "releasing program image", Device );
+    dev->image = 0;
   }
 
   // Releasing resource from context
-  if(CContext[Device].constMem0) {
-    calCtxReleaseMem(CContext[Device].ctx, CContext[Device].constMem0);
-    CContext[Device].constMem0=0;
-  }
-  if(CContext[Device].outputMem0) {
-    calCtxReleaseMem(CContext[Device].ctx, CContext[Device].outputMem0);
-    CContext[Device].outputMem0=0;
-  }
-  if(CContext[Device].globalMem0) {
-    calCtxReleaseMem(CContext[Device].ctx, CContext[Device].globalMem0);
-    CContext[Device].globalMem0=0;
-  }
+  ati_zap_mem(&dev->constMem0,  dev->ctx, "releasing constMem0",  Device);
+  ati_zap_mem(&dev->constMem1,  dev->ctx, "releasing constMem1",  Device);
+  ati_zap_mem(&dev->outputMem0, dev->ctx, "releasing outputMem0", Device);
+  ati_zap_mem(&dev->outputMem1, dev->ctx, "releasing outputMem1", Device);
+  ati_zap_mem(&dev->globalMem0, dev->ctx, "releasing globalMem0", Device);
+  ati_zap_mem(&dev->globalMem1, dev->ctx, "releasing globalMem1", Device);
 
   // Deallocating resources
-  if(CContext[Device].constRes0) {
-    calResFree(CContext[Device].constRes0);
-    CContext[Device].constRes0=0;
-  }
-
-  // Deallocating resources
-  if(CContext[Device].outputRes0) {
-    calResFree(CContext[Device].outputRes0);
-    CContext[Device].outputRes0=0;
-  }
-
-  // Deallocating resources
-  if(CContext[Device].globalRes0) {
-    calResFree(CContext[Device].globalRes0);
-    CContext[Device].globalRes0=0;
-  }
+  ati_zap_resource(&dev->constRes0,  "releasing constRes0",  Device);
+  ati_zap_resource(&dev->constRes1,  "releasing constRes1",  Device);
+  ati_zap_resource(&dev->outputRes0, "releasing outputRes0", Device);
+  ati_zap_resource(&dev->outputRes1, "releasing outputRes1", Device);
+  ati_zap_resource(&dev->globalRes0, "releasing globalRes0", Device);
+  ati_zap_resource(&dev->globalRes1, "releasing globalRes1", Device);
 
   // Destroying context
-  calCtxDestroy(CContext[Device].ctx);
-  CContext[Device].coreID=CORE_NONE;
-
-  if(ATIstream_GPUname)
+  if (dev->ctx)
   {
-    free(ATIstream_GPUname);
-    ATIstream_GPUname=0L;
+    ati_verbose( calCtxDestroy(dev->ctx), "destroying context", Device );
+    dev->ctx = 0;
   }
+
+  dev->coreID = CORE_NONE;
 }
