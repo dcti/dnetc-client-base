@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.8 2010/04/22 19:09:21 sla Exp $
+ * $Id: amdstream_context.h,v 1.9 2010/05/09 10:42:16 stream Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -19,7 +19,19 @@
 #include <cal_ext_counter.h>
 
 
-#define CORE_NONE   0xffffffff
+enum
+{
+  CORE_NONE, // must be zero
+#ifdef HAVE_RC5_72_CORES
+  CORE_IL4N,
+  CORE_IL4NA,
+  CORE_IL42T,
+#endif
+#ifdef HAVE_OGR_CORES
+  CORE_IL_OGRNG_BASIC,
+#endif
+  CORE_IL_TOTAL
+};
 
 typedef struct {
   CALdevice device;

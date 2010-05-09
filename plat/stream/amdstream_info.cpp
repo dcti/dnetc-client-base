@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.8 2010/01/07 09:01:08 sla Exp $
+ * $Id: amdstream_info.cpp,v 1.9 2010/05/09 10:42:17 stream Exp $
 */
 
 #include "amdstream_info.h"
@@ -14,100 +14,124 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *ATIstream_GPUname=0L;
+#include "logstuff.h"
 
-u32 getAMDStreamDeviceCount()
+u32 getAMDStreamDeviceCount(void)
 {
   return atistream_numDevices;
 }
 
-unsigned getAMDStreamDeviceFreq()
+unsigned getAMDStreamDeviceFreq(void)
 {
-  if(getAMDStreamDeviceCount()>0)
+  if (getAMDStreamDeviceCount() > 0)
     return CContext[0].attribs.engineClock;
-  else
-    return 0;
+
+  return 0;
 }
 
 static const char* GetNameById(u32 id)
 {
-  const char *name = "unknown";
-  switch(id) {
-  case CAL_TARGET_600:
-    name = "R600";
-    break;
-  case CAL_TARGET_610:
-    name = "RV610";
-    break;
-  case CAL_TARGET_630:
-    name = "RV630";
-    break;
-  case CAL_TARGET_670:
-    name = "RV670";
-    break;
-  case CAL_TARGET_7XX:
-    name = "R700 class";
-    break;
-  case CAL_TARGET_770:
-    name = "RV770";
-    break;
-  case CAL_TARGET_710:
-    name = "RV710";
-    break;
-  case CAL_TARGET_730:
-    name = "RV730";
-    break;
-  case 8: //RV870
-    name = "RV870";
-    break;
-  case 9: //RV840
-    name = "RV840";
-    break;
-  default:
-    break;
+  switch (id)
+  {
+  case CAL_TARGET_600: return "R600";
+  case CAL_TARGET_610: return "RV610";
+  case CAL_TARGET_630: return "RV630";
+  case CAL_TARGET_670: return "RV670";
+  case CAL_TARGET_7XX: return "R700 class";
+  case CAL_TARGET_770: return "RV770";
+  case CAL_TARGET_710: return "RV710";
+  case CAL_TARGET_730: return "RV730";
+  case 8: /* RV870 */  return "RV870";
+  case 9: /* RV840 */  return "RV840";
+  default:             return "unknown";
   }
-  return name;
 }
 
 long getAMDStreamRawProcessorID(const char **cpuname)
 {
   u32 nCPUs;
-  const char *curr_name;
-  u32 strl;
+  u32 i, amount;
+  static char *ATIstream_GPUname;
 
-  nCPUs=getAMDStreamDeviceCount();
-  if(nCPUs==0)
+  if (ATIstream_GPUname)
   {
-    *cpuname=GetNameById(0);
+    *cpuname = ATIstream_GPUname;
+    return CContext[0].attribs.target;
+  }
+
+  nCPUs = getAMDStreamDeviceCount();
+  if (nCPUs == 0)
+  {
+    *cpuname = GetNameById(0);
     return 0;
   }
-  //ѕодсчитываем количество требуемой пам€ти
-  strl=0;
-  u32 i;
-  for(i=0; i<nCPUs; i++)
+
+  // Calculate amount of required memory
+  for (i=amount=0; i < nCPUs; i++)
+    amount += strlen(GetNameById(CContext[i].attribs.target)) + 3; /* include ", " */
+
+  ATIstream_GPUname = (char*)malloc(amount);
+  if (!ATIstream_GPUname)
   {
-    curr_name=GetNameById(CContext[i].attribs.target);
-    strl+=strlen(curr_name)+3;          //+", "
-  }
-  if(ATIstream_GPUname)
-  {
-    free(ATIstream_GPUname);
-    ATIstream_GPUname=0L;
-  }
-  ATIstream_GPUname=(char*)malloc(strl);
-  if(!ATIstream_GPUname)
-  {
-    *cpuname=GetNameById(0);
+    *cpuname = GetNameById(0);
     return 0;
   }
+
   ATIstream_GPUname[0]=0;
-  for(i=0; i<nCPUs; i++)
+  for (i = 0; i < nCPUs; i++)
   {
-    if(strlen(ATIstream_GPUname)>0)
-      strcat(ATIstream_GPUname,", ");
-    curr_name=GetNameById(CContext[i].attribs.target);
-    strcat(ATIstream_GPUname,curr_name);
+    if (i != 0)
+      strcat(ATIstream_GPUname, ", ");
+    strcat(ATIstream_GPUname, GetNameById(CContext[i].attribs.target));
   }
-  *cpuname=ATIstream_GPUname;
+
+  *cpuname = ATIstream_GPUname;
   return CContext[0].attribs.target;
+}
+
+void AMDStreamPrintExtendedGpuInfo(void)
+{
+  int i;
+
+  if (atistream_numDevices <= 0)
+  {
+    LogRaw("No supported devices found\n");
+    return;
+  }
+  for (i = 0; i < atistream_numDevices; i++)
+  {
+    stream_context_t *dev = &CContext[i];
+
+    LogRaw("\n");
+    if (!dev->active)
+    {
+      LogRaw("Warning: device %d not activated\n", i);
+      continue;
+    }
+
+    LogRaw("GPU %d attributes (EEEEEEEE == undefined):\n", i);
+#define sh(name) LogRaw("%24s: %08X (%d)\n", #name, dev->attribs.##name, dev->attribs.##name)
+    sh(target);
+    sh(localRAM);
+    sh(uncachedRemoteRAM);
+    sh(cachedRemoteRAM);
+    sh(engineClock);
+    sh(memoryClock);
+    sh(wavefrontSize);
+    sh(numberOfSIMD);
+    sh(doublePrecision);
+    sh(localDataShare);
+    sh(globalDataShare);
+    sh(globalGPR);
+    sh(computeShader);
+    sh(memExport);
+    sh(pitch_alignment);
+    sh(surface_alignment);
+    sh(numberOfUAVs);
+    sh(bUAVMemExport);
+    sh(b3dProgramGrid);
+    sh(numberOfShaderEngines);
+    sh(targetRevision);
+#undef sh
+  }
 }
