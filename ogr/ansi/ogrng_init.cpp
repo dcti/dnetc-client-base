@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
  */
 const char *ogrng_init_cpp(void) {
-return "@(#)$Id: ogrng_init.cpp,v 1.10 2009/02/01 11:36:12 andreasb Exp $"; }
+return "@(#)$Id: ogrng_init.cpp,v 1.11 2010/05/09 10:58:19 stream Exp $"; }
 
 #include <stdlib.h>     /* calloc */
 #include "clisync.h"    /* fastlock_* */
@@ -176,8 +176,6 @@ static int build_cache(int nMarks)
 {
   int success = 0;
 
-  fastlock_lock(&memlock);
-
   if (nMarks >= OGR_NG_MIN && nMarks <= OGR_NG_MAX) {
     struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
     size_t n_elems = 32 << CHOOSE_DIST_BITS;
@@ -191,7 +189,6 @@ static int build_cache(int nMarks)
     }
   }
 
-  fastlock_unlock(&memlock);
   return success;
 }
 
@@ -207,12 +204,20 @@ int ogr_check_cache(int nMarks)
   if (nMarks >= OGR_NG_MIN && nMarks <= OGR_NG_MAX) {
     struct choose_datas* p = &precomp_limits[nMarks - OGR_NG_MIN];
 
-    if (p->choose_array) {
-      return (p->checksum == fletcher16(p->choose_array, (32 << CHOOSE_DIST_BITS)));
+    if (p->choose_array == NULL) {
+      /* Make sure no other threads creating cache at same time */
+      fastlock_lock(&memlock);
+      if (p->choose_array == NULL) {
+        /* Yes, the cache is still empty. Create it ourselves */
+        int success = build_cache(nMarks);
+        fastlock_unlock(&memlock);
+        return success;
+      }
+      /* Cache created in race condition by other thread, go back to fletcher as usual */
+      fastlock_unlock(&memlock);
     }
-    else {
-      return build_cache(nMarks);
-    }
+
+    return (p->checksum == fletcher16(p->choose_array, (32 << CHOOSE_DIST_BITS)));
   }
   return 0;
 }
