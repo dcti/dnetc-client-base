@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.14 2010/01/04 04:13:23 jlawson Exp $
+ * $Id: r72stream-common.cpp,v 1.15 2010/05/09 10:50:34 stream Exp $
 */
 
 #include "r72stream-common.h"
@@ -43,7 +43,7 @@ fastlock_t ATIstream_cMutex;
 fastlock_t ATIstream_RDPMutex;
 
 int ati_RC_error;
-void InitMutex()
+void AMDInitMutex()
 {
   fastlock_init(&ATIstream_cMutex);
   fastlock_init(&ATIstream_RDPMutex);
@@ -138,10 +138,32 @@ unsigned char* Decompress(unsigned char *inbuf, unsigned length)
   return outbuf;
 }
 
+CALresult runCompiler(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool verbose)
+{
+  CALobject s_obj=0;
+  CALresult result;
+  int Device = 999;  // todo
+
+  fastlock_lock(&ATIstream_cMutex);
+  result = calclCompile(&s_obj, CAL_LANGUAGE_IL, src, target);
+  // RC5-72 code blindly tries to compile few cores until it finds one suitable
+  // for current GPU architecture, so print error only when requested (by OGR code).
+  if (verbose)
+    ati_verbose_cl(result, "compiling program", Device);
+  if (result == CAL_RESULT_OK)
+  {
+    result = calclLink(image, &s_obj, 1);
+    if (ati_verbose_cl(result, "linking program", Device) == CAL_RESULT_OK)
+      result = ati_verbose( calModuleLoad(module, *ctx, *image), "loading module", Device );
+    ati_verbose_cl( calclFreeObject(s_obj), "freeing compiled object", Device);
+  }
+
+  fastlock_unlock(&ATIstream_cMutex);
+  return result;
+}
 
 CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool globalFlag)
 {
-  CALobject s_obj=0;
   CALresult result;
 
   char *decoded_src=(char*)malloc(strlen(src)+1);
@@ -170,17 +192,9 @@ CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CA
       }
     }
   } while(p);
-  fastlock_lock(&ATIstream_cMutex);
-  result = calclCompile(&s_obj, CAL_LANGUAGE_IL, (CALchar*)tempB, target);
-  if(result == CAL_RESULT_OK)
-  {
-    result=calclLink(image, &s_obj, 1);
-    if(result == CAL_RESULT_OK)
-      calModuleLoad(module, *ctx, *image);
-    calclFreeObject(s_obj);
-  }
 
-  fastlock_unlock(&ATIstream_cMutex);
+  result = runCompiler(ctx, image, module, (CALchar*)tempB, target);
+
   free(decompressed_src);
   free(tempB);
   return result;

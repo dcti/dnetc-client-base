@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.16 2010/01/04 02:57:58 andreasb Exp $
+ * $Id: r72stream-common.h,v 1.17 2010/05/09 10:50:34 stream Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -33,13 +33,9 @@
 #include <windows.h>
 #endif
 
-#define CORE_IL4N   1
-#define CORE_IL4NA  2
-#define CORE_IL42T  3
-
-
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
 CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool);
+CALresult runCompiler(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool verbose=false);
 
 u32 checkRemoteConnectionFlag();
 u32 setRemoteConnectionFlag();
@@ -101,5 +97,10 @@ inline double HiresTimerGetResolution()
 #define isRemoteSession() 0
 
 #endif
+
+// They're mine! TODO: rearrange common parts
+
+CALresult ati_verbose(CALresult result, const char *where, u32 DeviceIndex);
+CALresult ati_verbose_cl(CALresult result, const char *where, u32 DeviceIndex); // for compiler (after calcl...() functions)
 
 #endif
