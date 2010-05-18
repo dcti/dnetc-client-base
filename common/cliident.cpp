@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.36 2009/04/01 16:04:10 andreasb Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.37 2010/05/18 14:17:43 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -177,7 +177,9 @@ extern const char *base64_cpp(void);
 extern const char *bench_cpp(void);
 extern const char *buffbase_cpp(void);
 extern const char *buffpub_cpp(void);
-extern const char *buffupd_cpp(void);
+
+//disable so public source can compile
+//extern const char *buffupd_cpp(void);	
 extern const char *checkpt_cpp(void);
 extern const char *clicdata_cpp(void);
 extern const char *client_cpp(void);
@@ -254,7 +256,7 @@ static const char * (*ident_table[])(void) =
   bench_cpp,
   buffbase_cpp,
   buffpub_cpp,
-  buffupd_cpp,
+//  buffupd_cpp,
   checkpt_cpp,
   clicdata_cpp,
   client_cpp,
