@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: cuda_info.h,v 1.2 2009/04/07 09:23:31 andreasb Exp $
+ * $Id: cuda_info.h,v 1.3 2010/05/27 00:38:20 snikkel Exp $
 */
 
 #ifndef CUDA_INFO_H
@@ -17,5 +17,10 @@ long GetRawCUDAGPUID(const char **cpuname);
 
 // returns the frequency in MHz, or 0.
 unsigned int GetCUDAGPUFrequency();
+
+// Number of cores per MP (varies with SM version)
+// from NVIDIA CUDA SDK 'deviceQuery'
+#define MAX_CUDA_MAJOR 2
+static int CUDACoresPerSM[] = { -1, 8, 32 };
 
 #endif // CUDA_INFO_H

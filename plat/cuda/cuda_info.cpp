@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: cuda_info.cpp,v 1.3 2009/04/29 08:53:18 andreasb Exp $
+ * $Id: cuda_info.cpp,v 1.4 2010/05/27 00:38:20 snikkel Exp $
 */
 
 #include "cuda_info.h"
@@ -48,7 +48,11 @@ long GetRawCUDAGPUID(const char **cpuname)
     cudaDeviceProp deviceProp;
     cudaError_t rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
     if (rc == cudaSuccess) {
-      snprintf(namebuf, sizeof(namebuf), "%.29s (%d MPs)",
+      if (deviceProp.major<= MAX_CUDA_MAJOR)
+        snprintf(namebuf, sizeof(namebuf), "%.29s (%d SPs)",
+               deviceProp.name, deviceProp.multiProcessorCount*CUDACoresPerSM[deviceProp.major]);
+      else
+        snprintf(namebuf, sizeof(namebuf), "%.29s (%d MPs - ? SPs)",
                deviceProp.name, deviceProp.multiProcessorCount);
 
       // FIXME: we need some ID to distinguish different cards
