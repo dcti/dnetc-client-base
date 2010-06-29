@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.115 2009/08/11 13:12:18 andreasb Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.116 2010/06/29 01:22:20 snake Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -264,6 +264,8 @@
     #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(__mips__) || defined(ASM_MIPS)
     #define CLIENT_CPU     CPU_MIPS
+  #elif defined(__powerpc__) || defined(ASM_PPC)
+    #define CLIENT_CPU     CPU_POWERPC
   #endif
 #elif defined(bsdi)
   #ifndef __unix__ /* should already be defined */

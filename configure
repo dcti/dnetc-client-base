@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.413 2010/04/07 03:12:55 snake Exp $
+# @(#)$Id: configure,v 1.414 2010/06/29 01:22:23 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2276,6 +2276,18 @@ case "$1" in
         TARGET_TARBALL="netbsd-ppc"
         #add_sources "netbsd" "ppc"          # without Altivec
         add_sources "netbsd" "ppc" "altivec" # with AltiVec
+        ;;
+
+    *openbsd-ppc)                # [snake] for Macs and Freescale boards
+        TARGET_CC="g++"
+        generate_gcc_opts "ppc" "openbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-ltermcap"
+        TARGET_DOCFILES="docs/readme._ix"   
+        TARGET_TARBALL="openbsd-ppc"
+        #add_sources "openbsd" "ppc"          # without Altivec
+        add_sources "openbsd" "ppc" "altivec" # with AltiVec
         ;;
 
     *macosx-ppc)                # [mfeiri] (MACH 3.x based: MacOS X, Darwin)
