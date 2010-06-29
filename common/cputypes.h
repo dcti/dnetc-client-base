@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.116 2010/06/29 01:22:20 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.117 2010/06/29 05:22:40 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -537,6 +537,10 @@
     #define CLIENT_OS_NAME_EXTENDED "CUDA 2.2 on " CLIENT_OS_NAME
   #elif (CUDA_VERSION == 2030)
     #define CLIENT_OS_NAME_EXTENDED "CUDA 2.3 on " CLIENT_OS_NAME
+  #elif (CUDA_VERSION == 3000)
+    #define CLIENT_OS_NAME_EXTENDED "CUDA 3.0 on " CLIENT_OS_NAME
+  #elif (CUDA_VERSION == 3010)
+    #define CLIENT_OS_NAME_EXTENDED "CUDA 3.1 on " CLIENT_OS_NAME
   #else
     #define CLIENT_OS_NAME_EXTENDED "CUDA on " CLIENT_OS_NAME
   #endif
