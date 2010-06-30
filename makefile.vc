@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.130 2010/04/22 19:23:55 sla Exp $
+# $Id: makefile.vc,v 1.131 2010/06/30 04:47:21 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -144,7 +144,13 @@ OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH)
 OPTS_LIBS = $(OPTS_LIBS) version.lib $(CUDA_LIB_PATH)\cudart.lib
 ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda plat\cuda\cudatoolkit_eula.txt cudart.dll
 
-!if ( [cmd /c plat\win\cudaver.cmd] == 2030 )
+!if ( [cmd /c plat\win\cudaver.cmd] == 3010 )
+ZIPSUFFIX = win32-x86-cuda31
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=3010
+!elseif ( [cmd /c plat\win\cudaver.cmd] == 3000 )
+ZIPSUFFIX = win32-x86-cuda30
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=3000
+!elseif ( [cmd /c plat\win\cudaver.cmd] == 2030 )
 ZIPSUFFIX = win32-x86-cuda23
 OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2030
 !elseif ( [cmd /c plat\win\cudaver.cmd] == 2020 )
