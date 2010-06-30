@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-1pipe.cu,v 1.30 2010/06/30 16:04:56 nerf Exp $
+ * $Id: r72cuda-1pipe.cu,v 1.31 2010/06/30 20:59:29 stream Exp $
 */
 
 #include <stdio.h>
@@ -88,9 +88,11 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   u8 * results = NULL;
   u8 * cuda_results = NULL;
 
-  cudaStream_t core = 0;
-  cudaEvent_t start = 0, stop = 0;
+  cudaStream_t core;
+  cudaEvent_t start, stop;
   cudaError_t cuda_error, last_error;
+
+  int created_core = 0, created_start = 0, created_stop = 0;
 
 #ifdef DISPLAY_TIMESTAMPS
   int64_t current_ts;
@@ -116,20 +118,23 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     }
   }
 
-  if ((cuda_error = cudaStreamCreate(&core)) != cudaSuccess || core == 0) {
+  if ((cuda_error = cudaStreamCreate(&core)) != cudaSuccess) {
     failed = "cudaStreamCreate";
     goto error_exit;
   }
+  created_core = 1;
 
-  if ((cuda_error = cudaEventCreate(&start)) != cudaSuccess || start == 0) {
+  if ((cuda_error = cudaEventCreate(&start)) != cudaSuccess) {
     failed = "cudaEventCreate";
     goto error_exit;
   }
+  created_start = 1;
 
-  if ((cuda_error = cudaEventCreate(&stop)) != cudaSuccess || stop == 0) {
+  if ((cuda_error = cudaEventCreate(&stop)) != cudaSuccess) {
     failed = "cudaEventCreate";
     goto error_exit;
   }
+  created_stop = 1;
 
   /* Determine the grid dimensionality based on the */
   /* number of iterations.                          */
@@ -400,15 +405,15 @@ error_exit:
     cudaFree(cuda_results);
   }
 
-  if (stop != 0) {
+  if (created_stop) {
     cudaEventDestroy(stop);
   }
 
-  if (start != 0) {
+  if (created_start) {
     cudaEventDestroy(start);
   }
 
-  if (core != 0) {
+  if (created_core) {
     cudaStreamDestroy(core);
   }
 
