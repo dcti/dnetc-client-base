@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-1pipe.cu,v 1.29 2009/07/26 09:23:23 jlawson Exp $
+ * $Id: r72cuda-1pipe.cu,v 1.30 2010/06/30 16:04:56 nerf Exp $
 */
 
 #include <stdio.h>
@@ -88,8 +88,8 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   u8 * results = NULL;
   u8 * cuda_results = NULL;
 
-  cudaStream_t core = -1;
-  cudaEvent_t start = -1, stop = -1;
+  cudaStream_t core = 0;
+  cudaEvent_t start = 0, stop = 0;
   cudaError_t cuda_error, last_error;
 
 #ifdef DISPLAY_TIMESTAMPS
@@ -116,17 +116,17 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     }
   }
 
-  if ((cuda_error = cudaStreamCreate(&core)) != cudaSuccess || core == -1) {
+  if ((cuda_error = cudaStreamCreate(&core)) != cudaSuccess || core == 0) {
     failed = "cudaStreamCreate";
     goto error_exit;
   }
 
-  if ((cuda_error = cudaEventCreate(&start)) != cudaSuccess || start == -1) {
+  if ((cuda_error = cudaEventCreate(&start)) != cudaSuccess || start == 0) {
     failed = "cudaEventCreate";
     goto error_exit;
   }
 
-  if ((cuda_error = cudaEventCreate(&stop)) != cudaSuccess || stop == -1) {
+  if ((cuda_error = cudaEventCreate(&stop)) != cudaSuccess || stop == 0) {
     failed = "cudaEventCreate";
     goto error_exit;
   }
@@ -400,15 +400,15 @@ error_exit:
     cudaFree(cuda_results);
   }
 
-  if (stop != -1) {
+  if (stop != 0) {
     cudaEventDestroy(stop);
   }
 
-  if (start != -1) {
+  if (start != 0) {
     cudaEventDestroy(start);
   }
 
-  if (core != -1) {
+  if (core != 0) {
     cudaStreamDestroy(core);
   }
 
