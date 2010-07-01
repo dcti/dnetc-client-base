@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.183 2010/05/09 10:40:03 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.184 2010/07/01 12:52:19 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2347,8 +2347,9 @@ unsigned int GetProcessorFrequency()
       freq = (freqhz + 500000) / 1000000;
     }
   #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
-  struct timeval tv1, tv2, elapsed_time;
+    struct timeval tv1, tv2, elapsed_time;
     ui64 calltime = x86ReadTSC();
+    unsigned long divpart;
     sleep(0);
     calltime = x86ReadTSC() - calltime;
     
@@ -2359,7 +2360,9 @@ unsigned int GetProcessorFrequency()
     CliGetMonotonicClock(&tv2);
     CliTimerDiff(&elapsed_time,&tv1,&tv2);
 
-    freq = (unsigned int)((newtime - prevtime - calltime) / (elapsed_time.tv_usec + elapsed_time.tv_sec * 1000000));
+    /* Avoid division by zero (happens at least in DOS VDM) */
+    divpart = elapsed_time.tv_usec + elapsed_time.tv_sec * 1000000;
+    freq = divpart ? (unsigned int)((newtime - prevtime - calltime) / divpart) : 0;
     if (freq != 0)
     {
       if (freq < 250) {
