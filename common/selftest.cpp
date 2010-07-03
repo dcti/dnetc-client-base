@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.102 2010/02/15 19:44:27 stream Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.103 2010/07/03 13:25:36 stream Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -157,7 +157,7 @@ static const s32 ogrp2_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 // ---------------------------------------------------------------------------
 
 // returns 0 if not supported, <0 on failed or break
-long SelfTest( unsigned int contest )
+static long SelfTestInternal( unsigned int contest, int stress )
 {
   int threadpos, threadcount = 1;
   long successes = 0L;
@@ -326,6 +326,10 @@ long SelfTest( unsigned int contest )
         if (non_preemptive_env)
           tslice = 32768;
         #endif
+        #if defined(HAVE_OGR_CORES)
+        if (contest == OGR_NG && stress)
+          tslice = 1;
+        #endif
 
         if (ProblemLoadState( thisprob, &contestwork,
                               contest, tslice, 0, 0, 0, 0, NULL ) == 0)
@@ -484,6 +488,9 @@ long SelfTest( unsigned int contest )
               #ifdef HAVE_OGR_CORES
               case OGR_NG:
               {
+                int logTo;
+
+                resulttext = NULL; // assume success
                 if (expectedsolution_lo & 0x80000000)  // no solution
                 {
                   expectedsolution_lo = ~expectedsolution_lo;
@@ -491,29 +498,30 @@ long SelfTest( unsigned int contest )
                     contestwork.ogr_ng.nodes.lo != expectedsolution_lo)
                   {
                     resulttext = "FAILED1";
-                    resultcode = -1;
-                  }
-                  else
-                  {
-                    resulttext = "passed ";
-                    successes++;
                   }
                 }
                 else if (resultcode != RESULT_FOUND ||
                     contestwork.ogr_ng.nodes.lo != expectedsolution_lo)
                 {
                   resulttext = "FAILED2";
-                  resultcode = -1;
                 }
-                else
+
+                if (resulttext == NULL)
                 {
                   resulttext = "passed ";
                   successes++;
+                  logTo = LOGTO_SCREEN;  /* same as LogScreen() */
                 }
-                LogScreen( "\r%s: Test %02d %s: %s %08X-%08X\n",
-                                  contname, testnum + 1, resulttext,
-                                  ogrng_stubstr(&contestwork.ogr_ng.workstub),
-                                  contestwork.ogr_ng.nodes.lo, expectedsolution_lo );
+                else
+                {
+                  resultcode = -1;
+                  logTo = LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL; /* same as Log() */
+                }
+
+                LogTo( logTo, "\r%s: Test %02d %s: %s %08X-%08X\n",
+                                     contname, testnum + 1, resulttext,
+                                     ogrng_stubstr(&contestwork.ogr_ng.workstub),
+                                     contestwork.ogr_ng.nodes.lo, expectedsolution_lo );
                 break;
               }
               #endif
@@ -567,12 +575,19 @@ long SelfTest( unsigned int contest )
   return (successes);
 }
 
+long SelfTest( unsigned int contest )
+{
+  return SelfTestInternal(contest, 0);
+}
 
 long StressTest(unsigned int contest)
 {
   switch (contest) {
     #if defined(HAVE_RC5_72_CORES)
     case RC5_72: return StressRC5_72();
+    #endif
+    #if defined(HAVE_OGR_CORES)
+    case OGR_NG: return SelfTestInternal(contest, 1);
     #endif
     default: return SelfTest(contest);
   }
