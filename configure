@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.415 2010/06/29 05:22:39 jlawson Exp $
+# @(#)$Id: configure,v 1.416 2010/07/09 14:58:01 andreasb Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -815,7 +815,8 @@ infer_cuda_version() { # $1=configure target
     internal-*-cuda)
       for _ver in $TARGET_CUDA_VERSION 3.1 3.0 2.3 2.2 2.1 2.0
       do
-        if [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}" ]; then
+        if [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}" ] || \
+           [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}".* ]; then
           inferred_cuda_version="$_ver"
           break
         fi
@@ -3143,7 +3144,7 @@ case "$1" in
         TARGET_LIBS="-lcudart -lrt"
         TARGET_TARBALL="linux-${inferred_arch}${inferred_cuda_tarball_suffix}"
         TARGET_DOCFILES="docs/readme.linux docs/readme.cuda"   #platform specific docfile
-        TARGET_LIBFILES="plat/cuda/cudatoolkit_eula.txt ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.2 ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.$TARGET_CUDA_VERSION"
+        TARGET_LIBFILES="plat/cuda/cudatoolkit_eula.txt ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${TARGET_CUDA_VERSION%%.*} ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${TARGET_CUDA_VERSION}*"
         TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "cuda"
         ;;
