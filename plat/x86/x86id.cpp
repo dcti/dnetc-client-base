@@ -3,14 +3,14 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.16 2009/10/29 05:16:01 snikkel Exp $
+ * $Id: x86id.cpp,v 1.17 2010/07/10 18:39:30 mfeiri Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
  *    http://sandpile.org/   
  */
 const char *x86id_cpp(void) {
-return "@(#)$Id: x86id.cpp,v 1.16 2009/10/29 05:16:01 snikkel Exp $"; }
+return "@(#)$Id: x86id.cpp,v 1.17 2010/07/10 18:39:30 mfeiri Exp $"; }
 
 #include <string.h>
 #include <stdio.h>
@@ -81,7 +81,6 @@ union PageInfos {
                   "cpuid"
                   : "=a"(_ax), "=b"(_bx), "=c"(_cx), "=d"(_dx)
                   : "0"(page)
-                  : /* nothing */
                  );
     infos->regs.eax = _ax;
     infos->regs.ebx = _bx;
