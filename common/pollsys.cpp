@@ -40,7 +40,7 @@
  * --------------------------------------------------------------------
 */
 const char *pollsys_cpp(void) {
-  return "@(#)$Id: pollsys.cpp,v 1.22 2009/09/20 10:54:11 stream Exp $";
+  return "@(#)$Id: pollsys.cpp,v 1.23 2010/07/10 17:36:33 mfeiri Exp $";
 }
 
 #include "baseincs.h"  /* NULL, malloc */
@@ -126,7 +126,7 @@ int UnregPolledProcedure( int fd )
   to allow procedures with a low(er) priority to run.
 */
 
-int RegPolledProcedure( auto void (*proc)(void *), void *arg,
+int RegPolledProcedure( void (*proc)(void *), void *arg,
                         struct timeval *interval, unsigned int priority )
 {
   struct polldata *thatp, *thisp, *chaintail;
@@ -379,7 +379,7 @@ void __RunPollingLoop( unsigned int secs, unsigned int usecs )
 }
 
 // enqueue but don't register, yet
-int EnqueuePolledProcedure( auto void (*proc)(void *), void *arg,
+int EnqueuePolledProcedure( void (*proc)(void *), void *arg,
                             unsigned int priority )
 {
   struct polldata *thisp = (struct polldata *)(malloc( sizeof(struct polldata) ));
