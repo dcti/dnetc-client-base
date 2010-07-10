@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.103 2010/07/03 13:25:36 stream Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.104 2010/07/10 17:35:31 stream Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -170,7 +170,7 @@ static long SelfTestInternal( unsigned int contest, int stress )
 
   if (contest >= CONTEST_COUNT)
   {
-    LogScreen("test::error. invalid contest %u\n", contest );
+    Log("test::error. invalid contest %u\n", contest );
     return 0;
   }
   if (!IsProblemLoadPermitted(-1, contest)) /* also checks HAVE_xxx_CORES */
@@ -384,6 +384,9 @@ static long SelfTestInternal( unsigned int contest, int stress )
               {
                 int expected_cmc_count = (int)(*test_cases)[testnum][9];
                     // may be <= 0 if no solution, but perhaps some cmc key(s)
+                int logMode;
+
+                resulttext = NULL; /* assume success by default */
                 if ( expected_cmc_count == 0 &&        /* expect no solution and no cmc */
                      ( resultcode != RESULT_NOTHING || 
                        contestwork.bigcrypto.check.count != 0 ) )
@@ -391,7 +394,6 @@ static long SelfTestInternal( unsigned int contest, int stress )
                   contestwork.bigcrypto.key.lo  =
                   contestwork.bigcrypto.key.mid = contestwork.bigcrypto.key.hi = 0;
                   resulttext = "FAILED0";
-                  resultcode = -1;
                 }
                 else if ( expected_cmc_count < 0 &&       /* expect no solution but cmc */
                           ( resultcode != RESULT_NOTHING || 
@@ -400,14 +402,12 @@ static long SelfTestInternal( unsigned int contest, int stress )
                   //contestwork.bigcrypto.key.lo  =
                   //contestwork.bigcrypto.key.mid = contestwork.bigcrypto.key.hi = 0;
                   resulttext = "FAILED1";
-                  resultcode = -1;
                 }
                 else if ( expected_cmc_count > 0 && resultcode != RESULT_FOUND )     /* no solution */
                 {
                   contestwork.bigcrypto.key.lo  =
                   contestwork.bigcrypto.key.mid = contestwork.bigcrypto.key.hi = 0;
                   resulttext = "FAILED2";
-                  resultcode = -1;
                 }
                 else if ( expected_cmc_count > 0 &&
                           ( contestwork.bigcrypto.key.hi  != expectedsolution_hi  ||
@@ -415,13 +415,11 @@ static long SelfTestInternal( unsigned int contest, int stress )
                             contestwork.bigcrypto.key.lo  != expectedsolution_lo ) )
                 {                                                  /* wrong solution */
                   resulttext = "FAILED3";
-                  resultcode = -1;
                 }
                 else if ( expected_cmc_count > 0 && 
                           contestwork.bigcrypto.check.count != (u32)expected_cmc_count )
                 {
                   resulttext = "FAILED4";
-                  resultcode = -1;
                 }
                 else if ( expected_cmc_count != 0 &&
                           ( contestwork.bigcrypto.check.hi  != expectedsolution_hi  ||
@@ -429,20 +427,28 @@ static long SelfTestInternal( unsigned int contest, int stress )
                             contestwork.bigcrypto.check.lo  != expectedsolution_lo ) )
                 {                                          /* wrong partial solution */
                   resulttext = "FAILED5";
-                  resultcode = -1;
                 }
                 else if ( expected_cmc_count <= 0 )         /* correct 'no' solution */
                 {
                   expectedsolution_lo = contestwork.bigcrypto.key.lo;
-                  resulttext = "passed";
-                  successes++;
                 }
                 else                                             /* correct solution */
                 {
+                  // fallthru to success
+                }
+
+                if (resulttext == NULL)
+                {
                   resulttext = "passed";
                   successes++;
+                  logMode = LOGAS_LOGSCREEN;
                 }
-                LogScreen( "\r%s: Test %02d %s: %02X:%08X:%08X-%02X:%08X:%08X\n",
+                else
+                {
+                  resultcode = -1;
+                  logMode = LOGAS_LOG;
+                }
+                LogTo( logMode, "\r%s: Test %02d %s: %02X:%08X:%08X-%02X:%08X:%08X\n",
                    contname, testnum + 1, resulttext, contestwork.bigcrypto.key.hi,
                    contestwork.bigcrypto.key.mid, contestwork.bigcrypto.key.lo,
                    expectedsolution_hi, expectedsolution_mid, expectedsolution_lo );
@@ -510,12 +516,12 @@ static long SelfTestInternal( unsigned int contest, int stress )
                 {
                   resulttext = "passed ";
                   successes++;
-                  logTo = LOGTO_SCREEN;  /* same as LogScreen() */
+                  logTo = LOGAS_LOGSCREEN;  /* same as LogScreen() */
                 }
                 else
                 {
                   resultcode = -1;
-                  logTo = LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL; /* same as Log() */
+                  logTo = LOGAS_LOG; /* same as Log() */
                 }
 
                 LogTo( logTo, "\r%s: Test %02d %s: %s %08X-%08X\n",
@@ -537,7 +543,7 @@ static long SelfTestInternal( unsigned int contest, int stress )
           ClientEventSyncPost( CLIEVENT_SELFTEST_TESTEND, &resultcode, sizeof(resultcode) );
         } /* if load state ok */
         else {
-          LogScreen( "\r%s: Test %02d load failed\n", contname, testnum + 1);
+          Log( "\r%s: Test %02d load failed\n", contname, testnum + 1);
         }
         ProblemFree(thisprob);
       } /* if ProblemAlloc() */
@@ -586,9 +592,6 @@ long StressTest(unsigned int contest)
     #if defined(HAVE_RC5_72_CORES)
     case RC5_72: return StressRC5_72();
     #endif
-    #if defined(HAVE_OGR_CORES)
-    case OGR_NG: return SelfTestInternal(contest, 1);
-    #endif
-    default: return SelfTest(contest);
+    default: return SelfTestInternal(contest, 1);
   }
 }

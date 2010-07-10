@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __LOGSTUFF_H__
-#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.19 2008/12/30 20:58:41 andreasb Exp $"
+#define __LOGSTUFF_H__ "@(#)$Id: logstuff.h,v 1.20 2010/07/10 17:35:31 stream Exp $"
 
 /* this is shared with Configure() */
 #define LOGFILETYPE_NONE    0 //no logging to file
@@ -20,6 +20,10 @@
 #define LOGTO_FILE       0x02
 #define LOGTO_MAIL       0x04
 #define LOGTO_RAWMODE    0x80
+
+/* log modes used in corresponding functions for simple usage in LogTo() */
+#define LOGAS_LOG        (LOGTO_SCREEN | LOGTO_FILE | LOGTO_MAIL)  // same as Log()
+#define LOGAS_LOGSCREEN  LOGTO_SCREEN                              // same as LogScreen()
 
 /* ---------------------------------------------------- */
 

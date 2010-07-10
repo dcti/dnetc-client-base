@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.59 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.60 2010/07/10 17:35:30 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -684,7 +684,7 @@ void LogScreen( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN, format, MAKE_VA_LIST_PTR(argptr) );
+  LogWithPointer( LOGAS_LOGSCREEN, format, MAKE_VA_LIST_PTR(argptr) );
   va_end(argptr);
   return;
 }
@@ -693,7 +693,7 @@ void LogScreenRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN, format, MAKE_VA_LIST_PTR(argptr));
+  LogWithPointer( LOGTO_RAWMODE | LOGAS_LOGSCREEN, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
@@ -702,7 +702,7 @@ void Log( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, MAKE_VA_LIST_PTR(argptr));
+  LogWithPointer( LOGAS_LOG, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
@@ -711,7 +711,7 @@ void LogRaw( const char *format, ... )
 {
   va_list argptr;
   va_start(argptr, format);
-  LogWithPointer( LOGTO_RAWMODE|LOGTO_SCREEN|LOGTO_FILE|LOGTO_MAIL, format, MAKE_VA_LIST_PTR(argptr));
+  LogWithPointer( LOGTO_RAWMODE | LOGAS_LOG, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
 }
