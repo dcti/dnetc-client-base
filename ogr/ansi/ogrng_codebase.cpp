@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.11 2009/05/08 16:33:50 kakace Exp $
+ * $Id: ogrng_codebase.cpp,v 1.12 2010/07/10 19:29:52 stream Exp $
  */
 
 #include <string.h>   /* memset */
@@ -417,7 +417,7 @@ static int ogr_cycle_entry(void *state, int *pnodes, int with_time_constraints)
   struct OgrState *oState = (struct OgrState *)state;
   u16* pchoose = precomp_limits[oState->maxdepth - OGR_NG_MIN].choose_array;
   int safesize = OGRNG_BITMAPS_LENGTH * 2;
-  int depth;
+  int nodesDone;
 
   // Bug #4076 : Make sure a forked process has a chance to initialize itself.
   if (pchoose == NULL) {
@@ -438,18 +438,36 @@ static int ogr_cycle_entry(void *state, int *pnodes, int with_time_constraints)
   ** that are not Golomb. This loop asserts the Golombness of any ruler found
   ** when that makes sense.
   */
-  do {
-    depth = ogr_cycle_256(oState, pnodes, pchoose);
-  } while (depth == oState->maxdepthm1 && oState->Levels[depth].mark > safesize && found_one(oState) == 0);
+  for (nodesDone = 0;;) {
 
-  if (depth == oState->maxdepthm1) {
-    retval = CORE_S_SUCCESS;
-  }
-  else if (depth <= oState->stopdepth) {
-    retval = CORE_S_OK;
+    int nodes, nodesCopy;
+
+    nodes = nodesCopy = *pnodes - nodesDone;
+
+    oState->depth = ogr_cycle_256(oState, &nodes, pchoose);
+    nodesDone += nodes;
+
+    /* Ruler is not complete if all nodes were exhausted.
+    ** In this case last action was PUSH_LEVEL and last diff is zero.
+    */
+    if (oState->depth == oState->maxdepthm1 && nodes != nodesCopy) {
+      /* For long rulers, check their golombness first */
+      if (oState->Levels[oState->depth].mark > safesize && found_one(oState) == 0) {
+        continue;
+      }
+      retval = CORE_S_SUCCESS;
+    }
+    else if (oState->depth <= oState->stopdepth) {
+      retval = CORE_S_OK;
+    }
+    else {
+      retval = CORE_S_CONTINUE;
+    }
+    break;
   }
 
-  oState->depth = depth - 1;
+  *pnodes = nodesDone;
+  --oState->depth;
   return retval;
 }
 
