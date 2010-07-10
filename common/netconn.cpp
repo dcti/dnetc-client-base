@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.8 2008/12/30 20:58:42 andreasb Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.9 2010/07/10 19:11:17 stream Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -326,13 +326,13 @@ static int __init_connection(NETSTATE *netstate)
     if (rc != 0)
     {
       if (netstate->verbose_level > 0)
-        LogScreen("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
+        Log("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
       recoverable = 0;
     }
     else if (len != len2)
     {
       if (netstate->verbose_level > 0)
-        LogScreen("SOCKS5: error sending negotiation request\n");
+        Log("SOCKS5: error sending negotiation request\n");
       recoverable = 1;
     }
     else 
@@ -342,19 +342,19 @@ static int __init_connection(NETSTATE *netstate)
       if (rc != 0)
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
+          Log("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
         recoverable = 0;
       }
       else if (len != len2)
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS5: failed to get negotiation request ack.\n");
+          Log("SOCKS5: failed to get negotiation request ack.\n");
         recoverable = 1;
       }
       else if (psocks5mreply->ver != 5)
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS5: authentication has wrong version, %d should be 5\n",
+          Log("SOCKS5: authentication has wrong version, %d should be 5\n",
                               psocks5mreply->ver);
       }
       else if (psocks5mreply->Method == 0)       // no authentication required
@@ -365,7 +365,7 @@ static int __init_connection(NETSTATE *netstate)
       else if (psocks5mreply->Method == 1)  // GSSAPI
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS5: GSSAPI per-message authentication is\n"
+          Log("SOCKS5: GSSAPI per-message authentication is\n"
                     "not supported. Please use SOCKS4 or HTTP.\n");
       }
       else if (psocks5mreply->Method == 2)  // username and pw
@@ -407,13 +407,13 @@ static int __init_connection(NETSTATE *netstate)
         if (rc != 0)
         {
           if (netstate->verbose_level > 0)
-            LogScreen("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
+            Log("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
           recoverable = 0;
         }
         else if (len != len2)
         {
           if (netstate->verbose_level > 0)
-            LogScreen("SOCKS5: failed to send sub-negotiation request.\n");
+            Log("SOCKS5: failed to send sub-negotiation request.\n");
           recoverable = 1;
         }
         else
@@ -423,20 +423,20 @@ static int __init_connection(NETSTATE *netstate)
           if (rc != 0)
           {
             if (netstate->verbose_level > 0)
-              LogScreen("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
+              Log("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
             recoverable = 0;
           }
           else if (len != len2)
           {
             if (netstate->verbose_level > 0)
-              LogScreen("SOCKS5: failed to get sub-negotiation response.\n");
+              Log("SOCKS5: failed to get sub-negotiation response.\n");
             recoverable = 1;
           }
           else if (psocks5userpwreply->ver != 1 ||
               psocks5userpwreply->status != 0)
           {
             if (netstate->verbose_level > 0)
-              LogScreen("SOCKS5: user %s rejected by server.\n", username);
+              Log("SOCKS5: user %s rejected by server.\n", username);
             recoverable = 0;
           }
           else
@@ -448,7 +448,7 @@ static int __init_connection(NETSTATE *netstate)
       else //if (psocks5mreply->Method > 2)
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS5 authentication method rejected.\n");
+          Log("SOCKS5 authentication method rejected.\n");
       }
     }
 
@@ -482,13 +482,13 @@ static int __init_connection(NETSTATE *netstate)
       if (rc != 0)
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
+          Log("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
         recoverable = 0;
       }
       else if (len != packetsize)
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS5: failed to send connect request.\n");
+          Log("SOCKS5: failed to send connect request.\n");
         recoverable = 1;
       }
       else 
@@ -498,19 +498,19 @@ static int __init_connection(NETSTATE *netstate)
         if (rc != 0)        
         {
           if (netstate->verbose_level > 0)
-            LogScreen("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
+            Log("SOCKS5: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
           recoverable = 0;
         }
         else if (len < 10) /* too small for either atyp */
         {
           if (netstate->verbose_level > 0)
-            LogScreen("SOCKS5: failed to get connect request ack.\n");
+            Log("SOCKS5: failed to get connect request ack.\n");
           recoverable = 1;
         }
         else if (psocks5->ver != 5)
         {
           if (netstate->verbose_level > 0)
-             LogScreen("SOCKS5: reply has wrong version, %d should be 5\n",
+             Log("SOCKS5: reply has wrong version, %d should be 5\n",
                        psocks5->ver);
         }
         else if (psocks5->cmdORrep == 0)  // 0 is successful connect
@@ -532,7 +532,7 @@ static int __init_connection(NETSTATE *netstate)
               failcause = "failed. (network unreachable)";
             else if (psocks5->cmdORrep == 4)
               failcause = "failed. (host unreachable)";
-            LogScreen("SOCKS5: connect to %s:%u %s\n",
+            Log("SOCKS5: connect to %s:%u %s\n",
                         net_ntoa(netstate->svc_hostaddr),
                         (unsigned int)netstate->svc_hostport, 
                         failcause );
@@ -543,7 +543,7 @@ static int __init_connection(NETSTATE *netstate)
           const char *p = ((psocks5->cmdORrep >=
                            (sizeof Socks5ErrorText / sizeof Socks5ErrorText[0]))
                            ? ("") : (Socks5ErrorText[ psocks5->cmdORrep ]));
-          LogScreen("SOCKS5: server error 0x%02x%s%s%s\n"
+          Log("SOCKS5: server error 0x%02x%s%s%s\n"
                     "connecting to %s:%u\n",
                    ((int)(psocks5->cmdORrep)),
                    ((*p) ? (" (") : ("")), p, ((*p) ? (")") : ("")),
@@ -598,13 +598,13 @@ static int __init_connection(NETSTATE *netstate)
     if (rc != 0)
     {
       if (netstate->verbose_level > 0)
-        LogScreen("SOCKS4: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
+        Log("SOCKS4: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
       recoverable = 0;
     }
     else if (len2 != len)
     {
       if (netstate->verbose_level > 0)
-        LogScreen("SOCKS4: Error sending connect request\n");
+        Log("SOCKS4: Error sending connect request\n");
       recoverable = 1;
     }
     else
@@ -616,13 +616,13 @@ static int __init_connection(NETSTATE *netstate)
       if (rc != 0)
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS4: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
+          Log("SOCKS4: %s\n%s\n", proto_init_error_msg, net_strerror(rc,netstate->sock));
         recoverable = 0;
       }
       else if (len2 != len )
       {
         if (netstate->verbose_level > 0)
-          LogScreen("SOCKS4:%s response from server.\n",
+          Log("SOCKS4:%s response from server.\n",
                                      ((len==0)?("No"):("Invalid")));
         recoverable = 1;
       }
@@ -634,7 +634,7 @@ static int __init_connection(NETSTATE *netstate)
         }
         else if (netstate->verbose_level > 0)
         {
-          LogScreen("SOCKS4: request rejected%s.\n",
+          Log("SOCKS4: request rejected%s.\n",
             (psocks4->CD == 91)
              ? " or failed"
              :
@@ -714,7 +714,7 @@ static int __open_connection(void *cookie)
         newsock = INVALID_SOCKET;
         if (netstate->verbose_level > 0)
         {
-          LogScreen("Unable to create network endpoint\n%s\n",
+          Log("Unable to create network endpoint\n%s\n",
                     net_strerror( rc, newsock) );
         }
         success = 0;
@@ -746,7 +746,7 @@ static int __open_connection(void *cookie)
           success = 0;
           netstate->fwall_hostaddr = 0;
           if (netstate->verbose_level > 0)
-            LogScreen("\rNet::failed to resolve name \"%s\"\n%s\n",
+            Log("\rNet::failed to resolve name \"%s\"\n%s\n",
                       netstate->fwall_hostname, net_strerror( rc, netstate->sock ) );
            maxtries = -1; // unrecoverable error. retry won't help
         }
@@ -792,7 +792,7 @@ static int __open_connection(void *cookie)
             success = 0; 
             netstate->svc_hostaddr = 0;
             if (!netstate->reconnected && netstate->verbose_level > 0)
-              LogScreen("\rNet::failed to resolve name \"%s\"\n%s\n",
+              Log("\rNet::failed to resolve name \"%s\"\n%s\n",
                          netstate->svc_hostname, net_strerror( rc, netstate->sock ) );
           }
         }
@@ -832,7 +832,7 @@ static int __open_connection(void *cookie)
       {
         if (netstate->verbose_level > 0 && !__break_check(netstate))
         {
-          LogScreen( "%sonnect to host %s:%u failed.\n%s\n",
+          Log( "%sonnect to host %s:%u failed.\n%s\n",
                      ((netstate->reconnected)?("Rec"):("\rC")),
                      net_ntoa(netstate->conn_hostaddr),
                      (unsigned int)(netstate->conn_hostport), 
@@ -855,12 +855,12 @@ static int __open_connection(void *cookie)
         {
           if (!is_fwalled)
           {
-            LogScreen("\rConnected to %s:%u...\n", netstate->svc_hostname,
+            Log("\rConnected to %s:%u...\n", netstate->svc_hostname,
                   ((unsigned int)(netstate->svc_hostport)) );
           }
           else
           {
-            LogScreen( "\rConnected to %s:%u\nvia %s proxy %s:%u\n",
+            Log( "\rConnected to %s:%u\nvia %s proxy %s:%u\n",
                        netstate->svc_hostname, ((unsigned int)(netstate->svc_hostport)),
                        ((netstate->startmode & MODE_SOCKS5)?("SOCKS5"):
                        ((netstate->startmode & MODE_SOCKS4)?("SOCKS4"):("HTTP"))),
@@ -1053,7 +1053,7 @@ static unsigned int netspool_reserve(NETSPOOL *spool, unsigned int len)
         return len;
       }
     }
-    LogScreen("Net::read: ENOMEM: out of memory\n");
+    Log("Net::read: ENOMEM: out of memory\n");
   }
   return 0;
 }
@@ -1118,13 +1118,13 @@ int netconn_read( void *cookie, char * data, int numRequested )
         if (rc != 0)
         {
           if (netstate->verbose_level > 0 && !__break_check(netstate))
-            LogScreen("Net::read: %s\n", net_strerror(rc, netstate->sock ));
+            Log("Net::read: %s\n", net_strerror(rc, netstate->sock ));
           break;
         }
         if (numRead == 0)
         {
           if (netstate->verbose_level > 0)
-            LogScreen("Network read error: ETIMEDOUT: operation timed out\n");
+            Log("Network read error: ETIMEDOUT: operation timed out\n");
           break;
         }
         DUMP_PACKET("read", bufp, numRead );    
@@ -1211,7 +1211,7 @@ int netconn_read( void *cookie, char * data, int numRequested )
           if (skipcount < 0)
           {
             if (netstate->verbose_level > 0)
-              LogScreen("Net::read: unexpected binary data in HTTP header\n" );
+              Log("Net::read: unexpected binary data in HTTP header\n" );
             need_close = 1;
             break;
           }
@@ -1225,7 +1225,7 @@ int netconn_read( void *cookie, char * data, int numRequested )
             if (content_length == 0) /* we didn't get a content-length pragma */
             {            
               if (netstate->verbose_level > 0)
-                LogScreen("HTTP error: 500 missing 'Content-Length' pragma\n");
+                Log("HTTP error: 500 missing 'Content-Length' pragma\n");
               need_close = 1;
             }
             break;
@@ -1245,7 +1245,7 @@ int netconn_read( void *cookie, char * data, int numRequested )
             rc = atoi(bufp);
             if (rc < 200 || rc >= 300) /* not "200 ok" */
             {
-              LogScreen("HTTP error: '%s'\n", bufp );
+              Log("HTTP error: '%s'\n", bufp );
               need_close = 1;
               netstate->svc_hostaddr = 0;
               break; /* while remove line */
@@ -1290,7 +1290,7 @@ int netconn_read( void *cookie, char * data, int numRequested )
           if (skipcount < 0)
           {
             if (netstate->verbose_level > 0)
-              LogScreen("Net::read: unexpected binary data in UUE stream.\n");
+              Log("Net::read: unexpected binary data in UUE stream.\n");
             need_close = 1;
             break;
           }
@@ -1316,7 +1316,7 @@ int netconn_read( void *cookie, char * data, int numRequested )
             if (linelen < uulen ) /* physical line is shorter than the UUE */
             {                     /* length byte says it should be */
               if (netstate->verbose_level > 1)
-                LogScreen("Net::read UUE decode error (%d.%d:%d.%d)\n",
+                Log("Net::read UUE decode error (%d.%d:%d.%d)\n",
                            *p, n, linelen, uulen );
               need_close = 1;
               break;
@@ -1399,13 +1399,13 @@ int netconn_read( void *cookie, char * data, int numRequested )
           if (rc != 0)
           {
             if (netstate->verbose_level > 0 && !__break_check(netstate))
-              LogScreen("Net::read: %s\n", net_strerror(rc, netstate->sock ));
+              Log("Net::read: %s\n", net_strerror(rc, netstate->sock ));
             need_close = 1;
           }
           else if (numRead == 0)
           {
             if (netstate->verbose_level > 0)
-              LogScreen("Network read error: ETIMEDOUT: operation timed out\n");
+              Log("Network read error: ETIMEDOUT: operation timed out\n");
             need_close = 1;
           }
           else /* no error, not timeout */
@@ -1505,7 +1505,7 @@ int netconn_write( void *cookie, const char * data, int length )
     if (netconn_reset(netstate, netstate->svc_hostaddr) != 0)
     {
       if (netstate->verbose_level > 0)
-        LogScreen("Net::write error: could not reestablish connection.\n");
+        Log("Net::write error: could not reestablish connection.\n");
       rc = -1;
     }
   }
@@ -1528,7 +1528,7 @@ int netconn_write( void *cookie, const char * data, int length )
     {
       rc = -1;
       if (netstate->verbose_level > 0)
-        LogScreen("Net::send error. Out of memory\n");
+        Log("Net::send error. Out of memory\n");
     }
   }
 
@@ -1643,7 +1643,7 @@ int netconn_write( void *cookie, const char * data, int length )
     else
     {
       if (netstate->verbose_level > 0 && !__break_check(netstate))
-        LogScreen("Net::write: %s\n", net_strerror(rc,netstate->sock) );
+        Log("Net::write: %s\n", net_strerror(rc,netstate->sock) );
       rc = -1;
     }
   }
@@ -1807,7 +1807,7 @@ void *netconn_open( const char * _servname, int _servport,
         ((dummy = offsetof(SOCKS5USERPWREPLY, end)) != 2) ||
         ((dummy = offsetof(SOCKS5, end)) != 10))
     {
-      LogScreen("Net::Socks Incorrectly packed structures.\n");
+      Log("Net::Socks Incorrectly packed structures.\n");
       rc = -1;
     }
   }
@@ -1819,7 +1819,7 @@ void *netconn_open( const char * _servname, int _servport,
     netstate = (NETSTATE *)malloc(sizeof(NETSTATE));
     if (!netstate)
     {
-      LogScreen("Net::open error: insufficient memory\n");
+      Log("Net::open error: insufficient memory\n");
       rc = -1;
     }
     else
@@ -1946,7 +1946,7 @@ void *netconn_open( const char * _servname, int _servport,
       }
       else
       {
-        LogScreen("Net::error: proxy hostname required for SOCKS%d support.\n"
+        Log("Net::error: proxy hostname required for SOCKS%d support.\n"
                   "Connect cancelled.\n", _enctype );
         rc = -1;
       }
