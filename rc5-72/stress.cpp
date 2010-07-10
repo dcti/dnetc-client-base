@@ -5,7 +5,7 @@
 */
 
 const char *stress_r72_cpp(void) {
-return "@(#)$Id: stress.cpp,v 1.8 2010/02/15 19:44:33 stream Exp $"; }
+return "@(#)$Id: stress.cpp,v 1.9 2010/07/10 17:34:24 stream Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"
@@ -230,22 +230,22 @@ static long __check_result(int test, ContestWork *contestwork, int pipenum,
   long success = 1L;
   if (contestwork->bigcrypto.check.count != expected_count) {
     success = -1L;
-    LogScreen("\rRC5-72: Stress-test %d: Pipe #%d fails to set 'check.count'\n", test, pipenum);
-    LogScreen("Got 0x%08X, expected 0x%08X\n", contestwork->bigcrypto.check.count, expected_count);
+    Log("\rRC5-72: Stress-test %d: Pipe #%d fails to set 'check.count'\n", test, pipenum);
+    Log("Got 0x%08X, expected 0x%08X\n", contestwork->bigcrypto.check.count, expected_count);
   }
   if (contestwork->bigcrypto.check.hi != match->hi
         || contestwork->bigcrypto.check.mid != match->mid
         || contestwork->bigcrypto.check.lo != match->lo) {
     success = -1L;
-    LogScreen("\rRC5-72: Stress-test %d: Pipe #%d fails to set 'check.hi/mid/lo'\n", test, pipenum);
-    LogScreen("check:  %02X:%08X:%08X, expected %02X:%08X:%08X\n",
+    Log("\rRC5-72: Stress-test %d: Pipe #%d fails to set 'check.hi/mid/lo'\n", test, pipenum);
+    Log("check:  %02X:%08X:%08X, expected %02X:%08X:%08X\n",
         contestwork->bigcrypto.check.hi, contestwork->bigcrypto.check.mid, contestwork->bigcrypto.check.lo,
         match->hi, match->mid, match->lo);
   }
   if (contestwork->bigcrypto.keysdone.hi != 0 || contestwork->bigcrypto.keysdone.lo != expected_iters) {
     success = -1L;
-    LogScreen("\rRC5-72: Stress-test %d: Pipe #%d - Iterations count not updated\n", test, pipenum);
-    LogScreen("Got 0x%08X, expected 0x%08X\n", contestwork->bigcrypto.keysdone.lo, expected_iters);
+    Log("\rRC5-72: Stress-test %d: Pipe #%d - Iterations count not updated\n", test, pipenum);
+    Log("Got 0x%08X, expected 0x%08X\n", contestwork->bigcrypto.keysdone.lo, expected_iters);
   }
   return success;
 }
@@ -294,14 +294,14 @@ static long __test_1(void)
         /* Check the number of pipelines here, once and for all. */
         if (pipes != 1 && pipes != 2 && pipes != 3 && pipes != 4 &&
             pipes != 8 && pipes != 12 && pipes != 16 && pipes != 24) {
-          LogScreen("\rRC5-72 : INTERNAL ERROR - Number of pipes = %d\n", pipes);
+          Log("\rRC5-72 : INTERNAL ERROR - Number of pipes = %d\n", pipes);
           success = -1L;
         }
 
         if (success != 0L) {
           if (resultcode != RESULT_FOUND) {
             success = -1L;
-            LogScreen("\rRC5-72: Stress-test 1: Pipe #%d missed a full match\n", iters+1);
+            Log("\rRC5-72: Stress-test 1: Pipe #%d missed a full match\n", iters+1);
           }
           success |= __check_result(1, &contestwork, iters+1, 1, iters, &matchkey);
         }
@@ -311,18 +311,18 @@ static long __test_1(void)
   } while (++iters < pipes && success != 0L);
 
   if (success < 0) {
-    LogScreen("RC5-72: Stress-test 1 FAILED\n");
-    LogScreen("Possible errors locations :\n");
-    LogScreen("- Prolog/Epilog\n");
-    LogScreen("- Miscalculations in the main body\n");
-    LogScreen("- Full match detection\n");
+    Log("RC5-72: Stress-test 1 FAILED\n");
+    Log("Possible errors locations :\n");
+    Log("- Prolog/Epilog\n");
+    Log("- Miscalculations in the main body\n");
+    Log("- Full match detection\n");
   }
   else if (success == 0) {
     success = -1L;
-    LogScreen("RC5-72: *** break ***\n");
+    Log("RC5-72: *** break ***\n");
   }
   else
-    LogScreen("RC5-72: Stress-test 1 passed\n");
+    Log("RC5-72: Stress-test 1 passed\n");
 
   return success;
 }
@@ -380,7 +380,7 @@ static long __test_2(void)
 
           if (resultcode == RESULT_FOUND) {
             success = -1L;      /* A partial match was expected */
-            LogScreen("\rRC5-72: Stress-test 2: Pipe #%d found a full match\n", cpipe);
+            Log("\rRC5-72: Stress-test 2: Pipe #%d found a full match\n", cpipe);
           }
           success |= __check_result(2, &contestwork, cpipe, 1, maxkeys, &matchkey);
         }
@@ -390,18 +390,18 @@ static long __test_2(void)
   } while (++iters < maxkeys && success > 0L);
 
   if (success < 0) {
-    LogScreen("RC5-72: Stress-test 2 FAILED\n");
-    LogScreen("Possible errors :\n");
-    LogScreen("- Partial match detection fails\n");
-    LogScreen("- Miscalculations in key iteration block\n");
-    LogScreen("- Main loop re-initialization\n");
+    Log("RC5-72: Stress-test 2 FAILED\n");
+    Log("Possible errors :\n");
+    Log("- Partial match detection fails\n");
+    Log("- Miscalculations in key iteration block\n");
+    Log("- Main loop re-initialization\n");
   }
   else if (success == 0) {
     success = -1L;
-    LogScreen("RC5-72: *** break ***\n");
+    Log("RC5-72: *** break ***\n");
   }
   else
-    LogScreen("RC5-72: Stress-test 2 passed\n");
+    Log("RC5-72: Stress-test 2 passed\n");
 
   return success;
 }
@@ -488,7 +488,7 @@ static long __test_3(void)
 
             if (resultcode != RESULT_FOUND) {
               success = -1L;
-              LogScreen("\rRC5-72: Stress-test 3: Pipe #%d missed a full match\n", cpipe);
+              Log("\rRC5-72: Stress-test 3: Pipe #%d missed a full match\n", cpipe);
             }
             success |= __check_result(3, &contestwork, cpipe, 1, iters, &matchkey);
           }
@@ -499,18 +499,18 @@ static long __test_3(void)
   }
 
   if (success < 0) {
-    LogScreen("RC5-72: Stress-test 3 FAILED\n");
-    LogScreen("Possible errors :\n");
-    LogScreen("- Full match detection fails\n");
-    LogScreen("- Miscalculations in key iteration block\n");
-    LogScreen("- Main loop re-initialization\n");
+    Log("RC5-72: Stress-test 3 FAILED\n");
+    Log("Possible errors :\n");
+    Log("- Full match detection fails\n");
+    Log("- Miscalculations in key iteration block\n");
+    Log("- Main loop re-initialization\n");
   }
   else if (success == 0) {
     success = -1L;
-    LogScreen("RC5-72: *** break ***\n");
+    Log("RC5-72: *** break ***\n");
   }
   else
-    LogScreen("RC5-72: Stress-test 3 passed\n");
+    Log("RC5-72: Stress-test 3 passed\n");
 
   return success;
 }
@@ -584,7 +584,7 @@ static long __test_4(void)
       } while(1);
 
       if (remoteconn) {
-        LogScreen("\rRC5-72: Restarting stress-test 4\n");
+        Log("\rRC5-72: Restarting stress-test 4\n");
         iters = 0;
         cmc_key.hi = cmc_key.mid = cmc_key.lo = cmc_count = 0;
         ProblemFree(thisprob);
@@ -633,7 +633,7 @@ static long __test_4(void)
 
         if (resultcode == RESULT_FOUND) {
           success = -1L;    /* partial match expected */
-          LogScreen("\rRC5-72: Stress-test 4: Found a non-existing full match\n");
+          Log("\rRC5-72: Stress-test 4: Found a non-existing full match\n");
         }
         success |= __check_result(4, &contestwork, cpipe, cmc_count, iters, &cmc_key);
       }
@@ -642,17 +642,17 @@ static long __test_4(void)
   } // if (thisprob)
 
   if (success < 0) {
-    LogScreen("RC5-72: Stress-test 4 FAILED\n");
-    LogScreen("Possible errors :\n");
-    LogScreen("- Multiple partial match detection fails\n");
+    Log("RC5-72: Stress-test 4 FAILED\n");
+    Log("Possible errors :\n");
+    Log("- Multiple partial match detection fails\n");
     /* Other errors should have been found by test 1 to 3 */
   }
   else if (success == 0) {
     success = -1L;
-    LogScreen("RC5-72: *** break ***\n");
+    Log("RC5-72: *** break ***\n");
   }
   else
-    LogScreen("\rRC5-72: Stress-test 4 passed\n");
+    Log("\rRC5-72: Stress-test 4 passed\n");
 
   return success;
 }
