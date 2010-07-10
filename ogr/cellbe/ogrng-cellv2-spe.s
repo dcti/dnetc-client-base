@@ -41,6 +41,13 @@
 	;#    Keep cached comp0 from previous level in register (save it during
 	;# PUSH_LEVEL). Thus we can immediately start calculating CLZ etc. on it
 	;# combining with rest of POP_LEVEL code in free slots.
+	;#
+	;# 2010-06-30:
+	;#    Since we have lot of free/lost clocks during handling of pchoose cache,
+	;# implement 64-bit version of CLZ in these gaps. Also remove limitation of
+	;# 32 bits width of newbit to make big shifts work right.
+	;#    It was so many free clocks there that is was even possible to speculative
+	;# calculate whole next shift round, giving a nice boost (almost 10% total).
 
 	;#
 	;# Known non-optimal things:
@@ -57,7 +64,9 @@
 	;# (not benchmark!) performance greatly. Even in shortest codepath,
 	;# cache lookup procedure is a long sequence of slow and dependent
 	;# instructions - lot of clocks are lost here and, I'm afraid, nothing
-	;# can be done.
+	;# can be done. (In current version timing of cache access codepath is
+	;# precisiously synchronized with speculative calculation of next ogr
+	;# iteration, so losses are almost eliminated).
 	;#
 
 	.data
@@ -65,6 +74,8 @@
 
 data_vec_to_u16_shuf:
 	.int		0x1E1F1011, 0x12131415, 0x16171819, 0x1A1B1C1D
+clz_addons_init:
+	.int		0, 32, 64, 96
 
 	.text
 	.align	3
@@ -91,6 +102,9 @@ data_vec_to_u16_shuf:
 	.set	p_gkeyvectors,		15
 	.set	p_grvalues,		16
 	.set	p_grinsertpos,		17
+
+	.set	mask_2words,		18	# zero in words 0-1, ones in 2-3 (to mask words 0-1)
+	.set	clz_addons,		19	# values to add to clz for each word (0, 32, ...)
 
 	# "Level" data
 
@@ -132,6 +146,9 @@ data_vec_to_u16_shuf:
 	.set	new_compV1,		45
 	.set	new_distV0,		46
 
+	.set	const_singlebit,	47
+	.set	new_listV1,		48
+
 	# temp variables for pchoose fetch
 
 	.set	hash_mul16,		51
@@ -172,6 +189,8 @@ ogr_cycle_256_test:
 	ila		$p_grinsertpos, group_insertpos
 	ila		$p_grvalues,	group_values
 	ila		$p_gkeyvectors,	group_keysvectors
+	fsmbi		$mask_2words,   0x00FF
+	lqa		$clz_addons,    clz_addons_init
 
 	ila		$addr_forloop,    for_loop
 	ila		$addr_no_forloop, no_for_loop
@@ -192,12 +211,11 @@ ogr_cycle_256_test:
 	rotqby		$nodes, $nodes, $pnodes	# nodes = *pnodes
 
 	# if (depth < oState->maxdepthm1) { newbit = vec_splat_u32(1); } else = 0;
-	#
-	# note that only 32 bits of newbit are valid (we will never shift in more)
 
-	il		$newbit, 1
+	il		$const_singlebit, 1
+	rotqmbyi	$const_singlebit, $const_singlebit, -12	# keep 1 only in rightmost bit of reg
 	cgt		$temp, $maxdepthm1, $depth
-	and		$newbit, $newbit, $temp		# 1 if (maxdepthm1 > depth), 0 otherwise
+	and		$newbit, $const_singlebit, $temp # 1 if (maxdepthm1 > depth), 0 otherwise
 
 	# struct OgrLevel *lev = &oState->Levels[oState->depth];
 
@@ -213,7 +231,6 @@ ogr_cycle_256_test:
 	lqd		$distV1, 48($lev)
 	lqd		$compV0, 64($lev)
 	lqd		$compV1, 80($lev)
-	nop
 	lqd		$comp0_prevlev, 64-128($lev)
 
 	# Levels[oState->half_depth] used below
@@ -292,14 +309,14 @@ for_loop:
 	rotqbybi	$compV0, $compV0, $s
 	ori		$compV1, $new_compV1, 0
 	rotqbi		$listV1, $listV1, $inv_s
-	nop
-	rotqbi		$listV0, $listV0, $inv_s
 	il		$newbit, 0				# newbit = 0
+	rotqbi		$listV0, $listV0, $inv_s
+	ceq		$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
 	rotqbi		$compV0, $compV0, $s
 
 	# if (spu_extract(save_compV0, 0) == (SCALAR)~0) { continue; }
 
-	ceq		$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
+#	nop
 \lab:
 	bi		$addr_is_forloop
 .endm
@@ -355,116 +372,137 @@ no_for_loop:
 							# hash*16 to access array[hash],
 	stqd		$comp0_prevlev, 64($lev)	# lev->comp[0].v = compV0; (delayed)
 
+	# we will have lot of free clocks while making pchoose index and limit
+	# use them to make 64-bit version of clz
+
 	ai		$depth, $depth, 1	# ++depth;
 	lnop
 
 	shli		$pvalues, $hash_mul16, 5	# 1D: hash * 8 * 32 * 2  [ (hash * 16) * 32 ]
 	lqx		$keyvector, $hash_mul16, $p_gkeyvectors	# keyvector = group_keysvectors[hash]
 
+		# stuck by shli, could push calc of temp2 down
+		nor	$cond_comp0_minus1, $compV0, $mask_2words # ~comp0 (free clock). words 2-3 forced to zero.
+
 	a		$temp2, $depth, $depth	# depth * 2
 
-	il		$newbit, 1		# newbit = 1 from PUSH_LEVEL
-
-	ai		$lev, $lev, 128		# ++lev;
-	lnop
+	ori		$newbit, $const_singlebit, 0	# newbit = 1 from PUSH_LEVEL (f.c.)
+		rotqmbii $s, $cond_comp0_minus1, -1	# magic shift ~comp0 for whole 128 bits
 
 	a		$pvalues, $pvalues, $temp2	# 1D + 3D (hash * 8 * 32 * 2 + depth * 2)
+		orx	$cond_comp0_minus1, $cond_comp0_minus1  # word0==0 if all required parts of comp0 were -1
+
+	ai		$lev, $lev, 128		# (f.c.) ++lev
 
 	# eqbits    = spu_extract(spu_cntlz(spu_gather(spu_cmpeq(keyvector, (u16)group_of32))), 0);
 	# element   = eqbits - 24;
-	# also start making new $s using free clocks
 
-		nor	$s, $compV0, $compV0	# ~comp0
+	# this one stuck by lqx
 	ceqh		$element, $keyvector, $grpid_vector	# spu_cmpeq(keyvector, (u16)group_of32)
-		ceqi	$cond_comp0_minus1, $compV0, -1
-		rotmi	$s, $s, -1		# magic shift
-	gbh		$temp, $element		# spu_gather(...)
-		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
-	clz		$element, $temp		# spu_cntlz(...)
-		clz	$s, $s					# precount s (clz)!
+
+		clz	$s, $s					# precount s (clz)
 		lnop
+
+		ceqi	$cond_comp0_minus1, $cond_comp0_minus1, 0 # (f.c.)
+	gbh		$temp, $element		# spu_gather(...)
+
+		andi	$temp2, $s, 32		# if 32 is in word0, then use clz result from word1
+
+		a	$s, $s, $clz_addons	# clz(word1) += 32
+
+		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
+		lnop
+
+	clz		$element, $temp		# spu_cntlz(...)
+		rotqbybi $s, $s, $temp2		# use clz(word1) if necessary
+
+		cgt	$cond_depth_hd,  $depth, $half_depth	# (f.c.) depth > oState->half_depth
+	brz		$temp, fetch_new_pchoose	# if all bits were zero, i.e. clz==32 or element==8
 
 	# if (element == 8) /* 32 zeros => Out of bounds => no match */
 
 	ai		$element, $element, -24
-	brz		$temp, fetch_new_pchoose	# if all bits were zero, i.e. clz==32 or element==8
+	lnop
+
+fetch_pvalues:
+		cgt		$cond_depth_hd2, $depth, $half_depth2	# (f.c.) depth <= half_depth2
+		lnop
+#		hbr		.L_fl2, $addr_is_forloop
 
 	#            u16              8          32
 	# return group_values[hash][element][index_in32];
+	#
+	# ($s is also ready in this clock)
+
+#		for_loop_clz_ready_part1 # (f.c.)
 
 	shli		$element, $element, 6		# 2D: element * 32 * 2
-	lnop
-	;# 3 clocks lost here
-	a		$pvalues, $pvalues, $element	# final byte offset
-	;# 2 clocks lost here
-	lqx		$tempvector, $pvalues, $p_grvalues	# get data at full address
-fetch_pvalues:
+		shlqbybi	$ones_shl_s, $V_ONES, $s	# selMask_s
+
+		sfi		$inv_s, $s, 128			# inv_s = 128 -s
+		shlqbybi	$new_compV1, $compV1, $s
+
+		andc		$cond_depth_hd,  $cond_depth_hd, $cond_depth_hd2  # (f.c.)
+#		lnop
+		hbr		.L_fl2, $addr_is_forloop
+
+		ai		$nodes, $nodes, -1		# --nodes (f.c.)
+		shlqbybi	$ones_shl_inv, $V_ONES, $inv_s	# selMask_inv (f.c.)
 
 	# if (depth > half_depth && depth <= half_depth2) { ...
-
+	#
 	# It is possible to generate compilcated straight-forward code, but chance for
 	# 'if' body to execute is about 3%. Dumb jump is better in our case.
+	#
+	# Be careful to match calculation of ones_shl_* above and in update_limit
 
-	# finish load of 'limit'
+	a		$pvalues, $pvalues, $element	# final byte offset
+		brnz		$cond_depth_hd, update_limit
 
-	cgt		$cond_depth_hd,  $depth, $half_depth
+		shlqbi		$ones_shl_s, $ones_shl_s, $s
+
+	lqx		$tempvector, $pvalues, $p_grvalues	# get data at full address
+
 	rotqby		$pvalues, $const_vec_to_u16_shuf, $pvalues # create shuffle mask from byte address
 
-	cgt		$cond_depth_hd2, $depth, $half_depth2
-	lnop
+		shlqbi		$ones_shl_inv, $ones_shl_inv, $inv_s
 
-	for_loop_clz_ready_part1
+		selb		$new_listV1, $listV0, $listV1, $ones_shl_s
+		brz		$nodes, finish_limit_and_save_exit
 
-	andc		$cond_depth_hd,  $cond_depth_hd, $cond_depth_hd2
-	hbr		.L_fl2, $addr_is_forloop
+	;# Now is's safe to corrupt list and comp - they'll be reloaded in POP_LEVEL
+	;# if we'll go there.
+
+		selb		$listV0, $newbit, $listV0, $ones_shl_s
+		shlqbi		$new_compV1, $new_compV1, $s
 
 	and		$pvalues, $const_ffff, $pvalues		# set upper word of shuffle mask to zero
-	shlqbybi	$ones_shl_inv, $V_ONES, $inv_s	# selMask_inv (use free clock again)
+		rotqbybi	$listV1, $new_listV1, $inv_s
 
-	;# Note: limit is not ready yet, operation delayed in update_limit
-	ai		$nodes, $nodes, -1
-	brnz		$cond_depth_hd, update_limit
+		selb		$compV0, $compV0, $compV1, $ones_shl_inv
+		rotqbybi	$listV0, $listV0, $inv_s
+
+		a		$mark, $mark, $s		# mark += s
 	shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
 
-	# store of limit delayed
+		ori		$compV1, $new_compV1, 0
+		rotqbybi	$compV0, $compV0, $s
 
-	brz		$nodes, save_mark_and_exit
+		il		$newbit, 0				# newbit = 0
+		lnop
 
-	;# modifed version of for_loop_clz_ready_part2 code
-	;# hbr and one shift pushed up so it was possible to reorder instructions better.
-
-	#  if ((mark += s) > limit) { break; }
-	a		$mark, $mark, $s
-	shlqbi		$ones_shl_s, $ones_shl_s, $s
-
-	nop
-	shlqbybi	$new_compV1, $compV1, $s
+		ceq		$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
+		rotqbi		$listV1, $listV1, $inv_s
 
 	cgt		$cond_mark_limit, $mark, $limit
-	shlqbi		$ones_shl_inv, $ones_shl_inv, $inv_s
+		rotqbi		$listV0, $listV0, $inv_s
 
-	# COMP_LEFT_LIST_RIGHT(lev, s);
+		rotqbi		$compV0, $compV0, $s
 
-	;# it's ok to corrupt listV1 before jump - it's reloaded in break_for (POP_LEVEL)
-	selb		$listV1, $listV0, $listV1, $ones_shl_s
 	brnz		$cond_mark_limit, break_for
-
-	selb		$listV0, $newbit, $listV0, $ones_shl_s
-	shlqbi		$new_compV1, $new_compV1, $s
-	selb		$compV0, $compV0, $compV1, $ones_shl_inv
-	rotqbybi	$listV1, $listV1, $inv_s
-	rotqbybi	$listV0, $listV0, $inv_s
-	rotqbybi	$compV0, $compV0, $s
-	ori		$compV1, $new_compV1, 0
-	rotqbi		$listV1, $listV1, $inv_s
-	nop
-	rotqbi		$listV0, $listV0, $inv_s
-	il		$newbit, 0				# newbit = 0
-	rotqbi		$compV0, $compV0, $s
 
 	# if (spu_extract(save_compV0, 0) == (SCALAR)~0) { continue; }
 
-	ceq		$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
 .L_fl2:
 	bi		$addr_is_forloop
 
@@ -473,33 +511,106 @@ fetch_pvalues:
 update_limit:
 	;#
 	;# Visited in less then 3% cases and not so important
+	;# (gain/loss is just about 1,5 Knodes per clock in benchmark)
 	;#
 	;# Caller already prepared $s and executed for_loop_clz_ready_part1
 
-	# while $temp is loading (6 clocks), calc other things
+	# complete calculation of limit which was not executed by caller 
 
-	nor		$temp2, $distV0, $distV0
-	lqd		$temp, 128($lev_half_depth)	# offsetof(Levels) added here
+	nor			$temp2, $distV0, $distV0
+	lqd			$temp, 128($lev_half_depth)	# offsetof(Levels) added here
 
-	cgt		$cond_depth_hd2, $half_depth2, $depth	;# if (depth < oState->half_depth2)
-	;# Complete delayed fetch of limit
-	shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
-	clz		$temp2, $temp2
-	ai		$temp2, $temp2, 1			;# temp2 = LOOKUP_FIRSTBLANK
+	cgt			$cond_depth_hd2, $half_depth2, $depth	;# if (depth < oState->half_depth2)
+		lqx		$tempvector, $pvalues, $p_grvalues	# get data at full address
+
+	clz			$temp2, $temp2
+		rotqby		$pvalues, $const_vec_to_u16_shuf, $pvalues # create shuffle mask from byte address
+
+			nop
+			shlqbi	$ones_shl_s, $ones_shl_s, $s
+
+	ai			$temp2, $temp2, 1			;# temp2 = LOOKUP_FIRSTBLANK
+	brz			$nodes, finish_update_limit_and_exit
+
+	;# ok to update mark after jump above
+
+			a	$mark, $mark, $s	#  if ((mark += s) > limit) { break; }
+			shlqbi	$ones_shl_inv, $ones_shl_inv, $inv_s
+
+	sf			$temp, $temp, $maxlen_m1		;# temp  = ... (ready)
+			shlqbi	$new_compV1, $new_compV1, $s
+
+			selb	$listV1, $listV0, $listV1, $ones_shl_s
+			hbr	.L_fl3, $addr_is_forloop
+
+
+	sf			$temp2, $temp2, $temp			;# temp2 = temp - LFB() (probably will use)
+	lnop
+
+		and		$pvalues, $const_ffff, $pvalues		# set upper word of shuffle mask to zero
+
+	selb			$temp, $temp, $temp2, $cond_depth_hd2	;# use temp or "temp -= ..."
+
+			selb	$listV0, $newbit, $listV0, $ones_shl_s
+		shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
+
+			selb	 $compV0, $compV0, $compV1, $ones_shl_inv
+			rotqbybi $listV1, $listV1, $inv_s
+
+			ori	 $compV1, $new_compV1, 0
+			rotqbybi $listV0, $listV0, $inv_s
+
+			ceq	$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
+			rotqbybi $compV0, $compV0, $s
+
+	cgt			$cond_limit_temp, $limit, $temp		;# if (limit > temp)
+			fsmbi	$newbit, 0			;# newbit = 0
+
+			nop
+			rotqbi	$listV1, $listV1, $inv_s
+
+	selb		$limit, $limit, $temp, $cond_limit_temp ;#   limit = temp;
+			rotqbi	$listV0, $listV0, $inv_s
 	
+	cgt		$cond_mark_limit, $mark, $limit
+	rotqbi		$compV0, $compV0, $s
+
+	brnz		$cond_mark_limit, break_for
+
+.L_fl3:
+	bi		$addr_is_forloop
+
+finish_update_limit_and_exit:
+#	nor		$temp2, $distV0, $distV0
+#	lqd		$temp, 128($lev_half_depth)	# offsetof(Levels) added here
+
+#	cgt		$cond_depth_hd2, $half_depth2, $depth	;# if (depth < oState->half_depth2)
+#		lqx		$tempvector, $pvalues, $p_grvalues	# get data at full address
+
+#	clz		$temp2, $temp2
+#		rotqby		$pvalues, $const_vec_to_u16_shuf, $pvalues # create shuffle mask from byte address
+
+#	ai		$temp2, $temp2, 1			;# temp2 = LOOKUP_FIRSTBLANK
+
 	sf		$temp, $temp, $maxlen_m1		;# temp  = ... (ready)
+
+		and		$pvalues, $const_ffff, $pvalues		# set upper word of shuffle mask to zero
+
 	sf		$temp2, $temp2, $temp			;# temp2 = temp - LFB() (probably will use)
+
+		shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
+	
 	selb		$temp, $temp, $temp2, $cond_depth_hd2	;# use temp or "temp -= ..."
 
 	cgt		$cond_limit_temp, $limit, $temp		;# if (limit > temp)
 	selb		$limit, $limit, $temp, $cond_limit_temp ;#   limit = temp;
-	
-	# Store of limit delayed
+	br		save_mark_and_exit
 
-	brz		$nodes, save_mark_and_exit
 
-	for_loop_clz_ready_part2_head  .L_fl3
-	for_loop_clz_ready_part2_body  .L_fl3
+finish_limit_and_save_exit:
+	and		$pvalues, $const_ffff, $pvalues		# set upper word of shuffle mask to zero
+	shufb		$limit, $const_ffff, $tempvector, $pvalues # select required u16 and clear high part (use zeros from const)
+	br		save_mark_and_exit
 
 save_mark_and_exit_dec_lev:
 	ai		$lev, $lev, -128	# finally, --lev
@@ -583,6 +694,7 @@ break_for:
 	for_loop_clz_ready_part2_body  .L_fl1
 
 
+	.align	3
 fetch_new_pchoose:
 	;#
 	;# Called when new portion of pchoose entries must be copied from main
@@ -592,25 +704,22 @@ fetch_new_pchoose:
 
 	# v32_t tempvect = group_insertpos[hash];
 	# element        = spu_extract(tempvect, 0) & (GROUPS_LENGTH - 1);
-
-	lqx		$element, $hash_mul16, $p_grinsertpos
-	andi		$element, $element, 7
-
 	#               u16               8     [32]
 	# pvalues = group_values[hash][element];
-
-	rotmi		$pvalues, $hash_mul16, -1	# hash * 8 [ hash * 16 / 2 ]
-	a		$pvalues, $pvalues, $element	# hash * 8 + element
-	shli		$pvalues, $pvalues, 6		# (...) * 32 * 2 (last dimension and u16 to bytes)
-	a		$pvalues, $pvalues, $p_grvalues	# full byte address
-
+	#
 	# mfc_get(pvalues, upchoose + group_of32 * GROUP_ELEMENTS * 2, GROUP_ELEMENTS * 2, DMA_ID, 0, 0);
 
-	and		$mfc_src, $grpid_vector, $const_ffff
-	shli		$mfc_src, $mfc_src, 6		# * 32 * 2
-	a		$mfc_src, $mfc_src, $upchoose
+	rotmi		$pvalues, $hash_mul16, -1	# hash * 8 [ hash * 16 / 2 ]
+	lqx		$element, $hash_mul16, $p_grinsertpos
+		and		$mfc_src, $grpid_vector, $const_ffff
+		shli		$mfc_src, $mfc_src, 6		# * 32 * 2
+	andi		$element, $element, 7
+		a		$mfc_src, $mfc_src, $upchoose
+	a		$pvalues, $pvalues, $element	# hash * 8 + element
+	shli		$pvalues, $pvalues, 6		# (...) * 32 * 2 (last dimension and u16 to bytes)
+	a		$temp, $pvalues, $p_grvalues	# full byte address
 
-	wrch		$ch16, $pvalues
+	wrch		$ch16, $temp
 	wrch		$ch17, $const_0
 	wrch		$ch18, $mfc_src
 	wrch		$ch19, $const_64
@@ -634,13 +743,13 @@ fetch_new_pchoose:
 
 	a		$temp, $depth, $depth	# convert last index to bytes
 	a		$pvalues, $temp, $pvalues	# full byte address
+	il		$element, 0
 
 	# mfc_read_tag_status_all();
 
 	wrch		$ch23, $const_2
 	rdch		$temp2, $ch24
 
-	lqd		$tempvector, 0($pvalues)
+#	lqd		$tempvector, 0($pvalues)
 
-	# byte address in pvalues, values in tempvector
 	br		fetch_pvalues
