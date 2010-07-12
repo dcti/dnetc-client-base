@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.416 2010/07/09 14:58:01 andreasb Exp $
+# @(#)$Id: configure,v 1.417 2010/07/12 03:05:38 snake Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2528,9 +2528,10 @@ case "$1" in
     *freebsd*)                  # FreeBSD (autoselect version and arch)
                                 # FreeBSD x86-elf, bovine, snake
                                 # FreeBSD x86-aout 2.x, snake (experimental)
-                                # FreeBSD sparc-elf 6.x, snake (experimental)
+                                # FreeBSD sparc 6,7  snake
                                 # FreeBSD alpha-elf 4.x, snake
-                                # FreeBSD amd64-elf 6,7, snake
+                                # FreeBSD amd64 6,7,8 snake
+                                # FreeBSD ppc 8, snake
         # note: do NOT include the major version number in the make target:
         # use "configure freebsd-x86" , "configure freebsd-sparc" etc.
         # major version number is automatically appended in TARBALL
@@ -2557,15 +2558,21 @@ case "$1" in
         case internal-${inferred_arch} in
           internal-amd64)
             TARGET_NASM="yasm"
+            add_sources "freebsd" "${inferred_arch}"
             ;;
           internal-x86)
             TARGET_NASM="nasm"
+            add_sources "freebsd" "${inferred_arch}"
+            ;;
+          internal-powerpc)
+            TARGET_NASM=""
+            add_sources "freebsd" "ppc" "altivec"
             ;;
           internal-*)
             TARGET_NASM=""
+            add_sources "freebsd" "${inferred_arch}"
             ;;
         esac
-        add_sources "freebsd" "${inferred_arch}"
         ;;
 
     *netbsd-x86-aout)           # NetBSD 1.4.x, aout [bernd]
