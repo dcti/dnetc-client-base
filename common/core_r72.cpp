@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.46 2009/12/30 14:57:33 sla Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.47 2010/07/13 03:47:32 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -482,6 +482,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x15: cindex =11; break; // Intel Core i7  == GO 2-pipe-b (#4193)
           case 0x16: cindex = 6; break; // AMD Opteron
           case 0x17: cindex = 7; break; // Variation of 0x13 with another OGR-NG core (#4186)
+          case 0x18: cindex =11; break; // Via Nano       == GO 2-pipe-b (#4299)
           default:   cindex =-1; break; // no default
         }
         #else

@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.184 2010/07/01 12:52:19 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.185 2010/07/13 03:47:31 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1135,6 +1135,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         {  0x6090, 0xFFF0, CPU_F_I586, 0x0F, "C3 / C3-M (Nehemiah)" },
         {  0x60A0, 0xFFF0, CPU_F_I686, 0x0A, "C7-D/M (Model A)" }, /* OGR-NG: sse or force mmx? */
         {  0x60D0, 0xFFF0, CPU_F_I686, 0x0A, "C7-D/M (Model D)" }, /* (#4226, OGR-mmx!) */
+        {  0x60F0, 0xFFF0, CPU_F_I686, 0x18, "Nano" }, /* (#4299) */
         {  0x0000,      0,          0,    0, NULL }
       }; internalxref = &centaurxref[0];
     }
@@ -1322,7 +1323,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x080F020, 0xFFFFFF0, CPU_F_I686, 0x0B, "Pentium 4 (Northwood)" },
         /* (#4177) conflict: 2.0GHz 1090F027 need OGR-NG -p4, 2.8Ghz 1090F029 need -k8 */
         { 0x090F027, 0xFFFFFFF, CPU_F_I686, 0x17, "Pentium 4 (Northwood)" },
-        { 0x090F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Pentium 4 (Northwood)" },
+        { 0x090F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Pentium 4" }, /* (#4297) */
         { 0x0A0F020, 0xFFFFFF0, CPU_F_I686, 0x13, "Celeron 4 (Northwood)" },
         { 0x0B0F020, 0xFFFFFF0, CPU_F_I686, 0x17, "Xeon (Prestonia)" },  /* (#4186) */
         { 0x0C0F020, 0xFFFFFF0, CPU_F_I686, 0x17, "Xeon MP (Gallatin)" }, /* (#4209) */
@@ -1341,6 +1342,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00061A0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i7/Xeon" },  /* (#4118,#4198,#4193) */
         { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
         { 0x00061E0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i5/i7" },  /* (#4271) */
+        { 0x00062C0, 0xFFFFFF0, CPU_F_I686, 0x15, "Xeon 56xx" },  /* (#4301) */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
