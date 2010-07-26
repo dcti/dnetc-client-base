@@ -86,12 +86,11 @@ void ADLinit()
   }
 
     // Repeat for all available adapters in the system
-    int iAdapterIndex;
     ADLThermalControllerInfo lpThermalControllerInfo;
     for ( int i = 0; (i < iNumberAdapters) & (i < AMD_STREAM_MAX_GPUS); i++ )
     {
       //Retrieve Termal Controller Info
-      if (ADL_Overdrive5_ThermalDevices_Enum (iAdapterIndex, 0, &lpThermalControllerInfo) == ADL_OK) 
+      if (ADL_Overdrive5_ThermalDevices_Enum (i, 0, &lpThermalControllerInfo) == ADL_OK) 
         if (lpThermalControllerInfo.iThermalDomain == ADL_DL_THERMAL_DOMAIN_GPU)
         {
           for(int j=0; j<AMD_STREAM_MAX_GPUS; j++)
@@ -101,7 +100,7 @@ void ADLinit()
               ThermalDevices[j].active=1;
               ThermalDevices[j].bus=lpAdapterInfo[j].iBusNumber;
               ThermalDevices[j].device=lpAdapterInfo[j].iDeviceNumber;
-              ThermalDevices[j].iAdapterIndex=iAdapterIndex;
+              ThermalDevices[j].iAdapterIndex=i;
               break;
             }
             if((ThermalDevices[j].bus==lpAdapterInfo[j].iBusNumber)&&
