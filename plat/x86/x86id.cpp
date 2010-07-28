@@ -3,14 +3,14 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.17 2010/07/10 18:39:30 mfeiri Exp $
+ * $Id: x86id.cpp,v 1.18 2010/07/28 01:38:11 snikkel Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
  *    http://sandpile.org/   
  */
 const char *x86id_cpp(void) {
-return "@(#)$Id: x86id.cpp,v 1.17 2010/07/10 18:39:30 mfeiri Exp $"; }
+return "@(#)$Id: x86id.cpp,v 1.18 2010/07/28 01:38:11 snikkel Exp $"; }
 
 #include <string.h>
 #include <stdio.h>
@@ -485,6 +485,7 @@ static u32 x86GetAmdId(u32 maxfunc)
         int pkg  = 0;
 
         if (maxfunc >= 0x80000001U) {
+          x86cpuid(0x80000001U, &infos);
           code = (infos.regs.ebx >> 11) & 0x0F;    /* AMD:string1 */
           pkg  = (infos.regs.ebx >> 28) & 0x0F;
         }
@@ -520,6 +521,7 @@ static u32 x86GetAmdId(u32 maxfunc)
         int pkg  = 0;
 
         if (maxfunc >= 0x80000001U) {
+          x86cpuid(0x80000001U, &infos);
           code = (infos.regs.ebx >> 11) & 0x0F;    /* AMD:string1 */
           pkg  = (infos.regs.ebx >> 28) & 0x0F;
         }

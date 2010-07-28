@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.95 2010/07/13 03:47:33 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.96 2010/07/28 01:38:10 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -35,6 +35,7 @@ Version change log: $Id: CHANGES.txt,v 1.95 2010/07/13 03:47:33 snikkel Exp $
             imp: all: log errors to file during tests and buffer update
             fix: x86: possible division by zero in cpuinfo
             imp: x86: CPU detect and core select updates (#4297,#4299,#4301)
+            imp: x86: AMD Opteron/Phenom detection (#4326,#4256)
 
 2.9108-517  imp: x86: new OGR-NG 32- and 64-bit cores (#4256)
             imp: x86: identification of new i5/i7 chips (#4271)
