@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.9 2010/05/09 10:42:16 stream Exp $
+ * $Id: amdstream_context.h,v 1.10 2010/08/16 18:17:19 sla Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -62,6 +62,8 @@ typedef struct {
 
   u32 coreID;
   bool active;
+
+  u32 USEcount;		//# of Unexpected Stop Errors
 } stream_context_t;
 
 extern stream_context_t CContext[AMD_STREAM_MAX_GPUS];
