@@ -6,12 +6,95 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.23 2010/05/03 05:01:38 stream Exp $
+ * $Id: r72stream-vc4cn.cpp,v 1.24 2010/08/16 18:14:50 sla Exp $
 */
 
 #include "r72stream-common.h"
 #include "r72stream-vc4cng_il.cpp"
 #include "r72stream-vc4_bitalign.cpp"
+
+//rc5-72 test
+static s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+{
+  u32 i, j, k;
+  u32 A, B;
+  u32 S[26];
+  u32 L[3];
+  u32 kiter = *iterations;
+  while (kiter--)
+  {
+    L[2] = rc5_72unitwork->L0.hi;
+    L[1] = rc5_72unitwork->L0.mid;
+    L[0] = rc5_72unitwork->L0.lo;
+    for (S[0] = P, i = 1; i < 26; i++)
+      S[i] = S[i-1] + Q;
+      
+    for (A = B = i = j = k = 0;
+         k < 3*26; k++, i = (i + 1) % 26, j = (j + 1) % 3)
+    {
+      A = S[i] = ROTL3(S[i]+(A+B));
+      B = L[j] = ROTL(L[j]+(A+B),(A+B));
+    }
+    A = rc5_72unitwork->plain.lo + S[0];
+    B = rc5_72unitwork->plain.hi + S[1];
+    for (i=1; i<=12; i++)
+    {
+      A = ROTL(A^B,B)+S[2*i];
+      B = ROTL(B^A,A)+S[2*i+1];
+    }
+    if (A == rc5_72unitwork->cypher.lo)
+    {
+      ++rc5_72unitwork->check.count;
+      rc5_72unitwork->check.hi  = rc5_72unitwork->L0.hi;
+      rc5_72unitwork->check.mid = rc5_72unitwork->L0.mid;
+      rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
+      if (B == rc5_72unitwork->cypher.hi)
+      {
+        *iterations -= (kiter + 1);
+        return RESULT_FOUND;
+      }
+    }
+
+    #define key rc5_72unitwork->L0
+    key.hi = (key.hi + 0x01) & 0x000000FF;
+    if (!key.hi)
+    {
+      key.mid = key.mid + 0x01000000;
+      if (!(key.mid & 0xFF000000u))
+      {
+        key.mid = (key.mid + 0x00010000) & 0x00FFFFFF;
+        if (!(key.mid & 0x00FF0000))
+        {
+          key.mid = (key.mid + 0x00000100) & 0x0000FFFF;
+          if (!(key.mid & 0x0000FF00))
+          {
+            key.mid = (key.mid + 0x00000001) & 0x000000FF;
+            if (!key.mid)
+            {
+              key.lo = key.lo + 0x01000000;
+              if (!(key.lo & 0xFF000000u))
+              {
+                key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
+                if (!(key.lo & 0x00FF0000))
+                {
+                  key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
+                  if (!(key.lo & 0x0000FF00))
+                  {
+                    key.lo = (key.lo + 0x00000001) & 0x000000FF;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    #undef key
+  }
+  return RESULT_NOTHING;
+}
+// rc5-72 test
+
 
 static bool init_rc5_72_il4_nand(u32 Device)
 {
@@ -183,6 +266,7 @@ static bool init_rc5_72_il4_nand(u32 Device)
     return false;
   }
 
+  CContext[Device].USEcount=0;
   CContext[Device].coreID=CORE_IL4N;
 
   return true;
@@ -289,6 +373,16 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
             rc5_72unitwork->L0.lo=lo;
 
             calResUnmap(res);
+
+			//let's recheck the full match
+			RC5_72UnitWork t;
+			u32 it=1;
+			memcpy(&t,rc5_72unitwork,sizeof(RC5_72UnitWork));
+			if(rc5_72_unit_func_ansi_ref(&t,&it,NULL)!=RESULT_FOUND)
+			{
+				Log("WARNING!!!	False positive detected!\n");
+				Log("Debug info: %x:%x:%x, res=%x\n",hi,mid,lo,output);
+			}
 
             *CMC=CMC_hit;
             return 1;
@@ -498,12 +592,24 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     if(iters_finished!=((iters0-(rest0==0))&0x3f) /*6 lower bits*/)
     {
       // Something bad happend during program execution
-      Log("GPU: unexpected program stop!\n");
-      Log("Expected: %x, got:%x! Iters:%u MAXiters:%d rest:%u\n",iters0-(rest0==0),iters_finished,iters0,CContext[deviceID].maxIters,rest0);
-      RaiseExitRequestTrigger();
-      return -1;
+      if(CContext[deviceID].USEcount<15)
+	  {
+        Log("Thread %d was terminated in unexpected way. Restarting after a pause...\n", deviceID);
+        NonPolledUSleep(1000000);  //1s
+        memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
+        *iterations=0;
+        CContext[deviceID].USEcount++;
+        return RESULT_WORKING;
+	  }else
+	  {
+        Log("Too many errors! Giving up.\n");
+	Log("Debug info: Expected: %x, got:%x, Iters:%u MAXiters:%d rest:%u\n",iters0-(rest0==0),iters_finished,iters0,CContext[deviceID].maxIters,rest0);
+        RaiseExitRequestTrigger();
+        return -1;
+	  }
     }
 
+    CContext[deviceID].USEcount=0;	//Reset Unexpected Stop Error counter
     unsigned itersDone=(iters0-1)*RunSize+rest0;
     kiter-=itersDone;
     key_incr(&rc5_72unitwork->L0.hi,&rc5_72unitwork->L0.mid,&rc5_72unitwork->L0.lo,itersDone*4);
