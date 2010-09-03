@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.155 2009/08/15 00:51:56 andreasb Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.156 2010/09/03 19:27:45 stream Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1688,11 +1688,11 @@ int ClientRun( Client *client )
     {
       char srange[20];
       srange[0] = 0;
-      if (load_problem_count > 1 && load_problem_count <= 26 /* a-z */)
+      if (load_problem_count > 1 && load_problem_count <= PROBLEM_PRINTABLE_ID_COUNT /* a-z,A-Z */)
       {
         sprintf( srange, " ('a'%s'%c')",
           ((load_problem_count==2)?(" and "):("-")),
-          'a'+(load_problem_count-1) );
+          ProblemLetterId(load_problem_count-1) );
       }
       Log("%u cruncher%s%s ha%s been started.%c%c%u failed to start)\n",
              load_problem_count,

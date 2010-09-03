@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.108 2010/02/15 19:44:27 stream Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.109 2010/09/03 19:27:46 stream Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -286,5 +286,9 @@ int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
 
 // this is a bit misplaced here, but we need u64-ops
 int ProjectSetSpeed(int projectid, u32 speedhi, u32 speedlo);
+
+// only 52 crunchers (a-z, A-Z) could be identified by one-letter Id.
+#define PROBLEM_PRINTABLE_ID_COUNT  52
+#define ProblemLetterId(n)  ((n) >= PROBLEM_PRINTABLE_ID_COUNT ? '~' : (n) >= 26 ? (n)-26+'A' : (n)+'a')
 
 #endif /* __PROBLEM_H__ */

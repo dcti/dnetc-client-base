@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.97 2010/02/15 19:44:27 stream Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.98 2010/09/03 19:27:45 stream Exp $"; }
 
 //#define TRACE
 
@@ -495,10 +495,7 @@ static unsigned int __IndividualProblemSave( Problem *thisprob,
         tv.tv_sec = info.elapsed_secs; tv.tv_usec = info.elapsed_usecs;
 
         if (load_problem_count > 1) {
-          char core = (char)('a' + prob_i);
-          if (core > 'z')
-            core = (char)('A' + (prob_i - ('z' - 'a')));
-          sprintf(info_name, "%s #%c", info.name, core);
+          sprintf(info_name, "%s #%c", info.name, ProblemLetterId(prob_i));
         }
         else
           strcpy(info_name, info.name);
@@ -813,10 +810,7 @@ static unsigned int __IndividualProblemLoad( Problem *thisprob,
             }
 
             if (load_problem_count > 1) {
-              char core = (char)('a' + prob_i);
-              if (core > 'z')
-                core = (char)('A' + (prob_i - ('z' - 'a')));
-              Log("%s #%c: Loaded %s%s%s\n", info.name, core,
+              Log("%s #%c: Loaded %s%s%s\n", info.name, ProblemLetterId(prob_i),
                       ((thisprob->pub_data.is_random)?("random "):("")),
                       info.sigbuf, extramsg );
             }

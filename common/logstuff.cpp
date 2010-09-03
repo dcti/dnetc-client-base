@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.60 2010/07/10 17:35:30 stream Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.61 2010/09/03 19:27:45 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -1045,10 +1045,10 @@ static int __do_crunchometer( int event_disp_format,
   }
   else
   {
+    memset(pbuf, 0, sizeof(pbuf));
     for (prob_i = 0; prob_i < load_problem_count; prob_i++)
     {
       Problem *selprob = GetProblemPointerFromIndex(prob_i);
-      pbuf[prob_i] = 0;
       if (selprob)
       {
         u32 permille = 0, startpermille = 0;
@@ -1071,10 +1071,7 @@ static int __do_crunchometer( int event_disp_format,
           else if (girc != -1)
           {
             if (load_problem_count > 1) {
-              char core = (char)('a' + prob_i);
-              if (core > 'z')
-                core = (char)('A' + (prob_i - ('z' - 'a')));
-              sprintf(buffer, "%s #%c:%s [%s]", info.name, core, info.cwpbuf,
+              sprintf(buffer, "%s #%c:%s [%s]", info.name, ProblemLetterId(prob_i), info.cwpbuf,
                     U64stringify(blkdone, sizeof(blkdone),
                     info.dcounthi, info.dcountlo, 0, info.unit));
             }
@@ -1178,9 +1175,7 @@ static int __do_crunchometer( int event_disp_format,
           {
             if ( pbuf[prob_i] == (unsigned char)(percent) )
             {
-              ch = (char)('a'+prob_i);
-              if (ch > 'z')
-                ch = (char)('A'+(prob_i-('z'-'a')));
+              ch = ProblemLetterId(prob_i);
               if ( (++equals)>selprob_i )
                 break;
             }    
