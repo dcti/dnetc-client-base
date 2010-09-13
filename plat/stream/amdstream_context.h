@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.10 2010/08/16 18:17:19 sla Exp $
+ * $Id: amdstream_context.h,v 1.11 2010/09/13 16:05:37 sla Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -26,6 +26,7 @@ enum
   CORE_IL4N,
   CORE_IL4NA,
   CORE_IL42T,
+  CORE_IL4_1I,
 #endif
 #ifdef HAVE_OGR_CORES
   CORE_IL_OGRNG_BASIC,

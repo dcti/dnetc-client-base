@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.47 2010/07/13 03:47:32 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.48 2010/09/13 16:01:34 sla Exp $"; }
 
 //#define TRACE
 
@@ -104,6 +104,7 @@ extern "C" s32 CDECL rc5_72_unit_func_cuda_1_64_s1( RC5_72UnitWork *, u32 *, voi
 extern "C" s32 CDECL rc5_72_unit_func_il4_nand( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_il4a_nand( RC5_72UnitWork *, u32 *, void * );
 extern "C" s32 CDECL rc5_72_unit_func_il4_2t( RC5_72UnitWork *, u32 *, void * );
+extern "C" s32 CDECL rc5_72_unit_func_il4_1i (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
 
 
@@ -213,6 +214,7 @@ const char **corenames_for_contest_rc572()
       "IL 4-pipe c",
       "IL 4-pipe c alt",
       "IL 4-pipe 2 threads",
+      "IL 4-pipe cs-1",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -298,6 +300,11 @@ int apply_selcore_substitution_rules_rc572(int cindex)
     if (cindex == 5 || cindex == 8) {
       cindex = 0;    /* default: 1-pipe 64-thread */
     }
+  }
+#elif (CLIENT_CPU == CPU_ATI_STREAM)
+  if(GetProcessorType(1) < 8 ) { /* Need Cypress ASIC or later */
+    if(cindex == 3)
+      cindex = 0;
   }
 #endif
 
@@ -625,8 +632,10 @@ int selcoreGetPreselectedCoreForProject_rc572()
       case 5: 		    // RV770 GPU ISA
       case 6: 		    // RV710 GPU ISA
       case 7: 		    // RV730 GPU ISA
-      case 8: 		    // RV830 GPU ISA
-      case 9: 		    // RV870 GPU ISA
+      case 8: 		    // CYPRESS
+      case 9: 		    // JUNIPER
+      case 10: 		    // REDWOOD
+      case 11: 		    // CEDAR
        cindex = 0;	    // IL 4-pipe
        break;
     
@@ -876,19 +885,24 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         break;
      // -----------
      #elif (CLIENT_CPU == CPU_ATI_STREAM)
-      case 0:             
+      case 0:
       default:
         unit_func.gen_72 = rc5_72_unit_func_il4_nand;
         pipeline_count = 4;
       break;               
-      case 1:             
+      case 1:
         unit_func.gen_72 = rc5_72_unit_func_il4a_nand;
         pipeline_count = 4;
       break;               
-      case 2:             
+      case 2:
         unit_func.gen_72 = rc5_72_unit_func_il4_2t;
         pipeline_count = 4;
       break;               
+      case 3:
+        unit_func.gen_72 = rc5_72_unit_func_il4_1i;
+        pipeline_count = 4;
+      break;               
+
     // -----------
      #else /* the ansi cores */
       case 0:
