@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.132 2010/06/30 17:45:06 jlawson Exp $
+# $Id: makefile.vc,v 1.133 2010/09/13 16:31:29 sla Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -164,7 +164,7 @@ OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2020
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
 OPTS_MSVC = $(OPTS_MSVC) -I"$(CALROOT)include" -Iplat\stream -Iplat\x86
-OPTS_LIBS = $(OPTS_LIBS) "$(CALROOT)lib\xp32\aticalcl.lib" "$(CALROOT)lib\xp32\aticalrt.lib"
+OPTS_LIBS = $(OPTS_LIBS) "$(CALROOT)lib\aticalcl.lib" "$(CALROOT)lib\aticalrt.lib"
 !endif
 
 !if ( [plat\win\msvcver.cmd] >= 15 )
@@ -348,6 +348,7 @@ RC5_72_OBJS =                             \
         $(OUTPUTPATH)/r72stream-vc4cn.obj   \
         $(OUTPUTPATH)/r72stream-vc4cna.obj   \
         $(OUTPUTPATH)/r72stream-2th.obj   \
+        $(OUTPUTPATH)/r72stream-vc4-1i.obj   \
         $(OUTPUTPATH)/amdstream_info.obj \
         $(OUTPUTPATH)/amdstream_setup.obj \
         $(OUTPUTPATH)/adl.obj        
