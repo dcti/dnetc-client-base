@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.9 2010/05/09 10:42:17 stream Exp $
+ * $Id: amdstream_info.cpp,v 1.10 2010/09/13 16:11:55 sla Exp $
 */
 
 #include "amdstream_info.h"
@@ -29,20 +29,37 @@ unsigned getAMDStreamDeviceFreq(void)
   return 0;
 }
 
-static const char* GetNameById(u32 id)
+static const char* GetNameById(u32 id, u32 nSIMDs=0)
 {
   switch (id)
   {
-  case CAL_TARGET_600: return "R600";
-  case CAL_TARGET_610: return "RV610";
-  case CAL_TARGET_630: return "RV630";
-  case CAL_TARGET_670: return "RV670";
+  case CAL_TARGET_600: return "HD2900";
+  case CAL_TARGET_610: return "HD2400";
+  case CAL_TARGET_630: return "HD2600";
+  case CAL_TARGET_670: return "HD3870/HD3850/HD3690";
   case CAL_TARGET_7XX: return "R700 class";
-  case CAL_TARGET_770: return "RV770";
-  case CAL_TARGET_710: return "RV710";
-  case CAL_TARGET_730: return "RV730";
-  case 8: /* RV870 */  return "RV870";
-  case 9: /* RV840 */  return "RV840";
+  case CAL_TARGET_770: 
+    if(nSIMDs==8)  return "HD4860/HD4830";
+    if(nSIMDs==10) return "HD4850/HD4870";
+    return "HD48xx";
+  case CAL_TARGET_710: return "HD45xx/HD43xx";
+  case CAL_TARGET_730: return "HD4670/HD4650";
+//  case CAL_TARGET_740: return "HD4770/HD4750";
+  case CAL_TARGET_CYPRESS: 
+    if(nSIMDs==20) return "HD5870/HD5970";
+    if(nSIMDs==18) return "HD5850";
+    if(nSIMDs==14) return "HD5830";
+    return "HD58xx";
+  case CAL_TARGET_JUNIPER:
+    if(nSIMDs==10) return "HD5770";
+    if(nSIMDs==9)  return "HD5750";
+    return "HD57xx";
+  case CAL_TARGET_REDWOOD:
+    if(nSIMDs==5)  return "HD5670/HD5570";
+    if(nSIMDs==4)  return "HD5550";
+    return "HD56xx/HD55xx";
+  case CAL_TARGET_CEDAR: return "HD54xx";
+    
   default:             return "unknown";
   }
 }
@@ -68,7 +85,7 @@ long getAMDStreamRawProcessorID(const char **cpuname)
 
   // Calculate amount of required memory
   for (i=amount=0; i < nCPUs; i++)
-    amount += strlen(GetNameById(CContext[i].attribs.target)) + 3; /* include ", " */
+    amount += strlen(GetNameById(CContext[i].attribs.target, CContext[i].attribs.numberOfSIMD)) + 3; /* include ", " */
 
   ATIstream_GPUname = (char*)malloc(amount);
   if (!ATIstream_GPUname)
@@ -82,7 +99,7 @@ long getAMDStreamRawProcessorID(const char **cpuname)
   {
     if (i != 0)
       strcat(ATIstream_GPUname, ", ");
-    strcat(ATIstream_GPUname, GetNameById(CContext[i].attribs.target));
+    strcat(ATIstream_GPUname, GetNameById(CContext[i].attribs.target, CContext[i].attribs.numberOfSIMD));
   }
 
   *cpuname = ATIstream_GPUname;
@@ -112,6 +129,7 @@ void AMDStreamPrintExtendedGpuInfo(void)
     LogRaw("GPU %d attributes (EEEEEEEE == undefined):\n", i);
 #define sh(name) LogRaw("%24s: %08X (%d)\n", #name, dev->attribs.##name, dev->attribs.##name)
     sh(target);
+    sh(targetRevision);
     sh(localRAM);
     sh(uncachedRemoteRAM);
     sh(cachedRemoteRAM);
@@ -131,7 +149,6 @@ void AMDStreamPrintExtendedGpuInfo(void)
     sh(bUAVMemExport);
     sh(b3dProgramGrid);
     sh(numberOfShaderEngines);
-    sh(targetRevision);
 #undef sh
   }
 }
