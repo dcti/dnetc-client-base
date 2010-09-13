@@ -7,7 +7,7 @@
 */
 
 const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.9 2009/02/01 11:21:11 andreasb Exp $"; }
+return "@(#)$Id: w32svc.cpp,v 1.10 2010/09/13 16:04:10 sla Exp $"; }
 
 //#define TRACE
 
@@ -77,6 +77,10 @@ return "@(#)$Id: w32svc.cpp,v 1.9 2009/02/01 11:21:11 andreasb Exp $"; }
   #if (CLIENT_CPU == CPU_CUDA)
   #define SERVICEFOR  "CUDA-client"
   const char *NTSERVICEIDS[]={"dnetc-CUDA"/*feb09*/};
+  const char *W9xSERVICEKEY = "";
+  #elif (CLIENT_CPU == CPU_ATI_STREAM)
+  #define SERVICEFOR  "ATI-client"
+  const char *NTSERVICEIDS[]={"dnetc-ATI"/*feb09*/};
   const char *W9xSERVICEKEY = "";
   #else
   #define SERVICEFOR  "client"
