@@ -1,0 +1,1205 @@
+il_cs_2_0
+dcl_num_thread_per_group 64
+;corename=il4_1i_src
+
+dcl_raw_uav_id(0)
+
+dcl_cb cb0[3]				;key_hi,key_mid,key_lo,L0
+					;plain_lo,plain_hi,cypher_lo,cypher_hi
+					;S1
+
+dcl_literal	l0,	0xBF0A8B1D,0x1f,32,0
+
+dcl_literal l1, 0x5618cb1c, 0x5618cb1c, 0x5618cb1c, 0x5618cb1c
+dcl_literal l2, 0xf45044d5, 0xf45044d5, 0xf45044d5, 0xf45044d5
+dcl_literal l3, 0x9287be8e, 0x9287be8e, 0x9287be8e, 0x9287be8e
+dcl_literal l4, 0x30bf3847, 0x30bf3847, 0x30bf3847, 0x30bf3847
+dcl_literal l5, 0xcef6b200, 0xcef6b200, 0xcef6b200, 0xcef6b200
+dcl_literal l6, 0x6d2e2bb9, 0x6d2e2bb9, 0x6d2e2bb9, 0x6d2e2bb9
+dcl_literal l7, 0x0b65a572, 0x0b65a572, 0x0b65a572, 0x0b65a572
+dcl_literal l8, 0xa99d1f2b, 0xa99d1f2b, 0xa99d1f2b, 0xa99d1f2b
+dcl_literal l9, 0x47d498e4, 0x47d498e4, 0x47d498e4, 0x47d498e4
+dcl_literal l10, 0xe60c129d, 0xe60c129d, 0xe60c129d, 0xe60c129d
+dcl_literal l11, 0x84438c56, 0x84438c56, 0x84438c56, 0x84438c56
+dcl_literal l12, 0x227b060f, 0x227b060f, 0x227b060f, 0x227b060f
+dcl_literal l13, 0xc0b27fc8, 0xc0b27fc8, 0xc0b27fc8, 0xc0b27fc8
+dcl_literal l14, 0x5ee9f981, 0x5ee9f981, 0x5ee9f981, 0x5ee9f981
+dcl_literal l15, 0xfd21733a, 0xfd21733a, 0xfd21733a, 0xfd21733a
+dcl_literal l16, 0x9b58ecf3, 0x9b58ecf3, 0x9b58ecf3, 0x9b58ecf3
+dcl_literal l17, 0x399066ac, 0x399066ac, 0x399066ac, 0x399066ac
+dcl_literal l18, 0xd7c7e065, 0xd7c7e065, 0xd7c7e065, 0xd7c7e065
+dcl_literal l19, 0x75ff5a1e, 0x75ff5a1e, 0x75ff5a1e, 0x75ff5a1e
+dcl_literal l20, 0x1436d3d7, 0x1436d3d7, 0x1436d3d7, 0x1436d3d7
+dcl_literal l21, 0xb26e4d90, 0xb26e4d90, 0xb26e4d90, 0xb26e4d90
+dcl_literal l22, 0x50a5c749, 0x50a5c749, 0x50a5c749, 0x50a5c749
+dcl_literal l23, 0xeedd4102, 0xeedd4102, 0xeedd4102, 0xeedd4102
+dcl_literal l24, 0x8d14babb, 0x8d14babb, 0x8d14babb, 0x8d14babb
+dcl_literal l25, 0x2b4c3474, 0x2b4c3474, 0x2b4c3474, 0x2b4c3474
+dcl_literal l26, 0x0,0x1,0x2,0x3
+dcl_literal l27, 0xff,0x00ff0000,0x0000ff00,3
+dcl_literal l28, 8,24,2,29
+dcl_literal l29, 8.0,0x12,0x4,0x80000000
+dcl_literal l30, 23,0xfc,0xff00ff00,0x00ff00ff
+
+	;r100.x=key_hi,r100.y=key_mid,r100.z=key_lo
+	mov	r100.x,cb0[0].x
+	mov	r100.y,cb0[0].y
+	mov	r100.z,cb0[0].z
+
+	mov	r50.x,vaTid.x
+
+	ishl	r50.z,r50.x,l28.z
+	iadd	r100.x,r50.z,r100.x				;hi+objIndex*4, можно выкинуть верхний mov
+
+
+        ushr	r51.x,r100.x,l28.x				;(hi>>8)
+	icarry	r51.y,r100.y,r51.x
+	iadd	r50.x,r100.y,r51.x				;t+=(hi>>8)
+
+	mov	r102.x,cb0[0].w					;L0
+	mov	r102.y,cb0[2].x					;S1
+
+	if_logicalnz	r51.y
+			ishl	r52.x,r100.z,l28.y		;t=(lo<<24)|(lo>>24);
+			ushr	r52.y,r100.z,l28.y
+
+			iand	r52.z,r100.z,l27.y		;t=t|((lo&(unsigned)0x00ff0000)>>8);
+			iand	r52.w,r100.z,l27.z		;t=t|((lo&(unsigned)0x0000ff00)<<8);
+			
+			ushr	r52.z,r52.z,l28.x
+			ishl	r52.w,r52.w,l28.x
+
+			ior	r52.x,r52.x,r52.y
+			ior	r52.w,r52.z,r52.w
+			ior	r52.x,r52.x,r52.w		;bswap lo
+
+			iadd	r52.x,r52.x,l26.y		;t2=t2+1
+			;bswap lo
+			ishl	r53.x,r52.x,l28.y		;t2=(lo<<24)|(lo>>24);
+			ushr	r53.y,r52.x,l28.y
+
+			iand	r53.z,r52.x,l27.y		;t2=t2|((lo&0x00ff0000)>>8);
+			iand	r53.w,r52.x,l27.z		;t2=t2|((lo&0x0000ff00)<<8);
+
+			ushr	r53.z,r53.z,l28.x
+			ishl	r53.w,r53.w,l28.x
+
+			ior	r53.x,r53.x,r53.y
+			ior	r53.z,r53.z,r53.w
+			ior	r100.z,r53.x,r53.z		;bswap lo		
+
+			;update L0
+			iadd	r53.z,r100.z,l0.x
+		        bitalign r102.x,r53.z,r53.z,l27.w
+
+			;update S1
+			iadd	r53.x,l0.x,l1.x
+			iadd	r53.x,r53.x,r102.x
+			bitalign r102.y,r53.x,r53.x,l28.w
+		endif
+		
+		;
+		bytealign r50.y,r50.x,r50.x,l26.y
+		bytealign r50.z,r50.x,r50.x,l26.w
+
+		iand	r50.y,r50.y,l30.z
+		iand	r50.z,r50.z,l30.w
+
+		ior	r100.y,r50.y,r50.z				;bswap mid
+		iand	r100.x,r100.x,l27.x
+
+		;ѕреобразовываем key_hi,key_mid,key_lo
+		    ;L2 = key_hi;
+		    ;L1 = key_mid;
+		    ;L0 = key_lo;
+
+		;здесь у нас имеетс€ корректное hi:mid:lo
+		mov	r1,r100.yyyy
+		mov	r2,r100.xxxx
+	
+		iadd	r2,r2,l26
+		mov	r201.xyz,r100.xyz
+
+		;раунд 1 (с константами)
+		;S0=r10,S1=r11,...,S25=r35
+	
+		;L0=ROTL(L0+S0,S0)=ROTL(L0+S0,0x1d)
+		;It was precalculated earlier (by CPU or in keyLO update branch)
+		mov 	r0.xyzw,r102.xxxx
+	
+		;S1=ROTL3(Sc1+S0+L0)
+		mov	r11.xyzw,r102.yyyy
+
+		;L1=ROTL(L1+S1+L0,S1+L0)
+		iadd	r55,r11,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S2=ROTL3(Sc2+S1+L1)
+		iadd	r56,r11,l2.xxxx
+		iadd	r55,r56,r1
+		bitalign r12,r55,r55,l28.w
+	
+		;L2=ROTL(L2+S2+L1,S2+L1)
+		iadd	r55,r12,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+	
+		;S3=ROTL3(Sc3+S2+L2)
+		iadd	r56,r12,l3.xxxx
+		iadd	r55,r56,r2
+		bitalign r13,r55,r55,l28.w
+
+		;L0=ROTL(L0+S3+L2,S3+L2)
+		iadd	r55,r13,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S4=ROTL3(Sc4+S3+L0)
+		iadd	r56,r13,l4.xxxx
+		iadd	r55,r56,r0
+		bitalign r14,r55,r55,l28.w
+
+		;L1=ROTL(L1+S4+L0,S4+L0)
+		iadd	r55,r14,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S5=ROTL3(Sc5+S4+L1)
+		iadd	r56,r14,l5.xxxx
+		iadd	r55,r56,r1
+		bitalign r15,r55,r55,l28.w
+
+		;L2=ROTL(L2+S5+L1,S5+L1);
+		iadd	r55,r15,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+	
+		;S6=ROTL3(Sc6+S5+L2)
+		iadd	r56,r15,l6.xxxx
+		iadd	r55,r56,r2
+		bitalign r16,r55,r55,l28.w
+
+		;L0=ROTL(L0+S6+L2,S6+L2)
+		iadd	r55,r16,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S7=ROTL3(Sc7+S6+L0)
+		iadd	r56,r16,l7.xxxx
+		iadd	r55,r56,r0
+		bitalign r17,r55,r55,l28.w
+	
+		;L1=ROTL(L1+S7+L0,S7+L0)
+		iadd	r55,r17,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S8=ROTL3(Sc8+S7+L1)
+		iadd	r56,r17,l8.xxxx
+		iadd	r55,r56,r1
+		bitalign r18,r55,r55,l28.w
+
+		;L2=ROTL(L2+S8+L1,S8+L1)
+		iadd	r55,r18,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S9=ROTL3(Sc9+S8+L2)
+		iadd	r56,r18,l9.xxxx
+		iadd	r55,r56,r2
+		bitalign r19,r55,r55,l28.w
+
+		;L0=ROTL(L0+S9+L2,S9+L2)
+		iadd	r55,r19,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S10=ROTL3(Sc10+S9+L0)
+		iadd	r56,r19,l10.xxxx
+		iadd	r55,r56,r0
+		bitalign r20,r55,r55,l28.w
+
+		;L1=ROTL(L1+S10+L0,S10+L0)
+		iadd	r55,r20,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S11=ROTL3(Sc11+S10+L1)
+		iadd	r56,r20,l11.xxxx
+		iadd	r55,r56,r1
+		bitalign r21,r55,r55,l28.w
+
+		;L2=ROTL(L2+S11+L1,S11+L1)
+		iadd	r55,r21,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S12=ROTL3(Sc12+S11+L2)
+		iadd	r56,r21,l12.xxxx
+		iadd	r55,r56,r2
+		bitalign r22,r55,r55,l28.w
+
+		;L0=ROTL(L0+S12+L2,S12+L2);
+		iadd	r55,r22,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S13=ROTL3(Sc13+S12+L0)
+		iadd	r56,r22,l13.xxxx
+		iadd	r55,r56,r0
+		bitalign r23,r55,r55,l28.w
+
+		;L1=ROTL(L1+S13+L0,S13+L0)
+		iadd	r55,r23,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S14=ROTL3(Sc14+S13+L1)
+		iadd	r56,r23,l14.xxxx
+		iadd	r55,r56,r1
+		bitalign r24,r55,r55,l28.w
+
+		;L2=ROTL(L2+S14+L1,S14+L1)
+		iadd	r55,r24,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S15=ROTL3(Sc15+S14+L2)
+		iadd	r56,r24,l15.xxxx
+		iadd	r55,r56,r2
+		bitalign r25,r55,r55,l28.w
+
+		;L0=ROTL(L0+S15+L2,S15+L2)
+		iadd	r55,r25,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S16=ROTL3(Sc16+S15+L0)
+		iadd	r56,r25,l16.xxxx
+		iadd	r55,r56,r0
+		bitalign r26,r55,r55,l28.w
+
+		;L1=ROTL(L1+S16+L0,S16+L0)
+		iadd	r55,r26,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S17=ROTL3(Sc17+S16+L1)
+		iadd	r56,r26,l17.xxxx
+		iadd	r55,r56,r1
+		bitalign r27,r55,r55,l28.w
+
+		;L2=ROTL(L2+S17+L1,S17+L1)
+		iadd	r55,r27,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S18=ROTL3(Sc18+S17+L2)
+		iadd	r56,r27,l18.xxxx
+		iadd	r55,r56,r2
+		bitalign r28,r55,r55,l28.w
+
+		;L0=ROTL(L0+S18+L2,S18+L2)
+		iadd	r55,r28,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S19=ROTL3(Sc19+S18+L0)
+		iadd	r56,r28,l19.xxxx
+		iadd	r55,r56,r0
+		bitalign r29,r55,r55,l28.w
+
+		;L1=ROTL(L1+S19+L0,S19+L0)
+		iadd	r55,r29,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S20=ROTL3(Sc20+S19+L1)
+		iadd	r56,r29,l20.xxxx
+		iadd	r55,r56,r1
+		bitalign r30,r55,r55,l28.w
+
+		;L2=ROTL(L2+S20+L1,S20+L1)
+		iadd	r55,r30,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S21=ROTL3(Sc21+S20+L2)
+		iadd	r56,r30,l21.xxxx
+		iadd	r55,r56,r2
+		bitalign r31,r55,r55,l28.w
+
+		;L0=ROTL(L0+S21+L2,S21+L2)
+		iadd	r55,r31,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S22=ROTL3(Sc22+S21+L0)
+		iadd	r56,r31,l22.xxxx
+		iadd	r55,r56,r0
+		bitalign r32,r55,r55,l28.w
+	
+		;L1=ROTL(L1+S22+L0,S22+L0)
+		iadd	r55,r32,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S23=ROTL3(Sc23+S22+L1)
+		iadd	r56,r32,l23.xxxx
+		iadd	r55,r56,r1
+		bitalign r33,r55,r55,l28.w
+
+		;L2=ROTL(L2+S23+L1,S23+L1)
+		iadd	r55,r33,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S24=ROTL3(Sc24+S23+L2)
+		iadd	r56,r33,l24.xxxx
+		iadd	r55,r56,r2
+		bitalign r34,r55,r55,l28.w
+
+		;L0=ROTL(L0+S24+L2,S24+L2)
+		iadd	r55,r34,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S25=ROTL3(Sc25+S24+L0)
+		iadd	r56,r34,l25.xxxx
+		iadd	r55,r56,r0
+		bitalign r35,r55,r55,l28.w
+
+		;L1=ROTL(L1+S25+L0,S25+L0)
+		iadd	r55,r35,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59	
+
+		;Round 2
+
+		;S0=ROTL3(S0+S25+L1)
+		iadd	r56,r35,l0.xxxx
+		iadd	r55,r56,r1
+		bitalign r10,r55,r55,l28.w
+
+		;L2=ROTL(L2+S0+L1,S0+L1)
+		iadd	r55,r10,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S1=ROTL3(S1+S0+L2)
+		iadd	r56,r10,r11
+		iadd	r55,r56,r2
+		bitalign r11,r55,r55,l28.w
+
+		;L0=ROTL(L0+S1+L2,S1+L2)
+		iadd	r55,r11,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S2=ROTL3(S2+S1+L0)
+		iadd	r56,r11,r12
+		iadd	r55,r56,r0
+		bitalign r12,r55,r55,l28.w
+
+		;L1=ROTL(L1+S2+L0,S2+L0)
+		iadd	r55,r12,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S3=ROTL3(S3+S2+L1)
+		iadd	r56,r12,r13
+		iadd	r55,r56,r1
+		bitalign r13,r55,r55,l28.w
+
+		;L2=ROTL(L2+S3+L1,S3+L1)
+		iadd	r55,r13,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S4=ROTL3(S4+S3+L2)
+		iadd	r56,r13,r14
+		iadd	r55,r56,r2
+		bitalign r14,r55,r55,l28.w
+
+		;L0=ROTL(L0+S4+L2,S4+L2)
+		iadd	r55,r14,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S5=ROTL3(S5+S4+L0)
+		iadd	r56,r14,r15
+		iadd	r55,r56,r0
+		bitalign r15,r55,r55,l28.w
+
+		;L1=ROTL(L1+S5+L0,S5+L0)
+		iadd	r55,r15,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S6=ROTL3(S6+S5+L1)
+		iadd	r56,r15,r16
+		iadd	r55,r56,r1
+		bitalign r16,r55,r55,l28.w
+
+		;L2=ROTL(L2+S6+L1,S6+L1)
+		iadd	r55,r16,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S7=ROTL3(S7+S6+L2)
+		iadd	r56,r16,r17
+		iadd	r55,r56,r2
+		bitalign r17,r55,r55,l28.w
+
+		;L0=ROTL(L0+S7+L2,S7+L2)
+		iadd	r55,r17,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S8=ROTL3(S8+S7+L0)
+		iadd	r56,r17,r18
+		iadd	r55,r56,r0
+		bitalign r18,r55,r55,l28.w
+
+		;L1=ROTL(L1+S8+L0,S8+L0)
+		iadd	r55,r18,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S9=ROTL3(S9+S8+L1)
+		iadd	r56,r18,r19
+		iadd	r55,r56,r1
+		bitalign r19,r55,r55,l28.w
+
+		;L2=ROTL(L2+S9+L1,S9+L1)
+		iadd	r55,r19,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S10=ROTL3(S10+S9+L2)
+		iadd	r56,r19,r20
+		iadd	r55,r56,r2
+		bitalign r20,r55,r55,l28.w
+
+		;L0=ROTL(L0+S10+L2,S10+L2)
+		iadd	r55,r20,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S11=ROTL3(S11+S10+L0)
+		iadd	r56,r20,r21
+		iadd	r55,r56,r0
+		bitalign r21,r55,r55,l28.w
+
+		;L1=ROTL(L1+S11+L0,S11+L0)
+		iadd	r55,r21,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S12=ROTL3(S12+S11+L1)
+		iadd	r56,r21,r22
+		iadd	r55,r56,r1
+		bitalign r22,r55,r55,l28.w
+
+		;L2=ROTL(L2+S12+L1,S12+L1)
+		iadd	r55,r22,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S13=ROTL3(S13+S12+L2)
+		iadd	r56,r22,r23
+		iadd	r55,r56,r2
+		bitalign r23,r55,r55,l28.w
+
+		;L0=ROTL(L0+S13+L2,S13+L2)
+		iadd	r55,r23,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S14=ROTL3(S14+S13+L0)
+		iadd	r56,r23,r24
+		iadd	r55,r56,r0
+		bitalign r24,r55,r55,l28.w
+
+		;L1=ROTL(L1+S14+L0,S14+L0)
+		iadd	r55,r24,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S15=ROTL3(S15+S14+L1)
+		iadd	r56,r24,r25
+		iadd	r55,r56,r1
+		bitalign r25,r55,r55,l28.w
+
+		;L2=ROTL(L2+S15+L1,S15+L1)
+		iadd	r55,r25,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S16=ROTL3(S16+S15+L2)
+		iadd	r56,r25,r26
+		iadd	r55,r56,r2
+		bitalign r26,r55,r55,l28.w
+
+		;L0=ROTL(L0+S16+L2,S16+L2)
+		iadd	r55,r26,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S17=ROTL3(S17+S16+L0)
+		iadd	r56,r26,r27
+		iadd	r55,r56,r0
+		bitalign r27,r55,r55,l28.w
+
+		;L1=ROTL(L1+S17+L0,S17+L0)
+		iadd	r55,r27,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S18=ROTL3(S18+S17+L1)
+		iadd	r56,r27,r28
+		iadd	r55,r56,r1
+		bitalign r28,r55,r55,l28.w
+
+		;L2=ROTL(L2+S18+L1,S18+L1)
+		iadd	r55,r28,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S19=ROTL3(S19+S18+L2)
+		iadd	r56,r28,r29
+		iadd	r55,r56,r2
+		bitalign r29,r55,r55,l28.w
+
+		;L0=ROTL(L0+S19+L2,S19+L2)
+		iadd	r55,r29,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S20=ROTL3(S20+S19+L0)
+		iadd	r56,r29,r30
+		iadd	r55,r56,r0
+		bitalign r30,r55,r55,l28.w
+
+		;L1=ROTL(L1+S20+L0,S20+L0)
+		iadd	r55,r30,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S21=ROTL3(S21+S20+L1)
+		iadd	r56,r30,r31
+		iadd	r55,r56,r1
+		bitalign r31,r55,r55,l28.w
+
+		;L2=ROTL(L2+S21+L1,S21+L1)
+		iadd	r55,r31,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S22=ROTL3(S22+S21+L2)
+		iadd	r56,r31,r32
+		iadd	r55,r56,r2
+		bitalign r32,r55,r55,l28.w
+
+		;L0=ROTL(L0+S22+L2,S22+L2)
+		iadd	r55,r32,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S23=ROTL3(S23+S22+L0)
+		iadd	r56,r32,r33
+		iadd	r55,r56,r0
+		bitalign r33,r55,r55,l28.w
+
+		;L1=ROTL(L1+S23+L0,S23+L0)
+		iadd	r55,r33,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S24=ROTL3(S24+S23+L1)
+		iadd	r56,r33,r34
+		iadd	r55,r56,r1
+		bitalign r34,r55,r55,l28.w
+
+		;L2=ROTL(L2+S24+L1,S24+L1)
+		iadd	r55,r34,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S25=ROTL3(S25+S24+L2)
+		iadd	r56,r34,r35
+		iadd	r55,r56,r2
+		bitalign r35,r55,r55,l28.w
+
+		;L0=ROTL(L0+S25+L2,S25+L2)
+		iadd	r55,r35,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;Round 3
+		;S0=ROTL3(S0+S25+L0)
+		iadd	r56,r35,r10
+		iadd	r55,r56,r0
+		bitalign r10,r55,r55,l28.w
+
+		;L1=ROTL(L1+S0+L0,S0+L0)
+		iadd	r55,r10,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S1=ROTL3(S1+S0+L1)
+		iadd	r56,r10,r11
+		iadd	r55,r56,r1
+		bitalign r11,r55,r55,l28.w
+
+		;L2=ROTL(L2+S1+L1,S1+L1)
+		iadd	r55,r11,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S2=ROTL3(S2+S1+L2)
+		iadd	r56,r11,r12
+		iadd	r55,r56,r2
+		bitalign r12,r55,r55,l28.w
+
+		;L0=ROTL(L0+S2+L2,S2+L2)
+		iadd	r55,r12,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S3=ROTL3(S3+S2+L0)
+		iadd	r56,r12,r13
+		iadd	r55,r56,r0
+		bitalign r13,r55,r55,l28.w
+
+		;L1=ROTL(L1+S3+L0,S3+L0)
+		iadd	r55,r13,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S4=ROTL3(S4+S3+L1)
+		iadd	r56,r13,r14
+		iadd	r55,r56,r1
+		bitalign r14,r55,r55,l28.w
+
+		;L2=ROTL(L2+S4+L1,S4+L1)
+		iadd	r55,r14,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S5=ROTL3(S5+S4+L2)
+		iadd	r56,r14,r15
+		iadd	r55,r56,r2
+		bitalign r15,r55,r55,l28.w
+
+		;L0=ROTL(L0+S5+L2,S5+L2)
+		iadd	r55,r15,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S6=ROTL3(S6+S5+L0)
+		iadd	r56,r15,r16
+		iadd	r55,r56,r0
+		bitalign r16,r55,r55,l28.w
+
+		;L1=ROTL(L1+S6+L0,S6+L0)
+		iadd	r55,r16,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S7=ROTL3(S7+S6+L1)
+		iadd	r56,r16,r17
+		iadd	r55,r56,r1
+		bitalign r17,r55,r55,l28.w
+       	
+		;L2=ROTL(L2+S7+L1,S7+L1)
+		iadd	r55,r17,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S8=ROTL3(S8+S7+L2)
+		iadd	r56,r17,r18
+		iadd	r55,r56,r2
+		bitalign r18,r55,r55,l28.w
+
+		;L0=ROTL(L0+S8+L2,S8+L2)
+		iadd	r55,r18,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S9=ROTL3(S9+S8+L0)
+		iadd	r56,r18,r19
+		iadd	r55,r56,r0
+		bitalign r19,r55,r55,l28.w
+
+		;L1=ROTL(L1+S9+L0,S9+L0)
+		iadd	r55,r19,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S10=ROTL3(S10+S9+L1)
+		iadd	r56,r19,r20
+		iadd	r55,r56,r1
+		bitalign r20,r55,r55,l28.w
+
+		;L2=ROTL(L2+S10+L1,S10+L1)
+		iadd	r55,r20,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S11=ROTL3(S11+S10+L2)
+		iadd	r56,r20,r21
+		iadd	r55,r56,r2
+		bitalign r21,r55,r55,l28.w
+
+		;L0=ROTL(L0+S11+L2,S11+L2)
+		iadd	r55,r21,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S12=ROTL3(S12+S11+L0)
+		iadd	r56,r21,r22
+		iadd	r55,r56,r0
+		bitalign r22,r55,r55,l28.w
+
+		;L1=ROTL(L1+S12+L0,S12+L0)
+		iadd	r55,r22,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S13=ROTL3(S13+S12+L1)
+		iadd	r56,r22,r23
+		iadd	r55,r56,r1
+		bitalign r23,r55,r55,l28.w
+
+		;L2=ROTL(L2+S13+L1,S13+L1)
+		iadd	r55,r23,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S14=ROTL3(S14+S13+L2)
+		iadd	r56,r23,r24
+		iadd	r55,r56,r2
+		bitalign r24,r55,r55,l28.w
+
+		;L0=ROTL(L0+S14+L2,S14+L2)
+		iadd	r55,r24,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S15=ROTL3(S15+S14+L0)
+		iadd	r56,r24,r25
+		iadd	r55,r56,r0
+		bitalign r25,r55,r55,l28.w
+
+		;L1=ROTL(L1+S15+L0,S15+L0)
+		iadd	r55,r25,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+	
+		;S16=ROTL3(S16+S15+L1)
+		iadd	r56,r25,r26
+		iadd	r55,r56,r1
+		bitalign r26,r55,r55,l28.w
+
+		;L2=ROTL(L2+S16+L1,S16+L1)
+		iadd	r55,r26,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S17=ROTL3(S17+S16+L2)
+		iadd	r56,r26,r27
+		iadd	r55,r56,r2
+		bitalign r27,r55,r55,l28.w
+
+		;L0=ROTL(L0+S17+L2,S17+L2)
+		iadd	r55,r27,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S18=ROTL3(S18+S17+L0)
+		iadd	r56,r27,r28
+		iadd	r55,r56,r0;
+		bitalign r28,r55,r55,l28.w
+
+		;L1=ROTL(L1+S18+L0,S18+L0)
+		iadd	r55,r28,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S19=ROTL3(S19+S18+L1)
+		iadd	r56,r28,r29
+		iadd	r55,r56,r1
+		bitalign r29,r55,r55,l28.w
+
+		;L2=ROTL(L2+S19+L1,S19+L1)
+		iadd	r55,r29,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S20=ROTL3(S20+S19+L2)
+		iadd	r56,r29,r30
+		iadd	r55,r56,r2
+		bitalign r30,r55,r55,l28.w
+
+		;L0=ROTL(L0+S20+L2,S20+L2)
+		iadd	r55,r30,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S21=ROTL3(S21+S20+L0)
+		iadd	r56,r30,r31
+		iadd	r55,r56,r0
+		bitalign r31,r55,r55,l28.w
+
+		;L1=ROTL(L1+S21+L0,S21+L0)
+		iadd	r55,r31,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r1,r56,r56,r59
+
+		;S22=ROTL3(S22+S21+L1)
+		iadd	r56,r31,r32
+		iadd	r55,r56,r1
+		bitalign r32,r55,r55,l28.w
+
+		;L2=ROTL(L2+S22+L1,S22+L1)
+		iadd	r55,r32,r1
+		iadd	r56,r55,r2
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r2,r56,r56,r59
+
+		;S23=ROTL3(S23+S22+L2)
+		iadd	r56,r32,r33
+		iadd	r55,r56,r2
+		bitalign r33,r55,r55,l28.w
+
+		;L0=ROTL(L0+S23+L2,S23+L2)
+		iadd	r55,r33,r2
+		iadd	r56,r55,r0
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		bitalign r0,r56,r56,r59
+
+		;S24=ROTL3(S24+S23+L0)
+		iadd	r56,r33,r34
+		iadd	r55,r56,r0
+		bitalign r34,r55,r55,l28.w
+
+		;//Encryption round
+		;//setup
+	
+		;eA=PLAIN_LO+S0
+		iadd	r10,r10,cb0[1].xxxx			;eA
+		;eB=PLAIN_HI+S1;
+		iadd	r11,r11,cb0[1].yyyy			;eB
+
+		;eA=ROTL(eA^eB,eB)+S2
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r12
+
+		;eB=ROTL(eB^eA,eA)+S3
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r13
+
+		;eA=ROTL(eA^eB,eB)+S4
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r14
+
+		;eB=ROTL(eB^eA,eA)+S5
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r15
+
+		;eA=ROTL(eA^eB,eB)+S6
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r16
+
+		;eB=ROTL(eB^eA,eA)+S7
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r17
+
+		;eA=ROTL(eA^eB,eB)+S8
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r18
+
+		;eB=ROTL(eB^eA,eA)+S9;
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r19
+
+		;eA=ROTL(eA^eB,eB)+S10
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r20
+
+		;eB=ROTL(eB^eA,eA)+S11
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r21
+
+		;eA=ROTL(eA^eB,eB)+S12
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r22
+
+		;eB=ROTL(eB^eA,eA)+S13
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r23
+
+		;eA=ROTL(eA^eB,eB)+S14
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r24
+
+		;eB=ROTL(eB^eA,eA)+S15
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r25
+
+		;eA=ROTL(eA^eB,eB)+S16;
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r26
+	
+		;eB=ROTL(eB^eA,eA)+S17
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r27
+
+		;eA=ROTL(eA^eB,eB)+S18
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r28
+
+		;eB=ROTL(eB^eA,eA)+S19
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r29
+
+		;eA=ROTL(eA^eB,eB)+S20
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r30
+
+		;eB=ROTL(eB^eA,eA)+S21
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r31
+
+		;eA=ROTL(eA^eB,eB)+S22
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r32
+
+		;eB=ROTL(eB^eA,eA)+S23
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		bitalign r11,r11,r11,r59
+		iadd	r11,r11,r33
+
+		;eA=ROTL(eA^eB,eB)+S24
+		ixor	r10,r10,r11
+		iadd	r59,l0.zzzz,r11_neg(xyzw)
+		bitalign r10,r10,r10,r59
+		iadd	r10,r10,r34
+
+		;checking results
+		ieq	r12,r10,cb0[1].zzzz
+		dp4	r12,r12,r12.1111
+
+		if_logicalnz	r12.x
+
+		;L1=ROTL(L1+S24+L0,S24+L0)
+		iadd	r55,r34,r0
+		iadd	r56,r55,r1
+		iadd	r59,l0.zzzz,r55_neg(xyzw)
+		ishl	r55,r56,r55
+		ushr	r59,r56,r59
+		ior	r1,r55,r59
+
+		;S25=ROTL3(S25+S24+L1)
+		iadd	r56,r34,r35
+		iadd	r55,r56,r1
+		ishl	r56,r55,l27.w
+		ushr	r57,r55,l28.w
+		ior	r35,r56,r57
+
+		;eB=ROTL(eB^eA,eA)+S25
+		ixor	r11,r11,r10
+		iadd	r59,l0.zzzz,r10_neg(xyzw)
+		ishl	r55,r11,r10
+		ushr	r59,r11,r59
+		ior	r11,r55,r59
+		iadd	r11,r11,r35
+
+		mov	r101.x,l26.x		;N CMC
+		mov	r101.z,l26.x		;last CMC
+		mov	r101.w,l26.x		;Hit
+
+
+		uav_read_add_id(0) r200.x, l26.x, l26.y
+		ieq	r55.x,r10.x,cb0[1].z
+		if_logicalnz	r55.x		;key #0
+			;CMC increment
+			iadd	r101.x,r101.x,l26.y
+
+			ieq	r59.x,r11.x,cb0[1].w
+			if_logicalnz r59.x
+				;solution found
+				mov	r101.w,l29.w
+			endif
+		endif
+		ieq	r55.x,r10.y,cb0[1].z
+                cmov_logical r55.x, r101.w, l26.x, r55.x
+		if_logicalnz	r55.x		;key #1
+			;CMC increment
+			iadd	r101.x,r101.x,l26.y
+			mov	r101.z,l26.y
+
+			ieq	r59.x,r11.y,cb0[1].w
+			if_logicalnz r59.x
+				;solution found
+				mov	r101.w,l29.w
+			endif
+		endif
+		ieq	r55.x,r10.z,cb0[1].z
+                cmov_logical r55.x, r101.w, l26.x, r55.x
+		if_logicalnz	r55.x		;key #2
+			;CMC increment
+			iadd	r101.x,r101.x,l26.y
+			mov	r101.z,l26.z
+
+			ieq	r59.x,r11.z,cb0[1].w
+			if_logicalnz r59.x
+				;solution found
+				mov	r101.w,l29.w
+			endif
+		endif
+		ieq	r55.x,r10.w,cb0[1].z
+                cmov_logical r55.x, r101.w, l26.x, r55.x
+		if_logicalnz	r55.x		;key #3
+			;CMC increment
+			iadd	r101.x,r101.x,l26.y
+			mov	r101.z,l26.w
+
+			ieq	r59.x,r11.w,cb0[1].w
+			if_logicalnz r59.x
+				;solution found
+				mov	r101.w,l29.w
+			endif
+		endif
+
+		;HIT|NCMC|LAST_CMC 
+		;  1|  29|       2
+		ishl	r101.x,r101.x,l26.z
+		ior	r101.z,r101.z,r101.w
+		ior	r101.z,r101.z,r101.x
+		ishl	r200.x,r200.x,l29.z	;idx*16
+		iadd	r200.x,r200.x,l29.z
+
+		mov	r201.w,r101.z		;hi:mid:lo:status
+
+		uav_raw_store_id(0) mem.xyzw,r200.x,r201.xyzw
+        endif
+end
