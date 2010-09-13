@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.cpp,v 1.15 2010/05/09 10:50:34 stream Exp $
+ * $Id: r72stream-common.cpp,v 1.16 2010/09/13 16:23:07 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -36,6 +36,21 @@ void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr)
   *hi=*hi&0xff;
   *mid=swap32(t_m);
   *lo=swap32(t_l);
+}
+
+//Subtract two 72-bit numbers res=N1-N2
+//Assumptions:
+//N1>=N2, res<2^32
+u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2)
+{
+  m1=swap32(m1); 
+  m2=swap32(m2);
+
+  u32 h3=h1-h2;
+  u32 borrow=(h3>h1)?1:0;
+  u32 m3=m1-m2-borrow;
+
+  return (m3<<8)|(h3&0xff);
 }
 
 

@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.17 2010/05/09 10:50:34 stream Exp $
+ * $Id: r72stream-common.h,v 1.18 2010/09/13 16:21:38 sla Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -34,6 +34,7 @@
 #endif
 
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
+u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2);
 CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool);
 CALresult runCompiler(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool verbose=false);
 
