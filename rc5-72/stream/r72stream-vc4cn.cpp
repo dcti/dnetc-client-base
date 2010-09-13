@@ -6,7 +6,6 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cn.cpp,v 1.24 2010/08/16 18:14:50 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -14,13 +13,22 @@
 #include "r72stream-vc4_bitalign.cpp"
 
 //rc5-72 test
-static s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
+#define P 0xB7E15163
+#define Q 0x9E3779B9
+
+
+#define SHL(x, s) ((u32) ((x) << ((s) & 31)))
+#define SHR(x, s) ((u32) ((x) >> (32 - ((s) & 31))))
+#define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
+#define ROTL3(x) ROTL(x, 3)
+
+static s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork)
 {
   u32 i, j, k;
   u32 A, B;
   u32 S[26];
   u32 L[3];
-  u32 kiter = *iterations;
+  u32 kiter = 1;
   while (kiter--)
   {
     L[2] = rc5_72unitwork->L0.hi;
@@ -50,50 +58,12 @@ static s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork, u32 *itera
       rc5_72unitwork->check.lo  = rc5_72unitwork->L0.lo;
       if (B == rc5_72unitwork->cypher.hi)
       {
-        *iterations -= (kiter + 1);
         return RESULT_FOUND;
       }
     }
-
-    #define key rc5_72unitwork->L0
-    key.hi = (key.hi + 0x01) & 0x000000FF;
-    if (!key.hi)
-    {
-      key.mid = key.mid + 0x01000000;
-      if (!(key.mid & 0xFF000000u))
-      {
-        key.mid = (key.mid + 0x00010000) & 0x00FFFFFF;
-        if (!(key.mid & 0x00FF0000))
-        {
-          key.mid = (key.mid + 0x00000100) & 0x0000FFFF;
-          if (!(key.mid & 0x0000FF00))
-          {
-            key.mid = (key.mid + 0x00000001) & 0x000000FF;
-            if (!key.mid)
-            {
-              key.lo = key.lo + 0x01000000;
-              if (!(key.lo & 0xFF000000u))
-              {
-                key.lo = (key.lo + 0x00010000) & 0x00FFFFFF;
-                if (!(key.lo & 0x00FF0000))
-                {
-                  key.lo = (key.lo + 0x00000100) & 0x0000FFFF;
-                  if (!(key.lo & 0x0000FF00))
-                  {
-                    key.lo = (key.lo + 0x00000001) & 0x000000FF;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    #undef key
   }
   return RESULT_NOTHING;
 }
-// rc5-72 test
 
 
 static bool init_rc5_72_il4_nand(u32 Device)
@@ -374,15 +344,16 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
 
             calResUnmap(res);
 
-			//let's recheck the full match
-			RC5_72UnitWork t;
-			u32 it=1;
-			memcpy(&t,rc5_72unitwork,sizeof(RC5_72UnitWork));
-			if(rc5_72_unit_func_ansi_ref(&t,&it,NULL)!=RESULT_FOUND)
-			{
-				Log("WARNING!!!	False positive detected!\n");
-				Log("Debug info: %x:%x:%x, res=%x\n",hi,mid,lo,output);
-			}
+            //full match verification
+            RC5_72UnitWork t;
+            memcpy(&t,rc5_72unitwork,sizeof(RC5_72UnitWork));
+            if(rc5_72_unit_func_ansi_ref(&t)!=RESULT_FOUND)
+            {
+              Log("WARNING!!! False positive detected!\n");
+              Log("Debug info: %x:%x:%x, res=%x\n",hi,mid,lo,output);
+              RaiseExitRequestTrigger();
+              return -1;
+            }
 
             *CMC=CMC_hit;
             return 1;
@@ -509,19 +480,12 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     // Checking whether the execution of the program is complete or not
     HiresTimerGet(&cstart);
 
-    u32 busy_c=0;
-    if(iters0!=CContext[deviceID].maxIters)
-      busy_c=2;
-
     CALresult result;
-	if(isCalCtxWaitForEventsSupported)
-	  result=calCtxWaitForEvents(CContext[deviceID].ctx, &e0, 1, 0);
-	else
-	  while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) {
-	    if(!busy_c)
-		  NonPolledUSleep(15000);  //15ms
-		  busy_c++;
-	  }
+    if(isCalCtxWaitForEventsSupported)  //normal case
+      result=calCtxWaitForEvents(CContext[deviceID].ctx, &e0, 1, 0);
+    else
+      while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) 
+        NonPolledUSleep(15000);  //15ms
 
     if(result!=CAL_RESULT_OK)
     {
@@ -536,25 +500,22 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     }
     HiresTimerGet(&cend);
     double d=HiresTimerDiff(cend, cstart)/fr_d;
-#ifdef VERBOSE
-    LogScreen("Thread %u: Time %lf ms, c=%u\n",deviceID,(double)(cend-cstart)/fr_d, busy_c);
-#endif
     if(isCalCtxWaitForEventsSupported)
     {
-      if(d>10.5)
+      if(d>12.)
         if(CContext[deviceID].maxIters>1)
           CContext[deviceID].maxIters--;
-      if(d<9.5)
+      if(d<8.)
         CContext[deviceID].maxIters++;
     }else
-	{
-      if((d>15.5)&&(busy_c>1))
+    {
+      if(d>16.5)
       {
         u32 delta;
         if(d>60.)
-          delta=(u32)(CContext[deviceID].maxIters*0.3f);
+          delta=(u32)CContext[deviceID].maxIters*0.3f;
         else
-          delta=(u32)(CContext[deviceID].maxIters*0.1f);
+          delta=(u32)CContext[deviceID].maxIters*0.1f;
         if(delta==0)
           delta=1;
         if(delta>=CContext[deviceID].maxIters)
@@ -562,16 +523,16 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
         else
           CContext[deviceID].maxIters-=delta;
       }else
-      if((busy_c<=1)&&(d<15.5))
+      if(d<16.)
       {
         u32 delta;
-        delta=(u32)(CContext[deviceID].maxIters*0.02f);
+        delta=(u32)CContext[deviceID].maxIters*0.02f;
         if(delta==0)
           delta=1;
         CContext[deviceID].maxIters+=delta;
       }
-	}
-	//Check the results
+    }
+    //Check the results
     u32 CMC, iters_finished;
     s32 read_res=ReadResultsFromGPU(CContext[deviceID].outputRes0, CContext[deviceID].globalRes0, width, height, rc5_72unitwork, &CMC, &iters_finished);
     if (read_res==1) {
@@ -593,20 +554,20 @@ s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, v
     {
       // Something bad happend during program execution
       if(CContext[deviceID].USEcount<15)
-	  {
+      {
         Log("Thread %d was terminated in unexpected way. Restarting after a pause...\n", deviceID);
         NonPolledUSleep(1000000);  //1s
         memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
         *iterations=0;
         CContext[deviceID].USEcount++;
         return RESULT_WORKING;
-	  }else
-	  {
+      }else
+      {
         Log("Too many errors! Giving up.\n");
-	Log("Debug info: Expected: %x, got:%x, Iters:%u MAXiters:%d rest:%u\n",iters0-(rest0==0),iters_finished,iters0,CContext[deviceID].maxIters,rest0);
+	Log("Debug info: Expected: %x, got:%x! Iters:%u MAXiters:%d rest:%u\n",iters0-(rest0==0),iters_finished,iters0,CContext[deviceID].maxIters,rest0);
         RaiseExitRequestTrigger();
         return -1;
-	  }
+      }
     }
 
     CContext[deviceID].USEcount=0;	//Reset Unexpected Stop Error counter
