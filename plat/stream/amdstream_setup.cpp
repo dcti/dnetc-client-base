@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.16 2010/05/09 10:47:37 stream Exp $
+ * $Id: amdstream_setup.cpp,v 1.17 2010/09/13 16:18:41 sla Exp $
 */
 
 #include "amdstream_setup.h"
@@ -116,6 +116,9 @@ int AMDStreamInitialize()
   if (calExtSupported((CALextid)0x8009) == CAL_RESULT_OK)
     if (calExtGetProc((CALextproc*)&calCtxWaitForEvents, (CALextid)0x8009, "calCtxWaitForEvents") == CAL_RESULT_OK)
       isCalCtxWaitForEventsSupported = 1;
+
+  if(calCtxRunProgramGrid==0)
+    calExtGetProc((CALextproc*)&calCtxRunProgramGrid, CAL_EXT_COMPUTE_SHADER, "calCtxRunProgramGrid");
 
   ADLinit();
 
