@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.186 2010/07/28 01:38:16 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.187 2010/09/24 19:47:07 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -467,13 +467,14 @@ static long __GetRawProcessorID(const char **cpuname)
 /* note: Non-PVR based numbers start at 0x10000 (real PVR numbers are 16bit) */
 # define NONPVR(x) ((1L << 16) + (x))
 
+static int isaltivec;
+
 static long __GetRawProcessorID(const char **cpuname)
 {
   /* ******* detected type reference is (PVR value >> 16) *********** */
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
-  static int isaltivec = 0;
   static const char *detectedname = NULL;
-  static char namebuf[30];
+  static char namebuf[128];
 
   /* note: "PowerPC" will be prepended to the name
   ** note: always use PVR IDs :
@@ -492,8 +493,23 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x000A, "604r/604ev"          },
       {    0x000C, "7400 (G4)"           },
       {    0x0020, "403G/403GC/403GCX"   },
+      {    0x0033, "RS64-II (northstar)" },
+      {    0x0034, "RS64-III (pulsar)"   },
+      {    0x0035, "POWER4 (gp)"         },
+      {    0x0036, "RS64-III (icestar)"  },
+      {    0x0037, "RS64-IV (sstar)"     },
+      {    0x0038, "POWER4+ (gq)",       },
       {    0x0039, "970 (G5)"            },
+      {    0x003A, "POWER5 (gr)"         },
+      {    0x003B, "POWER5+ (gs)"        },
+      { NONPVR(0x3B), "POWER5+"          },
       {    0x003C, "970FX (G5)"          }, // XServe G5. See bug #3675
+      {    0x003E, "POWER6 (raw)"        },
+      { NONPVR(0x3E), "POWER6 (architected)" },
+      {    0x003F, "POWER7 (raw)"        },
+      { NONPVR(0x3F), "POWER7 (architected)" },
+      {    0x0040, "POWER3 (630)"        },
+      {    0x0041, "POWER3 (630+)"       },
       {    0x0044, "970MP (G5)"          }, // Dual core
       {    0x0045, "970GX (G5)"          },
       {    0x0050, "821/8xx"             },
@@ -505,6 +521,7 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x0084, "e300c2"              },
       {    0x0085, "e300c3"              },
       {    0x0086, "e300c4"              },
+      {    0x0090, "PA6T"                },
       {    0x1291, "405EX/EXr"           },
       {    0x1302, "460EX/GT"            },
       {    0x2001, "Virtex-II Pro/-4 FX" },
@@ -683,8 +700,28 @@ static long __GetRawProcessorID(const char **cpuname)
            { "403G ??",         0x0020  },
            { "403GC",           0x0020  },
            { "403GCX",          0x0020  },
+           { "RS64-II (northstar)", 0x0033 },
+           { "RS64-III (pulsar)",   0x0034 },
+           { "POWER4 (gp)",         0x0035 },
+           { "RS64-III (icestar)",  0x0036 },
+           { "RS64-IV (sstar)",     0x0037 },
+           { "POWER4+ (gq)",    0x0038  },
+           { "PPC970",          0x0039  },
+           { "POWER5 (gr)",     0x003A  },
+           { "POWER5+ (gs)",    0x003B  },
+           { "POWER5+",         NONPVR(0x3B) },
+           { "PPC970FX",        0x003C  },
+           { "POWER6 (raw)",    0x003E  },
+           { "POWER6 (architected)", NONPVR(0x3E) },
+           { "POWER7 (raw)",    0x003F  },
+           { "POWER7 (architected)", NONPVR(0x3F) },
+           { "POWER3 (630)",    0x0040  },
+           { "POWER3 (630+)",   0x0041  },
+           { "PPC970MP",        0x0044  },
+           { "PPC970GX",        0x0045  },
            { "821",             0x0050  },
            { "8xx",             0x0050  },
+           { "Cell Broadband Engine", 0x0070  },
            { "860",             0x0080  },
            { "8240",            0x0081  },
            { "82xx",            0x0081  },
@@ -694,6 +731,7 @@ static long __GetRawProcessorID(const char **cpuname)
            { "e300c2",          0x0084  },
            { "e300c3",          0x0085  },
            { "e300c4",          0x0086  },
+           { "PA6T",            0x0090  },
            { "405EX",           0x1291  },
            { "405EXr",          0x1291  },
            { "460EX",           0x1302  },
@@ -743,16 +781,17 @@ static long __GetRawProcessorID(const char **cpuname)
            { "e500mc",          0x8023  },
 //         { "e200z5",          0x810x  },
 //         { "e200z6",          0x811x  },
-           { "PPC970",          0x0039  },
-           { "PPC970FX",        0x003C  },
-           { "PPC970MP",        0x0044  },
-           { "PPC970GX",        0x0045  },
-           { "Cell Broadband Engine", 0x0070  },
            // Must find true rid's for these 
            { "440GRX",       NONPVR(1000) },
            { "440EPX",       NONPVR(1000) }
 
            };
+
+          for (p = buffer; (p = strchr(p, ',')) != NULL; p++)
+          {
+            if (memcmp(p, ", altivec supported", 19) == 0)
+              isaltivec = 1;
+          }
           p = &buffer[n]; buffer[sizeof(buffer)-1]='\0';
           for ( n = 0; n < (sizeof(sigs)/sizeof(sigs[0])); n++ )
           {
@@ -760,19 +799,6 @@ static long __GetRawProcessorID(const char **cpuname)
             if (memcmp( p, sigs[n].sig, l)==0 && (!p[l] || isspace(p[l]) || p[l]==','))
             {
               detectedtype = (long)sigs[n].rid;
-              /* 7400, 7410, 7450, 7455 (G4), 970, 970FX (G5),Cell */
-#if 0
-              if (detectedtype == 0x000C ||
-                  detectedtype == 0x0039 ||
-                  detectedtype == 0x003C ||
-                  detectedtype == 0x0044 ||
-                  detectedtype == 0x0070 ||
-                  detectedtype & 0x8000)
-#endif
-              {
-                if (memcmp( &p[l], ", altivec supported", 19)==0)
-                  isaltivec = 1;
-              }
               break;
             }
           }
@@ -953,11 +979,6 @@ static long __GetRawProcessorID(const char **cpuname)
   
   if (cpuname)
     *cpuname = detectedname;
-
-  if (detectedtype > 0 && isaltivec) {
-    /* *OS* supports altivec */
-    detectedtype |= (1L << 25);
-  }
 
   return detectedtype;
 }
@@ -2495,7 +2516,7 @@ unsigned long GetProcessorFeatureFlags()
     #elif (CLIENT_OS == OS_LINUX)
       // Can someone write something better ?
       long type = __GetRawProcessorID(NULL);
-      if ( (type & (1L << 25)) != 0)
+      if (isaltivec) // set up by __GetRawProcessorID
         ppc_features |= CPU_F_ALTIVEC;
       if ( (type & 0xFFFF) == 0x0070) {     /* Cell Broadband Engine */
         ppc_features |= CPU_F_64BITOPS;
