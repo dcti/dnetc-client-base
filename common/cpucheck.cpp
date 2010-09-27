@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.187 2010/09/24 19:47:07 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.188 2010/09/27 17:44:05 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2516,7 +2516,7 @@ unsigned long GetProcessorFeatureFlags()
     #elif (CLIENT_OS == OS_LINUX)
       // Can someone write something better ?
       long type = __GetRawProcessorID(NULL);
-      if (isaltivec) // set up by __GetRawProcessorID
+      if (isaltivec) // set up by __GetRawProcessorID even if exact CPU ID is unknown
         ppc_features |= CPU_F_ALTIVEC;
       if ( (type & 0xFFFF) == 0x0070) {     /* Cell Broadband Engine */
         ppc_features |= CPU_F_64BITOPS;

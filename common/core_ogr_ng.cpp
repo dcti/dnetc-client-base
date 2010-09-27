@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.37 2010/02/04 07:39:53 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.38 2010/09/27 17:44:05 stream Exp $"; }
 
 //#define TRACE
 
@@ -410,7 +410,14 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
       #if defined(HAVE_ALTIVEC) /* OS+compiler support altivec */
       if ((detected_flags & CPU_F_ALTIVEC) != 0) //altivec?
       {
-        cindex = 1;     // PPC-vector
+        switch (detected_type & 0xFFFF)
+        {
+        case 0x003E:  // POWER6: slow Altivec? Keep scalar (0)
+          break; 
+        default:
+          cindex = 1; // PPC-vector (Altivec)
+          break;
+        }
       }
       #endif
     }
