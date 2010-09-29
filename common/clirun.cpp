@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.156 2010/09/03 19:27:45 stream Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.157 2010/09/29 21:02:34 stream Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -328,7 +328,7 @@ void Go_mt( void * parm )
     {
       if (GetProcessAffinityMask(GetCurrentProcess(), &LProcessAffinity, &LSystemAffinity))
       {
-        LAffinity = 1L << threadnum;
+        LAffinity = ((DWORD_PTR)1) << threadnum;
         if (LProcessAffinity & LAffinity)
           SetThreadAffinityMask(GetCurrentThread(), LAffinity);
       }
