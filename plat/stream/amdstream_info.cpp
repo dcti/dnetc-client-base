@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.10 2010/09/13 16:11:55 sla Exp $
+ * $Id: amdstream_info.cpp,v 1.11 2010/12/02 19:42:30 sla Exp $
 */
 
 #include "amdstream_info.h"
@@ -39,11 +39,11 @@ static const char* GetNameById(u32 id, u32 nSIMDs=0)
   case CAL_TARGET_670: return "HD3870/HD3850/HD3690";
   case CAL_TARGET_7XX: return "R700 class";
   case CAL_TARGET_770: 
-    if(nSIMDs==8)  return "HD4860/HD4830";
+    if(nSIMDs==8)  return "HD4830/HD4860";
     if(nSIMDs==10) return "HD4850/HD4870";
     return "HD48xx";
-  case CAL_TARGET_710: return "HD45xx/HD43xx";
-  case CAL_TARGET_730: return "HD4670/HD4650";
+  case CAL_TARGET_710: return "HD43xx/HD45xx";
+  case CAL_TARGET_730: return "HD4650/HD4670";
 //  case CAL_TARGET_740: return "HD4770/HD4750";
   case CAL_TARGET_CYPRESS: 
     if(nSIMDs==20) return "HD5870/HD5970";
@@ -59,8 +59,11 @@ static const char* GetNameById(u32 id, u32 nSIMDs=0)
     if(nSIMDs==4)  return "HD5550";
     return "HD56xx/HD55xx";
   case CAL_TARGET_CEDAR: return "HD54xx";
-    
-  default:             return "unknown";
+  case 17:         //Hack for Barts until stream SDK 2.3
+    if(nSIMDs==12) return "HD6850";
+    if(nSIMDs==14) return "HD6870";
+    return "HD68xx";
+  default:         return "unknown";
   }
 }
 
