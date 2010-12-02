@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cna.cpp,v 1.11 2010/05/03 05:01:38 stream Exp $
+ * $Id: r72stream-vc4cna.cpp,v 1.12 2010/12/02 19:48:04 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -72,6 +72,10 @@ static bool init_rc5_72_il4a_nand(u32 Device)
       CContext[Device].domainSizeY=656;
       CContext[Device].maxIters=3;
       break;
+    case 17://Barts
+      CContext[Device].domainSizeX=904;
+      CContext[Device].domainSizeY=904;
+      CContext[Device].maxIters=3;
     default:
       break;
     }
