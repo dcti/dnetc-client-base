@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.101 2010/09/29 21:11:06 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.102 2010/12/11 03:34:46 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -37,7 +37,7 @@ Version change log: $Id: CHANGES.txt,v 1.101 2010/09/29 21:11:06 stream Exp $
             imp: all: log errors to file during tests and buffer update
             fix: x86: possible division by zero in cpuinfo
             imp: x86: CPU detect and core select updates (#4297,#4299,#4301)
-            imp: x86: AMD Opteron/Phenom detection (#4326,#4256)
+            imp: x86: AMD Opteron/Phenom detection (#4326,#4256,#4370)
             fix: all: logging issues with more then 26 crunchers (#4345)
             imp: ppc: recognize more PowerPC processors (#4349)
             imp: ppc: core selection for Power6 series (#4349)
