@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.103 2010/12/16 03:15:41 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.104 2010/12/16 21:12:42 sla Exp $
 ==========================================================================
 
 2.9100
@@ -43,6 +43,8 @@ Version change log: $Id: CHANGES.txt,v 1.103 2010/12/16 03:15:41 snikkel Exp $
             imp: ppc: core selection for Power6 series (#4349)
             fix: win64: only 32 processors were used (#4352)
             imp: x86: identification of i3 chips
+            imp: stream: new rc5-72 core, expected decreased GUI lag
+            imp: stream: HD6850/HD6870 detection (#4358)
 
 2.9108-517  imp: x86: new OGR-NG 32- and 64-bit cores (#4256)
             imp: x86: identification of new i5/i7 chips (#4271)
