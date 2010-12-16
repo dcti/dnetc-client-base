@@ -86,6 +86,10 @@ static bool init_rc5_72_il4_1i(u32 Device)
       CContext[Device].domainSizeY=656;
       CContext[Device].maxIters=1;
       break;
+    case 15: //Cayman
+      CContext[Device].domainSizeX=1024;
+      CContext[Device].domainSizeY=1024;
+      CContext[Device].maxIters=1;
     case 17: //Barts
       CContext[Device].domainSizeX=904;
       CContext[Device].domainSizeY=904;
