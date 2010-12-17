@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.189 2010/12/16 03:15:43 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.190 2010/12/17 12:01:43 oliver Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -867,9 +867,11 @@ static long __GetRawProcessorID(const char **cpuname)
        case CPUTYPE_PPC440GP:       detectedtype = 0x4012; break;
        case CPUTYPE_PPC440GX:       detectedtype = 0x51B2; break;
        case CPUTYPE_PPC440SP:       detectedtype = 0x5322; break;
+       case CPUTYPE_PA6T_1682M:     detectedtype = 0x0090; break;
+       case CPUTYPE_PPC460EX:       detectedtype = 0x1302; break;
        default: // some PPC processor that we don't know about
                 // set the tag (so that the user can tell us), but return 0
-       sprintf(namebuf, "OS4:0x%lx", cpu );
+       sprintf(namebuf, "OS4:%ld", cpu );
        detectedname = (const char *)&namebuf[0];
        detectedtype = 0;
        break;
