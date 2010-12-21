@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.105 2010/12/17 12:19:34 oliver Exp $
+Version change log: $Id: CHANGES.txt,v 1.106 2010/12/21 02:19:46 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -42,7 +42,7 @@ Version change log: $Id: CHANGES.txt,v 1.105 2010/12/17 12:19:34 oliver Exp $
             imp: ppc: recognize more PowerPC processors (#4349)
             imp: ppc: core selection for Power6 series (#4349)
             fix: win64: only 32 processors were used (#4352)
-            imp: x86: identification of i3 chips
+            imp: x86: identification of new i3/i5 chips (#4376)
             imp: stream: new rc5-72 core, expected decreased GUI lag
             imp: stream: HD6850/HD6870 detection (#4358)
             imp: amigaos: PowerPC 460EX detection on OS4
