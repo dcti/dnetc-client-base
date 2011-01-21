@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.106 2010/12/21 02:19:46 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.107 2011/01/21 20:02:33 stream Exp $
 ==========================================================================
 
 2.9100
@@ -46,6 +46,7 @@ Version change log: $Id: CHANGES.txt,v 1.106 2010/12/21 02:19:46 snikkel Exp $
             imp: stream: new rc5-72 core, expected decreased GUI lag
             imp: stream: HD6850/HD6870 detection (#4358)
             imp: amigaos: PowerPC 460EX detection on OS4
+            fix: cellbe: fetched 10000 blocks with default settings
 
 2.9108-517  imp: x86: new OGR-NG 32- and 64-bit cores (#4256)
             imp: x86: identification of new i5/i7 chips (#4271)

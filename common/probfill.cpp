@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.98 2010/09/03 19:27:45 stream Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.99 2011/01/21 20:02:33 stream Exp $"; }
 
 //#define TRACE
 
@@ -244,9 +244,36 @@ unsigned int ClientGetInThreshold(Client *client,
   }
   if (bufthresh < 1) /* undetermined */
   {
-    #define BUFTHRESHOLD_DEFAULT_PER_CRUNCHER (PREFERREDBLOCKSIZE_DEFAULT*24*100)  /* in stats units */
-    bufthresh = BUFTHRESHOLD_DEFAULT_PER_CRUNCHER * numcrunchers;
-    #undef BUFTHRESHOLD_DEFAULT_PER_CRUNCHER
+    switch (contestid)
+    {
+    /* in stats units, for each cruncher */
+#if defined(HAVE_RC5_72_CORES)
+    case RC5_72:
+      /* it's a bad idea to use PREFERREDBLOCKSIZE_DEFAULT here - too rough and unrelated */
+      /* the number could be arbitrary but must be reasonable. So we've choosed 24 units
+         for average PC (4 Mkeys/sec), but GPU settings could be tweaked accordingly. */
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
+      bufthresh = 6 * 200 * 100;  /* average GPU: 200 Mkeys/sec. */
+#elif (CLIENT_CPU == CPU_CELLBE)
+      bufthresh = 6 * 24 * 100;   /* PS3 each core: 24 Mkeys/sec. */
+#else
+      bufthresh = 6 * 4 * 100;    /* average PC: 4 Mkeys/sec, 24 blocks. */
+#endif
+      break;
+#endif
+#if defined(HAVE_OGR_CORES)
+    case OGR_NG:
+      /* stub size is unpredictable so use any reasonable default value */
+      bufthresh = 24*100;  /* fixed 24 stubs per cruncher */
+      break;
+#endif
+    default:
+      // PROJECT_NOT_HANDLED(contestid);
+      bufthresh = 1000;
+      break;
+    }
+    bufthresh *= numcrunchers;
+    TRACE_OUT((0, "set default bufthresh = %d\n", bufthresh));
   }
   if (bufthresh < (numcrunchers * 100)) /* ensure at least 1.00 stats */
   {                                     /* units per per cruncher */

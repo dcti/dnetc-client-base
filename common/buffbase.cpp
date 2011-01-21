@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-  return "@(#)$Id: buffbase.cpp,v 1.43 2009/04/01 15:49:21 andreasb Exp $";
+  return "@(#)$Id: buffbase.cpp,v 1.44 2011/01/21 20:02:32 stream Exp $";
 }
 
 //#define TRACE
@@ -437,21 +437,45 @@ long GetBufferRecord( Client *client, WorkRecord* data,
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * Get maximum number of work/stat units allowed in in-buff.
+ */
 static unsigned long __get_threshold_limit(unsigned int contest)
 {
-  static unsigned int nominal_rate = 0;
+  static unsigned int nominal_rates[CONTEST_COUNT];
 
-  if (nominal_rate == 0) {
+  if (contest >= CONTEST_COUNT)
+    return 1000;
+
+  if (nominal_rates[contest] == 0) {
     /* Allow for 14 days of work */
     unsigned int rate;
     rate = nominal_rate_for_contest(contest) * 14;
     if (rate == 0) {
+      switch (contest)
+      {
+#if defined(HAVE_RC5_72_CORES)
+      case RC5_72:
 #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_CELLBE)
-      rate = 10000;
+        rate = 10000;
 #else
-      rate = 1000;
+        rate = 1000;
 #endif
+        break;
+#endif
+#if defined(HAVE_OGR_CORES)
+      case OGR_NG:
+        rate = 1000;
+        break;
+#endif
+      default:
+        // /PROJECT_NOT_HANDLED(contest);
+        rate = 1000;
+        break;
+      }
+      // Log("Forced threshold_limit to %u\n", rate);
     } else {
+      // Log("threshold_limit from nominal_rate: %u (%u*14)\n", rate, rate/14);
       /* A bit of rounding */
       if (rate < 100)
         rate = 10 * ((rate + 5) / 10);
@@ -460,10 +484,10 @@ static unsigned long __get_threshold_limit(unsigned int contest)
       else
         rate = 100 * ((rate + 50) / 100);
     }
-    nominal_rate = rate;
+    nominal_rates[contest] = rate;
   }
 
-  return nominal_rate;
+  return nominal_rates[contest];
 }
 
 int BufferAssertIsBufferFull( Client *client, unsigned int contest )
