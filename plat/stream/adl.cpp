@@ -35,7 +35,9 @@ void __stdcall ADL_Main_Memory_Free ( void** lpBuffer )
 }
 
 ThermalDevices_t ThermalDevices[AMD_STREAM_MAX_GPUS];
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
 HINSTANCE hDLL;		// Handle to ADL DLL
+#endif
 
 void ADLinit()
 {
