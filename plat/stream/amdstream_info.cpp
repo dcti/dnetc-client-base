@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.11 2010/12/02 19:42:30 sla Exp $
+ * $Id: amdstream_info.cpp,v 1.12 2011/02/15 20:06:41 chandleg Exp $
 */
 
 #include "amdstream_info.h"
@@ -130,7 +130,11 @@ void AMDStreamPrintExtendedGpuInfo(void)
     }
 
     LogRaw("GPU %d attributes (EEEEEEEE == undefined):\n", i);
+#ifdef __GNUG__
+#define sh(name) LogRaw("%24s: %08X (%d)\n", #name, dev->attribs.name, dev->attribs.name)
+#else
 #define sh(name) LogRaw("%24s: %08X (%d)\n", #name, dev->attribs.##name, dev->attribs.##name)
+#endif
     sh(target);
     sh(targetRevision);
     sh(localRAM);
