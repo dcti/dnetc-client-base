@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.17 2010/09/13 16:18:41 sla Exp $
+ * $Id: amdstream_setup.cpp,v 1.18 2011/02/15 20:01:58 chandleg Exp $
 */
 
 #include "amdstream_setup.h"
@@ -17,6 +17,9 @@
 
 #include <calcl.h>
 #include <stdlib.h>
+#ifdef LINUX
+  #include <string.h>
+#endif
 
 stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 int atistream_numDevices = -1;
