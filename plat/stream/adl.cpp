@@ -3,6 +3,9 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
+#ifdef LINUX
+#include "baseincs.h"
+#endif
 
 #include "adl.h"
 #include "logstuff.h"
