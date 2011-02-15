@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.420 2011/02/15 19:53:38 chandleg Exp $
+# @(#)$Id: configure,v 1.421 2011/02/15 19:59:09 chandleg Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -700,6 +700,10 @@ add_sources() # $1=os, $2=arch, $3=custom
   #-----------------------------------------------------------------
   elif [ "$2" = "stream" ]; then
 
+    if [ "$1" = "linux" ]; then
+      ##Thanks for screwing up the headers ATI/AMD
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DLINUX"
+    fi
     HAVE_OGR="0"
     HAVE_OGR_P2="0"
     TARGET_HDIRS="$TARGET_HDIRS ./plat/stream"
