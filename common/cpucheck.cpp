@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.191 2010/12/21 02:19:47 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.192 2011/02/26 19:11:40 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1360,7 +1360,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x000F060, 0x00FFFF0, CPU_F_I686, 0x0B, "Pentium 4/D/4-M/Celeron/Xeon" },
         { 0x00060E0, 0x00FFFF0, CPU_F_I686, 0x0D, "Core",        CH_R72_X86_GO2B }, /* (#4193) */
         { 0x00060F0, 0x00FFFF0, CPU_F_I686, 0x12, "Core 2/Xeon" }, /* (#4193) */
-        { 0x0006160, 0x00FFFF0, CPU_F_I686, 0xFF, "Celeron" },              /* 65 nm */
+        { 0x0006160, 0x00FFFF0, CPU_F_I686, 0x12, "Celeron" }, /* 65 nm. Core2-based? (need same RC5-72 core) */
         { 0x0006170, 0xFFFFFF0, CPU_F_I686, 0x12, "Core 2/Extreme/Xeon" },  /* 45 nm */ /* (#4193) */
         { 0x00061A0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i7/Xeon" },  /* (#4118,#4198,#4193) */
         { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
