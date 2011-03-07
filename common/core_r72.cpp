@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.49 2010/12/17 11:58:10 oliver Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.50 2011/03/07 21:04:47 sla Exp $"; }
 
 //#define TRACE
 
@@ -52,6 +52,7 @@ extern "C" s32 CDECL rc5_72_unit_func_mmx( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_AMD64)
 extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_go_2c( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -156,6 +157,7 @@ const char **corenames_for_contest_rc572()
   #elif (CLIENT_CPU == CPU_AMD64)
       "SNJL 3-pipe",
       "KBE-64 3-pipe",
+      "GO 2-pipe c",
   #elif (CLIENT_CPU == CPU_ARM)
       "StrongARM 1-pipe",
       "ARM 2/3/6/7 1-pipe",
@@ -777,6 +779,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
       default:
         unit_func.gen_72 = rc5_72_unit_func_kbe;
         pipeline_count = 3;
+        break;
+      case 2:
+        unit_func.gen_72 = rc5_72_unit_func_go_2c;
+        pipeline_count = 2;
         break;
     // -----------
     #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
