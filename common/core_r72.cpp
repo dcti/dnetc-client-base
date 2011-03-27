@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.50 2011/03/07 21:04:47 sla Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.51 2011/03/27 17:09:00 sla Exp $"; }
 
 //#define TRACE
 
@@ -53,6 +53,7 @@ extern "C" s32 CDECL rc5_72_unit_func_mmx( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2c( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_go_2d( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -158,6 +159,7 @@ const char **corenames_for_contest_rc572()
       "SNJL 3-pipe",
       "KBE-64 3-pipe",
       "GO 2-pipe c",
+      "GO 2-pipe d",
   #elif (CLIENT_CPU == CPU_ARM)
       "StrongARM 1-pipe",
       "ARM 2/3/6/7 1-pipe",
@@ -537,7 +539,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x12: cindex = 1; break; // Core 2           == KBE-64 3-pipe
         case 0x14: cindex = 1; break; // Atom             == KBE-64 3-pipe
         case 0x15: cindex = 0; break; // Intel Core i7    == SNJL 3-pipe (#3817)
-        case 0x16: cindex = 0; break; // ??? need more info about other CPUs! AMD Athlon (Model 16) == SNJL 3-pipe (#4223)
+        case 0x16: cindex = 3; break; // ??? need more info about other CPUs! AMD Athlon (Model 16) == SNJL 3-pipe (#4223)
         default:   cindex =-1; break; // no default
       }
     }
@@ -782,6 +784,10 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
         break;
       case 2:
         unit_func.gen_72 = rc5_72_unit_func_go_2c;
+        pipeline_count = 2;
+        break;
+      case 3:
+        unit_func.gen_72 = rc5_72_unit_func_go_2d;
         pipeline_count = 2;
         break;
     // -----------
