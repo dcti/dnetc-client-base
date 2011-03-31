@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.202 2010/04/24 08:12:43 stream Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.203 2011/03/31 05:07:29 jlawson Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)

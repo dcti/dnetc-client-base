@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,7 +7,7 @@
  * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.48 2009/04/01 16:04:10 andreasb Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.49 2011/03/31 05:07:28 jlawson Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 

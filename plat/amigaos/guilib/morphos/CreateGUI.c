@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.c,v 1.4 2009/01/01 12:24:55 andreasb Exp $
+ * $Id: CreateGUI.c,v 1.5 2011/03/31 05:07:31 jlawson Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -112,7 +112,7 @@ Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct Dn
 	RawDoFmt(
 	 "\33cdistributed.net client - a product of distributed.net\n"
 	 "%s\n"
-	 "Copyright 1997-2009 distributed.net\n"
+	 "Copyright 1997-2011 distributed.net\n"
 	 "\n"
 	 "\n"
 	 "MorphOS client maintained by\n"

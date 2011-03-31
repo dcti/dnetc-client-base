@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *ogrng_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.8 2009/12/27 13:52:23 andreasb Exp $"; }
+return "@(#)$Id: ogrng-cell-spe-wrapper.c,v 1.9 2011/03/31 05:07:30 jlawson Exp $"; }
 
 #include <spu_intrinsics.h>
 #include "ccoreio.h"

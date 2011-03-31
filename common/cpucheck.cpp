@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.192 2011/02/26 19:11:40 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.193 2011/03/31 05:07:28 jlawson Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files

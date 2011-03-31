@@ -1,10 +1,10 @@
 /* 
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *r72_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.8 2009/12/27 13:52:43 andreasb Exp $"; }
+return "@(#)$Id: r72-cell-ppe-wrapper.cpp,v 1.9 2011/03/31 05:07:33 jlawson Exp $"; }
 
 #ifndef CORE_NAME
 #define CORE_NAME cellv1

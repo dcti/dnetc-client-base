@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.42 2010/05/07 05:13:24 snikkel Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.43 2011/03/31 05:07:30 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

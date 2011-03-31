@@ -1,6 +1,6 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.109 2010/09/03 19:27:46 stream Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.110 2011/03/31 05:07:29 jlawson Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */

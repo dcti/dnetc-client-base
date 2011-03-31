@@ -1,6 +1,6 @@
 /* -*-C-*-
  *
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.118 2010/07/11 23:51:05 snake Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.119 2011/03/31 05:07:28 jlawson Exp $"
 
 /* ----------------------------------------------------------------- */
 

@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  */
 #ifndef __X86ID_H__
-#define __X86ID_H__ "@(#)$Id: x86id.h,v 1.6 2009/02/01 11:36:32 andreasb Exp $"
+#define __X86ID_H__ "@(#)$Id: x86id.h,v 1.7 2011/03/31 05:07:32 jlawson Exp $"
 
 
 /* Extended CPU ID format :

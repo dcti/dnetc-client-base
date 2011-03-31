@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-  return "@(#)$Id: modereq.cpp,v 1.47 2009/09/30 12:41:18 stream Exp $";
+  return "@(#)$Id: modereq.cpp,v 1.48 2011/03/31 05:07:29 jlawson Exp $";
 }
 
 //#define TRACE

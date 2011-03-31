@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.22 2009/10/29 04:44:33 snikkel Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.23 2011/03/31 05:07:28 jlawson Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 

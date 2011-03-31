@@ -1,6 +1,6 @@
 /* Hey, Emacs, this is *not* a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2009 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd)
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.23 2009/04/01 15:49:21 andreasb Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.24 2011/03/31 05:07:27 jlawson Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
