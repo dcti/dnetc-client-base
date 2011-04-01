@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.38 2010/09/27 17:44:05 stream Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.39 2011/04/01 04:12:20 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -434,10 +434,17 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
             cindex = 7;
           /* SSE 4.1 - enable for all supported CPUs or just for group 0x12 (Core2) ? */
           if (cindex == -1 && (detected_flags & CPU_F_SSE4_1))
-            cindex = 6;
+          {
+            switch (detected_type)
+            {
+              case 0x15: cindex = 5; break; /* Intel i3/i5/i7 */
+              default:   cindex = 6; break;
+            }
+          }
+	  
           /* Some CPU types may require SSE core even if SSE2 is available but slow */
           if (cindex == -1 && (detected_flags & CPU_F_SSE))
-          {
+          {  
             /*
              * Sometimes it's very difficult to choose between -p4 and -k8 cores:
              * results are very close. Note that "dnetc -bench" and "dnetc -bench n"
