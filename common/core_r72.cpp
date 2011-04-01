@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.52 2011/04/01 04:12:20 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.53 2011/04/01 04:36:53 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -536,7 +536,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
       {
         case 0x09: cindex = 3; break; // K8               == GO 2-pipe d
         case 0x0B: cindex =-1; break; // Pentium 4        == KBE-64 3-pipe or GO 2???
-        case 0x12: cindex = 1; break; // Core 2           == GO 2-pipe d
+        case 0x12: cindex = 3; break; // Core 2           == GO 2-pipe d
         case 0x14: cindex = 1; break; // Atom             == KBE-64 3-pipe
         case 0x15: cindex = 3; break; // Intel Core i7    == GO 2-pipe d
         case 0x16: cindex = 3; break; // AMD Athlon (Model 16) == GO 2-pipe d
