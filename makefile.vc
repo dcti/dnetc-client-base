@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.134 2011/03/31 04:59:33 jlawson Exp $
+# $Id: makefile.vc,v 1.135 2011/04/12 04:48:10 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -98,6 +98,7 @@ ZIPEXTRAS = \
 #   cl 13.10.xxxx = Visual Studio.NET 2003 (VC7.1)
 #   cl 14.00.xxxx = Visual Studio 2005 (VC8)
 #   cl 15.00.xxxx = Visual Studio 2008 (VC9)
+#   cl 16.00.xxxx = Visual Studio 2010 (VC10)
 
 
 # a little blurb about options
