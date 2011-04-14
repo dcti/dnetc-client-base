@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.193 2011/03/31 05:07:28 jlawson Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.194 2011/04/14 23:46:44 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1242,6 +1242,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          *   0x15 - Core i7/Xeon
          *   0x16 - AMD-based (RC5-72 GO 2-pipe, #6) but similar to Intel Core CPUs, with fast SSE (OGR-NG SSE2 core) 
          *   0x17 - P4-based (RC5-72 core #7), OGR-NG core -p4
+         *   0x18 - Via Nano
+         *   0x19 - Sandy Bridge Core i3/i5/i7
          */
         { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Sempron" },
         { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron",           CH_R72_X86_GO2B }, /* (#4193) */
@@ -1366,6 +1368,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
         { 0x00061E0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i5/i7" },  /* (#4271) */
         { 0x0006250, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i3/i5" },  /* (#4376) */
+        { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core i3/i5/i7-2xxx" },
         { 0x00062C0, 0xFFFFFF0, CPU_F_I686, 0x15, "Xeon 56xx" },  /* (#4301) */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
