@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.136 2011/04/15 04:56:03 jlawson Exp $
+# $Id: makefile.vc,v 1.137 2011/04/15 05:14:02 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -604,8 +604,8 @@ makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
 	-del tmpzip.zip dnetcXXX-win32-x86.zip
 	zip -j tmpzip.zip $**
 	-rd /s tmpzipdir
-	unzip -a dnetcXXX-win32-x86.zip -d tmpzipdir
-	-del dnetcXXX-win32-x86.zip
+	unzip -a tmpzip.zip -d tmpzipdir
+	-del tmpzip.zip
 	zip -jr dnetcXXX-win32-x86.zip tmpzipdir
 	-rd /s tmpzipdir
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i$(BUILDNUM_APPEND)-$(ZIPSUFFIX).zip
