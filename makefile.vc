@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.135 2011/04/12 04:48:10 jlawson Exp $
+# $Id: makefile.vc,v 1.136 2011/04/15 04:56:03 jlawson Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -92,15 +92,6 @@ ZIPEXTRAS = \
 
 # --------------------------------------------
 
-# a little blurb about compiler versions
-#   cl 12.00.xxxx = Visual Studio 6 (VC6/VC98)
-#   cl 13.00.xxxx = Visual Studio.NET 2002 (VC7.0)
-#   cl 13.10.xxxx = Visual Studio.NET 2003 (VC7.1)
-#   cl 14.00.xxxx = Visual Studio 2005 (VC8)
-#   cl 15.00.xxxx = Visual Studio 2008 (VC9)
-#   cl 16.00.xxxx = Visual Studio 2010 (VC10)
-
-
 # a little blurb about options
 #
 # -Gs<num> == control stack probes (DevStudio docs)
@@ -140,33 +131,14 @@ OPTS_LINK = /nologo /incremental:no \
             /machine:$(OPTS_M_PLAT) $(OPTS_LINK_DEBUG)
 OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 
-!if "$(PROCESSOR_ARCHITECTURE)" == "cuda"
-OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH)
-OPTS_LIBS = $(OPTS_LIBS) version.lib $(CUDA_LIB_PATH)\cudart.lib
-ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda plat\cuda\cudatoolkit_eula.txt
 
-!if ( [cmd /c plat\win\cudaver.cmd] == 3010 )
-ZIPSUFFIX = win32-x86-cuda31
-OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=3010
-!elseif ( [cmd /c plat\win\cudaver.cmd] == 3000 )
-ZIPSUFFIX = win32-x86-cuda30
-OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=3000
-!elseif ( [cmd /c plat\win\cudaver.cmd] == 2030 )
-ZIPSUFFIX = win32-x86-cuda23
-OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2030
-!elseif ( [cmd /c plat\win\cudaver.cmd] == 2020 )
-ZIPSUFFIX = win32-x86-cuda22
-OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2020
-!else
-!error Could not detect CUDA version.
-!endif
-
-!endif
-
-!if "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
-OPTS_MSVC = $(OPTS_MSVC) -I"$(CALROOT)include" -Iplat\stream -Iplat\x86
-OPTS_LIBS = $(OPTS_LIBS) "$(CALROOT)lib\aticalcl.lib" "$(CALROOT)lib\aticalrt.lib"
-!endif
+# and now a little blurb about compiler versions:
+#   cl 12.00.xxxx = Visual Studio 6 (VC6/VC98)
+#   cl 13.00.xxxx = Visual Studio.NET 2002 (VC7.0)
+#   cl 13.10.xxxx = Visual Studio.NET 2003 (VC7.1)
+#   cl 14.00.xxxx = Visual Studio 2005 (VC8)
+#   cl 15.00.xxxx = Visual Studio 2008 (VC9)
+#   cl 16.00.xxxx = Visual Studio 2010 (VC10)
 
 !if ( [plat\win\msvcver.cmd] >= 15 )
 OPTS_MSVC = $(OPTS_MSVC) -EHs-c- -GS- -wd4996
@@ -182,6 +154,43 @@ OPTS_LINK = $(OPTS_LINK) /warn:1
 
 #OPTS_MSVC = $(OPTS_MSVC) -WX
 
+
+# --------------------------------------------
+
+# nVidia CUDA GPU support
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "cuda"
+OPTS_MSVC = $(OPTS_MSVC) -I$(CUDA_INC_PATH)
+OPTS_LIBS = $(OPTS_LIBS) version.lib $(CUDA_LIB_PATH)\cudart.lib
+ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.cuda plat\cuda\cudatoolkit_eula.txt
+
+!if ( [cmd /c plat\win\cudaver.cmd] == 3010 )
+ZIPSUFFIX = win32-x86-cuda31
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=3010
+ZIPEXTRAS = $(ZIPEXTRAS) $(CUDA_BIN_PATH)\cudart32_31_9.dll
+!elseif ( [cmd /c plat\win\cudaver.cmd] == 3000 )
+ZIPSUFFIX = win32-x86-cuda30
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=3000
+!elseif ( [cmd /c plat\win\cudaver.cmd] == 2030 )
+ZIPSUFFIX = win32-x86-cuda23
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2030
+!elseif ( [cmd /c plat\win\cudaver.cmd] == 2020 )
+ZIPSUFFIX = win32-x86-cuda22
+OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2020
+!else
+!error Could not detect CUDA version.
+!endif
+
+!endif
+
+# --------------------------------------------
+
+# ATI/AMD Stream GPU support
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
+OPTS_MSVC = $(OPTS_MSVC) -I"$(CALROOT)include" -Iplat\stream -Iplat\x86
+OPTS_LIBS = $(OPTS_LIBS) "$(CALROOT)lib\aticalcl.lib" "$(CALROOT)lib\aticalrt.lib"
+!endif
 
 # --------------------------------------------
 
@@ -592,6 +601,12 @@ rebuild: clean all
 # --------------------------------------------
 
 makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
-	zip dnetcXXX-win32-x86.zip $**
+	-del tmpzip.zip dnetcXXX-win32-x86.zip
+	zip -j tmpzip.zip $**
+	-rd /s tmpzipdir
+	unzip -a dnetcXXX-win32-x86.zip -d tmpzipdir
+	-del dnetcXXX-win32-x86.zip
+	zip -jr dnetcXXX-win32-x86.zip tmpzipdir
+	-rd /s tmpzipdir
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i$(BUILDNUM_APPEND)-$(ZIPSUFFIX).zip
 
