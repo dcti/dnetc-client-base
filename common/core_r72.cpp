@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.54 2011/04/14 23:46:44 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.55 2011/04/16 16:50:40 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -541,7 +541,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x14: cindex = 1; break; // Atom             == KBE-64 3-pipe
         case 0x15: cindex = 3; break; // Intel Core i7    == GO 2-pipe d
         case 0x16: cindex = 3; break; // AMD Athlon (Model 16) == GO 2-pipe d
-        case 0x19: cindex = 2; break; // Sandy Bridge     == GO 2-pipe c
+        case 0x19: cindex = 3; break; // Sandy Bridge     == GO 2-pipe d
         default:   cindex =-1; break; // no default
       }
     }
