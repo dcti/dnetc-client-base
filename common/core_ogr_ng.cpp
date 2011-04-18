@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.41 2011/04/16 16:50:40 snikkel Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.42 2011/04/18 14:03:02 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -437,7 +437,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
           {
             switch (detected_type)
             {
-              case 0x15: cindex = 5; break; /* Intel i3/i5/i7 */
+              case 0x15: cindex = 3; break; /* Intel i3/i5/i7 */
               default:   cindex = 6; break;
             }
           }
