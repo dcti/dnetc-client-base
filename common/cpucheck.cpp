@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.194 2011/04/14 23:46:44 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.195 2011/07/21 00:02:25 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1367,7 +1367,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00061A0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i7/Xeon" },  /* (#4118,#4198,#4193) */
         { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
         { 0x00061E0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i5/i7" },  /* (#4271) */
-        { 0x0006250, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i3/i5" },  /* (#4376) */
+        { 0x0006250, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i3/i5/i7" },  /* (#4376,#4224) */
         { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core i3/i5/i7-2xxx" },
         { 0x00062C0, 0xFFFFFF0, CPU_F_I686, 0x15, "Xeon 56xx" },  /* (#4301) */
         { 0x0000000,         0,          0,    0, NULL }
