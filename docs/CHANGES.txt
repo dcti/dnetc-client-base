@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.112 2011/04/18 14:03:01 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.113 2011/11/10 01:14:59 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -34,6 +34,7 @@ Version change log: $Id: CHANGES.txt,v 1.112 2011/04/18 14:03:01 snikkel Exp $
             chg: amd64: Core pre-selection for most processors
             imp: x86/amd64: Intel Sandy Bridge detection/selection
             fix: x86: OGR core pre-selection for Intel Core iX (#4376)
+            imp: x86/amd64: AMD APU detection/selection (#4429)
 
 2.9109.518  fix: all: OGR-NG codebase fixes (#4295)
             fix: all: OGR-NG incorrect node count after full restart

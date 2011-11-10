@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.42 2011/04/18 14:03:02 snikkel Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.43 2011/11/10 01:15:00 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -430,8 +430,14 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
       #else
         #if defined(HAVE_I64)
           /* Assume LZCNT is the best for all CPUs which support it? */
-          if (detected_flags & CPU_F_LZCNT)
-            cindex = 7;
+          if (cindex == -1 && detected_flags & CPU_F_LZCNT)
+          {
+            switch (detected_type)
+            {
+              case 0x20: cindex =-1; break; /* AMD APU */
+              default:   cindex = 7;
+            }
+          }
           /* SSE 4.1 - enable for all supported CPUs or just for group 0x12 (Core2) ? */
           if (cindex == -1 && (detected_flags & CPU_F_SSE4_1))
           {
@@ -486,11 +492,12 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
       switch (detected_type)
       {
         case 0x09: cindex = 1; break; /* AMD: generic (#4214) */
+        case 0x20: cindex = 1; break; /* AMD APU */
       }
       if (cindex == -1)
       {
         /* Assume that LZCNT+SSE2 is better then plain SSE2 everywhere */
-        if      (detected_flags & CPU_F_LZCNT)
+        if (detected_flags & CPU_F_LZCNT)
           cindex = 3;
         else if (detected_flags & CPU_F_SSE2)
           cindex = 2;  /* sse2 core */
