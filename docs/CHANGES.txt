@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.114 2011/11/10 01:23:46 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.115 2011/11/10 01:33:53 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -36,6 +36,7 @@ Version change log: $Id: CHANGES.txt,v 1.114 2011/11/10 01:23:46 snikkel Exp $
             fix: x86: OGR core pre-selection for Intel Core iX (#4376)
             imp: x86/amd64: AMD APU detection/selection (#4429)
             imp: amd64: Via Nano core selection (#4437)
+            imp: x86/amd64: AMD Opeteron 6xxx detection/selection (#4438)
 
 2.9109.518  fix: all: OGR-NG codebase fixes (#4295)
             fix: all: OGR-NG incorrect node count after full restart
