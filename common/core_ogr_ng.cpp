@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.43 2011/11/10 01:15:00 snikkel Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.44 2011/11/11 18:49:32 teichp Exp $"; }
 
 //#define TRACE
 
@@ -76,6 +76,7 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.43 2011/11/10 01:15:00 snikkel Exp $"; }
     CoreDispatchTable *ogrng_get_dispatch_table(void);
     CoreDispatchTable *ogrng_get_dispatch_table_arm1(void);
     CoreDispatchTable *ogrng_get_dispatch_table_arm2(void);
+    CoreDispatchTable *ogrng_get_dispatch_table_arm3(void);
 #elif (CLIENT_CPU == CPU_AMD64)
     CoreDispatchTable *ogrng64_get_dispatch_table(void);
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_generic(void);
@@ -150,6 +151,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
         ogrng_get_dispatch_table();
         ogrng_get_dispatch_table_arm1();
         ogrng_get_dispatch_table_arm2();
+        ogrng_get_dispatch_table_arm3();
       #elif (CLIENT_CPU == CPU_SPARC)
         #if (SIZEOF_LONG == 8)
           ogrng64_get_dispatch_table();
@@ -224,6 +226,7 @@ const char **corenames_for_contest_ogr_ng()
   #elif (CLIENT_CPU == CPU_ARM)
       "FLEGE 2.0",
       "FLEGE 2.0 ARMv3",
+      "FLEGE 2.0 ARMv5-XScale",
       "FLEGE 2.0 ARMv5",
   #elif (CLIENT_CPU == CPU_68K)
       "FLEGE 2.0 68000",
@@ -639,6 +642,8 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
     unit_func.ogr = ogrng_get_dispatch_table_arm1();
   else if (coresel == 2)
     unit_func.ogr = ogrng_get_dispatch_table_arm2();
+  else if (coresel == 3)
+    unit_func.ogr = ogrng_get_dispatch_table_arm3();
   else
   {
     unit_func.ogr = ogrng_get_dispatch_table();

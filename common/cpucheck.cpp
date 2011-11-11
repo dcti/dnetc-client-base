@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.197 2011/11/10 01:33:54 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.198 2011/11/11 18:49:34 teichp Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1458,13 +1458,15 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x41018100, 0xfffffff0, 0, 1, "ARM 810" },
     { 0x41129200, 0xfffffff0, 0, 1, "ARM 920T" },
     { 0x41029220, 0xfffffff0, 0, 1, "ARM 922T" },
-    { 0x41009260, 0xff00fff0, 0, 1, "ARM 926" },
+    { 0x41069260, 0xfffffff0, 0, 3, "ARM 926EJ-S" },
     { 0x41029400, 0xfffffff0, 0, 1, "ARM 940T" },
-    { 0x41049460, 0xfffffff0, 0, 1, "ARM 946ES" },
-    { 0x41049660, 0xfffffff0, 0, 1, "ARM 966ES" },
-    { 0x41059660, 0xfffffff0, 0, 1, "ARM 966ESR" },
-    { 0x4100a200, 0xff00fff0, 0, 1, "ARM 1020" },
-    { 0x4100a260, 0xff00fff0, 0, 1, "ARM 1026" },
+    { 0x41059460, 0xfffffff0, 0, 3, "ARM 946E-S" },
+    { 0x41059660, 0xfffffff0, 0, 3, "ARM 966E-S" },
+    { 0x41259660, 0xfffffff0, 0, 3, "ARM 966E-S r2" },
+    { 0x41059680, 0xfffffff0, 0, 3, "ARM 968E-S" },
+    { 0x4104a200, 0xfffffff0, 2, 3, "ARM 1020T" },
+    { 0x4115a200, 0xfffffff0, 2, 3, "ARM 1020E" },
+    { 0x4106a260, 0xfffffff0, 2, 3, "ARM 1026EJ-S" },
     // ?
     { 0x54029150, 0xfffffff0, 0, 1, "ARM 915" },
     { 0x54029250, 0xfffffff0, 0, 1, "ARM 925" },
@@ -1480,6 +1482,9 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x69052000, 0xfffffff0, 2, 2, "Intel 80200" },
     { 0x69052e20, 0xffffffe0, 2, 2, "Intel 80219" },
     { 0x69052c20, 0xffffffe0, 2, 2, "Intel IOP321" },
+    // Marvell
+    { 0x56251310, 0xfffffff0, 2, 3, "Marvell Feroceon 88FR131" },
+    // End
     { 0x00000000, 0x00000000, -1, -1, "" }
   };
 

@@ -3,23 +3,9 @@
 @ Any other distribution or use of this source violates copyright.
 @
 @ Author: Peter Teichmann <teichp@distributed.net>
-@ $Id: ogrng-arm2-gnu.S,v 1.5 2011/11/11 18:49:25 teichp Exp $
+@ $Id: ogrng-arm3-gnu.S,v 1.1 2011/11/11 18:49:25 teichp Exp $
 @
-@ ARMv5 variant, optimized for XScale:
-@ * Intel really did a extremly bad job. They had better just taken the
-@   StrongARM core and scaled to 0.18u. Consequences are:
-@ * 3 cycle more for ldm/stm than sequence of ldr/str (SA 1)
-@ * 5 cycle delay for mispredicted branches and data
-@   processing with pc destination. Even unconditional branches need to
-@   be predicted! Jesus! (SA 2/3)
-@ * 8 cycle delay for load to pc (SA 4)
-@ * predicted branch 1 cycle, mispredicted branch 5 cycles (SA taken 2/not
-@   taken 1)
-@ * avoid branch target buffer conflicts! The branch target buffer is direct
-@   mapped and contains 128 entries. (problem does not exist on SA)
-@ * 3 cycle result delay for ldr (SA 2)
-@ * 2 cycle delay for data processing if result is used for
-@   shift-by-immediate in next instruction (SA 1, as normal)
+@ ARMv5 variant
 @
 @ Stack:
 @ 0   int *pnodes
@@ -64,8 +50,8 @@
 
 .text
 	.align	5
-	.global	ogr_cycle_256_arm2
-ogr_cycle_256_arm2:
+	.global	ogr_cycle_256_arm3
+ogr_cycle_256_arm3:
 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, r10, r11, r12, r14}
 	sub	sp, sp, #2*4
 
@@ -114,41 +100,10 @@ comp0_lo:
 	ldr	r3, [r1, #O_list+0*4]	@ equal for all cases!
 	ldr	r4, [r1, #O_list+1*4]	@ equal for all cases!
 
-	add	pc, pc, r5, lsl#2	@ this is better for XScale because
-	.space	2*4			@ it avoids the BTB conflict for
-	b	cllr_1			@ b comp0_fi
-	b	cllr_2
-	b	cllr_3
-	b	cllr_4
-	b	cllr_5
-	b	cllr_6
-	b	cllr_7
-	b	cllr_8
-	b	cllr_9
-	b	cllr_10
-	b	cllr_11
-	b	cllr_12
-	b	cllr_13
-	b	cllr_14
-	b	cllr_15
-	b	cllr_16
-	b	cllr_17
-	b	cllr_18
-	b	cllr_19
-	b	cllr_20
-	b	cllr_21
-	b	cllr_22
-	b	cllr_23
-	b	cllr_24
-	b	cllr_25
-	b	cllr_26
-	b	cllr_27
-	b	cllr_28
-	b	cllr_29
-	b	cllr_30
+	add	pc, pc, r5, lsl#8
+	.space	1*4
 
-@ COMP_LEFT_LIST_RIGHT macro, should be 2^N+/-1 instructions to avoid
-@ BTB conflicts (presently 127)
+@ COMP_LEFT_LIST_RIGHT macro, 63 instructions
 
 .MACRO	COMP_LEFT_LIST_RIGHT N
 	
@@ -234,100 +189,101 @@ comp0_lo:
 	b	comp0_fi
 
 .ENDM
-@	.space	0*4
-cllr_31:
-	COMP_LEFT_LIST_RIGHT 31
+
 	.space	64*4
 cllr_1:
 	COMP_LEFT_LIST_RIGHT 1
-	.space	64*4
+	.space	1*4
 cllr_2:
 	COMP_LEFT_LIST_RIGHT 2
-	.space	64*4
+	.space	1*4
 cllr_3:
 	COMP_LEFT_LIST_RIGHT 3
-	.space	64*4
+	.space	1*4
 cllr_4:
 	COMP_LEFT_LIST_RIGHT 4
-	.space	64*4
+	.space	1*4
 cllr_5:
 	COMP_LEFT_LIST_RIGHT 5
-	.space	64*4
+	.space	1*4
 cllr_6:
 	COMP_LEFT_LIST_RIGHT 6
-	.space	64*4
+	.space	1*4
 cllr_7:
 	COMP_LEFT_LIST_RIGHT 7
-	.space	64*4
+	.space	1*4
 cllr_8:
 	COMP_LEFT_LIST_RIGHT 8
-	.space	64*4
+	.space	1*4
 cllr_9:
 	COMP_LEFT_LIST_RIGHT 9
-	.space	64*4
+	.space	1*4
 cllr_10:
 	COMP_LEFT_LIST_RIGHT 10
-	.space	64*4
+	.space	1*4
 cllr_11:
 	COMP_LEFT_LIST_RIGHT 11
-	.space	64*4
+	.space	1*4
 cllr_12:
 	COMP_LEFT_LIST_RIGHT 12
-	.space	64*4
+	.space	1*4
 cllr_13:
 	COMP_LEFT_LIST_RIGHT 13
-	.space	64*4
+	.space	1*4
 cllr_14:
 	COMP_LEFT_LIST_RIGHT 14
-	.space	64*4
+	.space	1*4
 cllr_15:
 	COMP_LEFT_LIST_RIGHT 15
-	.space	64*4
+	.space	1*4
 cllr_16:
 	COMP_LEFT_LIST_RIGHT 16
-	.space	64*4
+	.space	1*4
 cllr_17:
 	COMP_LEFT_LIST_RIGHT 17
-	.space	64*4
+	.space	1*4
 cllr_18:
 	COMP_LEFT_LIST_RIGHT 18
-	.space	64*4
+	.space	1*4
 cllr_19:
 	COMP_LEFT_LIST_RIGHT 19
-	.space	64*4
+	.space	1*4
 cllr_20:
 	COMP_LEFT_LIST_RIGHT 20
-	.space	64*4
+	.space	1*4
 cllr_21:
 	COMP_LEFT_LIST_RIGHT 21
-	.space	64*4
+	.space	1*4
 cllr_22:
 	COMP_LEFT_LIST_RIGHT 22
-	.space	64*4
+	.space	1*4
 cllr_23:
 	COMP_LEFT_LIST_RIGHT 23
-	.space	64*4
+	.space	1*4
 cllr_24:
 	COMP_LEFT_LIST_RIGHT 24
-	.space	64*4
+	.space	1*4
 cllr_25:
 	COMP_LEFT_LIST_RIGHT 25
-	.space	64*4
+	.space	1*4
 cllr_26:
 	COMP_LEFT_LIST_RIGHT 26
-	.space	64*4
+	.space	1*4
 cllr_27:
 	COMP_LEFT_LIST_RIGHT 27
-	.space	64*4
+	.space	1*4
 cllr_28:
 	COMP_LEFT_LIST_RIGHT 28
-	.space	64*4
+	.space	1*4
 cllr_29:
 	COMP_LEFT_LIST_RIGHT 29
-	.space	64*4
+	.space	1*4
 cllr_30:
 	COMP_LEFT_LIST_RIGHT 30
-	.space	44*4
+	.space	1*4
+cllr_31:
+	COMP_LEFT_LIST_RIGHT 31
+@	.space	0*4
 	
 @ End COMP_LEFT_LIST_RIGHT(lev, s)
 
@@ -421,14 +377,14 @@ comp0_fi:
 
 	add	r1, r1, #S_lev		@ ++lev
 	add	r6, r6, #1		@ ++depth
-	
+
 	ldr	r4, [r0, #O_half_depth2]
 	ldr	r3, [r0, #O_half_depth]
-	
-	mov	r5, r10, lsr #16
-	add	r5, r6, r5, lsl #5	@ (dist0>>16)*32+depth
-	add	r5, r2, r5, lsl #1	@ pointer to halfword
-	ldrh	r12, [r5]		@ limit = choose(dist0, depth)
+
+	mov	r12, r10, lsr #16
+	add	r12, r6, r12, lsl #5	@ (dist0>>16)*32+depth
+	add	r12, r2, r12, lsl #1	@ pointer to halfword
+	ldrh	r12, [r12]		@ limit = choose(dist0, depth)
 
 	cmp	r6, r4			@ if (depth <= oState->half_depth2
 	bgt	not_between
