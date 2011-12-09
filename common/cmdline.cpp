@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.172 2011/03/31 05:07:28 jlawson Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.173 2011/12/09 04:37:32 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1667,7 +1667,11 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           ( strcmp( thisarg, "-forceflush"  ) == 0 ) ||
           ( strcmp( thisarg, "-update"      ) == 0 ) ||
           ( strcmp( thisarg, "-ident"       ) == 0 ) ||
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
+#else
+          ( strcmp( thisarg, "-gpuinfo"     ) == 0 ) ||
+#endif
           ( strcmp( thisarg, "-config"      ) == 0 ) ||
           ( strcmp( thisarg, "-version"     ) == 0 ) )
       {
@@ -1811,6 +1815,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         ModeReqSet( MODEREQ_IDENT );
         break;
       }
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
       else if ( strcmp( thisarg, "-cpuinfo" ) == 0 )
       {
         client->quietmode = 0;
@@ -1819,6 +1824,16 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         ModeReqSet( MODEREQ_CPUINFO );
         break;
       }
+#else
+      else if ( strcmp( thisarg, "-gpuinfo" ) == 0 )
+      {
+        client->quietmode = 0;
+        *inimissing = 0; // Don't complain if the inifile is missing
+        ModeReqClear(-1); //clear all - only do -cpuinfo
+        ModeReqSet( MODEREQ_CPUINFO );
+        break;
+      }
+#endif
       else if ( strcmp( thisarg, "-benchmark" ) == 0  ||
                 strcmp( thisarg, "-bench" ) == 0 ||
                 strcmp( thisarg, "-benchmark2" ) == 0 ||

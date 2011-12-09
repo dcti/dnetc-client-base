@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.123 2009/08/11 17:50:34 sla Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.124 2011/12/09 04:37:39 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -430,7 +430,7 @@ static long __bench_or_test( int which,
 #else
               "The GPU core selection has been made as a tradeoff between core speed\n"
               "and responsiveness of the graphical desktop.\n"
-              "Please file a bug report along with the output of -cpuinfo\n"
+              "Please file a bug report along with the output of -gpuinfo\n"
               "only if the the faster core selection does not degrade graphics performance.\n",
 #endif
               fastest);

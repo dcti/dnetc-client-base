@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.82 2011/03/31 05:07:28 jlawson Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.83 2011/12/09 04:37:35 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -41,7 +41,11 @@ static const char *helpbody[] =
   "-test [prj [cn]]   tests for core errors [optional: only project prj]",
   "                   [optional: only core cn, must be used with prj]",
   "-stress [prj [cn]] more thorough and longer running variant of -test",
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
   "-cpuinfo           print information about the detected cpu(s)",
+#else
+  "-gpuinfo           print information about the detected gpu(s)",
+#endif
   "-restart           restart all active clients",
   "-shutdown          gracefully shut down all active clients",
   "-pause             pause all active clients",
