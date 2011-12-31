@@ -15,7 +15,7 @@
 //#define TRACE
 
 const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.61 2010/09/03 19:27:45 stream Exp $"; }
+return "@(#)$Id: logstuff.cpp,v 1.62 2011/12/31 20:32:22 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -824,18 +824,20 @@ static int __ContestGetLiveRate(unsigned int contest_i,
 
                   if (probcount == 0 || last_utimehi < oldest_sec || 
                      (last_utimehi == oldest_sec && 
-                      last_utimelo == oldest_usec))
+                      last_utimelo < oldest_usec))
                   {
                     oldest_sec = last_utimehi;
                     oldest_usec = last_utimelo;
                   }
-                  if (c_usec < last_ctimelo)
-                  {
-                    c_sec--;
-                    c_usec += 1000000;
-                  }
+
                   tctime_hi += (c_sec - last_ctimehi);
-                  tctime_lo += (c_usec - last_ctimelo); 
+                  if (last_ctimelo > c_usec)
+                  {
+                    tctime_hi--;
+                    tctime_lo += (1000000 + c_usec - last_ctimelo);
+                  }
+                  else
+                    tctime_lo += (c_usec - last_ctimelo); 
                   if (tctime_lo >= 1000000)
                   {
                     tctime_hi++;
@@ -1013,7 +1015,7 @@ static int __do_crunchometer( int event_disp_format,
       #if 0 /* is this useful/meaningful? */
       else 
       {
-        unsigned long benchrate = BenchGetBestRate(cont_i);
+        ui64 benchrate = BenchGetBestRate(cont_i);
         int bestperm = -1;
         if (benchrate)
         {

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.124 2011/12/09 04:37:39 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.125 2011/12/31 20:32:23 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -334,7 +334,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 static long __bench_or_test( int which, 
                             unsigned int cont_i, unsigned int benchsecs, int in_corenum )
 {
-  long rc = -1;
+  ui64 rc = 0;
 
   if (selcore_initlev > 0                  /* core table is initialized? */
       && cont_i < CONTEST_COUNT)           /* valid contest id? */
@@ -345,7 +345,7 @@ static long __bench_or_test( int which,
     int coreidx, corecount = corecount_for_contest( cont_i );
     int fastest = -1;
     int hardcoded = selcoreGetPreselectedCoreForProject(cont_i);
-    long bestrate = 0, refrate = 0;
+    ui64 bestrate = 0, refrate = 0;
 
     rc = 0; /* assume nothing done */
     for (coreidx = 0; coreidx < corecount; coreidx++)
@@ -409,13 +409,28 @@ static long __bench_or_test( int which,
     /* Not applicable for Cell due to PPU/SPU core selection hacks */
     if (in_corenum < 0 && fastest >= 0 && bestrate > 0) {
       double percent = 100.0 * (double)refrate / (double)bestrate;
+      char bestrate_str[32], refrate_str[32];
+
+      U64stringify(bestrate_str, sizeof(bestrate_str), 
+        (u32)(bestrate>>32), (u32)(bestrate & 0xfffffffful), 
+        2, 
+        CliGetContestUnitFromID(cont_i) );
+      U64stringify(refrate_str, sizeof(refrate_str), 
+        (u32)(refrate>>32), (u32)(refrate & 0xfffffffful), 
+        2, 
+        CliGetContestUnitFromID(cont_i) );
 
       Log("%s benchmark summary :\n"
-          "Default core : #%d (%s)\n"
-          "Fastest core : #%d (%s)\n",
+          "Default core : #%d (%s) %s/sec\n"
+          "Fastest core : #%d (%s) %s/sec\n",
           CliGetContestNameFromID(cont_i), hardcoded,
           (hardcoded >= 0 ? selcoreGetDisplayName(cont_i, hardcoded) : "undefined"),
-          fastest, selcoreGetDisplayName(cont_i, fastest));
+          refrate_str,
+          fastest, selcoreGetDisplayName(cont_i, fastest), bestrate_str);
+          
+      Log("Compare and share your rates in the speeds database at\n"
+          "http://www.distributed.net/speed/\n"
+          "(benchmark rates are for a single core)\n");
 
       if (percent < 100 && hardcoded >= 0 && hardcoded != fastest) {
         if (percent >= 97) {
@@ -426,13 +441,16 @@ static long __bench_or_test( int which,
         else {
           Log("Core #%d is significantly faster than the default core.\n"
 #if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
-              "Please file a bug report along with the output of\n-cpuinfo.\n",
+              "Please file a bug report along with the output of\n-cpuinfo.\n"
 #else
               "The GPU core selection has been made as a tradeoff between core speed\n"
               "and responsiveness of the graphical desktop.\n"
               "Please file a bug report along with the output of -gpuinfo\n"
-              "only if the the faster core selection does not degrade graphics performance.\n",
+              "only if the the faster core selection does not degrade graphics performance.\n"
 #endif
+              "Changes in cores and selection are frequently made, so be sure\n"
+              "to test with the latest client version, typically a pre-release\n"
+              "before filing a bug report.\n",
               fastest);
         }
       }
@@ -444,7 +462,7 @@ static long __bench_or_test( int which,
           GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     {
       Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */
-      rc = -1; /* assume alloc failed */
+      rc = 0; /* assume alloc failed */
       if (prob)
       {
         Log("RC5: using x86 core.\n" );
@@ -556,7 +574,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (corecount > 0)
     {
       int whichcrunch, saidmsg = 0, fastestcrunch = -1;
-      unsigned long fasttime = 0;
+      ui64 fasttime = 0;
 
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
@@ -564,7 +582,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (whichcrunch == apply_selcore_substitution_rules(contestid, 
                                                               whichcrunch))
         {
-          long rate;
+          ui64 rate;
           selcorestatics.corenum[contestid] = whichcrunch;
           if (!saidmsg)
           {
@@ -579,7 +597,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 #ifdef DEBUG
             LogScreen("%s Core %d: %d keys/sec\n", contname,whichcrunch,rate);
 #endif
-            if (fastestcrunch < 0 || ((unsigned long)rate) > fasttime)
+            if (fastestcrunch < 0 || rate > fasttime)
             {
               fasttime = rate;
               fastestcrunch = whichcrunch;

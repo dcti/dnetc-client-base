@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.203 2011/03/31 05:07:29 jlawson Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.204 2011/12/31 20:32:22 snikkel Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2160,6 +2160,24 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
   }
   TRACE_U64OPS((-1,"__u64stringify()=>'%s'\n",((buffer)?(buffer):("(null)"))));
   return buffer;
+}
+
+/* ----------------------------------------------------------------------- */
+
+void U64split(ui64 in, u32 *hi, u32 *lo)
+{
+  *hi = (u32)(in>>32);
+  *lo = (u32)(in & 0xfffffffful);
+  return;
+}
+
+/* ----------------------------------------------------------------------- */
+
+
+void U64join(ui64 *in, u32 hi, u32 lo)
+{
+  *in = ((ui64)hi<<32) + (ui64)lo;
+  return;
 }
 
 /* ----------------------------------------------------------------------- */
