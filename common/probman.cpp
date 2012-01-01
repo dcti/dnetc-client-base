@@ -6,7 +6,7 @@
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
 */
 const char *probman_cpp(void) {
-  return "@(#)$Id: probman.cpp,v 1.21 2008/12/30 20:58:42 andreasb Exp $";
+  return "@(#)$Id: probman.cpp,v 1.22 2012/01/01 19:36:42 snikkel Exp $";
 }
 
 #include "baseincs.h"  // malloc()/NULL/memset()
@@ -75,7 +75,7 @@ int InitializeProblemManager(unsigned int maxnumproblems)
 
   if (maxnumproblems == 0 || probmanstatics.probtable != ((Problem **)0))
     return -1;
-  if (((int)(maxnumproblems)) < 0)
+  if (maxnumproblems > (16*1024))
     maxnumproblems = (16*1024);     // XXX
                                     // a comment to explain this magic
                                     // number would be nice.  Why not 128
