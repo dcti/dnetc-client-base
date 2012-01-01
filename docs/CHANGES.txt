@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.118 2011/12/09 04:37:31 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.119 2012/01/01 19:44:19 snikkel Exp $
 ==========================================================================
 
 2.9100
@@ -40,6 +40,7 @@ Version change log: $Id: CHANGES.txt,v 1.118 2011/12/09 04:37:31 snikkel Exp $
             fix: cuda: processor counts for newer model fermi cards (#4441)
             imp: win: allow CUDA/Stream to coexist (#4274)
             imp: gpu: rename -cpuinfo to -gpuinfo
+            chg: all: increase max threads to 512
 
 2.9109.518  fix: all: OGR-NG codebase fixes (#4295)
             fix: all: OGR-NG incorrect node count after full restart
