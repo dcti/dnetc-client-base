@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.125 2011/12/31 20:32:23 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.126 2012/01/02 17:16:19 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -430,7 +430,7 @@ static long __bench_or_test( int which,
           
       Log("Compare and share your rates in the speeds database at\n"
           "http://www.distributed.net/speed/\n"
-          "(benchmark rates are for a single core)\n");
+          "(benchmark rates are for a single processor core)\n");
 
       if (percent < 100 && hardcoded >= 0 && hardcoded != fastest) {
         if (percent >= 97) {
