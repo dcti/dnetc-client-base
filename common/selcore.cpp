@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.126 2012/01/02 17:16:19 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.127 2012/01/03 01:56:36 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -448,9 +448,9 @@ static long __bench_or_test( int which,
               "Please file a bug report along with the output of -gpuinfo\n"
               "only if the the faster core selection does not degrade graphics performance.\n"
 #endif
-              "Changes in cores and selection are frequently made, so be sure\n"
-              "to test with the latest client version, typically a pre-release\n"
-              "before filing a bug report.\n",
+              "Changes in cores and selection are frequently made,\n"
+              "so be sure to test with the latest client version,\n"
+              "typically a pre-release, before filing a bug report.\n",
               fastest);
         }
       }
