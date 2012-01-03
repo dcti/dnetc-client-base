@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.199 2012/01/01 19:36:42 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.200 2012/01/03 17:46:34 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2523,6 +2523,9 @@ unsigned long GetProcessorFeatureFlags()
 
       len = sizeof(cpuSubType);
       if (sysctlbyname( sysname, &cpuSubType, &len, NULL, 0 ) == 0) {
+        #ifndef CPU_SUBTYPE_POWERPC_970
+          #define CPU_SUBTYPE_POWERPC_970 ((cpu_subtype_t) 100)
+        #endif
         if (cpuSubType == CPU_SUBTYPE_POWERPC_970)
           ppc_features |= CPU_F_64BITOPS;
       }
