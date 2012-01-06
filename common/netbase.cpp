@@ -65,9 +65,9 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.18 2008/12/30 20:58:41 andreasb Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.19 2012/01/06 04:57:40 snikkel Exp $"; }
 
-#define TRACE             /* expect trace to _really_ slow I/O down */
+//#define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
 #define TRACE_ERRMGMT(x)  //TRACE_OUT(x) /* error string/number calls */
 #define TRACE_POLL(x)     //TRACE_OUT(x) /* net_poll1() */
