@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.57 2011/11/10 01:23:47 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.58 2012/01/06 21:11:22 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -605,10 +605,13 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 20: cindex = 5; break; // UltraSPARC-III   == AnBe 2-pipe
         case 21: cindex = 5; break; // UltraSPARC-IIIi  == AnBe 2-pipe
         case 22: cindex = 5; break; // UltraSPARC-IV    == AnBe 2-pipe
-        case 23: cindex = 4; break; // UltraSPARC-T1/T2 == AnBe 1-pipe
-        case 24: cindex = 5; break; // SPARC64-IV       == AnBe 2-pipe (#3225)
-        case 25: cindex = 3; break; // SPARC64-V        == KKS 2-pipe (#3225)
-        case 26: cindex =-1; break; // SPARC64-VI       == no default
+        case 23: cindex = 4; break; // UltraSPARC-T1/T2/T3 == AnBe 1-pipe
+        case 24: cindex =-1; break; // SPARC-T4/T5      == no default
+        case 25: cindex = 5; break; // SPARC64-IV       == AnBe 2-pipe (#3225)
+        case 26: cindex = 3; break; // SPARC64-V        == KKS 2-pipe (#3225)
+        case 27: cindex =-1; break; // SPARC64-VI       == no default
+        case 28: cindex =-1; break; // SPARC64-VII      == no default
+        case 29: cindex =-1; break; // SPARC64-VIII     == no default 
         default: cindex =-1; break; // no default
       }
     }

@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.119 2011/03/31 05:07:28 jlawson Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.120 2012/01/06 21:11:22 snikkel Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -871,7 +871,6 @@ extern "C" {
   #define SIZEOF_LONGLONG 8
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
-
   #endif
 #elif (defined(_MSC_VER) && (_MSC_VER >= 11)) /* VC++ >= 5.0 */
   #define HAVE_I64
@@ -879,6 +878,11 @@ extern "C" {
   typedef unsigned __int64 ui64;
   typedef __int64 si64;
 #elif defined(__MWERKS__)
+  #define HAVE_I64
+  #define SIZEOF_LONGLONG 8
+  typedef unsigned long long ui64;
+  typedef signed long long si64;
+#elif defined(__SUNPRO_CC)
   #define HAVE_I64
   #define SIZEOF_LONGLONG 8
   typedef unsigned long long ui64;

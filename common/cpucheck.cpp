@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.200 2012/01/03 17:46:34 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.201 2012/01/06 21:11:22 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1987,12 +1987,18 @@ static long __GetRawProcessorID(const char **cpuname)
   {21, "UltraSPARC-IIIi+", "UltraSPARC-IIIi+"}, /* unconfirmed, .09u, adds cache? */
   {22, "UltraSPARC-IV", "UltraSPARC-IV"},
   {22, "UltraSPARC-IV+", "UltraSPARC-IV+"}, /* .09u adds 2MB L2 cache, external L3 doubled to 32MB */
+  /* sun4v */
   {23, "UltraSPARC-T1", "UltraSPARC-T1"},
   {23, "UltraSPARC-T2", "UltraSPARC-T2"}, /* unconfirmed */
   {23, "UltraSPARC-T2+", "UltraSPARC-T2+"}, /* #4250 */
-  {24, "SPARC64-IV", "SPARC64-IV"},
-  {25, "SPARC64-V", "SPARC64-V"},
-  {26, "SPARC64-VI", "SPARC64-VI"}, /* untested, no data */
+  {23, "SPARC-T3", "SPARC-T3"},  /* unconfirmed */
+  {24, "SPARC-T4", "SPARC-T4"},  /* unconfirmed */
+  {24, "SPARC-T5", "SPARC-T5"},  /* unconfirmed */
+  {25, "SPARC64-IV", "SPARC64-IV"},
+  {26, "SPARC64-V", "SPARC64-V"},
+  {27, "SPARC64-VI", "SPARC64-VI"}, /* untested, no data */
+  {28, "SPARC64-VII", "SPARC64-VII"},  /* unconfirmed */
+  {29, "SPARC64-VIII", "SPARC64-VIII"},  /* unconfirmed */
   };
 
   detectedtype = -1L;  /* detection supported, but failed */
