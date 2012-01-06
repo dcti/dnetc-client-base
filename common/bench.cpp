@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.71 2011/12/31 20:32:22 snikkel Exp $";
+  return "@(#)$Id: bench.cpp,v 1.72 2012/01/06 21:12:05 snikkel Exp $";
 }
 
 //#define TRACE
@@ -28,7 +28,12 @@ const char *bench_cpp(void) {
 #if (CONTEST_COUNT != 7)
   #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
 #endif
-ui64 bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0,0};
+#ifdef HAVE_I64
+ui64 
+#else
+unsigned long 
+#endif
+bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0,0};
 
 /* -------------------------------------------------------------------- */
 
@@ -42,7 +47,12 @@ void BenchResetStaticVars(void)
 /* -------------------------------------------------------------------- */
 
 /* BenchGetBestRate() is always per-processor */
-ui64 BenchGetBestRate(unsigned int contestid)
+#ifdef HAVE_I64
+ui64 
+#else
+unsigned long 
+#endif
+BenchGetBestRate(unsigned int contestid)
 {
 
   TRACE_OUT((+1, "BenchGetBestRate(%d)\n", contestid));
@@ -68,7 +78,13 @@ ui64 BenchGetBestRate(unsigned int contestid)
 
 /* -------------------------------------------------------------------- */
 
-static inline void __BenchSetBestRate(unsigned int contestid, ui64 rate)
+static inline void __BenchSetBestRate(unsigned int contestid, 
+#ifdef HAVE_I64
+ui64
+#else
+unsigned long 
+#endif
+rate)
 {
   TRACE_OUT((0, "__BenchSetBestRate(%d, %llu)\n", contestid, 
 rate));
@@ -83,11 +99,20 @@ rate));
 /* -------------------------------------------------------------------- */
 
 /* TBenchmark() is always per-processor */
-ui64 TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
+#ifdef HAVE_I64 
+ui64 
+#else 
+long 
+#endif 
+TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 {
   /* non-preemptive os minimum yields per second */
   struct { int yps, did_adjust; } non_preemptive_os;
+  #ifdef HAVE_I64
   ui64 retvalue = 0; /* assume error */
+  #else
+  long retvalue = 0; /* assume error */
+  #endif
   Problem *thisprob;
   u32 tslice;
 
@@ -130,7 +155,11 @@ ui64 TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
 
   if (tslice == 0 && ( flags & TBENCHMARK_CALIBRATION ) == 0 )
   {
+    #ifdef HAVE_I64
     ui64 res;
+    #else
+    long res;
+    #endif
     if ((flags & TBENCHMARK_QUIET) == 0)
     {
       selcoreGetSelectedCoreForContest(contestid); /* let selcore message */
@@ -326,7 +355,11 @@ ui64 TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
             ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &(info.ratehi),
                                 &(info.ratelo), info.rate.ratebuf, info.rate.size );
           }
+          #ifdef HAVE_I64
           U64join(&retvalue, info.ratehi, info.ratelo);
+          #else
+          retvalue = info.ratelo;
+          #endif
           __BenchSetBestRate(contestid, retvalue);
           if (!silent)
           {

@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.204 2011/12/31 20:32:22 snikkel Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.205 2012/01/06 21:12:05 snikkel Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -2163,23 +2163,22 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
 }
 
 /* ----------------------------------------------------------------------- */
-
+#ifdef HAVE_I64
 void U64split(ui64 in, u32 *hi, u32 *lo)
 {
   *hi = (u32)(in>>32);
   *lo = (u32)(in & 0xfffffffful);
   return;
 }
-
+#endif
 /* ----------------------------------------------------------------------- */
-
-
+#ifdef HAVE_I64
 void U64join(ui64 *in, u32 hi, u32 lo)
 {
   *in = ((ui64)hi<<32) + (ui64)lo;
   return;
 }
-
+#endif
 /* ----------------------------------------------------------------------- */
 
 /* if secs:usecs is zero, ProblemComputeRate() just returns

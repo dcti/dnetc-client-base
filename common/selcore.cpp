@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.127 2012/01/03 01:56:36 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.128 2012/01/06 21:12:05 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -334,7 +334,11 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 static long __bench_or_test( int which, 
                             unsigned int cont_i, unsigned int benchsecs, int in_corenum )
 {
+  #ifdef HAVE_I64
   ui64 rc = 0;
+  #else
+  long rc = 0;
+  #endif
 
   if (selcore_initlev > 0                  /* core table is initialized? */
       && cont_i < CONTEST_COUNT)           /* valid contest id? */
@@ -345,7 +349,11 @@ static long __bench_or_test( int which,
     int coreidx, corecount = corecount_for_contest( cont_i );
     int fastest = -1;
     int hardcoded = selcoreGetPreselectedCoreForProject(cont_i);
+    #ifdef HAVE_I64
     ui64 bestrate = 0, refrate = 0;
+    #else
+    long bestrate = 0, refrate = 0;
+    #endif
 
     rc = 0; /* assume nothing done */
     for (coreidx = 0; coreidx < corecount; coreidx++)
@@ -411,6 +419,7 @@ static long __bench_or_test( int which,
       double percent = 100.0 * (double)refrate / (double)bestrate;
       char bestrate_str[32], refrate_str[32];
 
+      #ifdef HAVE_I64
       U64stringify(bestrate_str, sizeof(bestrate_str), 
         (u32)(bestrate>>32), (u32)(bestrate & 0xfffffffful), 
         2, 
@@ -419,6 +428,16 @@ static long __bench_or_test( int which,
         (u32)(refrate>>32), (u32)(refrate & 0xfffffffful), 
         2, 
         CliGetContestUnitFromID(cont_i) );
+      #else
+      U64stringify(bestrate_str, sizeof(bestrate_str),
+        0, (u32)(bestrate & 0xfffffffful),
+        2,
+        CliGetContestUnitFromID(cont_i) );
+      U64stringify(refrate_str, sizeof(refrate_str),
+        0, (u32)(refrate & 0xfffffffful),
+        2,
+        CliGetContestUnitFromID(cont_i) );
+      #endif
 
       Log("%s benchmark summary :\n"
           "Default core : #%d (%s) %s/sec\n"
@@ -574,7 +593,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
     if (corecount > 0)
     {
       int whichcrunch, saidmsg = 0, fastestcrunch = -1;
+      #ifdef HAVE_I64
       ui64 fasttime = 0;
+      #else
+      unsigned long fasttime = 0;
+      #endif
 
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
@@ -582,7 +605,11 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
         if (whichcrunch == apply_selcore_substitution_rules(contestid, 
                                                               whichcrunch))
         {
+          #ifdef HAVE_I64
           ui64 rate;
+          #else
+          long rate;
+          #endif
           selcorestatics.corenum[contestid] = whichcrunch;
           if (!saidmsg)
           {

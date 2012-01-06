@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.42 2011/12/31 20:32:22 snikkel Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.43 2012/01/06 21:12:05 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -122,7 +122,11 @@ int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
   {
     if ((conInfo->BestTime == 0) && force)
     {
+      #ifdef HAVE_I64
       ui64 benchrate;
+      #else
+      unsigned long benchrate;
+      #endif
       u32 benchratehi, benchratelo;
 
       // This may trigger a mini-benchmark, which will get the speed
@@ -132,14 +136,24 @@ int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
       if (conInfo->BestTime == 0)
       {
         benchrate = BenchGetBestRate(contestid);
+        #ifdef HAVE_I64
         U64split(benchrate, &benchratehi, &benchratelo);
+        #else
+        benchratehi = 0;
+        benchratelo = benchrate;
+        #endif
         if (benchrate)
           ProjectSetSpeed(contestid, benchratehi, benchratelo);
       }
       if (conInfo->BestTime == 0)
       {
         benchrate = TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+        #ifdef HAVE_I64
         U64split(benchrate, &benchratehi, &benchratelo);
+        #else
+        benchratehi = 0;
+        benchratelo = benchrate;
+        #endif
         if (benchrate)
           ProjectSetSpeed(contestid, benchratehi, benchratelo);
       }
