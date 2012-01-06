@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.12 2010/02/01 20:06:43 stream Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.13 2012/01/06 00:13:04 snikkel Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -2383,6 +2383,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
         long swu_count;
         time_t till_completion;
       } buffers[2];
+      u32 last_ratehi;
       u32 last_ratelo;
       /* sizeof avgrate array => tray refresh interval in secs */
       struct {u32 hi,lo;} avgrate[5];
@@ -2779,9 +2780,12 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
               } /* for sel_buf ... */
             } /* need buffer level check */
 
-            if (buffers_changed || ratelo > dd->cdata[cont_i].last_ratelo)
+            if (buffers_changed || 
+              (ratehi > dd->cdata[cont_i].last_ratehi) ||
+              ((ratehi == dd->cdata[cont_i].last_ratehi) &&
+                (ratelo > dd->cdata[cont_i].last_ratelo)))
             {
-              long ll;
+              unsigned __int64 ll;
 
               if (buffers_changed)
               {
@@ -2817,11 +2821,16 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
               }
               else
               {
-                ll = (long) dd->cdata[cont_i].buffers[0].till_completion;
-                if (!ll && ratehi == 0 && ratelo != 0 &&
+                ll = dd->cdata[cont_i].buffers[0].till_completion;
+                if (!ll && (ratehi != 0 || ratelo != 0) &&
                    ((dd->cdata[cont_i].buffers[0].swu_count)%100) == 0)
                 {
-                  ll = ((1+(1ul << 28))/ratelo); /* secs per *work* unit */
+                  if (RC5_72 == cont_i)
+                    ll = (unsigned __int64)(1+(1ul << 32));
+                  else
+                    ll = (unsigned __int64)(1+(1ul << 28));
+                  ll = (ll/ratelo) /
+                    (unsigned __int64)(ratehi<<32); /* secs per *stat* unit */
                   ll *= ((dd->cdata[cont_i].buffers[0].swu_count)/100);
                 }
                 if (ll) /* otherwise, not available (yet) */
@@ -2839,6 +2848,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
               if (!buffer[0])
                 strcpy(buffer, "-.--:--:--" );
               SetDlgItemText(dialog,IDC_BUFIN_TIME, buffer);
+              dd->cdata[cont_i].last_ratehi  = ratehi;
               dd->cdata[cont_i].last_ratelo  = ratelo;
 
               if (out_buffer_changed)
@@ -2936,7 +2946,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
               (rate_cont_i >= 0 && rate_cont_i < CONTEST_COUNT))
           {
             unsigned int len;
-            char avg_ratebuf[sizeof("n,nnn,nnn,nnn xxxxx\0")];
+            char avg_ratebuf[sizeof("nnn,nnn,nnn,nnn xxxxx\0")];
             {
               u32 avg_ratehi = 0, avg_ratelo = 0;
               unsigned __int64 tot;
