@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.201 2012/01/06 21:11:22 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.202 2012/01/08 20:45:18 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1246,6 +1246,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          *   0x17 - P4-based (RC5-72 core #7), OGR-NG core -p4
          *   0x18 - Via Nano
          *   0x19 - Sandy Bridge Core i3/i5/i7
+         *   0x20 - AMD E-Series
          */
         { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Sempron" },
         { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron",           CH_R72_X86_GO2B }, /* (#4193) */
@@ -1372,6 +1373,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006250, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i3/i5/i7" },  /* (#4376,#4224) */
         { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core i3/i5/i7-2xxx" },
         { 0x00062C0, 0xFFFFFF0, CPU_F_I686, 0x15, "Xeon 56xx" },  /* (#4301) */
+        { 0x00062D0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core i7-2xxx/3xxx EE" },  /* (#4456) */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
