@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.58 2012/01/06 21:11:22 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.59 2012/01/09 01:45:42 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -497,6 +497,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x18: cindex =11; break; // Via Nano       == GO 2-pipe-b (#4299)
           case 0x19: cindex = 6; break; // Sandy Bridge   == GO 2-pipe
           case 0x20: cindex =-1; break; // AMD APU        == GO 2-pipe???
+          case 0x21: cindex =11; break; // AMD FX         == GO 2-pipe-b (#4455)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -524,6 +525,12 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x13: cindex =-1; break; // Other Pentium 4 == ?
           case 0x14: cindex =-1; break; // Intel Atom     == ?
           case 0x15: cindex =-1; break; // Intel Core i7  == ?
+          case 0x16: cindex =-1; break; // AMD Opteron    == ?
+          case 0x17: cindex =-1; break; // Variation of 0x13 with another OGR-NG core (#4186)
+          case 0x18: cindex =-1; break; // Via Nano       == ?
+          case 0x19: cindex =-1; break; // Sandy Bridge   == ?
+          case 0x20: cindex =-1; break; // AMD APU        == ?
+          case 0x21: cindex =-1; break; // AMD FX         == ?
           default:   cindex =-1; break; // no default
         }
         #endif
@@ -545,6 +552,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x18: cindex = 2; break; // Via Nano         == GO 2-pipe-c (#4437)
         case 0x19: cindex = 3; break; // Sandy Bridge     == GO 2-pipe d
         case 0x20: cindex = 3; break; // AMD APU          == GO 2-pipe d
+        case 0x21: cindex = 2; break; // AMD FX           == GO 2-pipe c (#4455)
         default:   cindex =-1; break; // no default
       }
     }
