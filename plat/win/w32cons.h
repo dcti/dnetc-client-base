@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32CONS_H__
-#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.6 2011/11/29 00:11:01 snikkel Exp $"
+#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.7 2012/01/11 02:54:57 snikkel Exp $"
 
 #include "cputypes.h"
 
@@ -16,7 +16,7 @@
 #if (CLIENT_CPU == CPU_CUDA)
 #define W32CLI_MUTEX_NAME       "Bovine RC5/DES Win32-CUDA GPU Client"
 #define W32CLI_CONSOLE_NAME     "distributed.net CUDA GPU client"
-#elfif (CLIENT_CPU == CPU_ATI_STREAM)
+#elif (CLIENT_CPU == CPU_ATI_STREAM)
 #define W32CLI_MUTEX_NAME       "Bovine RC5/DES Win32-Stream GPU Client"
 #define W32CLI_CONSOLE_NAME     "distributed.net Stream GPU client"
 #else
