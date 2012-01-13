@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.204 2012/01/13 01:05:22 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.205 2012/01/13 01:10:07 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -2727,31 +2727,11 @@ void DisplayProcessorInformation(void)
   GetProcessorInformationStrings( &scpuid, &smaxscpus, &sfoundcpus );
   unsigned int clockmhz = GetProcessorFrequency();
 
-  //#if (CLIENT_CPU == CPU_ATI_STREAM)
-#if 0
-  const char *gpunames;
-  const long *gpuids;
-  u32 *coreclocks;
-
-  getAMDStreamRawProcessorIDs(&gpunames, &gpuids);
-  getAMDStreamDeviceFreqs(&coreclocks);
-
-  LogRaw("Automatic processor identification:");
-  for (int i = 0; i < GetNumberOfDetectedProcessors(); i++ )
-  {
-    LogRaw("\n\t#%d (%d) %s (%u MHz)",
-      i, gpuids[i], &(gpunames[i*81]), coreclocks[i]);
-  }
-  LogRaw("Number of processors detected by this client: %s\n"
-    "Number of processors supported by this client: %s\n",
-    sfoundcpus, smaxscpus );
-  #else
   LogRaw("Automatic processor identification tag: %s\n"
     "Estimated processor clock speed (0 if unknown): %u MHz\n"
     "Number of processors detected by this client: %s\n"
     "Number of processors supported by this client: %s\n",
     scpuid, clockmhz, sfoundcpus, smaxscpus );
-  #endif
 
   #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     x86ShowInfos();
