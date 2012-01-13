@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.205 2012/01/06 21:12:05 snikkel Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.206 2012/01/13 01:05:22 snikkel Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -666,7 +666,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   {
     return -1;
   }
-  coresel = selcoreSelectCore( contestid, thisprob->priv_data.threadindex, 0, &selinfo );
+  coresel = selcoreSelectCore( client, contestid, thisprob->priv_data.threadindex, 0, &selinfo );
   if (coresel < 0)
   {
     return -2; // abort - LoadState may loop forever
@@ -704,6 +704,25 @@ static int __InternalLoadState( InternalProblem *thisprob,
   thisprob->pub_data.pipeline_count = selinfo.pipeline_count;
   thisprob->pub_data.use_generic_proto = selinfo.use_generic_proto;
   thisprob->pub_data.cruncher_is_asynchronous = selinfo.cruncher_is_asynchronous;
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
+  thisprob->pub_data.devicenum = -1;
+  if (client)
+  {
+    if (client->devicenum >= 0)
+    {
+      thisprob->pub_data.devicenum = client->devicenum;
+    }
+  }
+  if ((thisprob->priv_data.initialized) 
+    && (thisprob->pub_data.devicenum == -1))
+  {
+    thisprob->pub_data.devicenum = thisprob->priv_data.threadindex;
+  }
+  if (thisprob->pub_data.devicenum == -1)
+  {
+    thisprob->pub_data.devicenum = 0;
+  }
+#endif
   memcpy( (void *)&(thisprob->pub_data.unit_func),
           &selinfo.unit_func, sizeof(thisprob->pub_data.unit_func));
 
@@ -1293,7 +1312,7 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
 
 #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
-      thisprob->priv_data.rc5_72unitwork.threadnum = thisprob->pub_data.threadnum;
+      thisprob->priv_data.rc5_72unitwork.devicenum = thisprob->pub_data.devicenum;
 #endif     
       SAVE_CLIENT_OS_CONTEXT
 

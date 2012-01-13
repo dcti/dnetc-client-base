@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.83 2011/12/09 04:37:35 snikkel Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.84 2012/01/13 01:05:22 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -122,6 +122,7 @@ static const char *helpbody[] =
 #if !defined(SINGLE_CRUNCHER_ONLY)
   "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
 #endif
+  "-devicenum <n>     run on device <n> only.",
   "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
   "",
   "Logging options:",

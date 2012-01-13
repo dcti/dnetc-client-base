@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.99 2010/02/15 19:44:26 stream Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.100 2012/01/13 01:05:21 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -986,6 +986,14 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "max-threads", i, fn));
     }
   }
+  if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "devicenum",-12345,fn))!=-12345)
+  {
+    if ((i = GetPrivateProfileIntB( OPTION_SECTION, "deviceid", -12345, fn ))>=0)
+    {
+      client->devicenum = i;
+      modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "devicenum", i, fn));
+    }
+  }
   if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "priority", -12345, fn ))!=-12345)
   {
     i = GetPrivateProfileIntB( OPTION_SECTION, "niceness", -12345, fn );
@@ -1102,7 +1110,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
              "usemmx", "runoffline", "in","out","in2","out2",
              "in3","out3","nodisk", "dialwhenneeded","connectionname",
              "cputype","threshold","threshold2","preferredblocksize",
-             "logname", "keyproxy", "keyport", "numcpu", "count",
+             "logname", "keyproxy", "keyport", "numcpu", "deviceid", "count",
              "smtpsrvr", "smtpport", "messagelen", "smtpfrom", "smtpdest",
              "lurk", "lurkonly", "nettimeout", "nofallback", "frequent",
              "pausefile","noexitfilecheck","percentoff", "quiet" };
@@ -1238,6 +1246,7 @@ int ConfigRead(Client *client)
   #if !defined(SINGLE_CRUNCHER_ONLY)
   client->numcpu = GetPrivateProfileIntB( OPTSECT_CPU, "max-threads", client->numcpu, fn );
   #endif /* SINGLE_CRUNCHER_ONLY */
+  client->devicenum = GetPrivateProfileIntB( OPTSECT_CPU, "devicenum", client->devicenum, fn );
 
   /* --------------------- */
 
@@ -1453,6 +1462,7 @@ int ConfigWrite(Client *client)
     #if !defined(SINGLE_CRUNCHER_ONLY)
     __XSetProfileInt( OPTSECT_CPU, "max-threads", client->numcpu, fn, -1, 0 );
     #endif /* SINGLE_CRUNCHER_ONLY */
+    __XSetProfileInt( OPTSECT_CPU, "devicenum", client->devicenum, fn, -1, 0 );
     __XSetProfileInt( OPTSECT_CPU, "priority", client->priority, fn, 0, 0);
 
     /* more buffer stuff */

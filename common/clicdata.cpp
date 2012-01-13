@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.43 2012/01/06 21:12:05 snikkel Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.44 2012/01/13 01:05:21 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -113,7 +113,7 @@ int CliGetContestIDFromName( char *name )
 // returns the expected time to complete a work unit, in seconds
 // if force is true, then a microbenchmark will be done to get the
 // rate if no work on this contest has been completed yet.
-int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
+int CliGetContestWorkUnitSpeed( Client *client, int contestid, int force, int *was_forced)
 {
   TRACE_OUT((+1, "CliGetContestWorkUnitSpeed project=%d force=%d\n", contestid, force));
   struct contestInfo *conInfo =
@@ -131,11 +131,11 @@ int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
 
       // This may trigger a mini-benchmark, which will get the speed
       // we need and not waste time.
-      selcoreGetSelectedCoreForContest( contestid );
+      selcoreGetSelectedCoreForContest( client, contestid );
 
       if (conInfo->BestTime == 0)
       {
-        benchrate = BenchGetBestRate(contestid);
+        benchrate = BenchGetBestRate(client, contestid);
         #ifdef HAVE_I64
         U64split(benchrate, &benchratehi, &benchratelo);
         #else
@@ -147,7 +147,7 @@ int CliGetContestWorkUnitSpeed( int contestid, int force, int *was_forced)
       }
       if (conInfo->BestTime == 0)
       {
-        benchrate = TBenchmark(contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
+        benchrate = TBenchmark(client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
         #ifdef HAVE_I64
         U64split(benchrate, &benchratehi, &benchratelo);
         #else

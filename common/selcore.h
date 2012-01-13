@@ -5,8 +5,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELCORE_H__
-#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.24 2008/12/31 15:09:47 kakace Exp $"
+#define __SELCORE_H__ "@(#)$Id: selcore.h,v 1.25 2012/01/13 01:05:22 snikkel Exp $"
 
+#include "client.h"
 #include "cputypes.h"
 #include "ccoreio.h"
 #if defined(HAVE_OGR_CORES) || defined(HAVE_OGR_PASS2)
@@ -63,12 +64,12 @@ struct selcore
 
 /* Set the xx_unit_func vectors/cputype/coresel in the problem. */
 /* Returns core # or <0 if error. Called from Prob::LoadState and probfill */
-int selcoreSelectCore( unsigned int cont_id, unsigned int thrindex,
+int selcoreSelectCore( Client *client, unsigned int cont_id, unsigned int thrindex,
                        int *client_cpuP, struct selcore *selinfo );
 
 int selcoreGetPreselectedCoreForProject(unsigned int projectid);
 /* Get the core # for a contest. Informational use only. */
-int selcoreGetSelectedCoreForContest( unsigned int contestid );
+int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid );
 const char *selcoreGetDisplayName( unsigned int cont_i, int index );
 const char **corenames_for_contest( unsigned int cont_i );
 unsigned int corecount_for_contest( unsigned int cont_i );
@@ -84,9 +85,9 @@ void selcoreEnumerateWide( int (*enumcoresproc)(
                            void *userdata );
 
 /* benchmark/test each core - return < 0 on error, 0 = not supported, > 0=ok */
-long selcoreBenchmark( unsigned int cont_i, unsigned int secs, int corenum );
-long selcoreSelfTest( unsigned int cont_i, int corenum );
-long selcoreStressTest( unsigned int cont_i, int corenum );
+long selcoreBenchmark( Client *client, unsigned int cont_i, unsigned int secs, int corenum );
+long selcoreSelfTest( Client *client, unsigned int cont_i, int corenum );
+long selcoreStressTest( Client *client, unsigned int cont_i, int corenum );
 
 /* ClientMain() calls these */
 int InitializeCoreTable( int *coretypes );
@@ -107,7 +108,7 @@ void DeinitializeCoreTable_rc572();
 const char **corenames_for_contest_rc572();
 int apply_selcore_substitution_rules_rc572(int cindex);
 int selcoreGetPreselectedCoreForProject_rc572();
-int selcoreSelectCore_rc572( unsigned int threadindex,
+int selcoreSelectCore_rc572( Client *client, unsigned int threadindex,
                              int *client_cpuP, struct selcore *selinfo );
 unsigned int estimate_nominal_rate_rc572();
 
@@ -118,7 +119,8 @@ void DeinitializeCoreTable_ogr();
 const char **corenames_for_contest_ogr();
 int apply_selcore_substitution_rules_ogr(int cindex);
 int selcoreGetPreselectedCoreForProject_ogr();
-int selcoreSelectCore_ogr( unsigned int threadindex, int *client_cpuP,
+int selcoreSelectCore_ogr( Client *client, unsigned int threadindex, 
+                           int *client_cpuP,
                            struct selcore *selinfo, unsigned int contestid );
 unsigned int estimate_nominal_rate_ogr();
 
@@ -129,7 +131,8 @@ void DeinitializeCoreTable_ogr_ng();
 const char **corenames_for_contest_ogr_ng();
 int apply_selcore_substitution_rules_ogr_ng(int cindex);
 int selcoreGetPreselectedCoreForProject_ogr_ng();
-int selcoreSelectCore_ogr_ng( unsigned int threadindex, int *client_cpuP,
+int selcoreSelectCore_ogr_ng( Client *client, unsigned int threadindex, 
+                              int *client_cpuP,
                               struct selcore *selinfo, unsigned int contestid );
 #endif
 

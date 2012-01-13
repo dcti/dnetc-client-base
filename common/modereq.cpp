@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-  return "@(#)$Id: modereq.cpp,v 1.48 2011/03/31 05:07:29 jlawson Exp $";
+  return "@(#)$Id: modereq.cpp,v 1.49 2012/01/13 01:05:22 snikkel Exp $";
 }
 
 //#define TRACE
@@ -32,6 +32,7 @@ const char *modereq_cpp(void) {
 #include "buffbase.h" //"mode" UnlockBuffer(), ImportBuffer()
 #include "buffupd.h"  //"mode" BufferUpdate()
 #include "confmenu.h" //"mode" Configure()
+#include "logstuff.h"  // Log()/LogScreen()
 
 /* --------------------------------------------------------------- */
 
@@ -206,13 +207,16 @@ int ModeReqRun(Client *client)
             {
               if ((bits & (MODEREQ_BENCHMARK_ALLCORE))!=0)
                 if(client->corenumtotestbench < 0)
-                  selcoreBenchmark( contest, benchsecs, -1 );
+                  selcoreBenchmark( client, contest, benchsecs, -1 );
                 else
-                  selcoreBenchmark( contest, benchsecs, client->corenumtotestbench);
+                  selcoreBenchmark( client, contest, benchsecs, client->corenumtotestbench);
               else
-                TBenchmark( contest, benchsecs, 0 );
+                TBenchmark( client, contest, benchsecs, 0 );
             }
           }
+          Log("Compare and share your rates in the speeds database at\n"
+              "http://www.distributed.net/speed/\n"
+              "(benchmark rates are for a single processor core)\n");
         } while (!CheckExitRequestTriggerNoIO() && modereq.bench_projbits);
         retval |= (bits & (MODEREQ_BENCHMARK_QUICK | MODEREQ_BENCHMARK |
                            MODEREQ_BENCHMARK_ALLCORE));
@@ -315,16 +319,16 @@ int ModeReqRun(Client *client)
               {
                 if (client->corenumtotestbench < 0)
                 {
-                  if (selcoreSelfTest( contest, -1 ) < 0)
+                  if (selcoreSelfTest( client, contest, -1 ) < 0)
                     testfailed = 1;
                 }
                 else
                 {
-                  if (selcoreSelfTest( contest, client->corenumtotestbench ) < 0)
+                  if (selcoreSelfTest( client, contest, client->corenumtotestbench ) < 0)
                     testfailed = 1;
                 }
               }
-              else if ( SelfTest( contest ) < 0 )
+              else if ( SelfTest( client, contest ) < 0 )
                 testfailed = 1;
             }
           }
@@ -356,16 +360,16 @@ int ModeReqRun(Client *client)
               {
                 if (client->corenumtotestbench < 0)
                 {
-                  if (selcoreStressTest( contest, -1 ) < 0)
+                  if (selcoreStressTest( client, contest, -1 ) < 0)
                     testfailed = 1;
                 }
                 else
                 {
-                  if (selcoreStressTest( contest, client->corenumtotestbench ) < 0)
+                  if (selcoreStressTest( client, contest, client->corenumtotestbench ) < 0)
                     testfailed = 1;
                 }
               }
-              else if ( StressTest( contest ) < 0 )
+              else if ( StressTest( client, contest ) < 0 )
                 testfailed = 1;
             }
           }

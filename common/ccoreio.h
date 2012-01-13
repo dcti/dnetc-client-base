@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd)
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.24 2011/03/31 05:07:27 jlawson Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.25 2012/01/13 01:05:21 snikkel Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
@@ -62,7 +62,7 @@ typedef struct
   struct {u32 count; u32 hi,mid,lo;} check; /* counter-measure check */
 #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
   // HACK! better move these members to someplace else
-  int threadnum; /* To track which GPU to use */
+  int devicenum; /* To track which GPU to use */
   int optimal_timeslice_increment; /* Best timeslice increment for the core */
   long best_time; /* Remember the best time for optimal sleeping in subsequent runs */
 #endif

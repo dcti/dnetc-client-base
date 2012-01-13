@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.69 2010/04/22 19:21:53 sla Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.70 2012/01/13 01:05:21 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -573,6 +573,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   }
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
+  conf_options[CONF_DEVICENUM].thevariable = &(client->devicenum);
 
   /* --------------------------------------------------------- */
 

@@ -5,10 +5,9 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.160 2011/03/31 05:07:27 jlawson Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.161 2012/01/13 01:05:21 snikkel Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
-#include "problem.h"  /* WorkRecord, CONTEST_COUNT */
 #include "lurk.h"     /* lurk_conf structure */
 
 #define __TEXTIFY(x) #x
@@ -84,6 +83,7 @@ typedef struct Client_struct
 
   /* -- perf -- */
   int  numcpu;
+  int  devicenum;
   int  priority;
   int  coretypes[CONTEST_COUNT];
 
@@ -107,6 +107,8 @@ typedef struct Client_struct
   char smtpdest[MINCLIENTOPTSTRLEN];
 
 } Client;
+
+#include "problem.h"  /* WorkRecord, CONTEST_COUNT */
 
 // ------------------
 

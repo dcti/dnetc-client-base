@@ -6,7 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
- * $Id: r72cuda-1pipe.cu,v 1.31 2010/06/30 20:59:29 stream Exp $
+ * $Id: r72cuda-1pipe.cu,v 1.32 2012/01/13 01:05:33 snikkel Exp $
 */
 
 #include <stdio.h>
@@ -43,32 +43,32 @@ static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
 
 s32 CDECL rc5_72_unit_func_cuda_1_64(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 64, default_wait_mode);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->devicenum, 64, default_wait_mode);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_128(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 128, default_wait_mode);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->devicenum, 128, default_wait_mode);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_256(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 256, default_wait_mode);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->devicenum, 256, default_wait_mode);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_64_bw(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 64, -1);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->devicenum, 64, -1);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_64_s0(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 64, 0);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->devicenum, 64, 0);
 }
 
 s32 CDECL rc5_72_unit_func_cuda_1_64_s1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
-  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->threadnum, 64, 1);
+  return rc5_72_run_cuda_1(rc5_72unitwork, iterations, rc5_72unitwork->devicenum, 64, 1);
 }
 
 static s32 CDECL rc5_72_run_cuda_1(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, int device, u32 num_threads, int waitmode)

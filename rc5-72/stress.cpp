@@ -5,7 +5,7 @@
 */
 
 const char *stress_r72_cpp(void) {
-return "@(#)$Id: stress.cpp,v 1.9 2010/07/10 17:34:24 stream Exp $"; }
+return "@(#)$Id: stress.cpp,v 1.10 2012/01/13 01:05:29 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"
@@ -262,7 +262,7 @@ static long __check_result(int test, ContestWork *contestwork, int pipenum,
 **      fail to copy relevant datas to 'check.' members.
 ** - Epilog. Bogus cleanup.
 */
-static long __test_1(void)
+static long __test_1(Client *client)
 {
   ContestWork contestwork;
   Problem *thisprob;
@@ -282,7 +282,7 @@ static long __test_1(void)
     thisprob = ProblemAlloc();
     if (thisprob) {
       __cypher_text(&contestwork, &matchkey, iters);
-      if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL) == 0) {
+      if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, client) == 0) {
         pipes = thisprob->pub_data.pipeline_count;
 
         ProblemRun(thisprob);
@@ -338,7 +338,7 @@ static long __test_1(void)
 ** - Key incrementation.
 ** - Main loop re-initialization after a key incrementation occurs.
 */
-static long __test_2(void)
+static long __test_2(Client *client)
 {
   ContestWork contestwork;
   Problem *thisprob;
@@ -363,7 +363,7 @@ static long __test_2(void)
       /* kludge : Convert a full match into a partial match */
       contestwork.bigcrypto.cypher.hi = ~contestwork.bigcrypto.cypher.hi;
 
-      if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL) == 0) {
+      if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, client) == 0) {
         pipes = thisprob->pub_data.pipeline_count;
 
         do {
@@ -430,7 +430,7 @@ static RC5_Key key_masks[] = {
   {0x00, 0xFFFFFFFF, 0xFFFFFF00}
 };
 
-static long __test_3(void)
+static long __test_3(Client *client)
 {
   ContestWork contestwork;
   Problem *thisprob;
@@ -471,7 +471,7 @@ static long __test_3(void)
       thisprob = ProblemAlloc();
       if (thisprob) {
         __cypher_text(&contestwork, &matchkey, iters);
-        if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL) == 0) {
+        if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, client) == 0) {
           pipes = thisprob->pub_data.pipeline_count;
 
           do {
@@ -527,7 +527,7 @@ static long __test_3(void)
 **           The test is arranged so that partial matches #3 and #4 should be
 **           found in a single run (timeslice).
 */
-static long __test_4(void)
+static long __test_4(Client *client)
 {
   ContestWork contestwork;
   Problem *thisprob;
@@ -553,7 +553,7 @@ static long __test_4(void)
   ** partial matches (one or more in each run) will fail this test.
   */
 
-  if (thisprob && ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL) == 0) {
+  if (thisprob && ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, client) == 0) {
     u32 sec = 0;
     pipes = thisprob->pub_data.pipeline_count;
     do {
@@ -589,7 +589,7 @@ static long __test_4(void)
         cmc_key.hi = cmc_key.mid = cmc_key.lo = cmc_count = 0;
         ProblemFree(thisprob);
         thisprob = ProblemAlloc();
-        ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, NULL);
+        ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, client);
         continue;
       }
 
@@ -658,21 +658,21 @@ static long __test_4(void)
 }
 
 
-long StressRC5_72(void)
+long StressRC5_72(Client *client)
 {
   long result = 1L;
 
   if (!IsProblemLoadPermitted(-1, RC5_72))
     return 0;
 
-  if ((result = __test_1()) <= 0L)
+  if ((result = __test_1(client)) <= 0L)
     return result;
 
-  if ((result = __test_2()) <= 0L)
+  if ((result = __test_2(client)) <= 0L)
     return result;
 
-  if ((result = __test_3()) <= 0L)
+  if ((result = __test_3(client)) <= 0L)
     return result;
 
-  return __test_4();
+  return __test_4(client);
 }

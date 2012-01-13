@@ -377,7 +377,7 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
 
 s32 rc5_72_unit_func_il4_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
-  u32 deviceID=rc5_72unitwork->threadnum;
+  u32 deviceID=rc5_72unitwork->devicenum;
   RC5_72UnitWork tmp_unit;
 
   if (CContext[deviceID].coreID!=CORE_IL4N)

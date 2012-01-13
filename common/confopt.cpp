@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.61 2011/03/31 05:07:28 jlawson Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.62 2012/01/13 01:05:21 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -558,6 +558,21 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
   "Under RISC OS, processor 1 is the ARM, and processor 2 is an x86 processor\n"
   "card, if fitted.\n"
+#endif
+  /*) */,CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,-1,128,NULL,NULL
+},
+{ 
+  CONF_DEVICENUM               , /* CONF_MENU_PERF */
+  CFGTXT("Run on the selected device number only"), "-1 (run on any device)",
+  /* CFGTXT( */
+  "This option specifies a device number for the client to work on.\n"
+  "On multi-processor machines this can be set to a specific processor device\n"
+  "to run on.\n"
+  "Set to -1 to have the client run on any device.\n"
+  "Note: if this parameter is set to a specific device, the client is forced\n"
+  "to run with one thread.\n"
+#if !(CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM)
+  "This option is not currently supported on this platform and is ignored.\n"
 #endif
   /*) */,CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,-1,128,NULL,NULL
 },

@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.173 2011/12/09 04:37:32 snikkel Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.174 2012/01/13 01:05:21 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -35,6 +35,7 @@ return "@(#)$Id: cmdline.cpp,v 1.173 2011/12/09 04:37:32 snikkel Exp $"; }
 #include "triggers.h"  // TRIGGER_PAUSE_SIGNAL
 #include "coremem.h"   // cmem_select_allocator()
 #include "cmdline.h"   // ourselves
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors();
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
@@ -1620,6 +1621,16 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         }
       }
       #endif
+      else if ( strcmp( thisarg, "-devicenum" ) == 0 ) // run on a specific device only
+      {
+        if (!argvalue)
+          missing_value = 1;
+        else
+        {
+          skip_next = 1;
+          client->devicenum = atoi(argvalue);
+        }
+      }
       else if ( strcmp( thisarg, "-cktime" ) == 0 || /* obsolete */
                 strcmp( thisarg, "-ckpoint2" ) == 0 || /* obsolete */
                 strcmp( thisarg, "-exitfilechecktime" ) == 0 ) /* obsolete */
@@ -2201,6 +2212,19 @@ int ParseCommandline( Client *client,
   if (rc == 0)    
     rc = __finalize_level(argv[0],
              client, run_level, retcodeP, restarted, &inimissing, &multiok );
+
+  #if (CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM)
+  /* if a device is specified run only a single thread */  
+  if (client->devicenum >= 0)
+  {
+    int numdevices = GetNumberOfDetectedProcessors();
+    if ((numdevices > 0) && (client->devicenum >= numdevices))  /* out of bounds */
+      client->devicenum = -1;
+    if (client->numcpu != 0)
+      client->numcpu = 1;
+  }
+  #endif
+
   return rc;  
 }                      
   extern "C" int linux_uninstall(const char *basename, int quietly);

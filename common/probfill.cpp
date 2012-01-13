@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.99 2011/01/21 20:02:33 stream Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.100 2012/01/13 01:05:22 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -96,7 +96,7 @@ static unsigned int __get_thresh_secs(Client *client, int contestid,
   // get the speed - careful!: if CliGetContestWorkUnitSpeed
   // uses benchmark (was_forced) to get the speed, then the speed is
   // per-cpu, not per-cruncher. Otherwise, its per-cruncher.
-  sec = CliGetContestWorkUnitSpeed(contestid, force, &was_forced);
+  sec = CliGetContestWorkUnitSpeed(client, contestid, force, &was_forced);
 
   if (sec != 0) /* we have a rate */
   {

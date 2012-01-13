@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.72 2012/01/06 21:12:05 snikkel Exp $";
+  return "@(#)$Id: bench.cpp,v 1.73 2012/01/13 01:05:21 snikkel Exp $";
 }
 
 //#define TRACE
@@ -52,7 +52,7 @@ ui64
 #else
 unsigned long 
 #endif
-BenchGetBestRate(unsigned int contestid)
+BenchGetBestRate(Client *client, unsigned int contestid)
 {
 
   TRACE_OUT((+1, "BenchGetBestRate(%d)\n", contestid));
@@ -62,11 +62,11 @@ BenchGetBestRate(unsigned int contestid)
     {
       // This may trigger a mini-benchmark, which will get the speed
       // we need and not waste time.
-      selcoreGetSelectedCoreForContest( contestid );
+      selcoreGetSelectedCoreForContest( client, contestid );
     }
     if (bestrate_tab[contestid] == 0)
     {
-      TBenchmark(contestid, 2,
+      TBenchmark(client, contestid, 2,
                  TBENCHMARK_CALIBRATION|TBENCHMARK_QUIET|TBENCHMARK_IGNBRK);
     }
     TRACE_OUT((-1, "BenchGetBestRate(%d) => %llu\n", contestid, bestrate_tab[contestid]));
@@ -104,7 +104,7 @@ ui64
 #else 
 long 
 #endif 
-TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
+TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int flags )
 {
   /* non-preemptive os minimum yields per second */
   struct { int yps, did_adjust; } non_preemptive_os;
@@ -162,10 +162,10 @@ TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
     #endif
     if ((flags & TBENCHMARK_QUIET) == 0)
     {
-      selcoreGetSelectedCoreForContest(contestid); /* let selcore message */
+      selcoreGetSelectedCoreForContest(client, contestid); /* let selcore message */
       //LogScreen("Calibrating ... " );
     }
-    res = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
+    res = TBenchmark( client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
     if ( res <= 0 ) /* LoadState failed */
     {
       if ((flags & TBENCHMARK_QUIET) == 0)
@@ -173,7 +173,7 @@ TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
       #if ((CLIENT_OS == OS_WIN32) && defined(SMC))
         // HACK! to ignore failed benchmark for x86 rc5 smc core #7 if
         // started from menu and another cruncher is active in background.
-        if (contestid == RC5 && selcoreGetSelectedCoreForContest(contestid) == 7)
+        if (contestid == RC5 && selcoreGetSelectedCoreForContest(client, contestid) == 7)
           LogScreen("\rCan't benchmark core #7 while another cruncher\nis running in the background.\n");
         else
           LogScreen("\rCalibration failed!\n");
@@ -208,7 +208,7 @@ TBenchmark( unsigned int contestid, unsigned int numsecs, int flags )
   if (thisprob)
   {
     if ( ProblemLoadState( thisprob, CONTESTWORK_MAGIC_BENCHMARK,
-                           contestid, tslice, 0, 0, 0, 0, NULL) == 0)
+                           contestid, tslice, 0, 0, 0, 0, client) == 0)
     {
       const char *contname = CliGetContestNameFromID(contestid);
       int silent = 1, run = RESULT_WORKING; u32 bestlo = 0, besthi = 0;

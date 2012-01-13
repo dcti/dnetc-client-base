@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.128 2012/01/06 21:12:05 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.129 2012/01/13 01:05:22 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -331,7 +331,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 
 /* ---------------------------------------------------------------------- */
 
-static long __bench_or_test( int which, 
+static long __bench_or_test( Client *client, int which, 
                             unsigned int cont_i, unsigned int benchsecs, int in_corenum )
 {
   #ifdef HAVE_I64
@@ -379,11 +379,11 @@ static long __bench_or_test( int which,
         selcorestatics.corenum[cont_i] = -1; /* reset to show name */
 
         if (which == 't') /* selftest */
-          rc = SelfTest( cont_i );
+          rc = SelfTest( client, cont_i );
         else if (which == 's') /* stresstest */
-          rc = StressTest( cont_i );
+          rc = StressTest( client, cont_i );
         else {
-          rc = TBenchmark( cont_i, benchsecs, 0 );
+          rc = TBenchmark( client, cont_i, benchsecs, 0 );
           if (rc > 0 && selcorestatics.corenum[cont_i] == hardcoded) {
             refrate = rc;
           }
@@ -447,10 +447,6 @@ static long __bench_or_test( int which,
           refrate_str,
           fastest, selcoreGetDisplayName(cont_i, fastest), bestrate_str);
           
-      Log("Compare and share your rates in the speeds database at\n"
-          "http://www.distributed.net/speed/\n"
-          "(benchmark rates are for a single processor core)\n");
-
       if (percent < 100 && hardcoded >= 0 && hardcoded != fastest) {
         if (percent >= 97) {
           Log("Core #%d is marginally faster than the default core.\n"
@@ -486,9 +482,9 @@ static long __bench_or_test( int which,
       {
         Log("RC5: using x86 core.\n" );
         if (which != 's') /* bench */
-          rc = TBenchmark( cont_i, benchsecs, 0 );
+          rc = TBenchmark( client, cont_i, benchsecs, 0 );
         else
-          rc = SelfTest( cont_i );
+          rc = SelfTest( client, cont_i );
         ProblemFree(prob);
       }
     }
@@ -499,19 +495,19 @@ static long __bench_or_test( int which,
   return rc;
 }
 
-long selcoreBenchmark( unsigned int cont_i, unsigned int secs, int corenum )
+long selcoreBenchmark( Client *client, unsigned int cont_i, unsigned int secs, int corenum )
 {
-  return __bench_or_test( 'b', cont_i, secs, corenum );
+  return __bench_or_test( client, 'b', cont_i, secs, corenum );
 }
 
-long selcoreSelfTest( unsigned int cont_i, int corenum)
+long selcoreSelfTest( Client *client, unsigned int cont_i, int corenum)
 {
-  return __bench_or_test( 't', cont_i, 0, corenum );
+  return __bench_or_test( client, 't', cont_i, 0, corenum );
 }
 
-long selcoreStressTest( unsigned int cont_i, int corenum)
+long selcoreStressTest( Client *client, unsigned int cont_i, int corenum)
 {
-  return __bench_or_test( 's', cont_i, 0, corenum );
+  return __bench_or_test( client, 's', cont_i, 0, corenum );
 }
 
 /* ---------------------------------------------------------------------- */
@@ -540,7 +536,7 @@ int selcoreGetPreselectedCoreForProject(unsigned int projectid)
 /* ---------------------------------------------------------------------- */
 
 /* this is called from Problem::LoadState() */
-int selcoreGetSelectedCoreForContest( unsigned int contestid )
+int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid )
 {
   TRACE_OUT((0, "selcoreGetSelectedCoreForContest project=%d\n", contestid));
   int corename_printed = 0;
@@ -619,7 +615,7 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
           }
           if (CheckExitRequestTriggerNoIO())
             break;
-          if ((rate = TBenchmark( contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK )) > 0)
+          if ((rate = TBenchmark( client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK )) > 0)
           {
 #ifdef DEBUG
             LogScreen("%s Core %d: %d keys/sec\n", contname,whichcrunch,rate);
@@ -674,22 +670,22 @@ int selcoreGetSelectedCoreForContest( unsigned int contestid )
 
 /* ---------------------------------------------------------------------- */
 
-int selcoreSelectCore( unsigned int contestid, unsigned int threadindex,
+int selcoreSelectCore( Client *client, unsigned int contestid, unsigned int threadindex,
                        int *client_cpuP, struct selcore *selinfo )
 {
   switch (contestid)
     {
 #ifdef HAVE_RC5_72_CORES
     case RC5_72:
-      return selcoreSelectCore_rc572( threadindex, client_cpuP, selinfo );
+      return selcoreSelectCore_rc572( client, threadindex, client_cpuP, selinfo );
 #endif
 #ifdef HAVE_OGR_PASS2
     case OGR_P2:
-      return selcoreSelectCore_ogr( threadindex, client_cpuP, selinfo, contestid );
+      return selcoreSelectCore_ogr( client, threadindex, client_cpuP, selinfo, contestid );
 #endif
 #ifdef HAVE_OGR_CORES
     case OGR_NG:
-      return selcoreSelectCore_ogr_ng( threadindex, client_cpuP, selinfo, contestid );
+      return selcoreSelectCore_ogr_ng( client, threadindex, client_cpuP, selinfo, contestid );
 #endif
     default:
       return -1; /* core selection failed */

@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.18 2010/09/13 16:21:38 sla Exp $
+ * $Id: r72stream-common.h,v 1.19 2012/01/13 01:05:46 snikkel Exp $
 */
 
 #ifndef IL_COMMON_H
@@ -15,8 +15,8 @@
 #include "amdstream_setup.h"
 #include "amdstream_context.h"
 
-#include <cal.h>
-#include <calcl.h>
+#include <CAL/cal.h>
+#include <CAL/calcl.h>
 
 #include "ccoreio.h"
 #include <malloc.h>

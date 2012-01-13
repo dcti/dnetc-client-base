@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cna.cpp,v 1.12 2010/12/02 19:48:04 sla Exp $
+ * $Id: r72stream-vc4cna.cpp,v 1.13 2012/01/13 01:05:54 snikkel Exp $
 */
 
 #include "r72stream-common.h"
@@ -303,7 +303,7 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
 
 s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
-  u32 deviceID=rc5_72unitwork->threadnum;
+  u32 deviceID=rc5_72unitwork->devicenum;
   RC5_72UnitWork tmp_unit;
 
   if (CContext[deviceID].coreID!=CORE_IL4NA)

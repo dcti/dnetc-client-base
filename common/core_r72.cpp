@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.59 2012/01/09 01:45:42 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.60 2012/01/13 01:05:22 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -671,7 +671,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
 
 /* ---------------------------------------------------------------------- */
 
-int selcoreSelectCore_rc572(unsigned int threadindex,
+int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
                             int *client_cpuP, struct selcore *selinfo)
 {
   int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
@@ -679,7 +679,7 @@ int selcoreSelectCore_rc572(unsigned int threadindex,
   int cruncher_is_asynchronous = 0; /* on a co-processor or similar */
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
-  int coresel = selcoreGetSelectedCoreForContest(RC5_72);
+  int coresel = selcoreGetSelectedCoreForContest(client, RC5_72);
 #if (CLIENT_CPU == CPU_CELLBE)
   // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees 2
   // processors), but it has been found that running 2 simultaneous threads

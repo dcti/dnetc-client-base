@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.105 2011/03/31 05:07:30 jlawson Exp $"; }
+return "@(#)$Id: selftest.cpp,v 1.106 2012/01/13 01:05:22 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT
@@ -157,7 +157,7 @@ static const s32 ogrp2_test_cases[TEST_CASE_COUNT][TEST_CASE_DATA] = {
 // ---------------------------------------------------------------------------
 
 // returns 0 if not supported, <0 on failed or break
-static long SelfTestInternal( unsigned int contest, int stress )
+static long SelfTestInternal( Client *client, unsigned int contest, int stress )
 {
   int threadpos, threadcount = 1;
   long successes = 0L;
@@ -332,7 +332,7 @@ static long SelfTestInternal( unsigned int contest, int stress )
         #endif
 
         if (ProblemLoadState( thisprob, &contestwork,
-                              contest, tslice, 0, 0, 0, 0, NULL ) == 0)
+                              contest, tslice, 0, 0, 0, 0, client ) == 0)
         {
           ClientEventSyncPost( CLIEVENT_SELFTEST_TESTBEGIN, (void *)thisprob, -1 );
           do
@@ -581,17 +581,17 @@ static long SelfTestInternal( unsigned int contest, int stress )
   return (successes);
 }
 
-long SelfTest( unsigned int contest )
+long SelfTest( Client *client, unsigned int contest )
 {
-  return SelfTestInternal(contest, 0);
+  return SelfTestInternal(client, contest, 0);
 }
 
-long StressTest(unsigned int contest)
+long StressTest(Client *client, unsigned int contest)
 {
   switch (contest) {
     #if defined(HAVE_RC5_72_CORES)
-    case RC5_72: return StressRC5_72();
+    case RC5_72: return StressRC5_72(client);
     #endif
-    default: return SelfTestInternal(contest, 1);
+    default: return SelfTestInternal(client, contest, 1);
   }
 }

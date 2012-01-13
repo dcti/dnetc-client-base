@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.112 2012/01/06 21:12:05 snikkel Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.113 2012/01/13 01:05:22 snikkel Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -149,7 +149,7 @@ struct problem_publics
   int is_benchmark;              /* set if problem is benchmark          */
 
 #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
-  int threadnum;                 /* sets which GPU to use                */
+  int devicenum;                 /* sets which GPU to use                */
 #endif
 
   int loaderflags; /* used by problem loader (probfill.cpp) */

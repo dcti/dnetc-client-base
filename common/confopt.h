@@ -6,7 +6,7 @@
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.30 2008/12/30 20:58:41 andreasb Exp $"
+#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.31 2012/01/13 01:05:21 snikkel Exp $"
 
 enum /* anonymous */
 {
@@ -46,6 +46,7 @@ enum /* anonymous */
   CONF_MENU_PERF_PLACEHOLDER   , /* 29 */
   CONF_CPUTYPE                 , /* CONF_MENU_PERF */
   CONF_NUMCPU                  , /* CONF_MENU_PERF 0 ... */
+  CONF_DEVICENUM               , /* CONF_MENU_PERF */
   CONF_NICENESS                , /* CONF_MENU_PERF priority */
 
   CONF_MENU_LOG_PLACEHOLDER    , /* 33 */

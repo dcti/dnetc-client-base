@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.44 2011/11/11 18:49:32 teichp Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.45 2012/01/13 01:05:22 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -516,7 +516,8 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
 
 /* ---------------------------------------------------------------------- */
 
-int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
+int selcoreSelectCore_ogr_ng(Client *client, unsigned int threadindex, 
+                int *client_cpuP,
                 struct selcore *selinfo, unsigned int contestid)
 {
   int use_generic_proto = 0; /* if rc5/des unit_func proto is generic */
@@ -524,7 +525,7 @@ int selcoreSelectCore_ogr_ng(unsigned int threadindex, int *client_cpuP,
   int cruncher_is_asynchronous = 0; /* on a co-processor or similar */
   int pipeline_count = 2; /* most cases */
   int client_cpu = CLIENT_CPU; /* usual case */
-  int coresel = selcoreGetSelectedCoreForContest(contestid);
+  int coresel = selcoreGetSelectedCoreForContest(client, contestid);
 
 #if (CLIENT_CPU == CPU_CELLBE)
   // Each Cell has 1 PPE, which is dual-threaded (so in fact the OS sees 2
