@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.60 2012/01/13 01:05:22 snikkel Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.61 2012/01/14 13:37:14 sla Exp $"; }
 
 //#define TRACE
 
@@ -310,6 +310,8 @@ int apply_selcore_substitution_rules_rc572(int cindex)
     if(cindex == 3)
       cindex = 0;
   }
+  if(GetProcessorType(1) >= 20 )  /* Restrict Tahiti to compute shaders only until find the reason of pixel shader compilation error */
+      cindex = 3;
 #endif
 
   return cindex;
@@ -658,6 +660,10 @@ int selcoreGetPreselectedCoreForProject_rc572()
       case 10: 		    // REDWOOD
       case 11: 		    // CEDAR
        cindex = 0;	    // IL 4-pipe
+       break;
+
+      case 20:		    // TAHITI
+       cindex = 3;
        break;
     
       default:
