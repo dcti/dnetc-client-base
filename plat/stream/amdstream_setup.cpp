@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_setup.cpp,v 1.18 2011/02/15 20:01:58 chandleg Exp $
+ * $Id: amdstream_setup.cpp,v 1.19 2012/01/14 13:45:09 sla Exp $
 */
 
 #include "amdstream_setup.h"
@@ -15,7 +15,7 @@
 #include "logstuff.h"
 #include "adl.h"
 
-#include <calcl.h>
+#include <CAL/calcl.h>
 #include <stdlib.h>
 #ifdef LINUX
   #include <string.h>

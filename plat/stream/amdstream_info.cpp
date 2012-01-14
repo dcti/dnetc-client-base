@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.12 2011/02/15 20:06:41 chandleg Exp $
+ * $Id: amdstream_info.cpp,v 1.13 2012/01/14 13:45:09 sla Exp $
 */
 
 #include "amdstream_info.h"
@@ -52,17 +52,20 @@ static const char* GetNameById(u32 id, u32 nSIMDs=0)
     return "HD58xx";
   case CAL_TARGET_JUNIPER:
     if(nSIMDs==10) return "HD5770";
-    if(nSIMDs==9)  return "HD5750";
+    if(nSIMDs==9)  return "HD5750/HD6770";
     return "HD57xx";
   case CAL_TARGET_REDWOOD:
     if(nSIMDs==5)  return "HD5670/HD5570";
     if(nSIMDs==4)  return "HD5550";
     return "HD56xx/HD55xx";
   case CAL_TARGET_CEDAR: return "HD54xx";
-  case 17:         //Hack for Barts until stream SDK 2.3
+  case CAL_TARGET_BARTS:   
     if(nSIMDs==12) return "HD6850";
     if(nSIMDs==14) return "HD6870";
     return "HD68xx";
+  case 20:			//TODO: CAL_TARGET_TAHITI
+    if(nSIMDs==32) return "HD7970";
+	return "HD79xx";
   default:         return "unknown";
   }
 }

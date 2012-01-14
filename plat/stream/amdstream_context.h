@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_context.h,v 1.11 2010/09/13 16:05:37 sla Exp $
+ * $Id: amdstream_context.h,v 1.12 2012/01/14 13:45:09 sla Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H
@@ -15,8 +15,8 @@
 #include "amdstream_setup.h"
 #include "cputypes.h"
 
-#include <cal.h>
-#include <cal_ext_counter.h>
+#include <CAL/cal.h>
+#include <CAL/cal_ext_counter.h>
 
 
 enum
