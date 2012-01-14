@@ -10,6 +10,7 @@
 
 //63 elements
 #define GLOBAL_B_WIDTH 256 
+#define MAX_DOMAIN_SIZE 4096
 
 //rc5-72 test
 #define P 0xB7E15163
@@ -93,6 +94,10 @@ static bool init_rc5_72_il4_1i(u32 Device)
     case 17: //Barts
       CContext[Device].domainSizeX=904;
       CContext[Device].domainSizeY=904;
+      CContext[Device].maxIters=1;
+    case 20: //Tahiti
+      CContext[Device].domainSizeX=1280;
+      CContext[Device].domainSizeY=1280;
       CContext[Device].maxIters=1;
     default:
       CContext[Device].domainSizeX=512;
@@ -364,9 +369,6 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
   u32 kiter =(*iterations)/4;
 
   u32 itersNeeded=kiter;
-  u32 width=CContext[deviceID].domainSizeX;
-  u32 height=CContext[deviceID].domainSizeY;
-  u32 RunSize=width*height;
 
   CALevent e0 = 0;
   u32 rest0=0;
@@ -389,10 +391,16 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     return -1;          //err
   }
 
+  double fr_d=HiresTimerGetResolution();
+  hirestimer_type cstart, cend;
+
   CALresult result;
   u32 GPUiters=0;
+  u32 RunSize=CContext[deviceID].domainSizeX*CContext[deviceID].domainSizeY;
   while(itersNeeded) {
-    if(itersNeeded>=RunSize)
+	RunSize=CContext[deviceID].domainSizeX*CContext[deviceID].domainSizeY;
+	  
+	if(itersNeeded>=RunSize)
       rest0=RunSize;
     else
       rest0=itersNeeded;
@@ -439,6 +447,7 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     // Checking whether the execution of the program is complete or not
 
     CALresult result;
+    HiresTimerGet(&cstart);
     if(isCalCtxWaitForEventsSupported)  //normal case
       result=calCtxWaitForEvents(CContext[deviceID].ctx, &e0, 1, 0);
     else
@@ -455,6 +464,26 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
       Log("Error while waiting for GPU program to finish!\n");
       RaiseExitRequestTrigger();
       return -1;          //err
+    }
+
+    HiresTimerGet(&cend);
+    double d=HiresTimerDiff(cend, cstart)/fr_d;
+    if(isCalCtxWaitForEventsSupported)
+    {
+      if(d>12.)
+	  {
+        if(CContext[deviceID].domainSizeX>8)
+          CContext[deviceID].domainSizeX-=8;
+        if(CContext[deviceID].domainSizeY>8)
+          CContext[deviceID].domainSizeY-=8;
+	  }
+      if(d<8.)
+	  {
+        if(CContext[deviceID].domainSizeX<MAX_DOMAIN_SIZE)
+          CContext[deviceID].domainSizeX+=8;
+        if(CContext[deviceID].domainSizeY<MAX_DOMAIN_SIZE)
+          CContext[deviceID].domainSizeY+=8;
+	  }
     }
 
     CContext[deviceID].USEcount=0;	//Reset Unexpected Stop Error counter
