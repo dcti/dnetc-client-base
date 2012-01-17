@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.15 2012/01/14 13:41:31 sla Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.16 2012/01/17 18:44:38 sla Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -2829,7 +2829,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
                     ll = (1+((unsigned __int64)1ul << 32));
                   else
                     ll = (1+((unsigned __int64)1ul << 28));
-                  if(ratelo)	//Prevent crush if no blocks processed yet
+                  if(ratelo&&ratehi)	//Prevent crush if no blocks processed yet
                     ll = (ll/ratelo) /
                          ((unsigned __int64)ratehi<<32); /* secs per *stat* unit */
                   ll *= ((dd->cdata[cont_i].buffers[0].swu_count)/100);
