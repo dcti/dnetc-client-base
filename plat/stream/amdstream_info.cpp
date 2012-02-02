@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.13 2012/01/14 13:45:09 sla Exp $
+ * $Id: amdstream_info.cpp,v 1.14 2012/02/02 18:58:58 sla Exp $
 */
 
 #include "amdstream_info.h"
@@ -63,8 +63,13 @@ static const char* GetNameById(u32 id, u32 nSIMDs=0)
     if(nSIMDs==12) return "HD6850";
     if(nSIMDs==14) return "HD6870";
     return "HD68xx";
+  case CAL_TARGET_CAYMAN: 
+    if(nSIMDs==24) return "HD6970";
+    if(nSIMDs==22) return "HD6950";
+	return "HD69xx";
   case 20:			//TODO: CAL_TARGET_TAHITI
     if(nSIMDs==32) return "HD7970";
+    if(nSIMDs==28) return "HD7950";
 	return "HD79xx";
   default:         return "unknown";
   }
