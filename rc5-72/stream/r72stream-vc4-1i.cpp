@@ -96,8 +96,8 @@ static bool init_rc5_72_il4_1i(u32 Device)
       CContext[Device].domainSizeY=904;
       CContext[Device].maxIters=1;
     case 20: //Tahiti
-      CContext[Device].domainSizeX=1280;
-      CContext[Device].domainSizeY=1280;
+      CContext[Device].domainSizeX=2048;
+      CContext[Device].domainSizeY=2048;
       CContext[Device].maxIters=1;
     default:
       CContext[Device].domainSizeX=512;
