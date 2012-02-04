@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.122 2012/01/13 01:05:24 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.123 2012/02/04 17:31:14 sla Exp $
 ==========================================================================
 
 2.9100
@@ -44,6 +44,7 @@ Version change log: $Id: CHANGES.txt,v 1.122 2012/01/13 01:05:24 snikkel Exp $
             imp: x86/amd64: Intel Sandy Bridge EE (#4456)
             imp: x86/amd64: AMD FX (#4455)
             imp: gpu: add -devicenum option (#4306)
+            imp: stream: identification of HD7950/HD7970 GPUs
 
 2.9109.518  fix: all: OGR-NG codebase fixes (#4295)
             fix: all: OGR-NG incorrect node count after full restart
