@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.45 2012/01/13 01:05:22 snikkel Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.46 2012/04/29 14:30:34 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -437,7 +437,6 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
           {
             switch (detected_type)
             {
-              case 0x20: cindex =-1; break; /* AMD APU */
               default:   cindex = 7;
             }
           }
@@ -495,7 +494,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
       switch (detected_type)
       {
         case 0x09: cindex = 1; break; /* AMD: generic (#4214) */
-        case 0x20: cindex = 1; break; /* AMD APU */
+        /*case 0x20: cindex = 1; break;*/ /* AMD APU (#4429/#4485) */
       }
       if (cindex == -1)
       {

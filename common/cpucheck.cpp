@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.205 2012/01/13 01:10:07 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.206 2012/04/29 14:30:34 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1222,6 +1222,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00060A0, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP/XP-M or Sempron (Barton)" },   // OGR-NG: OK (-k8)
         { 0x000F000, 0xFFFF000, CPU_F_I686,    9, "Athlon (Model 15)" },
         { 0x0010000, 0xFFFF000, CPU_F_I686, 0x16, "Opteron 6xxx" }, /* (#4438) */
+        { 0x0012000, 0xFFFF000, CPU_F_I686, 0x20, "A-Series APU" }, /* (#4485) */
         { 0x0014000, 0xFFFF000, CPU_F_I686, 0x20, "E-Series APU" }, /* (#4429) */
         { 0x0015010, 0xFFFF000, CPU_F_I686, 0x21, "FX" }, /* (#4455) */
         { 0x010F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64",              0 /* CH_R72_X86_GO2B */ }, /* (#4193) */
