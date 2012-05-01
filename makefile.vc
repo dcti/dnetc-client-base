@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.138 2012/01/14 13:33:03 sla Exp $
+# $Id: makefile.vc,v 1.139 2012/05/01 07:49:00 stream Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -143,7 +143,7 @@ OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 !if ( [plat\win\msvcver.cmd] >= 15 )
 OPTS_MSVC = $(OPTS_MSVC) -EHs-c- -GS- -wd4996
 !elseif ( [plat\win\msvcver.cmd] >= 14 )
-OPTS_MSVC = $(OPTS_MSVC) -EHs-c-
+OPTS_MSVC = $(OPTS_MSVC) -EHs-c- -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE
 OPTS_LIBS = $(OPTS_LIBS) bufferoverflowu.lib
 !elseif ( [plat\win\msvcver.cmd] >= 12 )
 OPTS_MSVC = $(OPTS_MSVC) -GX- -GM
@@ -365,7 +365,7 @@ RC5_72_OBJS =                             \
         $(OUTPUTPATH)/amdstream_setup.obj \
         $(OUTPUTPATH)/adl.obj        
 
-OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE -DDYN_TIMESLICE -D_CRT_SECURE_NO_WARNINGS
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE
 !else
 !error No RC5-72 cores for this architecture.
 !endif
