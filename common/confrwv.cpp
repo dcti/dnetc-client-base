@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.100 2012/01/13 01:05:21 snikkel Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.101 2012/05/01 06:24:22 stream Exp $"; }
 
 //#define TRACE
 
@@ -976,7 +976,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
   /* ----------------- OPTSECT_CPU ----------------- */
   TRACE_OUT((0,"remapping 8 (%d)\n", modfail));
 
-  if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "max-threads",-12345,fn))!=-12345)
+  if ((int)GetPrivateProfileIntB( OPTSECT_CPU, "max-threads", -12345, fn ) == -12345)
   {
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "numcpu", -12345, fn ))>=0)
     {
@@ -986,7 +986,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "max-threads", i, fn));
     }
   }
-  if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "devicenum",-12345,fn))!=-12345)
+  if ((int)GetPrivateProfileIntB( OPTSECT_CPU, "devicenum", -12345, fn) == -12345)
   {
     if ((i = GetPrivateProfileIntB( OPTION_SECTION, "deviceid", -12345, fn ))>=0)
     {
@@ -994,7 +994,7 @@ static int __remapObsoleteParameters( Client *client, const char *fn )
       modfail += (!_WritePrivateProfile_sINT( OPTSECT_CPU, "devicenum", i, fn));
     }
   }
-  if ((i=GetPrivateProfileIntB( OPTSECT_CPU, "priority", -12345, fn ))!=-12345)
+  if ((int)GetPrivateProfileIntB( OPTSECT_CPU, "priority", -12345, fn ) == -12345)
   {
     i = GetPrivateProfileIntB( OPTION_SECTION, "niceness", -12345, fn );
     if (i>=0 && i<=2)
