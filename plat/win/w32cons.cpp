@@ -11,7 +11,7 @@
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.16 2012/01/17 18:44:38 sla Exp $"; }
+return "@(#)$Id: w32cons.cpp,v 1.17 2012/05/01 13:15:08 stream Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -2489,13 +2489,11 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
       TRACE_DLG((+1,"WM_INITDIALOG, dd=%p\n",dd));
       memset(dd, 0, sizeof(struct dlgdata));
 
-      dd->cont_sel = 0;
       dd->hOwner = hwnd = (HWND)lParam;
       dd->console = __win16GetHwndConsole( hwnd );
       dd->cont_sel_uncertain = 1;
       dd->cont_sel_explicit = -1;
       dd->timer_cont_sel = -1;
-      dd->cont_sel = 0;
       dd->effmax = 1000;
       dd->hFont = __w16FixupDlgFont(dialog, NULL);
       if (GetNumberOfDetectedProcessors() > 1)
@@ -2567,11 +2565,14 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
           {
             dd->cont_sel = (int)cont_i;
             dd->cont_sel_uncertain = 0;
+            SendMessage(hwnd, LB_SETCURSEL, (WPARAM)item_i, 0);
           }
           ++item_i;
         }
-        SendMessage(hwnd,LB_SETCURSEL,
-               (WPARAM)((dd->cont_sel_uncertain)?(-1):(dd->cont_sel)), 0);
+        if (dd->cont_sel_uncertain)
+        {
+          SendMessage(hwnd, LB_SETCURSEL, (WPARAM)-1, 0);
+        }
         //ShowScrollBar(hwnd, SB_VERT, TRUE);
         SetFocus(hwnd);
       }
@@ -2785,12 +2786,12 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
               ((ratehi == dd->cdata[cont_i].last_ratehi) &&
                 (ratelo > dd->cdata[cont_i].last_ratelo)))
             {
-              unsigned __int64 ll;
-
               if (buffers_changed)
               {
+                long ll;
+
                 ll = dd->cdata[cont_i].buffers[1].swu_count;
-                sprintf(buffer,"%d.%02d", ll/100, ll%100);
+                sprintf(buffer,"%ld.%02ld", ll/100, ll%100);
                 SetDlgItemText(dialog,IDC_BUFOUT_SWU, buffer);
                 SetDlgItemInt(dialog,IDC_BUFOUT_PKTS,
                      (UINT)(dd->cdata[cont_i].buffers[1].blk_count), FALSE);
@@ -2807,7 +2808,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
                 else
                 {
                   ll = dd->cdata[cont_i].buffers[0].swu_count;
-                  sprintf( buffer, "%d.%02d", ll/100, ll%100);
+                  sprintf( buffer, "%ld.%02ld", ll/100, ll%100);
                   SetDlgItemText(dialog, IDC_BUFIN_SWU, buffer);
                 }
               }
@@ -2821,22 +2822,28 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
               }
               else
               {
+                time_t ll;
+
+                /* If we have no official time-to-completion yet, estimate it based on keyrate.
+                   (key-based contest only) */
                 ll = dd->cdata[cont_i].buffers[0].till_completion;
                 if (!ll && (ratehi != 0 || ratelo != 0) &&
                    ((dd->cdata[cont_i].buffers[0].swu_count)%100) == 0)
                 {
+                  unsigned __int64 keys;
+
                   if (RC5_72 == cont_i)
-                    ll = (1+((unsigned __int64)1ul << 32));
+                    keys = (1+((unsigned __int64)1ul << 32));
                   else
-                    ll = (1+((unsigned __int64)1ul << 28));
-                  if(ratelo&&ratehi)	//Prevent crush if no blocks processed yet
-                    ll = (ll/ratelo) /
-                         ((unsigned __int64)ratehi<<32); /* secs per *stat* unit */
-                  ll *= ((dd->cdata[cont_i].buffers[0].swu_count)/100);
+                    keys = (1+((unsigned __int64)1ul << 28));
+                  /* Pre-multiply to avoid loss of precision for very high GPU rates
+                     (less then 1 sec per stat unit) */
+                  keys *= ((dd->cdata[cont_i].buffers[0].swu_count)/100);
+                  ll = (time_t) (keys / ( ((unsigned __int64)ratehi<<32) | ratelo ));
                 }
                 if (ll) /* otherwise, not available (yet) */
                 {
-                  int days = (ll / 86400UL);
+                  int days = (int) (ll / 86400UL);
                   if (days >= 0 && days <= 365)
                   {
                     sprintf( buffer,  "%d.%02d:%02d:%02d", days,
@@ -2857,6 +2864,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
                 u32 iterhi, iterlo;
                 unsigned int packets, swucount;
                 struct timeval ttime;
+                long ll;
 
                 if (CliGetContestInfoSummaryData( cont_i,
                      &packets, &iterhi, &iterlo,
@@ -2871,7 +2879,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
                   sprintf(buffer, "%u.%02u", swucount/100, swucount%100);
                   SetDlgItemText(dialog,IDC_SUM_SWU,buffer);
                   ll = ttime.tv_sec;
-                  sprintf( buffer,  "%d.%02d:%02d:%02d", (ll / 86400UL),
+                  sprintf( buffer,  "%d.%02d:%02d:%02d", (int) (ll / 86400UL),
                            (int) ((ll % 86400L) / 3600UL),
                            (int) ((ll % 3600UL)/60),
                            (int) (ll % 60) );
