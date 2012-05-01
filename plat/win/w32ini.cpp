@@ -17,7 +17,7 @@
  * ('D C T I' expands to "Distributed Computing Technologies, Inc.")
  * 'sect' is optional. If NULL or "", the format becomes key=value.
  *
- * $Id: w32ini.cpp,v 1.5 2008/12/30 20:58:44 andreasb Exp $
+ * $Id: w32ini.cpp,v 1.6 2012/05/01 16:21:16 stream Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */
@@ -27,9 +27,22 @@
 #include <string.h>   /* needed for win386 */
 #include "w32util.h"  /* winGetVersion() */
 #include "w32ini.h"   /* ourselves */
+#include "cputypes.h" /* CLIENT_OS */
 
 #ifndef MAX_PATH
 #define MAX_PATH 256
+#endif
+
+/*
+ * A Win64 user process is not allowed to write to HKLM without admin rights.
+ * Use HKCU instead.
+ * Altough HKLM is emulated under Win7 for 32-bit processes, it may be
+ * necessary to switch to HKCU globally.
+ */
+#if (CLIENT_OS == OS_WIN64)
+#define hBaseKey HKEY_CURRENT_USER
+#else
+#define hBaseKey HKEY_LOCAL_MACHINE
 #endif
 
 static char DCTI_KEYCTX[80] = "Distributed Computing Technologies, Inc.\0";
@@ -117,7 +130,7 @@ static void __do_winnt_thing(void) /* let win16 client use the registry too */
     if (winGetVersion() >= 2000) /* win16 client running on NT */
     {
       char scratch[MAX_PATH + 2];
-      HKEY hInstKey, hBaseKey = (( HKEY ) 0x80000002 );/*HKEY_LOCAL_MACHINE;*/
+      HKEY hInstKey;
       lstrcat( lstrcpy( scratch, "\\Software\\Microsoft\\Windows NT\\"
                "CurrentVersion\\IniFileMapping\\win.ini" ), DCTI_KEYCTX );
       if (ERROR_SUCCESS == RegCreateKey( hBaseKey, scratch, &hInstKey ))
@@ -158,7 +171,7 @@ int WriteDCTIProfileString(const char *sect, const char *entry, const char *val)
   if (winGetVersion() >= 400) /* not win32s */
   {
     LONG ec;
-    HKEY hInstKey, hBaseKey = (( HKEY ) 0x80000002 );/*HKEY_LOCAL_MACHINE;*/
+    HKEY hInstKey;
     char scratch[MAX_PATH + 2];
   
     lstrcat(lstrcpy(scratch,"Software\\"),sect);
@@ -247,7 +260,7 @@ unsigned int GetDCTIProfileString(const char *sect, const char *entry,
   if (winGetVersion() >= 400) /* not win32s */
   {
     int usedef = 1;
-    HKEY hInstKey, hBaseKey = (( HKEY ) 0x80000002 );/* HKEY_LOCAL_MACHINE; */
+    HKEY hInstKey;
     char scratch[MAX_PATH + 2];
     if (RegOpenKey( hBaseKey, lstrcat(lstrcpy(scratch,"Software\\"),sect), &hInstKey) == ERROR_SUCCESS)
     {
