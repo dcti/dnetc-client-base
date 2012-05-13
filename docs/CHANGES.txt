@@ -23,11 +23,21 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.124 2012/04/29 14:30:34 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.125 2012/05/13 10:03:30 stream Exp $
 ==========================================================================
 
 2.9100
 ------
+
+2.9111.520  imp: all: support for benchmarks > 2Gkeys/sec
+            chg: all: increase max threads to 512
+            imp: x86/amd64: Intel Sandy Bridge EE (#4456)
+            imp: x86/amd64: AMD FX (#4455)
+            imp: gpu: add -devicenum option (#4306)
+            imp: stream: identification of HD7950/HD7970 GPUs
+            imp: x86/amd64: AMD APU detection/selection (#4485)
+            fix: win64: window settings were not saved to registry
+            fix: win: misc gui fixes on 'core throughput' page
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core
@@ -40,12 +50,6 @@ Version change log: $Id: CHANGES.txt,v 1.124 2012/04/29 14:30:34 snikkel Exp $
             fix: cuda: processor counts for newer model fermi cards (#4441)
             imp: win: allow CUDA/Stream to coexist (#4274)
             imp: gpu: rename -cpuinfo to -gpuinfo
-            chg: all: increase max threads to 512
-            imp: x86/amd64: Intel Sandy Bridge EE (#4456)
-            imp: x86/amd64: AMD FX (#4455)
-            imp: gpu: add -devicenum option (#4306)
-            imp: stream: identification of HD7950/HD7970 GPUs
-            imp: x86/amd64: AMD APU detection/selection (#4485)
 
 2.9109.518  fix: all: OGR-NG codebase fixes (#4295)
             fix: all: OGR-NG incorrect node count after full restart
