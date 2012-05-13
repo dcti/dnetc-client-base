@@ -5,25 +5,17 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BENCH_H__
-#define __BENCH_H__ "@(#)$Id: bench.h,v 1.20 2012/01/13 01:05:21 snikkel Exp $"
+#define __BENCH_H__ "@(#)$Id: bench.h,v 1.21 2012/05/13 09:32:54 stream Exp $"
 
 #include "client.h"
 
-/* returns "rate", or 0 if not supported or core error */
-#ifdef HAVE_I64
-ui64 TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int flags );
-#else
-long TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int flags );
-#endif
+/* returns "rate", or -1 if core error/^C, or 0 if not supported */
+long TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int flags, u32 *p_ratehi, u32 *p_ratelo );
 #define TBENCHMARK_QUIET       0x01
 #define TBENCHMARK_IGNBRK      0x02
 // do not use 0x80, it's internal to TBenchmark
 //#define TBENCHMARK_CALIBRATION 0x80
-#ifdef HAVE_I64
-ui64 BenchGetBestRate(Client *client, unsigned int contestid);
-#else
-unsigned long BenchGetBestRate(Client *client, unsigned int contestid);
-#endif
+void BenchGetBestRate(Client *client, unsigned int contestid, u32 *p_ratehi, u32 *p_ratelo);
 void BenchResetStaticVars(void);
 
 #endif /* __BENCH_H__ */

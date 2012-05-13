@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.129 2012/01/13 01:05:22 snikkel Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.130 2012/05/13 09:32:55 stream Exp $"; }
 
 //#define TRACE
 
@@ -334,11 +334,7 @@ int InitializeCoreTable( int *coretypes ) /* ClientMain calls this */
 static long __bench_or_test( Client *client, int which, 
                             unsigned int cont_i, unsigned int benchsecs, int in_corenum )
 {
-  #ifdef HAVE_I64
-  ui64 rc = 0;
-  #else
-  long rc = 0;
-  #endif
+  long rc = -1;
 
   if (selcore_initlev > 0                  /* core table is initialized? */
       && cont_i < CONTEST_COUNT)           /* valid contest id? */
@@ -349,11 +345,7 @@ static long __bench_or_test( Client *client, int which,
     int coreidx, corecount = corecount_for_contest( cont_i );
     int fastest = -1;
     int hardcoded = selcoreGetPreselectedCoreForProject(cont_i);
-    #ifdef HAVE_I64
-    ui64 bestrate = 0, refrate = 0;
-    #else
-    long bestrate = 0, refrate = 0;
-    #endif
+    u32 bestrate_hi = 0, bestrate_lo = 0, refrate_hi = 0, refrate_lo = 0;
 
     rc = 0; /* assume nothing done */
     for (coreidx = 0; coreidx < corecount; coreidx++)
@@ -383,13 +375,16 @@ static long __bench_or_test( Client *client, int which,
         else if (which == 's') /* stresstest */
           rc = StressTest( client, cont_i );
         else {
-          rc = TBenchmark( client, cont_i, benchsecs, 0 );
+          u32 temprate_hi, temprate_lo;
+          rc = TBenchmark( client, cont_i, benchsecs, 0, &temprate_hi, &temprate_lo );
           if (rc > 0 && selcorestatics.corenum[cont_i] == hardcoded) {
-            refrate = rc;
+            refrate_hi = temprate_hi;
+            refrate_lo = temprate_lo;
           }
-          if (rc > bestrate) {
-            bestrate = rc;
-            fastest  = selcorestatics.corenum[cont_i];
+          if (rc > 0 && (temprate_hi > bestrate_hi || (temprate_hi == bestrate_hi && temprate_lo > bestrate_lo))) {
+            bestrate_hi = temprate_hi;
+            bestrate_lo = temprate_lo;
+            fastest     = selcorestatics.corenum[cont_i];
           }
         }
         #if (CLIENT_OS != OS_WIN32 || !defined(SMC))
@@ -415,29 +410,13 @@ static long __bench_or_test( Client *client, int which,
     /* Summarize the results if multiple cores have been benchmarked (#4108) */
 #if (CLIENT_CPU != CPU_CELLBE)
     /* Not applicable for Cell due to PPU/SPU core selection hacks */
-    if (in_corenum < 0 && fastest >= 0 && bestrate > 0) {
-      double percent = 100.0 * (double)refrate / (double)bestrate;
+    if (in_corenum < 0 && fastest >= 0 && (bestrate_hi != 0 || bestrate_lo != 0)) {
+      double percent = 100.0 * ((double)refrate_hi  * 4294967296.0 + (double)refrate_lo) /
+                               ((double)bestrate_hi * 4294967296.0 + (double)bestrate_lo);
       char bestrate_str[32], refrate_str[32];
 
-      #ifdef HAVE_I64
-      U64stringify(bestrate_str, sizeof(bestrate_str), 
-        (u32)(bestrate>>32), (u32)(bestrate & 0xfffffffful), 
-        2, 
-        CliGetContestUnitFromID(cont_i) );
-      U64stringify(refrate_str, sizeof(refrate_str), 
-        (u32)(refrate>>32), (u32)(refrate & 0xfffffffful), 
-        2, 
-        CliGetContestUnitFromID(cont_i) );
-      #else
-      U64stringify(bestrate_str, sizeof(bestrate_str),
-        0, (u32)(bestrate & 0xfffffffful),
-        2,
-        CliGetContestUnitFromID(cont_i) );
-      U64stringify(refrate_str, sizeof(refrate_str),
-        0, (u32)(refrate & 0xfffffffful),
-        2,
-        CliGetContestUnitFromID(cont_i) );
-      #endif
+      U64stringify(bestrate_str, sizeof(bestrate_str), bestrate_hi, bestrate_lo, 2, CliGetContestUnitFromID(cont_i));
+      U64stringify(refrate_str,  sizeof(refrate_str),  refrate_hi,  refrate_lo,  2, CliGetContestUnitFromID(cont_i));
 
       Log("%s benchmark summary :\n"
           "Default core : #%d (%s) %s/sec\n"
@@ -477,7 +456,7 @@ static long __bench_or_test( Client *client, int which,
           GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     {
       Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */
-      rc = 0; /* assume alloc failed */
+      rc = -1; /* assume alloc failed */
       if (prob)
       {
         Log("RC5: using x86 core.\n" );
@@ -589,11 +568,7 @@ int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid )
     if (corecount > 0)
     {
       int whichcrunch, saidmsg = 0, fastestcrunch = -1;
-      #ifdef HAVE_I64
-      ui64 fasttime = 0;
-      #else
-      unsigned long fasttime = 0;
-      #endif
+      u32 fasttime_hi = 0, fasttime_lo = 0;
 
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
@@ -601,11 +576,7 @@ int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid )
         if (whichcrunch == apply_selcore_substitution_rules(contestid, 
                                                               whichcrunch))
         {
-          #ifdef HAVE_I64
-          ui64 rate;
-          #else
-          long rate;
-          #endif
+          u32 rate_hi, rate_lo;
           selcorestatics.corenum[contestid] = whichcrunch;
           if (!saidmsg)
           {
@@ -615,14 +586,15 @@ int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid )
           }
           if (CheckExitRequestTriggerNoIO())
             break;
-          if ((rate = TBenchmark( client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK )) > 0)
+          if (TBenchmark( client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK, &rate_hi, &rate_lo ) > 0)
           {
 #ifdef DEBUG
-            LogScreen("%s Core %d: %d keys/sec\n", contname,whichcrunch,rate);
+            LogScreen("%s Core %d: %d:%d keys/sec\n", contname,whichcrunch,rate_hi,rate_lo);
 #endif
-            if (fastestcrunch < 0 || rate > fasttime)
+            if (fastestcrunch < 0 || (rate_hi > fasttime_hi || (rate_hi == fasttime_hi && rate_lo > fasttime_lo)))
             {
-              fasttime = rate;
+              fasttime_hi = rate_hi;
+              fasttime_lo = rate_lo;
               fastestcrunch = whichcrunch;
             }
           }

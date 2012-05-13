@@ -12,7 +12,7 @@
  * ---------------------------------------------------------------
 */
 const char *modereq_cpp(void) {
-  return "@(#)$Id: modereq.cpp,v 1.49 2012/01/13 01:05:22 snikkel Exp $";
+  return "@(#)$Id: modereq.cpp,v 1.50 2012/05/13 09:32:55 stream Exp $";
 }
 
 //#define TRACE
@@ -211,7 +211,7 @@ int ModeReqRun(Client *client)
                 else
                   selcoreBenchmark( client, contest, benchsecs, client->corenumtotestbench);
               else
-                TBenchmark( client, contest, benchsecs, 0 );
+                TBenchmark( client, contest, benchsecs, 0, NULL, NULL );
             }
           }
           Log("Compare and share your rates in the speeds database at\n"

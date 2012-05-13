@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.206 2012/01/13 01:05:22 snikkel Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.207 2012/05/13 09:32:55 stream Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -982,7 +982,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
    a previous RetrieveState(,,purge) will fail, and vice-versa.
 
    \param client is necessary for random subspace handling/random block
-   generation. It could be NULL in other cases.
+   generation and other global settings like GPU device number.
 
    return values:  0 OK
                   -1 error -> retry
@@ -2181,23 +2181,6 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
   return buffer;
 }
 
-/* ----------------------------------------------------------------------- */
-#ifdef HAVE_I64
-void U64split(ui64 in, u32 *hi, u32 *lo)
-{
-  *hi = (u32)(in>>32);
-  *lo = (u32)(in & 0xfffffffful);
-  return;
-}
-#endif
-/* ----------------------------------------------------------------------- */
-#ifdef HAVE_I64
-void U64join(ui64 *in, u32 hi, u32 lo)
-{
-  *in = ((ui64)hi<<32) + (ui64)lo;
-  return;
-}
-#endif
 /* ----------------------------------------------------------------------- */
 
 /* if secs:usecs is zero, ProblemComputeRate() just returns

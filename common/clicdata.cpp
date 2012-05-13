@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------------
 */ 
 const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.44 2012/01/13 01:05:21 snikkel Exp $"; }
+return "@(#)$Id: clicdata.cpp,v 1.45 2012/05/13 09:32:54 stream Exp $"; }
 
 //#define TRACE
 
@@ -122,11 +122,6 @@ int CliGetContestWorkUnitSpeed( Client *client, int contestid, int force, int *w
   {
     if ((conInfo->BestTime == 0) && force)
     {
-      #ifdef HAVE_I64
-      ui64 benchrate;
-      #else
-      unsigned long benchrate;
-      #endif
       u32 benchratehi, benchratelo;
 
       // This may trigger a mini-benchmark, which will get the speed
@@ -135,26 +130,15 @@ int CliGetContestWorkUnitSpeed( Client *client, int contestid, int force, int *w
 
       if (conInfo->BestTime == 0)
       {
-        benchrate = BenchGetBestRate(client, contestid);
-        #ifdef HAVE_I64
-        U64split(benchrate, &benchratehi, &benchratelo);
-        #else
-        benchratehi = 0;
-        benchratelo = benchrate;
-        #endif
-        if (benchrate)
+        BenchGetBestRate(client, contestid, &benchratehi, &benchratelo);
+        if (benchratehi || benchratelo)
           ProjectSetSpeed(contestid, benchratehi, benchratelo);
       }
       if (conInfo->BestTime == 0)
       {
-        benchrate = TBenchmark(client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK);
-        #ifdef HAVE_I64
-        U64split(benchrate, &benchratehi, &benchratelo);
-        #else
-        benchratehi = 0;
-        benchratelo = benchrate;
-        #endif
-        if (benchrate)
+        long status;
+        status = TBenchmark(client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK, &benchratehi, &benchratelo);
+        if (status > 0)
           ProjectSetSpeed(contestid, benchratehi, benchratelo);
       }
       if (conInfo->BestTime)

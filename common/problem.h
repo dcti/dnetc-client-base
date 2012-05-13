@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.113 2012/01/13 01:05:22 snikkel Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.114 2012/05/13 09:32:55 stream Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -280,11 +280,6 @@ int WorkGetSWUCount( const ContestWork *work,
 //               2=1+"nodes"/"keys"
 char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
                             int numstr_style, const char *numstr_suffix );
-
-#ifdef HAVE_I64
-void U64split(ui64, u32*, u32*);
-void U64join(ui64*, u32, u32);
-#endif
 
 /* result depends on #ifdefs, threadsafety issues etc */
 int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);

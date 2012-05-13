@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.73 2012/01/13 01:05:21 snikkel Exp $";
+  return "@(#)$Id: bench.cpp,v 1.74 2012/05/13 09:32:54 stream Exp $";
 }
 
 //#define TRACE
@@ -28,12 +28,8 @@ const char *bench_cpp(void) {
 #if (CONTEST_COUNT != 7)
   #error PROJECT_NOT_HANDLED("static initializer expects CONTEST_COUNT == 7")
 #endif
-#ifdef HAVE_I64
-ui64 
-#else
-unsigned long 
-#endif
-bestrate_tab[CONTEST_COUNT] = {0,0,0,0,0,0,0};
+static u32 bestrate_tab_hi[CONTEST_COUNT] = {0,0,0,0,0,0,0};
+static u32 bestrate_tab_lo[CONTEST_COUNT] = {0,0,0,0,0,0,0};
 
 /* -------------------------------------------------------------------- */
 
@@ -41,57 +37,56 @@ void BenchResetStaticVars(void)
 {
   int contest;
   for (contest = 0; contest < CONTEST_COUNT; contest++)
-    bestrate_tab[contest] = 0;
+  {
+    bestrate_tab_hi[contest] = 0;
+    bestrate_tab_lo[contest] = 0;
+  }
 }
 
 /* -------------------------------------------------------------------- */
 
 /* BenchGetBestRate() is always per-processor */
-#ifdef HAVE_I64
-ui64 
-#else
-unsigned long 
-#endif
-BenchGetBestRate(Client *client, unsigned int contestid)
+void BenchGetBestRate(Client *client, unsigned int contestid, u32 *p_ratehi, u32 *p_ratelo)
 {
 
   TRACE_OUT((+1, "BenchGetBestRate(%d)\n", contestid));
   if (contestid < CONTEST_COUNT)
   {
-    if (bestrate_tab[contestid] == 0)
+    if (bestrate_tab_hi[contestid] == 0 && bestrate_tab_lo[contestid] == 0)
     {
       // This may trigger a mini-benchmark, which will get the speed
       // we need and not waste time.
       selcoreGetSelectedCoreForContest( client, contestid );
     }
-    if (bestrate_tab[contestid] == 0)
+    if (bestrate_tab_hi[contestid] == 0 && bestrate_tab_lo[contestid] == 0)
     {
       TBenchmark(client, contestid, 2,
-                 TBENCHMARK_CALIBRATION|TBENCHMARK_QUIET|TBENCHMARK_IGNBRK);
+                 TBENCHMARK_CALIBRATION|TBENCHMARK_QUIET|TBENCHMARK_IGNBRK, NULL, NULL);
     }
-    TRACE_OUT((-1, "BenchGetBestRate(%d) => %llu\n", contestid, bestrate_tab[contestid]));
-    return bestrate_tab[contestid];
+    TRACE_OUT((-1, "BenchGetBestRate(%d) => %lu:%lu\n", contestid,
+              (unsigned long)bestrate_tab_hi[contestid], (unsigned long)bestrate_tab_lo[contestid]));
+    *p_ratehi = bestrate_tab_hi[contestid];
+    *p_ratelo = bestrate_tab_lo[contestid];
+    return;
   }
   TRACE_OUT((-1, "BenchGetBestRate(%d) => 0\n", contestid));
-  return 0;
+  *p_ratehi = 0;
+  *p_ratelo = 0;
+  return;
 }
 
 /* -------------------------------------------------------------------- */
 
-static inline void __BenchSetBestRate(unsigned int contestid, 
-#ifdef HAVE_I64
-ui64
-#else
-unsigned long 
-#endif
-rate)
+static inline void __BenchSetBestRate(unsigned int contestid, u32 rate_hi, u32 rate_lo)
 {
-  TRACE_OUT((0, "__BenchSetBestRate(%d, %llu)\n", contestid, 
-rate));
+  TRACE_OUT((0, "__BenchSetBestRate(%d, %lu:%lu)\n", contestid, (unsigned long)rate_hi, (unsigned long)rate_lo));
   if (contestid < CONTEST_COUNT)
   {
-    if (rate > bestrate_tab[contestid])
-      bestrate_tab[contestid] = rate;
+    if (rate_hi > bestrate_tab_hi[contestid] || (rate_hi == bestrate_tab_hi[contestid] && rate_lo > bestrate_tab_lo[contestid]))
+    {
+      bestrate_tab_hi[contestid] = rate_hi;
+      bestrate_tab_lo[contestid] = rate_lo;
+    }
   }
   return;
 }
@@ -99,20 +94,11 @@ rate));
 /* -------------------------------------------------------------------- */
 
 /* TBenchmark() is always per-processor */
-#ifdef HAVE_I64 
-ui64 
-#else 
-long 
-#endif 
-TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int flags )
+long TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int flags, u32 *p_ratehi, u32 *p_ratelo )
 {
   /* non-preemptive os minimum yields per second */
   struct { int yps, did_adjust; } non_preemptive_os;
-  #ifdef HAVE_I64
-  ui64 retvalue = 0; /* assume error */
-  #else
-  long retvalue = 0; /* assume error */
-  #endif
+  long retvalue = -1L; /* assume error */
   Problem *thisprob;
   u32 tslice;
 
@@ -155,18 +141,16 @@ TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int fl
 
   if (tslice == 0 && ( flags & TBENCHMARK_CALIBRATION ) == 0 )
   {
-    #ifdef HAVE_I64
-    ui64 res;
-    #else
     long res;
-    #endif
+    u32 res_hi, res_lo;
+
     if ((flags & TBENCHMARK_QUIET) == 0)
     {
       selcoreGetSelectedCoreForContest(client, contestid); /* let selcore message */
       //LogScreen("Calibrating ... " );
     }
-    res = TBenchmark( client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION );
-    if ( res <= 0 ) /* LoadState failed */
+    res = TBenchmark( client, contestid, 2, TBENCHMARK_QUIET | TBENCHMARK_IGNBRK | TBENCHMARK_CALIBRATION, &res_hi, &res_lo );
+    if ( res == -1 ) /* LoadState failed */
     {
       if ((flags & TBENCHMARK_QUIET) == 0)
       {
@@ -182,12 +166,12 @@ TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int fl
       #endif
       }
       TRACE_OUT((-1,"TBenchmark()=-1 (Calibration failed)\n"));
-      return 0;
+      return -1;
     }
-    if (res > 0xFFFFF000ul)
+    if (res_hi != 0 || res_lo > 0xFFFFF000ul)
       tslice = 0xFFFFF000ul;
     else
-      tslice = (((u32)res) + 0xFFFul) & 0xFFFFF000ul;
+      tslice = (res_lo + 0xFFF) & 0xFFFFF000ul;
     //if ((flags & TBENCHMARK_QUIET) == 0)
     //  LogScreen("\rCalibrating ... done. (%lu)\n", (unsigned long)tslice );
     if (non_preemptive_os.yps)
@@ -229,7 +213,7 @@ TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int fl
 
       while ( run == RESULT_WORKING )
       {
-        unsigned long permille; u32 ratehi, ratelo;
+        unsigned long permille;
 
         if (non_preemptive_os.yps) /* is this a non-preemptive environment? */
         {
@@ -244,11 +228,10 @@ TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int fl
               run = -2;
               break;
             }
-            ratelo = info.ratelo;
-            if (info.ratehi > 0)
+            if (info.ratehi != 0)
               newtslice = 0xFFFFF000ul;
             else
-              newtslice = (u32)(ratelo/((u32)non_preemptive_os.yps));
+              newtslice = (u32)(info.ratelo/((u32)non_preemptive_os.yps));
             if (newtslice > (tslice + (tslice/10)))
             {
               non_preemptive_os.did_adjust++;
@@ -269,6 +252,8 @@ TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int fl
         if (!thisprob->pub_data.last_runtime_is_invalid)
         {
           ProblemInfo info;
+          u32 ratehi, ratelo;
+
           if (ProblemGetInfo(thisprob, &info, P_INFO_DCOUNT) == -1)
           {
             run = -2;
@@ -355,12 +340,12 @@ TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int fl
             ProblemComputeRate( contestid, 0, 0, besthi, bestlo, &(info.ratehi),
                                 &(info.ratelo), info.rate.ratebuf, info.rate.size );
           }
-          #ifdef HAVE_I64
-          U64join(&retvalue, info.ratehi, info.ratelo);
-          #else
-          retvalue = info.ratelo;
-          #endif
-          __BenchSetBestRate(contestid, retvalue);
+          if (p_ratehi)
+            *p_ratehi = info.ratehi;
+          if (p_ratelo)
+            *p_ratelo = info.ratelo;
+          retvalue  = (info.ratehi != 0 || info.ratelo != 0);  /* 1 if result is valid (non-zero), 0 otherwise */
+          __BenchSetBestRate(contestid, info.ratehi, info.ratelo);
           if (!silent)
           {
             struct timeval tv;
@@ -392,6 +377,6 @@ TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, int fl
     ProblemFree(thisprob);
   }
 
-  TRACE_OUT((-1,"TBenchmark()=%llu\n", retvalue));
+  TRACE_OUT((-1,"TBenchmark()=%ld\n", retvalue));
   return retvalue;
 }
