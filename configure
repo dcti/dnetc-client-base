@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.427 2012/01/03 17:46:33 snikkel Exp $
+# @(#)$Id: configure,v 1.428 2012/05/13 09:06:44 stream Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -2420,6 +2420,27 @@ case "$1" in
         add_sources "linux" "cellbe" "altivec"
         ;;
 
+    *linux-cellbe-uclibc*)         # using uClibc
+        # 1. Need uClibc toolchain in the path, see buildroot.uclibc.org
+        # 2. Must build libspe2 (http://libspe.sourceforge.net) with uClibc first
+        #    and install libs/includes to uClibc toolchain tree.
+        TARGET_AS="powerpc-linux-as"
+        TARGET_CC="powerpc-linux-g++"
+        TARGET_STRIP="powerpc-linux-strip"
+        TARGET_SPUCC="spu-gcc"
+        TARGET_SPUAS="spu-as"
+        TARGET_SPUSTRIP="spu-strip"
+        TARGET_PPUEMBEDSPU="ppu-embedspu"
+        generate_gcc_opts "ppc" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DDYN_TIMESLICE -D__PPU__" # simulate ppu-gcc for correct CPU detection
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lspe2 -lpthread"
+        TARGET_DOCFILES="docs/readme.cell docs/readme.uclib"   #platform specific docfile
+        TARGET_TARBALL="linux-cellbe-uclibc"
+        TARGET_USES_GNUMAKE="yes"
+        add_sources "uclibc" "cellbe" "altivec"
+        ;;
+
 ###### SH4 platforms
 
   ### SH4 QNX targets
@@ -3533,7 +3554,7 @@ echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
-if [ "${BUILDNAME}" = "linux-cellbe" ]; then
+if [ -n "${TARGET_SPUCC}" ]; then
   echo "SPUCC = ${TARGET_SPUCC}" >> Makefile
   echo "SPUAS = ${TARGET_SPUAS}" >> Makefile
   echo "SPUSTRIP = ${TARGET_SPUSTRIP}" >> Makefile
@@ -3817,6 +3838,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       if [ "${TARGETTYP}" = "ccvec" ]; then
         if [ "${BUILDNAME}" = "ppc-macosx" -o \
              "${BUILDNAME}" = "morphos-ppc" -o \
+             "${BUILDNAME}" = "linux-cellbe-uclibc" -o \
              "${BUILDNAME}" = "linux-cellbe" ]; then
           # Do nothing extra, as all modules compiled with Altivec compiler switches on
           CCFLAGS_SELECT="${CCFLAGS_SELECT}"
