@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.160 2012/01/13 01:05:21 snikkel Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.161 2012/05/16 20:04:06 stream Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -106,7 +106,6 @@ struct thread_param_block
   #endif
   unsigned int threadnum;
   unsigned int numthreads;
-  int devicenum;
   int hasexited;
   int realthread;
   unsigned int priority;
@@ -823,7 +822,7 @@ static int __StopThread( struct thread_param_block *thrparams )
 
 static struct thread_param_block *__StartThread( unsigned int thread_i,
         unsigned int numthreads, unsigned int priority, int no_realthreads,
-        int is_non_preemptive_os, int devicenum )
+        int is_non_preemptive_os )
 {
   int success = 1, use_poll_process = 0;
 
@@ -836,7 +835,6 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
     thrparams->threadID = 0;              /* whatever type */
     thrparams->numthreads = numthreads;   /* unsigned int */
     thrparams->threadnum = thread_i;      /* unsigned int */
-    thrparams->devicenum = devicenum;     /* int */
     thrparams->realthread = 1;            /* int */
     thrparams->hasexited = 1;             /* not running yet */
     thrparams->priority = priority;       /* unsigned int */
@@ -1660,7 +1658,7 @@ int ClientRun( Client *client )
       struct thread_param_block *thrparams =
          __StartThread( prob_i, planned_problem_count,
                         client->priority, force_no_realthreads,
-                        is_non_preemptive_os, client->devicenum );
+                        is_non_preemptive_os );
       if ( thrparams )
       {
         if (!thread_data_table)

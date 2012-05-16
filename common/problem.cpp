@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.207 2012/05/13 09:32:55 stream Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.208 2012/05/16 20:04:06 stream Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -704,25 +704,6 @@ static int __InternalLoadState( InternalProblem *thisprob,
   thisprob->pub_data.pipeline_count = selinfo.pipeline_count;
   thisprob->pub_data.use_generic_proto = selinfo.use_generic_proto;
   thisprob->pub_data.cruncher_is_asynchronous = selinfo.cruncher_is_asynchronous;
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
-  thisprob->pub_data.devicenum = -1;
-  if (client)
-  {
-    if (client->devicenum >= 0)
-    {
-      thisprob->pub_data.devicenum = client->devicenum;
-    }
-  }
-  if ((thisprob->priv_data.initialized) 
-    && (thisprob->pub_data.devicenum == -1))
-  {
-    thisprob->pub_data.devicenum = thisprob->priv_data.threadindex;
-  }
-  if (thisprob->pub_data.devicenum == -1)
-  {
-    thisprob->pub_data.devicenum = 0;
-  }
-#endif
   memcpy( (void *)&(thisprob->pub_data.unit_func),
           &selinfo.unit_func, sizeof(thisprob->pub_data.unit_func));
 
@@ -847,7 +828,8 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
-      #if (CLIENT_CPU == CPU_CUDA)
+      #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
+      thisprob->priv_data.rc5_72unitwork.devicenum = (client->devicenum >= 0 ? client->devicenum : thisprob->priv_data.threadindex);
       thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = 0;
       thisprob->priv_data.rc5_72unitwork.best_time = -1;
       #endif
@@ -1311,9 +1293,6 @@ static int Run_RC5_72(InternalProblem *thisprob, /* already validated */
 
       *keyscheckedP = keystocheck; /* Pass 'keystocheck', get back 'keyschecked'*/
 
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
-      thisprob->priv_data.rc5_72unitwork.devicenum = thisprob->pub_data.devicenum;
-#endif     
       SAVE_CLIENT_OS_CONTEXT
 
       rescode = (*(thisprob->pub_data.unit_func.gen_72))(&thisprob->priv_data.rc5_72unitwork,keyscheckedP,thisprob->priv_data.core_membuffer);

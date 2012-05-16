@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.174 2012/01/13 01:05:21 snikkel Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.175 2012/05/16 20:04:06 stream Exp $"; }
 
 //#define TRACE
 
@@ -1627,8 +1627,24 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           missing_value = 1;
         else
         {
+          int n, nDev;
+
           skip_next = 1;
-          client->devicenum = atoi(argvalue);
+          n    = atoi(argvalue);
+          nDev = GetNumberOfDetectedProcessors();
+          if (n >= nDev)
+          {
+            invalid_value = 1;
+            if (run_level != 0)
+              LogScreenRaw("Device ID %d exceed number of detected devices (%d)\n", n, nDev);
+          }
+          else
+          {
+            if (run_level == 0)
+              client->devicenum = n;
+            else
+              LogScreenRaw("Setting device number to %d\n", client->devicenum);
+          }
         }
       }
       else if ( strcmp( thisarg, "-cktime" ) == 0 || /* obsolete */
@@ -2214,14 +2230,11 @@ int ParseCommandline( Client *client,
              client, run_level, retcodeP, restarted, &inimissing, &multiok );
 
   #if (CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM)
-  /* if a device is specified run only a single thread */  
-  if (client->devicenum >= 0)
+  /* if a device is specified run only a single thread */
+  /* for numcpu, 0 is same as "1 without shared memory", -1 is "auto" */
+  if (client->devicenum >= 0 && client->numcpu != 0)
   {
-    int numdevices = GetNumberOfDetectedProcessors();
-    if ((numdevices > 0) && (client->devicenum >= numdevices))  /* out of bounds */
-      client->devicenum = -1;
-    if (client->numcpu != 0)
-      client->numcpu = 1;
+    client->numcpu = 1;
   }
   #endif
 

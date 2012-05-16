@@ -8,7 +8,7 @@
  */
 
 #ifndef __PROBLEM_H__
-#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.114 2012/05/13 09:32:55 stream Exp $"
+#define __PROBLEM_H__ "@(#)$Id: problem.h,v 1.115 2012/05/16 20:04:07 stream Exp $"
 
 #include "cputypes.h" /* u32 */
 #include "ccoreio.h"  /* Crypto core stuff (including RESULT_* enum members) */
@@ -147,10 +147,6 @@ struct problem_publics
   int was_reset;                 /* set if loadstate reset the block     */
   int is_random;                 /* set if problem was RC5 'random'      */
   int is_benchmark;              /* set if problem is benchmark          */
-
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
-  int devicenum;                 /* sets which GPU to use                */
-#endif
 
   int loaderflags; /* used by problem loader (probfill.cpp) */
 
