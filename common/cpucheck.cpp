@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.206 2012/04/29 14:30:34 snikkel Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.207 2012/05/16 19:08:36 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -40,6 +40,15 @@ return "@(#)$Id: cpucheck.cpp,v 1.206 2012/04/29 14:30:34 snikkel Exp $"; }
 #elif (CLIENT_OS == OS_MORPHOS)
 #  include <exec/resident.h>
 #  include <exec/system.h>
+#elif (CLIENT_OS == OS_OPENBSD) && (CLIENT_CPU == CPU_POWERPC)
+#  include <machine/cpu.h>  // CPU_ALTIVEC
+/*
+ * Note to porter: Code is untested, just copied from bug #4363.
+ * After testing, please delete all "Untested" OpenBSD comments.
+ * If #include will not compile, please try to fix it first
+ * (try add 'extern "C"' or something else). As the last resort, use hack:
+ * #define CPU_ALTIVEC 2
+ */
 #endif
 
 #if (CLIENT_CPU == CPU_CELLBE)
@@ -960,6 +969,27 @@ static long __GetRawProcessorID(const char **cpuname)
       detectedtype = 0;
       break;
     }
+  }
+  #elif (CLIENT_OS == OS_OPENBSD)
+  /* Untested, coped from bug #4363 */
+  if (detectedtype == -2L)
+  {
+    char buffer[256];
+    int mib[2];
+    size_t len = (size_t)(sizeof(buffer)-1);
+    mib[0] = CTL_HW; mib[1] = HW_MODEL;
+    if (sysctl( mib, 2, &buffer[0], &len, NULL, 0 ) != 0) {
+      detectedtype = -1;
+    } else {
+      buffer[sizeof(buffer)-1] = 0;
+      strlcpy(namebuf, buffer, sizeof(namebuf));
+      detectedname = (const char*)&namebuf[0];
+      detectedtype = 1;
+    }
+    mib[0] = CTL_MACHDEP; mib[1] = CPU_ALTIVEC;
+    len = sizeof(isaltivec);
+    if (sysctl( mib, 2, &isaltivec, &len, NULL, 0 ) != 0)
+      isaltivec = 0;
   }
   #endif
   
@@ -2507,6 +2537,12 @@ unsigned int GetProcessorFrequency()
       }
       fclose(cpuinfo);
     }
+  #elif (CLIENT_OS == OS_OPENBSD)
+    /* Untested, coped from bug #4363 */
+    static int mib[2] = {CTL_HW, HW_CPUSPEED};
+    size_t len = sizeof(freq);
+    if (sysctl(mib, 2, &freq, &len, NULL, 0) != 0)
+      freq = 0;
   #endif
 
   return freq;
@@ -2581,6 +2617,15 @@ unsigned long GetProcessorFeatureFlags()
         }
       }
     }
+    #elif (CLIENT_OS == OS_OPENBSD)
+      /* Untested, copied from bug #4363. */
+      static int mib[2] = {CTL_MACHDEP, CPU_ALTIVEC};
+      int hasVectorUnit;
+      size_t len = sizeof(hasVectorUnit);
+      if (sysctl( mib, 2, &hasVectorUnit, &len, NULL, 0 ) == 0) {
+        if (hasVectorUnit != 0)
+          ppc_features |= CPU_F_ALTIVEC;
+      }
     #endif
     return ppc_features;
 
