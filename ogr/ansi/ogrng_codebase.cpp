@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.12 2010/07/10 19:29:52 stream Exp $
+ * $Id: ogrng_codebase.cpp,v 1.13 2012/05/17 17:57:25 stream Exp $
  */
 
 #include <string.h>   /* memset */
@@ -455,6 +455,8 @@ static int ogr_cycle_entry(void *state, int *pnodes, int with_time_constraints)
       if (oState->Levels[oState->depth].mark > safesize && found_one(oState) == 0) {
         continue;
       }
+      /* Simulate completion of the stub so ogr_getresult() will restore combined one */
+      oState->depth = oState->stopdepth;
       retval = CORE_S_SUCCESS;
     }
     else if (oState->depth <= oState->stopdepth) {

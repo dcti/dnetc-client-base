@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.125 2012/05/13 10:03:30 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.126 2012/05/17 17:57:25 stream Exp $
 ==========================================================================
 
 2.9100
@@ -38,6 +38,8 @@ Version change log: $Id: CHANGES.txt,v 1.125 2012/05/13 10:03:30 stream Exp $
             imp: x86/amd64: AMD APU detection/selection (#4485)
             fix: win64: window settings were not saved to registry
             fix: win: misc gui fixes on 'core throughput' page
+            imp: openbsd: cpu and altivec identification
+            fix: all: regression in OGR-NG codebase (#4295)
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core
