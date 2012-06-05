@@ -7,7 +7,7 @@
  * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 */
 const char *mail_cpp(void) {
-return "@(#)$Id: mail.cpp,v 1.49 2011/03/31 05:07:28 jlawson Exp $"; }
+return "@(#)$Id: mail.cpp,v 1.50 2012/06/05 22:12:55 snikkel Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 
@@ -327,15 +327,7 @@ static int smtp_open_message_envelope(void *net,
     pos = strlen( out_data );
     if (netconn_getname( net, &out_data[pos], 256 )!=0)
     {
-      u32 addr = netconn_getaddr( net ); 
-      if (!addr)
-        strcpy( &out_data[pos], "127.0.0.1" );//wicked! try it anyway
-      else
-      { 
-        char *p = (char *)(&addr);
-        sprintf( &out_data[pos], "%d.%d.%d.%d",
-               (p[0]&255), (p[1]&255), (p[2]&255), (p[3]&255) );
-      }
+      strcpy( &out_data[pos], "127.0.0.1" );//wicked! try it anyway
     }
     strcat( out_data, "\r\n" );
     if ( put_smtp_line( net, out_data, strlen(out_data) ))

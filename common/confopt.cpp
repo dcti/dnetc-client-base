@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.62 2012/01/13 01:05:21 snikkel Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.63 2012/06/05 22:12:54 snikkel Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -712,6 +712,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "The default hostname is the hostname component of the email address\n"
   "specified in the \"E-mail address that logs will be mailed from\" option.\n"
   "\n"
+  "Literal IPv6 addresses must be enclosed in \"[\" and \"]\". For example :\n"
+  "\"[1080::8:800:200C:417A]:1234\".\n"
+  "\n"
   "The default port specifier is 25.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 { 
@@ -776,6 +779,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "colon), and may include a port number override. For example :\n"
   "\"keyserv.hellsbells.org, join.the.dots.de:1234\".\n"
   "\n"
+  "Literal IPv6 addresses must be enclosed in \"[\" and \"]\". For example :\n"
+  "\"[1080::8:800:200C:417A]:1234\".\n"
+  "\n"
   "Host names/addresses without port numbers will inherit the port number\n"
   "from the \"Keyserver port\" option.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
@@ -831,6 +837,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "This field determines the host name or IP address of the firewall proxy\n"
   "through which the client should communicate. The proxy is expected to be\n"
   "on a local network. For example: \"socks.proxy.my:1080\"\n"
+  "\n"
+  "Literal IPv6 addresses must be enclosed in \"[\" and \"]\". For example :\n"
+  "\"[1080::8:800:200C:417A]:1080\".\n"
   "\n"
   "The port specifier defaults to 1080 for SOCKS and 8080 for HTTP.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL

@@ -6,7 +6,7 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.101 2012/05/01 06:24:22 stream Exp $"; }
+return "@(#)$Id: confrwv.cpp,v 1.102 2012/06/05 22:12:54 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -184,9 +184,16 @@ static int _readwrite_hostname_and_port( int aswrite, const char *fn,
         hostbuf[len] = '\0';
         if (len)
         {
+          int ip_literal_flag = 0;
           pos = 0;
-          while (hostbuf[pos] && hostbuf[pos]!=':')
+          while (hostbuf[pos] && (hostbuf[pos]!=':' && !ip_literal_flag))
+          {
+            if (hostbuf[pos] == '[')
+              ip_literal_flag = 1;
+            else if (hostbuf[pos] == ']')
+              ip_literal_flag = 0;
             pos++;
+          }
           if (hostbuf[pos] == ':')
           {
             portnum = atoi(&hostbuf[pos+1]);

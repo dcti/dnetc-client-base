@@ -13,7 +13,7 @@
  * module.
 */
 #ifndef __NETBASE_H__
-#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.7 2008/12/30 20:58:42 andreasb Exp $"
+#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.8 2012/06/05 22:12:55 snikkel Exp $"
 
 #include "cputypes.h" /* u32 */
 
@@ -67,7 +67,12 @@ const char *net_strerror(int /*ps_*/ errnum, SOCKET fd);
  * a dialup was explicitely caused, net_close() will disconnect.
  * If local_port is non-zero, a listener is created.
 */
+#ifdef HAVE_IPV6
+int net_open( SOCKET *sockP, const char *srv_hostname, int srv_port,
+                 int iotimeout /* millisecs */ );
+#else
 int net_open( SOCKET *sockP, u32 local_addr, int local_port );
+#endif
 int net_close( SOCKET sock );
 
 /* read/write from an endpoint. read() will return as soon as any
@@ -78,11 +83,13 @@ int net_close( SOCKET sock );
 *  be zero. This is believed to be more useful than returning a
 *  'timedout' error code.
 */
-int net_read( SOCKET sock, char *data, unsigned int *bufsz,
-              u32 that_address, int that_port, int iotimeout );
-int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
-               u32 that_address, int that_port, int iotimeout );
 
+int net_read( SOCKET sock, char *data, unsigned int *bufsz,
+              int iotimeout );
+int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
+               int iotimeout );
+
+#ifndef HAVE_IPV6
 /* connect to a peer. that_address and that_port are the address to
  * connect to. The authoritative peer address and port will be returned.
  * If a specific local address is to be connected() from, then pass that
@@ -94,12 +101,13 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
 int net_connect( SOCKET sock, u32 *that_address, int *that_port,
                  u32 *this_address, int *this_port,
                  int iotimeout /* millisecs */ );
+#endif
 
 /* NETDB name to address resolution. Returns error code on error, 0 on success
  * On entry, max_addrs contains the number of address slots in addr_list, on
  * return, it will contain the number of sucessfully obtained addresses.
 */
-int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs);
+int net_resolve_v4( const char *hostname, u32 *addr_list, unsigned int *max_addrs);
 
 /* get the name of the local host.
  * Returns error code on error, 0 on success.
@@ -110,8 +118,8 @@ int net_gethostname(char *buffer, unsigned int len);
  * versa. Unlike inet_addr(), the address is considered invalid if it
  * does not contain 4 parts.
 */
-int net_aton( const char *cp, u32 *inp );
-const char *net_ntoa( u32 addr );
+int net_aton_v4( const char *cp, u32 *inp );
+const char *net_ntoa_v4( u32 addr );
 
 #ifdef __cplusplus
 }

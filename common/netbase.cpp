@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.19 2012/01/06 04:57:40 snikkel Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.20 2012/06/05 22:12:55 snikkel Exp $"; }
 
 //#define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -91,6 +91,7 @@ return "@(#)$Id: netbase.cpp,v 1.19 2012/01/06 04:57:40 snikkel Exp $"; }
 #endif
 
 #include "baseincs.h"
+#include "logstuff.h"  // LogScreen()
 
 #if (CLIENT_OS == OS_VMS)
   #include <ioctl.h>
@@ -1884,6 +1885,232 @@ static int bsd_condition_new_socket(SOCKET fd, int as_listener)
 
 /* --------------------------------------------------------------------- */
 
+#ifdef HAVE_IPV6
+
+int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
+    int iotimeout /* millisecs */ )
+{
+  int rc = 0;
+  struct addrinfo *ai_res;
+  struct addrinfo ai_hints;
+  char srv_portS[6+1];
+  SOCKET sock = -1;
+
+  if (!sockP)
+    return ps_EINVAL;
+
+  TRACE_OPEN((+1,"net_open(%p, %s:%d)\n", sockP, srv_hostname, srv_port ));
+  if (!srv_hostname || srv_port<0 || srv_port>0xffff)
+  {
+    rc = ps_EINVAL;
+  }
+  if ((++open_endpoint_count) == 1)
+  {
+    if ((rc = net_init_check_deinit(+1,0)) != 0)
+    {
+      open_endpoint_count--;
+    }
+  }
+  else if ((rc = net_init_check_deinit(0,0)) != 0)
+  {
+    open_endpoint_count--; /* rc = ps_ENETDOWN|ps_ENOSYS; above */
+  }
+  if (rc != 0)
+    return rc;
+
+  memset(&ai_hints, '\0', sizeof(ai_hints));
+  ai_hints.ai_socktype = SOCK_STREAM;
+  ai_hints.ai_protocol = IPPROTO_TCP;
+  ai_hints.ai_flags = AI_ADDRCONFIG;
+  snprintf(srv_portS, 6+1, "%06d", srv_port);
+  rc = getaddrinfo(srv_hostname, srv_portS, &ai_hints, &ai_res);
+  if (rc != 0) {
+    Log( "getaddrinfo: %s\n", gai_strerror (rc));
+    if ((--open_endpoint_count)==0)
+      net_init_check_deinit(-1,0);
+    return rc;
+  }
+
+  sock = -1;
+  for (struct addrinfo *r = ai_res; r != NULL; r = r->ai_next)
+  {
+    TRACE_OPEN((+1,"socket( )\n" ));
+    sock = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
+    TRACE_OPEN((-1,"socket( ) => %d%s\n",sock, trace_expand_api_rc(((sock==-1)?(-1):(0)),sock) ));
+    if (sock == -1)
+    {
+      rc = ps_stdneterr;
+      ps_oereserved_cache.ps_errnum = ___read_errnos( INVALID_SOCKET, rc,
+                                      &ps_oereserved_cache.syserr,
+                                      &ps_oereserved_cache.neterr,
+                                      &ps_oereserved_cache.extra );
+      rc = ps_oereserved;
+      continue; // for; try next address
+    }
+    else
+    {
+      rc = bsd_condition_new_socket( sock, 0 );
+      if (rc == 0)
+      {
+        *sockP = sock;
+      }
+      else
+      {
+        net_close(sock);
+        if ((--open_endpoint_count)==0)
+          net_init_check_deinit(-1,0);
+        return rc;
+      }
+    } /* if (sock != -1) */
+
+    int break_pending = CheckExitRequestTriggerNoIO();
+    int loopcount = 0, maxloops = 0, mssleep = 0;
+    __calc_timeout_metrics(iotimeout, /* millisecs */
+                           &maxloops, /* max number of loops */
+                           &mssleep ); /* sleep time per loop */
+
+    int in_progress = 0, is_async = 1;
+
+    #if defined(FIONREAD)  /* socket default state is blocking */
+    is_async = 0;
+    if (iotimeout >= 0) /* we have a non-blocking timeout value */
+    {
+      if (net_set_nonblocking(sock) == 0) /* so convert to non-blocking */
+        is_async = 1;
+    }
+    #endif
+
+    TRACE_CONNECT((+1,"connect( )\n"));
+    rc = connect(sock, r->ai_addr, r->ai_addrlen);
+    TRACE_CONNECT((-1,"connect( ) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
+
+    TRACE_CONNECT((0,"phase 1: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
+    if (rc != 0) /* connect error or not complete */
+    {
+      rc = ps_stdneterr;
+      if (is_async && net_match_errno(ps_EINPROGRESS))
+      {
+        in_progress = 1;
+        rc = 0;
+      }
+    }
+    TRACE_CONNECT((0,"phase 2: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
+    if (is_async) /* connect was executed asynchronously */
+    {
+      #if defined(FIONREAD) /* socket default state is blocking */
+      int rc2 = net_set_blocking(sock); /* so return to blocking state */
+      if (rc == 0) rc = rc2;
+      #endif
+    }
+    TRACE_CONNECT((0,"phase 3: rc=%d is_async=%d in_progress=%d\n",rc,is_async,in_progress));
+    if (rc == 0 && in_progress) /* connect completion pending */
+    {
+      TRACE_CONNECT((+1,"EINPROGRESS loop\n"));
+      for (;;)
+      {
+        int revents = 0;
+        #if defined(LOOK_NOT_POLL)
+        TRACE_CONNECT((0,"begin net_look\n"));
+        rc = net_look( sock, ps_T_CONNECT, &revents, mssleep );
+        TRACE_CONNECT((0,"end net_look\n"));
+        if (rc != 0)
+          break;
+        if (revents == ps_T_CONNECT)
+        {
+          rc = 0;
+          break;
+        }
+        #else
+        rc = net_poll1( sock, POLLOUT|POLLIN, &revents, mssleep );
+        if (rc != 0)
+          break;
+        if ((revents & POLLERR)!=0) /* this shouldn't happen */
+        {                           /* (rc should be non-zero) */
+          rc = ps_stdneterr;
+          break;
+        }
+        if ((revents & POLLIN)!=0)  /* we have an error */
+        {
+          char c;
+          TRACE_CONNECT((+1,"recv(s,&ch,1,0)\n"));
+          rc = recv(sock, &c, 1, 0);
+          TRACE_CONNECT((-1,"recv(s,&ch,1,0) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
+          if (rc != 0) /* should always be the case here */
+          {
+            rc = ps_stdneterr;
+            break;
+          }
+        }
+        if ((revents & POLLOUT)!=0)
+        {
+          rc = 0;
+          break;
+        }
+        #endif
+        #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64))
+        {
+          /* wsock32.dll bug: does not set wfds on successful connect */
+          TRACE_CONNECT((+1,"2] connect(s, %s:%d)\n", srv_hostname, srv_port));
+          rc = connect(sock, r->ai_addr, r->ai_addrlen);
+          TRACE_CONNECT((-1,"2] connect(s) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
+          if (rc == 0)
+            break;
+          rc = WSAGetLastError();
+          if (rc == WSAEINVAL) /* Winsock 1.1 returns WSAEINVAL */
+            rc = WSAEALREADY;  /* instead of WSAEALREADY */
+          if (rc == WSAEISCONN)
+          {
+            rc = 0;
+            break;
+          }
+          if (rc != WSAEINPROGRESS && rc != WSAEALREADY && rc != WSAEWOULDBLOCK)
+          {
+            rc = ps_stdneterr;
+            break;
+          }
+        }
+        #endif
+        if (!break_pending && CheckExitRequestTriggerNoIO())
+        {
+          rc = ps_EINTR;
+          break;
+        }
+        if ((++loopcount) >= maxloops)
+        {
+          rc = ps_ETIMEDOUT;
+          break;
+        }
+        TRACE_CONNECT((0,"EINPROGRESS loop bottom\n"));
+      } /* for (;;) */
+      TRACE_CONNECT((-1,"EINPROGRESS loop =>%d%s\n",rc,trace_expand_ps_rc(rc,sock)));
+    } /* connect completion pending */
+    
+    if (rc != 0)
+    {
+      ps_oereserved_cache.ps_errnum = ___read_errnos( INVALID_SOCKET, rc,
+                                      &ps_oereserved_cache.syserr,
+                                      &ps_oereserved_cache.neterr,
+                                      &ps_oereserved_cache.extra );
+      rc = ps_oereserved;
+      continue; // for; try next address
+    }
+  } // for addrinfo
+  freeaddrinfo(ai_res);
+
+  if (rc != 0)
+  {
+    net_close(sock);
+    if ((--open_endpoint_count)==0)
+      net_init_check_deinit(-1,0);
+    return rc;
+  }
+
+  TRACE_CONNECT((-1, "net_open(...) => %d%s\n", rc, trace_expand_ps_rc(rc,sock)));
+  return rc;
+}
+
+#else // HAVE_IPV6
+
 int net_open(SOCKET *sockP, u32 local_addr, int local_port)
 {
   int rc = 0;
@@ -1891,7 +2118,7 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
   if (!sockP)
     return ps_EINVAL;
 
-  TRACE_OPEN((+1,"net_open(%p, %s:%d)\n", sockP, net_ntoa(local_addr), local_port ));
+  TRACE_OPEN((+1,"net_open(%p, %s:%d)\n", sockP, net_ntoa_v4(local_addr), local_port ));
   if (local_port<0 || local_port>0xffff || local_addr==0xffffffff)
   {
     rc = ps_EINVAL;
@@ -1910,9 +2137,6 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
 
   if (rc == 0)
   {
-    #if defined(AF_INET)
-    #endif
-
     #if defined(_TIUSER_)
     {
       int fd = t_open("/dev/tcp", O_RDWR|O_NDELAY, ((struct t_info *)0) );
@@ -1962,7 +2186,7 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
           saddr.sin_family = AF_INET;
           saddr.sin_port = htons(((u16)local_port));
           saddr.sin_addr.s_addr = local_addr;
-          TRACE_OPEN((+1,"bind(fd,%s:%d,...)\n",net_ntoa(local_addr),local_port));
+          TRACE_OPEN((+1,"bind(fd,%s:%d,...)\n",net_ntoa_v4(local_addr),local_port));
           while (bind(fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
           {
             if (net_match_errno(ps_EINTR)) /* caught a signal */
@@ -1970,7 +2194,7 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
             rc = ps_stdneterr;
             break;
           }
-          TRACE_OPEN((-1,"bind(fd,%s:%d,...) => %d%s\n",net_ntoa(local_addr),local_port,rc, trace_expand_ps_rc(rc,fd) ));
+          TRACE_OPEN((-1,"bind(fd,%s:%d,...) => %d%s\n",net_ntoa_v4(local_addr),local_port,rc, trace_expand_ps_rc(rc,fd) ));
         }
         if (rc == 0 && local_port) /* server */
         {
@@ -2009,6 +2233,9 @@ int net_open(SOCKET *sockP, u32 local_addr, int local_port)
   return rc;
 }
 
+#endif  // HAVE_IPV6
+
+#ifndef HAVE_IPV6
 /* ======================================================================== */
 /* CONNECT/ACCEPT                                                           */
 /* ======================================================================== */
@@ -2023,7 +2250,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
   DNETC_UNUSED_PARAM(this_port);
 
   TRACE_CONNECT((+1, "net_connect(s, %s:%d, %d)\n",
-                 net_ntoa((that_address)?(*that_address):(0)),
+                 net_ntoa_v4((that_address)?(*that_address):(0)),
                  ((that_port)?(*that_port):(0)), iotimeout ));
 
   if ( sock == INVALID_SOCKET )
@@ -2173,7 +2400,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
           memset((void *) &saddr, 0, sizeof(saddr));
           saddr.sin_family = AF_INET;
           saddr.sin_addr.s_addr = *this_address;
-          TRACE_CONNECT((+1,"bind(fd,%s:%d,...)\n",net_ntoa(*this_address),0));
+          TRACE_CONNECT((+1,"bind(fd,%s:%d,...)\n",net_ntoa_v4(*this_address),0));
           while (bind(sock, (struct sockaddr *)&saddr, sizeof(saddr)) < 0)
           {
             if (net_match_errno(ps_EINTR)) /* caught a signal */
@@ -2202,7 +2429,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
         }
         #endif
 
-        TRACE_CONNECT((+1,"connect(s, %s:%d)\n", net_ntoa(*that_address), *that_port));
+        TRACE_CONNECT((+1,"connect(s, %s:%d)\n", net_ntoa_v4(*that_address), *that_port));
         rc = connect(sock, (struct sockaddr *)&saddr, sizeof(saddr));
         TRACE_CONNECT((-1,"connect(s) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
 
@@ -2231,7 +2458,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
           for (;;)
           {
             int revents = 0;
-#if defined(LOOK_NOT_POLL)
+            #if defined(LOOK_NOT_POLL)
             TRACE_CONNECT((0,"begin net_look\n"));
             rc = net_look( sock, ps_T_CONNECT, &revents, mssleep );
             TRACE_CONNECT((0,"end net_look\n"));
@@ -2242,7 +2469,7 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
               rc = 0;
               break;
             }
-#else
+            #else
             rc = net_poll1( sock, POLLOUT|POLLIN, &revents, mssleep );
             if (rc != 0)
               break;
@@ -2268,11 +2495,11 @@ int net_connect( SOCKET sock, u32 *that_address, int *that_port,
               rc = 0;
               break;
             }
-#endif
+            #endif
             #if ((CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64))
             {
               /* wsock32.dll bug: does not set wfds on successful connect */
-              TRACE_CONNECT((+1,"2] connect(s, %s:%d)\n", net_ntoa(*that_address), *that_port));
+              TRACE_CONNECT((+1,"2] connect(s, %s:%d)\n", net_ntoa_v4(*that_address), *that_port));
               rc = connect(sock, (struct sockaddr *)&saddr, sizeof(saddr));
               TRACE_CONNECT((-1,"2] connect(s) => %d%s\n", rc, trace_expand_api_rc(rc,sock) ));
               if (rc == 0)
@@ -2544,6 +2771,7 @@ int net_accept( SOCKET listen_fd, SOCKET *conn_fdP,
   TRACE_ACCEPT((-1, "net_accept(...) => %d%s\n", rc, trace_expand_ps_rc(rc,listen_fd)));
   return rc;
 }
+#endif
 
 /* ======================================================================== */
 /* READ/WRITE                                                               */
@@ -2558,21 +2786,21 @@ int net_accept( SOCKET listen_fd, SOCKET *conn_fdP,
 *  'timedout' error code.
 */
 int net_read( SOCKET sock, char *data, unsigned int *bufsz,
-              u32 that_address, int that_port, int iotimeout /*millisecs*/ )
+              int iotimeout /*millisecs*/ )
 {
   unsigned int totaltodo = ((bufsz)?(*bufsz):(0));
   unsigned int totaldone = 0;
   int rc;
 
-  TRACE_READ((+1,"net_read(s, %p, %d, %s:%d, %d)\n",
-             data, totaltodo, net_ntoa(that_address), that_port, iotimeout));
+  TRACE_READ((+1,"net_read(s, %p, %d, %d)\n",
+             data, totaltodo, iotimeout));
 
   rc = ps_ENETDOWN;
   if ( sock == INVALID_SOCKET )
   {
     rc = ps_EBADF;
   }
-  else if (!bufsz || !data || !that_address || !that_port)
+  else if (!bufsz || !data)
   {
     rc = ps_EINVAL;
   }
@@ -2699,17 +2927,7 @@ int net_read( SOCKET sock, char *data, unsigned int *bufsz,
           if (toread >= 0) /* note that we want to read if read_ready is */
           {                /* zero - its going to be an error */
             TRACE_READ((+1,"recv(s, data, %d)\n", toread ));
-            #if 0
-            struct sockaddr_in saddr;
-            socklen_t sz = sizeof(saddr);
-            memset((void *) &saddr, 0, sizeof(saddr));
-            saddr.sin_family = AF_INET;
-            saddr.sin_port = htons(((u16)that_port));
-            saddr.sin_addr.s_addr = that_address;
-            didread = recvfrom(sock, data, toread, 0, (struct sockaddr *)&saddr, &sz );
-            #else
             didread = recv(sock, data, toread, 0 );
-            #endif
             TRACE_READ((-1,"recv(s, data, %d) =%d%s\n", toread, didread, trace_expand_api_rc(didread,sock) ));
             if (didread < 0)
             {
@@ -2768,7 +2986,7 @@ int net_read( SOCKET sock, char *data, unsigned int *bufsz,
 /* --------------------------------------------------------------------- */
 
 int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
-               u32 that_address, int that_port, int iotimeout /*millisecs*/ )
+               int iotimeout /*millisecs*/ )
 {
   unsigned int totaltodo = ((bufsz)?(*bufsz):(0));
   unsigned int totaldone = 0;
@@ -2778,13 +2996,13 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
   if (__data)
     *((const char **)&data) = __data; /* drop const without compiler warning*/
 
-  TRACE_WRITE((+1,"net_write(s,%p, %d,'%s:%d',%d)\n",
-             data, totaltodo, net_ntoa(that_address),that_port,iotimeout ));
+  TRACE_WRITE((+1,"net_write(s,%p, %d, %d)\n",
+             data, totaltodo, iotimeout ));
 
   rc = ps_ENETDOWN;
   if ( sock == INVALID_SOCKET )
     rc = ps_EBADF;
-  else if (!data || !bufsz || !that_address || that_port<=0 || that_port>0xffff)
+  else if (!data || !bufsz)
     rc = ps_EINVAL;
   else if ((rc = net_init_check_deinit(0,0)) == 0) /* check */
   {
@@ -2853,13 +3071,6 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
 #endif
         {
           int written, towrite;
-          #if defined(AF_INET)
-          struct sockaddr_in saddr;
-          memset((void *) &saddr, 0, sizeof(saddr));
-          saddr.sin_family = AF_INET;
-          saddr.sin_port = htons(((u16)that_port));
-          saddr.sin_addr.s_addr = that_address;
-          #endif
 
           written = -1;
           towrite = sendquota;
@@ -2897,11 +3108,9 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
           #elif defined(SOCK_STREAM)      //BSD 4.3 sockets
           if (towrite > 0)
           {
-            TRACE_WRITE((+1,"sendto(s,data,%d,0,'%s:%d',%d)\n",towrite,net_ntoa(that_address),that_port,sizeof(saddr) ));
+            TRACE_WRITE((+1,"send(s,data,%d,0)\n",towrite ));
             written = send(sock, data, towrite, 0);
-            //written = sendto(sock, data, towrite, 0,
-            //                   (struct sockaddr *)&saddr, sizeof(saddr) );
-            TRACE_WRITE((-1,"sendto() => %d\n", rc ));
+            TRACE_WRITE((-1,"send() => %d\n", rc ));
             if (written == 0) /* a zero here can only mean disconnect */
             {
               rc = ps_EDISCO;
@@ -2960,7 +3169,7 @@ int net_write( SOCKET sock, const char *__data, unsigned int *bufsz,
  * \param addr The IPv4 address to convert
  * \return Returns a pointer to a static buffer with the converted address.
  */
-const char *net_ntoa(u32 addr)
+const char *net_ntoa_v4(u32 addr)
 {
   static char buff[sizeof("255.255.255.255  ")];
   char *p = (char *)(&addr);
@@ -3110,7 +3319,7 @@ static int _inet_atox( const char *cp,
 }
 
 /* unlike inet_aton() this _requires_ the address to have 4 parts */
-int net_aton( const char *cp, u32 *addrp )
+int net_aton_v4( const char *cp, u32 *addrp )
 {
   if (_inet_atox( cp, addrp, 4, 'h' ) == 0)
     return 0;
@@ -3192,7 +3401,7 @@ int net_gethostname(char *buffer, unsigned int len)
  *     the used size of the buffer.
  * \return Returns 0 on success, otherwise an error code.
  */
-int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
+int net_resolve_v4( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
 {
   int rc;
 #if (CLIENT_OS == OS_SCO) || ((CLIENT_OS == OS_AMIGAOS) && defined(__amigaos4__))
@@ -3240,7 +3449,7 @@ int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
         rc = ps_EINVAL;
         if (dot_count == 3) /* 3 dots */
         {
-          if (net_aton(buffer, &addr) != 0)
+          if (net_aton_v4(buffer, &addr) != 0)
             addr = 0xffffffff; /* can't resolve a broadcast addr, so this is ok */
           TRACE_NETDB((0,"1) inet_aton() => 0x%08x\n", addr ));
           if (addr != 0xffffffff)
@@ -3258,7 +3467,7 @@ int net_resolve( const char *hostname, u32 *addr_list, unsigned int *max_addrs)
          && ((len-13) == (3+digit_count)) ) /* the rest is an IP address */
         {
           buffer[len-13] = '\0';
-          if (net_aton(buffer, &addr) != 0)
+          if (net_aton_v4(buffer, &addr) != 0)
             addr = 0xffffffff; /* can't resolve a broadcast addr, so this is ok */
           TRACE_NETDB((0,"2) inet_aton() => 0x%08x\n", addr ));
           if (addr != 0xffffffff)

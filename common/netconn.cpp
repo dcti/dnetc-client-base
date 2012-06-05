@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.9 2010/07/10 19:11:17 stream Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.10 2012/06/05 22:12:55 snikkel Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -86,7 +86,9 @@ typedef struct
 
   char fwall_hostname[64]; //intermediate
   int  fwall_hostport;
+  #ifndef HAVE_IPV6
   u32  fwall_hostaddr;
+  #endif
   char fwall_userpass[128]; //username+password
 
   #define MAX_SVC_HOSTNAMES 8
@@ -102,13 +104,16 @@ typedef struct
 
   const char *svc_hostname; // name of the final dest (server_name or rrdns_name)
   int  svc_hostport;   // the port of the final destination
-  u32  svc_hostaddr;   // resolved if direct connection or socks.
+  u32  svc_hostaddr;   // resolved or proxy returned address
+  const char *svc_hostaddr_full;  // address returned by proxy in http mode (v4 or v6)
 
   const char *conn_hostname; // hostname we connect()ing to (fwall or server)
   int  conn_hostport;  // port we are connect()ing to
+  #ifndef HAVE_IPV6
   u32  conn_hostaddr;  // the address we are connect()ing to
   int  local_hostport; // the port we are connect()ing from
   u32  local_hostaddr; // the address we are connect()ing from
+  #endif
 
   NETSPOOL netbuffer;  // "persistant" storage decoding HTTP/UUE stream
   int puthttpdone;     // reset the connection before every http ::Put
@@ -322,7 +327,7 @@ static int __init_connection(NETSTATE *netstate)
     int authaccepted = 0;
 
     len = len2 = 2 + psocks5mreq->nMethods;
-    rc = net_write(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
+    rc = net_write(netstate->sock,socksreq,&len,netstate->iotimeout);
     if (rc != 0)
     {
       if (netstate->verbose_level > 0)
@@ -338,7 +343,7 @@ static int __init_connection(NETSTATE *netstate)
     else 
     {
       len = len2 = 2;
-      rc = net_read(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
+      rc = net_read(netstate->sock,socksreq,&len,netstate->iotimeout);
       if (rc != 0)
       {
         if (netstate->verbose_level > 0)
@@ -403,7 +408,7 @@ static int __init_connection(NETSTATE *netstate)
         len += pwlen;
 
         len2 = len;
-        rc = net_write(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
+        rc = net_write(netstate->sock,socksreq,&len,netstate->iotimeout);
         if (rc != 0)
         {
           if (netstate->verbose_level > 0)
@@ -419,7 +424,7 @@ static int __init_connection(NETSTATE *netstate)
         else
         {
           len = len2 = 2;
-          rc = net_read(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
+          rc = net_read(netstate->sock,socksreq,&len,netstate->iotimeout);
           if (rc != 0)
           {
             if (netstate->verbose_level > 0)
@@ -478,7 +483,7 @@ static int __init_connection(NETSTATE *netstate)
       }
 
       len = packetsize;
-      rc = net_write(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
+      rc = net_write(netstate->sock,socksreq,&len,netstate->iotimeout);
       if (rc != 0)
       {
         if (netstate->verbose_level > 0)
@@ -494,7 +499,7 @@ static int __init_connection(NETSTATE *netstate)
       else 
       {
         len = packetsize;
-        rc = net_read(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
+        rc = net_read(netstate->sock,socksreq,&len,netstate->iotimeout);
         if (rc != 0)        
         {
           if (netstate->verbose_level > 0)
@@ -516,8 +521,10 @@ static int __init_connection(NETSTATE *netstate)
         else if (psocks5->cmdORrep == 0)  // 0 is successful connect
         {
           success = 1;
+          #ifndef HAVE_IPV6 /* hostname worked, why switch to IP now? */
           if (psocks5->atyp == 1)  // IPv4
             netstate->svc_hostaddr = psocks5->addr;
+          #endif
         }
         else if (netstate->svc_hostaddr != 0 /* we used an IP address */
              && (psocks5->cmdORrep == 3 || /*"Network unreachable"*/
@@ -533,7 +540,7 @@ static int __init_connection(NETSTATE *netstate)
             else if (psocks5->cmdORrep == 4)
               failcause = "failed. (host unreachable)";
             Log("SOCKS5: connect to %s:%u %s\n",
-                        net_ntoa(netstate->svc_hostaddr),
+                        netstate->svc_hostname,
                         (unsigned int)netstate->svc_hostport, 
                         failcause );
           }
@@ -594,7 +601,7 @@ static int __init_connection(NETSTATE *netstate)
     }      
 
     len2 = len;
-    rc = net_write(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
+    rc = net_write(netstate->sock,socksreq,&len,netstate->iotimeout);
     if (rc != 0)
     {
       if (netstate->verbose_level > 0)
@@ -612,7 +619,7 @@ static int __init_connection(NETSTATE *netstate)
       len = sizeof(*psocks4) - 1;  // - 1 for the USERID[1]
       len2 = len;
 
-      rc = net_read(netstate->sock,socksreq,&len,netstate->conn_hostaddr,netstate->conn_hostport,netstate->iotimeout);
+      rc = net_read(netstate->sock,socksreq,&len,netstate->iotimeout);
       if (rc != 0)
       {
         if (netstate->verbose_level > 0)
@@ -666,6 +673,8 @@ static int __init_connection(NETSTATE *netstate)
  * \param cookie Network connection to open.
  * \return Returns -1 on error, 0 on success
  */
+#ifdef HAVE_IPV6
+
 static int __open_connection(void *cookie)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
@@ -703,69 +712,27 @@ static int __open_connection(void *cookie)
 
     TRACE_OUT((0,"whichtry=%d, maxtries=%d, netstate->reconnected=%d, svc='%s'\n", whichtry, maxtries, netstate->reconnected,netstate->svc_hostname));
 
-    /* ---------- create a new socket --------------- */
+    /* --- set the connection hostname --- */
 
     if (success)
     {
-      SOCKET newsock;
-      rc = net_open( &newsock, 0, 0 );
-      if (rc != 0)
+      if (is_fwalled)
       {
-        newsock = INVALID_SOCKET;
-        if (netstate->verbose_level > 0)
-        {
-          Log("Unable to create network endpoint\n%s\n",
-                    net_strerror( rc, newsock) );
-        }
-        success = 0;
-        maxtries = -1; /* no point retrying if we can't create a socket */
+        netstate->conn_hostname = netstate->fwall_hostname;
+        netstate->conn_hostport = netstate->fwall_hostport;
       }
-      else /* success */
+      else
       {
-        if (netstate->sock != INVALID_SOCKET)
-          net_close(netstate->sock);
-        netstate->sock = newsock;
+        netstate->conn_hostname = netstate->svc_hostname;
+        netstate->conn_hostport = netstate->svc_hostport;
       }
-    }
-
-    /* --- resolve the firewall hostname --- */
-
-    if (success && is_fwalled)
-    {
-      TRACE_OUT((+1,"resolve netstate->fwall_hostname\n"));
-      if (netstate->fwall_hostaddr == 0) /* no address for firewall yet */
-      {
-        unsigned int count;
-        if (!netstate->reconnected && netstate->verbose_level > 0)
-          LogScreen( "\rAttempting to resolve %s...", netstate->fwall_hostname );
-
-        count = 1;
-        rc = net_resolve( netstate->fwall_hostname, &netstate->fwall_hostaddr, &count);
-        if (rc != 0)
-        {
-          success = 0;
-          netstate->fwall_hostaddr = 0;
-          if (netstate->verbose_level > 0)
-            Log("\rNet::failed to resolve name \"%s\"\n%s\n",
-                      netstate->fwall_hostname, net_strerror( rc, netstate->sock ) );
-           maxtries = -1; // unrecoverable error. retry won't help
-        }
-      }
-      TRACE_OUT((-1,"resolve netstate->fwall_hostname = %s\n",net_ntoa(netstate->fwall_hostaddr)));
-      netstate->conn_hostaddr = netstate->fwall_hostaddr;
-      netstate->conn_hostname = netstate->fwall_hostname;
-      netstate->conn_hostport = netstate->fwall_hostport;
     }
 
     /* --- resolve the service hostname --- */
 
-    if (success)
+    if (success && (netstate->startmode & MODE_SOCKS4))
     {
       TRACE_OUT((+1,"resolve netstate->svc_hostname\n"));
-      if ((netstate->startmode & MODE_HTTP) == 0)
-      {
-        netstate->svc_hostaddr = 0; /* always pick another hostaddress unless http. */
-      }    
       if (!netstate->reconnected || netstate->svc_hostaddr == 0)
       {
         /* target address resolution is optional when using socks4/5/http
@@ -782,18 +749,10 @@ static int __open_connection(void *cookie)
             LogScreen( "\rAttempting to resolve '%s'...",netstate->svc_hostname );
 
           count = sizeof(netstate->resolve_addrlist)/sizeof(netstate->resolve_addrlist[0]);
-          rc = net_resolve( netstate->svc_hostname, &netstate->resolve_addrlist[0], &count);
+          rc = net_resolve_v4( netstate->svc_hostname, &netstate->resolve_addrlist[0], &count);
           if (rc == 0)
           {
             maxtries = netstate->resolve_addrcount = count;
-          }
-          else if (!is_fwalled) //resolution _must_ complete only if not fwalled
-          {                      
-            success = 0; 
-            netstate->svc_hostaddr = 0;
-            if (!netstate->reconnected && netstate->verbose_level > 0)
-              Log("\rNet::failed to resolve name \"%s\"\n%s\n",
-                         netstate->svc_hostname, net_strerror( rc, netstate->sock ) );
           }
         }
         if (netstate->resolve_addrcount > 0)
@@ -801,13 +760,7 @@ static int __open_connection(void *cookie)
           netstate->svc_hostaddr = netstate->resolve_addrlist[whichtry % netstate->resolve_addrcount];
         }
       }
-      TRACE_OUT((-1,"resolve netstate->svc_hostname = %s\n",net_ntoa(netstate->svc_hostaddr)));
-      if (!is_fwalled) /* otherwise conn_* settings are already set */
-      {
-        netstate->conn_hostaddr = netstate->svc_hostaddr;
-        netstate->conn_hostname = netstate->svc_hostname;
-        netstate->conn_hostport = netstate->svc_hostport;
-      }
+      TRACE_OUT((-1,"resolve netstate->svc_hostname = %s\n",net_ntoa_v4(netstate->svc_hostaddr)));
     }
 
     /* ------ connect ------- */
@@ -817,16 +770,12 @@ static int __open_connection(void *cookie)
       if (!netstate->reconnected && netstate->verbose_level > 0)
       {
         LogScreen( "\rConnecting to %s:%u...",
-               ((netstate->conn_hostaddr)?(net_ntoa(netstate->conn_hostaddr)):(netstate->conn_hostname)),
-             (unsigned int)(netstate->conn_hostport) );
+            netstate->conn_hostname,
+            (unsigned int)(netstate->conn_hostport) );
       }
-      netstate->local_hostaddr = 0;
-      netstate->local_hostport = 0;
-      rc = net_connect(netstate->sock, 
-                       &(netstate->conn_hostaddr), 
-                       &(netstate->conn_hostport), 
-                       &(netstate->local_hostaddr),
-                       &(netstate->local_hostport),
+      rc = net_open(&(netstate->sock), 
+                       netstate->conn_hostname, 
+                       netstate->conn_hostport, 
                        netstate->iotimeout );
       if (rc != 0)
       {
@@ -834,7 +783,7 @@ static int __open_connection(void *cookie)
         {
           Log( "%sonnect to host %s:%u failed.\n%s\n",
                      ((netstate->reconnected)?("Rec"):("\rC")),
-                     net_ntoa(netstate->conn_hostaddr),
+                     netstate->conn_hostname,
                      (unsigned int)(netstate->conn_hostport), 
                      net_strerror(rc, netstate->sock) );
         }
@@ -912,6 +861,257 @@ static int __open_connection(void *cookie)
   TRACE_OUT((-1,"__open_connection() => %d\n", return_code));
   return return_code;
 }
+
+#else // HAVE_IPV6
+
+static int __open_connection(void *cookie)
+{
+  NETSTATE *netstate = __cookie2netstate(cookie);
+  int whichtry, maxtries;
+  int return_code = -1;
+
+  if (!netstate)
+    return -1;
+
+  netstate->puthttpdone = 0;
+  netstate->netbuffer.used = 0;
+  netstate->mode = netstate->startmode;
+
+  TRACE_OUT((+1,"__open_connection()\n"));
+
+  whichtry = 0, maxtries = 0; /* initially */
+  /* The total possible number of attempts will be H * A, (max is 8 * 32),
+     where 'H' is the number of hostnames in servername_buffer including
+     (possibly multiple) auto-select-keyservers, and/or fallback hostname,
+     and 'A' is the number of addresses that were resolved for each 
+     hostname in turn, (or if resolution failed and using http or socks5 
+     proxy, then the hostname itself)
+  */
+  for (;;)
+  {
+    int rc, success = 1;
+    int is_fwalled = ((netstate->fwall_hostname[0] != 0) &&
+                     ((netstate->startmode & (MODE_HTTP|MODE_SOCKS4|MODE_SOCKS5))!=0) );
+
+    if (__break_check(netstate)) 
+    {
+      success = 0;
+      maxtries = -1; /* we'll want to break out of the loop below */
+    }
+
+    TRACE_OUT((0,"whichtry=%d, maxtries=%d, netstate->reconnected=%d, svc='%s'\n", whichtry, maxtries, netstate->reconnected,netstate->svc_hostname));
+
+    /* ---------- create a new socket --------------- */
+
+    if (success)
+    {
+      SOCKET newsock;
+      rc = net_open( &newsock, 0, 0 );
+      if (rc != 0)
+      {
+        newsock = INVALID_SOCKET;
+        if (netstate->verbose_level > 0)
+        {
+          Log("Unable to create network endpoint\n%s\n",
+                    net_strerror( rc, newsock) );
+        }
+        success = 0;
+        maxtries = -1; /* no point retrying if we can't create a socket */
+      }
+      else /* success */
+      {
+        if (netstate->sock != INVALID_SOCKET)
+          net_close(netstate->sock);
+        netstate->sock = newsock;
+      }
+    }
+
+    /* --- resolve the firewall hostname --- */
+
+    if (success && is_fwalled)
+    {
+      TRACE_OUT((+1,"resolve netstate->fwall_hostname\n"));
+      if (netstate->fwall_hostaddr == 0) /* no address for firewall yet */
+      {
+        unsigned int count;
+        if (!netstate->reconnected && netstate->verbose_level > 0)
+          LogScreen( "\rAttempting to resolve %s...", netstate->fwall_hostname );
+
+        count = 1;
+        rc = net_resolve_v4( netstate->fwall_hostname, &netstate->fwall_hostaddr, &count);
+        if (rc != 0)
+        {
+          success = 0;
+          netstate->fwall_hostaddr = 0;
+          if (netstate->verbose_level > 0)
+            Log("\rNet::failed to resolve name \"%s\"\n%s\n",
+                      netstate->fwall_hostname, net_strerror( rc, netstate->sock ) );
+           maxtries = -1; // unrecoverable error. retry won't help
+        }
+      }
+      TRACE_OUT((-1,"resolve netstate->fwall_hostname = %s\n",net_ntoa_v4(netstate->fwall_hostaddr)));
+      netstate->conn_hostaddr = netstate->fwall_hostaddr;
+      netstate->conn_hostname = netstate->fwall_hostname;
+      netstate->conn_hostport = netstate->fwall_hostport;
+    }
+
+    /* --- resolve the service hostname --- */
+
+    if (success)
+    {
+      TRACE_OUT((+1,"resolve netstate->svc_hostname\n"));
+      if ((netstate->startmode & MODE_HTTP) == 0)
+      {
+        netstate->svc_hostaddr = 0; /* always pick another hostaddress unless http. */
+      }    
+      if (!netstate->reconnected || netstate->svc_hostaddr == 0)
+      {
+        /* target address resolution is optional when using socks4/5/http
+        ++ (although such support is not defined in the original socks4 spec,
+        ++ it is supported in the socks4a (SOCKS 4.3) protocol, which is what
+        ++ we implement here (with backwards compatibility)
+        ++ socks 4: http://www.socks.nec.com/protocol/socks4.protocol
+        ++ socks 4a: http://www.socks.nec.com/protocol/socks4a.protocol
+        */
+        if (netstate->resolve_addrcount < 1)
+        {
+          unsigned int count;
+          if (!netstate->reconnected && netstate->verbose_level > 0)
+            LogScreen( "\rAttempting to resolve '%s'...",netstate->svc_hostname );
+
+          count = sizeof(netstate->resolve_addrlist)/sizeof(netstate->resolve_addrlist[0]);
+          rc = net_resolve_v4( netstate->svc_hostname, &netstate->resolve_addrlist[0], &count);
+          if (rc == 0)
+          {
+            maxtries = netstate->resolve_addrcount = count;
+          }
+          else if (!is_fwalled) //resolution _must_ complete only if not fwalled
+          {                      
+            success = 0; 
+            netstate->svc_hostaddr = 0;
+            if (!netstate->reconnected && netstate->verbose_level > 0)
+              Log("\rNet::failed to resolve name \"%s\"\n%s\n",
+                         netstate->svc_hostname, net_strerror( rc, netstate->sock ) );
+          }
+        }
+        if (netstate->resolve_addrcount > 0)
+        {
+          netstate->svc_hostaddr = netstate->resolve_addrlist[whichtry % netstate->resolve_addrcount];
+        }
+      }
+      TRACE_OUT((-1,"resolve netstate->svc_hostname = %s\n",net_ntoa_v4(netstate->svc_hostaddr)));
+      if (!is_fwalled) /* otherwise conn_* settings are already set */
+      {
+        netstate->conn_hostaddr = netstate->svc_hostaddr;
+        netstate->conn_hostname = netstate->svc_hostname;
+        netstate->conn_hostport = netstate->svc_hostport;
+      }
+    }
+
+    /* ------ connect ------- */
+
+    if (success)
+    {
+      if (!netstate->reconnected && netstate->verbose_level > 0)
+      {
+        LogScreen( "\rConnecting to %s:%u...",
+               ((netstate->conn_hostaddr)?(net_ntoa_v4(netstate->conn_hostaddr)):(netstate->conn_hostname)),
+             (unsigned int)(netstate->conn_hostport) );
+      }
+      netstate->local_hostaddr = 0;
+      netstate->local_hostport = 0;
+      rc = net_connect(netstate->sock, 
+                       &(netstate->conn_hostaddr), 
+                       &(netstate->conn_hostport), 
+                       &(netstate->local_hostaddr),
+                       &(netstate->local_hostport),
+                       netstate->iotimeout );
+      if (rc != 0)
+      {
+        if (netstate->verbose_level > 0 && !__break_check(netstate))
+        {
+          Log( "%sonnect to host %s:%u failed.\n%s\n",
+                     ((netstate->reconnected)?("Rec"):("\rC")),
+                     net_ntoa_v4(netstate->conn_hostaddr),
+                     (unsigned int)(netstate->conn_hostport), 
+                     net_strerror(rc, netstate->sock) );
+        }
+        success = 0; 
+      }
+    }
+
+    /* ---- initialize the connection ---- */
+
+    if (success)   /* connect succeeded */
+    {
+      TRACE_OUT((+1,"initialize_connection\n"));
+      rc = __init_connection( netstate );
+      TRACE_OUT((-1,"initialize_connection =>%d\n",rc));
+      if (rc == 0)
+      {
+        if (netstate->verbose_level > 0 && !netstate->shown_connection)
+        {
+          if (!is_fwalled)
+          {
+            Log("\rConnected to %s:%u...\n", netstate->svc_hostname,
+                  ((unsigned int)(netstate->svc_hostport)) );
+          }
+          else
+          {
+            Log( "\rConnected to %s:%u\nvia %s proxy %s:%u\n",
+                       netstate->svc_hostname, ((unsigned int)(netstate->svc_hostport)),
+                       ((netstate->startmode & MODE_SOCKS5)?("SOCKS5"):
+                       ((netstate->startmode & MODE_SOCKS4)?("SOCKS4"):("HTTP"))),
+                       netstate->fwall_hostname, (unsigned int)netstate->fwall_hostport );
+          }
+          netstate->shown_connection = 1;
+        }
+        netstate->connection_closed = 0;
+        netstate->reconnected = 1;
+        return_code = 0;
+        break;
+      }
+      success = 0;
+      if (rc < 0)           /* unrecoverable error (negotiation failure) */
+        maxtries = -1; /* so don't retry */
+    }
+
+    /* ----------------------------------- */
+
+    if (maxtries < 0) /* don't retry */
+    {
+      break;
+    }
+    if ((++whichtry) < maxtries)
+    {
+      ; /* nothing - proceed normally */
+    }
+    else if (netstate->reconnected)
+    {
+      break; /* no sense skipping to next */
+    }
+    else if ((++netstate->servername_selector) >= netstate->servername_count)
+    {
+      netstate->servername_selector = 0;
+      TRACE_OUT((0,"no more hostnames to try\n"));
+      break;
+    }
+    else
+    {
+      netstate->resolve_addrcount = -1; /* need to re-resolve */
+      whichtry = maxtries = 0;
+      netstate->svc_hostname = netstate->servername_ptrs[netstate->servername_selector];
+      netstate->svc_hostport = netstate->servername_ports[netstate->servername_selector];
+      TRACE_OUT((0,"changed hostname to '%s:%d'\n", netstate->svc_hostname,netstate->svc_hostport));
+    }
+
+  } /* for (;;) */
+
+  TRACE_OUT((-1,"__open_connection() => %d\n", return_code));
+  return return_code;
+}
+
+#endif  // HAVE_IPV6
 
 /* ====================================================================== */
 
@@ -1112,8 +1312,6 @@ int netconn_read( void *cookie, char * data, int numRequested )
       {
         numRead = ((unsigned int)numRequested) - totalRead;
         rc = net_read(netstate->sock, bufp, &numRead, 
-                      netstate->conn_hostaddr, 
-                      netstate->conn_hostport, 
                       netstate->iotimeout);
         if (rc != 0)
         {
@@ -1258,14 +1456,23 @@ int netconn_read( void *cookie, char * data, int numRequested )
           }
           else if (memcmp(lcbuf, "x-keyserver: ", 13) == 0) //"X-KeyServer: "
           {
-            if (netstate->svc_hostaddr == 0)
+            // The proxy should return its IP address
+            // to assist clients in maintaining a stable
+            // connection to a single proxy
+            if ((netstate->svc_hostaddr == 0) && (!netstate->svc_hostaddr_full))
             {
               u32 newaddr = 0; unsigned int count = 1;
               bufp = &lcbuf[13];
               TRACE_OUT((+1,"X-Keyserver: '%s'\n", bufp ));
-              if (net_resolve( bufp, &newaddr, &count )==0)
+              if (net_resolve_v4( bufp, &newaddr, &count )==0)
+              {
                 netstate->svc_hostaddr = newaddr;
-              TRACE_OUT((-1,"X-Keyserver: => %s\n", net_ntoa(newaddr)));
+                TRACE_OUT((-1,"X-Keyserver: => %s\n", net_ntoa_v4(newaddr)));
+              }
+              else
+              {
+                netstate->svc_hostaddr_full = strdup (&lcbuf[13]);
+              }
             }
           }
           else if (memcmp(lcbuf, "connection: close", 17 ) == 0)
@@ -1394,7 +1601,6 @@ int netconn_read( void *cookie, char * data, int numRequested )
         {  
           bufp = &decodebuffer.mem[decodebuffer.used];
           rc = net_read(netstate->sock, bufp, &numRead, 
-                        netstate->conn_hostaddr, netstate->conn_hostport, 
                         netstate->iotimeout);
           if (rc != 0)
           {
@@ -1463,7 +1669,7 @@ int netconn_reset(void *cookie, u32 thataddress)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
   int rc = -1;
-  TRACE_OUT((+1,"netconn_reset(%s)\n", net_ntoa(thataddress) ));
+  TRACE_OUT((+1,"netconn_reset(%s)\n", net_ntoa_v4(thataddress) ));
   if (netstate)
   {
     if (thataddress == 0)
@@ -1473,7 +1679,9 @@ int netconn_reset(void *cookie, u32 thataddress)
     else
     {
       netstate->reconnected = 1;
+      #ifndef HAVE_IPV6
       netstate->svc_hostaddr = thataddress;
+      #endif
       rc = __open_connection(netstate);
     }
   }
@@ -1594,6 +1802,7 @@ int netconn_write( void *cookie, const char * data, int length )
   {
     unsigned long hdrlen;
     char userpass[(((sizeof(netstate->fwall_userpass)+1)*4)/3)];
+    const char *host;
 
     userpass[0] = '\0';
     if (netstate->fwall_userpass[0])
@@ -1605,6 +1814,12 @@ int netconn_write( void *cookie, const char * data, int length )
       }
       userpass[sizeof(userpass)-1]='\0';
     }
+    if (netstate->svc_hostaddr != 0)
+      host = net_ntoa_v4(netstate->svc_hostaddr);
+    else if (netstate->svc_hostaddr_full)
+      host = netstate->svc_hostaddr_full;
+    else
+      host = netstate->svc_hostname;
     hdrlen = sprintf( allocbuf,
                       "POST http://%s:%u/cgi-bin/rc5.cgi HTTP/1.0\r\n"
                       //"Connection: Keep-Alive\r\n" /* HTTP/1.1 */
@@ -1612,7 +1827,7 @@ int netconn_write( void *cookie, const char * data, int length )
                       "%s%s%s"
                       "Content-Type: application/octet-stream\r\n"
                       "Content-Length: %lu\r\n\r\n",
-                      ((netstate->svc_hostaddr)?(net_ntoa(netstate->svc_hostaddr)):(netstate->svc_hostname)),
+                      host,
                       ((unsigned int)(netstate->svc_hostport)),
                       ((userpass[0])?("Proxy-authorization: Basic "):("")),
                       ((userpass[0])?(userpass):("")),
@@ -1632,7 +1847,6 @@ int netconn_write( void *cookie, const char * data, int length )
 
     DUMP_PACKET("Put", data, towrite );
     rc = net_write(netstate->sock, data, &written, 
-                   netstate->conn_hostaddr, netstate->conn_hostport, 
                    netstate->iotimeout);
     if (rc == 0) /* success! sent all. */
     {
@@ -1685,7 +1899,7 @@ int netconn_getname(void *cookie, char *buffer, unsigned int len )
  * \param cookie Network connection to query.
  * \return Returns IPv4 address of host, or zero on error.
 */
-u32 netconn_getpeer(void *cookie)
+u32 netconn_getpeer_v4(void *cookie)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
   if (!netstate)
@@ -1705,15 +1919,17 @@ u32 netconn_getpeer(void *cookie)
  * \param address IPv4 address of the remote host.
  * \return Zero on error, otherwise the IPv4 address of the connection.
  */
-int netconn_setpeer(void *cookie, u32 address)
+int netconn_setpeer_v4(void *cookie, u32 address)
 {
   NETSTATE *netstate = __cookie2netstate(cookie);
   if (!netstate)
     return 0;
-  if (!netstate->svc_hostaddr)
+  if (!netstate->svc_hostaddr && ((netstate->mode & MODE_HTTP)!=0))
     netstate->svc_hostaddr = address;
   return netstate->svc_hostaddr;
 }
+
+#ifndef HAVE_IPV6
 
 /* ====================================================================== */
 
@@ -1731,6 +1947,8 @@ u32 netconn_getaddr(void *cookie)
 }
 
 /* ====================================================================== */
+
+#endif
 
 //! Close the connection
 /*!
@@ -1757,6 +1975,8 @@ int netconn_close(void *cookie)
       memset(&(netstate->netbuffer),0,sizeof(netstate->netbuffer));
       TRACE_OUT((-1,"delete netstate->netbuffer\n"));
     }
+    if (netstate->svc_hostaddr_full)
+      free((void *)netstate->svc_hostaddr_full);
     TRACE_OUT((0,"netconn_close() 3\n"));
     if (netstate->sock != INVALID_SOCKET)
       net_close(netstate->sock);
@@ -1844,7 +2064,10 @@ void *netconn_open( const char * _servname, int _servport,
     netstate->break_pending = CheckExitRequestTrigger();
 
     netstate->svc_hostport = netstate->conn_hostport = 0;
-    netstate->svc_hostaddr = netstate->conn_hostaddr = 0;
+    netstate->svc_hostaddr = 0;
+    #ifndef HAVE_IPV6
+    netstate->conn_hostaddr = 0;
+    #endif
     netstate->svc_hostname = netstate->conn_hostname = (const char *)0;
     netstate->resolve_addrcount = -1; /* uninitialized */
 
@@ -1879,18 +2102,32 @@ void *netconn_open( const char * _servname, int _servport,
     int have_fwallname = 0; /* do we have one? */
 
     netstate->fwall_hostport = 0;
+    #ifndef HAVE_IPV6
     netstate->fwall_hostaddr = 0;
+    #endif
     netstate->fwall_hostname[0] = '\0';
     netstate->fwall_userpass[0] = '\0';
 
     if (_fwallhost)
     {
       unsigned int pos = 0;
+      int ip_literal_flag = 0;
+
       while (*_fwallhost == ';' || *_fwallhost == ',' || isspace(*_fwallhost))
         _fwallhost++;
       while (*_fwallhost && pos < (sizeof(netstate->fwall_hostname)-1))
       {
-        if (*_fwallhost == ':')
+        if (*_fwallhost == '[') /* start literal URI */
+        {
+          ip_literal_flag = 1;
+          _fwallhost++; /* skip enclosure */
+        }
+        if (*_fwallhost == ']') /* end literal URI */
+        {
+          ip_literal_flag = 0;
+          _fwallhost++;  /* skip enclosure */
+        }
+        if ((*_fwallhost == ':') && (!ip_literal_flag))
           break;
         if (*_fwallhost == ';' || *_fwallhost == ',' || isspace(*_fwallhost))
           break;
@@ -2004,7 +2241,6 @@ void *netconn_open( const char * _servname, int _servport,
     }
     if (_servport <= 0 || _servport >= 0xffff) /* _servport is invalid */
       _servport = fallback_port;               /* so use the default port */
-
     TRACE_OUT((0,"server:%s:%d\n", (_servname)?(_servname):(""), _servport));
     if (_servname)
     {
@@ -2013,6 +2249,7 @@ void *netconn_open( const char * _servname, int _servport,
       {
         int selport = -1, badname = 0; 
         unsigned int namelen = 0;
+        int ip_literal_flag = 0;
 
         while (*p && (*p == ',' || *p == ';' || isspace(*p)))
           p++;
@@ -2020,7 +2257,17 @@ void *netconn_open( const char * _servname, int _servport,
         {
           if (!badname) /* otherwise just keep skipping to next name */
           {
-            if (*p == ':') /* embedded port # */
+            if (*p == '[') /* start literal URI */
+            {
+              ip_literal_flag = 1;
+              p++; /* skip enclosure */
+            }
+            if (*p == ']') /* end literal URI */
+            {
+              ip_literal_flag = 0;
+              p++; /* skip enclosure */
+            }
+            if ((*p == ':') && (!ip_literal_flag)) /* embedded port # */
             {
               if (selport >= 0) /* already have a port number */
                 badname = 1;

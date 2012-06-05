@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.428 2012/05/13 09:06:44 stream Exp $
+# @(#)$Id: configure,v 1.429 2012/06/05 22:12:52 snikkel Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -121,6 +121,8 @@ DEFAULT_OGRNG="1"       # 1 = compile generic ANSI core(s)
 
 add_sources() # $1=os, $2=arch, $3=custom
 {
+  TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_IPV6"
+
   # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
   # so that speed sensitive stuff can remain together at the 'bottom'
   if [ "$1" = "freebsd" -o "$1" = "netbsd" -o "$1" = "openbsd" \
