@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.20 2012/06/05 22:12:55 snikkel Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.21 2012/06/20 20:24:40 piru Exp $"; }
 
 //#define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -88,6 +88,27 @@ return "@(#)$Id: netbase.cpp,v 1.20 2012/06/05 22:12:55 snikkel Exp $"; }
   #if defined(_MSC_VER)
   #pragma warning(disable:4127) /* 'conditional expression is constant' */
   #endif              /* caused by do{}while(0) in winsock.h fd_set ops */
+#endif
+
+#if (CLIENT_OS == OS_MORPHOS)
+  /* A workaround for incorrect signedness in socket prototypes */
+  #include <exec/types.h>
+  LONG send(LONG s, const char *msg, LONG len, LONG flags);
+  LONG recv(LONG s, char *buf, LONG len, LONG flags);
+  struct hostent *gethostbyname(const char *name);
+  #define send send_bad_sign
+  #define recv recv_bad_sign
+  #define gethostbyname gethostbyname_bad_sign
+  #include <proto/socket.h>
+  #undef send
+  #undef recv
+  #undef gethostbyname
+  #define send(__p0, __p1, __p2, __p3) \
+    LP4(66, LONG, send, LONG , __p0, d0, const char *, __p1, a0, LONG, __p2, d1, LONG, __p3, d2,, SOCKET_BASE_NAME, 0, 0, 0, 0, 0, 0)
+  #define recv(__p0, __p1, __p2, __p3) \
+    LP4(78, LONG, recv, LONG, __p0, d0, char *, __p1, a0, LONG, __p2, d1, LONG, __p3, d2,, SOCKET_BASE_NAME, 0, 0, 0, 0, 0, 0)
+  #define gethostbyname(__p0) \
+    LP1(210, struct hostent *, gethostbyname, const char *, __p0, a0,, SOCKET_BASE_NAME, 0, 0, 0, 0, 0, 0)
 #endif
 
 #include "baseincs.h"
