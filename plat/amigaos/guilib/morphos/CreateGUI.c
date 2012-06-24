@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.c,v 1.5 2011/03/31 05:07:31 jlawson Exp $
+ * $Id: CreateGUI.c,v 1.6 2012/06/24 12:36:39 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -16,12 +16,13 @@
 
 #include	<libraries/gadtools.h>
 #include	<libraries/mui.h>
-#include	<mui/NFloattext_mcc.h>
 
 #include	<clib/alib_protos.h>
 #include	<proto/exec.h>
 #include	<proto/icon.h>
 #include	<proto/muimaster.h>
+
+#include	<mui/Aboutbox_mcc.h>
 
 #include	"CreateGUI.h"
 #include	"guilib_version.h"
@@ -35,7 +36,6 @@ static const char VerString[]	= "\0$VER: " PROGRAM_NAME " " PROGRAM_VER " " PROG
 
 static CONST_STRPTR ClassList[]	=
 {
-	"NListviews.mcc",
 	NULL
 };
 
@@ -143,19 +143,21 @@ Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct Dn
 			MUIA_Window_Menustrip, MUI_MakeObject(MUIO_MenustripNM, &Menus, 0),
 
 			WindowContents, VGroup,
-				Child, NListviewObject,
-					//MUIA_Background, MUII_ReadListBack,
-					//MUIA_Frame, MUIV_Frame_ReadList,
-					MUIA_Listview_List, os->lst	= NFloattextObject,
-						MUIA_CycleChain, TRUE,
-						MUIA_ContextMenu, MUIV_NList_ContextMenu_Never,
-						MUIA_NList_ConstructHook, MUIV_NList_ConstructHook_String,
-						MUIA_NList_DestructHook, MUIV_NList_DestructHook_String,
-						End,
+				Child, os->lst = ListObject,
+					MUIA_Background, MUII_ReadListBack,
+					MUIA_Frame, MUIV_Frame_ReadList,
+					MUIA_CycleChain, TRUE,
+						//MUIA_ContextMenu, MUIV_List_ContextMenu_Never,
+					MUIA_List_ConstructHook, MUIV_List_ConstructHook_String,
+					MUIA_List_DestructHook, MUIV_List_DestructHook_String,
 					End,
 				End,
 			End,
-		SubWindow, os->req	= WindowObject,
+		SubWindow, os->req	= AboutboxObject,
+			MUIA_Aboutbox_Credits, about,
+
+
+/*
 			MUIA_Window_Title	, "About...",
 			WindowContents, VGroup,
 				MUIA_Background, MUII_RequesterBack,
@@ -165,7 +167,7 @@ Object *CreateGUI(struct IClass *cl, Object *obj, struct ObjStore *os, struct Dn
 					Child, os->req_ok	= MUI_MakeObject(MUIO_Button, "_Moo!"),
 					Child, RectangleObject, End,
 					End,
-				End,
+				End,*/
 			End,
 		End;
 }

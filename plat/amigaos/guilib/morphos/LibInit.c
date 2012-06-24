@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: LibInit.c,v 1.2 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: LibInit.c,v 1.3 2012/06/24 12:36:39 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -166,7 +166,15 @@ struct Library	*NATDECLFUNC_1(LibOpen, a6, struct DnetcLibrary *, LibBase)
 
 	if (LibBase->Alloc == 0)
 	{
-		if ((MUIMasterBase	= (APTR)OpenLibrary("muimaster.library", 11)) != NULL)
+		MUIMasterBase      = (APTR)OpenLibrary("muimaster.library", 20);
+		if (MUIMasterBase && !LIB_MINVER(MUIMasterBase, 20, 6381))
+		{
+			/* Too old MUI, don't even bother trying to continue */
+			CloseLibrary(MUIMasterBase);
+			MUIMasterBase = NULL;
+		}
+
+		if ((MUIMasterBase	/*= (APTR)OpenLibrary("muimaster.library", 20)*/) != NULL)
 		if ((IntuitionBase	= (APTR)OpenLibrary("intuition.library", 36)) != NULL)
 		if ((UtilityBase	= (APTR)OpenLibrary("utility.library"  , 36)) != NULL)
 		if ((DOSBase		= (APTR)OpenLibrary("dos.library"      , 36)) != NULL)

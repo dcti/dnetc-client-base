@@ -3,7 +3,7 @@
 #
 
 TARGET	= ../../../../dnetcgui.library
-
+#TARGET = dnetcgui.library
 #
 ##
 #
@@ -29,7 +29,7 @@ clean:
 	rm -f $(OBJS) $(TARGET) $(TARGET).db
 
 $(TARGET): $(OBJS)
-		$(CC) $(LDFLAGS) -o $@.db $(OBJS) -lsyscall
+		$(CC) $(LDFLAGS) -o $@.db $(OBJS) -ldebug
 		ppc-morphos-strip --strip-unneeded --strip-debug --remove-section .comment -o $@ $@.db
 		-flushlib dnetcgui.library
 

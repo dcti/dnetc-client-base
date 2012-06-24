@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: CreateGUI.h,v 1.2 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: CreateGUI.h,v 1.3 2012/06/24 12:36:39 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -38,7 +38,7 @@ enum { MENU_IGNORE_ID = MENUBASE, MENU_MUISETTINGS_ID, MENU_ABOUT_ID, MENU_QUIT_
 
 struct ObjStore
 {
-	Object	*wnd, *req, *lst, *req_ok;
+	Object	*wnd, *req, *lst;
 };
 
 Object	*CreateGUI	(struct IClass *cl, Object *obj, struct ObjStore *os, struct DnetcLibrary *LibBase);

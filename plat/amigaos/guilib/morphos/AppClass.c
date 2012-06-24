@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: AppClass.c,v 1.2 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: AppClass.c,v 1.3 2012/06/24 12:36:38 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -11,8 +11,6 @@
  * MUI GUI module for MorphOS client - MUI application class code
  * ----------------------------------------------------------------------
 */
-
-#include	<mui/NList_mcc.h>
 
 #include	<clib/alib_protos.h>
 #include	<proto/intuition.h>
@@ -38,12 +36,9 @@ static ULONG mNew(struct IClass *cl, Object *obj, struct DnetcLibrary *LibBase)
 		data->mainwnd	= os.wnd;
 		data->list		= os.lst;
 		data->req		= os.req;
-		data->req_ok	= os.req_ok;
 
-		DoMethod(data->req, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, (ULONG)obj, 1, MUIM_MyApplication_CloseReq);
 		DoMethod(data->mainwnd, MUIM_Notify, MUIA_Window_CloseRequest, TRUE, (ULONG)obj, 2, MUIM_Application_ReturnID, MUIV_Application_ReturnID_Quit);
 		DoMethod(data->mainwnd, MUIM_Notify, MUIA_Window_MenuAction, MUIV_EveryTime, (ULONG)obj, 2, MUIM_MyApplication_GetMenuItem, MUIV_TriggerValue);
-		DoMethod(data->req_ok, MUIM_Notify, MUIA_Pressed, FALSE, (ULONG)obj, 1, MUIM_MyApplication_CloseReq);
 		DoMethod(obj, MUIM_Notify, MUIA_Application_Iconified, FALSE, (ULONG)obj, 1, MUIM_MyApplication_UnIconified);
 	}
 
@@ -82,7 +77,7 @@ static ULONG mCloseReq(struct Application_Data *data, struct DnetcLibrary *LibBa
 
 static ULONG mUnIconified(struct Application_Data *data)
 {
-	return DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
+	return DoMethod(data->list, MUIM_List_Jump, MUIV_List_Jump_Bottom);
 }
 
 /**********************************************************************
@@ -91,7 +86,7 @@ static ULONG mUnIconified(struct Application_Data *data)
 
 static ULONG mClearConsole(struct Application_Data *data)
 {
-	return DoMethod(data->list, MUIM_NList_Clear);
+	return DoMethod(data->list, MUIM_List_Clear);
 }
 
 /**********************************************************************
@@ -148,26 +143,29 @@ static ULONG mInsertNode(struct Application_Data *data, struct DnetcLibrary *Lib
 #if 1
 	LONG first_index, visible_lines, total_lines;
 
-	set(data->list, MUIA_NList_Quiet, MUIV_NList_Quiet_Full);
+//  1. MUIM_List_Jump() is ignored if MUIA_List_Quiet is set to TRUE.
+//  2. Using MUIA_List_Quiet for inserting just one line (and possibly removing one) is an overkill.
 
-	GetAttr(MUIA_NList_First, data->list, &first_index);
-	GetAttr(MUIA_NList_Visible, data->list, &visible_lines);
-	GetAttr(MUIA_NList_Entries, data->list, &total_lines);
+//	set(data->list, MUIA_List_Quiet, TRUE);
+
+	GetAttr(MUIA_List_First, data->list, &first_index);
+	GetAttr(MUIA_List_Visible, data->list, &visible_lines);
+	GetAttr(MUIA_List_Entries, data->list, &total_lines);
 
 	if (msg->overwrite)
 	{
-		DoMethod(data->list, MUIM_NList_Remove, MUIV_NList_Remove_Last);
+		DoMethod(data->list, MUIM_List_Remove, MUIV_List_Remove_Last);
 	}
 	else if (total_lines >= 1000)
 	{
-		DoMethod(data->list, MUIM_NList_Remove, MUIV_NList_Remove_First);
+		DoMethod(data->list, MUIM_List_Remove, MUIV_List_Remove_First);
 	}
 
-	DoMethod(data->list, MUIM_NList_InsertSingle, (ULONG)msg->output, MUIV_NList_Insert_Bottom);
+	DoMethod(data->list, MUIM_List_InsertSingle, (ULONG)msg->output, MUIV_List_Insert_Bottom);
 
 	if (visible_lines > -1 && first_index + visible_lines >= total_lines)
 	{
-		DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
+		DoMethod(data->list, MUIM_List_Jump, MUIV_List_Jump_Bottom);
 	}
 #else
 	set(data->list, MUIA_NList_Quiet, MUIV_NList_Quiet_Full);
@@ -181,7 +179,8 @@ static ULONG mInsertNode(struct Application_Data *data, struct DnetcLibrary *Lib
 		DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
 #endif
 
-	return set(data->list, MUIA_NList_Quiet, MUIV_NList_Quiet_None);
+//	return set(data->list, MUIA_List_Quiet, FALSE);
+	return TRUE;
 }
 
 DISPATCHERPROTO(MyApp_Dispatcher)

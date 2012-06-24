@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: AppClass.h,v 1.2 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: AppClass.h,v 1.3 2012/06/24 12:36:38 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -22,7 +22,7 @@
 struct Application_Data
 {
 	Object	*mainwnd, *list;
-	Object	*req, *req_ok;
+	Object	*req;
 	ULONG	Paused;
 };
 
