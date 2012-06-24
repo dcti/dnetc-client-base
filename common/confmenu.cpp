@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2012 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,7 +9,7 @@
  * ---------------------------------------------------------------------
 */
 const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.70 2012/01/13 01:05:21 snikkel Exp $"; }
+return "@(#)$Id: confmenu.cpp,v 1.71 2012/06/24 18:26:56 piru Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -611,7 +611,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     {
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   ((client->watchcputempthresh)?(NULL):("n/a"));
-      #if (CLIENT_OS != OS_MACOSX) && (CLIENT_OS != OS_DEC_UNIX) && (CLIENT_CPU != CPU_ATI_STREAM)
+      #if (CLIENT_OS != OS_MACOSX) && (CLIENT_OS != OS_DEC_UNIX) && (CLIENT_CPU != CPU_ATI_STREAM) && (CLIENT_OS != OS_MORPHOS)
       conf_options[CONF_PAUSEIFCPUTEMPHIGH].disabledtext=
       conf_options[CONF_CPUTEMPTHRESHOLDS].disabledtext=
                   "n/a [only supported on MacOS/PPC]";

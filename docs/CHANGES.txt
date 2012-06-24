@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.127 2012/06/05 22:12:55 snikkel Exp $
+Version change log: $Id: CHANGES.txt,v 1.128 2012/06/24 18:26:57 piru Exp $
 ==========================================================================
 
 2.9100
@@ -41,6 +41,7 @@ Version change log: $Id: CHANGES.txt,v 1.127 2012/06/05 22:12:55 snikkel Exp $
             imp: openbsd: cpu and altivec identification
             fix: all: regression in OGR-NG codebase (#4295)
             new: IPv6 support (#2982)
+            imp: morphos: Battery/AC power det & CPU temp query
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core

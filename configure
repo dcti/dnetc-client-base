@@ -4,7 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.429 2012/06/05 22:12:52 snikkel Exp $
+# @(#)$Id: configure,v 1.430 2012/06/24 18:26:56 piru Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -121,7 +121,9 @@ DEFAULT_OGRNG="1"       # 1 = compile generic ANSI core(s)
 
 add_sources() # $1=os, $2=arch, $3=custom
 {
-  TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_IPV6"
+  if [ "$1" != "amigaos" -a "$1" != "morphos" ]; then
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_IPV6"
+  fi
 
   # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
   # so that speed sensitive stuff can remain together at the 'bottom'
@@ -147,6 +149,10 @@ add_sources() # $1=os, $2=arch, $3=custom
                  plat/amigaos/amGUI.c \
                  plat/amigaos/amInstall.c \
                  ${COMMON_SRCS}"
+    if [ "$1" = "morphos" ]; then
+       COMMON_SRCS="plat/amigaos/amTemperature.c \
+                   ${COMMON_SRCS}"
+    fi
   elif [ "$1" = "linux" ]; then
     COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
     if [ "$2" = "x86" -o "$2" = "ppc" -o "$2" = "cuda" ]; then #maybe others as well
@@ -3161,13 +3167,13 @@ case "$1" in
         ;;
 
     *morphos-ppc)               # [piru] <sintonen@iki.fi>
-        TARGET_AS="ppc-rom-as"
-        TARGET_CC="ppc-morphos-g++"
+        TARGET_AS="ppc-rom-as -maltivec"
+        TARGET_CC="ppc-morphos-g++ -noixemul"
         generate_gcc_opts "ppc" "morphos"
-        TARGET_CCFLAGS="-xc++ $OPTS_GCC -noixemul -DNO_MIAMI -mmultiple -mstring \
+        TARGET_CCFLAGS="-xc++ $OPTS_GCC -DNO_MIAMI -mmultiple -mstring \
                         -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
                         -I./ -I./plat/amigaos/guilib/morphos/ -DDYN_TIMESLICE"
-        TARGET_LDFLAGS="-noixemul"
+        TARGET_LDFLAGS=""
         TARGET_TARBALL="morphos-ppc"
         TARGET_DOCFILES="docs/readme.morphos"   #platform specific docfile
         TARGET_STRIP="ppc-morphos-strip --remove-section .comment"
