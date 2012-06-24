@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.4 2009/10/02 20:53:10 piru Exp $
+ Document revision $Id: readme.morphos,v 1.5 2012/06/24 14:35:37 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -22,7 +22,7 @@
 
  1.0  System requirements --------------------------------------------
 
-     - MorphOS 0.4 or greater.
+     - MorphOS 0.4 or greater (MUI4 is required for the GUI part).
      - PowerPC 603e or greater.
      - Altivec cores require G4 and MorphOS 2.0 or newer.
      - A TCP stack compatible with AmiTCP 3.0 or newer.
@@ -114,15 +114,14 @@
 
     The GUI may be configured to your liking by using the MUI
     settings.  To edit choose "Project/MUI settings..." from menu.
-    To configure the listview, choose External from the left top
-    cyclegadget, and select NListviews.  Additionally, the following
-    tooltypes can be used in the client's icon:
+    To configure the listview, select "Lists". Additionally, the
+    following tooltype can be used in the client's icon:
 
     HIDE
 
       Specify this tooltype to cause the client to not open a window on
       startup, and show an icon and/or tools menu item (defaults to
-      both, but may be changed in the preferences) on the Workbench
+      both, but may be changed in the preferences) on the desktop
       instead.
 
   4.2  ARexx commands
