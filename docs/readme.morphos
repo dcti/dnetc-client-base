@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.5 2012/06/24 14:35:37 piru Exp $
+ Document revision $Id: readme.morphos,v 1.6 2012/06/25 00:31:00 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -54,18 +54,20 @@
 
  3.0  Notes ----------------------------------------------------------
 
-    If you want to contribute to the Distributed Pegasos Team, visit the
-    effort home page at http://distributed.pegasosforum.de/, it contains all
-    the necessary info along with extensive information on usage,
-    configuration etc.
+    If you want to contribute to the Distributed Pegasos Team, you can
+    join the team from address:
+    http://stats.distributed.net/team/tmsummary.php?project_id=27&team=30562
 
     If you want to contribute to the Distributed Amiga effort, visit the
     effort home page at http://distributed.amiga.org/.
 
     IMPORTANT: the client's default distributed.net ID is rc5@distributed.net.
-    Unless you change this your work is wasted effort.
-    The How To section on the Distributed Pegasos Team pages contains all
-    you need to know to change this.
+    Unless you change this your work goes unattributed.
+
+    By default the client is configured to pause if the system is running
+    on battery power. The client is also paused while charging the battery
+    to avoid straining it unnecessarily. The client can be configured to
+    ignore the battery status if so desired.
 
   3.1  Setting the time zone -----------------------------------------
 
