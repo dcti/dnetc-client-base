@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.44 2012/06/24 18:26:57 piru Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.45 2012/06/25 00:29:59 piru Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -339,9 +339,8 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach_init.h> /* for bootstrap_port */
 #elif (CLIENT_OS == OS_MORPHOS)
-#include <libraries/sensors.h>
-#include <proto/exec.h>
-#include <proto/sensors.h>
+int morphos_isrunningonbattery(void);
+LONG morphos_cputemp(void);
 #endif
 
 static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
@@ -688,46 +687,15 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     trigstatics.pause_if_no_mains_power = 0;
     #elif (CLIENT_OS == OS_MORPHOS)
     {
-      int disableme = 1; /* assume further checking should be disabled */
-      LONG pluggedin = 0;
-      struct Library *SensorsBase;
-      SensorsBase = OpenLibrary("sensors.library", 50);
-      if (SensorsBase)
-      {
-        struct TagItem sensortags[] =
-        {
-          {SENSORS_Type, SensorType_ACPower},
-          {TAG_DONE, 0}
-        };
-        struct TagItem tpluggedin[] =
-        {
-          {SENSORS_ACPower_PluggedIn, (IPTR)&pluggedin},
-          {TAG_DONE, 0}
-        };
-        APTR sensors, sensor;
+      int status = morphos_isrunningonbattery();
 
-        sensor = NULL;
-        sensors = ObtainSensorsList(sensortags);
-
-        while ((sensor = NextSensor(sensor, sensors, NULL)) != NULL)
-        {
-          if (GetSensorAttr(sensor, tpluggedin) > 0)
-          {
-            disableme = 0;
-            break;
-          }
-        }
-        ReleaseSensorsList(sensors, NULL);
-
-        CloseLibrary(SensorsBase);
-      }
-      if (disableme) /* disable further checks */
+      if (status == -1) /* disable further checks */
       {
         trigstatics.pause_if_no_mains_power = 0;
       }
       else
       {
-        return pluggedin ? 0 : 1;
+        return status;
       }
     }
     #endif
@@ -743,8 +711,6 @@ s32 macosx_cputemp();
 extern "C" int dunix_cputemp();
 #elif (CLIENT_CPU == CPU_ATI_STREAM)
 int stream_cputemp();
-#elif (CLIENT_OS == OS_MORPHOS)
-LONG morphos_cputemp(void);
 #endif
 
 static int __CPUTemperaturePoll(void) /*returns 0=no, >0=yes, <0=err/unknown*/
