@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.63 2012/06/05 22:12:54 snikkel Exp $"; }
+return "@(#)$Id: confopt.cpp,v 1.64 2012/08/08 19:00:49 sla Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -571,7 +571,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "Set to -1 to have the client run on any device.\n"
   "Note: if this parameter is set to a specific device, the client is forced\n"
   "to run with one thread.\n"
-#if !(CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM)
+#if !(CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM || CLIENT_CPU == CPU_OPENCL)
   "This option is not currently supported on this platform and is ignored.\n"
 #endif
   /*) */,CONF_MENU_PERF,CONF_TYPE_INT,NULL,NULL,-1,128,NULL,NULL

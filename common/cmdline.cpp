@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.175 2012/05/16 20:04:06 stream Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.176 2012/08/08 18:57:54 sla Exp $"; }
 
 //#define TRACE
 
@@ -2229,7 +2229,7 @@ int ParseCommandline( Client *client,
     rc = __finalize_level(argv[0],
              client, run_level, retcodeP, restarted, &inimissing, &multiok );
 
-  #if (CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM)
+  #if (CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM || CLIENT_CPU == CPU_OPENCL)
   /* if a device is specified run only a single thread */
   /* for numcpu, 0 is same as "1 without shared memory", -1 is "auto" */
   if (client->devicenum >= 0 && client->numcpu != 0)
