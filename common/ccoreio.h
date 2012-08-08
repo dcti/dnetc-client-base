@@ -21,7 +21,7 @@
  *   of the problem object (ie created when the object is new'd)
 */
 #ifndef __CCOREIO_H__
-#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.25 2012/01/13 01:05:21 snikkel Exp $"
+#define __CCOREIO_H__ "@(#)$Id: ccoreio.h,v 1.26 2012/08/08 18:34:30 sla Exp $"
 
 #include "cputypes.h"   /* u32 etc. used here and in the cores */
 
@@ -60,7 +60,7 @@ typedef struct
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,mid,lo;} L0; /* key, changes with every unit * PIPELINE_COUNT. */
   struct {u32 count; u32 hi,mid,lo;} check; /* counter-measure check */
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
   // HACK! better move these members to someplace else
   int devicenum; /* To track which GPU to use */
   int optimal_timeslice_increment; /* Best timeslice increment for the core */

@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-  return "@(#)$Id: buffbase.cpp,v 1.45 2011/03/31 05:07:27 jlawson Exp $";
+  return "@(#)$Id: buffbase.cpp,v 1.46 2012/08/08 18:33:28 sla Exp $";
 }
 
 //#define TRACE
@@ -456,7 +456,7 @@ static unsigned long __get_threshold_limit(unsigned int contest)
       {
 #if defined(HAVE_RC5_72_CORES)
       case RC5_72:
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_CELLBE)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_CELLBE) || (CLIENT_CPU == CPU_OPENCL)
         rate = 10000;
 #else
         rate = 1000;

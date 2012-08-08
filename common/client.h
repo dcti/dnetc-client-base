@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CLIENT_H__
-#define __CLIENT_H__ "@(#)$Id: client.h,v 1.161 2012/01/13 01:05:21 snikkel Exp $"
+#define __CLIENT_H__ "@(#)$Id: client.h,v 1.162 2012/08/08 18:37:09 sla Exp $"
 
 #include "projdata.h" /* PROJECT_COUNT */
 #include "lurk.h"     /* lurk_conf structure */
@@ -13,7 +13,7 @@
 #define __TEXTIFY(x) #x
 #define _TEXTIFY(x) __TEXTIFY(x)
 
-#if (CLIENT_CPU == CPU_CELLBE) || (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
+#if (CLIENT_CPU == CPU_CELLBE) || (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
 #define PREFERREDBLOCKSIZE_DEFAULT       64
 #else
 #define PREFERREDBLOCKSIZE_DEFAULT       1
