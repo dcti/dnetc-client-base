@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.130 2012/05/13 09:32:55 stream Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.131 2012/08/08 19:45:54 sla Exp $"; }
 
 //#define TRACE
 
@@ -434,7 +434,7 @@ static long __bench_or_test( Client *client, int which,
         }
         else {
           Log("Core #%d is significantly faster than the default core.\n"
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
               "Please file a bug report along with the output of\n-cpuinfo.\n"
 #else
               "The GPU core selection has been made as a tradeoff between core speed\n"

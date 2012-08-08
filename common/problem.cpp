@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.208 2012/05/16 20:04:06 stream Exp $"; }
+return "@(#)$Id: problem.cpp,v 1.209 2012/08/08 19:44:42 sla Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -263,7 +263,6 @@ Problem *ProblemAlloc(void)
   {
     memset( thisprob, 0, sizeof(SuperProblem) );
     fastlock_init(&(thisprob->copy_lock));
-
     thisprob->iprobs[PICKPROB_CORE].priv_data.threadindex =
     thisprob->iprobs[PICKPROB_MAIN].priv_data.threadindex =
     thisprob->iprobs[PICKPROB_TEMP].priv_data.threadindex =
@@ -677,7 +676,6 @@ static int __InternalLoadState( InternalProblem *thisprob,
     return -2; // abort - LoadState may loop forever
   }
   /* +++++ no point of failure beyond here (once thisprob is changed) +++++ */
-
   thisprob->priv_data.last_resultcode = -1;
   thisprob->priv_data.started = thisprob->priv_data.initialized = 0;
   thisprob->priv_data.loadtime_sec = thisprob->priv_data.loadtime_usec = 0;
@@ -828,7 +826,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
-      #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)
+      #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
       thisprob->priv_data.rc5_72unitwork.devicenum = (client->devicenum >= 0 ? client->devicenum : thisprob->priv_data.threadindex);
       thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = 0;
       thisprob->priv_data.rc5_72unitwork.best_time = -1;
