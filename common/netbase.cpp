@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.21 2012/06/20 20:24:40 piru Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.22 2012/08/08 19:57:14 sla Exp $"; }
 
 //#define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -79,6 +79,8 @@ return "@(#)$Id: netbase.cpp,v 1.21 2012/06/20 20:24:40 piru Exp $"; }
 #define TRACE_READ(x)     //TRACE_OUT(x) /* net_read() */
 #define TRACE_WRITE(x)    //TRACE_OUT(x) /* net_write() */
 #define TRACE_NETDB(x)    //TRACE_OUT(x) /* net_resolve() */
+
+#include "cputypes.h" /* u32 */
 
 #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
   #define WIN32_LEAN_AND_MEAN /* don't want winsock.h included here */
