@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.120 2012/01/06 21:11:22 snikkel Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.121 2012/08/08 19:37:36 sla Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -39,6 +39,7 @@
 #define CPU_CELLBE	18
 #define CPU_CUDA	19
 #define CPU_ATI_STREAM	20
+#define CPU_OPENCL	21
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -117,6 +118,8 @@
     #define CLIENT_CPU     CPU_CUDA
   #elif defined(ATI_STREAM)
     #define CLIENT_CPU     CPU_ATI_STREAM
+  #elif defined(OPENCL)
+    #define CLIENT_CPU     CPU_OPENCL
   #elif (!defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)) /* win16 */ \
         || (defined(__WINDOWS386__)) /* standard 32bit client built for win16 */
     #define CLIENT_CPU     CPU_X86
@@ -553,6 +556,13 @@
   #endif
 #endif
 
+#if (CLIENT_CPU == CPU_OPENCL)
+  #if (0)
+  #else
+    #define CLIENT_OS_NAME_EXTENDED "OpenCL on " CLIENT_OS_NAME
+  #endif
+#endif
+
 #if !defined(CLIENT_OS_NAME_EXTENDED)
   #define CLIENT_OS_NAME_EXTENDED   CLIENT_OS_NAME
 #endif
@@ -565,7 +575,7 @@
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
-     (CLIENT_CPU == CPU_ATI_STREAM) || \
+     (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || \
      ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_WIN32) || \
      (CLIENT_OS == OS_DEC_UNIX))))
    #define CORES_SUPPORT_SMP
@@ -614,7 +624,7 @@
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
 #elif (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOSX)) && \
-  ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM)))
+  ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)))
   /* Necessary for streams to work correctly */
   #define HAVE_POSIX_THREADS
   #define _POSIX_THREADS_SUPPORTED
@@ -684,6 +694,8 @@
   #error "FORK and CUDA don't work together - can't use multiple GPUs"
   #elif (CLIENT_CPU == CPU_ATI_STREAM)
   #error "FORK and ATI Stream probably don't work together"
+  #elif (CLIENT_CPU == CPU_OPENCL)
+  #error "FORK and OpenCL probably don't work together"
   #endif
 #else
   typedef int THREADID;
