@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.161 2012/05/16 20:04:06 stream Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.162 2012/08/08 18:44:43 sla Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -38,6 +38,10 @@ return "@(#)$Id: clirun.cpp,v 1.161 2012/05/16 20:04:06 stream Exp $"; }
 
 #if (CLIENT_CPU == CPU_CUDA)
 #include "cuda_setup.h"         // InitializeCUDA();
+#endif
+
+#if (CLIENT_CPU == CPU_OPENCL)
+#include "ocl_setup.h"		// InitializeOpenCL()
 #endif
 
 // --------------------------------------------------------------------------
@@ -1443,6 +1447,15 @@ int ClientRun( Client *client )
   if (InitializeCUDA() != 0)
   {
     Log("Unable to initialize CUDA.\n");
+    TimeToQuit = 1;
+    exitcode = -3;
+  }
+  #endif
+
+  #if (CLIENT_CPU == CPU_OPENCL)
+  if (InitializeOpenCL() <= 0)
+  {
+    Log("Unable to initialize OpenCL.\n");
     TimeToQuit = 1;
     exitcode = -3;
   }
