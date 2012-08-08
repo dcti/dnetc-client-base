@@ -1,12 +1,13 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.139 2012/05/01 07:49:00 stream Exp $
+# $Id: makefile.vc,v 1.140 2012/08/08 18:29:34 sla Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
 #PROCESSOR_ARCHITECTURE = cuda
 #PROCESSOR_ARCHITECTURE = ATI_STREAM
+#PROCESSOR_ARCHITECTURE = OPENCL
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -58,6 +59,12 @@ OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat
 #CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 ZIPSUFFIX = win32-x86-stream
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL"
+HAVE_OGR_CORES = 0
+OPTS_CC_CPU =
+OPTS_M_PLAT = IX86
+CHIPSRCPATH = plat
+ZIPSUFFIX = win32-x86-opencl
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
@@ -190,6 +197,15 @@ OPTS_MSVC = $(OPTS_MSVC) -DEXPECTED_CUDA_VERSION=2020
 !if "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
 OPTS_MSVC = $(OPTS_MSVC) -I"$(CALROOT)include" -Iplat\stream -Iplat\x86
 OPTS_LIBS = $(OPTS_LIBS) "$(CALROOT)aticalcl.lib" "$(CALROOT)aticalrt.lib"
+!endif
+
+# --------------------------------------------
+
+# OpenCL support
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "OPENCL"
+OPTS_MSVC = $(OPTS_MSVC) -I"$(OPENCLDIR)include" -Iplat\opencl -Iplat\x86
+OPTS_LIBS = $(OPTS_LIBS) "$(OPENCLDIR)lib\x86\OpenCL.lib"
 !endif
 
 # --------------------------------------------
@@ -366,6 +382,15 @@ RC5_72_OBJS =                             \
         $(OUTPUTPATH)/adl.obj        
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL"
+RC5_72_OBJS =                      \
+        $(OUTPUTPATH)/ocl_info.obj \
+        $(OUTPUTPATH)/ocl_setup.obj \
+        $(OUTPUTPATH)/ocl_common.obj \
+        $(OUTPUTPATH)/ocl_ref.obj \
+        $(OUTPUTPATH)/ocl_1pipe.obj
+
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DOPENCL -DDYN_TIMESLICE
 !else
 !error No RC5-72 cores for this architecture.
 !endif
@@ -542,6 +567,21 @@ $(VC_CHECK):
 
 {$(RC572SRCPATH)/stream}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL"
+
+{$(CHIPSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+
+{$(CHIPSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(CHIPSRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(RC572SRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
 !endif
 
 {$(RC572SRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
