@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.63 2012/08/08 19:02:01 sla Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.64 2012/08/11 09:04:57 sla Exp $"; }
 
 //#define TRACE
 
@@ -110,6 +110,8 @@ extern "C" s32 CDECL rc5_72_unit_func_il4_1i (RC5_72UnitWork *rc5_72unitwork, u3
 #elif (CLIENT_CPU == CPU_OPENCL)
 extern "C" s32 rc5_72_unit_func_ocl_ref (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_ocl_1pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_2pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
 
 
@@ -225,6 +227,8 @@ const char **corenames_for_contest_rc572()
   #elif (CLIENT_CPU == CPU_OPENCL)
       "CL ANSI 1-pipe",
       "CL 1-pipe",
+      "CL 2-pipe",
+      "CL 4-pipe",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -954,6 +958,14 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
       case 1:
         unit_func.gen_72 = rc5_72_unit_func_ocl_1pipe;
         pipeline_count = 1;
+        break;
+      case 2:
+        unit_func.gen_72 = rc5_72_unit_func_ocl_2pipe;
+        pipeline_count = 2;
+        break;
+      case 3:
+        unit_func.gen_72 = rc5_72_unit_func_ocl_4pipe;
+        pipeline_count = 4;
         break;
 
     // -----------
