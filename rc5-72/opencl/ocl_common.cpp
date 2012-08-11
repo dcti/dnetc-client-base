@@ -7,6 +7,9 @@
 */
 #include "cputypes.h"
 #include "ocl_common.h"
+#include "base64.h"
+#include <stdlib.h>
+#include <string.h>
 
 //rc5-72 test
 #define P 0xB7E15163
@@ -157,4 +160,80 @@ char* clStrError(cl_int status)
     case CL_INVALID_MIP_LEVEL:                  return "Invalid mip-map level";
     default: return "Unknown";
   }
+}
+
+#define BUFFER_INCREMENT 4096
+
+static unsigned char* Decompress(const unsigned char *inbuf, unsigned length)
+{
+  unsigned char *outbuf=NULL;
+  unsigned buflen=BUFFER_INCREMENT;
+  unsigned used=0;
+  unsigned todo=length;
+  outbuf=(unsigned char*)malloc(BUFFER_INCREMENT);
+  if(outbuf==NULL)
+    return NULL;
+
+  while(todo) {
+    if(*inbuf & 0x80) {    //compressed
+      unsigned len=*inbuf&0x7f;
+
+      if(buflen <= (used+len)) {
+        buflen += BUFFER_INCREMENT;
+        outbuf = (unsigned char*)realloc(outbuf,buflen);
+        if(outbuf==NULL)
+          break;
+      }
+
+      unsigned off=*(inbuf+1)+*(inbuf+2)*256;
+      inbuf += 3;
+      todo -= 3;
+      for( ; len>0; len--) {
+        outbuf[used] = outbuf[used-off];
+        used++;
+      }
+    } else {  //plain
+      unsigned len=*inbuf&0x7f;
+      if(buflen <= (used+len)) {
+        buflen += BUFFER_INCREMENT;
+        outbuf = (unsigned char*)realloc(outbuf,buflen);
+        if(outbuf==NULL)
+          break;
+      }
+      todo--;
+      inbuf++;
+      for( ; len>0; len--) {
+        outbuf[used++] = *inbuf;
+        inbuf++; todo--;
+      }
+    }
+  }
+  outbuf[used]=0;
+  return outbuf;
+}
+
+
+bool BuildCLProgram(unsigned deviceID, const char* programText, const char *kernelName)
+{
+  char *decoded_src=(char*)malloc(strlen(programText)+1);
+  if(!decoded_src)
+	  return false;
+  u32 decoded_len=base64_decode(decoded_src, programText, strlen(programText), strlen(programText));
+  unsigned char *decompressed_src=Decompress((unsigned char*)decoded_src,decoded_len);
+  free(decoded_src);
+  if(decompressed_src==NULL)
+    return false;
+
+  cl_int status;
+  ocl_context[deviceID].program = clCreateProgramWithSource(ocl_context[deviceID].clcontext, 1, (const char**)&decompressed_src, NULL, &status);
+  free(decompressed_src);
+  status |= clBuildProgram(ocl_context[deviceID].program, 1, &ocl_context[deviceID].deviceID, NULL, NULL, NULL);
+  if(ocl_diagnose(status, "building cl program", deviceID) !=CL_SUCCESS)
+    return false;
+
+  ocl_context[deviceID].kernel = clCreateKernel(ocl_context[deviceID].program, kernelName, &status);
+  if(ocl_diagnose(status, "building kernel", deviceID) !=CL_SUCCESS)
+    return false;
+
+  return true;
 }

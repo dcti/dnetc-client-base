@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "rc5-1pipe.cpp"
+
 #define CONST_SIZE (sizeof(cl_uint)*16)
 #define OUT_SIZE (sizeof(cl_uint)*128)
 
@@ -45,42 +47,8 @@ static bool init_rc5_72_ocl_1pipe(u32 device)
   if(ocl_diagnose(status, "creating output buffer", device) !=CL_SUCCESS)
 	  return false;
 
-  //////////////////////////////////
-    FILE *f;
-    cl_char *programSource;
-
-	f=fopen("rc5-1pipe.cl","rb");
-	if(f==NULL) {
-		Log("Couldn't load 'rc5-1pipe.cl'");
-		return false;
-	}
-
-	fseek (f , 0 , SEEK_END);
-	unsigned lSize = ftell (f)+1;
-
-	if(lSize>1000000) { 
-		fclose(f);
-		Log("Error in 'rc5-ref.cl'");
-		return false;
-	}
-
-	programSource=(cl_char*)malloc(lSize);
-	rewind(f);
-	fread(programSource,lSize-1,1,f);
-	programSource[lSize-1]=0; 
-
-	fclose(f);
-    ocl_context[device].program = clCreateProgramWithSource(ocl_context[device].clcontext, 1, (const char**)&programSource, NULL, &status);
-    free(programSource);
-  //////////////////////////////////
-  // Build (compile) the program for the devices
-  status |= clBuildProgram(ocl_context[device].program, 1, &ocl_context[device].deviceID, NULL, NULL, NULL);
-  if(ocl_diagnose(status, "building cl program", device) !=CL_SUCCESS)
-    return false;
-
-  ocl_context[device].kernel = clCreateKernel(ocl_context[device].program, "ocl_rc572_1pipe", &status);
-  if(ocl_diagnose(status, "building kernel", device) !=CL_SUCCESS)
-    return false;
+  if(!BuildCLProgram(device, ocl_rc572_1pipe_src, "ocl_rc572_1pipe"))
+	  return false;
 
   //Get a performance hint
   size_t prefm;

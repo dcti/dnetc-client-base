@@ -32,5 +32,6 @@ int getNumDevices();
 s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork);
 cl_int ocl_diagnose(cl_int result, const char *where, u32 DeviceIndex);
 char* clStrError(cl_int status);
+bool BuildCLProgram(unsigned deviceID, const char* programText, const char *kernelName);
 
 #endif //OCL_COMMON_H
