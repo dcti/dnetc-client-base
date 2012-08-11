@@ -14,6 +14,8 @@
 #include <CL/cl_ext.h>
 
 #include "logstuff.h"
+#include "deviceid.cpp"
+#include "../rc5-72/opencl/ocl_common.h"
 
 cl_uint numPlatforms = 0;
 cl_platform_id *platforms = NULL;
@@ -41,68 +43,40 @@ u32 getOpenCLDeviceFreq(unsigned device)
 static unsigned GetDeviceID(unsigned vendor_id, cl_char *device_name, cl_uint cunits, unsigned device)
 {
 	//Run kernel with predefined constants to get device ID
-  cl_context context = NULL;
+//  cl_context context = NULL;
   cl_command_queue cmdQueue = NULL;
   cl_mem out_buffer = NULL;
-  cl_program program = NULL;
-  cl_kernel kernel = NULL;
+//  cl_program program = NULL;
+//  cl_kernel kernel = NULL;
   cl_int status;
   cl_uint id=0;
 
+  if(ocl_context[device].coreID != CORE_NONE)
+	  OCLReinitializeDevice(device);
+
   // Create a context and associate it with the device
-  context = clCreateContext(NULL, 1, &devices[device], NULL, NULL, &status);
+  ocl_context[device].clcontext = clCreateContext(NULL, 1, &devices[device], NULL, NULL, &status);
   if(status != CL_SUCCESS)
 	  return 0;
   
-  cmdQueue = clCreateCommandQueue(context, devices[device], 0, &status);
+  cmdQueue = clCreateCommandQueue(ocl_context[device].clcontext, devices[device], 0, &status);
   if(status != CL_SUCCESS)
 	  goto finished;
 
-  out_buffer = clCreateBuffer(context, CL_MEM_ALLOC_HOST_PTR, 4, NULL, &status);
+  out_buffer = clCreateBuffer(ocl_context[device].clcontext, CL_MEM_ALLOC_HOST_PTR, 4, NULL, &status);
   if(status != CL_SUCCESS)
 	  goto finished;
 
-  //////////////////////////////////
-    FILE *f;
-    cl_char *programSource;
+  if(!BuildCLProgram(device, deviceid_src, "deviceID"))
+	  goto finished;
 
-	f=fopen("deviceid.cl","rb");
-	if(f==NULL) {
-		Log("Couldn't load 'deviceid.cl'");
-		return false;
-	}
-
-	fseek (f , 0 , SEEK_END);
-	unsigned lSize = ftell (f)+1;
-
-	if(lSize>1000000) { 
-		fclose(f);
-		Log("Error in 'deviceid.cl'");
-		return false;
-	}
-
-	programSource=(cl_char*)malloc(lSize);
-	rewind(f);
-	fread(programSource,lSize-1,1,f);
-	programSource[lSize-1]=0; 
-
-	fclose(f);
-   program = clCreateProgramWithSource(context, 1, (const char**)&programSource, NULL, &status);
-    free(programSource);
-  //////////////////////////////////
-
-   status |= clBuildProgram(program, 1, &devices[device], NULL, NULL, NULL);
+   status |= clSetKernelArg(ocl_context[device].kernel, 0, sizeof(cl_mem), &out_buffer);
    if(status != CL_SUCCESS)
      goto finished;
-
-   kernel = clCreateKernel(program, "deviceID", &status);
-   status |= clSetKernelArg(kernel, 0, sizeof(cl_mem), &out_buffer);
-   if(status != CL_SUCCESS)
-     goto finished;
-
+	 
    size_t globalWorkSize[1];
    globalWorkSize[0] = 1;
-   status = clEnqueueNDRangeKernel(cmdQueue, kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
+   status = clEnqueueNDRangeKernel(cmdQueue, ocl_context[device].kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
    if(status != CL_SUCCESS)
      goto finished;
 
@@ -115,16 +89,11 @@ static unsigned GetDeviceID(unsigned vendor_id, cl_char *device_name, cl_uint cu
   }
 
 finished:
-  if(kernel)
-    clReleaseKernel(kernel);
-  if(program)
-    clReleaseProgram(program);
   if(cmdQueue)
     clReleaseCommandQueue(cmdQueue);
   if(out_buffer)
     clReleaseMemObject(out_buffer);
-  if(context)
-    clReleaseContext(context);
+  OCLReinitializeDevice(device);
   return id;
 }
 
