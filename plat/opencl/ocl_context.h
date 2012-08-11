@@ -13,6 +13,8 @@ enum {
   CORE_NONE = 0,
   CORE_REF,
   CORE_1PIPE,
+  CORE_2PIPE,
+  CORE_4PIPE,
   CORE_CL_TOTAL
 };
 
