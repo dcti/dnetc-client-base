@@ -11,20 +11,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "rc5-ref.cpp"
+#include "rc5-2pipe.cpp"
 
 #define CONST_SIZE (sizeof(cl_uint)*16)
-#define OUT_SIZE (sizeof(cl_uint)*64)
+#define OUT_SIZE (sizeof(cl_uint)*128)
 
-static bool init_rc5_72_ocl_ref(u32 device)
+static bool init_rc5_72_ocl_2pipe(u32 device)
 {
   if(!ocl_context[device].active)
   {
-    Log("Device %u: is not supported\n", device);
+    Log("Device %u is not supported\n", device);
     return false;
   }
   
-  if(ocl_context[device].coreID!=CORE_REF)
+  if(ocl_context[device].coreID!=CORE_2PIPE)
     OCLReinitializeDevice(device);
 
   cl_int status;
@@ -47,57 +47,19 @@ static bool init_rc5_72_ocl_ref(u32 device)
   if(ocl_diagnose(status, "creating output buffer", device) !=CL_SUCCESS)
 	  return false;
 
-  if(!BuildCLProgram(device, ocl_rc572_ref_src, "ocl_rc572_ref"))
+  if(!BuildCLProgram(device, ocl_rc572_2pipe_src, "ocl_rc572_2pipe"))
 	  return false;
-  //////////////////////////////////
-  /*
-	FILE *f;
-    cl_char *programSource;
 
-	f=fopen("rc5-ref.cl","rb");
-	if(f==NULL) {
-		Log("Couldn't load 'rc5-ref.cl'");
-		return false;
-	}
-
-	fseek (f , 0 , SEEK_END);
-	unsigned lSize = ftell (f)+1;
-
-	if(lSize>1000000) { 
-		fclose(f);
-		Log("Error in 'rc5-ref.cl'");
-		return false;
-	}
-
-	programSource=(cl_char*)malloc(lSize);
-	rewind(f);
-	fread(programSource,lSize-1,1,f);
-	programSource[lSize-1]=0; 
-
-	fclose(f);
-    ocl_context[device].program = clCreateProgramWithSource(ocl_context[device].clcontext, 1, (const char**)&programSource, NULL, &status);
-    free(programSource);
-  //////////////////////////////////
-    
-  // Build (compile) the program for the devices
-  status |= clBuildProgram(ocl_context[device].program, 1, &ocl_context[device].deviceID, NULL, NULL, NULL);
-  if(ocl_diagnose(status, "building cl program", device) !=CL_SUCCESS)
-	return false;
-
-  ocl_context[device].kernel = clCreateKernel(ocl_context[device].program, "ocl_rc572_ref", &status);
-  if(ocl_diagnose(status, "building kernel", device) !=CL_SUCCESS)
-	return false;
-  */
   //Get a performance hint
   size_t prefm;
   status = clGetKernelWorkGroupInfo(ocl_context[device].kernel, ocl_context[device].deviceID, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, 
 	  sizeof(prefm), &prefm, NULL);
   if(status==CL_SUCCESS)
   {
-	  size_t cus;
-	  status = clGetDeviceInfo(ocl_context[device].deviceID, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cus), &cus, NULL);
-	  if(status == CL_SUCCESS)
-		ocl_context[device].runSizeMultiplier = prefm * cus;
+    size_t cus;
+    status = clGetDeviceInfo(ocl_context[device].deviceID, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cus), &cus, NULL);
+    if(status == CL_SUCCESS)
+      ocl_context[device].runSizeMultiplier = prefm * cus;
   }
   
   /*size_t workitem_size[3];
@@ -107,7 +69,8 @@ static bool init_rc5_72_ocl_ref(u32 device)
     ocl_context[device].maxWorkSize = workitem_size[0] * workitem_size[1] * workitem_size[2];
     Log("max worksize = %u\n", ocl_context[device].maxWorkSize);
   }*/
-  ocl_context[device].coreID=CORE_REF;
+  ocl_context[device].maxWorkSize = 0xffffffff;
+  ocl_context[device].coreID=CORE_2PIPE;
   return true;
 }
 
@@ -127,7 +90,7 @@ static bool ClearOutBuffer(const cl_mem buffer, u32 device)
   return true;
 }
 
-static bool FillConstantBuffer(const cl_mem buffer, RC5_72UnitWork *rc5_72unitwork, cl_uint keys, u32 device)
+static bool FillConstantBuffer(const cl_mem buffer, RC5_72UnitWork *rc5_72unitwork, cl_uint iter_offset, u32 device)
 {
   cl_uint *constPtr = NULL;
   cl_int status;
@@ -138,15 +101,19 @@ static bool FillConstantBuffer(const cl_mem buffer, RC5_72UnitWork *rc5_72unitwo
 
   //key_hi,key_mid,key_lo,granularity
   constPtr[0]=rc5_72unitwork->L0.hi;
-  constPtr[1]=rc5_72unitwork->L0.mid;
+  constPtr[1]=swap32(rc5_72unitwork->L0.mid);
   constPtr[2]=rc5_72unitwork->L0.lo;
-  constPtr[3]=keys;
+  constPtr[3]=iter_offset;
 
   //plain_lo,plain_hi,cypher_lo,cypher_hi
   constPtr[4]=rc5_72unitwork->plain.lo;
   constPtr[5]=rc5_72unitwork->plain.hi;
   constPtr[6]=rc5_72unitwork->cypher.lo;
   constPtr[7]=rc5_72unitwork->cypher.hi;
+
+  cl_uint l0= ROTL(0xBF0A8B1D+rc5_72unitwork->L0.lo,0x1d); //L0=ROTL(L0+S0,S0)=ROTL(L0+S0,0x1d)
+  constPtr[8]= l0;
+  constPtr[9]=ROTL3(l0+0xBF0A8B1D+0x5618cb1c);	           //S1=ROTL3(Sc1+S0+L0)
   
   status = clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, constPtr, 0, NULL, NULL);
   if(ocl_diagnose(status, "unmapping constants buffer", device) !=CL_SUCCESS)
@@ -161,32 +128,41 @@ static s32 ReadResults(const cl_mem buffer, u32 *CMC, u32 *iters_done, u32 devic
   cl_uint found;
 
   *CMC = 0; 
-  *iters_done = 0x7fffffff;
+  *iters_done = 0xffffffff;
   outPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_READ|CL_MAP_WRITE, 0, OUT_SIZE, 0, NULL, NULL, &status);
   if(ocl_diagnose(status, "mapping output buffer", device) !=CL_SUCCESS)
 	return -1;
 
+  //Log("A=%x B=%x\n", outPtr[0], outPtr[1]);
   found = outPtr[0];
   outPtr[0] = 0;
   if(found)
   {
 	u32 fullmatchkeyidx = 0xffffffff;
-    for(u32 idx=1; idx<=found; idx++)
+	u32 fullmatch = 0;
+    if(found>=(OUT_SIZE/sizeof(cl_uint)/2))
 	{
-		if(outPtr[idx]&0x80000000)
+      clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
+	  return -1;
+	}
+    for(u32 idx=0; idx<found; idx++)
+	{
+		if(outPtr[idx*2+1]&0x80000000)
 		{
-			fullmatchkeyidx = outPtr[idx]&0x7fffffff;
+			fullmatchkeyidx = outPtr[idx*2+2];
+			fullmatch = 1;
 			break;
 		}
 	}
+	
 	//second pass, calculate CMCs
     for(u32 idx=1; idx<=found; idx++)
 	{
-		u32 data= outPtr[idx]&0x7fffffff;
+		u32 data= outPtr[idx*2];
 		if(data<=fullmatchkeyidx)
 		{
 			(*CMC)++;
-			if((data > *iters_done) || (data == fullmatchkeyidx) || (*iters_done == 0x7fffffff))
+			if((data > *iters_done) || (data == fullmatchkeyidx) || (*iters_done == 0xffffffff))
 			{
 			  *iters_done = data;
 			}
@@ -195,7 +171,7 @@ static s32 ReadResults(const cl_mem buffer, u32 *CMC, u32 *iters_done, u32 devic
     status = clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
     if(ocl_diagnose(status, "unmapping output buffer", device) !=CL_SUCCESS)
 	  return -1;
-	if(fullmatchkeyidx < 0xffffffff)
+	if(fullmatch)
 		return 1;
   }
   status = clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
@@ -224,7 +200,7 @@ static bool selftest(int deviceID)
   tmp_unit.cypher.lo=0x12345678;
   tmp_unit.cypher.hi=0x9abcdef0;
 
-  if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 1, deviceID))
+  if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 0, deviceID))
     return false;	
   
   status  = clSetKernelArg(ocl_context[deviceID].kernel, 0, sizeof(cl_mem), &ocl_context[deviceID].const_buffer);
@@ -252,7 +228,7 @@ static bool selftest(int deviceID)
   tmp_unit.cypher.lo=0xbefcafe7;
   tmp_unit.cypher.hi=0xa6ec745f;
 
-  if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 1, deviceID))
+  if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 0, deviceID))
     return false;	
   status = clEnqueueNDRangeKernel(ocl_context[deviceID].cmdQueue, ocl_context[deviceID].kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
   if(ocl_diagnose(status, "launching kernel", deviceID) !=CL_SUCCESS)
@@ -271,7 +247,7 @@ static bool selftest(int deviceID)
   tmp_unit.cypher.hi=0xd1c60cfb;
 
   Log("Self-test passed, device %u\n", deviceID);
-  if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 1, deviceID))
+  if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 0, deviceID))
     return false;	
   status = clEnqueueNDRangeKernel(ocl_context[deviceID].cmdQueue, ocl_context[deviceID].kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
   if(ocl_diagnose(status, "launching kernel", deviceID) !=CL_SUCCESS)
@@ -285,9 +261,9 @@ static bool selftest(int deviceID)
 
 #undef CONST_SIZE
 #ifdef __cplusplus
-extern "C" s32 rc5_72_unit_func_ocl_ref (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_2pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
-s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+s32 rc5_72_unit_func_ocl_2pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
   int deviceID=rc5_72unitwork->devicenum;
   RC5_72UnitWork tmp_unit;
@@ -296,29 +272,26 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
   if(deviceID>=getNumDevices())
 	  deviceID = 0;
 
-  if (ocl_context[deviceID].coreID!=CORE_REF)
+  if (ocl_context[deviceID].coreID!=CORE_2PIPE)
   {
-    init_rc5_72_ocl_ref(deviceID);
-    if(ocl_context[deviceID].coreID!=CORE_REF) {
+    init_rc5_72_ocl_2pipe(deviceID);
+    if(ocl_context[deviceID].coreID!=CORE_2PIPE) {
       RaiseExitRequestTrigger();
       return -1;
     }
   }
-
   if(!selftestpassed)
-	if(!selftest(deviceID))
-	{
-		Log("Abnormal core termination! Device: %u\n", deviceID);
-        RaiseExitRequestTrigger();
-        return -1;
-	}else
-		selftestpassed = true;
+    if(!selftest(deviceID))
+    {
+      Log("Abnormal core termination! Device: %u\n", deviceID);
+      RaiseExitRequestTrigger();
+      return -1;
+    }else
+      selftestpassed = true;
 
-  //Log("Got %u iters to do\n", *iterations);
-  //Log("%x:%x:%x - %u\n", rc5_72unitwork->L0.hi, rc5_72unitwork->L0.mid, rc5_72unitwork->L0.lo, *iterations);
   memmove(&tmp_unit, rc5_72unitwork, sizeof(RC5_72UnitWork));
 
-  u32 kiter =*iterations;
+  u32 kiter =*iterations/2;
 
   if(!ClearOutBuffer(ocl_context[deviceID].out_buffer, deviceID))
   {
@@ -327,30 +300,30 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
       return -1;         
   }
 
+  cl_int status  = clSetKernelArg(ocl_context[deviceID].kernel, 0, sizeof(cl_mem), &ocl_context[deviceID].const_buffer);
+  status |= clSetKernelArg(ocl_context[deviceID].kernel, 1, sizeof(cl_mem), &ocl_context[deviceID].out_buffer);
+  if(ocl_diagnose(status, "setting kernel arguments", deviceID) !=CL_SUCCESS)
+  {
+	RaiseExitRequestTrigger();
+    return -1;          //err
+  }
+
+  u32 iter_offset=0;
   while(kiter) {
     u32 rest0;
-	cl_int status;
 
-	if(kiter>=ocl_context[deviceID].runSize)
-      rest0=ocl_context[deviceID].runSize;
-    else
-      rest0=kiter;
+    if(kiter>=ocl_context[deviceID].runSize)
+        rest0=ocl_context[deviceID].runSize;
+      else
+        rest0=kiter;
     kiter-=rest0;
     //fill constant buffer
-    if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, rest0, deviceID))
+    if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, iter_offset, deviceID))
     {
 	  //Log("Error filling constant buffer, device:#%u\n", deviceID);
       RaiseExitRequestTrigger();
       return -1;          //err
     }
-    
-    status  = clSetKernelArg(ocl_context[deviceID].kernel, 0, sizeof(cl_mem), &ocl_context[deviceID].const_buffer);
-    status |= clSetKernelArg(ocl_context[deviceID].kernel, 1, sizeof(cl_mem), &ocl_context[deviceID].out_buffer);
-    if(ocl_diagnose(status, "setting kernel arguments", deviceID) !=CL_SUCCESS)
-	{
-	  RaiseExitRequestTrigger();
-	  return -1;          //err
-	}
 
     // Define an index space (global work size) of work items for execution.
     size_t globalWorkSize[1];    
@@ -403,9 +376,13 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
   	    //Log("Up:Time: %f, runsize=%u, diff=%u\n", float(d), ocl_context[deviceID].runSize, diffm*ocl_context[deviceID].runSizeMultiplier); 
 	  }
 
-    //Check the results
-    u32 CMC, iters_done;
-    s32 read_res=ReadResults(ocl_context[deviceID].out_buffer, &CMC, &iters_done, deviceID);
+	key_incr(&tmp_unit.L0.hi, &tmp_unit.L0.mid, &tmp_unit.L0.lo, rest0*2);
+	iter_offset+=rest0*2;
+  }
+    
+  //Check the results
+  u32 CMC, iters_done;
+  s32 read_res=ReadResults(ocl_context[deviceID].out_buffer, &CMC, &iters_done, deviceID);
 	if(read_res<0)
 	{
 	  RaiseExitRequestTrigger();
@@ -414,9 +391,9 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
 
 	if(CMC)
 	{
-		u32 hi = tmp_unit.L0.hi;
-		u32 mid = tmp_unit.L0.mid;
-		u32 lo = tmp_unit.L0.lo;
+		u32 hi = rc5_72unitwork->L0.hi;
+		u32 mid = rc5_72unitwork->L0.mid;
+		u32 lo = rc5_72unitwork->L0.lo;
 
 		//Log("%x:%x:%x\n", hi,mid,lo);
 		key_incr(&hi, &mid, &lo, iters_done);
@@ -450,13 +427,11 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
 		  tmp_unit.L0.mid = mid;
 		  tmp_unit.L0.lo = lo;
 
-          *iterations -= kiter-iters_done+rest0;
+          *iterations = iters_done;
           memmove(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
           return RESULT_FOUND;
 		}
 	}
-	key_incr(&tmp_unit.L0.hi, &tmp_unit.L0.mid, &tmp_unit.L0.lo, rest0);
-  }
 
   /* tell the client about the optimal timeslice increment for this core
      (with current parameters) */

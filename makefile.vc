@@ -1,7 +1,7 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.140 2012/08/08 18:29:34 sla Exp $
+# $Id: makefile.vc,v 1.141 2012/08/11 09:24:36 sla Exp $
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
@@ -388,7 +388,9 @@ RC5_72_OBJS =                      \
         $(OUTPUTPATH)/ocl_setup.obj \
         $(OUTPUTPATH)/ocl_common.obj \
         $(OUTPUTPATH)/ocl_ref.obj \
-        $(OUTPUTPATH)/ocl_1pipe.obj
+        $(OUTPUTPATH)/ocl_1pipe.obj \
+        $(OUTPUTPATH)/ocl_2pipe.obj \
+        $(OUTPUTPATH)/ocl_4pipe.obj
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DOPENCL -DDYN_TIMESLICE
 !else

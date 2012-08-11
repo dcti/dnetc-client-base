@@ -1,11 +1,12 @@
 #pragma OPENCL EXTENSION cl_amd_media_ops : enable
-//CORENAME=ocl_rc572_1pipe_src
+//CORENAME=ocl_rc572_2pipe_src
 
 #ifdef  cl_amd_media_ops
-#define ROTL(x, s) amd_bitalign(x, x, (uint)(32 - (s)))
+#define ROTL1(x, s) amd_bitalign(x, x, (uint)(32 - (s)))
+#define ROTL(x, s) amd_bitalign(x, x, (uint2)(32 - (s)))
 #define SWAP(x) ((amd_bytealign(x, x, 1) & 0xff00ff00) | (amd_bytealign(x, x, 3) & 0x00ff00ff))
 #else
-#define ROTL(x, s) rotate((uint)x, (uint)s)
+#define ROTL(x, s) rotate((uint4)x, (uint4)s)
 #define SWAP(x) ((x >> 24) | (x << 24) | ((x&0x00ff0000) >> 8) | ((x&0x0000ff00)<<8))
 #endif //cl_amd_media_ops
 
@@ -29,34 +30,35 @@
     A = ROTL(A^B,B)+S[a]; \
     B = ROTL(B^A,A)+S[a+1]
 
-__kernel void ocl_rc572_1pipe( __constant uint *rc5_72unitwork, __global uint *outbuf)
+__kernel void ocl_rc572_2pipe( __constant uint *rc5_72unitwork, __global uint *outbuf)
 {
-  uint L[3];
-  uint S[26];
-  uint A,B;
-  uint t;
+  uint2 L[3];
+  uint2 S[26];
+  uint2 A,B;
+  uint2 t;
 
-  L[2] = rc5_72unitwork[0];   //L0hi;
-  L[1] = rc5_72unitwork[1];   //L0mid;
+  L[2].x = rc5_72unitwork[0];   //L0hi;
+  L[1].x = rc5_72unitwork[1];   //L0mid;
   L[0] = rc5_72unitwork[8];   
   S[1] = rc5_72unitwork[9];
 
-  L[2] += get_global_id(0);
-  uint l1_t1 = L[1];
-  uint l1_t2 = l1_t1 + (L[2] >> 8);
-  L[2] &= 0x000000ff;
+  L[2].x += get_global_id(0)*2;
+  uint l1_t1 = L[1].x;
+  uint l1_t2 = l1_t1 + (L[2].x >> 8);
+  L[2].x &= 0x000000ff;
   if(l1_t2 < l1_t1)
   {
     uint l0_t = SWAP(rc5_72unitwork[2]);
     l0_t +=1;
     L[0] = ROTL(0xBF0A8B1D + SWAP(l0_t), (uint)0x1d);
-    S[1] = ROTL(L[0] + 0xBF0A8B1D + 0x5618cb1c, (uint)3);
+    S[1].x = S[1].y = ROTL1(L[0].x + 0xBF0A8B1D + 0x5618cb1c, (uint)3);
   }
-  L[1] = SWAP(l1_t2);
+  L[1].x = SWAP(l1_t2);
   
   S[0] = 0xBF0A8B1D;
-  t = S[1] + L[0];
-  L[1] = ROTL(L[1] + t, t);
+  t.x = S[1].x + L[0].x;
+  L[1].x = L[1].y = ROTL1(L[1].x + t.x, t.x);
+  L[2].y = L[2].x + 1;
 
   ROUND1( 2,  1, 1, 2);
   ROUND1( 3,  2, 2, 0);
@@ -154,12 +156,24 @@ __kernel void ocl_rc572_1pipe( __constant uint *rc5_72unitwork, __global uint *o
   ENCRYPT(22);
   ENCRYPT(24);
 
-  if(A == rc5_72unitwork[6])
+  if((A.x == rc5_72unitwork[6])||(A.y == rc5_72unitwork[6]))
   {
-    uint idx = atomic_add(&outbuf[0], 1)*2+1;
-    uint val = get_global_id(0) + rc5_72unitwork[3]; //keyN+offset
-    uint attrib = (B == rc5_72unitwork[7])?0x80000000:0;
-    outbuf[idx] = attrib;
-    outbuf[idx+1] = val;
+    uint idx, val, attrib;
+    if(A.x == rc5_72unitwork[6])
+    {
+      idx = atomic_add(&outbuf[0], 1)*2+1;
+      val = get_global_id(0) * 2 + rc5_72unitwork[3]; //keyN+offset
+      attrib = (B.x == rc5_72unitwork[7])?0x80000000:0;
+      outbuf[idx] = attrib;
+      outbuf[idx+1] = val;
+    }
+    if(A.y == rc5_72unitwork[6])
+    {
+      idx = atomic_add(&outbuf[0], 1)*2+1;
+      val = get_global_id(0) * 2 + rc5_72unitwork[3] + 1; //keyN+offset
+      attrib = (B.y == rc5_72unitwork[7])?0x80000000:0;
+      outbuf[idx] = attrib;
+      outbuf[idx+1] = val;
+    }
   }
 }

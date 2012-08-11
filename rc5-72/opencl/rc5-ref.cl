@@ -7,6 +7,7 @@
 #define P 0xB7E15163
 #define Q 0x9E3779B9
 
+//CORENAME=ocl_rc572_ref_src
 __kernel void ocl_rc572_ref( __constant uint *rc5_72unitwork, __global uint *outbuf)
 {
   uint L[3];
