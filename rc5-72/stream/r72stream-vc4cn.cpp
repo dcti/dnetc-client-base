@@ -131,6 +131,11 @@ static bool init_rc5_72_il4_nand(u32 Device)
       CContext[Device].domainSizeY=904;
       CContext[Device].maxIters=3;
       break;
+    case 20: //Tahiti
+      CContext[Device].domainSizeX=768;
+      CContext[Device].domainSizeY=768;
+      CContext[Device].maxIters=1;
+      break;
     default:
       CContext[Device].domainSizeX=512;
       CContext[Device].domainSizeY=512;
@@ -148,10 +153,12 @@ static bool init_rc5_72_il4_nand(u32 Device)
   }
 
   CContext[Device].globalRes0=0;
-  if(CContext[Device].attribs.memExport) {
-    calResAllocRemote2D(&CContext[Device].globalRes0, &CContext[Device].device, 1, 64,
+  if(CContext[Device].attribs.target<20)
+    if(CContext[Device].attribs.memExport) {
+      calResAllocRemote2D(&CContext[Device].globalRes0, &CContext[Device].device, 1, 64,
                         1, CAL_FORMAT_UINT_1, CAL_RESALLOC_GLOBAL_BUFFER);
-  }
+    }
+  
 
   //-------------------------------------------------------------------------
   // Compiling Device Program

@@ -6,7 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cna.cpp,v 1.13 2012/01/13 01:05:54 snikkel Exp $
+ * $Id: r72stream-vc4cna.cpp,v 1.14 2012/08/12 17:19:19 sla Exp $
 */
 
 #include "r72stream-common.h"
@@ -90,10 +90,11 @@ static bool init_rc5_72_il4a_nand(u32 Device)
   }
 
   CContext[Device].globalRes0=0;
-  if(CContext[Device].attribs.memExport) {
-    calResAllocRemote2D(&CContext[Device].globalRes0, &CContext[Device].device, 1, 64,
+  if(CContext[Device].attribs.target<20)
+    if(CContext[Device].attribs.memExport) {
+      calResAllocRemote2D(&CContext[Device].globalRes0, &CContext[Device].device, 1, 64,
                         1, CAL_FORMAT_UINT_1, CAL_RESALLOC_GLOBAL_BUFFER);
-  }
+    }
 
   //-------------------------------------------------------------------------
   // Compiling Device Program
