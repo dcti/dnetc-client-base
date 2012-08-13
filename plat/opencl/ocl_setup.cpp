@@ -57,16 +57,16 @@ int InitializeOpenCL()
     ocl_context[i].coreID = CORE_NONE;
     ocl_context[i].clcontext = NULL;
     ocl_context[i].deviceID = devices[i];
-	ocl_context[i].cmdQueue = NULL;
-	ocl_context[i].const_buffer = NULL;
-	ocl_context[i].out_buffer = NULL;
-	ocl_context[i].const_ptr = NULL;
-	ocl_context[i].out_ptr = NULL;
-	ocl_context[i].kernel = NULL;
-	ocl_context[i].program = NULL;
-	ocl_context[i].runSize = 65536;	
-	ocl_context[i].runSizeMultiplier = 1;
-	ocl_context[i].maxWorkSize = 2048 * 2048;
+    ocl_context[i].cmdQueue = NULL;
+    ocl_context[i].const_buffer = NULL;
+    ocl_context[i].out_buffer = NULL;
+    ocl_context[i].const_ptr = NULL;
+    ocl_context[i].out_ptr = NULL;
+    ocl_context[i].kernel = NULL;
+    ocl_context[i].program = NULL;
+    ocl_context[i].runSize = 65536;	
+    ocl_context[i].runSizeMultiplier = 64;
+    ocl_context[i].maxWorkSize = 2048 * 2048;
   }
   
   return numDevices;
@@ -136,7 +136,6 @@ void OCLReinitializeDevice(int device)
   }
 
   ocl_context[device].runSize = 65536;	
-  ocl_context[device].runSizeMultiplier = 1;
   ocl_context[device].maxWorkSize = 2048 * 2048;
   //Log("Reinit OK\n");
 }
