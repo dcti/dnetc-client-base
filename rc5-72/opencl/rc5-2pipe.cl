@@ -1,7 +1,13 @@
-#pragma OPENCL EXTENSION cl_amd_media_ops : enable
+/*
+* Copyright distributed.net 2012 - All Rights Reserved
+* For use in distributed.net projects only.
+* Any other distribution or use of this source violates copyright.
+*
+* $Id: 
+*/
 //CORENAME=ocl_rc572_2pipe_src
-
 #ifdef  cl_amd_media_ops
+#pragma OPENCL EXTENSION cl_amd_media_ops : enable
 #define ROTL1(x, s) amd_bitalign(x, x, (uint)(32 - (s)))
 #define ROTL(x, s) amd_bitalign(x, x, (uint2)(32 - (s)))
 #define SWAP(x) ((amd_bytealign(x, x, 1) & 0xff00ff00) | (amd_bytealign(x, x, 3) & 0x00ff00ff))
@@ -136,8 +142,8 @@ __kernel void ocl_rc572_2pipe( __constant uint *rc5_72unitwork, __global uint *o
   ROUND23(21,20, 0, 1);
   ROUND23(22,21, 1, 2);
   ROUND23(23,22, 2, 0);
-  ROUND23(24,23, 0, 1);
-  ROUND23(25,24, 1, 2);
+
+  S[24] = ROTL3(S[24] + S[23] +L[0]); 
 
 
   A = rc5_72unitwork[4] + S[0];	//plain_lo
@@ -154,11 +160,19 @@ __kernel void ocl_rc572_2pipe( __constant uint *rc5_72unitwork, __global uint *o
   ENCRYPT(18);
   ENCRYPT(20);
   ENCRYPT(22);
-  ENCRYPT(24);
+
+  A = ROTL(A^B,B)+S[24]; 
 
   if((A.x == rc5_72unitwork[6])||(A.y == rc5_72unitwork[6]))
   {
     uint idx, val, attrib;
+
+    t = S[24] + L[0]; 
+    L[1] = ROTL(L[1] + t, t);
+
+    S[25] = ROTL3(S[25] + S[24] +L[1]);
+    B = ROTL(B^A,A)+S[25];
+
     if(A.x == rc5_72unitwork[6])
     {
       idx = atomic_add(&outbuf[0], 1)*2+1;

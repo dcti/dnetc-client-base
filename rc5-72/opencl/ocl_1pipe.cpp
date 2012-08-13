@@ -59,8 +59,11 @@ static bool init_rc5_72_ocl_1pipe(u32 device)
     size_t cus;
     status = clGetDeviceInfo(ocl_context[device].deviceID, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cus), &cus, NULL);
     if(status == CL_SUCCESS)
-      ocl_context[device].runSizeMultiplier = prefm * cus;
+      ocl_context[device].runSizeMultiplier = prefm * cus *4; //Hack for now. We need 4 wavefronts per CU to hide latency
   }
+  unsigned t = ocl_context[device].runSize/ocl_context[device].runSizeMultiplier;
+  if (t == 0) t = 1;
+  ocl_context[device].runSize = ocl_context[device].runSizeMultiplier * t; //To be sure runsize is divisible by multiplier
   
   /*size_t workitem_size[3];
   status = clGetDeviceInfo(ocl_context[device].deviceID, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(workitem_size), &prefm, NULL);
@@ -246,7 +249,7 @@ static bool selftest(int deviceID)
   tmp_unit.cypher.lo=0x4da0ae1c;
   tmp_unit.cypher.hi=0xd1c60cfb;
 
-  Log("Self-test passed, device %u\n", deviceID);
+  //Log("Self-test passed, device %u\n", deviceID);
   if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 0, deviceID))
     return false;	
   status = clEnqueueNDRangeKernel(ocl_context[deviceID].cmdQueue, ocl_context[deviceID].kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
@@ -364,6 +367,8 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
 	{
 	  //Decrease worksize by 5%
 	  u32 diffm = ocl_context[deviceID].runSize /20 /ocl_context[deviceID].runSizeMultiplier;
+	  if(diffm == 0)
+		diffm = 1;
       if(ocl_context[deviceID].runSize>(diffm*ocl_context[deviceID].runSizeMultiplier))
 		  ocl_context[deviceID].runSize -= diffm*ocl_context[deviceID].runSizeMultiplier;
 	  //Log("Down:Time: %f, runsize=%u\n", float(d), ocl_context[deviceID].runSize); 
@@ -371,6 +376,8 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       if((d<8.) &&(rest0 == ocl_context[deviceID].runSize))
 	  {
 	    u32 diffm = ocl_context[deviceID].runSize /20 /ocl_context[deviceID].runSizeMultiplier;
+	    if(diffm == 0)
+		  diffm = 1;
         if(ocl_context[deviceID].runSize<ocl_context[deviceID].maxWorkSize)
 		  ocl_context[deviceID].runSize += diffm*ocl_context[deviceID].runSizeMultiplier;
   	    //Log("Up:Time: %f, runsize=%u, diff=%u\n", float(d), ocl_context[deviceID].runSize, diffm*ocl_context[deviceID].runSizeMultiplier); 
@@ -436,7 +443,7 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
   /* tell the client about the optimal timeslice increment for this core
      (with current parameters) */
   memmove(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
-  rc5_72unitwork->optimal_timeslice_increment = ocl_context[deviceID].runSize;
+  rc5_72unitwork->optimal_timeslice_increment = ocl_context[deviceID].runSizeMultiplier;
   return RESULT_NOTHING;
 }
 

@@ -270,7 +270,7 @@ static bool selftest(int deviceID)
   tmp_unit.cypher.lo=0x4da0ae1c;
   tmp_unit.cypher.hi=0xd1c60cfb;
 
-  Log("Self-test passed, device %u\n", deviceID);
+  //Log("Self-test passed, device %u\n", deviceID);
   if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 1, deviceID))
     return false;	
   status = clEnqueueNDRangeKernel(ocl_context[deviceID].cmdQueue, ocl_context[deviceID].kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
