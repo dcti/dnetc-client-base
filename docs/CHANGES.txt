@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.128 2012/06/24 18:26:57 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.129 2012/08/14 20:06:27 sla Exp $
 ==========================================================================
 
 2.9100
@@ -42,6 +42,7 @@ Version change log: $Id: CHANGES.txt,v 1.128 2012/06/24 18:26:57 piru Exp $
             fix: all: regression in OGR-NG codebase (#4295)
             new: IPv6 support (#2982)
             imp: morphos: Battery/AC power det & CPU temp query
+            new: opencl: New rc5-72 cores
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core
