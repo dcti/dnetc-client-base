@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.64 2012/08/11 09:04:57 sla Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.65 2012/08/14 19:33:01 sla Exp $"; }
 
 //#define TRACE
 
@@ -652,6 +652,21 @@ int selcoreGetPreselectedCoreForProject_rc572()
     cindex = 1; // now we use ansi-2pipe
   #elif (CLIENT_CPU == CPU_CUDA)
     cindex = 0; // 1-pipe 64-threads
+  #elif (CLIENT_CPU == CPU_OPENCL)
+    switch (detected_type)
+    {
+      case 9:               //Tahiti
+      case 10:              //Pitcairn
+        cindex = 1;
+        break;
+      case 12:              //Cayman
+      case 13:              //Barts
+      case 14:              //Cypress
+      case 15:              //Juniper
+      case 16:              //Redwood
+        cindex = 3;
+        break;
+    }
   #elif (CLIENT_CPU == CPU_ATI_STREAM)
     switch (detected_type)
     {
