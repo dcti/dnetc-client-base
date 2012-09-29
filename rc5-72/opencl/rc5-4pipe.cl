@@ -12,6 +12,7 @@
 #define ROTL(x, s) amd_bitalign(x, x, (uint4)(32 - (s)))
 #define SWAP(x) ((amd_bytealign(x, x, 1) & 0xff00ff00) | (amd_bytealign(x, x, 3) & 0x00ff00ff))
 #else
+#define ROTL1(x, s) rotate(x, s)
 #define ROTL(x, s) rotate((uint4)x, (uint4)s)
 #define SWAP(x) ((x >> 24) | (x << 24) | ((x&0x00ff0000) >> 8) | ((x&0x0000ff00)<<8))
 #endif //cl_amd_media_ops
@@ -56,7 +57,7 @@ __kernel void ocl_rc572_4pipe( __constant uint *rc5_72unitwork, __global uint *o
   {
     uint l0_t = SWAP(rc5_72unitwork[2]);
     l0_t +=1;
-    L[0] = ROTL(0xBF0A8B1D + SWAP(l0_t), (uint)0x1d);
+    L[0].x = L[0].y = L[0].z = L[0].w = ROTL1(0xBF0A8B1D + SWAP(l0_t), (uint)0x1d);
     S[1].x = S[1].y = S[1].z = S[1].w = ROTL1(L[0].x + 0xBF0A8B1D + 0x5618cb1c, (uint)3);
   }
   L[1].x = SWAP(l1_t2);

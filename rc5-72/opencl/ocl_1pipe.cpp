@@ -82,13 +82,13 @@ static bool ClearOutBuffer(const cl_mem buffer, u32 device)
   cl_uint *outPtr = NULL;
   cl_int status;
 
-  outPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0, 4, 0, NULL, NULL, &status);
+  outPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE, 0, 4, 0, NULL, NULL, &status);
   if(ocl_diagnose(status, "mapping output buffer", device) !=CL_SUCCESS)
 	return false;
    outPtr[0]=0;
 
   status = clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
-  if(ocl_diagnose(status, "unmapping output buffer", device) !=CL_SUCCESS)
+  if(ocl_diagnose(status, "unmapping output buffer (1)", device) !=CL_SUCCESS)
 	return false;
   return true;
 }
@@ -98,7 +98,7 @@ static bool FillConstantBuffer(const cl_mem buffer, RC5_72UnitWork *rc5_72unitwo
   cl_uint *constPtr = NULL;
   cl_int status;
 
-  constPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0, CONST_SIZE, 0, NULL, NULL, &status);
+  constPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE, 0, CONST_SIZE, 0, NULL, NULL, &status);
   if(ocl_diagnose(status, "mapping constants buffer", device) !=CL_SUCCESS)
 	return false;
 
@@ -141,44 +141,46 @@ static s32 ReadResults(const cl_mem buffer, u32 *CMC, u32 *iters_done, u32 devic
   outPtr[0] = 0;
   if(found)
   {
-	u32 fullmatchkeyidx = 0xffffffff;
-	u32 fullmatch = 0;
+    u32 fullmatchkeyidx = 0xffffffff;
+    u32 fullmatch = 0;
     if(found>=(OUT_SIZE/sizeof(cl_uint)/2))
-	{
+    {
+      Log("Internal error reading kernel output\n");
       clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
-	  return -1;
-	}
+      return -1;
+    }
     for(u32 idx=0; idx<found; idx++)
-	{
-		if(outPtr[idx*2+1]&0x80000000)
-		{
-			fullmatchkeyidx = outPtr[idx*2+2];
-			fullmatch = 1;
-			break;
-		}
-	}
+    {
+      if(outPtr[idx*2+1]&0x80000000)
+      {
+        fullmatchkeyidx = outPtr[idx*2+2];
+	fullmatch = 1;
+	break;
+      }
+    }
 	
-	//second pass, calculate CMCs
+    //second pass, calculate CMCs
     for(u32 idx=1; idx<=found; idx++)
-	{
-		u32 data= outPtr[idx*2];
-		if(data<=fullmatchkeyidx)
-		{
-			(*CMC)++;
-			if((data > *iters_done) || (data == fullmatchkeyidx) || (*iters_done == 0xffffffff))
-			{
-			  *iters_done = data;
-			}
-		}
-	}
+    {
+      u32 data= outPtr[idx*2];
+      if(data<=fullmatchkeyidx)
+      {
+        (*CMC)++;
+        if((data > *iters_done) || (data == fullmatchkeyidx) || (*iters_done == 0xffffffff))
+        {
+          *iters_done = data;
+        }
+      }
+    }
     status = clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
-    if(ocl_diagnose(status, "unmapping output buffer", device) !=CL_SUCCESS)
+    if(ocl_diagnose(status, "unmapping output buffer (2)", device) !=CL_SUCCESS)
 	  return -1;
-	if(fullmatch)
-		return 1;
+    if(fullmatch)
+      return 1;
+    return 0;
   }
   status = clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
-  if(ocl_diagnose(status, "unmapping output buffer", device) !=CL_SUCCESS)
+  if(ocl_diagnose(status, "unmapping output buffer (3)", device) !=CL_SUCCESS)
     return -1;
   return 0; 
 }
@@ -249,7 +251,6 @@ static bool selftest(int deviceID)
   tmp_unit.cypher.lo=0x4da0ae1c;
   tmp_unit.cypher.hi=0xd1c60cfb;
 
-  //Log("Self-test passed, device %u\n", deviceID);
   if(!FillConstantBuffer(ocl_context[deviceID].const_buffer, &tmp_unit, 0, deviceID))
     return false;	
   status = clEnqueueNDRangeKernel(ocl_context[deviceID].cmdQueue, ocl_context[deviceID].kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
@@ -349,42 +350,42 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     status |= clGetEventProfilingInfo(ndrEvt, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &endTime, 0);
     status |= clReleaseEvent(ndrEvt);
 
-	double d;
-	if(status == CL_SUCCESS)
-		d=1e-6 * (endTime - startTime);
-	else	
-	{
-		static bool profilingErr=false;
-		if(!profilingErr)
-		{
-			profilingErr = true;
-			ocl_diagnose(status, "getting profile info", deviceID);
-		}
-		d = 10;
-	}
+    double d;
+    if(status == CL_SUCCESS)
+      d=1e-6 * (endTime - startTime);
+    else	
+    {
+      static bool profilingErr=false;
+      if(!profilingErr)
+      {
+        profilingErr = true;
+        ocl_diagnose(status, "getting profile info", deviceID);
+      }
+      d = 10;
+    }
 
     if(d>12.)
-	{
-	  //Decrease worksize by 5%
-	  u32 diffm = ocl_context[deviceID].runSize /20 /ocl_context[deviceID].runSizeMultiplier;
-	  if(diffm == 0)
-		diffm = 1;
+    {
+      //Decrease worksize by 5%
+      u32 diffm = ocl_context[deviceID].runSize /20 /ocl_context[deviceID].runSizeMultiplier;
+      if(diffm == 0)
+        diffm = 1;
       if(ocl_context[deviceID].runSize>(diffm*ocl_context[deviceID].runSizeMultiplier))
-		  ocl_context[deviceID].runSize -= diffm*ocl_context[deviceID].runSizeMultiplier;
-	  //Log("Down:Time: %f, runsize=%u\n", float(d), ocl_context[deviceID].runSize); 
-	}else
+        ocl_context[deviceID].runSize -= diffm*ocl_context[deviceID].runSizeMultiplier;
+      //Log("Down:Time: %f, runsize=%u\n", float(d), ocl_context[deviceID].runSize); 
+    }else
       if((d<8.) &&(rest0 == ocl_context[deviceID].runSize))
-	  {
-	    u32 diffm = ocl_context[deviceID].runSize /20 /ocl_context[deviceID].runSizeMultiplier;
-	    if(diffm == 0)
-		  diffm = 1;
+      {
+        u32 diffm = ocl_context[deviceID].runSize /20 /ocl_context[deviceID].runSizeMultiplier;
+        if(diffm == 0)
+          diffm = 1;
         if(ocl_context[deviceID].runSize<ocl_context[deviceID].maxWorkSize)
-		  ocl_context[deviceID].runSize += diffm*ocl_context[deviceID].runSizeMultiplier;
-  	    //Log("Up:Time: %f, runsize=%u, diff=%u\n", float(d), ocl_context[deviceID].runSize, diffm*ocl_context[deviceID].runSizeMultiplier); 
-	  }
+          ocl_context[deviceID].runSize += diffm*ocl_context[deviceID].runSizeMultiplier;
+        //Log("Up:Time: %f, runsize=%u, diff=%u\n", float(d), ocl_context[deviceID].runSize, diffm*ocl_context[deviceID].runSizeMultiplier); 
+      }
 
-	key_incr(&tmp_unit.L0.hi, &tmp_unit.L0.mid, &tmp_unit.L0.lo, rest0);
-	iter_offset+=rest0;
+    key_incr(&tmp_unit.L0.hi, &tmp_unit.L0.mid, &tmp_unit.L0.lo, rest0);
+    iter_offset+=rest0;
   }
     
   //Check the results

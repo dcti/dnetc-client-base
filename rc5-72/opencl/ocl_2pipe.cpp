@@ -82,7 +82,7 @@ static bool ClearOutBuffer(const cl_mem buffer, u32 device)
   cl_uint *outPtr = NULL;
   cl_int status;
 
-  outPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0, 4, 0, NULL, NULL, &status);
+  outPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE, 0, 4, 0, NULL, NULL, &status);
   if(ocl_diagnose(status, "mapping output buffer", device) !=CL_SUCCESS)
 	return false;
    outPtr[0]=0;
@@ -98,7 +98,7 @@ static bool FillConstantBuffer(const cl_mem buffer, RC5_72UnitWork *rc5_72unitwo
   cl_uint *constPtr = NULL;
   cl_int status;
 
-  constPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0, CONST_SIZE, 0, NULL, NULL, &status);
+  constPtr = (cl_uint*) clEnqueueMapBuffer(ocl_context[device].cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE, 0, CONST_SIZE, 0, NULL, NULL, &status);
   if(ocl_diagnose(status, "mapping constants buffer", device) !=CL_SUCCESS)
 	return false;
 
@@ -141,41 +141,43 @@ static s32 ReadResults(const cl_mem buffer, u32 *CMC, u32 *iters_done, u32 devic
   outPtr[0] = 0;
   if(found)
   {
-	u32 fullmatchkeyidx = 0xffffffff;
-	u32 fullmatch = 0;
+    u32 fullmatchkeyidx = 0xffffffff;
+    u32 fullmatch = 0;
     if(found>=(OUT_SIZE/sizeof(cl_uint)/2))
-	{
+    {
+      Log("Internal error reading kernel output\n");
       clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
-	  return -1;
-	}
+      return -1;
+    }
     for(u32 idx=0; idx<found; idx++)
-	{
-		if(outPtr[idx*2+1]&0x80000000)
-		{
-			fullmatchkeyidx = outPtr[idx*2+2];
-			fullmatch = 1;
-			break;
-		}
-	}
+    {
+      if(outPtr[idx*2+1]&0x80000000)
+      {
+        fullmatchkeyidx = outPtr[idx*2+2];
+        fullmatch = 1;
+        break;
+      }
+    }
 	
-	//second pass, calculate CMCs
+    //second pass, calculate CMCs
     for(u32 idx=1; idx<=found; idx++)
-	{
-		u32 data= outPtr[idx*2];
-		if(data<=fullmatchkeyidx)
-		{
-			(*CMC)++;
-			if((data > *iters_done) || (data == fullmatchkeyidx) || (*iters_done == 0xffffffff))
-			{
-			  *iters_done = data;
-			}
-		}
-	}
+    {
+      u32 data= outPtr[idx*2];
+      if(data<=fullmatchkeyidx)
+      {
+        (*CMC)++;
+        if((data > *iters_done) || (data == fullmatchkeyidx) || (*iters_done == 0xffffffff))
+        {
+          *iters_done = data;
+        }
+      }
+    }
     status = clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
     if(ocl_diagnose(status, "unmapping output buffer", device) !=CL_SUCCESS)
 	  return -1;
-	if(fullmatch)
-		return 1;
+    if(fullmatch)
+      return 1;
+    return 0;
   }
   status = clEnqueueUnmapMemObject(ocl_context[device].cmdQueue, buffer, outPtr, 0, NULL, NULL);
   if(ocl_diagnose(status, "unmapping output buffer", device) !=CL_SUCCESS)

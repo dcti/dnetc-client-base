@@ -218,6 +218,7 @@ bool BuildCLProgram(unsigned deviceID, const char* programText, const char *kern
   char *decoded_src=(char*)malloc(strlen(programText)+1);
   if(!decoded_src)
 	  return false;
+
   u32 decoded_len=base64_decode(decoded_src, programText, strlen(programText), strlen(programText));
   unsigned char *decompressed_src=Decompress((unsigned char*)decoded_src,decoded_len);
   free(decoded_src);
@@ -229,7 +230,19 @@ bool BuildCLProgram(unsigned deviceID, const char* programText, const char *kern
   free(decompressed_src);
   status |= clBuildProgram(ocl_context[deviceID].program, 1, &ocl_context[deviceID].deviceID, NULL, NULL, NULL);
   if(ocl_diagnose(status, "building cl program", deviceID) !=CL_SUCCESS)
+  {
+    static char buf[0x10000]={0};
+
+    clGetProgramBuildInfo( ocl_context[deviceID].program,
+                           ocl_context[deviceID].deviceID,
+                           CL_PROGRAM_BUILD_LOG,
+                           0x10000,
+                           buf,
+                           NULL );
+    LogRaw(buf);
+    
     return false;
+  }
 
   ocl_context[deviceID].kernel = clCreateKernel(ocl_context[deviceID].program, kernelName, &status);
   if(ocl_diagnose(status, "building kernel", deviceID) !=CL_SUCCESS)
