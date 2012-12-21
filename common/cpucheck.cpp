@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.208 2012/08/08 19:27:20 sla Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.209 2012/12/21 16:04:53 piru Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -973,6 +973,18 @@ static long __GetRawProcessorID(const char **cpuname)
       case 0x0044:   // 970MP (G5)
       case 0x8081:   // 5200 (G2)
       case 0x8082:   // 5200 (G2-LE)
+      case 0x7000:   // 750FX
+      case 0x7002:   // 750GX/750GL
+      case 0x1302:   // 460EX/460GT
+      case 0x4222:   // 440EP
+      case 0x41F1:   // 405LP
+      case 0x5121:   // 405EP
+      case 0x4011:   // 405GP
+      case 0x5091:   // 405GPR
+      case 0x4012:   // 440GP
+      case 0x51B2:   // 440GX
+      case 0x5322:   // 440SP
+      case 0x0090:   // PA6T-1682M
       detectedtype = cpu; break;
       default: // some PPC processor that we don't know about
                // set the tag (so that the user can tell us), but return 0
