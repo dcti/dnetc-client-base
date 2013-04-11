@@ -1,6 +1,6 @@
 ;
 ; Assembly core for OGR-NG, 64bit SSE2 with LZCNT asm version.
-; $Id: ogrng64-cj1-sse2-lzcnt-asm.asm,v 1.1 2010/02/02 05:35:23 stream Exp $
+; $Id: ogrng64-cj1-sse2-lzcnt-asm.asm,v 1.2 2013/04/11 19:39:30 umccullough Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
@@ -8,7 +8,12 @@
 %ifdef __NASM_VER__
 	cpu	686
 %else
-	cpu	p3 mmx sse sse2 amd
+	cpu	p3 mmx sse sse2
+%if (__YASM_MAJOR__ < 1) || (__YASM_MAJOR__ == 1 && __YASM_MINOR__ < 2)
+	cpu	amd ; Older versions of yasm assumed lzcnt with "amd"
+%else
+	cpu	lzcnt
+%endif
 	BITS	64
 %endif
 
