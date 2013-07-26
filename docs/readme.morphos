@@ -1,7 +1,7 @@
 
  distributed.net client for MorphOS (PPC)
  Released by Harry Sintonen <sintonen@iki.fi>
- Document revision $Id: readme.morphos,v 1.6 2012/06/25 00:31:00 piru Exp $
+ Document revision $Id: readme.morphos,v 1.7 2013/07/26 00:34:06 piru Exp $
 
  Welcome to the distributed.net client.
 
@@ -24,9 +24,8 @@
 
      - MorphOS 0.4 or greater (MUI4 is required for the GUI part).
      - PowerPC 603e or greater.
-     - Altivec cores require G4 and MorphOS 2.0 or newer.
-     - A TCP stack compatible with AmiTCP 3.0 or newer.
-       There are several, such as Miami(Dx) or Genesis.
+     - Altivec cores require CPU with AltiVec and MorphOS 2.0 or newer.
+     - A TCP/IP stack (MorphOS built-in one will do just fine)
 
  2.0  Getting started ------------------------------------------------
 
@@ -54,19 +53,20 @@
 
  3.0  Notes ----------------------------------------------------------
 
-    If you want to contribute to the Distributed Pegasos Team, you can
-    join the team from address:
-    http://stats.distributed.net/team/tmsummary.php?project_id=27&team=30562
+    If you want to contribute to the Team MorphOS, you can join the team
+    from address:
+    http://stats.distributed.net/team/tmsummary.php?project_id=27&team=32053
 
     If you want to contribute to the Distributed Amiga effort, visit the
     effort home page at http://distributed.amiga.org/.
 
-    IMPORTANT: the client's default distributed.net ID is rc5@distributed.net.
-    Unless you change this your work goes unattributed.
+    IMPORTANT: By defaut the work is unattributed.  Configure the email
+    address in the General Client Options to get the work attributed to
+    you.
 
     By default the client is configured to pause if the system is running
-    on battery power. The client is also paused while charging the battery
-    to avoid straining it unnecessarily. The client can be configured to
+    on battery power.  The client is also paused while charging the battery
+    to avoid straining it unnecessarily.  The client can be configured to
     ignore the battery status if so desired.
 
   3.1  Setting the time zone -----------------------------------------
@@ -144,9 +144,10 @@
 
  5.0  Credits & thank yous -------------------------------------------
 
-    -- Ilkka Lehtoranta (MUI dnetcgui.library)
+    -- Ilkka Lehtoranta (Original MUI dnetcgui.library)
 
-    -- Grzegorz Kraszewski (spotting some really nasty bug)
+    -- Grzegorz Kraszewski (spotting some really nasty bug, work on
+       non-NList MUI GUI)
 
     -- Herbert Klackl (spotting and reporting checkpoint bug)
 
