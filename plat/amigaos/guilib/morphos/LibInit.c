@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: LibInit.c,v 1.3 2012/06/24 12:36:39 piru Exp $
+ * $Id: LibInit.c,v 1.4 2013/07/26 00:27:42 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -20,6 +20,7 @@
 #include	<proto/muimaster.h>
 
 #include	"AppClass.h"
+#include	"ListClass.h"
 #include	"CreateGUI.h"
 #include	"LibHeader.h"
 
@@ -90,6 +91,7 @@ static void UserLibClose(struct DnetcLibrary *LibBase)
 			MUI_DeleteCustomClass(LibBase->AppMCC);
 		}
 
+		DeleteLogListClass(LibBase);
 		CloseLibrary(MUIMasterBase);
 
 		LibBase->MyMUIMasterBase	= NULL;
@@ -166,29 +168,26 @@ struct Library	*NATDECLFUNC_1(LibOpen, a6, struct DnetcLibrary *, LibBase)
 
 	if (LibBase->Alloc == 0)
 	{
-		MUIMasterBase      = (APTR)OpenLibrary("muimaster.library", 20);
-		if (MUIMasterBase && !LIB_MINVER(MUIMasterBase, 20, 6381))
-		{
-			/* Too old MUI, don't even bother trying to continue */
-			CloseLibrary(MUIMasterBase);
-			MUIMasterBase = NULL;
-		}
-
-		if ((MUIMasterBase	/*= (APTR)OpenLibrary("muimaster.library", 20)*/) != NULL)
+		if ((MUIMasterBase	= (APTR)OpenLibrary("muimaster.library", 11)) != NULL)
 		if ((IntuitionBase	= (APTR)OpenLibrary("intuition.library", 36)) != NULL)
 		if ((UtilityBase	= (APTR)OpenLibrary("utility.library"  , 36)) != NULL)
 		if ((DOSBase		= (APTR)OpenLibrary("dos.library"      , 36)) != NULL)
 		if ((IconBase		= (APTR)OpenLibrary("icon.library"     , 36)) != NULL)
-		if ((LibBase->AppMCC	= MUI_CreateCustomClass(NULL, MUIC_Application, NULL, sizeof(struct Application_Data), (APTR)&AppDispatcher)) != NULL)
+
+		if (CreateLogListClass(LibBase))
 		{
-			LibBase->AppMCC->mcc_Class->cl_UserData	= (ULONG)LibBase;
+			if ((LibBase->AppMCC	= MUI_CreateCustomClass(NULL, MUIC_Application, NULL, sizeof(struct Application_Data), (APTR)&AppDispatcher)) != NULL)
+			{
+				LibBase->AppMCC->mcc_Class->cl_UserData	= (ULONG)LibBase;
 
-			HodgePodge(MUIMasterBase);
+				//HodgePodge(MUIMasterBase);
 
-			LibBase->Alloc	= 1;
+				LibBase->Alloc	= 1;
 				goto done;
+			}
 		}
 
+		DeleteLogListClass(LibBase);
 		UserLibClose(LibBase);
 		LibBase->Library.lib_OpenCnt--;
 		base	= NULL;

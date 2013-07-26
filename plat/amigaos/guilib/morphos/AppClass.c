@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: AppClass.c,v 1.3 2012/06/24 12:36:38 piru Exp $
+ * $Id: AppClass.c,v 1.4 2013/07/26 00:27:42 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -13,6 +13,7 @@
 */
 
 #include	<clib/alib_protos.h>
+#include	<proto/exec.h>
 #include	<proto/intuition.h>
 #include	<proto/muimaster.h>
 #include	<proto/dos.h>
@@ -20,6 +21,8 @@
 #include	"AppClass.h"
 #include	"CreateGUI.h"
 #include	"LibHeader.h"
+#include	"ListClass.h"
+#include	"Support.h"
 
 /**********************************************************************
 	mNew
@@ -140,13 +143,7 @@ static ULONG mGetMenuItem(struct Application_Data *data, struct DnetcLibrary *Li
 
 static ULONG mInsertNode(struct Application_Data *data, struct DnetcLibrary *LibBase, struct MUIP_MyApplication_InsertNode *msg)
 {
-#if 1
 	LONG first_index, visible_lines, total_lines;
-
-//  1. MUIM_List_Jump() is ignored if MUIA_List_Quiet is set to TRUE.
-//  2. Using MUIA_List_Quiet for inserting just one line (and possibly removing one) is an overkill.
-
-//	set(data->list, MUIA_List_Quiet, TRUE);
 
 	GetAttr(MUIA_List_First, data->list, &first_index);
 	GetAttr(MUIA_List_Visible, data->list, &visible_lines);
@@ -154,32 +151,28 @@ static ULONG mInsertNode(struct Application_Data *data, struct DnetcLibrary *Lib
 
 	if (msg->overwrite)
 	{
-		DoMethod(data->list, MUIM_List_Remove, MUIV_List_Remove_Last);
-	}
-	else if (total_lines >= 1000)
-	{
-		DoMethod(data->list, MUIM_List_Remove, MUIV_List_Remove_First);
-	}
+		ULONG entries;
+		struct LogListEntry *e;
+		STRPTR line_copy;
 
-	DoMethod(data->list, MUIM_List_InsertSingle, (ULONG)msg->output, MUIV_List_Insert_Bottom);
+		GetAttr(MUIA_List_Entries, data->list, &entries);
+		DoMethod(data->list, MUIM_List_GetEntry, entries - 1, (IPTR)&e);
 
-	if (visible_lines > -1 && first_index + visible_lines >= total_lines)
+		if (e && (line_copy = AllocVecTaskPooled(strlen(msg->output) + 1)))
+		{
+			strcpy(line_copy, msg->output);
+			if (e->LogListLine) FreeVecTaskPooled(e->LogListLine);
+			e->LogListLine = line_copy;
+			DoMethod(data->list, MUIM_List_Redraw, entries - 1, (IPTR)e);
+		}
+	}
+	else
 	{
+		if (total_lines >= 1000) DoMethod(data->list, MUIM_List_Remove, MUIV_List_Remove_First);
+		DoMethod(data->list, MUIM_List_InsertSingle, (ULONG)msg->output, MUIV_List_Insert_Bottom);
 		DoMethod(data->list, MUIM_List_Jump, MUIV_List_Jump_Bottom);
 	}
-#else
-	set(data->list, MUIA_NList_Quiet, MUIV_NList_Quiet_Full);
 
-	if (msg->overwrite)
-		DoMethod(data->list, MUIM_NList_Remove, MUIV_NList_Remove_Last);
-
-	DoMethod(data->list, MUIM_NList_InsertSingle, (ULONG)msg->output, MUIV_NList_Insert_Bottom);
-
-	if (!msg->overwrite)
-		DoMethod(data->list, MUIM_NList_Jump, MUIV_NList_Jump_Bottom);
-#endif
-
-//	return set(data->list, MUIA_List_Quiet, FALSE);
 	return TRUE;
 }
 

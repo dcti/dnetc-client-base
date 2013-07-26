@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: LibHeader.h,v 1.2 2007/10/22 16:48:30 jlawson Exp $
+ * $Id: LibHeader.h,v 1.3 2013/07/26 00:27:42 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -95,6 +95,7 @@ struct DnetcLibrary
 	struct SignalSemaphore	SemaphoreGUI;
 	struct SignalSemaphore	Semaphore;
 	struct MUI_CustomClass	*AppMCC;
+	struct MUI_CustomClass	*ListMCC;
 
 	/* GUI data */
 

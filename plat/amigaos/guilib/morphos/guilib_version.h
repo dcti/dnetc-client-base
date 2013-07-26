@@ -3,7 +3,7 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: guilib_version.h,v 1.3 2012/06/24 12:36:39 piru Exp $
+ * $Id: guilib_version.h,v 1.4 2013/07/26 00:27:42 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
@@ -16,4 +16,4 @@
 #define COMPILE_REVISION	3
 #define PROGRAM_NAME		"dnetcgui.library"
 #define PROGRAM_VER		"1.3"
-#define PROGRAM_DATE		"(22.06.2012)"
+#define PROGRAM_DATE		"(04.02.2013)"
