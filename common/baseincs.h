@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.94 2008/12/30 20:58:40 andreasb Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.95 2013/10/14 01:43:12 snikkel Exp $"
 
 #include "cputypes.h"
 
@@ -212,7 +212,9 @@
   #include <sys/file.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */
+#ifndef ANDROID
   #include <sys/dir.h> /*scandir*/
+#endif
   #undef NULL    /* some broken header unconditionally */
   #define NULL 0 /* defines NULL to be ((void *)0) */
   #if defined(_MIT_POSIX_THREADS)

@@ -9,7 +9,7 @@
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *coremem_cpp(void) {
-  return "@(#)$Id: coremem.cpp,v 1.10 2011/03/31 05:07:28 jlawson Exp $";
+  return "@(#)$Id: coremem.cpp,v 1.11 2013/10/14 01:43:12 snikkel Exp $";
 }
 
 //#define TRACE
@@ -27,8 +27,10 @@ const char *coremem_cpp(void) {
 /* <=2.2.2, and flakey in 2.2.3. MAP_SHARED is broken in 2.0 */
 /* MAP_SHARED is broken on HPUX <= 9.0 */
 #include <sys/ipc.h>
+#ifndef ANDROID
 #include <sys/shm.h>
 #define USE_SYSV_SHM
+#endif
 #endif
 
 // 0 = shared memory (default)
