@@ -94,6 +94,7 @@
 #define OS_NETWARE6     47
 #define OS_DRAGONFLY    48
 #define OS_HAIKU        49
+#define OS_ANDROID	50
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
@@ -505,6 +506,10 @@
   #if defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
   #endif
+#elif define(_ANDROID_)
+  #define CLIENT_OS_NAME  "Android"
+  #define CLIENT_CPU      CPU_ARM
+  #define CLIENT_OS       OS_LINUX
 #endif
 
 #if !defined(CLIENT_OS)
