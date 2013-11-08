@@ -1329,11 +1329,11 @@ COMMON_SRCS="\
 
 # conditional addition if files are present
 #
-if [ -f "common/scram.cpp" -o -f "common/scram.h" -o \
-     -f "common/buffpriv.cpp" -o -f "common/buffupd.cpp" ]; then
-COMMON_SRCS="common/buffpriv.cpp \
-             common/scram.cpp    \
-             common/buffupd.cpp  \
+if [ -f "../private/scram.cpp" -o -f "../private/scram.h" -o \
+     -f "../private/buffpriv.cpp" -o -f "../private/buffupd.cpp" ]; then
+COMMON_SRCS="../private/buffpriv.cpp \
+             ../private/scram.cpp    \
+             ../private/buffupd.cpp  \
              ${COMMON_SRCS}"
 else
 COMMON_SRCS="common/buffpub.cpp \
