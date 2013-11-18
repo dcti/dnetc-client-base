@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-2009 - All Rights Reserved
+# Copyright distributed.net 1998-2013 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
@@ -1282,6 +1282,16 @@ OPTS_MWCC_PPC604="$OPTS_MWCC -proc 604e"
 OPTS_WATCOMCC="-DASM_X86 -Osax -4 -mf"
 #OPTS_WATCOMCC="-DASM_X86 -g"
 
+#-- Apple LLVM version 5.0 (clang-500.2.79) (based on LLVM 3.3svn)
+
+OPTS_CLANGCC="-W -Wall -Wpointer-arith -Wcast-align \
+							-Wconversion -Winline -Waggregate-return \
+							-Wcast-qual -Woverloaded-virtual -Os \
+							-Wno-shorten-64-to-32 -Wno-sign-conversion \
+							-fno-exceptions -fno-rtti"
+OPTS_CLANGCC_32="$OPTS_CLANGCC -DASM_X86"
+OPTS_CLANGCC_64="$OPTS_CLANGCC -DASM_AMD64"
+
 # -------------------------------------------------------------------------
 
 #
@@ -2328,14 +2338,14 @@ case "$1" in
         add_sources "openbsd" "ppc" "altivec" # with AltiVec
         ;;
 
-    *macosx-ppc)                # [mfeiri] (MACH 3.x based: MacOS X, Darwin, requires XCode <= 3.1)
+    *macosx-ppc)                # [mfeiri] (MACH 3.x based: Mac OS X, Darwin, req Xcode <= 3.1)
         #TARGET_CC="/usr/bin/gcc-3.3"
-	#gcc-3.3 doesn't work with isysroot or macosx-version-min
+        #gcc-3.3 doesn't work with isysroot or macosx-version-min
         TARGET_CC="/usr/bin/gcc"
         generate_gcc_opts "ppc" "macosx"
         TARGET_plat="-mmacosx-version-min=10.0 -DMACOSX_DEPLOYMENT_TARGET=10.0 -isysroot /Developer/SDKs/MacOSX10.2.8.sdk"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -mdynamic-no-pic $TARGET_plat"
-	TARGET_LDFLAGS="$TARGET_plat"
+        TARGET_LDFLAGS="$TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
@@ -2713,7 +2723,7 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
-    *macosx-x86)                # [mfeiri] Mac OS X, Darwin (requires XCode >=2.1 && <=3.2)
+    *macosx-x86)                # [mfeiri] Mac OS X 10.4+ 32-bit, Darwin (req Xcode >=2.1 && <=3.2)
         TARGET_CC="/usr/bin/gcc-4.0"
         generate_gcc_opts "x86" "macosx"
         TARGET_plat="-mmacosx-version-min=10.4 -DMACOSX_DEPLOYMENT_TARGET=10.4 -isysroot /Developer/SDKs/MacOSX10.6.sdk -arch i386"
@@ -2838,17 +2848,10 @@ case "$1" in
         add_sources "openbsd" "amd64"
         ;;
 
-    *macosx-amd64)              # [mfeiri] Mac OS X, Darwin (requires XCode >= 3.2)
-        generate_gcc_opts "amd64" "macosx"
-        TARGET_plat="-mmacosx-version-min=10.5 -DMACOSX_DEPLOYMENT_TARGET=10.5 -isysroot /Developer/SDKs/MacOSX10.6.sdk -arch x86_64"
-        #TARGET_CC="/Developer/usr/bin/llvm-g++"
-        TARGET_CC="/Developer/usr/bin/clang"
-        #TARGET_CC="/Developer/usr/bin/g++"
-        #TARGET_CC="/opt/local/bin/clang"
-        #TARGET_CC="/opt/local/bin/llvm-g++"
-        #TARGET_CC="/opt/local/bin/g++-mp-4.6" # requires >=4.6 to process CoreFoundation headers
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS $TARGET_plat"
-        TARGET_LIBS="-framework IOKit -framework CoreFoundation -weak_framework OpenCL"
+    *macosx-amd64)              # [zebe] Mac OS X 10.7+ 64-bit, Darwin (Xcode >= 5 recommended)
+        TARGET_plat="-mmacosx-version-min=10.7 -DMACOSX_DEPLOYMENT_TARGET=10.7 -arch x86_64"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DHAVE_POSIX_THREADS $TARGET_plat"
+        TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
         TARGET_LDFLAGS="$TARGET_plat"
         
         TARGET_NASM="/opt/local/bin/yasm"
