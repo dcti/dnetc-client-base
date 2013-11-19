@@ -1297,12 +1297,14 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          * Current pseudo-groups for different combinations of RC5-72 and OGR-NG cores:
          *   0x13 - P4-based (RC5-72 core #7), OGR-NG core -k8
          *   0x14 - Atom
-         *   0x15 - Core i7/Xeon
+         *   0x15 - Core iX/Xeon
          *   0x16 - AMD-based (RC5-72 GO 2-pipe, #6) but similar to Intel Core CPUs, with fast SSE (OGR-NG SSE2 core) 
          *   0x17 - P4-based (RC5-72 core #7), OGR-NG core -p4
          *   0x18 - Via Nano
-         *   0x19 - Sandy Bridge Core i3/i5/i7
-         *   0x1A-1F
+         *   0x19 - Sandy Bridge Core iX-2xxx
+         *   0x1A - Ivy Bridge Core iX-3xxx
+         *   0x1B - Haswell Core iX-4xxx
+         *   0x1C-1F
          *   0x20 - AMD Bobcat - Embedded APU
          *   0x21 - AMD Bulldozer - FX
          *   0x22 - AMD Husky - APU
@@ -1430,9 +1432,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
         { 0x00061E0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i5/i7" },  /* (#4271) */
         { 0x0006250, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i3/i5/i7" },  /* (#4376,#4224) */
-        { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core i3/i5/i7-2xxx" },
+        { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core iX-2xxx (Sandy Bridge)" },
         { 0x00062C0, 0xFFFFFF0, CPU_F_I686, 0x15, "Xeon 56xx" },  /* (#4301) */
         { 0x00062D0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core i7-2xxx/3xxx EE" },  /* (#4456) */
+        { 0x00063A0, 0xFFFFFF0, CPU_F_I686, 0x1A, "Core iX-3xxx (Ivy Bridge)" },  /* (#4514) */
+        { 0x00063C0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },  /* (#4533) */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
