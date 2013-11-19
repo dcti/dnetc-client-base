@@ -509,8 +509,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x17: cindex = 7; break; // Variation of 0x13 with another OGR-NG core (#4186)
           case 0x18: cindex =11; break; // Via Nano       == GO 2-pipe-b (#4299)
           case 0x19: cindex = 6; break; // Sandy Bridge   == GO 2-pipe
-          case 0x20: cindex =11; break; // AMD APU        == GO 2-pipe-b (#4485)
-          case 0x21: cindex =11; break; // AMD FX         == GO 2-pipe-b (#4455)
+          case 0x20: cindex =-1; break; // AMD Bobcat     == ?
+          case 0x21: cindex =11; break; // AMD Bulldozer  == GO 2-pipe-b (#4455)
+          case 0x22: cindex =11; break; // AMD Husky      == GO 2-pipe-b (#4485)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -542,8 +543,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x17: cindex =-1; break; // Variation of 0x13 with another OGR-NG core (#4186)
           case 0x18: cindex =-1; break; // Via Nano       == ?
           case 0x19: cindex =-1; break; // Sandy Bridge   == ?
-          case 0x20: cindex =-1; break; // AMD APU        == ?
-          case 0x21: cindex =-1; break; // AMD FX         == ?
+          case 0x20: cindex =-1; break; // AMD Bobcat     == ?
+          case 0x21: cindex =-1; break; // AMD Bulldozer  == ?
+          case 0x22: cindex =-1; break; // AMD Husky      == ?
           default:   cindex =-1; break; // no default
         }
         #endif
@@ -564,8 +566,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x16: cindex = 3; break; // AMD Athlon (Model 16) == GO 2-pipe d
         case 0x18: cindex = 2; break; // Via Nano         == GO 2-pipe-c (#4437)
         case 0x19: cindex = 3; break; // Sandy Bridge     == GO 2-pipe d
-        case 0x20: cindex = 3; break; // AMD APU          == GO 2-pipe d
-        case 0x21: cindex = 2; break; // AMD FX           == GO 2-pipe c (#4455)
+        case 0x20: cindex = 3; break; // AMD Bobcat       == GO 2-pipe d (#4429)
+        case 0x21: cindex = 2; break; // AMD Bulldozer    == GO 2-pipe c (#4455)
+        case 0x22: cindex = 3; break; // AMD Husky        == GO 2-pipe d (#4485)
         default:   cindex =-1; break; // no default
       }
     }

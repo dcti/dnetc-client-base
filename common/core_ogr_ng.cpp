@@ -494,7 +494,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
       switch (detected_type)
       {
         case 0x09: cindex = 1; break; /* AMD: generic (#4214) */
-        /*case 0x20: cindex = 1; break;*/ /* AMD APU (#4429/#4485) */
+        case 0x20: cindex = 1; break; /* AMD Bobcat (#4429) */
       }
       if (cindex == -1)
       {

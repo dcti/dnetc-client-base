@@ -1276,9 +1276,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00060A0, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP/XP-M or Sempron (Barton)" },   // OGR-NG: OK (-k8)
         { 0x000F000, 0xFFFF000, CPU_F_I686,    9, "Athlon (Model 15)" },
         { 0x0010000, 0xFFFF000, CPU_F_I686, 0x16, "Opteron 6xxx" }, /* (#4438) */
-        { 0x0012000, 0xFFFF000, CPU_F_I686, 0x20, "A-Series APU" }, /* (#4485) */
-        { 0x0014000, 0xFFFF000, CPU_F_I686, 0x20, "E-Series APU" }, /* (#4429) */
-        { 0x0015010, 0xFFFF000, CPU_F_I686, 0x21, "FX" }, /* (#4455) */
+        { 0x0012000, 0xFFFF000, CPU_F_I686, 0x22, "A-Series APU (Husky)" }, /* (#4485) */
+        { 0x0014000, 0xFFFF000, CPU_F_I686, 0x20, "E/C-Series APU (Bobcat)" }, /* (#4429,#4536) */
+        { 0x0015010, 0xFFFF000, CPU_F_I686, 0x21, "FX (Bulldozer)" }, /* (#4455) */
         { 0x010F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64",              0 /* CH_R72_X86_GO2B */ }, /* (#4193) */
         { 0x020F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core", CH_R72_X86_GO2B }, /* (#4193) */
         { 0x030F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Athlon 64" },
@@ -1302,8 +1302,10 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          *   0x17 - P4-based (RC5-72 core #7), OGR-NG core -p4
          *   0x18 - Via Nano
          *   0x19 - Sandy Bridge Core i3/i5/i7
-         *   0x20 - AMD E-Series
-         *   0x21 - AMD FX
+         *   0x1A-1F
+         *   0x20 - AMD Bobcat - Embedded APU
+         *   0x21 - AMD Bulldozer - FX
+         *   0x22 - AMD Husky - APU
          */
         { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Sempron" },
         { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron",           CH_R72_X86_GO2B }, /* (#4193) */

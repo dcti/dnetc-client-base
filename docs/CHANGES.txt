@@ -44,6 +44,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             imp: morphos: Battery/AC power det & CPU temp query
             new: opencl: New rc5-72 cores
             imp: morphos: use standard MUI List instead of NList
+            imp: x86/amd64: AMD APU detection/selection (#4536)
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core
