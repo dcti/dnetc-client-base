@@ -2622,6 +2622,7 @@ case "$1" in
         case internal-${inferred_arch} in
           internal-amd64)
             TARGET_NASM="yasm"
+            TARGET_NASM_FMT="elf64"
             add_sources "freebsd" "${inferred_arch}"
             ;;
           internal-x86)
@@ -2828,6 +2829,7 @@ case "$1" in
         TARGET_CC="g++"
         generate_gcc_opts "amd64" "netbsd"
         TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -2841,6 +2843,7 @@ case "$1" in
         TARGET_CC="eg++"
         generate_gcc_opts "amd64" "openbsd"
         TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
