@@ -89,6 +89,24 @@ enum AmdModel17 {
    AMDM17_LAST_MODEL = AMDM17_ATHLON_X2
 };
 
+enum AmdModel18 {
+   AMDM18_UNKNOWN = AMDM17_LAST_MODEL + 1,
+   AMDM18_APU,
+   AMDM18_LAST_MODEL = AMDM18_APU
+};
+
+enum AmdModel20 {
+   AMDM20_UNKNOWN = AMDM18_LAST_MODEL + 1,
+   AMDM20_APU,
+   AMDM20_LAST_MODEL = AMDM20_APU
+};
+
+enum AmdModel21 {
+   AMDM21_UNKNOWN = AMDM20_LAST_MODEL + 1,
+   AMDM21_FX,
+   AMDM21_LAST_MODEL = AMDM21_FX
+};
+
 const char* x86GetVendorName(u32);
 u32         x86GetDetectedType(void);
 u32         x86GetFeatures(void);

@@ -48,6 +48,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             imp: x86: Pentium M core selection (#4534)
             imp: x86/amd64: Intel Ivy Bridge/Haswell
                  detection/selection (#4514,#4533)
+            imp: x86/amd64: AMD FX detection/selection (#4497)
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core

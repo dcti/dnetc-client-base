@@ -548,6 +548,15 @@ static u32 x86GetAmdId(u32 maxfunc)
         }
         model = 0;    /* Scrub the model number (irrelevant) */
       }
+      else if (family == 18) {
+        brandid = AMDM18_APU;
+      }
+      else if (family == 20) {
+        brandid = AMDM20_APU;
+      }
+      else if (family == 21) {
+        brandid = AMDM21_FX;
+      }
       /* Otherwise we don't know much yet, so we'd better don't touch */
     }
     cpuid = MAKE_CPUID(VENDOR_AMD, brandid, family, model, step);
@@ -781,19 +790,17 @@ u32 x86GetFeatures(void)
       if ((fecx & X86_HAS_SSE3) != 0) {
         features |= CPU_F_SSE3;
       }
-      if (ID_VENDOR_CODE(cpuid) == VENDOR_INTEL) {
-        if ((infos.regs.ebx & 0xFF0000) > 1 && (fedx & X86_HAS_HTT) != 0) {
-          features |= CPU_F_HYPERTHREAD;      /* Hyperthreading enabled */
-        }
-        if ((fecx & X86_HAS_SSSE3) != 0) {
-          features |= CPU_F_SSSE3;
-        }
-        if ((fecx & X86_HAS_SSE4_1) != 0) {
-          features |= CPU_F_SSE4_1;
-        }
-        if ((fecx & X86_HAS_SSE4_2) != 0) {
-          features |= CPU_F_SSE4_2;
-        }
+      if (((infos.regs.ebx & 0xFF0000)>>16) > 1 && (fedx & X86_HAS_HTT) != 0) {
+        features |= CPU_F_HYPERTHREAD;      /* Hyperthreading enabled */
+      }
+      if ((fecx & X86_HAS_SSSE3) != 0) {
+        features |= CPU_F_SSSE3;
+      }
+      if ((fecx & X86_HAS_SSE4_1) != 0) {
+        features |= CPU_F_SSE4_1;
+      }
+      if ((fecx & X86_HAS_SSE4_2) != 0) {
+        features |= CPU_F_SSE4_2;
       }
     }
 
