@@ -1285,10 +1285,10 @@ OPTS_WATCOMCC="-DASM_X86 -Osax -4 -mf"
 #-- Apple LLVM version 5.0 (clang-500.2.79) (based on LLVM 3.3svn)
 
 OPTS_CLANGCC="-W -Wall -Wpointer-arith -Wcast-align \
-							-Wconversion -Winline -Waggregate-return \
-							-Wcast-qual -Woverloaded-virtual -Os \
-							-Wno-shorten-64-to-32 -Wno-sign-conversion \
-							-fno-exceptions -fno-rtti"
+-Wconversion -Winline -Waggregate-return \
+-Wcast-qual -Woverloaded-virtual -Os \
+-Wno-shorten-64-to-32 -Wno-sign-conversion \
+-fno-exceptions -fno-rtti"
 OPTS_CLANGCC_32="$OPTS_CLANGCC -DASM_X86"
 OPTS_CLANGCC_64="$OPTS_CLANGCC -DASM_AMD64"
 
