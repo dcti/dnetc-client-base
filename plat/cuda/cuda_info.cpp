@@ -51,10 +51,11 @@ long GetRawCUDAGPUID(const char **cpuname)
     if (rc == cudaSuccess) {
       if ((cores = getCUDACoresPerSM (deviceProp.major, deviceProp.minor)) != -1) {
         snprintf(namebuf, sizeof(namebuf), "%.29s (%d SPs)",
-               deviceProp.name, deviceProp.multiProcessorCount*cores);
-      else
+          deviceProp.name, deviceProp.multiProcessorCount*cores);
+      } else {
         snprintf(namebuf, sizeof(namebuf), "%.29s (%d MPs - ? SPs)",
-               deviceProp.name, deviceProp.multiProcessorCount);
+          deviceProp.name, deviceProp.multiProcessorCount);
+      }
 
       // FIXME: we need some ID to distinguish different cards
       // for now the register count is enough to decide whether 256-thread cores are feasible

@@ -52,3 +52,4 @@ inline int getCUDACoresPerSM (int major, int minor)
   return -1;
 }
 
+#endif // CUDA_INFO_H
