@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2013 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
@@ -230,7 +230,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME_EXTENDED " "
-                    "Copyright 1997-2012, distributed.net\n");
+                    "Copyright 1997-2013, distributed.net\n");
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
         LogScreenRaw( "ARM assembly by Peter Teichmann\n");
