@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2012 - All Rights Reserved
+ * Copyright distributed.net 1997-2013 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -332,12 +332,21 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
       (CLIENT_CPU == CPU_X86)
 #include <fcntl.h>
 #include <machine/apm_bios.h>
+
 #elif (CLIENT_OS == OS_MACOSX)
+#include <CoreFoundation/CoreFoundation.h>
+#if (CLIENT_CPU != CPU_PPC)
+#include <Availability.h> /* only available in 10.6+ */
+#endif
+#if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
+#include <IOKit/ps/IOPowerSources.h>
+#else
 #include <IOKit/IOKitLib.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <IOKit/pwr_mgt/IOPM.h>
-#include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach_init.h> /* for bootstrap_port */
+#endif
+
 #elif (CLIENT_OS == OS_MORPHOS)
 int morphos_isrunningonbattery(void);
 LONG morphos_cputemp(void);
@@ -656,6 +665,15 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       trigstatics.pause_if_no_mains_power = 0;
     } /* #if (NetBSD && i386) */
     #elif (CLIENT_OS == OS_MACOSX)
+    #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
+    /* cheaper, easier check available in 10.7+ */
+    if (IOPSGetTimeRemainingEstimate() != kIOPSTimeRemainingUnlimited) {
+      return 1; /* we don't have AC */
+    } else {
+      return 0; /* we have AC power */
+    }
+    #else
+    /* old way for 10.0-10.6 */
     mach_port_t master;
     /* Initialize the connection to IOKit */
     if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess )
@@ -685,6 +703,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     } /* if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess ) */
     /* We dont seem to have a PowerManager, disable battery checking. */
     trigstatics.pause_if_no_mains_power = 0;
+    #endif /* #if OS X 10.7+ */
     #elif (CLIENT_OS == OS_MORPHOS)
     {
       int status = morphos_isrunningonbattery();
