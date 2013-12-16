@@ -2724,11 +2724,9 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
-    *macosx-x86)                # [mfeiri] Mac OS X 10.4+ 32-bit, Darwin (req Xcode >=2.1 && <=3.2)
-        TARGET_CC="/usr/bin/gcc-4.0"
-        generate_gcc_opts "x86" "macosx"
-        TARGET_plat="-mmacosx-version-min=10.4 -DMACOSX_DEPLOYMENT_TARGET=10.4 -isysroot /Developer/SDKs/MacOSX10.6.sdk -arch i386"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS $TARGET_plat"
+    *macosx-x86)                # [zebe] Mac OS X 10.6+ 32-bit, Darwin (Xcode >= 5 recommended)
+        TARGET_plat="-mmacosx-version-min=10.6 -DMACOSX_DEPLOYMENT_TARGET=10.6 -arch i386"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_32 -DHAVE_POSIX_THREADS $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_plat"
 
