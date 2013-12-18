@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.45 2012/06/25 00:29:59 piru Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.46 2013/12/15 17:11:00 zebe Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
