@@ -51,6 +51,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             imp: x86/amd64: AMD FX detection/selection (#4497)
             imp: macosx: better pause-on-battery detection on 10.7+
             imp: cellbe: faster OGR-NG SPU ASM core
+            fix: linux: misc installation (dnetc -install) issues
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core

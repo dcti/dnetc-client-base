@@ -144,7 +144,13 @@ int linux_uninstall(const char *basename, int quietly)
 static int determine_appname(char *buffer,unsigned int bufsize)
 {
   char fullpath[MAXPATHLEN];
-  char *app = getenv("_");
+  char *app;
+
+  /* For sudo mode, $_ is not set or set to 'sudo'
+     $SUDO_COMMAND exist but it contains full command line with arguments */
+  app = NULL;
+  if (getenv("SUDO_COMMAND") == NULL)  /* only in non-sudo mode */
+    app = getenv("_");
   if (app)
   {
     app = realpath(app,fullpath);
@@ -162,7 +168,7 @@ static int determine_appname(char *buffer,unsigned int bufsize)
         procstat[sizeof(procstat)-1]='\0';
 	if (memcmp(procstat,"Name:\t",6)==0)
 	{
-	  struct stat st; char *p;
+	  char *p;
 	  unsigned int i, n = strlen(procstat);
 	  if (n == sizeof(procstat))
 	    break;
@@ -175,16 +181,21 @@ static int determine_appname(char *buffer,unsigned int bufsize)
 	  if (i>0 && fullpath[i-1]!='/')
 	    fullpath[i++]='/';
 	  strcpy(&fullpath[i],&procstat[6]);
-	  if (stat(fullpath,&st)!=0)
-	    break;
           sprintf(procstat,"/proc/%lu/exe",(unsigned long)getpid());
 	  i = readlink(procstat,procstat,sizeof(procstat));
 	  if (((int)i) < 0 || i == sizeof(procstat))
 	    break;
 	  procstat[i] = '\0';    
+	  /* Linux 2.0 and earlier format:  [device]:inode
+	     Linux 2.2 and later:    this file is a symbolic link
+	     containing the actual pathname of the executed command */
 	  p = strchr(procstat,':');
 	  if (p)
 	  {
+	    /* assuming 2.0 format */
+	    struct stat st;
+	    if (stat(fullpath,&st)!=0)
+	      break;
 	    dev_t dev = 0; n = 1;
 	    if (((ino_t)atol(p+1)) != st.st_ino)
 	      break;
@@ -205,6 +216,10 @@ static int determine_appname(char *buffer,unsigned int bufsize)
 	      n++;	
 	    }  	
 	  }                       
+	  else /* 2.2+ format: plain executable */
+	  {
+	    app = procstat;
+	  }
           break;
         } /* if (memcmp(procstat,"Name:\t",6)==0) */
       } /* while (fgets(procstat,sizeof(procstat),file)) */
@@ -277,6 +292,8 @@ static int create_init_d_script(const char *basename,const char *script_fullpath
   "\t*start)\n"
   "\t\t$CLIENT -quiet -shutdown  # only allow one instance to run.\n"
   "\t\t$CLIENT -quiet $STARTOPTS # -quiet is 'mandatory' here.\n"
+  "\t\t# To run client as 'username', comment out line above and uncomment below:\n"
+  "\t\t# su username -c \"$CLIENT -quiet $STARTOPTS\"\n"
   "\t\t;;\n"
   "\t*stop)\t# sends SIGTERM to all running clients.\n"
   "\t\t$CLIENT -quiet -shutdown  # remove '-quiet' to see activity.\n"
