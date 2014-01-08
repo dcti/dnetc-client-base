@@ -1114,7 +1114,7 @@ unsigned int LoadSaveProblems(Client *client,
         WorkRecord data;
         while (GetBufferCount(client, cont_i, 0, 0)>0)
           GetBufferRecord( client, &data, cont_i, 0 );
-        while (GetBufferCount(client, cont_i, 0, 0)>0)
+        while (GetBufferCount(client, cont_i, 1, 0)>0)
           GetBufferRecord( client, &data, cont_i, 1);
       }
     }
