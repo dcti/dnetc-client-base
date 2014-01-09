@@ -626,7 +626,7 @@ static long __loadapacket( Client *client,
       bufcount = GetBufferCount( client, selproject, 0, NULL );
     else         /* haven't got a packet yet */
     {
-      bufcount = GetBufferRecord( client, wrdata, selproject, 0 );
+      bufcount = GetBufferRecord( client, wrdata, selproject, prob_i, 0 );
       if (bufcount >= 0) /* no error */
         wrdata = 0;     /* don't load again */
     }
@@ -1113,9 +1113,9 @@ unsigned int LoadSaveProblems(Client *client,
       {
         WorkRecord data;
         while (GetBufferCount(client, cont_i, 0, 0)>0)
-          GetBufferRecord( client, &data, cont_i, 0 );
+          GetBufferRecord( client, &data, cont_i, -1, 0 );
         while (GetBufferCount(client, cont_i, 1, 0)>0)
-          GetBufferRecord( client, &data, cont_i, 1);
+          GetBufferRecord( client, &data, cont_i, -1, 1 );
       }
     }
     retval = total_problems_saved;

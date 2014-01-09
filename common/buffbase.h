@@ -25,7 +25,7 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
 
 /* ..Get() returns <0 on err (ioerr ==-1, corrupt==-123), else >=0 if ok */
 int BufferGetFileRecord( const char *filename, WorkRecord * data,
-                         unsigned long *countP, int flags );
+                         unsigned long *countP, int flags, int required_core );
 
 /* ..Count() returns <0 on ioerr, else 0 on success */
 int BufferCountFileRecords( const char *filename, unsigned int contest,
@@ -52,7 +52,7 @@ long BufferFetchFile( Client *client, int break_pending, const char *loadermap_f
 /* automatically open a buffer and read/write/count single records */
 long PutBufferRecord(Client *client, const WorkRecord * data);
 long GetBufferRecord(Client *client, WorkRecord * data,
-                     unsigned int contest, int use_out_file);
+                     unsigned int contest, int prob_i, int use_out_file);
 long GetBufferCount(Client *client, unsigned int contest,
                     int use_out_file, unsigned long *normcountP );
 

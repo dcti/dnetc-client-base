@@ -309,7 +309,7 @@ int BufferPutFileRecord( const char *filename, const WorkRecord * data,
 /* --------------------------------------------------------------------- */
 
 int BufferGetFileRecord( const char *filename, WorkRecord * data,
-                         unsigned long *countP, int flags ) 
+                         unsigned long *countP, int flags, int /* required_core */ ) 
                         /* returns <0 on ioerr, >0 if norecs */
 {
   unsigned long reccount = 0;
