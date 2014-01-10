@@ -712,9 +712,11 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "The default hostname is the hostname component of the email address\n"
   "specified in the \"E-mail address that logs will be mailed from\" option.\n"
   "\n"
+  #ifdef HAVE_IPV6
   "Literal IPv6 addresses must be enclosed in \"[\" and \"]\". For example :\n"
   "\"[1080::8:800:200C:417A]:1234\".\n"
   "\n"
+  #endif
   "The default port specifier is 25.\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 { 
@@ -779,9 +781,11 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "colon), and may include a port number override. For example :\n"
   "\"keyserv.hellsbells.org, join.the.dots.de:1234\".\n"
   "\n"
+  #ifdef HAVE_IPV6
   "Literal IPv6 addresses must be enclosed in \"[\" and \"]\". For example :\n"
   "\"[1080::8:800:200C:417A]:1234\".\n"
   "\n"
+  #endif
   "Host names/addresses without port numbers will inherit the port number\n"
   "from the \"Keyserver port\" option.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
@@ -838,9 +842,11 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "through which the client should communicate. The proxy is expected to be\n"
   "on a local network. For example: \"socks.proxy.my:1080\"\n"
   "\n"
+  #ifdef HAVE_IPV6
   "Literal IPv6 addresses must be enclosed in \"[\" and \"]\". For example :\n"
   "\"[1080::8:800:200C:417A]:1080\".\n"
   "\n"
+  #endif
   "The port specifier defaults to 1080 for SOCKS and 8080 for HTTP.\n"
   ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
