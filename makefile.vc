@@ -12,6 +12,7 @@
 BASENAME = dnetc
 OUTPUTPATH = output
 COMMONPATH = common
+PRIVATEPATH = ../private
 RC572SRCPATH = rc5-72
 OGRSRCPATH = ogr
 PLATSRCPATH = plat/win
@@ -262,7 +263,7 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/triggers.obj   \
         $(OUTPUTPATH)/util.obj
 OPTS_MSVC = $(OPTS_MSVC) -I$(COMMONPATH) -DLURK
-!if exist( "$(COMMONPATH:/=\)\buffpriv.cpp" )
+!if exist( "$(PRIVATEPATH:/=\)\buffpriv.cpp" )
 COMMON_OBJS = $(COMMON_OBJS)         \
         $(OUTPUTPATH)/buffupd.obj    \
         $(OUTPUTPATH)/buffpriv.obj   \
@@ -602,6 +603,9 @@ $(VC_CHECK):
         cl -c -Ox -Zl $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+{$(PRIVATEPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 $(RES_FILE):    $(RC_FILE)
