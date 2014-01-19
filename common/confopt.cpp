@@ -705,7 +705,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 { 
   CONF_SMTPSRVR                , /* CONF_MENU_LOG */
   CFGTXT("SMTP server:port"), "",
-  CFGTXT(
+  /* CFGTXT( */
   "Specify the name or DNS address of the SMTP host via which the client should\n"
   "relay mail logs. For example : \"mercury.pegasus.org:25\"\n"
   "\n"
@@ -718,7 +718,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "\n"
   #endif
   "The default port specifier is 25.\n"
-  ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
+  /* ) */,CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL},
 { 
   CONF_SMTPFROM                , /* CONF_MENU_LOG */
   CFGTXT("E-mail address that logs will be mailed from"),
@@ -769,7 +769,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 { 
   CONF_KEYSERVNAME             , /* CONF_MENU_NET */
   CFGTXT("Keyserver host name(s)"), "",
-  CFGTXT(
+  /* CFGTXT( */
   "This is the name(s) or IP address(s) of the machine(s) that your client\n"
   "will obtain keys from and send completed packets to. Avoid IP addresses\n"
   "unless the client has trouble resolving names to addresses.\n"
@@ -788,7 +788,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   #endif
   "Host names/addresses without port numbers will inherit the port number\n"
   "from the \"Keyserver port\" option.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
+  /* ) */,CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
   CONF_KEYSERVPORT             , /* CONF_MENU_NET */
@@ -837,7 +837,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 { 
   CONF_FWALLHOSTNAME           , /* CONF_MENU_NET */
   CFGTXT("Firewall hostname:port"), "",
-  CFGTXT(
+  /* CFGTXT( */
   "This field determines the host name or IP address of the firewall proxy\n"
   "through which the client should communicate. The proxy is expected to be\n"
   "on a local network. For example: \"socks.proxy.my:1080\"\n"
@@ -848,7 +848,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "\n"
   #endif
   "The port specifier defaults to 1080 for SOCKS and 8080 for HTTP.\n"
-  ),CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
+  /* ) */,CONF_MENU_NET,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
   CONF_FWALLUSERNAME           , /* CONF_MENU_NET */
