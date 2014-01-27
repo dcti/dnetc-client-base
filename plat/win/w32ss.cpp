@@ -45,7 +45,7 @@ return "@(#)$Id: w32ss.cpp,v 1.9 2010/02/01 20:06:43 stream Exp $"; }
 
 static const char *szSSIniSect = "ScreenSaver";
 static const char *szAppName = "distributed.net client launcher";
-static char szAlternateAppName[64] = {0};
+static char szAlternateAppName[64];
 
 #define SSWriteProfileString(e,v) WriteDCTIProfileString(szSSIniSect,e,v)
 #define SSGetProfileString(e,d,b,l) GetDCTIProfileString(szSSIniSect,e,d,b,l)
@@ -67,10 +67,22 @@ static HINSTANCE __SSGetInstance(HWND hWnd)
 
 static int SSIsTransparencyAvailable(void)
 {
+#if 0
   static int iswin95 = -1;
   if (iswin95 == -1)
     iswin95 = (winGetVersion()>=400 && winGetVersion()<2000)?(+1):(0);
   return iswin95;
+#else
+  // Hmmm... May be correct answer should be "available on Win95 and Win2k+, but not on NT4" ?
+  static int result = -1;
+  if (result == -1)
+  {
+    unsigned ver = winGetVersion();
+    //                  Win95                   W2K+
+    result = (ver >= 400 && ver < 2000) || (ver >= 2500);
+  }
+  return result;
+#endif
 }
 
 /* ---------------------------------------------------- */
@@ -126,7 +138,7 @@ static LRESULT CALLBACK SaverWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM 
     int sstype; /* 0 == blank, -1 == none */
     UINT top, left, height, width;
     int mmthreshX, mmthreshY;
-  } ss = {0,{0,0},0,0,0,0,0,0,0,0};
+  } ss; // = {0,{0,0},0,0,0,0,0,0,0,0};
 
   switch (msg)
   {
@@ -355,8 +367,9 @@ struct _ofh /* size 224 */
    DWORD   SizeOfUninitializedData;/* 12 */
    DWORD   AddressOfEntryPoint;    /* 16 */
    DWORD   BaseOfCode;             /* 20 */
-   DWORD   BaseOfData;             /* 24 */
-   DWORD   ImageBase;              /* 28 */
+   /* win64 combines two fields below to ImageBase_64 */
+   DWORD   BaseOfData_32;          /* 24 */
+   DWORD   ImageBase_32;           /* 28 */
    /* --- end of std header, begin NT specific part */
    DWORD   SectionAlignment;       /* 32 */
    DWORD   FileAlignment;          /* 36 */
@@ -372,15 +385,18 @@ struct _ofh /* size 224 */
    DWORD   CheckSum;               /* 64 */
    WORD    Subsystem;              /* 68 */
    WORD    DllCharacteristics;     /* 70 */
-   DWORD   SizeOfStackReserve;     /* 72 */
-   DWORD   SizeOfStackCommit;      /* 76 */
-   DWORD   SizeOfHeapReserve;      /* 80 */
-   DWORD   SizeOfHeapCommit;       /* 84 */
-   DWORD   LoaderFlags;            /* 88 */
-   DWORD   NumberOfRvaAndSizes;    /* 92 */
-   struct { DWORD VirtualAddress, Size; } DataDirectory[16]; /* 96-224 */
+   /* Field below have ifferent sizes and offsets in win64 */
+   DWORD   SizeOfStackReserve_32;  /* 72 */
+   DWORD   SizeOfStackCommit_32;   /* 76 */
+   DWORD   SizeOfHeapReserve_32;   /* 80 */
+   DWORD   SizeOfHeapCommit_32;    /* 84 */
+   DWORD   LoaderFlags_32;         /* 88 */
+   DWORD   NumberOfRvaAndSizes_32; /* 92 */
+   struct { DWORD VirtualAddress, Size; } DataDirectory_32[16]; /* 96-224 */
    //IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 };
+/* commented out because need fixing for win64 if ever will be used */
+#if 0
 /* first section begins here */
 struct _ish /* size 40 */
 {
@@ -428,6 +444,8 @@ struct _ird
   // followed by struct _irde
   // ImageResourceDirectoryEntries[NumberOfNamedEntries+NumberOfIdEntries]
 };
+#endif
+
 #pragma pack()
 
 //! Retrieve details about the client executable.
@@ -521,11 +539,11 @@ static int SSGetFileData(const char *filename, int *verp, int *isguip,
         p += sizeof(struct _ifh);
         ofh = (struct _ofh *)p;
         if (ifh->SizeOfOptionalHeader >= sizeof(struct _ofh) &&
-            ofh->Magic == 0x010B /* file == 0x10B, rom == 0x107 */ )
+            (ofh->Magic == 0x010B || ofh->Magic == 0x020B) /* file == 0x10B, rom == 0x107, pe32+(64bits) == 0x20b */ )
         {
           ver = (ofh->MajorSubsystemVersion * 100)+
                 (ofh->MinorSubsystemVersion);
-          ver+= 2000; /* 32bit */
+          ver += (ofh->Magic == 0x020B ? 4000 : 2000); /* 64bit or 32bit */
           isgui = (ofh->Subsystem == 2); /* IMAGE_SUBSYSTEM_WINDOWS_GUI */
 
           #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
@@ -1215,7 +1233,11 @@ static int SSDoSaver(HINSTANCE hInstance, HWND hParentWnd )
       {
         char cmdline[32];
         void *handle;
+#if (CLIENT_OS == OS_WIN64)
+        sprintf( cmdline, "/p %I64u", (unsigned __int64)hParentWnd );
+#else
         sprintf( cmdline, "/p %lu", (long)hParentWnd );
+#endif
         handle = SSLaunchProcess( path, cmdline, 0 /*-filever*/, 0 );
         if (handle)
           SSFreeProcess( handle, 0 ); /* free, but don't kill it */
@@ -1518,7 +1540,9 @@ static const char *SSGetDCTIFileVersion(const char *filename,
         if (withtype && (wpos < (sizeof(verstring)-9)))
         {
           int filever = SSGetFileData(filename,0,0,0,0);
-          if (filever>=2000)
+          if (filever>=4000)
+            strcat(verstring," (64bit)");
+          else if (filever>=2000)
             strcat(verstring," (32bit)");
           else if (filever>=100)
             strcat(verstring," (16bit)");
@@ -1997,8 +2021,7 @@ BOOL __GetOpenFileName(LPOPENFILENAME lpofn)
  * \param lparam
  * \return
  */
-static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
-                    UINT msg, UINT wparam, LONG lparam )
+static INT_PTR CALLBACK SSConfigDialogProc( HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam )
 {
   static char dlghelptext[80];
   static HWND dlghlpWnd = NULL;
@@ -2155,7 +2178,7 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
           ofn.hwndOwner = dialog;
           //ofn.hInstance = __SSGetInstance(dialog);
           ofn.lpstrFilter =
-                        "distributed.net clients\0dnetc.exe;rc5des*.exe;\0"
+                        "distributed.net clients\0dnetc*.exe;rc5des*.exe;\0"
                         "All Executable Files\0*.EXE;*.COM\0\0";
           if (szAlternateAppName[0])
             ofn.lpstrFilter = "All Executable Files\0*.EXE;*.COM\0\0";
@@ -2318,7 +2341,11 @@ static BOOL CALLBACK SSConfigDialogProc( HWND dialog,
             if (filever>=2400) /* win32 and 4.x exe */
             {
               char cmd[32];
-              sprintf(cmd,"/c:%ld",dialog);
+#if (CLIENT_OS == OS_WIN64)
+              sprintf(cmd,"/c:%I64u", (unsigned __int64)dialog);
+#else
+              sprintf(cmd,"/c:%lu", (unsigned long)dialog);
+#endif
               SSLaunchProcess( fullpath, cmd, +1, +1 ); /* soft block + higher prio */
             }
             else if (filever >= 0)
@@ -2475,7 +2502,11 @@ int PASCAL SSMain(HINSTANCE hInst, HINSTANCE hPrevInst,
           {
             while (*lpszCmdLine==' ' || *lpszCmdLine=='\t' || *lpszCmdLine==':')
               lpszCmdLine++;
+#if (CLIENT_OS == OS_WIN64)
+            hwndParent = (HWND)_atoi64(lpszCmdLine);
+#else
             hwndParent = (HWND)atoi(lpszCmdLine);
+#endif
           }
         }
       }
