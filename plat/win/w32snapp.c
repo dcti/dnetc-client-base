@@ -50,6 +50,10 @@
   #include <stdio.h>
 #endif
 
+/* Do not use this code on WIN64. All functions are in the kernel now. */
+
+#if (CLIENT_OS != OS_WIN64)
+
 /* ---------------------------------------------------- */
 
 #pragma pack(1)
@@ -806,6 +810,8 @@ BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY32 lppe)
 }
 
 /* ---------------------------------------------------- */
+
+#endif // CLIENT_OS. Do not use this code on WIN64.
 
 #if defined(TEST_WITH_MAIN)
 int main(int argc, char **argv)

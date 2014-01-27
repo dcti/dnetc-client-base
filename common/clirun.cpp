@@ -92,7 +92,7 @@ struct thread_param_block
   #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
-    unsigned long threadID;
+    UINT_PTR threadID;  /* 64 bits on win64 */
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
   #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS)
@@ -1096,7 +1096,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         else
         {
           thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
-          success = ( (thrparams->threadID) != 0);
+          /* MSVC _beginthread() returns -1 on error, _beginthreadex returns 0, other compilers - ? */
+          /* so check both cases */
+          success = ( thrparams->threadID != 0 && thrparams->threadID != -1 );
         }
       }
       #elif (CLIENT_OS == OS_OS2)
