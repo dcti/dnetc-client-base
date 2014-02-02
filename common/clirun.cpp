@@ -929,12 +929,15 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           ok2thread = -3;
         else if (sysctlbyname("kern.osrelease",buffer,&len2,NULL,0)!=0)
           ok2thread = -4;
-        else if (len<3 || !isdigit(buffer[0]) || buffer[1]!='.' || !isdigit(buffer[2]))
-          ok2thread = -5;
+        //else if (len<3 || !isdigit(buffer[0]) || buffer[1]!='.' || !isdigit(buffer[2]))
+          //ok2thread = -5;
         else
         {
-          buffer[sizeof(buffer)-1] = '\0';
-          ok2thread = ((buffer[0]-'0')*100)+((buffer[2]-'0')*10);
+          //buffer[sizeof(buffer)-1] = '\0';
+          //ok2thread = ((buffer[0]-'0')*100)+((buffer[2]-'0')*10);
+          
+          ok2thread = (int)(100*atof(buffer));
+	
           //fprintf(stderr, "found fbsd '%s' (interp ver %d)\n", buffer, ok2thread );
           if (ok2thread < 300) /* FreeBSD < 3.0 */
             ok2thread = -6;
