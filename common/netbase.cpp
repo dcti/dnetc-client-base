@@ -1959,7 +1959,7 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
   {
     TRACE_OPEN((+1,"socket( )\n" ));
     sock = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
-    TRACE_OPEN((-1,"socket( ) => %d%s\n",sock, trace_expand_api_rc(((sock==-1)?(-1):(0)),sock) ));
+    TRACE_OPEN((-1,"socket( ) => %d%s family %d\n",sock, trace_expand_api_rc(((sock==-1)?(-1):(0)),sock),r->ai_family ));
     if (sock == -1)
     {
       rc = ps_stdneterr;
@@ -1979,10 +1979,7 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
       }
       else
       {
-        net_close(sock);
-        if ((--open_endpoint_count)==0)
-          net_init_check_deinit(-1,0);
-        return rc;
+         break;
       }
     } /* if (sock != -1) */
 
@@ -2117,17 +2114,36 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
       rc = ps_oereserved;
       continue; // for; try next address
     }
+
+    // test for connection failure
+    int result_events = __bsd_quick_disco_look(sock, 0);
+    if (result_events == 0) // success
+      break; // for; use this address
+    else if (result_events == ps_T_DISCONNECT)
+      rc = ps_stdneterr;
+    else if (result_events == ps_T_ORDREL)
+      rc = ps_EDISCO;
+
+    if (rc != 0)
+    {
+      ps_oereserved_cache.ps_errnum = ___read_errnos( INVALID_SOCKET, rc,
+                                      &ps_oereserved_cache.syserr,
+                                      &ps_oereserved_cache.neterr,
+                                      &ps_oereserved_cache.extra );
+      rc = ps_oereserved;
+      continue; // for; try next address
+    }
+
   } // for addrinfo
   freeaddrinfo(ai_res);
 
   if (rc != 0)
   {
-    net_close(sock);
-    if ((--open_endpoint_count)==0)
-      net_init_check_deinit(-1,0);
-    return rc;
+    int ret = net_close(sock);
+    if (ret != 0)
+      if ((--open_endpoint_count)==0)
+        net_init_check_deinit(-1,0);
   }
-
   TRACE_CONNECT((-1, "net_open(...) => %d%s\n", rc, trace_expand_ps_rc(rc,sock)));
   return rc;
 }
