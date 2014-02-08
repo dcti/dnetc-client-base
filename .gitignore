@@ -16,3 +16,5 @@ buff-out.*
 ckpoint
 logfile*.log
 trace.out
+
+output/
