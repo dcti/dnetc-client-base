@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-2013 - All Rights Reserved
+# Copyright distributed.net 1998-2014 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.433 2013/10/15 00:03:21 snikkel Exp $
+# @(#)$Id: configure,v 1.434 2014/02/23 22:04:21 zebe Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -64,6 +64,8 @@ TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
 TARGET_IS_CROSSCOMPILE=""
 if [ -x /usr/bin/nvcc ]; then
 TARGET_CUDA_INSTALL_PATH=""
+elif [ -d /Developer/NVIDIA ]; then
+TARGET_CUDA_INSTALL_PATH="/Developer/NVIDIA/CUDA-5.5"
 else
 TARGET_CUDA_INSTALL_PATH="/usr/local/cuda"
 fi
@@ -811,7 +813,7 @@ inferred_cuda_version=""
 inferred_cuda_major=0
 inferred_cuda_minor=0
 infer_cuda_version() { # $1=configure target
-  # check if a version was given explicitely
+  # check if a version was given explicitly
   case "internal-$1" in
     internal-*-cuda20)
       inferred_cuda_version="2.0"
@@ -831,8 +833,11 @@ infer_cuda_version() { # $1=configure target
     internal-*-cuda31)
       inferred_cuda_version="3.1"
       ;;
+    internal-*-cuda55)
+      inferred_cuda_version="5.5"
+      ;;
     internal-*-cuda)
-      for _ver in $TARGET_CUDA_VERSION 3.1 3.0 2.3 2.2 2.1 2.0
+      for _ver in $TARGET_CUDA_VERSION 5.5 3.1 3.0 2.3 2.2 2.1 2.0
       do
         if [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}" ] || \
            [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}".* ]; then
@@ -2730,7 +2735,7 @@ case "$1" in
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_plat"
 
-        TARGET_NASM="/opt/local/bin/nasm" # use nasm 2.08 or newer
+        TARGET_NASM="/opt/local/bin/nasm"
         TARGET_NASM_FMT="macho"
 
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -3222,21 +3227,22 @@ case "$1" in
         add_sources "linux" "cuda"
         ;;
 
-    *macosx-cuda*)              # Mac OS X, Darwin plus CUDA, use -cuda20 or -cuda21 to specify CUDA version
-        TARGET_CUDA_VERSION="3.0"  # default, can't autodetect by looking at file names
+    *macosx-cuda*)              # Mac OS X, Darwin 64-bit plus CUDA (specify version with -cuda55)
+        TARGET_CUDA_VERSION="5.5" # default
         infer_cuda_version "$1"
-        generate_gcc_opts "x86" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_plat="-mmacosx-version-min=10.6 -DMACOSX_DEPLOYMENT_TARGET=10.6 -arch x86_64"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_64 $TARGET_plat"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DEXPECTED_CUDA_VERSION=${inferred_cuda_version_expected}"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -m32 ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
-        # To use nasm's macho output, you will need a custom patch:
-        # http://sf.net/project/shownotes.php?release_id=337548
-        TARGET_NASM_FMT="macho"
-
+        TARGET_LDFLAGS="$TARGET_LDFLAGS $TARGET_plat ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -rpath @executable_path/lib -rpath ${TARGET_CUDA_INSTALL_PATH}/lib"
+        TARGET_NASM="/opt/local/bin/nasm"
+        TARGET_NASM_FMT="macho64"
+        # you need the CUDA libs to be able to run the test program:
+        export DYLD_LIBRARY_PATH="${TARGET_CUDA_INSTALL_PATH}/lib"
         TARGET_LIBS="$TARGET_LIBS -lcudart"
-        TARGET_TARBALL="macosx-x86${inferred_cuda_tarball_suffix}"
+        TARGET_TARBALL="macosx-amd64${inferred_cuda_tarball_suffix}"
         TARGET_DOCFILES="docs/readme.cuda"   #platform specific docfile
         TARGET_LIBFILES="plat/cuda/cudatoolkit_eula.txt ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.dylib"
         add_sources "macosx" "cuda"
