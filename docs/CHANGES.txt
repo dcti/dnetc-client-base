@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.131 2014/02/23 11:03:42 zebe Exp $
 ==========================================================================
 
 2.9100
@@ -54,6 +54,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             fix: linux: misc installation (dnetc -install) issues
             imp: all: try to find partial packet started by matched core
             fix: win64: screensaver broken (#4434)
+            imp: cuda: support CUDA 5.5
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core

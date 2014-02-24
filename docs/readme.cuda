@@ -1,6 +1,6 @@
 
  distributed.net client for nVidia CUDA-compatible GPUs
- document revision $Id: readme.cuda,v 1.14 2010/07/09 15:15:01 andreasb Exp $
+ document revision $Id: readme.cuda,v 1.15 2014/02/23 22:56:01 zebe Exp $
 
  Welcome to the distributed.net client.
 
@@ -11,7 +11,7 @@
 
     1.0  Getting started
     2.0  nVidia CUDA specific notes
-    3.0  Troubleshooting and Known issues
+    3.0  Troubleshooting and known issues
 
  1.0  Getting started ------------------------------------------------
  
@@ -39,10 +39,10 @@
     CUDA, see <http://en.wikipedia.org/wiki/CUDA#Supported_GPUs>
 
     When installing the CUDA drivers, be sure to download the version
-    matching the client build: CUDA 3.1 or 3.0.
-    When there are separate CUDA 3.0 and CUDA 3.1 builds available for
-    your platform, please use the matching driver version!
-    Visit <http://www.nvidia.com/object/cuda_get.html>
+    matching the client build, e.g. CUDA 5.5, 3.1, 3.0, etc.
+    When there are separate CUDA builds available for your platform,
+    please use the matching driver version!
+    Visit <https://developer.nvidia.com/cuda-downloads>
 
     It is not neccessary to install the CUDA Toolkit as a copy of the
     CUDA runtime library from CUDA Toolkit is bundled with the client.
@@ -59,7 +59,7 @@
     subdirectory.
 
 
- 3.0  Troubleshooting and Known issues ------------------------------
+ 3.0  Troubleshooting and known issues ------------------------------
 
     The required nVidia driver version is 256.xx for use with CUDA 3.1
     and 195.xx for CUDA 3.0. While newer drivers might work, older
