@@ -1,6 +1,6 @@
 /* -*-C-*-
  *
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.121 2012/08/08 19:37:36 sla Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.122 2014/02/23 22:51:36 zebe Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -36,10 +36,10 @@
 #define CPU_DESCRACKER  16 /* eff descracker */
 #define CPU_AMD64       17 /* official name */
 #define CPU_X86_64      CPU_AMD64 /* old GNU name before AMD announced AMD64 */
-#define CPU_CELLBE	18
-#define CPU_CUDA	19
-#define CPU_ATI_STREAM	20
-#define CPU_OPENCL	21
+#define CPU_CELLBE      18
+#define CPU_CUDA        19
+#define CPU_ATI_STREAM  20
+#define CPU_OPENCL      21
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -94,7 +94,7 @@
 #define OS_NETWARE6     47
 #define OS_DRAGONFLY    48
 #define OS_HAIKU        49
-#define OS_ANDROID	50
+#define OS_ANDROID      50
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
@@ -181,8 +181,8 @@
     #define CLIENT_CPU     CPU_ALPHA
   #elif defined(ASM_X86) || defined(__i386__)
     #define CLIENT_CPU     CPU_X86
-  #elif defined(__S390__) && defined(S390_Z_ARCH)	
-    #define CLIENT_CPU     CPU_S390	/* like S390 except rotate.h */
+  #elif defined(__S390__) && defined(S390_Z_ARCH)
+    #define CLIENT_CPU     CPU_S390   /* like S390 except rotate.h */
     #undef  CLIENT_OS_NAME
     #define CLIENT_OS_NAME "Linux (z/Architecture)"
   #elif defined(__S390__)
@@ -549,6 +549,8 @@
     #define CLIENT_OS_NAME_EXTENDED "CUDA 3.0 on " CLIENT_OS_NAME
   #elif (CUDA_VERSION == 3010)
     #define CLIENT_OS_NAME_EXTENDED "CUDA 3.1 on " CLIENT_OS_NAME
+  #elif (CUDA_VERSION == 5050)
+    #define CLIENT_OS_NAME_EXTENDED "CUDA 5.5 on " CLIENT_OS_NAME
   #else
     #define CLIENT_OS_NAME_EXTENDED "CUDA on " CLIENT_OS_NAME
   #endif
@@ -575,7 +577,7 @@
 /* ----------------------------------------------------------------- */
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || \
-	 (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_88K) || \
+     (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_88K) || \
      (CLIENT_CPU == CPU_SPARC) || \
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
@@ -769,7 +771,7 @@ extern "C" {
         #define SIZEOF_SHORT 8
       #else
         #error fixme: sizeof(unsigned short) !=1 and !=2 and !=4 and !=8?
-      #endif	
+      #endif
     #endif
     #if defined(SIZEOF_INT)
       #ifndef SIZEOF_SHORT
