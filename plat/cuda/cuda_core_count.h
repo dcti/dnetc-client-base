@@ -11,7 +11,7 @@
 
 // Number of cores per MP (varies with SM version)
 // from NVIDIA CUDA SDK sample code 'deviceQuery'
-// http://developer.nvidia.com/cuda-cc-sdk-code-samples
+// http://docs.nvidia.com/cuda/cuda-samples/index.html#device-query
 typedef struct
 {
   int SM; // 0xMm (hexidecimal notation)
@@ -20,12 +20,14 @@ typedef struct
 } sSMtoCores;
 sSMtoCores CUDACoresPerSM[] =
 {
-  { 0x10,  8 },
-  { 0x11,  8 },
-  { 0x12,  8 },
-  { 0x13,  8 },
-  { 0x20, 32 },
-  { 0x21, 48 },
+  { 0x10,  8 }, // Tesla Generation (SM 1.0) G80 class
+  { 0x11,  8 }, // Tesla Generation (SM 1.1) G8x class
+  { 0x12,  8 }, // Tesla Generation (SM 1.2) G9x class
+  { 0x13,  8 }, // Tesla Generation (SM 1.3) GT200 class
+  { 0x20, 32 }, // Fermi Generation (SM 2.0) GF100 class
+  { 0x21, 48 }, // Fermi Generation (SM 2.1) GF10x class
+  { 0x30, 192}, // Kepler Generation (SM 3.0) GK10x class
+  { 0x35, 192}, // Kepler Generation (SM 3.5) GK11x class
   {   -1, -1 }
 };
 
