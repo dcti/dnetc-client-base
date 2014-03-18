@@ -84,6 +84,7 @@ BITS 64
 
 global          x86getid,_x86getid
 global          x86cpuid,_x86cpuid
+global          x86xgetbv,_x86xgetbv
 global          x86ident_haveioperm, _x86ident_haveioperm
 
 __DATASECT__
@@ -129,3 +130,10 @@ x86getid:       mov     eax, -1         ; cpuid instruction is supported.
 
 ;----------------------------------------------------------------------
 
+_x86xgetbv:     ; x86xgetbv(u32 function, union PageInfos *infos)
+x86xgetbv:      push    rdx            ; save address, function number already in ECX
+                db      0fh, 01h, 0d0h ; xgetbv
+                pop     rcx            ; PageInfos *
+                mov     [rcx+4 ], edx
+                mov     [rcx+12], eax
+                ret                    ; return copy of eax

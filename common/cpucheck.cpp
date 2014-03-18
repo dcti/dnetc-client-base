@@ -2768,6 +2768,12 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     if (features & CPU_F_LZCNT) {
       strcat( namebuf, "LZCNT ");
     }
+    if (features & CPU_F_AVX_DISABLED) {
+      strcat( namebuf, "AVX(disabled) ");
+    }
+    if (features & CPU_F_AVX) {
+      strcat( namebuf, "AVX ");
+    }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     sprintf(namebuf, "%08lX\n\tname: %s", rawid, cpuid_s );
   #else

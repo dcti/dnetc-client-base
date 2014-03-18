@@ -48,6 +48,8 @@ union PageInfos {
 #define X86_HAS_SSSE3     (1 <<  9)
 #define X86_HAS_SSE4_1    (1 << 19)
 #define X86_HAS_SSE4_2    (1 << 20)
+#define X86_HAS_OSXSAVE   (1 << 27)      /* internal: is XGETBV instruction supported */
+#define X86_HAS_AVX       (1 << 28)
 
 /* 0x80000001:ECX */
 #define X86_HAS_LZCNT     (1 <<  5)
@@ -88,17 +90,32 @@ union PageInfos {
     infos->regs.edx = _dx;
     return _ax;
   }
+
+  static u32 x86xgetbv(u32 page, union PageInfos* infos)
+  {
+    u32 _ax, _dx;
+
+    asm volatile (".byte 0x0f, 0x01, 0xd0"
+                  : "=a"(_ax), "=d"(_dx)
+                  : "c"(page)
+                 );
+    infos->regs.eax = _ax;
+    infos->regs.edx = _dx;
+    return _ax;
+  }
   #endif
 #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
   #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
     extern "C" s32 x86getid(void) asm ("x86getid");
     extern "C" u32 x86cpuid(u32 page, union PageInfos* infos) asm ("x86cpuid");
+    extern "C" u32 x86xgetbv(u32 page, union PageInfos* infos) asm ("x86xgetbv");
   #else
     // x86getid()/x86cpuid() can destroy all registers except ebx/esi/edi/ebp
     // => must be declared as "cdecl" to allow compiler save necessary
     //    registers.
     extern "C" s32 CDECL x86getid(void);
     extern "C" u32 CDECL x86cpuid(u32 page, union PageInfos* infos);
+    extern "C" u32 CDECL x86xgetbv(u32 page, union PageInfos* infos);
   #endif
 
 #endif
@@ -801,6 +818,19 @@ u32 x86GetFeatures(void)
       }
       if ((fecx & X86_HAS_SSE4_2) != 0) {
         features |= CPU_F_SSE4_2;
+      }
+      if (fecx & X86_HAS_AVX) {
+        features |= CPU_F_AVX_DISABLED;  /* assume it disabled for now */
+        /* check if XGETBV is enabled for application use */
+        if (fecx & X86_HAS_OSXSAVE) {
+          union PageInfos bvinfo;
+          x86xgetbv(0, &bvinfo);
+          /* check OS has enabled both XMM and YMM support */
+          if ((bvinfo.regs.eax & 0x06) == 0x06) {
+            features &= ~CPU_F_AVX_DISABLED;
+            features |=  CPU_F_AVX;
+          }
+        }
       }
     }
 

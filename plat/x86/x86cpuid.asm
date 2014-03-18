@@ -82,6 +82,7 @@
 
 global          x86getid,_x86getid
 global          x86cpuid,_x86cpuid
+global          x86xgetbv,_x86xgetbv
 global          x86ident_haveioperm, _x86ident_haveioperm
 
 __DATASECT__
@@ -438,3 +439,12 @@ _cx4x86:        mov     ah, 40h        ; 486 class CPU
                 jmp     _end           ; model 0=Cx486SLC/DLC/SRx/DRx,
                                        ; model 1=Cx486S/DX/DX2/DX4, 4=MediaGX
 
+;----------------------------------------------------------------------
+
+_x86xgetbv:     ; x86xgetbv(u32 function, union PageInfos *infos)
+x86xgetbv:      mov     ecx, [esp+4]   ; Function number
+                db      0fh, 01h, 0d0h ; xgetbv
+                mov     ecx, [esp+8]   ; PageInfos *
+                mov     [ecx+4 ], edx
+                mov     [ecx+12], eax
+                ret                    ; return copy of eax
