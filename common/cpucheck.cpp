@@ -2774,6 +2774,9 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     if (features & CPU_F_AVX) {
       strcat( namebuf, "AVX ");
     }
+    if (features & CPU_F_AVX2) {
+      strcat( namebuf, "AVX2 ");
+    }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     sprintf(namebuf, "%08lX\n\tname: %s", rawid, cpuid_s );
   #else

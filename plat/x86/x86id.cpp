@@ -51,6 +51,9 @@ union PageInfos {
 #define X86_HAS_OSXSAVE   (1 << 27)      /* internal: is XGETBV instruction supported */
 #define X86_HAS_AVX       (1 << 28)
 
+/* 0x00000007/ECX=0:EBX */
+#define X86_07_00_EBX_AVX2 (1 << 5)
+
 /* 0x80000001:ECX */
 #define X86_HAS_LZCNT     (1 <<  5)
 
@@ -829,6 +832,11 @@ u32 x86GetFeatures(void)
           if ((bvinfo.regs.eax & 0x06) == 0x06) {
             features &= ~CPU_F_AVX_DISABLED;
             features |=  CPU_F_AVX;
+            /* Check for AVX2: cpuid(eax=7, ecx=0) : ebx bit 5 */
+            x86cpuid(0x00000007, &infos);
+            if (infos.regs.ebx & X86_07_00_EBX_AVX2) {
+              features |= CPU_F_AVX2;
+            }
           }
         }
       }
