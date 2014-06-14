@@ -55,6 +55,7 @@ Version change log: $Id: CHANGES.txt,v 1.131 2014/02/23 11:03:42 zebe Exp $
             imp: all: try to find partial packet started by matched core
             fix: win64: screensaver broken (#4434)
             imp: cuda: support CUDA 5.5
+            imp: x86/amd64: Intel Haswell/Xeon detection (#4578,#4579)
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core
