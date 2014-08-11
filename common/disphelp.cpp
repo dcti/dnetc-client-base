@@ -41,7 +41,7 @@ static const char *helpbody[] =
   "-test [prj [cn]]   tests for core errors [optional: only project prj]",
   "                   [optional: only core cn, must be used with prj]",
   "-stress [prj [cn]] more thorough and longer running variant of -test",
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
   "-cpuinfo           print information about the detected cpu(s)",
 #else
   "-gpuinfo           print information about the detected gpu(s)",

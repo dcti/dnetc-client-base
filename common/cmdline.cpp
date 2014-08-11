@@ -1694,7 +1694,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           ( strcmp( thisarg, "-forceflush"  ) == 0 ) ||
           ( strcmp( thisarg, "-update"      ) == 0 ) ||
           ( strcmp( thisarg, "-ident"       ) == 0 ) ||
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
 #else
           ( strcmp( thisarg, "-gpuinfo"     ) == 0 ) ||
@@ -1842,7 +1842,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         ModeReqSet( MODEREQ_IDENT );
         break;
       }
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
       else if ( strcmp( thisarg, "-cpuinfo" ) == 0 )
       {
         client->quietmode = 0;

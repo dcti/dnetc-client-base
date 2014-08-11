@@ -740,6 +740,28 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
 
   #-----------------------------------------------------------------
+  elif [ "$2" = "opencl" ]; then
+
+    HAVE_OGR="0"
+    HAVE_OGR_P2="0"
+    TARGET_HDIRS="$TARGET_HDIRS ./plat/opencl"
+
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                          plat/opencl/ocl_info.cpp \
+                          plat/opencl/ocl_setup.cpp"
+
+    # -------------- rc5-72 --------------
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      DEFAULT_RC5_72="0"     # don't add the ansi cores
+      TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                          rc5-72/opencl/ocl_common.cpp \
+                          rc5-72/opencl/ocl_ref.cpp \
+                          rc5-72/opencl/ocl_1pipe.cpp \
+                          rc5-72/opencl/ocl_2pipe.cpp \
+                          rc5-72/opencl/ocl_4pipe.cpp"
+    fi # HAVE_RC5_72
+
+  #-----------------------------------------------------------------
   else
     echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
   fi
@@ -3264,6 +3286,30 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.linux docs/readme.stream"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "stream"
+        ;;
+
+###### OpenCL
+
+    *macosx-amd64-opencl)              # [zebe] Mac OS X 10.7+ 64-bit, Darwin (Xcode >= 5 recommended)
+        TARGET_plat="-mmacosx-version-min=10.7 -DMACOSX_DEPLOYMENT_TARGET=10.7 -arch x86_64"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"
+        TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
+        TARGET_LDFLAGS="$TARGET_plat"
+        
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="macosx-amd64-opencl"
+        add_sources "macosx" "opencl"
+        ;;
+
+    *macosx-x86-opencl)                # [zebe] Mac OS X 10.6+ 32-bit, Darwin (Xcode >= 5 recommended)
+        TARGET_plat="-mmacosx-version-min=10.6 -DMACOSX_DEPLOYMENT_TARGET=10.6 -arch i386"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_32 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"
+        TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
+        TARGET_LDFLAGS="$TARGET_plat"
+
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="macosx-x86-opencl"
+        add_sources "macosx" "opencl"
         ;;
 
 ###### Unknown

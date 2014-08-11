@@ -13,7 +13,11 @@
 #define OCL_INFO_H
 
 #include "cputypes.h"
+#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
 #include <CL/cl.h>
+#elif (CLIENT_OS == OS_MACOSX)
+#include <OpenCL/opencl.h>
+#endif
 
 int     getOpenCLDeviceCount();
 u32     getOpenCLDeviceFreq(unsigned device=0);

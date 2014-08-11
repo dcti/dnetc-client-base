@@ -9,7 +9,12 @@
 #ifndef OCL_COMMON_H
 #define OCL_COMMON_H
 
+#include "cputypes.h"
+#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
 #include <CL/cl.h>
+#elif (CLIENT_OS == OS_MACOSX)
+#include <OpenCL/opencl.h>
+#endif
 #include "ccoreio.h"
 #include "logstuff.h"  // LogScreen()
 #include "triggers.h"
@@ -22,10 +27,11 @@
 #define SHR(x, s) ((u32) ((x) >> (32 - ((s) & 31))))
 #define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
 #define ROTL3(x) ROTL(x, 3)
- 
+#define SWAP32(x) (((((x) >> 24) | ((x) << 24)) | (((x) & 0x00ff0000) >> 8)) | (((x) & 0x0000ff00 ) << 8))
+
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
 u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2);
-inline u32 swap32(u32 a);
+//inline u32 swap32(u32 a);
 void OCLReinitializeDevice(int device);
 int getNumDevices();
 

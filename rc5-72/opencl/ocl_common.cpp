@@ -20,6 +20,7 @@
 #define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
 #define ROTL3(x) ROTL(x, 3)
 
+#if 0
 inline u32 swap32(u32 a)
 {
   u32 t=(a>>24)|(a<<24);
@@ -27,6 +28,7 @@ inline u32 swap32(u32 a)
   t|=(a&0x0000ff00)<<8;
   return t;
 }
+#endif
 
 s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork)
 {
@@ -73,14 +75,18 @@ void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr)
   u32 ad=*hi>>8;
   if(*hi<incr)
     ad+=0x01000000;
-  u32 t_m=swap32(*mid)+ad;
-  u32 t_l=swap32(*lo);
+  //u32 t_m=swap32(*mid)+ad;
+  u32 t_m=SWAP32(*mid)+ad;
+  //u32 t_l=swap32(*lo);
+  u32 t_l=SWAP32(*lo);
   if(t_m<ad)
     t_l++;
 
   *hi=*hi&0xff;
-  *mid=swap32(t_m);
-  *lo=swap32(t_l);
+  //*mid=swap32(t_m);
+  *mid=SWAP32(t_m);
+  //*lo=swap32(t_l);
+  *lo=SWAP32(t_l);
 }
 
 //Subtract two 72-bit numbers res=N1-N2
@@ -88,8 +94,10 @@ void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr)
 //N1>=N2, res<2^32
 u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2)
 {
-  m1=swap32(m1); 
-  m2=swap32(m2);
+  //m1=swap32(m1); 
+  m1=SWAP32(m1); 
+  //m2=swap32(m2);
+  m2=SWAP32(m2);
 
   u32 h3=h1-h2;
   u32 borrow=(h3>h1)?1:0;
@@ -228,19 +236,35 @@ bool BuildCLProgram(unsigned deviceID, const char* programText, const char *kern
   cl_int status;
   ocl_context[deviceID].program = clCreateProgramWithSource(ocl_context[deviceID].clcontext, 1, (const char**)&decompressed_src, NULL, &status);
   free(decompressed_src);
-  status |= clBuildProgram(ocl_context[deviceID].program, 1, &ocl_context[deviceID].deviceID, NULL, NULL, NULL);
+  //status |= clBuildProgram(ocl_context[deviceID].program, 1, &ocl_context[deviceID].deviceID, NULL, NULL, NULL);
+  status |= clBuildProgram(ocl_context[deviceID].program, 1, &ocl_context[deviceID].deviceID, "-cl-std=CL1.1", NULL, NULL);
   if(ocl_diagnose(status, "building cl program", deviceID) !=CL_SUCCESS)
   {
-    static char buf[0x10000]={0};
+    //static char buf[0x10001]={0};
+    size_t log_size;
 
     clGetProgramBuildInfo( ocl_context[deviceID].program,
                            ocl_context[deviceID].deviceID,
                            CL_PROGRAM_BUILD_LOG,
-                           0x10000,
+                           0,
+                           NULL,
+                           &log_size );
+
+    char *buf = (char *) malloc(log_size);
+    clGetProgramBuildInfo( ocl_context[deviceID].program,
+                           ocl_context[deviceID].deviceID,
+                           CL_PROGRAM_BUILD_LOG,
+                           log_size,
                            buf,
                            NULL );
-    LogRaw(buf);
     
+    buf[log_size - 1] = '\0';
+    Log("Build log returned %d bytes\n", log_size);
+    LogRaw("Build Log:\n");
+    LogRaw("%s\n", buf);
+   
+    free(buf);
+
     return false;
   }
 

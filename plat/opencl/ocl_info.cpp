@@ -11,7 +11,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
 #include <CL/cl_ext.h>
+#endif
 
 #include "logstuff.h"
 #include "deviceid.cpp"
@@ -42,6 +44,9 @@ u32 getOpenCLDeviceFreq(unsigned device)
 
 static unsigned GetDeviceID(unsigned vendor_id, cl_char *device_name, cl_uint cunits, unsigned device)
 {
+  size_t globalWorkSize[1];
+  cl_uint *outPtr;
+
 	//Run kernel with predefined constants to get device ID
 //  cl_context context = NULL;
   cl_command_queue cmdQueue = NULL;
@@ -74,13 +79,12 @@ static unsigned GetDeviceID(unsigned vendor_id, cl_char *device_name, cl_uint cu
    if(status != CL_SUCCESS)
      goto finished;
 	 
-   size_t globalWorkSize[1];
    globalWorkSize[0] = 1;
    status = clEnqueueNDRangeKernel(cmdQueue, ocl_context[device].kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
    if(status != CL_SUCCESS)
      goto finished;
 
-  cl_uint *outPtr = NULL;
+  outPtr = NULL;
   outPtr = (cl_uint*) clEnqueueMapBuffer(cmdQueue, out_buffer, CL_TRUE, CL_MAP_READ, 0, 4, 0, NULL, NULL, &status);
   if(status == CL_SUCCESS)
   {
@@ -112,6 +116,7 @@ long getOpenCLRawProcessorID(const char **cpuname, unsigned device)
 	//retrieve card info, if available
 	u32 off = strlen((const char*)device_name);
 	device_name[off++]=' '; device_name[off++]='\0';
+#ifdef CL_DEVICE_BOARD_NAME_AMD
 	if(clGetDeviceInfo(devices[device], CL_DEVICE_BOARD_NAME_AMD, sizeof(device_name)-off, &device_name[off], NULL) == CL_SUCCESS)
 	{
 	  device_name[off-1]='(';
@@ -119,6 +124,7 @@ long getOpenCLRawProcessorID(const char **cpuname, unsigned device)
 	  device_name[off2] = ')';
 	  device_name[off2+1] = '\0';
 	}
+#endif
 	
 	cl_uint vendor_id=0;
 	clGetDeviceInfo(devices[device], CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL);
