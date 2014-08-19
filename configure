@@ -3290,6 +3290,21 @@ case "$1" in
 
 ###### OpenCL
 
+    *linux-amd64-opencl)              # [khanna] 
+        infer_arch_and_version "Linux"
+        TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
+        TARGET_AS="gcc -c"  
+        TARGET_CC="gcc"
+        generate_gcc_opts "${inferred_arch}" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DOPENCL -DDYN_TIMESLICE"
+        TARGET_LIBS="-lrt -lOpenCL"
+        TARGET_USES_GNUMAKE="yes"        
+        TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
+        TARGET_TARBALL="linux-amd64-opencl"
+        add_sources "linux" "opencl"
+        ;;
+
     *macosx-amd64-opencl)              # [zebe] Mac OS X 10.7+ 64-bit, Darwin (Xcode >= 5 recommended)
         TARGET_plat="-mmacosx-version-min=10.7 -DMACOSX_DEPLOYMENT_TARGET=10.7 -arch x86_64"
         TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"

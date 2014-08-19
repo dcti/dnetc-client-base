@@ -10,7 +10,7 @@
 #define OCL_COMMON_H
 
 #include "cputypes.h"
-#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16)
+#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_LINUX)
 #include <CL/cl.h>
 #elif (CLIENT_OS == OS_MACOSX)
 #include <OpenCL/opencl.h>
