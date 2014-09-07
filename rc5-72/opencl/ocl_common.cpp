@@ -1,9 +1,9 @@
 /*
-* Copyright distributed.net 2009 - All Rights Reserved
+* Copyright distributed.net 2009-2014 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: 
+* $Id: ocl_common.cpp 2014/08/11 22:18:25 ertyu Exp $
 */
 #include "cputypes.h"
 #include "ocl_common.h"
