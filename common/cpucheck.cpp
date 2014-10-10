@@ -1516,7 +1516,9 @@ static long __GetRawProcessorID(const char **cpuname )
     signed int r72, ogr;
     const char *name;
   } ids[] = {
-    // ARM
+    // https://gist.github.com/dword1511/8262223
+    // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ihi0014q/Bcfihfdj.html
+    // 0x41(A) - ARM 
     { 0x41560200, 0xfffffff0, 1, 1, "ARM 2" },
     { 0x41560250, 0xfffffff0, 1, 1, "ARM 250" },
     { 0x41560300, 0xfffffff0, 1, 1, "ARM 3" },
@@ -1544,13 +1546,43 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x4104a200, 0xfffffff0, 2, 3, "ARM 1020T" },
     { 0x4115a200, 0xfffffff0, 2, 3, "ARM 1020E" },
     { 0x4106a260, 0xfffffff0, 2, 3, "ARM 1026EJ-S" },
-    // ?
-    { 0x54029150, 0xfffffff0, 0, 1, "ARM 915" },
-    { 0x54029250, 0xfffffff0, 0, 1, "ARM 925" },
-    // Digital
+    //{ 0x41009200, 0xff00fff0,-1,-1, "ARM 920" },
+    //{ 0x41009220, 0xff00fff0,-1,-1, "ARM 922" },
+    //{ 0x41009260, 0xff00fff0,-1,-1, "ARM 926" },
+    //{ 0x41009400, 0xff00fff0,-1,-1, "ARM 940" },
+    //{ 0x41009460, 0xff00fff0,-1,-1, "ARM 946" },
+    //{ 0x41009660, 0xff00fff0,-1,-1, "ARM 966" },
+    //{ 0x41009680, 0xff00fff0,-1,-1, "ARM 968" },
+    { 0x4100b020, 0xff00fff0,-1,-1, "ARM11 MPCore" },
+    { 0x4100b360, 0xff00fff0, 2, 3, "ARM 1136" },
+    { 0x4100b560, 0xff00fff0,-1,-1, "ARM 1156" },
+    { 0x4100b760, 0xff00fff0, 2, 3, "ARM 1176" },
+    { 0x4100c050, 0xff00fff0, 2, 3, "ARM Cortex-A5" },
+    { 0x4100c070, 0xff00fff0, 2, 3, "ARM Cortex-A7" },
+    { 0x4100c080, 0xff00fff0, 2, 3, "ARM Cortex-A8" },
+    { 0x4100c090, 0xff00fff0, 0, 3, "ARM Cortex-A9" },
+    { 0x4100c0c0, 0xff00fff0,-1,-1, "ARM Cortex-A12" },
+    { 0x4100c0f0, 0xff00fff0, 2, 3, "ARM Cortex-A15" },
+    { 0x4100d030, 0xff00fff0,-1,-1, "ARM Cortex-A53" },
+    { 0x4100d070, 0xff00fff0,-1,-1, "ARM Cortex-A57" },
+    // 0x44(D) - Digital
     { 0x4401a100, 0xfffffff0, 0, 1, "Digital StrongARM 110" },
     { 0x4401a110, 0xfffffff0, 0, 1, "Digital StrongARM 1100" },
-    // Intel
+    // 0x4D(M) - Motorola/Freescale
+    // 0x51(Q) - Qualcomm
+    { 0x510000f0, 0xff00fff0, 2, 3, "Qualcomm Scorpion (Snapdragon S1/S2)" },
+    { 0x510002d0, 0xff00fff0,-1,-1, "Qualcomm Dual Scorpion (Snapdragon S3)" },
+    { 0x510004d0, 0xff00fff0, 2, 3, "Qualcomm Dual Krait (Snapdragon S4)" },
+    { 0x510006f0, 0xff00fff0, 2, 3, "Qualcomm Quad Krait (Snapdragon 600/800)" },
+    // 0x54(T) - TI
+    { 0x54029150, 0xfffffff0, 0, 1, "TI ARM 915" },
+    { 0x54029250, 0xfffffff0, 0, 1, "TI ARM 925" },
+    // 0x56(V) - Marvell
+    { 0x56251310, 0xfffffff0, 2, 3, "Marvell Feroceon 88FR131" },
+    //{ 0x56001310, 0xff00fff0,-1,-1, "Marvell Feroceon" },
+    { 0x56005810, 0xff00fff0,-1,-1, "Marvell PJ4/PJ4b" },
+    { 0x56005840, 0xff00fff0,-1,-1, "Marvell Dual PJ4/PJ4b" },
+    // 0x69(i) - Intel 
     { 0x6901b110, 0xfffffff0, 0, 1, "Intel StrongARM 1110" },
     { 0x69052120, 0xfffff3f0, 2, 2, "Intel PXA210" },
     { 0x69052100, 0xfffff7f0, 2, 2, "Intel PXA250" },
@@ -1559,8 +1591,6 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x69052000, 0xfffffff0, 2, 2, "Intel 80200" },
     { 0x69052e20, 0xffffffe0, 2, 2, "Intel 80219" },
     { 0x69052c20, 0xffffffe0, 2, 2, "Intel IOP321" },
-    // Marvell
-    { 0x56251310, 0xfffffff0, 2, 3, "Marvell Feroceon 88FR131" },
     // End
     { 0x00000000, 0x00000000, -1, -1, "" }
   };
