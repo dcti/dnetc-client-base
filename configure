@@ -1559,14 +1559,26 @@ case "$1" in
         add_sources "linux" "arm" "elf"
         ;;
 
-    *android-arm-eabi)		# [yoyo mikereed]
+    *android-arm-eabi-r9)		# [yoyo mikereed]
         TARGET_CC="arm-linux-androideabi-gcc"
         TARGET_AS="arm-linux-androideabi-gcc -c"
         #generate_gcc_opts "arm" "eabi" #?
         TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID  -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -I$TCINCLUDES/include"
         TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="android-arm-eabi"
+        TARGET_TARBALL="android-arm-eabi-r9"
+        TARGET_STRIP="arm-linux-androideabi-strip"
+        add_sources "linux" "arm" "elf"
+        ;;
+
+    *android-arm-eabi-r16)	# [yoyo mikereed]
+        TARGET_CC="arm-linux-androideabi-gcc"
+        TARGET_AS="arm-linux-androideabi-gcc -c"
+        #generate_gcc_opts "arm" "eabi" #?
+        TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID  -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -I$TCINCLUDES/include -fPIE"
+        TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="android-arm-eabi-r16"
         TARGET_STRIP="arm-linux-androideabi-strip"
         add_sources "linux" "arm" "elf"
         ;;
