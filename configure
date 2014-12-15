@@ -1583,6 +1583,18 @@ case "$1" in
         add_sources "linux" "arm" "elf"
         ;;
 
+
+   *android-x86)		# [yoyo mikereed]
+	TARGET_CC="i686-linux-android-gcc"
+	TARGET_AS="i686-linux-android-gcc -c"
+	TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer"
+	TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
+	TARGET_DOCFILES="docs/readme._ix"
+	TARGET_TARBALL="android-x86"
+	TARGET_STRIP="x86-linux-android-strip"
+	add_sources "linux" "x86" "elf"
+	;;
+
     *linux-arm-elf_single)      # [teichp]
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
