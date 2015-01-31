@@ -3719,7 +3719,7 @@ if [ -n "$TARGET_GENMAN" ]; then
   echo "	test -s dnetc.1" >> Makefile
 fi
 if [ -n "$TARGET_TARBALL" ]; then
-  if [ -f ./upload.sh ]; then
+  if [ -f ../tools/upload.sh ]; then
     FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}\${ARCHIVENAME_APPEND}"
     if [ "$TARGET_ARCTYPE" = "zip" ]; then
       echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
@@ -3776,11 +3776,11 @@ if [ -n "$TARGET_TARBALL" ]; then
   echo "ftp:" >> Makefile
   if [ "$BUILDNAME" = "x86-os2" -a -f upload.cmd ] ; then
     echo "	\$(SHELL) /C .\\upload.cmd ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
-  elif [ -f ./upload.sh ]; then
+  elif [ -f ../tools/upload.sh ]; then
     if [ -n "$TARGET_TARBALL_COMMENT" ]; then
       echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
     fi
-    echo "	\$(SHELL) ./upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+    echo "	\$(SHELL) ../tools/upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
     if [ -n "$TARGET_TARBALL_COMMENT" ]; then
       echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
     fi
@@ -4182,7 +4182,7 @@ fi
 #
 echo "Makefile auto-generation complete!"
 if [ -z "$TARGET_TARBALL" ]; then
-  if [ -f ./upload.sh ]; then
+  if [ -f ../tools/upload.sh ]; then
     echo "TARGET_TARBALL was not defined."
     echo "Upload-ready tarballs will not be auto-generated"
     echo "and Makefile does not have an 'ftp' target"
