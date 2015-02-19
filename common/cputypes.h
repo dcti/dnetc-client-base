@@ -506,7 +506,7 @@
   #if defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
   #endif
-#elif define(_ANDROID_)
+#elif defined(_ANDROID_)
   #define CLIENT_OS_NAME  "Android"
   #define CLIENT_CPU      CPU_ARM
   #define CLIENT_OS       OS_LINUX
