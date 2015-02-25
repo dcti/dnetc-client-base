@@ -1932,6 +1932,17 @@ case "$1" in
         add_sources "linux" "mips"
         ;;
 
+    *linux-mips64)   # [mikereed ertyu]
+        TARGET_CC="gcc"
+        generate_gcc_opts "mips64" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -march=mips64 -mabi=64 -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS="-mabi=64"              
+        TARGET_LIBS="-lrt -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-mips64"      
+        add_sources "linux" "mips64"
+        ;;
+        
     *sinix-mips)                # MIPS SINIX
         TARGET_CC="g++"
         generate_gcc_opts "mips" "sinix"
