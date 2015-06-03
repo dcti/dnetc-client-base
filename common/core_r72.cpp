@@ -54,7 +54,8 @@ extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2c( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2d( RC5_72UnitWork *, u32 *, void *);
-#elif (CLIENT_CPU == CPU_ARM)
+#elif (CLIENT_CPU == CPU_ARM) && \
+      (CLIENT_OS != OS_WIN32)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm3( RC5_72UnitWork *, u32 *, void *);
@@ -736,7 +737,8 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
     switch (coresel)
     {
      /* architectures without ansi cores */
-     #if (CLIENT_CPU == CPU_ARM)
+     #if (CLIENT_CPU == CPU_ARM) && \
+         (CLIENT_OS != OS_WIN32)
       case 0:
       default:
         unit_func.gen_72 = rc5_72_unit_func_arm1;
