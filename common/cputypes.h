@@ -119,6 +119,8 @@
     #define CLIENT_CPU     CPU_CUDA
   #elif defined(ATI_STREAM)
     #define CLIENT_CPU     CPU_ATI_STREAM
+  #elif defined(_M_ARM)
+    #define CLIENT_CPU     CPU_ARM
   #elif defined(OPENCL)
     #define CLIENT_CPU     CPU_OPENCL
   #elif (!defined(WIN32) && !defined(__WIN32__) && !defined(_WIN32)) /* win16 */ \
