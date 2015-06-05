@@ -402,9 +402,9 @@ RC5_72_OBJS =                      \
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DOPENCL -DDYN_TIMESLICE
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "arm"
 RC5_72_OBJS =                        \
-        $(OUTPUTPATH)/r72ansi1.obj \
-        $(OUTPUTPATH)/r72ansi2.obj \
-        $(OUTPUTPATH)/r72ansi4.obj
+        $(OUTPUTPATH)/r72arm1-winrt.obj \
+        $(OUTPUTPATH)/r72arm2-winrt.obj \
+        $(OUTPUTPATH)/r72arm3-winrt.obj
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !else
@@ -597,6 +597,11 @@ $(VC_CHECK):
 
 {$(RC572SRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "arm"
+
+{$(RC572SRCPATH)/arm}.asm{$(OUTPUTPATH)}.obj:
+        armasm -o $(@:/=\) -coff_thumb2_only $(**:/=\)
 
 !endif
 
