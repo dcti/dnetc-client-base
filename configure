@@ -162,7 +162,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
       COMMON_SRCS="plat/linux/resolv.c ${COMMON_SRCS}"
     fi
-  elif [ "$1" = "uclibc" ]; then
+  elif [ "$1" = "uclibc" -o "$1" = "android" ]; then
     COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
   elif [ "$1" = "riscos" ]; then
     COMMON_SRCS="plat/riscos/riscos_sup.cpp \
@@ -1587,12 +1587,16 @@ case "$1" in
    *android-x86)		# [yoyo mikereed]
 	TARGET_CC="i686-linux-android-gcc"
 	TARGET_AS="i686-linux-android-gcc -c"
-	TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer"
+	TARGET_NASM="yasm"
+	TARGET_NASM_FMT="elf"
+	TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -fPIE"
 	TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
+	TARGET_LDFLAGS="-fPIE -pie"
 	TARGET_DOCFILES="docs/readme._ix"
 	TARGET_TARBALL="android-x86"
-	TARGET_STRIP="x86-linux-android-strip"
-	add_sources "linux" "x86" "elf"
+	TARGET_STRIP="i686-linux-android-strip"
+	TARGET_IS_CROSSCOMPILE="1"
+	add_sources "android" "x86"
 	;;
 
     *linux-arm-elf_single)      # [teichp]
