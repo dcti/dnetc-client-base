@@ -919,9 +919,9 @@ int win32CliInstallService(int quiet)
           else
           {
             /* TDI=DHCP client+DNS client (depend on PNP_TDI=tcpip etc) */
-            const char *dependancies = "+TDI\0+NetworkProvider\0\0";
+            const char *dependencies = "+TDI\0+NetworkProvider\0\0";
             if (ras_detect_state > 0)
-              dependancies = "RasMan\0+TDI\0+NetworkProvider\0\0";
+              dependencies = "RasMan\0+TDI\0+NetworkProvider\0\0";
 
             __GetMyModuleFilename( &buffer[1], sizeof(buffer)-1);
             buffer[0] = '\"';
@@ -933,7 +933,7 @@ int win32CliInstallService(int quiet)
                 (char *)APPDESCRIP, SERVICE_ALL_ACCESS,
                 SERVICE_WIN32_OWN_PROCESS,
                 SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
-                buffer, 0, 0, dependancies, 0, 0);
+                buffer, 0, 0, dependencies, 0, 0);
             if (!myService)
             {
               errnum = GetLastError();

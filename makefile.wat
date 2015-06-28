@@ -82,7 +82,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             # this list can be added to in the platform specific section
             # (+3 desmmx, +2 mt, +x plat specific)
 
-%PRELINKDEPS = # dependancies that need 'compiling' but not linking (eg .RC's)
+%PRELINKDEPS = # dependencies that need 'compiling' but not linking (eg .RC's)
 %POSTLINKTGTS= # targets to make after linking (bind etc)
 
 #---

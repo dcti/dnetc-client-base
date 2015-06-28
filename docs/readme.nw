@@ -29,7 +29,7 @@
     its built-in commands first, which effectively negates the use of the
     -pause, -unpause, -restart and -shutdown switches.
 
-    Dependancies (or not):
+    Dependencies (or not):
 
     A3112.NLM: is *required* by this version of the client. 
     NetWare 3.x users who do not have this file in their SYS:/SYSTEM 

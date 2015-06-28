@@ -1477,7 +1477,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
     returnvalue = -1;
   }
 
-  /* -- massage mapped options and dependancies back into place -- */
+  /* -- massage mapped options and dependencies back into place -- */
 
   if (returnvalue != -1)
   {

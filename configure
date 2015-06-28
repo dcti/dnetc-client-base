@@ -3419,7 +3419,7 @@ else
   cc common/testplat.cpp -o testplat
 fi
 echo "Checking test program..."
-./testplat build_dependancies common/client.cpp > /dev/null
+./testplat build_dependencies common/client.cpp > /dev/null
 if [ $? -ne 0 ]; then
   echo "Execution failed.  Check your library search path."
   exit 1
@@ -3979,7 +3979,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           CCFLAGS_SELECT="${CCFLAGS_SELECT} -maltivec"
         fi
       fi
-      deplist=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+      deplist=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
       echo "	\${CC} -c ${CCFLAGS_SELECT} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
@@ -4076,7 +4076,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
 	  CORE=TARGETSRC
 	fi
       done
-      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+      TARGET_HDEPS=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       echo "$target:    $TARGETSRC $TARGET_HDEPS" >> Makefile
       echo "	\${SPUCC} -c -Dlinux -O3 -Wall -Wextra \${HPATHS} -DCORE_NAME=$CORE $TARGETSRC -o $target" >> Makefile
       echo "" >> Makefile
@@ -4101,7 +4101,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETSRC=""
     # ------------------------------------
       elif [ "${TARGETTYP}" = "cu" ]; then
-      deplist=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+      deplist=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       echo "$target:    ${TARGETSRC} ${deplist}" >> Makefile
       CUDA_CODEGEN="--generate-code arch=compute_10,code=compute_10 --generate-code arch=compute_30,code=compute_30 --generate-code arch=compute_35,code=compute_35"
       echo "	\${NVCC} --ptx --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target.ptx" >> Makefile 
@@ -4120,7 +4120,7 @@ fi
 if [ "$TARGET_OGRNG_MULTI" = "68k" ]; then
   echo "Generating Makefile 68k multi-core OGR-NG dependency targets..."
   TARGETSRC="$OGR/ansi/ogrng-32.cpp"
-  TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+  TARGET_HDEPS=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     deplist=""
@@ -4155,7 +4155,7 @@ fi
 if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   echo "Generating Makefile 68k multi-core OGR dependency targets..."
   TARGETSRC="$OGR/68k/ogr-68k.cpp"
-  TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+  TARGET_HDEPS=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     deplist=""

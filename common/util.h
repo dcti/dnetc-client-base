@@ -8,7 +8,7 @@
  * misc functions that don't fit anywhere else.
  *
  * Note that this file may be included from anywhere, and should
- * therefore not have any non-standard dependancies (eg, 'u32', 'Stub' etc)
+ * therefore not have any non-standard dependencies (eg, 'u32', 'Stub' etc)
  * ----------------------------------------------------------------
 */
 #ifndef __UTIL_H__
