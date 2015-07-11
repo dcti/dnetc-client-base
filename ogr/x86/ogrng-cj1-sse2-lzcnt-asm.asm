@@ -8,7 +8,7 @@
 %ifdef __NASM_VER__
         cpu     p4
 %else
-        cpu     p4 mmx sse sse2
+        cpu     p4
 %if (__YASM_MAJOR__ < 1)
         cpu     amd ; Older versions of yasm assumed lzcnt with "amd"
 %else

@@ -8,7 +8,7 @@
 %ifdef __NASM_VER__
         cpu     p4
 %else
-        cpu     p4 mmx sse sse2 sse4.1
+        cpu     p4 sse4.1
 %endif
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
