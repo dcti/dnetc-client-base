@@ -3473,7 +3473,7 @@ if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
   fi
   ${TARGET_STRIP} testplat
 else
-  cc common/testplat.cpp -o testplat
+  g++ common/testplat.cpp -o testplat
 fi
 echo "Checking test program..."
 ./testplat build_dependencies common/client.cpp > /dev/null
