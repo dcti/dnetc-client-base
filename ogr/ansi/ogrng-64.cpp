@@ -1,9 +1,9 @@
 /*
- * Copyright distributed.net 2002-2009 - All Rights Reserved
+ * Copyright distributed.net 2002-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng-64.cpp,v 1.8 2009/09/17 20:16:00 andreasb Exp $
+ * $Id: ogrng-64.cpp,v 1.9 2015/06/27 21:52:52 zebe Exp $
 */
 
 #include "ansi/ogrng-64.h"
@@ -34,6 +34,12 @@
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
   #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      1 /* 0/1 - register-based  */
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
+#elif (CLIENT_CPU == CPU_ARM64)
+  #include <arm_neon.h>
+  #define __CNTLZ(x) (1+__builtin_clzl(~(x)))
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
+  #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      0 /* 0/1 - memory-based    */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
 #else
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
   #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      0 /* 0/1 - memory-based    */
@@ -49,7 +55,8 @@
 ** then the __CNTLZ macro is discarded.
 */
 #if !defined(__x86_64__) && !defined(__amd64__) && !defined(_M_AMD64) && \
-	!defined(__ppc64__) && !defined(__alpha__) && !defined(__sparc_v9__)
+  !defined(__ppc64__) && !defined(__alpha__) && !defined(__sparc_v9__) && \
+  !defined(__arm64__)
   #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 2)
     #undef  __CNTLZ
     #undef  OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM

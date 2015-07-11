@@ -60,7 +60,7 @@
  *     static, this may not be feasable, and is in fact not recommended
  *     by the glibc maintainer <drepper@cygnus.com>).
  *     The dynamic resolver isn't compatible to anything other than the
- *     'current' versions of the external dependancies, which naturally
+ *     'current' versions of the external dependencies, which naturally
  *     may or may not be same version as the dynamic resolver itself.
  *   - Due to a mutex bug in glibc, using glibc's dynamic linker
  *     interface will eventually hang the process when running

@@ -1,6 +1,6 @@
 /* -*-C-*-
  *
- * Copyright distributed.net 1997-2014 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.122 2014/08/11 16:08:36 ertyu Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.123 2015/06/27 21:52:52 zebe Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -40,6 +40,7 @@
 #define CPU_CUDA        19
 #define CPU_ATI_STREAM  20
 #define CPU_OPENCL      21
+#define CPU_ARM64       22
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -193,6 +194,8 @@
     #define CLIENT_CPU     CPU_S390X
   #elif defined(__IA64__)
     #define CLIENT_CPU     CPU_IA64
+  #elif defined(__arm64__)
+    #define CLIENT_CPU     CPU_ARM64
   #elif defined(ARM) || defined(__arm__)
     #define CLIENT_CPU     CPU_ARM
   #elif defined(ASM_SPARC) || defined(__sparc__)
@@ -233,6 +236,8 @@
   #define CLIENT_OS        OS_NETBSD
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
+  #elif defined(__arm64__)
+    #define CLIENT_CPU     CPU_ARM64
   #elif defined(__arm32__) || defined(ARM)
     #define CLIENT_CPU     CPU_ARM
   #elif defined(__alpha__) || defined(ASM_ALPHA)
@@ -512,7 +517,15 @@
   #endif
 #elif defined(_ANDROID_)
   #define CLIENT_OS_NAME  "Android"
-  #define CLIENT_CPU      CPU_ARM
+  #if defined(__arm64__)
+    #define CLIENT_CPU     CPU_ARM64
+  #elif defined(__i386__) || defined(ASM_X86)
+    #define CLIENT_CPU     CPU_X86
+  #elif defined(__arm32__) || defined(ARM)
+    #define CLIENT_CPU     CPU_ARM
+  #else
+    #define CLIENT_CPU     CPU_ARM
+  #endif
   #define CLIENT_OS       OS_LINUX
 #endif
 
@@ -582,7 +595,7 @@
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || \
      (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_88K) || \
-     (CLIENT_CPU == CPU_SPARC) || \
+     (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_ARM64) || \
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
