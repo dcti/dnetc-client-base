@@ -3339,6 +3339,7 @@ case "$1" in
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DEXPECTED_CUDA_VERSION=${inferred_cuda_version_expected}"
         TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_LIB_PATH}"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -Wl,-rpath=\\\$\$ORIGIN/lib,-rpath=${TARGET_CUDA_LIB_PATH}"
         # Need the CUDA libs to be able to run the testplat program
         export LD_LIBRARY_PATH="${TARGET_CUDA_LIB_PATH}"
         TARGET_LIBS="-lcudart -lrt"
