@@ -347,6 +347,9 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
 #include <mach/mach_init.h> /* for bootstrap_port */
 #endif
 
+#elif (CLIENT_OS == OS_IOS)
+/* TBD */
+
 #elif (CLIENT_OS == OS_MORPHOS)
 int morphos_isrunningonbattery(void);
 LONG morphos_cputemp(void);

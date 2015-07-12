@@ -229,7 +229,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #else // a.out libc4
     NonPolledUSleep( 0 ); /* yield */
     #endif
-  #elif (CLIENT_OS == OS_MACOSX)
+  #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
     sched_yield();
   #elif (CLIENT_OS == OS_DRAGONFLY)
     sched_yield();

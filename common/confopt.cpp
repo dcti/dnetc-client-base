@@ -116,7 +116,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "listed here are found to be running. Multiple filenames/process names\n"
   "may be specified by separating them with a '|'.\n"
   "\n"
-  #if (CLIENT_OS == OS_MACOSX)
+  #if (CLIENT_OS == OS_MACOSX || CLIENT_OS == OS_IOS)
   "For example, \"DVD Player|Safari\". Providing a path is not permitted.\n"
   "You can invoke the \"ps -acxw\" command to determine what are the real\n"
   "names of the processes currently running on your machine.\n"
@@ -214,7 +214,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
       (CLIENT_OS == DRAGONFLY)))
   "This option is ignored if power management is disabled or not configured or\n"
   "if /dev/apm cannot be opened for reading (may require superuser privileges).\n"
-  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOSX)
+  #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
   "This option is ignored if power source detection is not supported by the\n"
   "the operating system or hardware architecture.\n"
   #else

@@ -1131,14 +1131,14 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
-        #elif (CLIENT_OS == OS_MACOSX)
+        #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
         /* White spaces in directory/file names make parsing very error */
         /* prone. The workaround is to ask 'ps' to output the pid and   */
         /* executable name only, so that we can deal with white spaces  */
         /* in program names (quite frequent under Mac OS X)             */
         pscmd = "ps acxw -o pid,command 2>/dev/null";
         #elif (CLIENT_OS == OS_NEXTSTEP)
-        /* NeXTstep porduces spaces in process status columns like
+        /* NeXTstep produces spaces in process status columns like
          * 26513 p1 SW    0:01 -bash (bash)
          * 26542 p1 R N  32:52 ./dnetc */
         pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
@@ -1224,7 +1224,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                     while (*foundname && isspace(*foundname))
                       foundname++;
                     p = foundname;
-                    #if (CLIENT_OS == OS_MACOSX)
+                    #if (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
                     /* Skip to the end of line, and accept white spaces */
                     while (*p)
                       p++;

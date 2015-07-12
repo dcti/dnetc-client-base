@@ -96,6 +96,7 @@
 #define OS_DRAGONFLY    48
 #define OS_HAIKU        49
 #define OS_ANDROID      50
+#define OS_IOS          51 /* Apple iOS (iPhone, iPad, etc.) */
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
@@ -432,22 +433,32 @@
     #define HAVE_POSIX_THREADS
   #endif
 #elif defined(__APPLE__)
-   #define CLIENT_OS_NAME  "Mac OS X"
-   #define CLIENT_OS       OS_MACOSX
-   #ifndef __unix__
-   #define __unix__
-   #endif
-   #if defined(CUDA) && (defined(__i386__) || defined(__x86_64__))
-     #define CLIENT_CPU    CPU_CUDA
-   #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__))
-     #define CLIENT_CPU    CPU_OPENCL
-   #elif defined(__ppc__) || defined (__ppc64__)
-     #define CLIENT_CPU    CPU_POWERPC
-   #elif defined(__i386__) || defined(ASM_X86)
-     #define CLIENT_CPU    CPU_X86
-   #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
-     #define CLIENT_CPU    CPU_AMD64
-   #endif
+  #if defined(__arm64__)
+    #define CLIENT_OS_NAME  "iOS"
+    #define CLIENT_OS       OS_IOS
+    #define CLIENT_CPU      CPU_ARM64
+  #elif defined(__arm__) || defined(ARM)
+    #define CLIENT_OS_NAME  "iOS"
+    #define CLIENT_OS       OS_IOS
+    #define CLIENT_CPU      CPU_ARM
+  #else
+    #define CLIENT_OS_NAME  "Mac OS X"
+    #define CLIENT_OS       OS_MACOSX
+  #endif
+  #ifndef __unix__
+    #define __unix__
+  #endif
+  #if defined(CUDA) && (defined(__i386__) || defined(__x86_64__))
+    #define CLIENT_CPU    CPU_CUDA
+  #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__))
+    #define CLIENT_CPU    CPU_OPENCL
+  #elif defined(__ppc__) || defined(__ppc64__)
+    #define CLIENT_CPU    CPU_POWERPC
+  #elif defined(__i386__) || defined(ASM_X86)
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
+    #define CLIENT_CPU    CPU_AMD64
+  #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */
   #define __unix__ /* it ain't that special! */

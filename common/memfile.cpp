@@ -20,7 +20,7 @@ const char *memfile_cpp(void) {
 
 #include <stdio.h>
 #include <string.h>
-#if (CLIENT_OS != OS_MACOSX)
+#if (CLIENT_OS != OS_MACOSX) && (CLIENT_OS != OS_IOS)
   #include <malloc.h>
 #endif
 #if (CLIENT_OS == OS_VMS)

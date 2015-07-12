@@ -570,7 +570,7 @@ int main( int argc, char *argv[] )
       /* yes, it stays open */
     }
   }
-  #elif (CLIENT_OS == OS_MACOSX)                  /* SPT_TYPE==SPT_PSSTRINGS */
+  #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)     /* SPT_TYPE==SPT_PSSTRINGS */
   /* NOTHING - PS_STRINGS are no longer supported and there's no way to
   ** change the name of our process.
   if (needchange)

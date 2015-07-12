@@ -232,6 +232,8 @@ return "@(#)$Id: netbase.cpp,v 1.23 2014/02/07 18:55:14 snikkel Exp $"; }
     #define _BSD_SOCKLEN_T_ int32_t     // Missing in SDKs < 10.3.0
     typedef _BSD_SOCKLEN_T_ socklen_t;
   #endif
+#elif (CLIENT_OS == OS_IOS)
+  /* nothing; socklen_t already defined */
 #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION < 199701))
   #define socklen_t size_t
   /* only needed for old BSD/OS (before 4.x) */

@@ -165,7 +165,8 @@ static int __GetMinutesWest(void)
 #elif (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_VMS) || \
       (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_BSDOS) || \
-      (CLIENT_OS == OS_MACOSX) /* *BSDs don't set timezone in gettimeofday() */
+      (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
+      /* *BSDs don't set timezone in gettimeofday() */
   time_t timenow;
   struct tm * tmP;
   struct tm loctime, utctime;
@@ -545,7 +546,7 @@ int CliGetMonotonicClock( struct timeval *tv )
       if (!gotit) return -1;
       __clks2tv( 1000, ticks, l_wrap_count, tv );
     }
-    #elif (CLIENT_OS == OS_MACOSX)
+    #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
       // OS 10.5.2 : the sysctl() call causes a huge slow down on 64-bit arch.
       static struct timeval boot = {0, 0};
       struct timeval now;

@@ -29,6 +29,9 @@ return "@(#)$Id: cpucheck.cpp,v 1.209 2014/06/14 19:23:53 ertyu Exp $"; }
 #  include <mach/mach.h>
 #  include <mach/machine.h>
 #  include <IOKit/IOKitLib.h>
+#elif (CLIENT_OS == OS_IOS)
+#  include <mach/mach.h>
+#  include <mach/machine.h>
 #elif (CLIENT_OS == OS_DYNIX)
 #  include <sys/tmp_ctl.h>
 #elif (CLIENT_OS == OS_SOLARIS)
@@ -69,6 +72,10 @@ return "@(#)$Id: cpucheck.cpp,v 1.209 2014/06/14 19:23:53 ertyu Exp $"; }
 
 #if (CLIENT_CPU == CPU_OPENCL)
 #include "ocl_info.h"
+#endif
+
+#if (CLIENT_CPU == CPU_ARM64)
+#include <arm_neon.h>
 #endif
 
 
@@ -132,7 +139,7 @@ int GetNumberOfDetectedProcessors( void )
       //if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
     }
-    #elif (CLIENT_OS == OS_MACOSX)
+    #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
     {
       unsigned int    count;
       struct host_basic_info  info;
@@ -628,7 +635,7 @@ static long __GetRawProcessorID(const char **cpuname)
       detectedname = "Power";
     }
   }
-  #elif (CLIENT_OS == OS_MACOSX)
+  #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
   if (detectedtype == -2L)
   {
     // We prefer raw PVR values over the IDs provided by host_info()

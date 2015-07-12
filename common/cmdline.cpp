@@ -433,12 +433,12 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
-          #elif (CLIENT_OS == OS_MACOSX)
+          #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
           // Only grab the executable name to avoid troubles with white spaces
           // in file paths.
           pscmd = "ps acxw|awk '{print$1\" \"$5}' 2>/dev/null";
           #elif (CLIENT_OS == OS_NEXTSTEP)
-          /* NeXTstep porduces spaces in process status columns like
+          /* NeXTstep produces spaces in process status columns like
           * 26513 p1 SW    0:01 -bash (bash)
           * 26542 p1 R N  32:52 ./dnetc */
           pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
