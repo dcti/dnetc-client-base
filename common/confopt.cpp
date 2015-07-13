@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
@@ -209,9 +209,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "system is running on battery power or, where more appropriate, if it finds\n"
   "that the system is not running on mains power.\n" 
   "\n"
-  #if (CLIENT_OS == OS_LINUX) ||  ((CLIENT_CPU == CPU_X86) && \
-      ((CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_NETBSD) || \
-      (CLIENT_OS == DRAGONFLY)))
+  #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID) || \
+      ((CLIENT_CPU == CPU_X86) && ((CLIENT_OS == OS_FREEBSD) || \
+      (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == DRAGONFLY)))
   "This option is ignored if power management is disabled or not configured or\n"
   "if /dev/apm cannot be opened for reading (may require superuser privileges).\n"
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)

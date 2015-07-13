@@ -13,7 +13,9 @@
 #define OCL_INFO_H
 
 #include "cputypes.h"
-#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_LINUX)
+#if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || \
+    (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_LINUX) || \
+    (CLIENT_OS == OS_ANDROID)
 #include <CL/cl.h>
 #elif (CLIENT_OS == OS_MACOSX)
 #include <OpenCL/opencl.h>

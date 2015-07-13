@@ -537,7 +537,7 @@
   #else
     #define CLIENT_CPU     CPU_ARM
   #endif
-  #define CLIENT_OS       OS_LINUX
+  #define CLIENT_OS        OS_ANDROID
 #endif
 
 #if !defined(CLIENT_OS)
@@ -658,7 +658,8 @@
   #include <sys/resource.h> /* WIF*() macros */
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
-#elif (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOSX)) && \
+#elif (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOSX) || \
+  (CLIENT_OS == OS_IOS) || (CLIENT_OS == OS_ANDROID)) && \
   ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)))
   /* Necessary for streams to work correctly */
   #define HAVE_POSIX_THREADS

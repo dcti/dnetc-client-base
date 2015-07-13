@@ -33,7 +33,7 @@ return "@(#)$Id: clitime.cpp,v 1.77 2013/05/08 20:34:37 bovine Exp $"; }
   #undef THREADS_HAVE_OWN_ACCOUNTING
   #if !defined(CLIENT_SUPPORTS_SMP) || \
       defined(HAVE_MULTICRUNCH_VIA_FORK) || \
-      (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD)
+      (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_ANDROID)
     // if threads have their own pid, then we can use getrusage() to
     // obtain thread-time, otherwise resort to something else
     #define THREADS_HAVE_OWN_ACCOUNTING
@@ -597,7 +597,8 @@ int CliGetMonotonicClock( struct timeval *tv )
       tv->tv_sec = (time_t)(hirestime / 1000000);
       tv->tv_usec = (unsigned long)(hirestime % 1000000);
     }
-    #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) /*only RTlinux has clock_gettime/gethrtime*/
+    #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
+    /*only RTlinux has clock_gettime/gethrtime*/
     {
       static int supports_clock_gettime = -1;
       if (supports_clock_gettime == -1)

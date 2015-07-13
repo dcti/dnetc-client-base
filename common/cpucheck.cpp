@@ -192,10 +192,10 @@ int GetNumberOfDetectedProcessors( void )
       if (rc != 0 || cpucount < 1)
         cpucount = -1;
     }
-    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && \
-           (CLIENT_CPU != CPU_CELLBE)
+    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || \
+           (CLIENT_OS == OS_ANDROID)) && (CLIENT_CPU != CPU_CELLBE)
     {
-      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
+      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM64)
         cpucount = 1;
       #else
       FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
@@ -425,7 +425,7 @@ static long __GetRawProcessorID(const char **cpuname)
       detectedtype = -1;
     }
   }
-  #elif (CLIENT_OS == OS_LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)
   if (detectedtype == -2L)
   {
     FILE *cpuinfo;
@@ -1608,7 +1608,7 @@ static long __GetRawProcessorID(const char **cpuname )
     detectedtype = ARMident();
     sprintf(namebuf, "%0lX", detectedtype);
   }
-  #elif (CLIENT_OS == OS_LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)
   if (detectedtype == -2)
   {
     char buffer[256];

@@ -58,7 +58,7 @@ static const char *helpbody[] =
 #elif (CLIENT_OS == OS_OS2)
   "-install           install the client in the startup folder",
   "-uninstall         remove the client from the startup folder",
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
   "-install [...]     install the client in /etc[/rc.d]/init.d/",
   "                   all [...options...] that follow '-install' serve",
   "                   as parameters for the installed client.",

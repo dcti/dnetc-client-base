@@ -95,7 +95,7 @@ struct thread_param_block
     UINT_PTR threadID;  /* 64 bits on win64 */
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
-  #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS)
+  #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS)
     long threadID;
   #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
     thread_id threadID;
@@ -221,7 +221,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
       riscos_upcall_6();
       return (read_monotonic_time()-t)*10000;
     }
-  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
     #if defined(HAVE_KTHREADS) /* kernel threads */
     kthread_yield();
     #elif defined(__ELF__)
@@ -751,7 +751,8 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS == OS_NETWARE)
       while (!thrparams->hasexited)
         delay(100);
-      #elif ((CLIENT_OS==OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS) /*kernel threads*/
+      #elif ((CLIENT_OS==OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) \
+         || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS) /*kernel threads*/
       kthread_join( thrparams->threadID );
       #elif defined(HAVE_MULTICRUNCH_VIA_FORK)
       int status = 0, elapsed = 0;
@@ -1080,7 +1081,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           } /* if parent or child */
         } /* thrparam inheritance ok */
       } /* FreeBSD >= 3.0 (+ SMP kernel optional) + global inheritance ok */
-      #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS)
+      #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS)
       {
         if (thrparams->threadnum == 0) /* first thread */
           use_poll_process = 1;

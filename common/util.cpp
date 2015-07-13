@@ -624,7 +624,8 @@ const char *utilGetAppName(void)
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) || \
+      (CLIENT_OS == OS_ANDROID)
   #include <dirent.h>         // for direct read of /proc/
 #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
   #include <kernel/OS.h>      // get_next_team_info()
@@ -1054,7 +1055,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
 
       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
           (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-          (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
+          (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) || \
+          (CLIENT_OS == OS_ANDROID)
       {
         DIR *dirp = opendir("/proc");
 
@@ -1116,7 +1118,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
       #endif
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX) && (CLIENT_OS != OS_PS2LINUX)
+      #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX) && \
+          (CLIENT_OS != OS_PS2LINUX) && (CLIENT_OS != OS_ANDROID)
       {
         /* this part is only needed for operating systems that do not read /proc
            OR do not have a reliable method to set the name as read from /proc
@@ -1127,7 +1130,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
             (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
             (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX) || \
-            (CLIENT_OS == OS_DRAGONFLY)
+            (CLIENT_OS == OS_DRAGONFLY) || (CLIENT_OS == OS_ANDROID)
         pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */

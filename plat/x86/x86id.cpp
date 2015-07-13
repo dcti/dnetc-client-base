@@ -108,7 +108,7 @@ union PageInfos {
   }
   #endif
 #elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
-  #if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+  #if ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && !defined(__ELF__)
     extern "C" s32 x86getid(void) asm ("x86getid");
     extern "C" u32 x86cpuid(u32 page, union PageInfos* infos) asm ("x86cpuid");
     extern "C" u32 x86xgetbv(u32 page, union PageInfos* infos) asm ("x86xgetbv");
@@ -123,7 +123,7 @@ union PageInfos {
 
 #endif
 
-#if (CLIENT_OS == OS_LINUX) && !defined(__ELF__)
+#if ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && !defined(__ELF__)
   extern "C" ui64 x86rdtsc( void ) asm ("x86rdtsc");
 #else
   extern "C" ui64 CDECL x86rdtsc( void );
@@ -137,7 +137,7 @@ ui64 x86ReadTSC(void)
 
 static s32 x86id_fixup(s32 x86id_result)
 {
-#if (CLIENT_OS == OS_LINUX)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)
   if (x86id_result == MAKE_CPUID(VENDOR_CYRIX, 0, 4, 0, 0)) /* Cyrix indeterminate */
   {
     FILE *file = fopen("/proc/cpuinfo", "r");

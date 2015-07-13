@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2000-2014 - All Rights Reserved
+ * Copyright distributed.net 2000-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  */
@@ -1689,7 +1689,7 @@ static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
   #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     if (IoctlSocket(sock, opt, (char *)i_optval)!=0) return ps_stdneterr;
     return 0;
-  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
   	   /*use ioctl to avoid 2.0+2.1 vs 2.2+ trouble*/
     unsigned int optval = (unsigned int)*i_optval;
     if (ioctl(sock, opt, &optval )!=0) return ps_stdneterr;

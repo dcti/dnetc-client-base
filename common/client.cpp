@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2014 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.271 2012/05/13 10:22:13 stream Exp $"; }
+return "@(#)$Id: client.cpp,v 1.272 2015/07/12 22:29:12 zebe Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -522,7 +522,7 @@ int main( int argc, char *argv[] )
     char *p = strrchr( argv[0], '/' );
     needchange = (strcmp( ((p)?(p+1):(argv[0])), defname )!=0);
 
-    #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+    #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
     /* discard dir component from argv[0] when started from init.d */
     if (!needchange && *argv[0] == '/' && strlen(argv[0]) > (strlen(defname)+10))
     {

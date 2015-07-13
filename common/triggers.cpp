@@ -385,7 +385,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #elif (CLIENT_OS == OS_LINUX) && ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64))
+    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && \
+          ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64))
     {
       // requires the ac kernel module
       int fd = open("/sys/class/power_supply/AC/online", O_RDONLY);
@@ -406,7 +407,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         }
       }
     }
-    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86)
+    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && \
+          (CLIENT_CPU == CPU_X86)
     {
       static long time_last = 0;
       long time_now = (time(0)/60); /* not more than once per minute */
@@ -1232,7 +1234,7 @@ void pascal __far16 MoreOS2Signals(USHORT sigArg, USHORT sigNumber)
 
 // -----------------------------------------------------------------------
 
-#if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) || \
+#if (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS)) || \
    defined(HAVE_MULTICRUNCH_VIA_FORK)
 /* forward all signals to the parent process */
 static void sig_forward_to_parent( int nsig )
@@ -1243,8 +1245,8 @@ static void sig_forward_to_parent( int nsig )
 
 int TriggersSetThreadSigMask(void)
 {
-#if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) \
-    || defined(HAVE_MULTICRUNCH_VIA_FORK)
+#if (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS)) || \
+    defined(HAVE_MULTICRUNCH_VIA_FORK)
   /* setup signal forwarding */
 
   int sigs[] = { SIGINT, SIGTERM, SIGKILL, SIGHUP, SIGCONT,
@@ -1271,7 +1273,7 @@ int TriggersSetThreadSigMask(void)
   }
 
   #if defined(_POSIX_THREADS_SUPPORTED) /* must be first */
-    #if ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
+    #if (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(_MIT_POSIX_THREADS)) \
        || (CLIENT_OS == OS_DGUX)
     /* nothing - no pthread_sigmask() and no alternative */
     #else
@@ -1280,7 +1282,7 @@ int TriggersSetThreadSigMask(void)
   #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
   thr_sigsetmask(SIG_BLOCK, &signals_to_block, NULL);
   #elif defined(HAVE_MULTICRUNCH_VIA_FORK) || \
-        ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS))
+        (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS))
   sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
   #endif
 #endif
