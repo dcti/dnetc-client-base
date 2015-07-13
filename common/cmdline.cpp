@@ -39,7 +39,7 @@ return "@(#)$Id: cmdline.cpp,v 1.176 2014/08/11 18:57:54 ertyu Exp $"; }
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-    (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) \
+    (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) || \
     (CLIENT_OS == OS_ANDROID)
 #include <dirent.h> /* for direct read of /proc/ */
 #endif
@@ -215,7 +215,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           pid_t already_sigd[128]; unsigned int sigd_count = 0;
           #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
               (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-              (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) \
+              (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) || \
               (CLIENT_OS == OS_ANDROID)
           DIR *dirp = opendir("/proc");
           if (!dirp)
