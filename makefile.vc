@@ -154,6 +154,8 @@ OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 #   cl 14.00.xxxx = Visual Studio 2005 (VC8)
 #   cl 15.00.xxxx = Visual Studio 2008 (VC9)
 #   cl 16.00.xxxx = Visual Studio 2010 (VC10)
+#   cl 17.00.xxxx = Visual Studio 2012 (VC11)
+#   cl 18.00.xxxx = Visual Studio 2013 (VC12)
 
 !if ( [plat\win\msvcver.cmd] >= 15 )
 OPTS_MSVC = $(OPTS_MSVC) -EHs-c- -GS- -wd4996
