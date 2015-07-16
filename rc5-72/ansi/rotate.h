@@ -14,7 +14,7 @@
 
 //-------------------------------------------------------------------
 
-#if ((CLIENT_CPU == CPU_SPARC) && !defined(__SUNPRO_CC)) || (CLIENT_CPU == CPU_ARM)
+#if ((CLIENT_CPU == CPU_SPARC) && !defined(__SUNPRO_CC)) || ((CLIENT_CPU == CPU_ARM) && (CLIENT_OS != OS_WIN32))
 
 #define SHL(x, s) ((u32) ((x) << (s) ))
 #define SHR(x, s) ((u32) ((x) >> (32 - (s)) ))
