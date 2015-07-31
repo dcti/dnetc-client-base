@@ -2534,14 +2534,14 @@ unsigned int GetProcessorFrequency()
       if (freq < 250) {
         unsigned int nearest25, nearest30, nearest33;
         if ((freq - ((unsigned int)(freq / 25) * 25)) < 
-          (unsigned int)abs(freq - (((unsigned int)(freq / 25) + 1) * 25)))
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / 25) + 1) * 25))))
         {
           nearest25 = (unsigned int)(freq / 25) * 25;
         } else {
           nearest25 = ((unsigned int)(freq / 25) + 1) * 25;
         }
         if ((freq - ((unsigned int)(freq / 30) * 30)) < 
-          (unsigned int)abs(freq - (((unsigned int)(freq / 30) + 1) * 30)))
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / 30) + 1) * 30))))
         {
           nearest30 = (unsigned int)(freq / 30) * 30;
         } else {
@@ -2554,16 +2554,16 @@ unsigned int GetProcessorFrequency()
         } else {
           nearest33 = (unsigned int)(((unsigned int)(freq / (100.0/3.0)) + 1) * (100.0/3.0));
         }
-        if (abs(freq - nearest25) < abs(freq - nearest30))
+        if (abs((int)(freq - nearest25)) < abs((int)(freq - nearest30)))
         {
-          if (abs(freq - nearest25) < abs(freq - nearest33))
+          if (abs((int)(freq - nearest25)) < abs((int)(freq - nearest33)))
           {
             freq = nearest25;
           } else {
             freq = nearest33;
           }
         } 
-        else if (abs(freq - nearest30) < abs(freq - nearest33))
+        else if (abs((int)(freq - nearest30)) < abs((int)(freq - nearest33)))
         {
           freq = nearest30;
         } else {
@@ -2592,16 +2592,16 @@ unsigned int GetProcessorFrequency()
         } else {
           nearest166 = (unsigned int)(((unsigned int)(freq / (500.0/3.0)) + 1) * (500.0/3.0));
         }
-        if (abs(freq - nearest50) < abs(freq - nearest66))
+        if (abs((int)(freq - nearest50)) < abs((int)(freq - nearest66)))
         {
-          if (abs(freq - nearest50) < abs(freq - nearest166))
+          if (abs((int)(freq - nearest50)) < abs((int)(freq - nearest166)))
           {
             freq = nearest50;
           } else {
             freq = nearest166;
           }
         } 
-        else if (abs(freq - nearest66) < abs(freq - nearest166))
+        else if (abs((int)(freq - nearest66)) < abs((int)(freq - nearest166)))
         {
           freq = nearest66;
         } else {
