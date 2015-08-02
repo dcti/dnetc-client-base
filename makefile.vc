@@ -21,6 +21,7 @@ PLATSRCPATH = plat/win
 HAVE_RC5_72_CORES=1
 HAVE_OGR_CORES=1
 HAVE_OGR_PASS2=0
+HAVE_IPV6=1
 
 # --------------------------------------------
 
@@ -304,6 +305,10 @@ PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/strcmpi.obj
 
 
 OPTS_MSVC = $(OPTS_MSVC) -I$(PLATSRCPATH) -I$(CHIPSRCPATH)
+
+!if $(HAVE_IPV6) == 1
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_IPV6
+!endif
 
 !if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 OPTS_MSVC = $(OPTS_MSVC) -I plat/x86
