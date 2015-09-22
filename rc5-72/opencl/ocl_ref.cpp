@@ -313,13 +313,15 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
   }
 
   if(!selftestpassed)
+  {
 	if(!selftest(deviceID))
 	{
-		Log("Abnormal core termination! Device: %u\n", deviceID);
+		Log("Sanity checks failed - OpenCL system is not functional! Device: %u\n", deviceID);
         RaiseExitRequestTrigger();
         return -1;
 	}else
 		selftestpassed = true;
+  }
 
   //Log("Got %u iters to do\n", *iterations);
   //Log("%x:%x:%x - %u\n", rc5_72unitwork->L0.hi, rc5_72unitwork->L0.mid, rc5_72unitwork->L0.lo, *iterations);
