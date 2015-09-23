@@ -638,6 +638,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDNASMS="$TARGET_ADDNASMS \
                        rc5-72/amd64/r72-snjl.asm \
                        rc5-72/amd64/r72-kbe.asm \
+                       rc5-72/amd64/r72-avx2.asm \
                        rc5-72/amd64/r72-go2c.asm \
                        rc5-72/amd64/r72-go2d.asm"
     fi # HAVE_RC5_72

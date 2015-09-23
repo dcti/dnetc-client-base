@@ -54,6 +54,7 @@ extern "C" s32 CDECL rc5_72_unit_func_snjl( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2c( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2d( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_avx2( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -165,6 +166,7 @@ const char **corenames_for_contest_rc572()
       "KBE-64 3-pipe",
       "GO 2-pipe c",
       "GO 2-pipe d",
+      "YK AVX2",
   #elif (CLIENT_CPU == CPU_ARM)
       "StrongARM 1-pipe",
       "ARM 2/3/6/7 1-pipe",
@@ -306,6 +308,13 @@ int apply_selcore_substitution_rules_rc572(int cindex)
         cindex = 1;     /* default core */
       }
     }
+  }
+#elif (CLIENT_CPU == CPU_AMD64)
+  {
+    unsigned long flags = GetProcessorFeatureFlags();
+
+    if (!(flags & CPU_F_AVX2) && cindex == 4)   /* AVX2 core */
+      cindex = 3;
   }
 #elif (CLIENT_CPU == CPU_CUDA)
   // GetProcessorType() currently returns the number of registers
@@ -560,7 +569,9 @@ int selcoreGetPreselectedCoreForProject_rc572()
   {
     if (detected_type >= 0)
     {
-      switch (detected_type)
+      if (detected_flags & CPU_F_AVX2)
+        cindex = 4;
+      else switch (detected_type)
       {
         case 0x09: cindex = 3; break; // K8               == GO 2-pipe d
         case 0x0B: cindex =-1; break; // Pentium 4        == KBE-64 3-pipe or GO 2???
@@ -846,6 +857,10 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
       case 3:
         unit_func.gen_72 = rc5_72_unit_func_go_2d;
         pipeline_count = 2;
+        break;
+      case 4:
+        unit_func.gen_72 = rc5_72_unit_func_avx2;
+        pipeline_count = 16;
         break;
     // -----------
     #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)

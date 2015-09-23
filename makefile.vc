@@ -360,6 +360,7 @@ RC5_72_OBJS = \
         $(OUTPUTPATH)/r72-kbe.obj \
         $(OUTPUTPATH)/r72-go2c.obj \
         $(OUTPUTPATH)/r72-go2d.obj \
+        $(OUTPUTPATH)/r72-avx2.obj \
         $(OUTPUTPATH)/r72ansi1.obj \
         $(OUTPUTPATH)/r72ansi2.obj \
         $(OUTPUTPATH)/r72ansi4.obj
