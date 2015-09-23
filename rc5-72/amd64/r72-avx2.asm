@@ -75,24 +75,30 @@ defwork work_pre_S1
 defwork work_pre_S2
 
 ; Second pool of variables - aligned by 32, referenced via [RBP+xxx]
-
+; Add padding area for alignment
+%assign work_size work_size + 32
+; Start of secondary area (non-aligned yet)
 %assign work_offset work_size
 
 defwork32 work_C_0
 defwork32 work_C_1
 defwork32 work_S, (26*2)
 
-; Concatenate two work areas together, reserve extra 32 bytes for alignment
-%assign work_size work_offset + work32_size + 32
+; Concatenate two work areas together
+%assign work_size work_size + work32_size
+
 ; "The stack must be aligned by 16 before any call instruction.
 ; Consequently, the value of the stack pointer is always 8 modulo 16
 ; at the entry of a procedure. A procedure must subtract an odd multiple
 ; of 8 from the stack pointer before any call instruction." (Agner Fog)
-; If final work_size is divisible by 16, reserve 8 more bytes, as requested above.
 ;
-; ??? what if remainder is 4 or 12 ??? Look like work_pre_A was added only to align
-; and avoid this case, this variable is not used anywhere.
+; Step 1. Make sure that work_size is multiple of 8.
+%assign work_size (work_size + 7) & 0FFFFFFF8h
+; Step 2. If final work_size is divisible by 16, reserve 8 more bytes, as requested above.
 %assign work_size work_size + (8 - work_size % 16)
+; Note to other developers: a simpler method is to save registers in prologue
+; using odd number of push'es - this will make rsp aligned by 16, then align
+; work_size by 16 using only Step 1.
 
 ;; offsets within the parameter structure
 %define RC5_72UnitWork_plainhi  rdi+0
@@ -155,6 +161,12 @@ startseg:
 _rc5_72_unit_func_avx2:
 rc5_72_unit_func_avx2:
 
+; Note to other core writers:
+; Alternative simpler method is to save registers here using ODD number of push'es.
+; This make stack aligned by 16 and work_size need to be only trivially aligned by 16.
+; It may be preferable to always save maximum required set of registers no matter
+; which OS is used (entry/exit sequence don't need to be optimized for speed)
+
     sub     rsp, work_size     ; stack becomes aligned to 16 bytes, as required by calling convention
 
 %ifdef _WINDOWS
@@ -180,9 +192,9 @@ rc5_72_unit_func_avx2:
     mov     [save_r14], r14
     mov     [save_r15], r15
 
-; Move RBP to start of secondary area plus 32 bytes for alignment.
+; Move RBP to start of secondary area, after alignment space
 ; Align secondary area by 32 bytes.
-    lea     rbp, [rsp+work_offset+32]
+    lea     rbp, [rsp+work_offset]
     and     bpl, 0xE0
 
     mov     r10d, [rsi]
