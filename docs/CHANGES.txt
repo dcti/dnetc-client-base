@@ -30,6 +30,7 @@ Version change log: $Id: CHANGES.txt,v 1.132 2015/07/12 22:29:12 zebe Exp $
 ------
 
 2.9112.521  new: amd64: RC5-72 AVX2 core
+            imp: IPv6 support for Windows clients (#2982)
             imp: x86/amd64: Intel Skylake (#4615)
 
 2.9111.520  imp: all: support for benchmarks > 2Gkeys/sec
