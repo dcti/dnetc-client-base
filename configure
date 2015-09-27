@@ -245,6 +245,7 @@ add_sources() # $1=os, $2=arch, $3=custom
                          rc5-72/x86/r72-go2b.asm \
                          rc5-72/x86/r72-sgp3.asm \
                          rc5-72/x86/r72-ma4.asm \
+                         rc5-72/x86/r72-avx2-32.asm \
                          rc5-72/x86/r72-mmx.asm"
 
       fi

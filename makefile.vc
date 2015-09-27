@@ -378,6 +378,7 @@ RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-go2b.obj   \
         $(OUTPUTPATH)/r72-sgp3.obj   \
         $(OUTPUTPATH)/r72-ma4.obj    \
+        $(OUTPUTPATH)/r72-avx2-32.obj \
         $(OUTPUTPATH)/r72-mmx.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
