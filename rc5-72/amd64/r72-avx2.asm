@@ -80,6 +80,8 @@ defwork work_pre_S2
 ; Start of secondary area (non-aligned yet)
 %assign work_offset work_size
 
+; WARNING: key_setup expects only this layout of frame, two fields before work_S,
+; i.e. work_S must be started at [ebp+64]
 defwork32 work_C_0
 defwork32 work_C_1
 defwork32 work_S, (26*2)
