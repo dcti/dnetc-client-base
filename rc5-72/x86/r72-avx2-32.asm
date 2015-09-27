@@ -140,7 +140,7 @@ rc5_72_unit_func_avx2:
 %define param_unitwork     esp+work_size+10h+4
 %define param_piterations  esp+work_size+10h+8
 
-    sub     esp, work_size     ; stack becomes aligned to 16 bytes, as required by calling convention
+    sub     esp, work_size
 ; Move EBP to start of secondary area, after alignment space
 ; Align secondary area by 32 bytes.
     lea     ebp, [esp+work_offset]
