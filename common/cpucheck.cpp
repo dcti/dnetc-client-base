@@ -1456,6 +1456,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00063E0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon E7 v2 (Ivy Bridge EX)" },  /* (#4578) */
         { 0x0006450, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },  /* (#4579) */
         { 0x0006460, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },
+        { 0x00065E0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-6xxx (Skylake)" },  /* (#4615) */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
