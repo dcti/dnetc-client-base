@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.65 2012/08/14 19:33:01 sla Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.65 2015/09/28 19:33:01 stream Exp $"; }
 
 //#define TRACE
 
