@@ -1,5 +1,5 @@
 ; RC5-72 AVX-2 core
-; Created by: Yasuhiro Katsu (bakabaka9xx@github)
+; Created by: Yasuhiro Katsui (bakabaka9xx@gmail.com, bakabaka9xx@github)
 ;
 ; 16-pipe
 ; Need popcnt and AVX2 instruction

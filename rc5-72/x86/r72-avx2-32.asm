@@ -1,5 +1,5 @@
 ; RC5-72 AVX-2 core
-; Based on 64-bit core created by Yasuhiro Katsu (bakabaka9xx@github)
+; Based on 64-bit core created by Yasuhiro Katsui (bakabaka9xx@gmail.com, bakabaka9xx@github)
 ;
 ; 8-pipe
 ; Need popcnt and AVX2 instruction
