@@ -88,6 +88,9 @@ static void errMessage(const char *msg, DWORD lastError /* GetLastError() */)
          => "BLAH.COM: Spawn failed: The system cannot open the file.\n"
   */
   int len; char buf[MAX_PATH+1];
+  /* Do it now or it'll be lost after GetModuleFileName() */
+  if (lastError == ((DWORD)-1))
+    lastError = GetLastError();
   if ((len = ((int)GetModuleFileName(NULL,buf,sizeof(buf))))!=0)
   {
     while (len > 0)
@@ -121,12 +124,11 @@ static void errMessage(const char *msg, DWORD lastError /* GetLastError() */)
   if (lastError)
   {
     LPVOID lpMsgBuf;
-    if (lastError == ((DWORD)-1))
-      lastError = GetLastError();
     FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER |
        FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
        lastError,  0 /*MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT)*/,
      (LPTSTR) &lpMsgBuf, 0, NULL ); /* Process any inserts in lpMsgBuf. */
+    AnsiToOem( lpMsgBuf, lpMsgBuf ); /* Console output must be in OEM encoding for non-English languages */
     ErrOut( (const char *)lpMsgBuf );
     LocalFree( lpMsgBuf );
   }
