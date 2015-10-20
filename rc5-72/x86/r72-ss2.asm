@@ -23,7 +23,7 @@
 
 %define P         0xB7E15163
 %define Q         0x9E3779B9
-%define S_not(N)  (P+Q*(N))
+%define S_not(N)  ((P+Q*(N)) & 0xFFFFFFFF)
 %define S0_ROL3   0xBF0A8B1D
 
 ;------------------------------------------------
@@ -270,7 +270,7 @@ LOOP_MID_SS_2:
     mov  ecx, eax
     bswap ebx
 
-    add  eax, S_not(1) + S0_ROL3
+    add  eax, (S_not(1) + S0_ROL3) & 0xFFFFFFFF
     rol  eax, 3
 
     add  ecx, eax

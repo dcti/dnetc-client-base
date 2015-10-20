@@ -21,7 +21,7 @@
 %define Q	0x9E3779B9
 
 ;define an entry for S's value
-%define SVal(x)	(P+(Q*x))
+%define SVal(x)	((P+(Q*x)) & 0xFFFFFFFF)
 
 ;defines of where things are in the stack
 %define ebx_save	esp+0		;4 bytes
