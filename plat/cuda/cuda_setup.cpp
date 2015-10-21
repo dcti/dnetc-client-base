@@ -49,7 +49,7 @@ int InitializeCUDA()
 
         if (dwLen > 0)
         {
-          LPBYTE pBuffer = new BYTE[dwLen];
+          LPBYTE pBuffer = (LPBYTE)malloc(dwLen);
           if (pBuffer)
           {
             if (GetFileVersionInfo(&pszFile[0], dwHandle, dwLen, pBuffer))
@@ -90,7 +90,7 @@ int InitializeCUDA()
               Log("Unable to read CUDA file version\n");
             }
 
-            delete [] pBuffer;
+            free(pBuffer);
           }
 
         }

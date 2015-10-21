@@ -13,9 +13,9 @@
 // returns 0 if no supported GPU was found
 int GetNumberOfDetectedCUDAGPUs();
 
-long GetRawCUDAGPUID(const char **cpuname);
+long GetRawCUDAGPUID(int device, const char **cpuname);
 
 // returns the frequency in MHz, or 0.
-unsigned int GetCUDAGPUFrequency();
+unsigned int GetCUDAGPUFrequency(int device);
 
 #endif // CUDA_INFO_H

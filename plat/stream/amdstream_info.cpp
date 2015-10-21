@@ -16,15 +16,15 @@
 
 #include "logstuff.h"
 
-u32 getAMDStreamDeviceCount(void)
+int getAMDStreamDeviceCount(void)
 {
   return atistream_numDevices;
 }
 
-unsigned getAMDStreamDeviceFreq(void)
+unsigned getAMDStreamDeviceFreq(int device)
 {
-  if (getAMDStreamDeviceCount() > 0)
-    return CContext[0].attribs.engineClock;
+  if (device < atistream_numDevices)
+    return CContext[device].attribs.engineClock;
 
   return 0;
 }
@@ -75,8 +75,11 @@ static const char* GetNameById(u32 id, u32 nSIMDs=0)
   }
 }
 
-long getAMDStreamRawProcessorID(const char **cpuname)
+long getAMDStreamRawProcessorID(int device, const char **cpuname)
 {
+#if 0
+  /* This code not needed anymore because client now requests device parameters for each device */
+
   u32 nCPUs;
   u32 i, amount;
   static char *ATIstream_GPUname;
@@ -115,28 +118,45 @@ long getAMDStreamRawProcessorID(const char **cpuname)
 
   *cpuname = ATIstream_GPUname;
   return CContext[0].attribs.target;
+#else
+  if (device < atistream_numDevices)
+  {
+    stream_context_t *dev = &CContext[device];
+
+    *cpuname = GetNameById(dev->attribs.target, dev->attribs.numberOfSIMD);
+    return dev->attribs.target;
+  }
+  else
+  {
+    *cpuname = "???";
+    return 0;
+  }
+#endif
 }
 
-void AMDStreamPrintExtendedGpuInfo(void)
+void AMDStreamPrintExtendedGpuInfo(int i)
 {
-  int i;
+//int i;
 
+/*
   if (atistream_numDevices <= 0)
   {
     LogRaw("No supported devices found\n");
     return;
   }
-  for (i = 0; i < atistream_numDevices; i++)
+*/
+//for (i = 0; i < atistream_numDevices; i++)
+//{
+  stream_context_t *dev = &CContext[i];
+
+  LogRaw("\n");
+  if (!dev->active)
   {
-    stream_context_t *dev = &CContext[i];
-
-    LogRaw("\n");
-    if (!dev->active)
-    {
-      LogRaw("Warning: device %d not activated\n", i);
-      continue;
-    }
-
+    LogRaw("Warning: device %d not activated\n", i);
+//  continue;
+  }
+  else
+  {
     LogRaw("GPU %d attributes (EEEEEEEE == undefined):\n", i);
 #ifdef __GNUG__
 #define sh(name) LogRaw("%24s: %08X (%d)\n", #name, dev->attribs.name, dev->attribs.name)
@@ -166,4 +186,5 @@ void AMDStreamPrintExtendedGpuInfo(void)
     sh(numberOfShaderEngines);
 #undef sh
   }
+//}
 }

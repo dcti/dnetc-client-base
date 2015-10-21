@@ -21,10 +21,10 @@
 #include <OpenCL/opencl.h>
 #endif
 
-int     getOpenCLDeviceCount();
-u32     getOpenCLDeviceFreq(unsigned device=0);
-long    getOpenCLRawProcessorID(const char **cpuname, unsigned device=0);
-void    OpenCLPrintExtendedGpuInfo(void);
+int     getOpenCLDeviceCount(void);
+u32     getOpenCLDeviceFreq(int device);
+long    getOpenCLRawProcessorID(int device, const char **cpuname);
+void    OpenCLPrintExtendedGpuInfo(int device);
 
 extern cl_uint numPlatforms;
 extern cl_platform_id *platforms;

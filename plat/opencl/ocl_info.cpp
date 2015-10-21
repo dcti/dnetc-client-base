@@ -31,9 +31,9 @@ int getOpenCLDeviceCount(void)
   return numDevices;
 }
 
-u32 getOpenCLDeviceFreq(unsigned device)
+u32 getOpenCLDeviceFreq(int device)
 {
-  if (getOpenCLDeviceCount() > (int)device)
+  if (getOpenCLDeviceCount() > device)
   {
     cl_uint clockrate;
     if(clGetDeviceInfo(devices[device], CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(clockrate), &clockrate, NULL)==CL_SUCCESS)
@@ -42,7 +42,7 @@ u32 getOpenCLDeviceFreq(unsigned device)
   return 0;
 }
 
-static unsigned GetDeviceID(unsigned vendor_id, cl_char *device_name, cl_uint cunits, unsigned device)
+static unsigned GetDeviceID(/* unsigned vendor_id, cl_char *device_name, cl_uint cunits, */ unsigned device)
 {
   size_t globalWorkSize[1];
   cl_uint *outPtr;
@@ -101,15 +101,15 @@ finished:
   return id;
 }
 
-long getOpenCLRawProcessorID(const char **cpuname, unsigned device)
+long getOpenCLRawProcessorID(int device, const char **cpuname)
 {
-  static cl_char device_name[256+130] = {0};
+  static cl_char device_name[256+130];
   strcpy((char*)device_name, "Unknown");
 
   if(cpuname)
 	*cpuname = (const char*)device_name;
 
-  if (getOpenCLDeviceCount() > (int)device)
+  if (getOpenCLDeviceCount() > device)
   {
     clGetDeviceInfo(devices[device], CL_DEVICE_NAME, sizeof(device_name)-130, device_name, NULL);
 
@@ -125,35 +125,36 @@ long getOpenCLRawProcessorID(const char **cpuname, unsigned device)
 	  device_name[off2+1] = '\0';
 	}
 #endif
-	
+// ??? Never used
+/*
 	cl_uint vendor_id=0;
 	clGetDeviceInfo(devices[device], CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL);
 
 	cl_uint cunits=0;
 	clGetDeviceInfo(devices[device], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cunits), &cunits, NULL);
-	
-	return GetDeviceID(vendor_id, device_name, cunits, device);
+*/
+	return GetDeviceID(/* vendor_id, device_name, cunits, */ device);
   }
 
   return -1;
 
 }
 
-void OpenCLPrintExtendedGpuInfo(void)
+void OpenCLPrintExtendedGpuInfo(int device)
 {
   int i;
+  const char *data;
+  cl_int status;
 
-  if (getOpenCLDeviceCount() <= 0)
-  {
-    LogRaw("No supported devices found\n");
+  if (device >= getOpenCLDeviceCount())
     return;
-  }
 
-  //Print platform info
+  if (device == 0)
+  {
+  //Print platform info once
   LogRaw("\nPlatform info:\n");
   LogRaw("--------------\n");
   cl_char str[80];
-  cl_int status;
   status = clGetPlatformInfo(platforms[0], CL_PLATFORM_NAME, sizeof(str), (void *)str, NULL);
   if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform Name", str);
 
@@ -174,26 +175,31 @@ void OpenCLPrintExtendedGpuInfo(void)
     if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform extensions",str2);
     free(str2);
   }
+  /* Split platform and device info */
+  LogRaw("\nDevice info:\n");
+  LogRaw("--------------\n");
+  }
 
-  for (i = 0; i < getOpenCLDeviceCount(); i++)
+//for (i = 0; i < getOpenCLDeviceCount(); i++)
+  i = device;
   {
     cl_char device_name[1024] = {0};
     
-    LogRaw("\nDevice #%u:\n",i);
-    LogRaw("------------\n");
+//  LogRaw("\nDevice #%u:\n",i);
+//  LogRaw("------------\n");
 
     cl_device_type type;
     status = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(type), &type, NULL);
     if(status == CL_SUCCESS)
     {
-      LogRaw("%30s: ", "Type");
       if( type & CL_DEVICE_TYPE_CPU )
-        LogRaw("CPU\n");                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+        data = "CPU";
       else
         if( type & CL_DEVICE_TYPE_GPU )
-          LogRaw("GPU\n");
+          data = "GPU";
         else
-          LogRaw("UNKNOWN\n");
+          data = "UNKNOWN";
+      LogRaw("%30s: %s\n", "Type", data);
     }
 
     status = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(device_name), device_name, NULL);
@@ -215,43 +221,31 @@ void OpenCLPrintExtendedGpuInfo(void)
     status = clGetDeviceInfo(devices[i], CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof(ct), &ct, NULL);
     if(status == CL_SUCCESS) 
     {
-      LogRaw("%30s: ", "Global memory cache type");
       switch(ct)
       {
         case CL_NONE:
-          LogRaw("NONE\n");
+          data = "NONE";
           break;
         case CL_READ_ONLY_CACHE:
-          LogRaw("Read Only\n");
+          data = "Read Only";
           break;
         case CL_READ_WRITE_CACHE:
-          LogRaw("Read/Write\n");
+          data = "Read/Write";
           break;
         default:
-          LogRaw("Not sure\n");
+          data = "Not sure";
       }
+      LogRaw("%30s: %s\n", "Global memory cache type", data);
     }
 
     cl_bool um;
     status = clGetDeviceInfo(devices[i], CL_DEVICE_HOST_UNIFIED_MEMORY, sizeof(um), &um, NULL);
     if(status == CL_SUCCESS) 
-    {
-      LogRaw("%30s: ", "Unified memory subsystem");
-      if(um)
-        LogRaw("Yes\n");
-      else
-        LogRaw("No\n");
-    }
+      LogRaw("%30s: %s\n", "Unified memory subsystem", (um ? "Yes" : "No"));
 
     status = clGetDeviceInfo(devices[i], CL_DEVICE_IMAGE_SUPPORT, sizeof(um), &um, NULL);
     if(status == CL_SUCCESS) 
-    {
-      LogRaw("%30s: ", "Image support");
-      if(um)
-        LogRaw("Yes\n");
-      else
-        LogRaw("No\n");
-    }
+      LogRaw("%30s: %s\n", "Image support", (um ? "Yes" : "No"));
 
     status = clGetDeviceInfo(devices[i], CL_DEVICE_LOCAL_MEM_SIZE, sizeof(gmemcache), &gmemcache, NULL);
     if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "Local memory size", gmemcache);
