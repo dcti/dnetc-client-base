@@ -533,7 +533,7 @@ $(VC_CHECK):
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
 
-{$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj:
+{$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
@@ -548,7 +548,7 @@ $(VC_CHECK):
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS $(**:/=\)
 
-{plat/x86}.cpp{$(OUTPUTPATH)}.obj:
+{plat/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
@@ -556,7 +556,7 @@ $(VC_CHECK):
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
-{$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
+{$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
@@ -573,7 +573,7 @@ $(VC_CHECK):
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
-{$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj:
+{$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/cuda}.cu{$(OUTPUTPATH)}.obj:
@@ -584,10 +584,10 @@ $(VC_CHECK):
 {$(CHIPSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
-{$(CHIPSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj:
+{$(CHIPSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
-{$(CHIPSRCPATH)/stream}.cpp{$(OUTPUTPATH)}.obj:
+{$(CHIPSRCPATH)/stream}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/stream}.cpp{$(OUTPUTPATH)}.obj::
@@ -598,7 +598,7 @@ $(VC_CHECK):
 {$(CHIPSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
         nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
-{$(CHIPSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj:
+{$(CHIPSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(CHIPSRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
