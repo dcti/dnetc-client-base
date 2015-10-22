@@ -17,9 +17,7 @@
 
 #include <CAL/calcl.h>
 #include <stdlib.h>
-#ifdef LINUX
-  #include <string.h>
-#endif
+#include <string.h>
 
 stream_context_t CContext[AMD_STREAM_MAX_GPUS];
 int atistream_numDevices = -1;
