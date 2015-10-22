@@ -635,6 +635,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   ContestWork for_magic;
   int genned_random = 0, genned_benchmark = 0;
   struct selcore selinfo; int coresel;
+  int device = hackGetUsedDeviceIndex(client, thisprob->priv_data.threadindex); // GPU device to use
 
   //has to be done before anything else
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
@@ -661,7 +662,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
     Log("BUG! LoadState() without previous RetrieveState(,,purge)!\n");
     return -1;
   }
-  if (!IsProblemLoadPermitted(thisprob->priv_data.threadindex, contestid))
+  if (!IsProblemLoadPermitted(device, contestid))
   {
     return -1;
   }
@@ -827,7 +828,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
       #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
-      thisprob->priv_data.rc5_72unitwork.devicenum = (client->devicenum >= 0 ? client->devicenum : thisprob->priv_data.threadindex);
+      thisprob->priv_data.rc5_72unitwork.devicenum = device;
       thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = 0;
       thisprob->priv_data.rc5_72unitwork.best_time = -1;
       #endif
@@ -1745,13 +1746,15 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 // specified problem slot, or 0 if it is not allowed.  Core
 // thread-safety and contest availability checks are used to determine
 // allowability, but not contest closure.
+//
+// If device < 0, it must be ignored (check if contest can be loaded to any device)
 
-int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
+int IsProblemLoadPermitted(int device, unsigned int contest_i)
 {
-  DNETC_UNUSED_PARAM(prob_index);
+  DNETC_UNUSED_PARAM(device);
 
   #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
-  if (prob_index == 1 && /* thread number reserved for x86 card */
+  if (device == 1 && /* thread number reserved for x86 card */
      contest_i != RC5 && /* RISC OS x86 thread only supports RC5 */
      GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     return 0;

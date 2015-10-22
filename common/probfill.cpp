@@ -617,7 +617,7 @@ static long __loadapacket( Client *client,
       continue;
     if (client->project_state[selproject] & PROJECTSTATE_USER_DISABLED)
       continue;
-    if (!IsProblemLoadPermitted( (long)prob_i, selproject ))
+    if (!IsProblemLoadPermitted( hackGetUsedDeviceIndex(client, prob_i), selproject ))
     {
       continue; /* problem.cpp - result depends on #defs, threadsafety etc */
     }

@@ -67,7 +67,7 @@ struct selcore
 int selcoreSelectCore( Client *client, unsigned int cont_id, unsigned int thrindex,
                        int *client_cpuP, struct selcore *selinfo );
 
-int selcoreGetPreselectedCoreForProject(unsigned int projectid);
+int selcoreGetPreselectedCoreForProject(unsigned int projectid, int device);
 /* Get the core # for a contest. Informational use only. */
 int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid );
 const char *selcoreGetDisplayName( unsigned int cont_i, int index );
@@ -76,10 +76,10 @@ unsigned int corecount_for_contest( unsigned int cont_i );
 unsigned int nominal_rate_for_contest( unsigned int cont_i);
 
 /* conf calls these */
-int selcoreValidateCoreIndex( unsigned int cont_i, int index );
+int selcoreValidateCoreIndex( unsigned int cont_i, int index, Client *client );
 void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont,
-                                            const char *corename, int idx, void *udata ),
-                       void *userdata );
+                                            const char *corename, int idx, void *udata, Client *client ),
+                       void *userdata, Client *client );
 void selcoreEnumerateWide( int (*enumcoresproc)(
                              const char **corenames, int idx, void *udata ),
                            void *userdata );
@@ -92,6 +92,9 @@ long selcoreStressTest( Client *client, unsigned int cont_i, int corenum );
 /* ClientMain() calls these */
 int InitializeCoreTable( int *coretypes );
 int DeinitializeCoreTable( void );
+
+// Get GPU device index from devicenum and threadindex
+int hackGetUsedDeviceIndex( Client *client, unsigned threadindex );
 
 /* ---------------------------------------------------------------------- */
 
@@ -106,8 +109,8 @@ int DeinitializeCoreTable( void );
 int InitializeCoreTable_rc572(int first_time);
 void DeinitializeCoreTable_rc572();
 const char **corenames_for_contest_rc572();
-int apply_selcore_substitution_rules_rc572(int cindex);
-int selcoreGetPreselectedCoreForProject_rc572();
+int apply_selcore_substitution_rules_rc572(int cindex, int device);
+int selcoreGetPreselectedCoreForProject_rc572(int device);
 int selcoreSelectCore_rc572( Client *client, unsigned int threadindex,
                              int *client_cpuP, struct selcore *selinfo );
 unsigned int estimate_nominal_rate_rc572();

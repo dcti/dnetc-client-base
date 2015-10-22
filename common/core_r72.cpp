@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.65 2015/09/28 19:33:01 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.65 2015/10/22 19:33:01 stream Exp $"; }
 
 //#define TRACE
 
@@ -264,8 +264,10 @@ const char **corenames_for_contest_rc572()
 ** they have to live with the possibility that the choice will at some point
 ** no longer be optimal.
 */
-int apply_selcore_substitution_rules_rc572(int cindex)
+int apply_selcore_substitution_rules_rc572(int cindex, int device)
 {
+  DNETC_UNUSED_PARAM(device); /* In most cases, except GPU */
+
 #if (CLIENT_CPU == CPU_POWERPC)
   int have_vec = 0;
 
@@ -323,18 +325,18 @@ int apply_selcore_substitution_rules_rc572(int cindex)
   }
 #elif (CLIENT_CPU == CPU_CUDA)
   // GetProcessorType() currently returns the number of registers
-  if (GetProcessorType(1) < 256 * 36) {
+  if (GetProcessorType(1, device) < 256 * 36) {
     /* the 2/4-pipe cores require 36/35 registers per thread, so the 256-thread cores are only feasible on a GTX */
     if (cindex == 5 || cindex == 8) {
       cindex = 0;    /* default: 1-pipe 64-thread */
     }
   }
 #elif (CLIENT_CPU == CPU_ATI_STREAM)
-  if(GetProcessorType(1) < 8 ) { /* Need Cypress ASIC or later */
+  if(GetProcessorType(1, device) < 8 ) { /* Need Cypress ASIC or later */
     if(cindex == 3)
       cindex = 0;
   }
-  if(GetProcessorType(1) >= 20 )  /* UAV support in Tahiti is currently broken */
+  if(GetProcessorType(1, device) >= 20 )  /* UAV support in Tahiti is currently broken */
     if(cindex == 3)
       cindex = 0;
 #endif
@@ -344,7 +346,7 @@ int apply_selcore_substitution_rules_rc572(int cindex)
 
 /* ===================================================================== */
 
-int selcoreGetPreselectedCoreForProject_rc572()
+int selcoreGetPreselectedCoreForProject_rc572(int device)
 {
   static long detected_type = -123;
   static unsigned long detected_flags = 0;
@@ -352,10 +354,10 @@ int selcoreGetPreselectedCoreForProject_rc572()
 
   if (detected_type == -123) /* haven't autodetected yet? */
   {
-    detected_type = GetProcessorType(1 /* quietly */);
+    detected_type = GetProcessorType(1 /* quietly */, device);
     if (detected_type < 0)
       detected_type = -1;
-    detected_flags = GetProcessorFeatureFlags();
+    detected_flags = GetProcessorFeatureFlags(device);
   }
 
   // PROJECT_NOT_HANDLED("you may add your pre-selected core depending on arch

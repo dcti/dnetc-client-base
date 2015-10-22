@@ -191,7 +191,7 @@ struct enumcoredata
 
 /* N rows per contest, upto 3 corenames per row */
 static int __enumcorenames(unsigned int cont_i, const char *corename,
-                           int idx, void *arg)
+                           int idx, void *arg, Client *client)
 {
   if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE))
   {
@@ -210,7 +210,7 @@ static int __enumcorenames(unsigned int cont_i, const char *corename,
       else
       {
         len = 0;
-        if (selcoreValidateCoreIndex(cont_i,idx) == idx)
+        if (selcoreValidateCoreIndex(cont_i, idx, client) == idx)
           len = sprintf(label, "%2d) ", idx);
         else
           len = strlen(strcpy(label, "n/a "));
@@ -567,7 +567,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   {
     if (__is_opt_available_for_project(cont_i, CONF_CPUTYPE))
     {
-      client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i,client->coretypes[cont_i]);
+      client->coretypes[cont_i] = selcoreValidateCoreIndex(cont_i, client->coretypes[cont_i], client);
       conf_options[CONF_CPUTYPE].thevariable = &(client->coretypes[0]);
     }
   }
@@ -1087,7 +1087,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
             struct enumcoredata ecd;
             ecd.linepos = 0;
             ecd.cont_i = ((unsigned int)-1);
-            selcoreEnumerate( __enumcorenames, &ecd );
+            selcoreEnumerate( __enumcorenames, &ecd, client );
             LogScreenRaw("\n\n");
             #else /* one column per contest */
             selcoreEnumerateWide( __enumcorenames_wide, NULL );
@@ -1206,7 +1206,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
               for (cont_i = 0; cont_i < CONTEST_COUNT; cont_i++)
               {
                 if (__is_opt_available_for_project(cont_i, editthis) &&
-                   iarray[cont_i] != selcoreValidateCoreIndex(cont_i,iarray[cont_i]))
+                   iarray[cont_i] != selcoreValidateCoreIndex(cont_i, iarray[cont_i], client))
                 {
                   newval_isok = 0; /* reject it */
                   break;
@@ -1418,7 +1418,7 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
             {
               vecta[cont_i] = -1; /* autosel */
               if (__is_opt_available_for_project(cont_i, editthis))
-                vecta[cont_i] = selcoreValidateCoreIndex(cont_i,iarray_a[cont_i]);
+                vecta[cont_i] = selcoreValidateCoreIndex(cont_i, iarray_a[cont_i], client);
             }
           }
           else

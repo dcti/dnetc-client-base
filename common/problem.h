@@ -278,7 +278,7 @@ char *U64stringify(char *buffer, unsigned int buflen, u32 hi, u32 lo,
                             int numstr_style, const char *numstr_suffix );
 
 /* result depends on #ifdefs, threadsafety issues etc */
-int IsProblemLoadPermitted(long prob_index, unsigned int contest_i);
+int IsProblemLoadPermitted(int device, unsigned int contest_i);
 
 // this is a bit misplaced here, but we need u64-ops
 int ProjectSetSpeed(int projectid, u32 speedhi, u32 speedlo);

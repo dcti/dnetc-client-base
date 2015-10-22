@@ -2676,8 +2676,10 @@ unsigned int GetProcessorFrequency(int device)
 
 //get a set of supported processor features
 //cores may get disabled due to missing features
-unsigned long GetProcessorFeatureFlags()
+unsigned long GetProcessorFeatureFlags(int device)
 {
+  DNETC_UNUSED_PARAM(device); /* Reserved for future use (GPU) */
+
   #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     return (__GetRawProcessorID(NULL, 'f')) | (x86GetFeatures());
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)

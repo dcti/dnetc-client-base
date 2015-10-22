@@ -1727,31 +1727,11 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           else
           {
             skip_next = 1;
-            if (argvalue2)
+            if (argvalue2 && isdigit(*argvalue2))
             {
-              unsigned int corenum = atoi(argvalue2);
-              if (corecount_for_contest(contest) > corenum)
-              {
-                if (selcoreValidateCoreIndex(contest, corenum) >= 0)
-                {
-                  client->corenumtotestbench = corenum;
-                  skip_next = 2;
-                }
-                else
-                {
-                  sprintf(scratch, "Core #%d is not available on this machine.\n",
-                        corenum);
-                  ConOutErr(scratch);
-                  retcode = 3;
-                }
-              }
-              else
-              {
-                sprintf(scratch, "Core #%d doesn't exist for contest \"%.30s\".\n",
-                      corenum, argvalue);
-                ConOutErr(scratch);
-                retcode = 3;
-              }
+              /* Core check delayed: -devicenum may be not set yet */
+              client->corenumtotestbench = atoi(argvalue2);
+              skip_next = 2;
             }
           }
         }
@@ -1894,6 +1874,33 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           {
             skip_next = 1;
             ModeReqLimitProject(do_mode, contest);
+
+            int corenum = client->corenumtotestbench;
+            if (corenum >= 0)  /* was specified (only when contest was valid too) */
+            {
+              if (corecount_for_contest(contest) > (unsigned)corenum)
+              {
+                if (selcoreValidateCoreIndex(contest, corenum, client) < 0)
+                {
+                  sprintf(scratch, "Core #%d is not available on this machine.\n",
+                        corenum);
+                  ConOutErr(scratch);
+                  retcode = 3;
+                  ModeReqClear(-1);  // clear all on error
+                  break;
+                }
+              }
+              else
+              {
+                sprintf(scratch, "Core #%d doesn't exist for contest \"%.30s\".\n",
+                      corenum, argvalue);
+                ConOutErr(scratch);
+                retcode = 3;
+                ModeReqClear(-1);  // clear all on error
+                break;
+              }
+              skip_next = 2;
+            }
           }
         }
         break;
