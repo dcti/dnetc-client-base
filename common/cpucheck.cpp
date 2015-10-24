@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.210 2015/10/21 19:23:53 stream Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.210 2015/10/24 19:23:53 stream Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -110,7 +110,7 @@ int GetNumberOfDetectedProcessors( void )
     #if (CLIENT_CPU == CPU_CUDA)
     {
       if ((cpucount = GetNumberOfDetectedCUDAGPUs()) <= 0) {
-        LogScreen("No CUDA-supported GPU found.\n");
+        Log("No CUDA-supported GPU found.\n");
         cpucount = -99;
       }
     }
@@ -118,7 +118,7 @@ int GetNumberOfDetectedProcessors( void )
     {
       cpucount=getAMDStreamDeviceCount();
       if (cpucount<=0) {
-        LogScreen("No ATI Stream compatible device found.\n");
+        Log("No ATI Stream compatible device found.\n");
         cpucount = -99;
       }
     }
@@ -126,7 +126,7 @@ int GetNumberOfDetectedProcessors( void )
     {
       cpucount=getOpenCLDeviceCount();
       if (cpucount<=0) {
-        LogScreen("No OpenCL compatible devices found.\n");
+        Log("No OpenCL compatible devices found.\n");
         cpucount = -99;
       }
     }
@@ -2430,7 +2430,7 @@ long GetProcessorType(int quietly, int device)
     {
       retval = -1L;  
       if (!quietly)
-        LogScreen("%s%s.\n", apd, ((rawid == -1L)?("failed"):("is not supported")));
+        Log("%s%s.\n", apd, ((rawid == -1L)?("failed"):("is not supported")));
     }
     else if (rawid == 0)
     {
@@ -2460,7 +2460,7 @@ long GetProcessorType(int quietly, int device)
   #else
   {
     if (!quietly)
-      LogScreen("%sis not supported.\n", apd );
+      Log("%sis not supported.\n", apd );
   }
   #endif
   return retval;

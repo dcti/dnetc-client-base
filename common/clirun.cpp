@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.163 2014/02/01 21:01:43 snikkel Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.163 2015/10/24 21:01:43 stream Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -35,14 +35,6 @@ return "@(#)$Id: clirun.cpp,v 1.163 2014/02/01 21:01:43 snikkel Exp $"; }
 #include "clievent.h"  // ClientEventSyncPost() and constants
 #include "coremem.h"   // cmem_alloc(), cmem_free()
 #include "bench.h"     // BenchResetStaticVars()
-
-#if (CLIENT_CPU == CPU_CUDA)
-#include "cuda_setup.h"         // InitializeCUDA();
-#endif
-
-#if (CLIENT_CPU == CPU_OPENCL)
-#include "ocl_setup.h"		// InitializeOpenCL()
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -1413,7 +1405,6 @@ int ClientRun( Client *client )
   //
   // Initialization: (order is important, 'F' denotes code that can fail)
   // 1.    UndoCheckpoint() (it is not affected by TimeToQuit)
-  // 1a.F  Initialize co-processors
   // 2.    Determine number of problems
   // 3. F  Create problem table (InitializeProblemManager())
   // 4. F  Load (or try to load) that many problems (needs number of problems)
@@ -1444,28 +1435,6 @@ int ClientRun( Client *client )
       checkpointsDisabled = 1;
     }
   }
-
-  // --------------------------------------
-  // Do co-processor specific initialization
-  // --------------------------------------
-
-  #if (CLIENT_CPU == CPU_CUDA)
-  if (InitializeCUDA() != 0)
-  {
-    Log("Unable to initialize CUDA.\n");
-    TimeToQuit = 1;
-    exitcode = -3;
-  }
-  #endif
-
-  #if (CLIENT_CPU == CPU_OPENCL)
-  if (InitializeOpenCL() <= 0)
-  {
-    Log("Unable to initialize OpenCL.\n");
-    TimeToQuit = 1;
-    exitcode = -3;
-  }
-  #endif
 
   // --------------------------------------
   // Determine the number of problems to work with. Number is used everywhere.

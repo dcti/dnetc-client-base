@@ -108,7 +108,7 @@ u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2)
 
 cl_int ocl_diagnose(cl_int result, const char *where, u32 DeviceIndex)
 {
-  if(result!=CL_SUCCESS)
+  if (result!=CL_SUCCESS)
   {
     Log("Error %s on device %u\n", where, DeviceIndex);
     Log("Error code %d, message: %s\n", result, clStrError(result));
@@ -221,38 +221,38 @@ static unsigned char* Decompress(const unsigned char *inbuf, unsigned length)
 }
 
 
-bool BuildCLProgram(unsigned deviceID, const char* programText, const char *kernelName)
+bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *kernelName)
 {
-  char *decoded_src=(char*)malloc(strlen(programText)+1);
-  if(!decoded_src)
-	  return false;
+  char *decoded_src = (char*)malloc(strlen(programText)+1);
+  if (!decoded_src)
+    return false;
 
-  u32 decoded_len=base64_decode(decoded_src, programText, strlen(programText), strlen(programText));
-  unsigned char *decompressed_src=Decompress((unsigned char*)decoded_src,decoded_len);
+  u32 decoded_len = base64_decode(decoded_src, programText, strlen(programText), strlen(programText));
+  unsigned char *decompressed_src = Decompress((unsigned char*)decoded_src,decoded_len);
   free(decoded_src);
-  if(decompressed_src==NULL)
+  if (decompressed_src == NULL)
     return false;
 
   cl_int status;
-  ocl_context[deviceID].program = clCreateProgramWithSource(ocl_context[deviceID].clcontext, 1, (const char**)&decompressed_src, NULL, &status);
+  cont->program = clCreateProgramWithSource(cont->clcontext, 1, (const char**)&decompressed_src, NULL, &status);
   free(decompressed_src);
-  //status |= clBuildProgram(ocl_context[deviceID].program, 1, &ocl_context[deviceID].deviceID, NULL, NULL, NULL);
-  status |= clBuildProgram(ocl_context[deviceID].program, 1, &ocl_context[deviceID].deviceID, "-cl-std=CL1.1", NULL, NULL);
-  if(ocl_diagnose(status, "building cl program", deviceID) !=CL_SUCCESS)
+  //status |= clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL);
+  status |= clBuildProgram(cont->program, 1, &cont->deviceID, "-cl-std=CL1.1", NULL, NULL);
+  if (ocl_diagnose(status, "building cl program", cont->clientDeviceNo) != CL_SUCCESS)
   {
     //static char buf[0x10001]={0};
     size_t log_size;
 
-    clGetProgramBuildInfo( ocl_context[deviceID].program,
-                           ocl_context[deviceID].deviceID,
+    clGetProgramBuildInfo( cont->program,
+                           cont->deviceID,
                            CL_PROGRAM_BUILD_LOG,
                            0,
                            NULL,
                            &log_size );
 
     char *buf = (char *) malloc(log_size);
-    clGetProgramBuildInfo( ocl_context[deviceID].program,
-                           ocl_context[deviceID].deviceID,
+    clGetProgramBuildInfo( cont->program,
+                           cont->deviceID,
                            CL_PROGRAM_BUILD_LOG,
                            log_size,
                            buf,
@@ -268,8 +268,8 @@ bool BuildCLProgram(unsigned deviceID, const char* programText, const char *kern
     return false;
   }
 
-  ocl_context[deviceID].kernel = clCreateKernel(ocl_context[deviceID].program, kernelName, &status);
-  if(ocl_diagnose(status, "building kernel", deviceID) !=CL_SUCCESS)
+  cont->kernel = clCreateKernel(cont->program, kernelName, &status);
+  if (ocl_diagnose(status, "building kernel", cont->clientDeviceNo) != CL_SUCCESS)
     return false;
 
   return true;

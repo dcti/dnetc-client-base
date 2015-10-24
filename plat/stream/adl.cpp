@@ -58,7 +58,7 @@ void ADLinit()
 {
   int i;
 
-  Log("Initializing ADL...\n");
+//Log("Initializing ADL...\n");
   for(i=0;i<AMD_STREAM_MAX_GPUS;i++)
     ThermalDevices[i].active=0;
 
@@ -71,7 +71,7 @@ void ADLinit()
   if (NULL == hDLL)
     return;
 
-  Log("Retrieving ADL handlers\n");
+//Log("Retrieving ADL handlers\n");
   ADL_Main_Control_Create = (ADL_MAIN_CONTROL_CREATE) GetProcAddress(hDLL,"ADL_Main_Control_Create");
   ADL_Main_Control_Destroy = (ADL_MAIN_CONTROL_DESTROY) GetProcAddress(hDLL,"ADL_Main_Control_Destroy");
   ADL_Adapter_NumberOfAdapters_Get = (ADL_ADAPTER_NUMBEROFADAPTERS_GET) GetProcAddress(hDLL,"ADL_Adapter_NumberOfAdapters_Get");

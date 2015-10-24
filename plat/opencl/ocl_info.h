@@ -26,10 +26,4 @@ u32     getOpenCLDeviceFreq(int device);
 long    getOpenCLRawProcessorID(int device, const char **cpuname);
 void    OpenCLPrintExtendedGpuInfo(int device);
 
-extern cl_uint numPlatforms;
-extern cl_platform_id *platforms;
-extern cl_int numDevices;
-extern cl_device_id *devices;
-
-
 #endif // OCL_INFO_H

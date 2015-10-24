@@ -21,8 +21,11 @@ enum {
 typedef struct {
   u32               coreID;
   bool              active;
+  bool              firstOnPlatform; // new platform started here (for logs)
+  cl_platform_id    platformID;      // in OpenCL subsystem
+  cl_device_id      deviceID;        // in OpenCL subsystem
+  int               clientDeviceNo;  // client GPU index (for logs)
   cl_context        clcontext;
-  cl_device_id      deviceID;
   cl_command_queue  cmdQueue; 
   cl_mem            const_buffer; 
   cl_mem            out_buffer; 
@@ -33,8 +36,8 @@ typedef struct {
   u32               runSize;
   u32               runSizeMultiplier;
   u32               maxWorkSize;
-}ocl_context_t;
+} ocl_context_t;
 
-extern ocl_context_t *ocl_context;
+ocl_context_t *ocl_get_context(int device);
 
 #endif //OCL_CONTEXT_INCLUDED

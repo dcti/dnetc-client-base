@@ -12,130 +12,177 @@
 #include "ocl_info.h"
 #include "ocl_setup.h"
 #include "ocl_context.h"
+#include "../rc5-72/opencl/ocl_common.h"
 
-ocl_context_t *ocl_context;
+static cl_int numDevices = -12345;
+static ocl_context_t *ocl_context;
 
-int getNumDevices()
+int getOpenCLDeviceCount(void)
 {
-	return numDevices;
+  return numDevices;
 }
 
-int InitializeOpenCL()
+ocl_context_t *ocl_get_context(int device)
 {
+  return device < numDevices ? &ocl_context[device] : NULL;
+}
 
-  numDevices = -1;
+#undef  CL_DEVICE_TYPE_GPU
+#define CL_DEVICE_TYPE_GPU CL_DEVICE_TYPE_ALL
+
+int InitializeOpenCL(void)
+{
+  if (numDevices != -12345)
+    return numDevices;
+
+  numDevices = -1;  /* assume detection failure for now */
+
+  cl_uint devicesDetected = 0;
+  cl_uint numPlatforms;
   cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
-	
-  if(!numPlatforms)
+  if (ocl_diagnose(status, "clGetPlatformIDs(1)", 999) == CL_SUCCESS)
   {
-    Log("No OpenCL platforms available!\n");
-    return -1;
+    cl_platform_id *platforms = NULL;
+    cl_device_id *devices = NULL;
+
+    if (numPlatforms != 0)
+    {
+      // Allocate enough space for each platform
+      platforms = (cl_platform_id *) malloc(numPlatforms * sizeof(cl_platform_id));
+
+      // Fill in platforms with clGetPlatformIDs()
+      status = clGetPlatformIDs(numPlatforms, platforms, NULL);
+      if (ocl_diagnose(status, "clGetPlatformIDs(2)", 999) == CL_SUCCESS)
+      {
+        // Use clGetDeviceIDs() to retrieve the number of devices present
+        for (cl_uint plat = 0; plat < numPlatforms; plat++)
+        {
+          cl_uint devcnt;
+
+          status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, 0, NULL, &devcnt);
+          if (ocl_diagnose(status, "clGetDeviceIDs(query platform)", plat) != CL_SUCCESS)
+            break;
+          devicesDetected += devcnt;
+        }
+      }
+    }
+
+    if (status == CL_SUCCESS && devicesDetected != 0)
+    {
+      // Allocate enough space for each device
+      devices = (cl_device_id*) malloc(devicesDetected * sizeof(cl_device_id));
+
+      // Allocate and zero space for ocl_context
+      ocl_context = (ocl_context_t*) calloc(devicesDetected, sizeof(ocl_context_t));
+
+      // Fill in devices with clGetDeviceIDs()
+      cl_uint offset = 0;
+      for (cl_uint plat = 0; plat < numPlatforms; plat++)
+      {
+        cl_uint devcnt;
+
+        status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, devicesDetected - offset, devices + offset, &devcnt);
+        if (ocl_diagnose(status, "clGetDeviceIDs(fetch platform)", plat) != CL_SUCCESS)
+          break;
+
+        // Fill non-zero context fields for each device
+        for (cl_uint u = 0; u < devcnt; u++, offset++)
+        {
+          ocl_context_t *cont = &ocl_context[offset];
+
+          cont->active            = true;
+          cont->coreID            = CORE_NONE;
+          cont->platformID        = platforms[plat];
+          cont->deviceID          = devices[offset];
+          cont->firstOnPlatform   = (u == 0);
+          cont->clientDeviceNo    = offset;
+          cont->runSize           = 65536;
+          cont->runSizeMultiplier = 64;
+          cont->maxWorkSize       = 2048 * 2048;
+        }
+      }
+    }
+
+    if (status == CL_SUCCESS)
+    {
+      // Everything is done. Apply configuration.
+      numDevices = devicesDetected;
+    }
+
+    // Don't need them anymore
+    if (devices)
+      free(devices);
+    if (platforms)
+      free(platforms);
   }
-  // Allocate enough space for each platform
-  platforms = (cl_platform_id*)malloc(numPlatforms*sizeof(cl_platform_id));
 
-  // Fill in platforms with clGetPlatformIDs()
-  status = clGetPlatformIDs(numPlatforms, platforms, NULL);
-
-  // Use clGetDeviceIDs() to retrieve the number of 
-  // devices present
-  status = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 0, NULL, (cl_uint*)&numDevices);
-  if(numDevices)
-  {
-    // Allocate enough space for each device
-    devices = (cl_device_id*)malloc(numDevices*sizeof(cl_device_id));
-
-    // Fill in devices with clGetDeviceIDs()
-    status = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
-  }
-
-  //allocating space for ocl_context
-  ocl_context = (ocl_context_t*)malloc(numDevices*sizeof(ocl_context_t));
-  for(int i=0; i < numDevices; i++)
-  {
-    ocl_context[i].active = true;
-    ocl_context[i].coreID = CORE_NONE;
-    ocl_context[i].clcontext = NULL;
-    ocl_context[i].deviceID = devices[i];
-    ocl_context[i].cmdQueue = NULL;
-    ocl_context[i].const_buffer = NULL;
-    ocl_context[i].out_buffer = NULL;
-    ocl_context[i].const_ptr = NULL;
-    ocl_context[i].out_ptr = NULL;
-    ocl_context[i].kernel = NULL;
-    ocl_context[i].program = NULL;
-    ocl_context[i].runSize = 65536;	
-    ocl_context[i].runSizeMultiplier = 64;
-    ocl_context[i].maxWorkSize = 2048 * 2048;
-  }
-  
   return numDevices;
 } 
 
-void OCLReinitializeDevice(int device)
+void OCLReinitializeDevice(ocl_context_t *cont)
 {
-  if(ocl_context[device].coreID == CORE_NONE)
-	  return;
+  if (cont->coreID == CORE_NONE)
+    return;
   //Log("Reinializing device %u\n", device);
-  ocl_context[device].coreID = CORE_NONE;
+  cont->coreID = CORE_NONE;
 
   //Log("Releasing kernel\n");
-  if(ocl_context[device].kernel)
+  if (cont->kernel)
   {
-	  clReleaseKernel(ocl_context[device].kernel);
-	  ocl_context[device].kernel = NULL;
+    clReleaseKernel(cont->kernel);
+    cont->kernel = NULL;
   }
   
   //Log("Releasing program\n");
-  if(ocl_context[device].program)
+  if (cont->program)
   {
-	clReleaseProgram(ocl_context[device].program);
-    ocl_context[device].program = NULL;
+    clReleaseProgram(cont->program);
+    cont->program = NULL;
   }
 
   //Log("Releasing CQ\n");
-  if(ocl_context[device].cmdQueue)
+  if (cont->cmdQueue)
   {
-	clReleaseCommandQueue(ocl_context[device].cmdQueue);
-	ocl_context[device].cmdQueue = NULL;
+    clReleaseCommandQueue(cont->cmdQueue);
+    cont->cmdQueue = NULL;
   }
 
   //Log("Releasing out ptr\n");
-  if(ocl_context[device].out_ptr)
+  if (cont->out_ptr)
   {
-	  free(ocl_context[device].out_ptr);
-	  ocl_context[device].out_ptr = NULL;
+    free(cont->out_ptr);
+    cont->out_ptr = NULL;
   }
 
   //Log("Releasing const ptr\n");
-  if(ocl_context[device].const_ptr)
+  if (cont->const_ptr)
   {
-	  free(ocl_context[device].const_ptr);
-	  ocl_context[device].const_ptr = NULL;
+    free(cont->const_ptr);
+    cont->const_ptr = NULL;
   }
 
   //Log("Releasing const buffer\n");
-  if(ocl_context[device].const_buffer)
+  if (cont->const_buffer)
   {
-	  clReleaseMemObject(ocl_context[device].const_buffer);
-	  ocl_context[device].const_buffer = NULL;
+    clReleaseMemObject(cont->const_buffer);
+    cont->const_buffer = NULL;
   }
 
   //Log("Releasing out buffer buffer\n");
-  if(ocl_context[device].out_buffer)
+  if (cont->out_buffer)
   {
-	  clReleaseMemObject(ocl_context[device].out_buffer);
-	  ocl_context[device].out_buffer = NULL;
+    clReleaseMemObject(cont->out_buffer);
+    cont->out_buffer = NULL;
   }
 
   //Log("Releasing context\n");
-  if(ocl_context[device].clcontext)
+  if (cont->clcontext)
   {
-	  clReleaseContext(ocl_context[device].clcontext);
-	  ocl_context[device].clcontext = NULL;
+    clReleaseContext(cont->clcontext);
+    cont->clcontext = NULL;
   }
 
-  ocl_context[device].runSize = 65536;	
-  ocl_context[device].maxWorkSize = 2048 * 2048;
+  cont->runSize = 65536;
+  cont->maxWorkSize = 2048 * 2048;
   //Log("Reinit OK\n");
 }

@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.176 2014/08/11 18:57:54 ertyu Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.176 2015/10/24 18:57:54 stream Exp $"; }
 
 //#define TRACE
 
@@ -35,7 +35,6 @@ return "@(#)$Id: cmdline.cpp,v 1.176 2014/08/11 18:57:54 ertyu Exp $"; }
 #include "triggers.h"  // TRIGGER_PAUSE_SIGNAL
 #include "coremem.h"   // cmem_select_allocator()
 #include "cmdline.h"   // ourselves
-#include "cpucheck.h"  // GetNumberOfDetectedProcessors();
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
@@ -1631,24 +1630,17 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           missing_value = 1;
         else
         {
-          int n, nDev;
+          int n;
 
           skip_next = 1;
-          n    = atoi(argvalue);
-          nDev = GetNumberOfDetectedProcessors();
-          if (n >= nDev)
-          {
-            invalid_value = 1;
-            if (run_level != 0)
-              LogScreenRaw("Device ID %d exceed number of detected devices (%d)\n", n, nDev);
-          }
+          n = atoi(argvalue);
+          // This option cannot be checked here - cannot call GetNumberOfDetectedProcessors()
+          // because GPUs are not detected yet at runlevel 0, and runlevel 1 is optional.
+          // The value is only stored here, real check is done after GPU init.
+          if (run_level == 0)
+            client->devicenum = n;
           else
-          {
-            if (run_level == 0)
-              client->devicenum = n;
-            else
-              LogScreenRaw("Setting device number to %d\n", client->devicenum);
-          }
+            LogScreenRaw("Setting device number to %d\n", client->devicenum);
         }
       }
       else if ( strcmp( thisarg, "-cktime" ) == 0 || /* obsolete */

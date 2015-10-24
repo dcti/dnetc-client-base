@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.272 2015/07/12 22:29:12 zebe Exp $"; }
+return "@(#)$Id: client.cpp,v 1.272 2015/10/24 22:29:12 stream Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -29,10 +29,19 @@ return "@(#)$Id: client.cpp,v 1.272 2015/07/12 22:29:12 zebe Exp $"; }
 #include "logstuff.h"  // [De]InitializeLogging(),Log()/LogScreen()
 #include "console.h"   // [De]InitializeConsole(), ConOutErr()
 #include "selcore.h"   // [De]InitializeCoreTable()
+#include "cpucheck.h"  // GetNumberOfDetectedProcessors()
 
 #if (CLIENT_CPU == CPU_ATI_STREAM)
 #include "amdstream_setup.h" // AMDStreamInitialize();
 #include "adl.h"             // Thermal control functions
+#endif
+
+#if (CLIENT_CPU == CPU_CUDA)
+#include "cuda_setup.h"         // InitializeCUDA();
+#endif
+
+#if (CLIENT_CPU == CPU_OPENCL)
+#include "ocl_setup.h"		// InitializeOpenCL()
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -316,6 +325,55 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
 }
 /* ---------------------------------------------------------------------- */
 
+// --------------------------------------
+// Do co-processor specific initialization
+// This function can be called many times from restart loop,
+// but GPU init must be done only once. Protect it here too
+// (don't rely on GPU init code).
+// --------------------------------------
+static int InitializeCoProcessorsOnce(Client *client)
+{
+  static char done;
+
+  if (!done)
+  {
+    done = 1;
+
+    #if (CLIENT_CPU == CPU_ATI_STREAM)
+    AMDStreamInitialize();
+    #endif
+
+    #if (CLIENT_CPU == CPU_CUDA)
+    if (InitializeCUDA() != 0)
+    {
+      Log("Unable to initialize CUDA.\n");
+      return -1;
+    }
+    #endif
+
+    #if (CLIENT_CPU == CPU_OPENCL)
+    if (InitializeOpenCL() <= 0)
+    {
+      Log("Unable to initialize OpenCL.\n");
+      return -1;
+    }
+    #endif
+  }
+
+  // Now it's ok to call GetNumberOfDetectedProcessors().
+  // Do delayed check of -devicenum option now.
+  // Style of error messages will differs a bit, but it was hackish
+  // from the beginning...
+  int nDev = GetNumberOfDetectedProcessors();
+  if (client->devicenum >= nDev)
+  {
+    Log("Device ID %d exceed number of detected devices (%d), ignored\n", client->devicenum, nDev);
+    client->devicenum = -1;
+  }
+
+  return 0;
+}
+
 static int ClientMain( int argc, char *argv[] )
 {
   Client *client = (Client *)0;
@@ -353,10 +411,6 @@ static int ClientMain( int argc, char *argv[] )
   }
   srand( (unsigned) time(NULL) );
   InitRandom();
-
-  #if (CLIENT_CPU == CPU_ATI_STREAM)
-  AMDStreamInitialize();
-  #endif
 
   do
   {
@@ -415,7 +469,10 @@ static int ClientMain( int argc, char *argv[] )
                                  client->id );
               TRACE_OUT((-1,"initializelogging\n"));
 
-              if (BufferInitialize(client) == 0)
+              // GPU init is complex, it need logging to catch many possible errors
+              // but must be done early because GetNumberOfDetectedProcessors() depends
+              // on it. Let's try to put it here, soon after InitializeLogging()
+              if (BufferInitialize(client) == 0 && InitializeCoProcessorsOnce(client) == 0)
               {
                 InitRandom2( client->id );
 
