@@ -305,7 +305,7 @@ static long SelfTestInternal( Client *client, unsigned int contest, int stress )
       if (userbreak)
         break;
 
-      thisprob = ProblemAlloc();
+      thisprob = ProblemAlloc(0);  // assume GPU0 without -devicenum
       if (thisprob)
       {
         u32 tslice = 0x4000;

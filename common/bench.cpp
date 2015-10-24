@@ -188,7 +188,7 @@ long TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, i
 
   /* ++++++ run the benchmark +++++ */
 
-  thisprob = ProblemAlloc();
+  thisprob = ProblemAlloc(0);  // assume GPU0 if no -devicenum
   if (thisprob)
   {
     if ( ProblemLoadState( thisprob, CONTESTWORK_MAGIC_BENCHMARK,

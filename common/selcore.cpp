@@ -459,7 +459,7 @@ static long __bench_or_test( Client *client, int which,
     if (rc > 0 && cont_i == RC5 && 
           GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     {
-      Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */
+      Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */ /* FIXME: not true anymore */
       rc = -1; /* assume alloc failed */
       if (prob)
       {

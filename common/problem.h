@@ -249,7 +249,7 @@ typedef struct ProblemInfo {
 // returns RESULT_* or -1 if bad state
 int ProblemGetInfo(void *__thisprob, ProblemInfo *info, long flags);
 
-Problem *ProblemAlloc(void);
+Problem *ProblemAlloc(unsigned thread_index);
 void ProblemFree(void *__thisprob);
 
 /* Get the number of problems for a particular contest, */

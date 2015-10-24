@@ -81,6 +81,8 @@ static unsigned int __problem_counter = 0;
    and addressed/decremented in the destructor, both of which are
    'thread safe' in the sense that they are never called from the
    actual crunching threads themselves.
+   2015-10-24: threadindex will be set externally due to GPU issues
+   (microbench will call another ProblemAlloc() and get wrong GPU index)
 */
 
 /* ------------------------------------------------------------------- */
@@ -182,7 +184,7 @@ void ProblemFree(void *__thisprob)
   return;
 }
 
-Problem *ProblemAlloc(void)
+Problem *ProblemAlloc(unsigned thread_index)
 {
   char *p;
   SuperProblem *thisprob = (SuperProblem *)0;
@@ -265,8 +267,8 @@ Problem *ProblemAlloc(void)
     fastlock_init(&(thisprob->copy_lock));
     thisprob->iprobs[PICKPROB_CORE].priv_data.threadindex =
     thisprob->iprobs[PICKPROB_MAIN].priv_data.threadindex =
-    thisprob->iprobs[PICKPROB_TEMP].priv_data.threadindex =
-                                              __problem_counter++;
+    thisprob->iprobs[PICKPROB_TEMP].priv_data.threadindex = thread_index;
+    __problem_counter++;
 
     //align core_membuffer to 16byte boundary
     p = &(thisprob->iprobs[PICKPROB_CORE].priv_data.__core_membuffer_space[0]);

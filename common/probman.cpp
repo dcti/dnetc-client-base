@@ -95,7 +95,7 @@ int InitializeProblemManager(unsigned int maxnumproblems)
   probcount = 0;
   for (i=0; i<maxnumproblems; i++)
   {
-    probmanstatics.probtable[i]=ProblemAlloc();
+    probmanstatics.probtable[i]=ProblemAlloc(i);
     if (probmanstatics.probtable[i]==((Problem *)0))
       break;
     probcount++;
