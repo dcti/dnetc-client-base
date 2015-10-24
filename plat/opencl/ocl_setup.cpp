@@ -27,8 +27,9 @@ ocl_context_t *ocl_get_context(int device)
   return device < numDevices ? &ocl_context[device] : NULL;
 }
 
-#undef  CL_DEVICE_TYPE_GPU
-#define CL_DEVICE_TYPE_GPU CL_DEVICE_TYPE_ALL
+// To debug on CPU...
+// #undef  CL_DEVICE_TYPE_GPU
+// #define CL_DEVICE_TYPE_GPU CL_DEVICE_TYPE_ALL
 
 int InitializeOpenCL(void)
 {
