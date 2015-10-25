@@ -106,11 +106,12 @@ u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2)
   return (m3<<8)|(h3&0xff);
 }
 
-cl_int ocl_diagnose(cl_int result, const char *where, u32 DeviceIndex)
+cl_int ocl_diagnose(cl_int result, const char *where, ocl_context_t *cont)
 {
   if (result!=CL_SUCCESS)
   {
-    Log("Error %s on device %u\n", where, DeviceIndex);
+    if (where && cont)
+      Log("Error %s on device %u\n", where, cont->clientDeviceNo);
     Log("Error code %d, message: %s\n", result, clStrError(result));
   }
 
@@ -238,7 +239,7 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
   free(decompressed_src);
   //status |= clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL);
   status |= clBuildProgram(cont->program, 1, &cont->deviceID, "-cl-std=CL1.1", NULL, NULL);
-  if (ocl_diagnose(status, "building cl program", cont->clientDeviceNo) != CL_SUCCESS)
+  if (ocl_diagnose(status, "building cl program", cont) != CL_SUCCESS)
   {
     //static char buf[0x10001]={0};
     size_t log_size;
@@ -269,7 +270,7 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
   }
 
   cont->kernel = clCreateKernel(cont->program, kernelName, &status);
-  if (ocl_diagnose(status, "building kernel", cont->clientDeviceNo) != CL_SUCCESS)
+  if (ocl_diagnose(status, "building kernel", cont) != CL_SUCCESS)
     return false;
 
   return true;

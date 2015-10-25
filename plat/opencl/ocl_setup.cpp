@@ -41,7 +41,12 @@ int InitializeOpenCL(void)
   cl_uint devicesDetected = 0;
   cl_uint numPlatforms;
   cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
-  if (ocl_diagnose(status, "clGetPlatformIDs(1)", 999) == CL_SUCCESS)
+  if (status != CL_SUCCESS)
+  {
+    Log("Error obtaining number of platforms (clGetPlatformIDs/1)\n");
+    ocl_diagnose(status, NULL, NULL);  // decode error code only
+  }
+  if (status == CL_SUCCESS)
   {
     cl_platform_id *platforms = NULL;
     cl_device_id *devices = NULL;
@@ -53,7 +58,12 @@ int InitializeOpenCL(void)
 
       // Fill in platforms with clGetPlatformIDs()
       status = clGetPlatformIDs(numPlatforms, platforms, NULL);
-      if (ocl_diagnose(status, "clGetPlatformIDs(2)", 999) == CL_SUCCESS)
+      if (status != CL_SUCCESS)
+      {
+        Log("Error obtaining list of platforms (clGetPlatformIDs/2)\n");
+        ocl_diagnose(status, NULL, NULL);  // decode error code only
+      }
+      else
       {
         // Use clGetDeviceIDs() to retrieve the number of devices present
         for (cl_uint plat = 0; plat < numPlatforms; plat++)
@@ -61,8 +71,17 @@ int InitializeOpenCL(void)
           cl_uint devcnt;
 
           status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, 0, NULL, &devcnt);
-          if (ocl_diagnose(status, "clGetDeviceIDs(query platform)", plat) != CL_SUCCESS)
+          if (status == CL_DEVICE_NOT_FOUND)  // Special case. No GPU devices but other may exist
+          {
+            status = CL_SUCCESS;
+            devcnt = 0;
+          }
+          if (status != CL_SUCCESS)
+          {
+            Log("Error obtaining number of devices on platform %u (clGetDeviceIDs/1)\n", plat);
+            ocl_diagnose(status, NULL, NULL);  // decode error code only
             break;
+          }
           devicesDetected += devcnt;
         }
       }
@@ -83,8 +102,17 @@ int InitializeOpenCL(void)
         cl_uint devcnt;
 
         status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, devicesDetected - offset, devices + offset, &devcnt);
-        if (ocl_diagnose(status, "clGetDeviceIDs(fetch platform)", plat) != CL_SUCCESS)
+        if (status == CL_DEVICE_NOT_FOUND)  // Special case. No GPU devices but other may exist
+        {
+          status = CL_SUCCESS;
+          devcnt = 0;
+        }
+        if (status != CL_SUCCESS)
+        {
+          Log("Error obtaining list of devices on platform %u (clGetDeviceIDs/2)\n", plat);
+          ocl_diagnose(status, NULL, NULL);  // decode error code only
           break;
+        }
 
         // Fill non-zero context fields for each device
         for (cl_uint u = 0; u < devcnt; u++, offset++)

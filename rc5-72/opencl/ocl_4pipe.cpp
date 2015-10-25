@@ -30,21 +30,21 @@ static bool init_rc5_72_ocl_4pipe(ocl_context_t *cont)
   cl_int status;
   // Create a context and associate it with the device
   cont->clcontext = clCreateContext(NULL, 1, &cont->deviceID, NULL, NULL, &status);
-  if(ocl_diagnose(status, "creating OCL context", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "creating OCL context", cont) != CL_SUCCESS)
 	  return false;
   
   //Create a command queue
   cont->cmdQueue = clCreateCommandQueue(cont->clcontext, cont->deviceID, CL_QUEUE_PROFILING_ENABLE, &status);
-  if(ocl_diagnose(status, "creating command queue", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "creating command queue", cont) != CL_SUCCESS)
 	  return false;
 
   //Create device buffers
   cont->const_buffer = clCreateBuffer(cont->clcontext, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR, CONST_SIZE, NULL, &status); //CL_MEM_COPY_HOST_WRITE_ONLY ??
-  if(ocl_diagnose(status, "creating constants buffer", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "creating constants buffer", cont) != CL_SUCCESS)
 	  return false;
 
   cont->out_buffer = clCreateBuffer(cont->clcontext, CL_MEM_ALLOC_HOST_PTR, OUT_SIZE, NULL, &status);
-  if(ocl_diagnose(status, "creating output buffer", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "creating output buffer", cont) != CL_SUCCESS)
 	  return false;
 
   if(!BuildCLProgram(cont, ocl_rc572_4pipe_src, "ocl_rc572_4pipe"))
@@ -83,12 +83,12 @@ static bool ClearOutBuffer(const cl_mem buffer, ocl_context_t *cont)
   cl_int status;
 
   outPtr = (cl_uint*) clEnqueueMapBuffer(cont->cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE, 0, 4, 0, NULL, NULL, &status);
-  if(ocl_diagnose(status, "mapping output buffer", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "mapping output buffer", cont) != CL_SUCCESS)
 	return false;
    outPtr[0]=0;
 
   status = clEnqueueUnmapMemObject(cont->cmdQueue, buffer, outPtr, 0, NULL, NULL);
-  if(ocl_diagnose(status, "unmapping output buffer (1)", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "unmapping output buffer (1)", cont) != CL_SUCCESS)
 	return false;
   return true;
 }
@@ -99,7 +99,7 @@ static bool FillConstantBuffer(const cl_mem buffer, RC5_72UnitWork *rc5_72unitwo
   cl_int status;
 
   constPtr = (cl_uint*) clEnqueueMapBuffer(cont->cmdQueue, buffer, CL_TRUE, CL_MAP_WRITE, 0, CONST_SIZE, 0, NULL, NULL, &status);
-  if(ocl_diagnose(status, "mapping constants buffer", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "mapping constants buffer", cont) != CL_SUCCESS)
 	return false;
 
   //key_hi,key_mid,key_lo,granularity
@@ -120,7 +120,7 @@ static bool FillConstantBuffer(const cl_mem buffer, RC5_72UnitWork *rc5_72unitwo
   constPtr[9]=ROTL3(l0+0xBF0A8B1D+0x5618cb1c);	           //S1=ROTL3(Sc1+S0+L0)
   
   status = clEnqueueUnmapMemObject(cont->cmdQueue, buffer, constPtr, 0, NULL, NULL);
-  if(ocl_diagnose(status, "unmapping constants buffer", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "unmapping constants buffer", cont) != CL_SUCCESS)
 	return false;
   return true;
 }
@@ -134,7 +134,7 @@ static s32 ReadResults(const cl_mem buffer, u32 *CMC, u32 *iters_done, ocl_conte
   *CMC = 0; 
   *iters_done = 0xffffffff;
   outPtr = (cl_uint*) clEnqueueMapBuffer(cont->cmdQueue, buffer, CL_TRUE, CL_MAP_READ|CL_MAP_WRITE, 0, OUT_SIZE, 0, NULL, NULL, &status);
-  if(ocl_diagnose(status, "mapping output buffer", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "mapping output buffer", cont) != CL_SUCCESS)
 	return -1;
 
   //Log("A=%x B=%x\n", outPtr[0], outPtr[1]);
@@ -174,14 +174,14 @@ static s32 ReadResults(const cl_mem buffer, u32 *CMC, u32 *iters_done, ocl_conte
       }
     }
     status = clEnqueueUnmapMemObject(cont->cmdQueue, buffer, outPtr, 0, NULL, NULL);
-    if(ocl_diagnose(status, "unmapping output buffer (2)", cont->clientDeviceNo) != CL_SUCCESS)
+    if(ocl_diagnose(status, "unmapping output buffer (2)", cont) != CL_SUCCESS)
       return -1;
     if(fullmatch)
       return 1;
     return 0;
   }
   status = clEnqueueUnmapMemObject(cont->cmdQueue, buffer, outPtr, 0, NULL, NULL);
-  if(ocl_diagnose(status, "unmapping output buffer (3)", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "unmapping output buffer (3)", cont) != CL_SUCCESS)
     return -1;
   return 0; 
 }
@@ -211,14 +211,14 @@ static bool selftest(ocl_context_t *cont)
   
   status  = clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &cont->const_buffer);
   status |= clSetKernelArg(cont->kernel, 1, sizeof(cl_mem), &cont->out_buffer);
-  if(ocl_diagnose(status, "setting kernel arguments", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "setting kernel arguments", cont) != CL_SUCCESS)
     return false;
 
   // Define an index space (global work size) of work items for execution.
   globalWorkSize[0] = 1;
 
   status = clEnqueueNDRangeKernel(cont->cmdQueue, cont->kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
-  if(ocl_diagnose(status, "launching kernel", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "launching kernel", cont) != CL_SUCCESS)
 	  return false;
 
   s32 read_res=ReadResults(cont->out_buffer, &CMC, &iters_done, cont);
@@ -237,7 +237,7 @@ static bool selftest(ocl_context_t *cont)
   if(!FillConstantBuffer(cont->const_buffer, &tmp_unit, 0, cont))
     return false;	
   status = clEnqueueNDRangeKernel(cont->cmdQueue, cont->kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
-  if(ocl_diagnose(status, "launching kernel", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "launching kernel", cont) != CL_SUCCESS)
 	return false;
   read_res=ReadResults(cont->out_buffer, &CMC, &iters_done, cont);
   if((read_res<0)||(CMC!=1)||(read_res>0))
@@ -256,7 +256,7 @@ static bool selftest(ocl_context_t *cont)
   if(!FillConstantBuffer(cont->const_buffer, &tmp_unit, 0, cont))
     return false;	
   status = clEnqueueNDRangeKernel(cont->cmdQueue, cont->kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
-  if(ocl_diagnose(status, "launching kernel", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "launching kernel", cont) != CL_SUCCESS)
 	return false;
   read_res=ReadResults(cont->out_buffer, &CMC, &iters_done, cont);
   if((read_res<=0)||(CMC!=1))
@@ -307,7 +307,7 @@ s32 rc5_72_unit_func_ocl_4pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
 
   cl_int status  = clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &cont->const_buffer);
   status |= clSetKernelArg(cont->kernel, 1, sizeof(cl_mem), &cont->out_buffer);
-  if(ocl_diagnose(status, "setting kernel arguments", cont->clientDeviceNo) != CL_SUCCESS)
+  if(ocl_diagnose(status, "setting kernel arguments", cont) != CL_SUCCESS)
   {
 	RaiseExitRequestTrigger();
     return -1;          //err
@@ -336,7 +336,7 @@ s32 rc5_72_unit_func_ocl_4pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
 
     cl_event ndrEvt;
     status = clEnqueueNDRangeKernel(cont->cmdQueue, cont->kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, &ndrEvt);
-    if(ocl_diagnose(status, "launching kernel", cont->clientDeviceNo) != CL_SUCCESS)
+    if(ocl_diagnose(status, "launching kernel", cont) != CL_SUCCESS)
 	{
 	  RaiseExitRequestTrigger();
 	  return -1;          //err
@@ -360,7 +360,7 @@ s32 rc5_72_unit_func_ocl_4pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       if(!profilingErr)
       {
         profilingErr = true;
-        ocl_diagnose(status, "getting profile info", cont->clientDeviceNo);
+        ocl_diagnose(status, "getting profile info", cont);
       }
       d = 10;
     }
