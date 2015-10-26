@@ -93,8 +93,12 @@ u32 checkRemoteConnectionFlag()
     {
       LogScreen("Remote connection is no longer active. Resuming\n");
 
-      for(int i=0; i<AMD_STREAM_MAX_GPUS; i++)
-        CContext[i].coreID=CORE_NONE;
+      for(int i = 0; i < getAMDStreamDeviceCount(); i++)
+      {
+        stream_context_t *cont = stream_get_context(i);
+        if (cont)
+          cont->coreID = CORE_NONE;
+      }
       ati_RC_error=0;
     }
     fastlock_unlock(&ATIstream_RDPMutex);
@@ -153,31 +157,30 @@ unsigned char* Decompress(unsigned char *inbuf, unsigned length)
   return outbuf;
 }
 
-CALresult runCompiler(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool verbose)
+CALresult runCompiler(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool verbose, stream_context_t *cont)
 {
   CALobject s_obj=0;
   CALresult result;
-  int Device = 999;  // todo
 
   fastlock_lock(&ATIstream_cMutex);
   result = calclCompile(&s_obj, CAL_LANGUAGE_IL, src, target);
   // RC5-72 code blindly tries to compile few cores until it finds one suitable
   // for current GPU architecture, so print error only when requested (by OGR code).
   if (verbose)
-    ati_verbose_cl(result, "compiling program", Device);
+    ati_verbose_cl(result, "compiling program", cont);
   if (result == CAL_RESULT_OK)
   {
     result = calclLink(image, &s_obj, 1);
-    if (ati_verbose_cl(result, "linking program", Device) == CAL_RESULT_OK)
-      result = ati_verbose( calModuleLoad(module, *ctx, *image), "loading module", Device );
-    ati_verbose_cl( calclFreeObject(s_obj), "freeing compiled object", Device);
+    if (ati_verbose_cl(result, "linking program", cont) == CAL_RESULT_OK)
+      result = ati_verbose( calModuleLoad(module, *ctx, *image), "loading module", cont );
+    ati_verbose_cl( calclFreeObject(s_obj), "freeing compiled object", cont);
   }
 
   fastlock_unlock(&ATIstream_cMutex);
   return result;
 }
 
-CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool globalFlag)
+CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool globalFlag, stream_context_t *cont)
 {
   CALresult result;
 
@@ -208,7 +211,7 @@ CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CA
     }
   } while(p);
 
-  result = runCompiler(ctx, image, module, (CALchar*)tempB, target);
+  result = runCompiler(ctx, image, module, (CALchar*)tempB, target, false, cont);
 
   free(decompressed_src);
   free(tempB);

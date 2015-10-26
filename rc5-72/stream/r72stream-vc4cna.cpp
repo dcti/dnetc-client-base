@@ -12,95 +12,92 @@
 #include "r72stream-common.h"
 #include "r72stream-vc4nag_il.cpp"
 
-static bool init_rc5_72_il4a_nand(u32 Device)
+static bool init_rc5_72_il4a_nand(stream_context_t *cont)
 {
-  if(CContext[Device].coreID!=CORE_IL4NA)
-    AMDStreamReinitializeDevice(Device);
+  if(cont->coreID!=CORE_IL4NA)
+    AMDStreamReinitializeDevice(cont);
 
-  if(!CContext[Device].active)
+  if(!cont->active)
   {
-    Log("Thread %u: Device is not supported\n", Device);
+    Log("Thread %u: Device is not supported\n", cont->clientDeviceNo);
     return false;
   } else{
-    switch(CContext[Device].attribs.target) {
+    switch(cont->attribs.target) {
     case CAL_TARGET_600:
-      CContext[Device].domainSizeX=56;
-      CContext[Device].domainSizeY=56;
-      CContext[Device].maxIters=128;
+      cont->domainSizeX=56;
+      cont->domainSizeY=56;
+      cont->maxIters=128;
       break;
     case CAL_TARGET_610:
-      CContext[Device].domainSizeX=40;
-      CContext[Device].domainSizeY=40;
-      CContext[Device].maxIters=10;
+      cont->domainSizeX=40;
+      cont->domainSizeY=40;
+      cont->maxIters=10;
       break;
     case CAL_TARGET_630:
-      CContext[Device].domainSizeX=24;
-      CContext[Device].domainSizeY=24;
-      CContext[Device].maxIters=350;
+      cont->domainSizeX=24;
+      cont->domainSizeY=24;
+      cont->maxIters=350;
       break;
     case CAL_TARGET_670:
-      CContext[Device].domainSizeX=32;
-      CContext[Device].domainSizeY=32;
-      CContext[Device].maxIters=300;
+      cont->domainSizeX=32;
+      cont->domainSizeY=32;
+      cont->maxIters=300;
       break;
     case CAL_TARGET_7XX:
       //TODO:domainSize
       break;
     case CAL_TARGET_770:
-      CContext[Device].domainSizeX=600;
-      CContext[Device].domainSizeY=600;
-      CContext[Device].maxIters=5;
+      cont->domainSizeX=600;
+      cont->domainSizeY=600;
+      cont->maxIters=5;
       break;
     case CAL_TARGET_710:
       //TODO:domainSize
-      CContext[Device].domainSizeX=80;
-      CContext[Device].domainSizeY=80;
-      CContext[Device].maxIters=128;
+      cont->domainSizeX=80;
+      cont->domainSizeY=80;
+      cont->maxIters=128;
       break;
     case CAL_TARGET_730:
-      CContext[Device].domainSizeX=120;
-      CContext[Device].domainSizeY=120;
-      CContext[Device].maxIters=30;
+      cont->domainSizeX=120;
+      cont->domainSizeY=120;
+      cont->maxIters=30;
       break;
     case 8: //RV870
-      CContext[Device].domainSizeX=728;
-      CContext[Device].domainSizeY=728;
-      CContext[Device].maxIters=4;
+      cont->domainSizeX=728;
+      cont->domainSizeY=728;
+      cont->maxIters=4;
       break;
     case 9: //RV840
-      CContext[Device].domainSizeX=656;
-      CContext[Device].domainSizeY=656;
-      CContext[Device].maxIters=3;
+      cont->domainSizeX=656;
+      cont->domainSizeY=656;
+      cont->maxIters=3;
       break;
     case 17://Barts
-      CContext[Device].domainSizeX=904;
-      CContext[Device].domainSizeY=904;
-      CContext[Device].maxIters=3;
+      cont->domainSizeX=904;
+      cont->domainSizeY=904;
+      cont->maxIters=3;
     default:
       break;
     }
   }
 
   CALresult result;
-  result=calCtxCreate(&CContext[Device].ctx, CContext[Device].device);
-  if(result!=CAL_RESULT_OK)
-  {
-    Log("Thread %u: creating context failed! Reason:%u\n",Device,result);
+  result=calCtxCreate(&cont->ctx, cont->device);
+  if (ati_verbose(result, "creating context", cont) != CAL_RESULT_OK)
     return false;
-  }
 
-  CContext[Device].globalRes0=0;
-  if(CContext[Device].attribs.target<20)
-    if(CContext[Device].attribs.memExport) {
-      calResAllocRemote2D(&CContext[Device].globalRes0, &CContext[Device].device, 1, 64,
+  cont->globalRes0=0;
+  if(cont->attribs.target<20)
+    if(cont->attribs.memExport) {
+      calResAllocRemote2D(&cont->globalRes0, &cont->device, 1, 64,
                         1, CAL_FORMAT_UINT_1, CAL_RESALLOC_GLOBAL_BUFFER);
     }
 
   //-------------------------------------------------------------------------
   // Compiling Device Program
   //-------------------------------------------------------------------------
-  result=compileProgram(&CContext[Device].ctx,&CContext[Device].image,&CContext[Device].module0,
-                        (CALchar *)il4ag_nand_src,CContext[Device].attribs.target,CContext[Device].globalRes0);
+  result=compileProgram(&cont->ctx,&cont->image,&cont->module0,
+                        (CALchar *)il4ag_nand_src, cont->attribs.target, (cont->globalRes0 != 0), cont);
 
   if ( result!= CAL_RESULT_OK)
   {
@@ -113,14 +110,14 @@ static bool init_rc5_72_il4a_nand(u32 Device)
   //-------------------------------------------------------------------------
 
   // Input and output resources
-  CContext[Device].outputRes0=0;
-  if(CContext[Device].attribs.cachedRemoteRAM>0)
-    calResAllocRemote2D(&CContext[Device].outputRes0, &CContext[Device].device, 1, CContext[Device].domainSizeX,
-                        CContext[Device].domainSizeY, CAL_FORMAT_UINT_1, CAL_RESALLOC_CACHEABLE);
+  cont->outputRes0=0;
+  if(cont->attribs.cachedRemoteRAM>0)
+    calResAllocRemote2D(&cont->outputRes0, &cont->device, 1, cont->domainSizeX,
+                        cont->domainSizeY, CAL_FORMAT_UINT_1, CAL_RESALLOC_CACHEABLE);
 
-  if(!CContext[Device].outputRes0) {
-    if(calResAllocRemote2D(&CContext[Device].outputRes0, &CContext[Device].device, 1, CContext[Device].domainSizeX,
-                           CContext[Device].domainSizeY, CAL_FORMAT_UINT_1, 0)!=CAL_RESULT_OK)
+  if(!cont->outputRes0) {
+    if(calResAllocRemote2D(&cont->outputRes0, &cont->device, 1, cont->domainSizeX,
+                           cont->domainSizeY, CAL_FORMAT_UINT_1, 0)!=CAL_RESULT_OK)
     {
       Log("Failed to allocate output buffer\n");
       return false;
@@ -128,7 +125,7 @@ static bool init_rc5_72_il4a_nand(u32 Device)
   }
 
   // Constant resource
-  if(calResAllocRemote1D(&CContext[Device].constRes0, &CContext[Device].device, 1, 3, CAL_FORMAT_UINT_4, 0)!=CAL_RESULT_OK)
+  if(calResAllocRemote1D(&cont->constRes0, &cont->device, 1, 3, CAL_FORMAT_UINT_4, 0)!=CAL_RESULT_OK)
   {
     Log("Failed to allocate constants buffer\n");
     return false;
@@ -136,9 +133,9 @@ static bool init_rc5_72_il4a_nand(u32 Device)
 
   // Mapping output resource to CPU and initializing values
   // Getting memory handle from resources
-  result=calCtxGetMem(&CContext[Device].outputMem0, CContext[Device].ctx, CContext[Device].outputRes0);
+  result=calCtxGetMem(&cont->outputMem0, cont->ctx, cont->outputRes0);
   if(result==CAL_RESULT_OK)
-    result=calCtxGetMem(&CContext[Device].constMem0, CContext[Device].ctx, CContext[Device].constRes0);
+    result=calCtxGetMem(&cont->constMem0, cont->ctx, cont->constRes0);
   if(result!=CAL_RESULT_OK)
   {
     Log("Failed to map resources!\n");
@@ -146,11 +143,11 @@ static bool init_rc5_72_il4a_nand(u32 Device)
   }
 
   // Defining entry point for the module
-  result=calModuleGetEntry(&CContext[Device].func0, CContext[Device].ctx, CContext[Device].module0, "main");
+  result=calModuleGetEntry(&cont->func0, cont->ctx, cont->module0, "main");
   if(result==CAL_RESULT_OK) {
-    result=calModuleGetName(&CContext[Device].outName0, CContext[Device].ctx, CContext[Device].module0, "o0");
+    result=calModuleGetName(&cont->outName0, cont->ctx, cont->module0, "o0");
     if(result==CAL_RESULT_OK)
-      result=calModuleGetName(&CContext[Device].constName0, CContext[Device].ctx, CContext[Device].module0, "cb0");
+      result=calModuleGetName(&cont->constName0, cont->ctx, cont->module0, "cb0");
   }
   if(result!=CAL_RESULT_OK)
   {
@@ -158,12 +155,12 @@ static bool init_rc5_72_il4a_nand(u32 Device)
     return false;
   }
 
-  if(CContext[Device].globalRes0) {
-    result=calCtxGetMem(&CContext[Device].globalMem0, CContext[Device].ctx, CContext[Device].globalRes0);
+  if(cont->globalRes0) {
+    result=calCtxGetMem(&cont->globalMem0, cont->ctx, cont->globalRes0);
     if(result==CAL_RESULT_OK) {
-      result=calModuleGetName(&CContext[Device].globalName0, CContext[Device].ctx, CContext[Device].module0, "g[]");
+      result=calModuleGetName(&cont->globalName0, cont->ctx, cont->module0, "g[]");
       if(result==CAL_RESULT_OK)
-        result=calCtxSetMem(CContext[Device].ctx, CContext[Device].globalName0, CContext[Device].globalMem0);
+        result=calCtxSetMem(cont->ctx, cont->globalName0, cont->globalMem0);
     }
     if(result!=CAL_RESULT_OK)
     {
@@ -174,16 +171,16 @@ static bool init_rc5_72_il4a_nand(u32 Device)
 
   // Setting input and output buffers
   // used in the kernel
-  result=calCtxSetMem(CContext[Device].ctx, CContext[Device].outName0, CContext[Device].outputMem0);
+  result=calCtxSetMem(cont->ctx, cont->outName0, cont->outputMem0);
   if(result==CAL_RESULT_OK)
-    result=calCtxSetMem(CContext[Device].ctx, CContext[Device].constName0, CContext[Device].constMem0);
+    result=calCtxSetMem(cont->ctx, cont->constName0, cont->constMem0);
   if(result!=CAL_RESULT_OK)
   {
     Log("Failed to set buffers!\n");
     return false;
   }
 
-  CContext[Device].coreID=CORE_IL4NA;
+  cont->coreID=CORE_IL4NA;
 
   return true;
 }
@@ -304,13 +301,19 @@ static s32 ReadResultsFromGPU(CALresource res, CALresource globalRes, u32 width,
 
 s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
-  u32 deviceID=rc5_72unitwork->devicenum;
+  stream_context_t *cont = stream_get_context(rc5_72unitwork->devicenum);
   RC5_72UnitWork tmp_unit;
 
-  if (CContext[deviceID].coreID!=CORE_IL4NA)
+  if (cont == NULL)
   {
-    init_rc5_72_il4a_nand(deviceID);
-    if(CContext[deviceID].coreID!=CORE_IL4NA) {
+    RaiseExitRequestTrigger();
+    return -1;
+  }
+
+  if (cont->coreID!=CORE_IL4NA)
+  {
+    init_rc5_72_il4a_nand(cont);
+    if(cont->coreID!=CORE_IL4NA) {
       RaiseExitRequestTrigger();
       return -1;
     }
@@ -322,7 +325,7 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     *iterations=0;
     return RESULT_WORKING;
   }
-  if(CContext[deviceID].coreID==CORE_NONE)
+  if(cont->coreID==CORE_NONE)
   {
     *iterations=0;
     return RESULT_WORKING;
@@ -333,8 +336,8 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
   u32 kiter =(*iterations)/4;
 
   u32 itersNeeded=kiter;
-  u32 width=CContext[deviceID].domainSizeX;
-  u32 height=CContext[deviceID].domainSizeY;
+  u32 width=cont->domainSizeX;
+  u32 height=cont->domainSizeY;
   u32 RunSize=width*height;
 
   CALevent e0 = 0;
@@ -344,19 +347,19 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
 //#define VERBOSE 1
 
 #ifdef VERBOSE
-  LogScreen("Tread %u: %u ITERS (%u), maxiters=%u\n",deviceID, kiter,kiter/RunSize,CContext[deviceID].maxIters);
+  LogScreen("Tread %u: %u ITERS (%u), maxiters=%u\n",deviceID, kiter,kiter/RunSize,cont->maxIters);
 #endif
   double fr_d=HiresTimerGetResolution();
   hirestimer_type cstart, cend;
 
   //Clear global buffer
-  if(CContext[deviceID].globalRes0) {
+  if(cont->globalRes0) {
     u32* gPtr = NULL;
     CALuint pitch = 0;
-    if(calResMap((CALvoid**)&gPtr, &pitch, CContext[deviceID].globalRes0, 0)==CAL_RESULT_OK)
+    if(calResMap((CALvoid**)&gPtr, &pitch, cont->globalRes0, 0)==CAL_RESULT_OK)
     {
       gPtr[0]=0;
-      calResUnmap(CContext[deviceID].globalRes0);
+      calResUnmap(cont->globalRes0);
     }else
     {
       if(setRemoteConnectionFlag()) {
@@ -372,12 +375,12 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
   CALresult result;
   while(itersNeeded) {
     //Make sure there is no overflow in core output
-    if(CContext[deviceID].maxIters>65535)
-      CContext[deviceID].maxIters=65535;
+    if(cont->maxIters>65535)
+      cont->maxIters=65535;
 
     iters0=itersNeeded/RunSize;
-    if(iters0>=CContext[deviceID].maxIters) {
-      iters0=CContext[deviceID].maxIters;
+    if(iters0>=cont->maxIters) {
+      iters0=cont->maxIters;
       rest0=RunSize;
     } else  {
       rest0=itersNeeded-iters0*RunSize;
@@ -386,7 +389,7 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     itersNeeded-=(iters0-1)*RunSize+rest0;
 
     //fill constant buffer
-    if(!FillConstantBuffer(CContext[deviceID].constRes0,RunSize, iters0, rest0, (float)width, rc5_72unitwork,0))
+    if(!FillConstantBuffer(cont->constRes0,RunSize, iters0, rest0, (float)width, rc5_72unitwork,0))
     {
       if(setRemoteConnectionFlag()) {
         memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
@@ -399,7 +402,7 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     }
 
     CALdomain domain = {0, 0, width, height};
-    result=calCtxRunProgram(&e0, CContext[deviceID].ctx, CContext[deviceID].func0, &domain);
+    result=calCtxRunProgram(&e0, cont->ctx, cont->func0, &domain);
     if((result!=CAL_RESULT_OK)&&(result!=CAL_RESULT_PENDING))
     {
       if(setRemoteConnectionFlag()) {
@@ -416,14 +419,14 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     HiresTimerGet(&cstart);
 
     u32 busy_c=0;
-    if(iters0!=CContext[deviceID].maxIters)
+    if(iters0!=cont->maxIters)
       busy_c=2;
 
     CALresult result;
     if(isCalCtxWaitForEventsSupported)
-      result=calCtxWaitForEvents(CContext[deviceID].ctx, &e0, 1, 0);
+      result=calCtxWaitForEvents(cont->ctx, &e0, 1, 0);
     else
-      while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) {
+      while((result=calCtxIsEventDone(cont->ctx, e0)) == CAL_RESULT_PENDING) {
         if(!busy_c)
           NonPolledUSleep(15000);  //15ms
         busy_c++;
@@ -448,39 +451,39 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     if(isCalCtxWaitForEventsSupported)
     {
       if(d>10.5)
-        if(CContext[deviceID].maxIters>1)
-          CContext[deviceID].maxIters--;
+        if(cont->maxIters>1)
+          cont->maxIters--;
       if(d<9.5)
-        CContext[deviceID].maxIters++;
+        cont->maxIters++;
     }else
     {
       if((d>15.5)&&(busy_c>1))
       {
         u32 delta;
         if(d>60.)
-          delta=(u32)(CContext[deviceID].maxIters*0.3f);
+          delta=(u32)(cont->maxIters*0.3f);
         else
-          delta=(u32)(CContext[deviceID].maxIters*0.1f);
+          delta=(u32)(cont->maxIters*0.1f);
         if(delta==0)
           delta=1;
-        if(delta>=CContext[deviceID].maxIters)
-          CContext[deviceID].maxIters=1;
+        if(delta>=cont->maxIters)
+          cont->maxIters=1;
         else
-          CContext[deviceID].maxIters-=delta;
+          cont->maxIters-=delta;
       }else
       if((busy_c<=1)&&(d<15.5))
       {
         u32 delta;
-        delta=(u32)(CContext[deviceID].maxIters*0.02f);
+        delta=(u32)(cont->maxIters*0.02f);
         if(delta==0)
           delta=1;
-        CContext[deviceID].maxIters+=delta;
+        cont->maxIters+=delta;
       }
     }
 
     //Check results
     u32 CMC, iters_finished;
-    s32 read_res=ReadResultsFromGPU(CContext[deviceID].outputRes0, CContext[deviceID].globalRes0, width, height, rc5_72unitwork, &CMC, &iters_finished);
+    s32 read_res=ReadResultsFromGPU(cont->outputRes0, cont->globalRes0, width, height, rc5_72unitwork, &CMC, &iters_finished);
     if (read_res==1) {
       *iterations -= (kiter*4-CMC);
       return RESULT_FOUND;
@@ -500,7 +503,7 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     {
       // Something bad happend during program execution
       Log("GPU: unexpected program stop!\n");
-      Log("Expected: %x, got:%x! Iters:%u MAXiters:%d rest:%u\n",iters0-(rest0==0),iters_finished,iters0,CContext[deviceID].maxIters,rest0);
+      Log("Expected: %x, got:%x! Iters:%u MAXiters:%d rest:%u\n",iters0-(rest0==0),iters_finished,iters0,cont->maxIters,rest0);
       RaiseExitRequestTrigger();
       return -1;
     }
@@ -512,6 +515,6 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
 
   /* tell the client about the optimal timeslice increment for this core
      (with current parameters) */
-  rc5_72unitwork->optimal_timeslice_increment = RunSize*4*CContext[deviceID].maxIters;
+  rc5_72unitwork->optimal_timeslice_increment = RunSize*4*cont->maxIters;
   return RESULT_NOTHING;
 }

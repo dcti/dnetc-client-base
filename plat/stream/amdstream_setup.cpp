@@ -36,39 +36,56 @@
  * GPU hardware if Initialize...() wasn't called or was called but failed.
  */
 
-stream_context_t CContext[AMD_STREAM_MAX_GPUS];
-int atistream_numDevices = -12345;
+static stream_context_t CContext[AMD_STREAM_MAX_GPUS];
+static int atistream_numDevices = -12345;
 
 PFNCALCTXWAITFOREVENTS calCtxWaitForEvents;
 u32 isCalCtxWaitForEventsSupported;
 
 void AMDInitMutex();
 
-static void ati_diagnose(CALresult result, const char *where, u32 DeviceIndex, const char *errmsg)
+static void ati_diagnose(CALresult result, const char *where, stream_context_t *cont, const char *errmsg)
 {
-  Log("Error %s on GPU %u\n", where, DeviceIndex);
+  if (cont)
+    Log("Error %s on GPU %d\n", where, cont->clientDeviceNo);
+  else
+    Log("Error %s on GPU\n", where);
   Log("Error code %u, message: %s\n", result, errmsg);
 }
 
-CALresult ati_verbose(CALresult result, const char *where, u32 DeviceIndex)
+CALresult ati_verbose(CALresult result, const char *where, stream_context_t *cont)
 {
   if (result != CAL_RESULT_OK)
   {
-    ati_diagnose(result, where, DeviceIndex, calGetErrorString());
+    ati_diagnose(result, where, cont, calGetErrorString());
     if (atistream_numDevices > 1)
       Log("(message could be wrong in multi-threaded environments)\n");
   }
   return result;
 }
 
-CALresult ati_verbose_cl(CALresult result, const char *where, u32 DeviceIndex)
+CALresult ati_verbose_cl(CALresult result, const char *where, stream_context_t *cont)
 {
   if (result != CAL_RESULT_OK)
   {
-    ati_diagnose(result, where, DeviceIndex, calclGetErrorString());
+    ati_diagnose(result, where, cont, calclGetErrorString());
     // compiler is mutex-protected so no warnings about multiple threads
   }
   return result;
+}
+
+int getAMDStreamDeviceCount(void)
+{
+  return atistream_numDevices;
+}
+
+stream_context_t *stream_get_context(int device)
+{
+  if (device >= 0 && device < atistream_numDevices)
+    return &CContext[device];
+
+  Log("INTERNAL ERROR: bad Stream device index %d (detected %d)!\n", device, atistream_numDevices);
+  return NULL;
 }
 
 int AMDStreamInitialize(void)
@@ -83,11 +100,11 @@ int AMDStreamInitialize(void)
   atistream_numDevices = -1;  // assume detection error for now
 
   // Initialize CAL (global)
-  if (CAL_RESULT_OK != ati_verbose( calInit(), "initializing CAL", 0 ))
+  if (CAL_RESULT_OK != ati_verbose( calInit(), "initializing CAL", NULL ))
     return -1;
 
   // Query number of devices
-  if (CAL_RESULT_OK != ati_verbose( calDeviceGetCount(&numDevices), "querying number of devices", 0 ))
+  if (CAL_RESULT_OK != ati_verbose( calDeviceGetCount(&numDevices), "querying number of devices", NULL ))
     return -1;
   if (numDevices > AMD_STREAM_MAX_GPUS)
     numDevices = AMD_STREAM_MAX_GPUS;
@@ -98,8 +115,10 @@ int AMDStreamInitialize(void)
     stream_context_t *dev = &CContext[i];
     CALresult result;
 
+    dev->clientDeviceNo = i;  // init now for logging
+
     // Open device
-    if (CAL_RESULT_OK != ati_verbose( calDeviceOpen(&dev->device, i), "opening device", i ))
+    if (CAL_RESULT_OK != ati_verbose( calDeviceOpen(&dev->device, i), "opening device", dev ))
       continue;
 
     // Query device attribs
@@ -121,7 +140,7 @@ int AMDStreamInitialize(void)
         result = calDeviceGetAttribs(&dev->attribs, i);
       }
     }
-    if (CAL_RESULT_OK != ati_verbose( result, "querying device attributes", i ))
+    if (CAL_RESULT_OK != ati_verbose( result, "querying device attributes", dev ))
       continue;
 
     dev->active      = true;
@@ -147,73 +166,71 @@ int AMDStreamInitialize(void)
   return numDevices;
 }
 
-static void ati_zap_resource(CALresource *pRes, const char *where, int Device)
+static void ati_zap_resource(CALresource *pRes, const char *where, stream_context_t *cont)
 {
   if (*pRes)
   {
-    ati_verbose( calResFree(*pRes), where, Device );
+    ati_verbose( calResFree(*pRes), where, cont );
     *pRes = 0;
   }
 }
 
-static void ati_zap_mem(CALmem *pMem, CALcontext ctx, const char *where, int Device)
+static void ati_zap_mem(CALmem *pMem, CALcontext ctx, const char *where, stream_context_t *cont)
 {
   if (*pMem)
   {
-    ati_verbose( calCtxReleaseMem(ctx, *pMem), where, Device );
+    ati_verbose( calCtxReleaseMem(ctx, *pMem), where, cont );
     *pMem = 0;
   }
 }
 
-static void ati_zap_module(CALmodule *pModule, CALcontext ctx, const char *where, int Device)
+static void ati_zap_module(CALmodule *pModule, CALcontext ctx, const char *where, stream_context_t *cont)
 {
   if (*pModule)
   {
-    ati_verbose( calModuleUnload(ctx, *pModule), where, Device );
+    ati_verbose( calModuleUnload(ctx, *pModule), where, cont );
     *pModule = 0;
   }
 }
 
-void AMDStreamReinitializeDevice(int Device)
+void AMDStreamReinitializeDevice(stream_context_t *dev)
 {
-  stream_context_t *dev = &CContext[Device];
-
   // Creation: CALdevice -> CALcontext, CALresource;
   //           CALcontext, CALresource -> CALmem;
   //           CALcontext, CALimage -> CALmodule;
   // Deinitialize in reverse order
 
   // Unloading the module
-  ati_zap_module(&dev->module0, dev->ctx, "unloading module0", Device);
-  ati_zap_module(&dev->module1, dev->ctx, "unloading module1", Device);
+  ati_zap_module(&dev->module0, dev->ctx, "unloading module0", dev);
+  ati_zap_module(&dev->module1, dev->ctx, "unloading module1", dev);
 
   // Freeing compiled program binary
   if (dev->image)
   {
-    ati_verbose( calclFreeImage(dev->image), "releasing program image", Device );
+    ati_verbose( calclFreeImage(dev->image), "releasing program image", dev );
     dev->image = 0;
   }
 
   // Releasing resource from context
-  ati_zap_mem(&dev->constMem0,  dev->ctx, "releasing constMem0",  Device);
-  ati_zap_mem(&dev->constMem1,  dev->ctx, "releasing constMem1",  Device);
-  ati_zap_mem(&dev->outputMem0, dev->ctx, "releasing outputMem0", Device);
-  ati_zap_mem(&dev->outputMem1, dev->ctx, "releasing outputMem1", Device);
-  ati_zap_mem(&dev->globalMem0, dev->ctx, "releasing globalMem0", Device);
-  ati_zap_mem(&dev->globalMem1, dev->ctx, "releasing globalMem1", Device);
+  ati_zap_mem(&dev->constMem0,  dev->ctx, "releasing constMem0",  dev);
+  ati_zap_mem(&dev->constMem1,  dev->ctx, "releasing constMem1",  dev);
+  ati_zap_mem(&dev->outputMem0, dev->ctx, "releasing outputMem0", dev);
+  ati_zap_mem(&dev->outputMem1, dev->ctx, "releasing outputMem1", dev);
+  ati_zap_mem(&dev->globalMem0, dev->ctx, "releasing globalMem0", dev);
+  ati_zap_mem(&dev->globalMem1, dev->ctx, "releasing globalMem1", dev);
 
   // Deallocating resources
-  ati_zap_resource(&dev->constRes0,  "releasing constRes0",  Device);
-  ati_zap_resource(&dev->constRes1,  "releasing constRes1",  Device);
-  ati_zap_resource(&dev->outputRes0, "releasing outputRes0", Device);
-  ati_zap_resource(&dev->outputRes1, "releasing outputRes1", Device);
-  ati_zap_resource(&dev->globalRes0, "releasing globalRes0", Device);
-  ati_zap_resource(&dev->globalRes1, "releasing globalRes1", Device);
+  ati_zap_resource(&dev->constRes0,  "releasing constRes0",  dev);
+  ati_zap_resource(&dev->constRes1,  "releasing constRes1",  dev);
+  ati_zap_resource(&dev->outputRes0, "releasing outputRes0", dev);
+  ati_zap_resource(&dev->outputRes1, "releasing outputRes1", dev);
+  ati_zap_resource(&dev->globalRes0, "releasing globalRes0", dev);
+  ati_zap_resource(&dev->globalRes1, "releasing globalRes1", dev);
 
   // Destroying context
   if (dev->ctx)
   {
-    ati_verbose( calCtxDestroy(dev->ctx), "destroying context", Device );
+    ati_verbose( calCtxDestroy(dev->ctx), "destroying context", dev );
     dev->ctx = 0;
   }
 

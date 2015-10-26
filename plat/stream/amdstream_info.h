@@ -14,8 +14,8 @@
 
 #include "cputypes.h"
 
-int getAMDStreamDeviceCount();
-u32 getAMDStreamDeviceFreq(int device);
+int  getAMDStreamDeviceCount(void);
+u32  getAMDStreamDeviceFreq(int device);
 long getAMDStreamRawProcessorID(int device, const char **cpuname);
 void AMDStreamPrintExtendedGpuInfo(int device);
 

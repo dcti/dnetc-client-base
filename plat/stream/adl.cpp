@@ -138,7 +138,8 @@ void ADLdeinit()
     ADL_Main_Control_Destroy ();
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) 
-  FreeLibrary(hDLL);
+  if (hDLL)
+    FreeLibrary(hDLL);
 #endif
 }
 

@@ -66,60 +66,57 @@ static s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork)
   return RESULT_NOTHING;
 }
 
-static bool init_rc5_72_il4_1i(u32 Device)
+static bool init_rc5_72_il4_1i(stream_context_t *cont)
 {
-  if(CContext[Device].coreID!=CORE_IL4_1I)
-    AMDStreamReinitializeDevice(Device);
+  if(cont->coreID!=CORE_IL4_1I)
+    AMDStreamReinitializeDevice(cont);
 
-  if(!CContext[Device].active)
+  if(!cont->active)
   {
-    Log("Thread %u: Device is not supported\n", Device);
+    Log("Thread %u: Device is not supported\n", cont->clientDeviceNo);
     return false;
   } else{
-    switch(CContext[Device].attribs.target) {
+    switch(cont->attribs.target) {
     case 8: //RV870
-      CContext[Device].domainSizeX=1280;
-      CContext[Device].domainSizeY=1280;
-      CContext[Device].maxIters=1;
+      cont->domainSizeX=1280;
+      cont->domainSizeY=1280;
+      cont->maxIters=1;
       break;
     case 9: //RV840
-      CContext[Device].domainSizeX=656;
-      CContext[Device].domainSizeY=656;
-      CContext[Device].maxIters=1;
+      cont->domainSizeX=656;
+      cont->domainSizeY=656;
+      cont->maxIters=1;
       break;
     case 15: //Cayman
-      CContext[Device].domainSizeX=1024;
-      CContext[Device].domainSizeY=1024;
-      CContext[Device].maxIters=1;
+      cont->domainSizeX=1024;
+      cont->domainSizeY=1024;
+      cont->maxIters=1;
     case 17: //Barts
-      CContext[Device].domainSizeX=904;
-      CContext[Device].domainSizeY=904;
-      CContext[Device].maxIters=1;
+      cont->domainSizeX=904;
+      cont->domainSizeY=904;
+      cont->maxIters=1;
     case 20: //Tahiti
-      CContext[Device].domainSizeX=2048;
-      CContext[Device].domainSizeY=2048;
-      CContext[Device].maxIters=1;
+      cont->domainSizeX=2048;
+      cont->domainSizeY=2048;
+      cont->maxIters=1;
     default:
-      CContext[Device].domainSizeX=512;
-      CContext[Device].domainSizeY=512;
-      CContext[Device].maxIters=1;
+      cont->domainSizeX=512;
+      cont->domainSizeY=512;
+      cont->maxIters=1;
       break;
     }
   }
 
   CALresult result;
-  result=calCtxCreate(&CContext[Device].ctx, CContext[Device].device);
-  if(result!=CAL_RESULT_OK)
-  {
-    Log("Thread %u: creating context failed! Reason:%s\n",Device,calGetErrorString());
+  result=calCtxCreate(&cont->ctx, cont->device);
+  if (ati_verbose(result, "creating context", cont) != CAL_RESULT_OK)
     return false;
-  }
 
-  CContext[Device].globalRes0=0;
-  calResAllocRemote1D(&CContext[Device].globalRes0, &CContext[Device].device, 1, GLOBAL_B_WIDTH,
+  cont->globalRes0=0;
+  calResAllocRemote1D(&cont->globalRes0, &cont->device, 1, GLOBAL_B_WIDTH,
                         CAL_FORMAT_UINT_1, CAL_RESALLOC_GLOBAL_BUFFER);
   
-  if(!CContext[Device].globalRes0)
+  if(!cont->globalRes0)
   {
     Log("Failed to allocate UAV buffer. Reason:%s\n", calGetErrorString());
     return false;
@@ -128,8 +125,8 @@ static bool init_rc5_72_il4_1i(u32 Device)
   //-------------------------------------------------------------------------
   // Compiling Device Program
   //-------------------------------------------------------------------------
-  result=compileProgram(&CContext[Device].ctx,&CContext[Device].image,&CContext[Device].module0,
-                        (CALchar *)il4_1i_src,CContext[Device].attribs.target,CContext[Device].globalRes0);
+  result=compileProgram(&cont->ctx,&cont->image,&cont->module0,
+                        (CALchar *)il4_1i_src, cont->attribs.target, (cont->globalRes0 != 0), cont);
 
   if ( result!= CAL_RESULT_OK)
   {
@@ -142,7 +139,7 @@ static bool init_rc5_72_il4_1i(u32 Device)
   //-------------------------------------------------------------------------
 
   // Constant resource
-  if(calResAllocRemote1D(&CContext[Device].constRes0, &CContext[Device].device, 1, 3, CAL_FORMAT_UINT_4, 0)!=CAL_RESULT_OK)
+  if(calResAllocRemote1D(&cont->constRes0, &cont->device, 1, 3, CAL_FORMAT_UINT_4, 0)!=CAL_RESULT_OK)
   {
     Log("Failed to allocate constants buffer\n");
     return false;
@@ -150,7 +147,7 @@ static bool init_rc5_72_il4_1i(u32 Device)
 
   // Mapping output resource to CPU and initializing values
   // Getting memory handle from resources
-  result=calCtxGetMem(&CContext[Device].constMem0, CContext[Device].ctx, CContext[Device].constRes0);
+  result=calCtxGetMem(&cont->constMem0, cont->ctx, cont->constRes0);
   if(result!=CAL_RESULT_OK)
   {
     Log("Failed to map resources!\n");
@@ -158,20 +155,20 @@ static bool init_rc5_72_il4_1i(u32 Device)
   }
 
   // Defining entry point for the module
-  result=calModuleGetEntry(&CContext[Device].func0, CContext[Device].ctx, CContext[Device].module0, "main");
+  result=calModuleGetEntry(&cont->func0, cont->ctx, cont->module0, "main");
   if(result==CAL_RESULT_OK)
-    result=calModuleGetName(&CContext[Device].constName0, CContext[Device].ctx, CContext[Device].module0, "cb0");
+    result=calModuleGetName(&cont->constName0, cont->ctx, cont->module0, "cb0");
   if(result!=CAL_RESULT_OK)
   {
     Log("Failed to get entry points!\n");
     return false;
   }
 
-  result=calCtxGetMem(&CContext[Device].globalMem0, CContext[Device].ctx, CContext[Device].globalRes0);
+  result=calCtxGetMem(&cont->globalMem0, cont->ctx, cont->globalRes0);
   if(result==CAL_RESULT_OK) {
-    result=calModuleGetName(&CContext[Device].globalName0, CContext[Device].ctx, CContext[Device].module0, "uav0");
+    result=calModuleGetName(&cont->globalName0, cont->ctx, cont->module0, "uav0");
     if(result==CAL_RESULT_OK)
-      result=calCtxSetMem(CContext[Device].ctx, CContext[Device].globalName0, CContext[Device].globalMem0);
+      result=calCtxSetMem(cont->ctx, cont->globalName0, cont->globalMem0);
   }
   if(result!=CAL_RESULT_OK)
   {
@@ -181,15 +178,15 @@ static bool init_rc5_72_il4_1i(u32 Device)
 
   // Setting input and output buffers
   // used in the kernel
-  result=calCtxSetMem(CContext[Device].ctx, CContext[Device].constName0, CContext[Device].constMem0);
+  result=calCtxSetMem(cont->ctx, cont->constName0, cont->constMem0);
   if(result!=CAL_RESULT_OK)
   {
     Log("Failed to set buffers!\n");
     return false;
   }
 
-  CContext[Device].USEcount=0;
-  CContext[Device].coreID=CORE_IL4_1I;
+  cont->USEcount=0;
+  cont->coreID=CORE_IL4_1I;
 
   return true;
 }
@@ -340,13 +337,19 @@ static s32 ReadResultsFromGPU(CALresource globalRes, RC5_72UnitWork *rc5_72unitw
 
 s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
-  u32 deviceID=rc5_72unitwork->devicenum;
+  stream_context_t *cont = stream_get_context(rc5_72unitwork->devicenum);
   RC5_72UnitWork tmp_unit;
 
-  if (CContext[deviceID].coreID!=CORE_IL4_1I)
+  if (cont == NULL)
   {
-    init_rc5_72_il4_1i(deviceID);
-    if(CContext[deviceID].coreID!=CORE_IL4_1I) {
+    RaiseExitRequestTrigger();
+    return -1;
+  }
+
+  if (cont->coreID!=CORE_IL4_1I)
+  {
+    init_rc5_72_il4_1i(cont);
+    if(cont->coreID!=CORE_IL4_1I) {
       RaiseExitRequestTrigger();
       return -1;
     }
@@ -358,7 +361,7 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     *iterations=0;
     return RESULT_WORKING;
   }
-  if(CContext[deviceID].coreID==CORE_NONE)
+  if(cont->coreID==CORE_NONE)
   {
     *iterations=0;
     return RESULT_WORKING;
@@ -376,10 +379,10 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
   //Clear global buffer
   u32* gPtr = NULL;
   CALuint pitch = 0;
-  if(calResMap((CALvoid**)&gPtr, &pitch, CContext[deviceID].globalRes0, 0)==CAL_RESULT_OK)
+  if(calResMap((CALvoid**)&gPtr, &pitch, cont->globalRes0, 0)==CAL_RESULT_OK)
   {
     gPtr[0]=0;
-    calResUnmap(CContext[deviceID].globalRes0);
+    calResUnmap(cont->globalRes0);
   }else
   {
     if(setRemoteConnectionFlag()) {
@@ -396,9 +399,9 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
 
   CALresult result;
   u32 GPUiters=0;
-  u32 RunSize=CContext[deviceID].domainSizeX*CContext[deviceID].domainSizeY;
+  u32 RunSize=cont->domainSizeX*cont->domainSizeY;
   while(itersNeeded) {
-	RunSize=CContext[deviceID].domainSizeX*CContext[deviceID].domainSizeY;
+	RunSize=cont->domainSizeX*cont->domainSizeY;
 	  
 	if(itersNeeded>=RunSize)
       rest0=RunSize;
@@ -408,7 +411,7 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     itersNeeded-=rest0;
 
     //fill constant buffer
-    if(!FillConstantBuffer(CContext[deviceID].constRes0, rc5_72unitwork))
+    if(!FillConstantBuffer(cont->constRes0, rc5_72unitwork))
     {
       if(setRemoteConnectionFlag()) {
         memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
@@ -421,7 +424,7 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     }
 
     CALprogramGrid g_calProgramGrid;
-    g_calProgramGrid.func             = CContext[deviceID].func0;
+    g_calProgramGrid.func             = cont->func0;
     g_calProgramGrid.flags            = 0;
     g_calProgramGrid.gridBlock.width  = 64; //needs to be = thread group size as given in IL kernel.
     g_calProgramGrid.gridBlock.height = 1;
@@ -431,7 +434,7 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     g_calProgramGrid.gridSize.height  = 1;
     g_calProgramGrid.gridSize.depth   = 1;
 
-    result = calCtxRunProgramGrid(&e0, CContext[deviceID].ctx, &g_calProgramGrid);
+    result = calCtxRunProgramGrid(&e0, cont->ctx, &g_calProgramGrid);
     if((result!=CAL_RESULT_OK)&&(result!=CAL_RESULT_PENDING))
     {
       if(setRemoteConnectionFlag()) {
@@ -449,9 +452,9 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     CALresult result;
     HiresTimerGet(&cstart);
     if(isCalCtxWaitForEventsSupported)  //normal case
-      result=calCtxWaitForEvents(CContext[deviceID].ctx, &e0, 1, 0);
+      result=calCtxWaitForEvents(cont->ctx, &e0, 1, 0);
     else
-      while((result=calCtxIsEventDone(CContext[deviceID].ctx, e0)) == CAL_RESULT_PENDING) 
+      while((result=calCtxIsEventDone(cont->ctx, e0)) == CAL_RESULT_PENDING) 
         NonPolledUSleep(15000);  //15ms
 
     if(result!=CAL_RESULT_OK)
@@ -472,21 +475,21 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
     {
       if(d>12.)
 	  {
-        if(CContext[deviceID].domainSizeX>8)
-          CContext[deviceID].domainSizeX-=8;
-        if(CContext[deviceID].domainSizeY>8)
-          CContext[deviceID].domainSizeY-=8;
+        if(cont->domainSizeX>8)
+          cont->domainSizeX-=8;
+        if(cont->domainSizeY>8)
+          cont->domainSizeY-=8;
 	  }
       if(d<8.)
 	  {
-        if(CContext[deviceID].domainSizeX<MAX_DOMAIN_SIZE)
-          CContext[deviceID].domainSizeX+=8;
-        if(CContext[deviceID].domainSizeY<MAX_DOMAIN_SIZE)
-          CContext[deviceID].domainSizeY+=8;
+        if(cont->domainSizeX<MAX_DOMAIN_SIZE)
+          cont->domainSizeX+=8;
+        if(cont->domainSizeY<MAX_DOMAIN_SIZE)
+          cont->domainSizeY+=8;
 	  }
     }
 
-    CContext[deviceID].USEcount=0;	//Reset Unexpected Stop Error counter
+    cont->USEcount=0;	//Reset Unexpected Stop Error counter
     u32 itersDone=rest0;
     kiter-=itersDone;
     key_incr(&rc5_72unitwork->L0.hi,&rc5_72unitwork->L0.mid,&rc5_72unitwork->L0.lo,itersDone*4);
@@ -497,7 +500,7 @@ s32 rc5_72_unit_func_il4_1i(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, voi
   u32 CMC, iters_finished;
 
   memcpy(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
-  s32 read_res=ReadResultsFromGPU(CContext[deviceID].globalRes0, rc5_72unitwork, &CMC, GPUiters*4);
+  s32 read_res=ReadResultsFromGPU(cont->globalRes0, rc5_72unitwork, &CMC, GPUiters*4);
   if (read_res==1) {
     *iterations = CMC;
     return RESULT_FOUND;

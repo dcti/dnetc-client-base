@@ -14,6 +14,7 @@
 
 #include "amdstream_setup.h"
 #include "amdstream_context.h"
+#include "amdstream_info.h"
 
 #include <CAL/cal.h>
 #include <CAL/calcl.h>
@@ -35,8 +36,8 @@
 
 void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
 u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2);
-CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool);
-CALresult runCompiler(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool verbose=false);
+CALresult compileProgram(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool globalFlag, stream_context_t *cont);
+CALresult runCompiler(CALcontext *ctx, CALimage *image, CALmodule *module, CALchar *src, CALtarget target, bool verbose, stream_context_t *cont);
 
 u32 checkRemoteConnectionFlag();
 u32 setRemoteConnectionFlag();
@@ -101,7 +102,7 @@ inline double HiresTimerGetResolution()
 
 // They're mine! TODO: rearrange common parts
 
-CALresult ati_verbose(CALresult result, const char *where, u32 DeviceIndex);
-CALresult ati_verbose_cl(CALresult result, const char *where, u32 DeviceIndex); // for compiler (after calcl...() functions)
+CALresult ati_verbose(CALresult result, const char *where, stream_context_t *cont);
+CALresult ati_verbose_cl(CALresult result, const char *where, stream_context_t *cont); // for compiler (after calcl...() functions)
 
 #endif
