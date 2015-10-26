@@ -1488,7 +1488,32 @@ int ClientRun( Client *client )
     //  force_no_realthreads = 1; // if only one thread/processor is to used
     #endif
 
+    // On GPU, number of crunchers must NEVER exceed number of detected GPUs
+    #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+    int gpus = GetNumberOfDetectedProcessors();
+    if (gpus < 0)
+      gpus = 0; // just in case. It should not fail on GPU (return 0 on error)
+    if (numcrunchers > gpus)
+      numcrunchers = gpus;
+    #endif
+
     load_problem_count = numcrunchers;
+  }
+
+  // --------------------------------------
+  // Optional. Print nice error message if no GPUs were found. Even without this,
+  // client will stop later anyway, because no problem were loaded, with message
+  // "Unable to initialize problem manager", which may be too cryptic.
+  // --------------------------------------
+
+  if (!TimeToQuit)
+  {
+    if (load_problem_count == 0)
+    {
+      Log( "No crunchers to start. Quitting...\n" );
+      exitcode = -3;
+      TimeToQuit = 1;
+    }
   }
 
   // -------------------------------------

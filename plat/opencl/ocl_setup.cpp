@@ -14,6 +14,23 @@
 #include "ocl_context.h"
 #include "../rc5-72/opencl/ocl_common.h"
 
+/*
+ * Initialize...() must return:
+ *
+ *  < 0 - on error (fatal error during initialization/detection, client will shutdown)
+ * >= 0 - on success, no matter how many devices were found (even 0).
+ *
+ * getNumDevices() must return:
+ *
+ * < 0 - on error (or if previous Initialize...() failed)
+ * = 0 - no errors but no devices were found
+ * > 0 - number of detected GPUs
+ *
+ * Although it's expected that Initialize...() will be always called before
+ * any getDeviceCount(),  getDeviceCount() must return error and do not touch
+ * GPU hardware if Initialize...() wasn't called or was called but failed.
+ */
+
 static cl_int numDevices = -12345;
 static ocl_context_t *ocl_context;
 
@@ -24,7 +41,11 @@ int getOpenCLDeviceCount(void)
 
 ocl_context_t *ocl_get_context(int device)
 {
-  return device < numDevices ? &ocl_context[device] : NULL;
+  if (device >= 0 && device < numDevices)
+    return &ocl_context[device];
+
+  Log("INTERNAL ERROR: bad OpenCL device index %d (detected %d)!\n", device, numDevices);
+  return NULL;
 }
 
 // To debug on CPU...

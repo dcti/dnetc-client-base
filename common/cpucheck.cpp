@@ -109,26 +109,20 @@ int GetNumberOfDetectedProcessors( void )
     cpucount = -1;
     #if (CLIENT_CPU == CPU_CUDA)
     {
-      if ((cpucount = GetNumberOfDetectedCUDAGPUs()) <= 0) {
-        Log("No CUDA-supported GPU found.\n");
-        cpucount = -99;
-      }
+      if ((cpucount = GetNumberOfDetectedCUDAGPUs()) <= 0)
+        cpucount = -99;  // special magic value for GPU
     }
     #elif (CLIENT_CPU == CPU_ATI_STREAM)
     {
-      cpucount=getAMDStreamDeviceCount();
-      if (cpucount<=0) {
-        Log("No ATI Stream compatible device found.\n");
+      cpucount = getAMDStreamDeviceCount();
+      if (cpucount <= 0)
         cpucount = -99;
-      }
     }
     #elif (CLIENT_CPU == CPU_OPENCL)
     {
-      cpucount=getOpenCLDeviceCount();
-      if (cpucount<=0) {
-        Log("No OpenCL compatible devices found.\n");
+      cpucount = getOpenCLDeviceCount();
+      if (cpucount <= 0)
         cpucount = -99;
-      }
     }
     #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \

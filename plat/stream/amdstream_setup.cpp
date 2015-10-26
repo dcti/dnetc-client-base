@@ -19,8 +19,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * Initialize...() must return:
+ *
+ *  < 0 - on error (fatal error during initialization/detection, client will shutdown)
+ * >= 0 - on success, no matter how many devices were found (even 0).
+ *
+ * getNumDevices() must return:
+ *
+ * < 0 - on error (or if previous Initialize...() failed)
+ * = 0 - no errors but no devices were found
+ * > 0 - number of detected GPUs
+ *
+ * Although it's expected that Initialize...() will be always called before
+ * any getDeviceCount(),  getDeviceCount() must return error and do not touch
+ * GPU hardware if Initialize...() wasn't called or was called but failed.
+ */
+
 stream_context_t CContext[AMD_STREAM_MAX_GPUS];
-int atistream_numDevices = -1;
+int atistream_numDevices = -12345;
 
 PFNCALCTXWAITFOREVENTS calCtxWaitForEvents;
 u32 isCalCtxWaitForEventsSupported;
@@ -54,24 +71,24 @@ CALresult ati_verbose_cl(CALresult result, const char *where, u32 DeviceIndex)
   return result;
 }
 
-int AMDStreamInitialize()
+int AMDStreamInitialize(void)
 {
   CALuint numDevices;
   unsigned i;
 
-  if (atistream_numDevices >= 0)
+  if (atistream_numDevices != -12345)
     return atistream_numDevices;
 
   AMDInitMutex();
-  atistream_numDevices = 0;
+  atistream_numDevices = -1;  // assume detection error for now
 
   // Initialize CAL (global)
   if (CAL_RESULT_OK != ati_verbose( calInit(), "initializing CAL", 0 ))
-    return 0;
+    return -1;
 
   // Query number of devices
   if (CAL_RESULT_OK != ati_verbose( calDeviceGetCount(&numDevices), "querying number of devices", 0 ))
-    return 0;
+    return -1;
   if (numDevices > AMD_STREAM_MAX_GPUS)
     numDevices = AMD_STREAM_MAX_GPUS;
 
@@ -101,7 +118,7 @@ int AMDStreamInitialize()
       {
         memset(&dev->attribs, 0xEE, sizeof(CALdeviceattribs)); // 0xEEEEEEEE in undefined fields
         dev->attribs.struct_size = 0x50;
-        result = calDeviceGetAttribs(&CContext[i].attribs, i);
+        result = calDeviceGetAttribs(&dev->attribs, i);
       }
     }
     if (CAL_RESULT_OK != ati_verbose( result, "querying device attributes", i ))

@@ -21,7 +21,7 @@ int GetNumberOfDetectedCUDAGPUs()
 
   if (gpucount == -123) {
     gpucount = -1;
-    if (InitializeCUDA() == 0) {
+    if (cuda_init_state >= 0) {
       cudaDeviceProp deviceProp;
       cudaError_t rc = cudaGetDeviceCount(&gpucount);
       if (rc != cudaSuccess) {
@@ -46,7 +46,7 @@ long GetRawCUDAGPUID(int device, const char **cpuname)
   if (cpuname)
     *cpuname = &namebuf[0];
 
-  if (GetNumberOfDetectedCUDAGPUs() >= 0) {
+  if (device >= 0 && device < GetNumberOfDetectedCUDAGPUs()) {
     cudaDeviceProp deviceProp;
     cudaError_t rc = cudaGetDeviceProperties(&deviceProp, device);
     if (rc == cudaSuccess) {
@@ -70,7 +70,7 @@ long GetRawCUDAGPUID(int device, const char **cpuname)
 unsigned int GetCUDAGPUFrequency(int device)
 {
   unsigned int freq = 0;
-  if (GetNumberOfDetectedCUDAGPUs() >= 0) {
+  if (device >= 0 && device < GetNumberOfDetectedCUDAGPUs()) {
     cudaDeviceProp deviceProp;
     cudaError_t rc = cudaGetDeviceProperties(&deviceProp, device);
     if (rc == cudaSuccess)

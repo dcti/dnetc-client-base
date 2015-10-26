@@ -331,7 +331,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
 // but GPU init must be done only once. Protect it here too
 // (don't rely on GPU init code).
 // --------------------------------------
-static int InitializeCoProcessorsOnce(Client *client)
+static void InitializeCoProcessorsOnce(Client *client)
 {
   static char done;
 
@@ -339,24 +339,29 @@ static int InitializeCoProcessorsOnce(Client *client)
   {
     done = 1;
 
+    // GPU init must return <0 on error
     #if (CLIENT_CPU == CPU_ATI_STREAM)
-    AMDStreamInitialize();
+      #define GPU_NAME "AMD STREAM"
+      #define GPU_INIT AMDStreamInitialize()
     #endif
 
     #if (CLIENT_CPU == CPU_CUDA)
-    if (InitializeCUDA() != 0)
-    {
-      Log("Unable to initialize CUDA.\n");
-      return -1;
-    }
+      #define GPU_NAME "CUDA"
+      #define GPU_INIT InitializeCUDA()
     #endif
 
     #if (CLIENT_CPU == CPU_OPENCL)
-    if (InitializeOpenCL() <= 0)
-    {
-      Log("Unable to initialize OpenCL.\n");
-      return -1;
-    }
+      #define GPU_NAME "OpenCL"
+      #define GPU_INIT InitializeOpenCL()
+    #endif
+
+    #ifdef GPU_NAME
+    if (GPU_INIT < 0)
+      Log("Unable to initialize " GPU_NAME "\n");
+    else if (GetNumberOfDetectedProcessors() < 1)  /* Must be positive on GPU */
+      Log("No " GPU_NAME " compatible devices found\n");
+    #undef GPU_NAME
+    #undef GPU_INIT
     #endif
   }
 
@@ -365,13 +370,13 @@ static int InitializeCoProcessorsOnce(Client *client)
   // Style of error messages will differs a bit, but it was hackish
   // from the beginning...
   int nDev = GetNumberOfDetectedProcessors();
+  if (nDev < 0)  // <0 if autodetection failed. 0 is valid for GPU
+    nDev = 1;
   if (client->devicenum >= nDev)
   {
     Log("Device ID %d exceed number of detected devices (%d), ignored\n", client->devicenum, nDev);
     client->devicenum = -1;
   }
-
-  return 0;
 }
 
 static int ClientMain( int argc, char *argv[] )
@@ -469,11 +474,23 @@ static int ClientMain( int argc, char *argv[] )
                                  client->id );
               TRACE_OUT((-1,"initializelogging\n"));
 
-              // GPU init is complex, it need logging to catch many possible errors
-              // but must be done early because GetNumberOfDetectedProcessors() depends
-              // on it. Let's try to put it here, soon after InitializeLogging()
-              if (BufferInitialize(client) == 0 && InitializeCoProcessorsOnce(client) == 0)
+              // GPU init is complex, it need logging to catch many possible errors but
+              // must be done early because GetNumberOfDetectedProcessors() depends on it.
+              //
+              // Approach #1. Call it here, soon after InitializeLogging(). Safe, but this
+              // could make some messages printed before banner and hard to see.
+              //
+              // Approach #2 (used). Put two separate init calls before ModeReqRun()
+              // and ClientRun(). Nice messages (everything is after banner), good user
+              // experience, but too much code above which may require CPU info.
+              // E.g. now, InitializeCoreTable() asks for CPU info on AIX platform.
+              // It'll not affect GPUs but be warned that this code is more fragile.
+              // Don't call GetNumberOfDetectedProcessors() & Co. on early stages.
+              //
+              if (BufferInitialize(client) == 0)
               {
+//              InitializeCoProcessorsOnce(client);  /* Approach #1 - see comment above */
+
                 InitRandom2( client->id );
 
                 TRACE_OUT((+1,"initcoretable\n"));
@@ -498,6 +515,7 @@ static int ClientMain( int argc, char *argv[] )
                     { /* avoid printing/logging banners for nothing */
                       PrintBanner(client->id,1,restarted,((domodes & MODEREQ_CMDLINE_HELP)!=0));
                     }
+                    InitializeCoProcessorsOnce(client);  /* Approach #2 - see comment above */
                     TRACE_OUT((+1,"modereqrun\n"));
                     ModeReqRun( client );
                     TRACE_OUT((-1,"modereqrun\n"));
@@ -507,6 +525,7 @@ static int ClientMain( int argc, char *argv[] )
                   {
                     con_waitforuser = 0;
                     PrintBanner(client->id,2,restarted,0);
+                    InitializeCoProcessorsOnce(client);  /* Approach #2 - see comment above */
                     TRACE_OUT((+1,"client.run\n"));
                     retcode = ClientRun(client);
                     TRACE_OUT((-1,"client.run\n"));

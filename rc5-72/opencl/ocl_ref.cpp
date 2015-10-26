@@ -300,6 +300,12 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
   RC5_72UnitWork tmp_unit;
   static bool selftestpassed=false;
 
+  if (cont == NULL)
+  {
+    RaiseExitRequestTrigger();
+    return -1;
+  }
+
   if (cont->coreID!=CORE_REF)
   {
     init_rc5_72_ocl_ref(cont);
