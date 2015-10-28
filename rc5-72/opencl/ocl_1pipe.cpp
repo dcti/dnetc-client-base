@@ -12,11 +12,13 @@
 #include <string.h>
 
 #include "rc5-1pipe.cpp"
+#include "rc5-2pipe.cpp"
+#include "rc5-4pipe.cpp"
 
 #define CONST_SIZE (sizeof(cl_uint)*16)
 #define OUT_SIZE (sizeof(cl_uint)*128)
 
-static bool init_rc5_72_ocl_1pipe(ocl_context_t *cont)
+static bool init_rc5_72_ocl_npipe(ocl_context_t *cont, unsigned core_ID, const char *core_program, const char *program_entry)
 {
   if (!cont->active)
   {
@@ -24,7 +26,7 @@ static bool init_rc5_72_ocl_1pipe(ocl_context_t *cont)
     return false;
   }
 
-  if (cont->coreID != CORE_1PIPE)
+  if (cont->coreID != core_ID)
     OCLReinitializeDevice(cont);
 
   cl_int status;
@@ -47,7 +49,7 @@ static bool init_rc5_72_ocl_1pipe(ocl_context_t *cont)
   if (ocl_diagnose(status, "creating output buffer", cont) != CL_SUCCESS)
     return false;
 
-  if (!BuildCLProgram(cont, ocl_rc572_1pipe_src, "ocl_rc572_1pipe"))
+  if (!BuildCLProgram(cont, core_program, program_entry))
     return false;
 
   //Get a performance hint
@@ -61,6 +63,7 @@ static bool init_rc5_72_ocl_1pipe(ocl_context_t *cont)
     if (status == CL_SUCCESS)
       cont->runSizeMultiplier = prefm * cus *4; //Hack for now. We need 4 wavefronts per CU to hide latency
   }
+  //Log("Multiplier = %u\n", cont->runSizeMultiplier);
   unsigned t = cont->runSize/cont->runSizeMultiplier;
   if (t == 0) t = 1;
   cont->runSize = cont->runSizeMultiplier * t; //To be sure runsize is divisible by multiplier
@@ -73,7 +76,7 @@ static bool init_rc5_72_ocl_1pipe(ocl_context_t *cont)
     Log("max worksize = %u\n", cont->maxWorkSize);
   }*/
   cont->maxWorkSize = 0xffffffff;
-  cont->coreID = CORE_1PIPE;
+  cont->coreID = core_ID;
   return true;
 }
 
@@ -267,12 +270,24 @@ static bool selftest(ocl_context_t *cont)
 #undef CONST_SIZE
 #ifdef __cplusplus
 extern "C" s32 rc5_72_unit_func_ocl_1pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_2pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
-s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+
+/* some static flags which are set on per-core basis */
+struct core_static_flags
+{
+  bool selftestpassed;
+  bool profilingErr;
+};
+
+static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations,
+                                      unsigned core_ID, unsigned pipes_count,
+                                      const char *core_program, const char *program_entry,
+                                      struct core_static_flags *static_flags)
 {
   ocl_context_t *cont = ocl_get_context(rc5_72unitwork->devicenum);
   RC5_72UnitWork tmp_unit;
-  static bool selftestpassed = false;
 
   if (cont == NULL)
   {
@@ -280,15 +295,15 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     return -1;
   }
 
-  if (cont->coreID != CORE_1PIPE)
+  if (cont->coreID != core_ID)
   {
-    init_rc5_72_ocl_1pipe(cont);
-    if (cont->coreID != CORE_1PIPE) {
+    init_rc5_72_ocl_npipe(cont, core_ID, core_program, program_entry);
+    if (cont->coreID != core_ID) {
       RaiseExitRequestTrigger();
       return -1;
     }
   }
-  if (!selftestpassed)
+  if (!static_flags->selftestpassed)
   {
     if (!selftest(cont))
     {
@@ -296,12 +311,12 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       RaiseExitRequestTrigger();
       return -1;
     } else
-      selftestpassed = true;
+      static_flags->selftestpassed = true;
   }
 
   memmove(&tmp_unit, rc5_72unitwork, sizeof(RC5_72UnitWork));
 
-  u32 kiter = *iterations;
+  u32 kiter = *iterations / pipes_count;
 
   if (!ClearOutBuffer(cont->out_buffer, cont))
   {
@@ -361,10 +376,9 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       d = 1e-6 * (endTime - startTime);
     else
     {
-      static bool profilingErr = false;
-      if (!profilingErr)
+      if (!static_flags->profilingErr)
       {
-        profilingErr = true;
+        static_flags->profilingErr = true;
         ocl_diagnose(status, "getting profile info", cont);
       }
       d = 10;
@@ -390,8 +404,8 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
       //Log("Up:Time: %f, runsize=%u, diff=%u\n", float(d), cont->runSize, diffm*cont->runSizeMultiplier);
     }
 
-    key_incr(&tmp_unit.L0.hi, &tmp_unit.L0.mid, &tmp_unit.L0.lo, rest0);
-    iter_offset += rest0;
+    key_incr(&tmp_unit.L0.hi, &tmp_unit.L0.mid, &tmp_unit.L0.lo, rest0 * pipes_count);
+    iter_offset += rest0 * pipes_count;
   }
 
   //Check the results
@@ -450,7 +464,27 @@ s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
   /* tell the client about the optimal timeslice increment for this core
      (with current parameters) */
   memmove(rc5_72unitwork, &tmp_unit, sizeof(RC5_72UnitWork));
-  rc5_72unitwork->optimal_timeslice_increment = cont->runSizeMultiplier;
+  rc5_72unitwork->optimal_timeslice_increment = cont->runSizeMultiplier * pipes_count;
   return RESULT_NOTHING;
 }
 
+s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe(rc5_72unitwork, iterations, CORE_1PIPE, 1, ocl_rc572_1pipe_src, "ocl_rc572_1pipe", &flags);
+}
+
+s32 rc5_72_unit_func_ocl_2pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe(rc5_72unitwork, iterations, CORE_2PIPE, 2, ocl_rc572_2pipe_src, "ocl_rc572_2pipe", &flags);
+}
+
+s32 rc5_72_unit_func_ocl_4pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe(rc5_72unitwork, iterations, CORE_4PIPE, 4, ocl_rc572_4pipe_src, "ocl_rc572_4pipe", &flags);
+}

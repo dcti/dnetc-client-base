@@ -782,9 +782,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS \
                           rc5-72/opencl/ocl_common.cpp \
                           rc5-72/opencl/ocl_ref.cpp \
-                          rc5-72/opencl/ocl_1pipe.cpp \
-                          rc5-72/opencl/ocl_2pipe.cpp \
-                          rc5-72/opencl/ocl_4pipe.cpp"
+                          rc5-72/opencl/ocl_1pipe.cpp"
     fi # HAVE_RC5_72
 
   #-----------------------------------------------------------------

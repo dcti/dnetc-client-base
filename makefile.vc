@@ -404,9 +404,7 @@ RC5_72_OBJS =                      \
         $(OUTPUTPATH)/ocl_setup.obj \
         $(OUTPUTPATH)/ocl_common.obj \
         $(OUTPUTPATH)/ocl_ref.obj \
-        $(OUTPUTPATH)/ocl_1pipe.obj \
-        $(OUTPUTPATH)/ocl_2pipe.obj \
-        $(OUTPUTPATH)/ocl_4pipe.obj
+        $(OUTPUTPATH)/ocl_1pipe.obj
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DOPENCL -DDYN_TIMESLICE
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "arm"
