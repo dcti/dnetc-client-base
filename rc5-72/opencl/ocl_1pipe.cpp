@@ -61,7 +61,7 @@ static bool init_rc5_72_ocl_npipe(ocl_context_t *cont, unsigned core_ID, const c
     size_t cus;
     status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cus), &cus, NULL);
     if (status == CL_SUCCESS)
-      cont->runSizeMultiplier = prefm * cus *4; //Hack for now. We need 4 wavefronts per CU to hide latency
+      cont->runSizeMultiplier = prefm * cus * 4; //Hack for now. We need 4 wavefronts per CU to hide latency
   }
   //Log("Multiplier = %u\n", cont->runSizeMultiplier);
   unsigned t = cont->runSize/cont->runSizeMultiplier;
@@ -213,7 +213,8 @@ static bool selftest(ocl_context_t *cont)
     return false;
 
   status = clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &cont->const_buffer);
-  status |= clSetKernelArg(cont->kernel, 1, sizeof(cl_mem), &cont->out_buffer);
+  if (status == CL_SUCCESS)
+    status = clSetKernelArg(cont->kernel, 1, sizeof(cl_mem), &cont->out_buffer);
   if (ocl_diagnose(status, "setting kernel arguments", cont) != CL_SUCCESS)
     return false;
 
@@ -288,6 +289,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
 {
   ocl_context_t *cont = ocl_get_context(rc5_72unitwork->devicenum);
   RC5_72UnitWork tmp_unit;
+  cl_int status;
 
   if (cont == NULL)
   {
@@ -325,8 +327,9 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
     return -1;
   }
 
-  cl_int status = clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &cont->const_buffer);
-  status |= clSetKernelArg(cont->kernel, 1, sizeof(cl_mem), &cont->out_buffer);
+  status = clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &cont->const_buffer);
+  if (status == CL_SUCCESS)
+    status = clSetKernelArg(cont->kernel, 1, sizeof(cl_mem), &cont->out_buffer);
   if (ocl_diagnose(status, "setting kernel arguments", cont) != CL_SUCCESS)
   {
     RaiseExitRequestTrigger();
@@ -364,15 +367,29 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
 
     // wait for the kernel call to finish execution
     status = clWaitForEvents(1, &ndrEvt);
+    if (ocl_diagnose(status, "waiting for event", cont) != CL_SUCCESS)
+    {
+      clReleaseEvent(ndrEvt);  // allocated locally, must (try to) free before return
+      RaiseExitRequestTrigger();
+      return -1;          //err
+    }
 
     cl_ulong startTime;
     cl_ulong endTime;
-    status = clGetEventProfilingInfo(ndrEvt, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &startTime, 0);
-    status |= clGetEventProfilingInfo(ndrEvt, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &endTime, 0);
-    status |= clReleaseEvent(ndrEvt);
+    cl_int   status_p1, status_p2;
+    status_p1 = clGetEventProfilingInfo(ndrEvt, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &startTime, 0);
+    status_p2 = clGetEventProfilingInfo(ndrEvt, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &endTime, 0);
+
+    // event must be released in any case
+    status = clReleaseEvent(ndrEvt);
+    if (ocl_diagnose(status, "releasing event", cont) != CL_SUCCESS)
+    {
+      RaiseExitRequestTrigger();
+      return -1;          //err
+    }
 
     double d;
-    if (status == CL_SUCCESS)
+    if (status_p1 == CL_SUCCESS && status_p2 == CL_SUCCESS) // this is status of clGetEventProfilingInfo
       d = 1e-6 * (endTime - startTime);
     else
     {
@@ -387,7 +404,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
     if (d > 12.)
     {
       //Decrease worksize by 5%
-      u32 diffm = cont->runSize /20 /cont->runSizeMultiplier;
+      u32 diffm = cont->runSize / 20 / cont->runSizeMultiplier;
       if (diffm == 0)
         diffm = 1;
       if (cont->runSize > (diffm*cont->runSizeMultiplier))
@@ -396,7 +413,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
     } else
     if ((d < 8.) && (rest0 == cont->runSize))
     {
-      u32 diffm = cont->runSize /20 /cont->runSizeMultiplier;
+      u32 diffm = cont->runSize / 20 / cont->runSizeMultiplier;
       if (diffm == 0)
         diffm = 1;
       if (cont->runSize < cont->maxWorkSize)
