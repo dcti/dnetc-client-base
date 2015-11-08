@@ -274,5 +274,10 @@ void OpenCLPrintExtendedGpuInfo(int device)
   if (status == CL_SUCCESS)
     LogRaw("%30s: %s\n", "Driver version",device_name);
 
+  cl_uint devbits;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_ADDRESS_BITS, sizeof(devbits), &devbits, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %u%s\n", "Device address bits", devbits, (devbits == sizeof(size_t) * 8 ? "" : " - NOT MATCHED -"));
+
   //TODO: device extensions
 }

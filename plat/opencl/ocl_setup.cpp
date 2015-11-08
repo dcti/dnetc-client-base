@@ -140,6 +140,7 @@ int InitializeOpenCL(void)
         {
           ocl_context_t *cont = &ocl_context[offset];
 
+          /* Assume it working for now */
           cont->active            = true;
           cont->coreID            = CORE_NONE;
           cont->platformID        = platforms[plat];
@@ -149,6 +150,17 @@ int InitializeOpenCL(void)
           cont->runSize           = 65536;
           cont->runSizeMultiplier = 64;
           cont->maxWorkSize       = 2048 * 2048;
+
+          /* Sanity check: size_t must be same width for both client and device */
+          cl_uint devbits;
+          status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_ADDRESS_BITS, sizeof(devbits), &devbits, NULL);
+          if (ocl_diagnose(status, "clGetDeviceInfo(CL_DEVICE_ADDRESS_BITS)", cont) != CL_SUCCESS)
+            cont->active = false;
+          else if (devbits != sizeof(size_t) * 8)
+          {
+            Log("Error: Bitness of device %u (%u) does not match CPU (%u)!\n", u, devbits, sizeof(size_t) * 8);
+            cont->active = false;
+          }
         }
       }
     }
