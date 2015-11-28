@@ -3416,7 +3416,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC -DOPENCL -DDYN_TIMESLICE"
         TARGET_LIBS="-lrt -lOpenCL"
         TARGET_USES_GNUMAKE="yes"        
-        TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.linux docs/readme.opencl"   #platform specific docfile
         TARGET_TARBALL="linux-amd64-opencl"
         add_sources "linux" "opencl"
         ;;
@@ -3426,7 +3426,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
         TARGET_LDFLAGS="$TARGET_plat"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
         TARGET_TARBALL="macosx-amd64-opencl"
         add_sources "macosx" "opencl"
         ;;
@@ -3436,7 +3436,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CLANGCC_32 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
         TARGET_LDFLAGS="$TARGET_plat"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
         TARGET_TARBALL="macosx-x86-opencl"
         add_sources "macosx" "opencl"
         ;;
