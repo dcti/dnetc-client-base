@@ -600,8 +600,19 @@ void Go_mt( void * parm )
               const u32 fixed_increment = thisprob->pub_data.tslice_increment_hint;
               const u32 usec = thrparams->dyn_timeslice_table[contest_i].usec;
               const u32 usec5perc = usec / 20;
-              if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
+              if (runtime_usec < (usec - usec5perc))
               {
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+                /*
+                 * Bump timeslice very fast for GPU clients. An 1GKey GPU have optimal
+                 * timeslice 15000 times higher then initial value. Original code
+                 * is reaching this point too slow, performance loss becomes noticeable
+                 * on small blocks.
+                 */
+                if (runtime_usec <= usec / 4)
+                  optimal_timeslice *= usec / (runtime_usec ? runtime_usec : 1);
+                else
+#endif
                 if ((fixed_increment >= optimal_timeslice / 100) && (usec - 5 * usec5perc < runtime_usec))
                   optimal_timeslice += fixed_increment;
                 else
@@ -609,7 +620,7 @@ void Go_mt( void * parm )
                 if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
                   optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
               }
-              else if (runtime_usec > (thrparams->dyn_timeslice_table[contest_i].usec + usec5perc))
+              else if (runtime_usec > (usec + usec5perc))
               {
                 optimal_timeslice -= (optimal_timeslice>>2);
                 if (is_non_preemptive_cruncher)

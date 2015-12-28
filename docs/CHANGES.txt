@@ -35,6 +35,7 @@ Version change log: $Id: CHANGES.txt,v 1.133 2015/10/21 22:29:12 stream Exp $
             imp: gpu/OpenCL: support any number of OCL platforms on PC
             imp: gpu: make -gpuinfo be similar on all types of devices
             imp: gpu: improved GPU initialization and error diagnostic
+            imp: gpu: better handling of small blocks on fast GPUs
 
 2.9111.520  imp: all: support for benchmarks > 2Gkeys/sec
             chg: all: increase max threads to 512
