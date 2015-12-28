@@ -347,7 +347,7 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
 //#define VERBOSE 1
 
 #ifdef VERBOSE
-  LogScreen("Tread %u: %u ITERS (%u), maxiters=%u\n", deviceID, kiter, kiter/RunSize, cont->maxIters);
+  LogTo(LOGTO_FILE, "%u ITERS (%u), maxiters=%u\n", kiter, kiter/RunSize, cont->maxIters);
 #endif
   double fr_d = HiresTimerGetResolution();
   hirestimer_type cstart, cend;
@@ -446,7 +446,7 @@ s32 rc5_72_unit_func_il4a_nand(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
     HiresTimerGet(&cend);
     double d = HiresTimerDiff(cend, cstart)/fr_d;
 #ifdef VERBOSE
-    LogScreen("Thread %u: Time %lf ms, c=%u\n", deviceID, (double)(cend-cstart)/fr_d, busy_c);
+    LogTo(LOGTO_FILE, "Time %lf ms, c=%u\n", (double)(cend-cstart)/fr_d, busy_c);
 #endif
     if (isCalCtxWaitForEventsSupported)
     {
