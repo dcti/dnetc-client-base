@@ -1720,7 +1720,7 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
                              using_ptime, &s_using_ptime, last_resultcode );
         core_prob->pub_data.core_run_count++;
         core_prob->pub_data.tslice = iterations;
-#if (CLIENT_CPU == CPU_CUDA)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
         // FIXME there could be a better way to do this
         core_prob->pub_data.tslice_increment_hint = core_prob->priv_data.rc5_72unitwork.optimal_timeslice_increment;
 #endif
