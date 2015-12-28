@@ -320,6 +320,9 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
 
   u32 kiter = *iterations / pipes_count;
 
+//LogTo(LOGTO_FILE, "enter: iter=%X kiter=%X rsz=%X rsm=%X\n",
+//       *iterations, kiter, cont->runSize, cont->runSizeMultiplier);
+
   if (!ClearOutBuffer(cont->out_buffer, cont))
   {
     //Log("Couldn't clear out buffer, device:#%u\n", deviceID);
@@ -396,7 +399,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
       if (!static_flags->profilingErr)
       {
         static_flags->profilingErr = true;
-        ocl_diagnose(status, "getting profile info", cont);
+        ocl_diagnose((status_p1 != CL_SUCCESS ? status_p1 : status_p2), "getting profile info", cont);
       }
       d = 10;
     }
