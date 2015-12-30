@@ -33,61 +33,52 @@ u32 getOpenCLDeviceFreq(int device)
   return 0;
 }
 
+/*
+ * Run kernel with predefined constants to get device ID
+ */
 static unsigned GetDeviceID(/* unsigned vendor_id, cl_char *device_name, cl_uint cunits, */ ocl_context_t *cont)
 {
   size_t globalWorkSize[1];
-  cl_uint *outPtr;
-
-//Run kernel with predefined constants to get device ID
-//  cl_context context = NULL;
-  cl_command_queue cmdQueue = NULL;
-  cl_mem out_buffer = NULL;
-//  cl_program program = NULL;
-//  cl_kernel kernel = NULL;
   cl_int status;
-  cl_uint id=0;
+  cl_uint id = 0;
 
-  if (cont->coreID != CORE_NONE)
-    OCLReinitializeDevice(cont);
+  // This code does not set coreID, so device must be implicitily reinited at start
+  // and cleaned up at end.
+  OCLReinitializeDevice(cont);
 
   // Create a context and associate it with the device
   cont->clcontext = clCreateContext(NULL, 1, &cont->deviceID, NULL, NULL, &status);
   if (status != CL_SUCCESS)
-    return 0;
+    goto finished;
   
-  cmdQueue = clCreateCommandQueue(cont->clcontext, cont->deviceID, 0, &status);
+  cont->cmdQueue = clCreateCommandQueue(cont->clcontext, cont->deviceID, 0, &status);
   if (status != CL_SUCCESS)
     goto finished;
 
-  out_buffer = clCreateBuffer(cont->clcontext, CL_MEM_ALLOC_HOST_PTR, 4, NULL, &status);
+  cont->out_buffer = clCreateBuffer(cont->clcontext, CL_MEM_ALLOC_HOST_PTR, 4, NULL, &status);
   if (status != CL_SUCCESS)
     goto finished;
 
   if (!BuildCLProgram(cont, deviceid_src, "deviceID"))
     goto finished;
 
-  status |= clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &out_buffer);
+  status = clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &cont->out_buffer);
   if (status != CL_SUCCESS)
     goto finished;
 	 
   globalWorkSize[0] = 1;
-  status = clEnqueueNDRangeKernel(cmdQueue, cont->kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
+  status = clEnqueueNDRangeKernel(cont->cmdQueue, cont->kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
   if (status != CL_SUCCESS)
      goto finished;
 
-  outPtr = NULL;
-  outPtr = (cl_uint*) clEnqueueMapBuffer(cmdQueue, out_buffer, CL_TRUE, CL_MAP_READ, 0, 4, 0, NULL, NULL, &status);
+  cl_uint *outPtr = (cl_uint*) clEnqueueMapBuffer(cont->cmdQueue, cont->out_buffer, CL_TRUE, CL_MAP_READ, 0, 4, 0, NULL, NULL, &status);
   if (status == CL_SUCCESS)
   {
     id = outPtr[0];
-    clEnqueueUnmapMemObject(cmdQueue, out_buffer, outPtr, 0, NULL, NULL);
+    clEnqueueUnmapMemObject(cont->cmdQueue, cont->out_buffer, outPtr, 0, NULL, NULL);
   }
 
 finished:
-  if (cmdQueue)
-    clReleaseCommandQueue(cmdQueue);
-  if (out_buffer)
-    clReleaseMemObject(out_buffer);
   OCLReinitializeDevice(cont);
   return id;
 }

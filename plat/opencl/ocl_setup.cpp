@@ -183,29 +183,27 @@ int InitializeOpenCL(void)
 
 void OCLReinitializeDevice(ocl_context_t *cont)
 {
-  if (cont->coreID == CORE_NONE)
-    return;
   //Log("Reinializing device %u\n", device);
   cont->coreID = CORE_NONE;
 
   //Log("Releasing kernel\n");
   if (cont->kernel)
   {
-    clReleaseKernel(cont->kernel);
+    ocl_diagnose( clReleaseKernel(cont->kernel), "clReleaseKernel", cont );
     cont->kernel = NULL;
   }
   
   //Log("Releasing program\n");
   if (cont->program)
   {
-    clReleaseProgram(cont->program);
+    ocl_diagnose( clReleaseProgram(cont->program), "clReleaseProgram", cont );
     cont->program = NULL;
   }
 
   //Log("Releasing CQ\n");
   if (cont->cmdQueue)
   {
-    clReleaseCommandQueue(cont->cmdQueue);
+    ocl_diagnose( clReleaseCommandQueue(cont->cmdQueue), "clReleaseCommandQueue", cont );
     cont->cmdQueue = NULL;
   }
 
@@ -226,21 +224,21 @@ void OCLReinitializeDevice(ocl_context_t *cont)
   //Log("Releasing const buffer\n");
   if (cont->const_buffer)
   {
-    clReleaseMemObject(cont->const_buffer);
+    ocl_diagnose( clReleaseMemObject(cont->const_buffer), "clReleaseMemObject(const_buffer)", cont );
     cont->const_buffer = NULL;
   }
 
   //Log("Releasing out buffer buffer\n");
   if (cont->out_buffer)
   {
-    clReleaseMemObject(cont->out_buffer);
+    ocl_diagnose( clReleaseMemObject(cont->out_buffer),  "clReleaseMemObject(out_buffer)", cont );
     cont->out_buffer = NULL;
   }
 
   //Log("Releasing context\n");
   if (cont->clcontext)
   {
-    clReleaseContext(cont->clcontext);
+    ocl_diagnose( clReleaseContext(cont->clcontext), "clReleaseContext", cont );
     cont->clcontext = NULL;
   }
 
