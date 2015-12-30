@@ -237,8 +237,11 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
   cl_int status;
   cont->program = clCreateProgramWithSource(cont->clcontext, 1, (const char**)&decompressed_src, NULL, &status);
   free(decompressed_src);
-  //status |= clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL);
-  status |= clBuildProgram(cont->program, 1, &cont->deviceID, "-cl-std=CL1.1", NULL, NULL);
+  if (status == CL_SUCCESS)
+  {
+    //status = clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL);
+    status = clBuildProgram(cont->program, 1, &cont->deviceID, "-cl-std=CL1.1", NULL, NULL);
+  }
   if (ocl_diagnose(status, "building cl program", cont) != CL_SUCCESS)
   {
     //static char buf[0x10001]={0};
