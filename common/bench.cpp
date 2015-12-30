@@ -278,14 +278,17 @@ long TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, i
 //printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "");
           }
           if (ratehi)
-            ratelo = 0x0fffffff;
+            ratelo = 0xFFFFFF00;
           if (ratelo > tslice || contestid == OGR_NG || contestid == OGR_P2)
             tslice = thisprob->pub_data.tslice = ratelo;
           if (thisprob->pub_data.tslice_increment_hint) {
             if (tslice < thisprob->pub_data.tslice_increment_hint)
               tslice = thisprob->pub_data.tslice_increment_hint;
             else {
+              u32 tmp = tslice;
               tslice += thisprob->pub_data.tslice_increment_hint / 2;
+              if (tslice < tmp)  /* overflow */
+                tslice = 0xFFFFFF00;
               tslice -= tslice % thisprob->pub_data.tslice_increment_hint;
             }
             thisprob->pub_data.tslice = tslice;

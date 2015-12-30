@@ -609,14 +609,23 @@ void Go_mt( void * parm )
                  * is reaching this point too slow, performance loss becomes noticeable
                  * on small blocks.
                  */
+                #define MAX_U32_TIMESLICE 0xFFFFFF00  /* I just don't like 0xFFFFFFFF. It'll be truncated to table.max anyway */
                 if (runtime_usec <= usec / 4)
-                  optimal_timeslice *= usec / (runtime_usec ? runtime_usec : 1);
+                {
+                  /* Be careful about 4GKey+ cards, lesser values also can overflow during bump */
+                  ui64 bumped_timeslice = (ui64)optimal_timeslice * usec / (runtime_usec ? runtime_usec : 1);
+                  if (bumped_timeslice > MAX_U32_TIMESLICE)
+                    bumped_timeslice = MAX_U32_TIMESLICE;
+                  optimal_timeslice = (u32)bumped_timeslice;
+                }
                 else
 #endif
+                {
                 if ((fixed_increment >= optimal_timeslice / 100) && (usec - 5 * usec5perc < runtime_usec))
                   optimal_timeslice += fixed_increment;
-                else
+                else if (optimal_timeslice < 0x80000000)  /* it's max for RC5, bad things will happens after shifting this! */
                   optimal_timeslice <<= 1;
+                }
                 if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
                   optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
               }
