@@ -36,6 +36,7 @@ Version change log: $Id: CHANGES.txt,v 1.133 2015/10/21 22:29:12 stream Exp $
             imp: gpu: make -gpuinfo be similar on all types of devices
             imp: gpu: improved GPU initialization and error diagnostic
             imp: gpu: better handling of small blocks on fast GPUs
+            imp: x86/amd64: Intel Xeon E7 v3 (#4626)
 
 2.9111.520  imp: all: support for benchmarks > 2Gkeys/sec
             chg: all: increase max threads to 512
