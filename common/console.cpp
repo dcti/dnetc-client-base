@@ -733,6 +733,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
         (CLIENT_OS == OS_DYNIX) || (CLIENT_OS == OS_PS2LINUX) || \
         ( (CLIENT_OS == OS_QNX) && !defined( __QNXNTO__ ) ) || \
         (CLIENT_OS == OS_SCO) || (CLIENT_OS == OS_HAIKU) || \
+        (CLIENT_OS == OS_OPENBSD) || \
         ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ >= 8)) || \
         (CLIENT_OS == OS_IOS) || (CLIENT_OS == OS_ANDROID)
     /* good for any flavour? */
@@ -744,7 +745,7 @@ int ConGetSize(int *widthP, int *heightP) /* one-based */
       height  = winsz.ws_row;
     }
   #elif ((CLIENT_OS == OS_FREEBSD) && (__FreeBSD__ < 8)) || \
-        (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_OPENBSD) || \
+        (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_DRAGONFLY)
     struct ttysize winsz;
     winsz.ts_lines = winsz.ts_cols = winsz.ts_xxx = winsz.ts_yyy = 0;
