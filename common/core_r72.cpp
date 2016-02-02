@@ -488,14 +488,14 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
   #elif (CLIENT_CPU == CPU_X86)
   {
       int have_mmx = (detected_flags & CPU_F_MMX);
-      if (detected_type >= 0)
+      if (detected_flags & CPU_F_AVX2)
+        cindex = 12;
+      else if (detected_type >= 0)
       {
         #if !defined(HAVE_NO_NASM)
         unsigned long hints = GetProcessorCoreHints();
         if (hints & CH_R72_X86_GO2B) /* force go-2b */
           cindex = 11;
-        else if (detected_flags & CPU_F_AVX2)
-          cindex = 12;
         else switch (detected_type)
         {
           case 0x00: cindex = (have_mmx?9   // P5 MMX     == MMX 4-pipe 
@@ -576,11 +576,11 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
   // ===============================================================
   #elif (CLIENT_CPU == CPU_AMD64)
   {
-    if (detected_type >= 0)
+    if (detected_flags & CPU_F_AVX2)
+      cindex = 4;
+    else if (detected_type >= 0)
     {
-      if (detected_flags & CPU_F_AVX2)
-        cindex = 4;
-      else switch (detected_type)
+      switch (detected_type)
       {
         case 0x09: cindex = 3; break; // K8               == GO 2-pipe d
         case 0x0B: cindex =-1; break; // Pentium 4        == KBE-64 3-pipe or GO 2???
