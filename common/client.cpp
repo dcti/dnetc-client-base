@@ -239,7 +239,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME_EXTENDED " "
-                    "Copyright 1997-2014, distributed.net\n");
+                    "Copyright 1997-2016, distributed.net\n");
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
         LogScreenRaw( "ARM assembly by Peter Teichmann\n");
