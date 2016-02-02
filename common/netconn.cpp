@@ -1848,9 +1848,9 @@ int netconn_write( void *cookie, const char * data, int length )
     DUMP_PACKET("Put", data, towrite );
     rc = net_write(netstate->sock, data, &written, 
                    netstate->iotimeout);
-    if (rc == 0) /* success! sent all. */
+    if (rc == 0) /* sent all or timed out. */
     {
-      rc = length; /* we return the requested length */
+      rc = written; /* return the number of sent bytes */
       if ((netstate->mode & MODE_HTTP)!=0)
         netstate->puthttpdone = 1;
     }
