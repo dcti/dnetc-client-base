@@ -2114,6 +2114,7 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
                                       &ps_oereserved_cache.neterr,
                                       &ps_oereserved_cache.extra );
       rc = ps_oereserved;
+      close(sock);
       continue; // for; try next address
     }
 
@@ -2133,6 +2134,7 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
                                       &ps_oereserved_cache.neterr,
                                       &ps_oereserved_cache.extra );
       rc = ps_oereserved;
+      close(sock);
       continue; // for; try next address
     }
 
