@@ -29,8 +29,6 @@ typedef struct {
   cl_command_queue  cmdQueue; 
   cl_mem            const_buffer; 
   cl_mem            out_buffer; 
-  cl_uint           *const_ptr; 
-  cl_uint           *out_ptr; 
   cl_program	    program; 
   cl_kernel         kernel; 
   u32               runSize;

@@ -122,6 +122,9 @@ int InitializeOpenCL(void)
       {
         cl_uint devcnt;
 
+        if (offset >= devicesDetected)   /* Avoid call with bufferSize=0 for last platform without GPU devices */
+          break;
+
         status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, devicesDetected - offset, devices + offset, &devcnt);
         if (status == CL_DEVICE_NOT_FOUND)  // Special case. No GPU devices but other may exist
         {
@@ -158,7 +161,7 @@ int InitializeOpenCL(void)
             cont->active = false;
           else if (devbits != sizeof(size_t) * 8)
           {
-            Log("Error: Bitness of device %u (%u) does not match CPU (%u)!\n", u, devbits, sizeof(size_t) * 8);
+            Log("Error: Bitness of device %u (%u) does not match CPU (%u)!\n", offset, devbits, sizeof(size_t) * 8);
             cont->active = false;
           }
         }
@@ -205,20 +208,6 @@ void OCLReinitializeDevice(ocl_context_t *cont)
   {
     ocl_diagnose( clReleaseCommandQueue(cont->cmdQueue), "clReleaseCommandQueue", cont );
     cont->cmdQueue = NULL;
-  }
-
-  //Log("Releasing out ptr\n");
-  if (cont->out_ptr)
-  {
-    free(cont->out_ptr);
-    cont->out_ptr = NULL;
-  }
-
-  //Log("Releasing const ptr\n");
-  if (cont->const_ptr)
-  {
-    free(cont->const_ptr);
-    cont->const_ptr = NULL;
   }
 
   //Log("Releasing const buffer\n");
