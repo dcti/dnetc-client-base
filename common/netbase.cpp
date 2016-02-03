@@ -1793,6 +1793,28 @@ static int net_set_nonblocking(SOCKET fd)
 
 static unsigned int open_endpoint_count = 0;
 
+#if defined(SOCK_STREAM) /* BSD sox */
+static int net_close_socket(SOCKET fd)
+{
+  int rc;
+
+  #if (CLIENT_OS == OS_OS2) && !defined(__EMX__)
+  rc = (int)soclose( fd );
+  #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || \
+        (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_BEOS)
+  rc = (int)closesocket( fd );
+  #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
+  rc = (int)CloseSocket( fd );
+  #elif (CLIENT_OS == OS_VMS) && defined(MULTINET)
+  rc = (int)socket_close( fd );
+  #else
+  rc = (int)close( fd );
+  #endif
+
+  return rc;
+}
+#endif
+
 int net_close(SOCKET fd)
 {
   int rc = ps_EBADF;
@@ -1818,18 +1840,7 @@ int net_close(SOCKET fd)
     rc = shutdown( fd, 2 );
     TRACE_CLOSE((-1,"shutdown(s,2) => %d%s\n", rc, trace_expand_api_rc(rc,fd) ));
     TRACE_CLOSE((+1,"close(s)\n"));
-    #if (CLIENT_OS == OS_OS2) && !defined(__EMX__)
-    rc = (int)soclose( fd );
-    #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || \
-          (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_BEOS)
-    rc = (int)closesocket( fd );
-    #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
-    rc = (int)CloseSocket( fd );
-    #elif (CLIENT_OS == OS_VMS) && defined(MULTINET)
-    rc = (int)socket_close( fd );
-    #else
-    rc = (int)close( fd );
-    #endif
+    rc = net_close_socket(fd);
     TRACE_CLOSE((-1,"close(s) = %d%s\n",rc, trace_expand_api_rc(rc,fd)));
     if (rc != 0)
       rc = ps_stdneterr;
@@ -2114,18 +2125,7 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
                                       &ps_oereserved_cache.neterr,
                                       &ps_oereserved_cache.extra );
       rc = ps_oereserved;
-      #if (CLIENT_OS == OS_OS2) && !defined(__EMX__)
-      soclose( sock );
-      #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || \
-            (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_BEOS)
-      closesocket( sock );
-      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
-      CloseSocket( sock );
-      #elif (CLIENT_OS == OS_VMS) && defined(MULTINET)
-      socket_close( sock );
-      #else
-      close( sock );
-      #endif
+      net_close_socket(sock);
       continue; // for; try next address
     }
 
@@ -2145,18 +2145,7 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
                                       &ps_oereserved_cache.neterr,
                                       &ps_oereserved_cache.extra );
       rc = ps_oereserved;
-      #if (CLIENT_OS == OS_OS2) && !defined(__EMX__)
-      soclose( sock );
-      #elif (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || \
-            (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_BEOS)
-      closesocket( sock );
-      #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
-      CloseSocket( sock );
-      #elif (CLIENT_OS == OS_VMS) && defined(MULTINET)
-      socket_close( sock );
-      #else
-      close( sock );
-      #endif
+      net_close_socket(sock);
       continue; // for; try next address
     }
 
