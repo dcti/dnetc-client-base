@@ -1850,7 +1850,14 @@ int netconn_write( void *cookie, const char * data, int length )
                    netstate->iotimeout);
     if (rc == 0) /* sent all or timed out. */
     {
-      rc = written; /* return the number of sent bytes */
+      if (written == 0) /* timed out */
+      {
+        rc = 0;
+      }
+      else
+      {
+        rc = length; /* return the requested length */
+      }
       if ((netstate->mode & MODE_HTTP)!=0)
         netstate->puthttpdone = 1;
     }
