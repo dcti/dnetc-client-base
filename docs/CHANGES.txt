@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.133 2015/10/21 22:29:12 stream Exp $
+Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 ==========================================================================
 
 2.9100

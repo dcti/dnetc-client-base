@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2015 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.272 2015/10/24 22:29:12 stream Exp $"; }
+return "@(#)$Id: client.cpp,v 1.272 2016/02/01 16:08:35 stream Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

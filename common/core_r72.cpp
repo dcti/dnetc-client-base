@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1998-2009 - All Rights Reserved
+ * Copyright distributed.net 1998-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.65 2015/10/22 19:33:01 stream Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.65 2016/02/01 17:16:00 ertyu Exp $"; }
 
 //#define TRACE
 
