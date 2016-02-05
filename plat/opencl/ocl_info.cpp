@@ -1,9 +1,9 @@
 /*
-* Copyright distributed.net 2009-2014 - All Rights Reserved
+* Copyright distributed.net 2009-2016 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: ocl_info.cpp 2014/08/19 22:18:25 gkhanna Exp $
+* $Id: ocl_info.cpp 2016/02/04 19:08:25 zebe Exp $
 */
 
 #include "ocl_info.h"
@@ -41,8 +41,9 @@ static unsigned GetDeviceID(/* unsigned vendor_id, cl_char *device_name, cl_uint
   size_t globalWorkSize[1];
   cl_int status;
   cl_uint id = 0;
+  cl_uint *outPtr;
 
-  // This code does not set coreID, so device must be implicitily reinited at start
+  // This code does not set coreID, so device must be implicitly reinited at start
   // and cleaned up at end.
   OCLReinitializeDevice(cont);
 
@@ -71,7 +72,7 @@ static unsigned GetDeviceID(/* unsigned vendor_id, cl_char *device_name, cl_uint
   if (status != CL_SUCCESS)
      goto finished;
 
-  cl_uint *outPtr = (cl_uint*) clEnqueueMapBuffer(cont->cmdQueue, cont->out_buffer, CL_TRUE, CL_MAP_READ, 0, 4, 0, NULL, NULL, &status);
+  outPtr = (cl_uint*) clEnqueueMapBuffer(cont->cmdQueue, cont->out_buffer, CL_TRUE, CL_MAP_READ, 0, 4, 0, NULL, NULL, &status);
   if (status == CL_SUCCESS)
   {
     id = outPtr[0];
