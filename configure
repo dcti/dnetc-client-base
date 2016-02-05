@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-2015 - All Rights Reserved
+# Copyright distributed.net 1998-2016 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.435 2015/06/27 21:52:52 zebe Exp $
+# @(#)$Id: configure,v 1.435 2016/02/04 19:12:52 zebe Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -3423,7 +3423,7 @@ case "$1" in
 
     *macosx-amd64-opencl)       # [zebe] Mac OS X 10.7+ 64-bit, Darwin (Xcode >= 5 recommended)
         TARGET_plat="-mmacosx-version-min=10.7 -DMACOSX_DEPLOYMENT_TARGET=10.7 -arch x86_64"
-        TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DOPENCL -DDYN_TIMESLICE $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
@@ -3433,7 +3433,7 @@ case "$1" in
 
     *macosx-x86-opencl)         # [zebe] Mac OS X 10.6+ 32-bit, Darwin (Xcode >= 5 recommended)
         TARGET_plat="-mmacosx-version-min=10.6 -DMACOSX_DEPLOYMENT_TARGET=10.6 -arch i386"
-        TARGET_CCFLAGS="$OPTS_CLANGCC_32 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_32 -DOPENCL -DDYN_TIMESLICE $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
