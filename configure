@@ -2654,15 +2654,24 @@ case "$1" in
         ### I've downloaded the root_fs_i386 from
         ### http://www.kernel.org/pub/linux/libs/uclibc/root_fs_i386.bz2
         ### chroot'ed into it and installed bc, cvs and nasm 
-        infer_arch_and_version "Linux"
+        #
+        # another way: create own crosscompile uClibc toolchain with 'buildroot' tool. [stream]
+        # things that'll break cross-compile commented out.
+        # put toolchain prefix here.
+        cross_prefix="/home/stream/work/buildroot-2015.11.1/output/host/usr/bin/i486-buildroot-linux-uclibc-"
+        TARGET_IS_CROSSCOMPILE=1
+#       infer_arch_and_version "Linux"
         TARGET_NASM_FMT="elf"
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "${inferred_arch}" "linux"
+        TARGET_AS="${cross_prefix}gcc -c"
+        TARGET_CC="${cross_prefix}gcc"
+        TARGET_STRIP="${cross_prefix}strip"
+#       generate_gcc_opts "${inferred_arch}" "linux"
+        generate_gcc_opts "x86" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_LIBS=""
-        TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}-uclibc"
+#       TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}-uclibc"
+        TARGET_TARBALL="linux-x86-${TARGET_NASM_FMT}-uclibc"
         TARGET_DOCFILES="docs/readme.linux docs/readme.uclib"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
         add_sources "uclibc" "x86"
