@@ -3423,7 +3423,7 @@ case "$1" in
         TARGET_CC="gcc"
         generate_gcc_opts "${inferred_arch}" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -DOPENCL -DDYN_TIMESLICE"
-        TARGET_LIBS="-lrt -lOpenCL"
+        TARGET_LIBS="-lrt -lOpenCL -lpthread"
         TARGET_USES_GNUMAKE="yes"        
         TARGET_DOCFILES="docs/readme.linux docs/readme.opencl"   #platform specific docfile
         TARGET_TARBALL="linux-amd64-opencl"
