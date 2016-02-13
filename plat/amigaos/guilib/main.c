@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -159,7 +159,7 @@ struct NewMenu ClientMenus[] = {
 
 const char AboutText[] =
    "distributed.net client - a product of distributed.net\n"
-   "%s\nCopyright (C) 1997-2010 distributed.net\n\n"
+   "%s\nCopyright (C) 1997-2016 distributed.net\n\n"
 #ifndef __amigaos4__
    "\33cAmigaOS clients maintained by\n"
 #else

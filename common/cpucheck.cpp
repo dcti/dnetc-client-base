@@ -604,6 +604,8 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x8020, "e500"                },
       {    0x8021, "e500v2"              },
       {    0x8023, "e500mc"              },
+      {    0x8024, "e5500"               },
+      {    0x8040, "e6500"               },
       {    0x8081, "5200 (G2)"           },
       {    0x8082, "5200 (G2-LE)"        },
 //    {    0x810x, "e200z5"              }, // last digit of rid???
@@ -831,6 +833,8 @@ static long __GetRawProcessorID(const char **cpuname)
            { "e500",            0x8020  },
            { "e500v2",          0x8021  },
            { "e500mc",          0x8023  },
+           { "e5500",           0x8024  },
+           { "e6500",           0x8040  },
 //         { "e200z5",          0x810x  },
 //         { "e200z6",          0x811x  },
            // Must find true rid's for these 
@@ -900,7 +904,7 @@ static long __GetRawProcessorID(const char **cpuname)
     #if defined(__amigaos4__)
     /* AmigaOS 4.x */
     ULONG cpu;
-    IExec->GetCPUInfoTags(GCIT_Model, &cpu, TAG_DONE);
+    GetCPUInfoTags(GCIT_Model, &cpu, TAG_DONE);
     switch (cpu)
     {
        case CPUTYPE_PPC603E:        detectedtype = 0x0006; break;
@@ -921,6 +925,8 @@ static long __GetRawProcessorID(const char **cpuname)
        case CPUTYPE_PPC440SP:       detectedtype = 0x5322; break;
        case CPUTYPE_PA6T_1682M:     detectedtype = 0x0090; break;
        case CPUTYPE_PPC460EX:       detectedtype = 0x1302; break;
+       case CPUTYPE_PPC5121E:       detectedtype = 0x0086; break;
+       case CPUTYPE_P50XX:          detectedtype = 0x8024; break;
        default: // some PPC processor that we don't know about
                 // set the tag (so that the user can tell us), but return 0
        sprintf(namebuf, "OS4:%ld", cpu );
@@ -2526,7 +2532,7 @@ unsigned int GetProcessorFrequency(int device)
   #elif (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
     #if defined(__amigaos4__)
       uint64 freqhz;
-      IExec->GetCPUInfoTags(GCIT_ProcessorSpeed, &freqhz, TAG_DONE);
+      GetCPUInfoTags(GCIT_ProcessorSpeed, &freqhz, TAG_DONE);
       if (freqhz != 0)
         freq = (freqhz + 500000) / 1000000;
     #elif !defined(__POWERUP__)
@@ -2713,7 +2719,7 @@ unsigned long GetProcessorFeatureFlags(int device)
         /* AmigaOS 4.x */
         ULONG vec;
         char *extensions;
-        IExec->GetCPUInfoTags(GCIT_VectorUnit, &vec, GCIT_Extensions, &extensions, TAG_DONE);
+        GetCPUInfoTags(GCIT_VectorUnit, &vec, GCIT_Extensions, &extensions, TAG_DONE);
 
         if ((vec == VECTORTYPE_ALTIVEC) &&
             (extensions && strstr(extensions,"altivec")) &&

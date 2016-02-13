@@ -38,6 +38,7 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
             imp: gpu: better handling of small blocks on fast GPUs
             imp: x86/amd64: Intel Xeon E5/E7 v3 (#4626,#4627)
             fix: threading on FreeBSD >= 10
+            imp: ppc: recognize e5500 and e6500 processors
 
 2.9111.520  imp: all: support for benchmarks > 2Gkeys/sec
             chg: all: increase max threads to 512
