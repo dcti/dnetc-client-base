@@ -155,15 +155,27 @@ int InitializeOpenCL(void)
           cont->maxWorkSize       = 2048 * 2048;
 
           /* Sanity check: size_t must be same width for both client and device */
+          /* Re-reading OpenCL specs, I found this check too paranoid. If implemented
+             correctly, difference in bitness must only limit maximum number of iterations
+             allowed to be requested from kernel (i.e. 64-bit host cannot request
+             more then 0xFFFFFFFF iterations from "32-bit" device. Client always requests
+             lesser value. So only log a message, just in case.
+          */
           cl_uint devbits;
           status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_ADDRESS_BITS, sizeof(devbits), &devbits, NULL);
+#if 0
+          /* Disabled, too paranoid */
           if (ocl_diagnose(status, "clGetDeviceInfo(CL_DEVICE_ADDRESS_BITS)", cont) != CL_SUCCESS)
             cont->active = false;
           else if (devbits != sizeof(size_t) * 8)
           {
-            Log("Error: Bitness of device %u (%u) does not match CPU (%u)!\n", offset, devbits, sizeof(size_t) * 8);
+            Log("Error: Bitness of device %u (%u) does not match CPU (%u)!\n", offset, devbits, (unsigned)(sizeof(size_t) * 8));
             cont->active = false;
           }
+#else
+          if (ocl_diagnose(status, "clGetDeviceInfo(CL_DEVICE_ADDRESS_BITS)", cont) == CL_SUCCESS && devbits != sizeof(size_t) * 8)
+            Log("size_t on device %u: %u bits, host: %u\n", offset, devbits, (unsigned)(sizeof(size_t) * 8));
+#endif
         }
       }
     }
