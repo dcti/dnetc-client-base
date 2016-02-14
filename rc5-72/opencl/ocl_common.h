@@ -38,7 +38,7 @@ void OCLReinitializeDevice(ocl_context_t *cont);
 
 s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork);
 cl_int ocl_diagnose(cl_int result, const char *where, ocl_context_t *cont);
-char* clStrError(cl_int status);
+const char* clStrError(cl_int status);
 bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *kernelName);
 
 #endif //OCL_COMMON_H

@@ -118,7 +118,7 @@ cl_int ocl_diagnose(cl_int result, const char *where, ocl_context_t *cont)
   return result;
 }
 
-char* clStrError(cl_int status)
+const char* clStrError(cl_int status)
 {
   switch (status) {
     case CL_SUCCESS:                            return "Success!";
@@ -263,7 +263,7 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
                            NULL );
     
     buf[log_size - 1] = '\0';
-    Log("Build log returned %d bytes\n", log_size);
+    Log("Build log returned %ld bytes\n", (long)log_size);
     LogRaw("Build Log:\n");
     LogRaw("%s\n", buf);
    

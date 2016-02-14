@@ -195,7 +195,7 @@ void OpenCLPrintExtendedGpuInfo(int device)
 
   cl_ulong gmemcache;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(gmemcache), &gmemcache, NULL);
-  if (status == CL_SUCCESS) LogRaw("%30s: %u\n", "Global memory cache size", gmemcache);
+  if (status == CL_SUCCESS) LogRaw("%30s: %lu\n", "Global memory cache size", gmemcache);
 
   cl_device_mem_cache_type ct;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof(ct), &ct, NULL);
@@ -229,12 +229,12 @@ void OpenCLPrintExtendedGpuInfo(int device)
 
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(gmemcache), &gmemcache, NULL);
   if (status == CL_SUCCESS)
-    LogRaw("%30s: %u\n", "Local memory size", gmemcache);
+    LogRaw("%30s: %lu\n", "Local memory size", gmemcache);
 
   size_t mwgs;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(mwgs), &mwgs, NULL);
   if (status == CL_SUCCESS)
-    LogRaw("%30s: %u\n", "Max workgroup size", mwgs);
+    LogRaw("%30s: %lu\n", "Max workgroup size", (unsigned long)mwgs);
 
   cl_uint nvw;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_NATIVE_VECTOR_WIDTH_INT, sizeof(nvw), &nvw, NULL);
@@ -251,7 +251,7 @@ void OpenCLPrintExtendedGpuInfo(int device)
   size_t ptres;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_PROFILING_TIMER_RESOLUTION, sizeof(ptres), &ptres, NULL);
   if (status == CL_SUCCESS)
-    LogRaw("%30s: %u\n", "Device timer resolution (ns)",ptres);
+    LogRaw("%30s: %lu\n", "Device timer resolution (ns)", (unsigned long)ptres);
 
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_VENDOR, sizeof(device_name), device_name, NULL);
   if (status == CL_SUCCESS)
