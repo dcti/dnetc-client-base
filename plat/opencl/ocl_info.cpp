@@ -19,6 +19,13 @@
 #include "deviceid.cpp"
 #include "../rc5-72/opencl/ocl_common.h"
 
+/* For printing 64-bit values. Probably it should be in common client compiler-specific stuff. */
+#if defined(_MSC_VER) && _MSC_VER <= 1600  /* At least MSVC 2010 does not have nor this nor "inttypes.h" */
+#define PRIu64 "I64u"
+#else
+#include <inttypes.h>
+#endif
+
 u32 getOpenCLDeviceFreq(int device)
 {
   ocl_context_t *cont = ocl_get_context(device);
@@ -195,7 +202,7 @@ void OpenCLPrintExtendedGpuInfo(int device)
 
   cl_ulong gmemcache;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(gmemcache), &gmemcache, NULL);
-  if (status == CL_SUCCESS) LogRaw("%30s: %lu\n", "Global memory cache size", gmemcache);
+  if (status == CL_SUCCESS) LogRaw("%30s: %" PRIu64 "\n", "Global memory cache size", gmemcache);
 
   cl_device_mem_cache_type ct;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof(ct), &ct, NULL);
@@ -229,7 +236,7 @@ void OpenCLPrintExtendedGpuInfo(int device)
 
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(gmemcache), &gmemcache, NULL);
   if (status == CL_SUCCESS)
-    LogRaw("%30s: %lu\n", "Local memory size", gmemcache);
+    LogRaw("%30s: %" PRIu64 "\n", "Local memory size", gmemcache);
 
   size_t mwgs;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(mwgs), &mwgs, NULL);
