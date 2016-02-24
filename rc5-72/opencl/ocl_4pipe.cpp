@@ -104,7 +104,8 @@ static bool FillConstantBuffer(const cl_mem buffer, RC5_72UnitWork *rc5_72unitwo
 
   //key_hi,key_mid,key_lo,granularity
   constPtr[0]=rc5_72unitwork->L0.hi;
-  constPtr[1]=swap32(rc5_72unitwork->L0.mid);
+  //constPtr[1]=swap32(rc5_72unitwork->L0.mid);
+  constPtr[1]=SWAP32(rc5_72unitwork->L0.mid);
   constPtr[2]=rc5_72unitwork->L0.lo;
   constPtr[3]=iter_offset;
 

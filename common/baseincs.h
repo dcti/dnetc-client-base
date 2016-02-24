@@ -1,11 +1,11 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.95 2013/10/14 01:43:12 snikkel Exp $"
+#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.97 2015/07/12 22:29:12 zebe Exp $"
 
 #include "cputypes.h"
 
@@ -207,7 +207,7 @@
   // clock_gettime is called getclock (used in clitime.cpp)
   #include <sys/timers.h> /* int getclock */ 
   #define clock_gettime(a,b) (getclock(a,b))
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
   #include <sys/time.h>
   #include <sys/file.h>
   #include <unistd.h>
@@ -229,6 +229,11 @@
 #elif (CLIENT_OS == OS_MACOSX)
   #include <sys/time.h>
   #include <sys/vmparam.h> //USRSTACK
+  #include <sys/sysctl.h>
+  #include <unistd.h>
+  #include <fcntl.h> /* O_RDWR etc */
+#elif (CLIENT_OS == OS_IOS)
+  #include <sys/time.h>
   #include <sys/sysctl.h>
   #include <unistd.h>
   #include <fcntl.h> /* O_RDWR etc */

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2012 - All Rights Reserved
+ * Copyright distributed.net 1997-2013 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -18,7 +18,7 @@
 */
 
 const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.45 2012/06/25 00:29:59 piru Exp $"; }
+return "@(#)$Id: triggers.cpp,v 1.46 2013/12/15 17:11:00 zebe Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -332,12 +332,24 @@ static const char *__mangle_pauseapp_name(const char *name, int unmangle_it )
       (CLIENT_CPU == CPU_X86)
 #include <fcntl.h>
 #include <machine/apm_bios.h>
+
 #elif (CLIENT_OS == OS_MACOSX)
+#include <CoreFoundation/CoreFoundation.h>
+#if (CLIENT_CPU != CPU_PPC)
+#include <Availability.h> /* only available in 10.6+ */
+#endif
+#if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
+#include <IOKit/ps/IOPowerSources.h>
+#else
 #include <IOKit/IOKitLib.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include <IOKit/pwr_mgt/IOPM.h>
-#include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach_init.h> /* for bootstrap_port */
+#endif
+
+#elif (CLIENT_OS == OS_IOS)
+/* TBD */
+
 #elif (CLIENT_OS == OS_MORPHOS)
 int morphos_isrunningonbattery(void);
 LONG morphos_cputemp(void);
@@ -373,7 +385,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         /* third condition is 0xff ("unknown"), so fall through */
       }
     }
-    #elif (CLIENT_OS == OS_LINUX) && ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64))
+    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && \
+          ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64))
     {
       // requires the ac kernel module
       int fd = open("/sys/class/power_supply/AC/online", O_RDONLY);
@@ -394,7 +407,8 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
         }
       }
     }
-    #elif (CLIENT_OS == OS_LINUX) && (CLIENT_CPU == CPU_X86)
+    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && \
+          (CLIENT_CPU == CPU_X86)
     {
       static long time_last = 0;
       long time_now = (time(0)/60); /* not more than once per minute */
@@ -656,6 +670,15 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
       trigstatics.pause_if_no_mains_power = 0;
     } /* #if (NetBSD && i386) */
     #elif (CLIENT_OS == OS_MACOSX)
+    #if defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
+    /* cheaper, easier check available in 10.7+ */
+    if (IOPSGetTimeRemainingEstimate() != kIOPSTimeRemainingUnlimited) {
+      return 1; /* we don't have AC */
+    } else {
+      return 0; /* we have AC power */
+    }
+    #else
+    /* old way for 10.0-10.6 */
     mach_port_t master;
     /* Initialize the connection to IOKit */
     if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess )
@@ -685,6 +708,7 @@ static int __IsRunningOnBattery(void) /*returns 0=no, >0=yes, <0=err/unknown*/
     } /* if( IOMasterPort(bootstrap_port, &master) == kIOReturnSuccess ) */
     /* We dont seem to have a PowerManager, disable battery checking. */
     trigstatics.pause_if_no_mains_power = 0;
+    #endif /* #if OS X 10.7+ */
     #elif (CLIENT_OS == OS_MORPHOS)
     {
       int status = morphos_isrunningonbattery();
@@ -1210,7 +1234,7 @@ void pascal __far16 MoreOS2Signals(USHORT sigArg, USHORT sigNumber)
 
 // -----------------------------------------------------------------------
 
-#if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) || \
+#if (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS)) || \
    defined(HAVE_MULTICRUNCH_VIA_FORK)
 /* forward all signals to the parent process */
 static void sig_forward_to_parent( int nsig )
@@ -1221,8 +1245,8 @@ static void sig_forward_to_parent( int nsig )
 
 int TriggersSetThreadSigMask(void)
 {
-#if ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS)) \
-    || defined(HAVE_MULTICRUNCH_VIA_FORK)
+#if (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS)) || \
+    defined(HAVE_MULTICRUNCH_VIA_FORK)
   /* setup signal forwarding */
 
   int sigs[] = { SIGINT, SIGTERM, SIGKILL, SIGHUP, SIGCONT,
@@ -1249,7 +1273,7 @@ int TriggersSetThreadSigMask(void)
   }
 
   #if defined(_POSIX_THREADS_SUPPORTED) /* must be first */
-    #if ((CLIENT_OS == OS_LINUX) && defined(_MIT_POSIX_THREADS)) \
+    #if (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(_MIT_POSIX_THREADS)) \
        || (CLIENT_OS == OS_DGUX)
     /* nothing - no pthread_sigmask() and no alternative */
     #else
@@ -1258,7 +1282,7 @@ int TriggersSetThreadSigMask(void)
   #elif (CLIENT_OS == OS_SOLARIS) || (CLIENT_OS == OS_SUNOS)
   thr_sigsetmask(SIG_BLOCK, &signals_to_block, NULL);
   #elif defined(HAVE_MULTICRUNCH_VIA_FORK) || \
-        ((CLIENT_OS == OS_LINUX) && defined(HAVE_KTHREADS))
+        (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS))
   sigprocmask(SIG_BLOCK, &signals_to_block, NULL);
   #endif
 #endif

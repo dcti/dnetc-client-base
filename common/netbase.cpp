@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2000-2008 - All Rights Reserved
+ * Copyright distributed.net 2000-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  */
@@ -65,7 +65,7 @@
  *
 */
 const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.22 2012/08/08 19:57:14 sla Exp $"; }
+return "@(#)$Id: netbase.cpp,v 1.23 2014/02/07 18:55:14 snikkel Exp $"; }
 
 //#define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */
@@ -232,6 +232,8 @@ return "@(#)$Id: netbase.cpp,v 1.22 2012/08/08 19:57:14 sla Exp $"; }
     #define _BSD_SOCKLEN_T_ int32_t     // Missing in SDKs < 10.3.0
     typedef _BSD_SOCKLEN_T_ socklen_t;
   #endif
+#elif (CLIENT_OS == OS_IOS)
+  /* nothing; socklen_t already defined */
 #elif ((CLIENT_OS == OS_BSDOS) && (_BSDI_VERSION < 199701))
   #define socklen_t size_t
   /* only needed for old BSD/OS (before 4.x) */
@@ -1687,7 +1689,7 @@ static int net_ioctl( SOCKET sock, unsigned long opt, int *i_optval )
   #elif (CLIENT_OS == OS_AMIGAOS) || (CLIENT_OS == OS_MORPHOS)
     if (IoctlSocket(sock, opt, (char *)i_optval)!=0) return ps_stdneterr;
     return 0;
-  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
   	   /*use ioctl to avoid 2.0+2.1 vs 2.2+ trouble*/
     unsigned int optval = (unsigned int)*i_optval;
     if (ioctl(sock, opt, &optval )!=0) return ps_stdneterr;
@@ -1959,7 +1961,7 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
   {
     TRACE_OPEN((+1,"socket( )\n" ));
     sock = socket(r->ai_family, r->ai_socktype, r->ai_protocol);
-    TRACE_OPEN((-1,"socket( ) => %d%s\n",sock, trace_expand_api_rc(((sock==-1)?(-1):(0)),sock) ));
+    TRACE_OPEN((-1,"socket( ) => %d%s family %d\n",sock, trace_expand_api_rc(((sock==-1)?(-1):(0)),sock),r->ai_family ));
     if (sock == -1)
     {
       rc = ps_stdneterr;
@@ -1979,10 +1981,7 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
       }
       else
       {
-        net_close(sock);
-        if ((--open_endpoint_count)==0)
-          net_init_check_deinit(-1,0);
-        return rc;
+         break;
       }
     } /* if (sock != -1) */
 
@@ -2117,17 +2116,36 @@ int net_open(SOCKET *sockP, const char *srv_hostname, int srv_port,
       rc = ps_oereserved;
       continue; // for; try next address
     }
+
+    // test for connection failure
+    int result_events = __bsd_quick_disco_look(sock, 0);
+    if (result_events == 0) // success
+      break; // for; use this address
+    else if (result_events == ps_T_DISCONNECT)
+      rc = ps_stdneterr;
+    else if (result_events == ps_T_ORDREL)
+      rc = ps_EDISCO;
+
+    if (rc != 0)
+    {
+      ps_oereserved_cache.ps_errnum = ___read_errnos( INVALID_SOCKET, rc,
+                                      &ps_oereserved_cache.syserr,
+                                      &ps_oereserved_cache.neterr,
+                                      &ps_oereserved_cache.extra );
+      rc = ps_oereserved;
+      continue; // for; try next address
+    }
+
   } // for addrinfo
   freeaddrinfo(ai_res);
 
   if (rc != 0)
   {
-    net_close(sock);
-    if ((--open_endpoint_count)==0)
-      net_init_check_deinit(-1,0);
-    return rc;
+    int ret = net_close(sock);
+    if (ret != 0)
+      if ((--open_endpoint_count)==0)
+        net_init_check_deinit(-1,0);
   }
-
   TRACE_CONNECT((-1, "net_open(...) => %d%s\n", rc, trace_expand_ps_rc(rc,sock)));
   return rc;
 }

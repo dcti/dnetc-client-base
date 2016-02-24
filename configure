@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-2009 - All Rights Reserved
+# Copyright distributed.net 1998-2015 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
-# @(#)$Id: configure,v 1.433 2013/10/15 00:03:21 snikkel Exp $
+# @(#)$Id: configure,v 1.435 2015/06/27 21:52:52 zebe Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -64,8 +64,17 @@ TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
 TARGET_IS_CROSSCOMPILE=""
 if [ -x /usr/bin/nvcc ]; then
 TARGET_CUDA_INSTALL_PATH=""
+elif [ -d /Developer/NVIDIA ]; then
+TARGET_CUDA_INSTALL_PATH="/Developer/NVIDIA/CUDA-5.5"
+elif [ -d $(find /usr/local -maxdepth 1 -name 'cuda-*' -print -quit) ]; then
+TARGET_CUDA_INSTALL_PATH=$(find /usr/local -maxdepth 1 -name 'cuda-*' -print -quit)
 else
 TARGET_CUDA_INSTALL_PATH="/usr/local/cuda"
+fi
+if [ -d "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib64" ]; then
+TARGET_CUDA_LIB_PATH="${TARGET_CUDA_INSTALL_PATH:-/usr}/lib64"
+else
+TARGET_CUDA_LIB_PATH="${TARGET_CUDA_INSTALL_PATH:-/usr}/lib"
 fi
 TARGET_CUDA_VERSION="x.y"
 TARGET_NVCC="${TARGET_CUDA_INSTALL_PATH:+${TARGET_CUDA_INSTALL_PATH}/bin/}nvcc"
@@ -160,7 +169,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       #(obsolete) TARGET_CCFLAGS="$TARGET_CCFLAGS -DUNIVERSALRESOLVER"
       COMMON_SRCS="plat/linux/resolv.c ${COMMON_SRCS}"
     fi
-  elif [ "$1" = "uclibc" ]; then
+  elif [ "$1" = "uclibc" -o "$1" = "android" ]; then
     COMMON_SRCS="plat/linux/li_inst.c ${COMMON_SRCS}"
   elif [ "$1" = "riscos" ]; then
     COMMON_SRCS="plat/riscos/riscos_sup.cpp \
@@ -498,6 +507,23 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi
   #-----------------------------------------------------------------
+  elif [ "$2" = "arm64" ]; then
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      DEFAULT_RC5_72="1"
+    fi # HAVE_RC5_72
+    
+    if [ "$HAVE_OGR" = "1" ]; then
+      DEFAULT_OGRNG="0"     # don't add the 32-bit ansi core
+      # add the 64-bit core
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-64.cpp"
+    fi
+
+    if [ "$HAVE_OGR_P2" = "1" ]; then
+      DEFAULT_OGR="0"       # don't add the 32-bit ansi core
+      # add the 64-bit core
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogrp2-64.cpp"
+    fi
+  #-----------------------------------------------------------------
   elif [ "$2" = "arm" ]; then
     if [ "$HAVE_RC5_72" = 1 ]; then
       DEFAULT_RC5_72="0"
@@ -577,8 +603,8 @@ add_sources() # $1=os, $2=arch, $3=custom
       if [ "$2" = "s390x" ]; then
 #        DEFAULT_RC5_72="0"
         TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/s390x/r72ansi1-s390x-gcc32.S \
-					rc5-72/s390x/r72ansi2-s390x-gcc32.S \
-					rc5-72/s390x/r72ansi4-s390x-gcc32.S"
+          rc5-72/s390x/r72ansi2-s390x-gcc32.S \
+          rc5-72/s390x/r72ansi4-s390x-gcc32.S"
       fi
     fi # HAVE_RC5_72
 
@@ -738,6 +764,28 @@ add_sources() # $1=os, $2=arch, $3=custom
     fi # HAVE_RC5_72
 
   #-----------------------------------------------------------------
+  elif [ "$2" = "opencl" ]; then
+
+    HAVE_OGR="0"
+    HAVE_OGR_P2="0"
+    TARGET_HDIRS="$TARGET_HDIRS ./plat/opencl"
+
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                          plat/opencl/ocl_info.cpp \
+                          plat/opencl/ocl_setup.cpp"
+
+    # -------------- rc5-72 --------------
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      DEFAULT_RC5_72="0"     # don't add the ansi cores
+      TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                          rc5-72/opencl/ocl_common.cpp \
+                          rc5-72/opencl/ocl_ref.cpp \
+                          rc5-72/opencl/ocl_1pipe.cpp \
+                          rc5-72/opencl/ocl_2pipe.cpp \
+                          rc5-72/opencl/ocl_4pipe.cpp"
+    fi # HAVE_RC5_72
+
+  #-----------------------------------------------------------------
   else
     echo "Warning. Unknown arch '$2' to add_sources. Using all-ANSI cores."
   fi
@@ -811,7 +859,7 @@ inferred_cuda_version=""
 inferred_cuda_major=0
 inferred_cuda_minor=0
 infer_cuda_version() { # $1=configure target
-  # check if a version was given explicitely
+  # check if a version was given explicitly
   case "internal-$1" in
     internal-*-cuda20)
       inferred_cuda_version="2.0"
@@ -831,11 +879,23 @@ infer_cuda_version() { # $1=configure target
     internal-*-cuda31)
       inferred_cuda_version="3.1"
       ;;
+    internal-*-cuda55)
+      inferred_cuda_version="5.5"
+      ;;
+    internal-*-cuda60)
+      inferred_cuda_version="6.0"
+      ;;
+    internal-*-cuda65)
+      inferred_cuda_version="6.5"
+      ;;
+    internal-*-cuda70)
+      inferred_cuda_version="7.0"
+      ;;
     internal-*-cuda)
-      for _ver in $TARGET_CUDA_VERSION 3.1 3.0 2.3 2.2 2.1 2.0
+      for _ver in $TARGET_CUDA_VERSION 7.0 6.5 6.0 5.5 3.1 3.0 2.3 2.2 2.1 2.0
       do
-        if [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}" ] || \
-           [ -f "${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${_ver}".* ]; then
+        if [ -f "${TARGET_CUDA_LIB_PATH}/libcudart.so.${_ver}" ] || \
+           [ -f "${TARGET_CUDA_LIB_PATH}/libcudart.so.${_ver}".* ]; then
           inferred_cuda_version="$_ver"
           break
         fi
@@ -853,6 +913,8 @@ infer_cuda_version() { # $1=configure target
   TARGET_CUDA_VERSION="${inferred_cuda_major}.${inferred_cuda_minor}"
   inferred_cuda_version_expected="${inferred_cuda_major}0${inferred_cuda_minor}0"
   inferred_cuda_tarball_suffix="-cuda${inferred_cuda_major}${inferred_cuda_minor}"
+  cudaver=$(echo "($inferred_cuda_major * 100)+$inferred_cuda_minor" | bc)
+  #echo $cudaver
 }
 
 # -------------------------------------------------------------------
@@ -1282,6 +1344,16 @@ OPTS_MWCC_PPC604="$OPTS_MWCC -proc 604e"
 OPTS_WATCOMCC="-DASM_X86 -Osax -4 -mf"
 #OPTS_WATCOMCC="-DASM_X86 -g"
 
+#-- Apple LLVM version 5.0 (clang-500.2.79) (based on LLVM 3.3svn)
+
+OPTS_CLANGCC="-W -Wall -Wpointer-arith -Wcast-align \
+-Wconversion -Winline -Waggregate-return \
+-Wcast-qual -Woverloaded-virtual -Os \
+-Wno-shorten-64-to-32 -Wno-sign-conversion \
+-fno-exceptions -fno-rtti"
+OPTS_CLANGCC_32="$OPTS_CLANGCC -DASM_X86"
+OPTS_CLANGCC_64="$OPTS_CLANGCC -DASM_AMD64"
+
 # -------------------------------------------------------------------------
 
 #
@@ -1329,11 +1401,11 @@ COMMON_SRCS="\
 
 # conditional addition if files are present
 #
-if [ -f "common/scram.cpp" -o -f "common/scram.h" -o \
-     -f "common/buffpriv.cpp" -o -f "common/buffupd.cpp" ]; then
-COMMON_SRCS="common/buffpriv.cpp \
-             common/scram.cpp    \
-             common/buffupd.cpp  \
+if [ -f "../private/scram.cpp" -o -f "../private/scram.h" -o \
+     -f "../private/buffpriv.cpp" -o -f "../private/buffupd.cpp" ]; then
+COMMON_SRCS="../private/buffpriv.cpp \
+             ../private/scram.cpp    \
+             ../private/buffupd.cpp  \
              ${COMMON_SRCS}"
 else
 COMMON_SRCS="common/buffpub.cpp \
@@ -1522,16 +1594,55 @@ case "$1" in
         add_sources "linux" "arm" "elf"
         ;;
 
-    *android-arm-eabi)		# [yoyo mikereed]
+    *android-arm-eabi-r9)       # [yoyo mikereed]
         TARGET_CC="arm-linux-androideabi-gcc"
         TARGET_AS="arm-linux-androideabi-gcc -c"
         #generate_gcc_opts "arm" "eabi" #?
         TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID  -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -I$TCINCLUDES/include"
         TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="android-arm-eabi"
+        TARGET_TARBALL="android-arm-eabi-r9"
         TARGET_STRIP="arm-linux-androideabi-strip"
         add_sources "linux" "arm" "elf"
+        ;;
+
+    *android-arm-eabi-r16)      # [yoyo mikereed]
+        TARGET_CC="arm-linux-androideabi-gcc"
+        TARGET_AS="arm-linux-androideabi-gcc -c"
+        #generate_gcc_opts "arm" "eabi" #?
+        TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID  -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -I$TCINCLUDES/include -fPIE"
+        TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="android-arm-eabi-r16"
+        TARGET_STRIP="arm-linux-androideabi-strip"
+        add_sources "linux" "arm" "elf"
+        ;;
+
+    *android-arm-eabi-r16)      # [yoyo mikereed]
+        TARGET_CC="arm-linux-androideabi-gcc"
+        TARGET_AS="arm-linux-androideabi-gcc -c"
+        #generate_gcc_opts "arm" "eabi" #?
+        TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID  -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -I$TCINCLUDES/include -fPIE"
+        TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="android-arm-eabi-r16"
+        TARGET_STRIP="arm-linux-androideabi-strip"
+        add_sources "linux" "arm" "elf"
+        ;;
+
+    *android-x86)               # [yoyo mikereed]
+        TARGET_CC="i686-linux-android-gcc"
+        TARGET_AS="i686-linux-android-gcc -c"
+        TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf"
+        TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -fPIE"
+        TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
+        TARGET_LDFLAGS="-fPIE -pie"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="android-x86"
+        TARGET_STRIP="i686-linux-android-strip"
+        TARGET_IS_CROSSCOMPILE="1"
+        add_sources "android" "x86"
         ;;
 
     *linux-arm-elf_single)      # [teichp]
@@ -1607,6 +1718,28 @@ case "$1" in
         TARGET_ARCTYPE="riscoszip"
         TARGET_IS_CROSSCOMPILE=1
         add_sources "riscos" "arm" "gccsdk"
+        ;;
+
+    *ios-arm64)              # [zebe] iOS 7+, 64-bit (Xcode >= 6 recommended)
+        TARGET_plat="-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.1 -DIPHONEOS_DEPLOYMENT_TARGET=7.1 -DTARGETED_DEVICE_FAMILY=\"1,2\" -arch arm64"
+        TARGET_CCFLAGS="$OPTS_CLANGCC -Os -DHAVE_POSIX_THREADS $TARGET_plat"
+        TARGET_LIBS="-framework CoreFoundation"
+        TARGET_LDFLAGS="$TARGET_plat"
+        TARGET_IS_CROSSCOMPILE=1
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="ios-arm64"
+        add_sources "ios" "arm64"
+        ;;
+        
+    *ios-arm)              # [zebe] iOS 5+, 32-bit (Xcode >= 5 recommended)
+        TARGET_plat="-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=5.1 -DIPHONEOS_DEPLOYMENT_TARGET=5.1 -DTARGETED_DEVICE_FAMILY=\"1,2\" -arch armv7"
+        TARGET_CCFLAGS="$OPTS_CLANGCC -Os -DHAVE_POSIX_THREADS $TARGET_plat"
+        TARGET_LIBS="-framework CoreFoundation"
+        TARGET_LDFLAGS="$TARGET_plat"
+        TARGET_IS_CROSSCOMPILE=1
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="ios-arm"
+        add_sources "ios" "generic"
         ;;
 
 # IA64 *****************************************************************
@@ -1860,6 +1993,28 @@ case "$1" in
         add_sources "linux" "mips" "ps2"
         ;;
 
+    *linux-mips32el)            # [mikereed ertyu]
+        TARGET_CC="gcc"
+        generate_gcc_opts "mips" "linux" "EL"
+        TARGET_CCFLAGS="$OPTS_GCC -march=mips32 -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS=""
+        TARGET_LIBS="-lrt -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-mips32el"    
+        add_sources "linux" "mips"
+        ;;
+
+    *linux-mips64)              # [mikereed ertyu]
+        TARGET_CC="gcc"
+        generate_gcc_opts "mips64" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -march=mips64 -mabi=64 -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS="-mabi=64"              
+        TARGET_LIBS="-lrt -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-mips64"      
+        add_sources "linux" "mips64"
+        ;;
+        
     *sinix-mips)                # MIPS SINIX
         TARGET_CC="g++"
         generate_gcc_opts "mips" "sinix"
@@ -2085,7 +2240,7 @@ case "$1" in
         add_sources "netbsd" "sparc64"
         ;;
 
-    *linux-sparc-v7)               # [teichp mikereed]
+    *linux-sparc-v7)            # [teichp mikereed]
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
         generate_gcc_opts "sparc" "linux"
@@ -2097,29 +2252,29 @@ case "$1" in
         add_sources "linux" "sparc"
         ;;
 
-    *linux-sparc-v8)		# [teichp mikereed]
-	TARGET_CC="gcc"
-	TARGET_AS="gcc -c"
-	generate_gcc_opts "sparc" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -mcpu=v8"
-	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lrt"
-	TARGET_DOCFILES="docs/readme._ix"  #platform specific docfile
-	TARGET_TARBALL="linux-sparc-v8"
-	add_sources "linux" "sparc"
-	;;
+    *linux-sparc-v8)            # [teichp mikereed]
+        TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        generate_gcc_opts "sparc" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -mcpu=v8"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lrt"
+        TARGET_DOCFILES="docs/readme._ix"  #platform specific docfile
+        TARGET_TARBALL="linux-sparc-v8"
+        add_sources "linux" "sparc"
+        ;;
 
-    *linux-sparc-v9)		# [teichp mikereed]
-	TARGET_CC="gcc"
-	TARGET_AS="gcc -c"
-	generate_gcc_opts "sparc" "linux"
-	TARGET_CCFLAGS="$OPTS_GCC -mcpu=v9"
-	TARGET_LDFLAGS="-static"
-	TARGET_LIBS="-lrt"
-	TARGET_DOCFILES="docs/readme._ix"  #platform specific docfile
-	TARGET_TARBALL="linux-sparc-v9"
-	add_sources "linux" "sparc"
-	;;
+    *linux-sparc-v9)            # [teichp mikereed]
+        TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        generate_gcc_opts "sparc" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -mcpu=v9"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lrt"
+        TARGET_DOCFILES="docs/readme._ix"  #platform specific docfile
+        TARGET_TARBALL="linux-sparc-v9"
+        add_sources "linux" "sparc"
+        ;;
 
     *sunos-sparc-gcc-nomt)      # [ivo] sunos413/nomt
         TARGET_CC="gcc"
@@ -2141,7 +2296,6 @@ case "$1" in
         TRAGET_TARBALL="solaris26-sparc-nomt"
         add_sources "solaris" "sparc"
         ;;
-
 
     *solaris-sparc-gcc)         # [andreasb] sparc/v7
         TARGET_CC="gcc"
@@ -2173,7 +2327,6 @@ case "$1" in
         TARGET_TARBALL="solaris26-ultrasparc"
         add_sources "solaris" "sparc"
         ;;
-
 
     *solaris-sparc-cc-v7)       # [andreasb] sparc/v7
         TARGET_CC="CC"
@@ -2279,7 +2432,7 @@ case "$1" in
 
 ###### PowerPC/POWER
 
-    *linux-ppc)	                # [myshkin] linux-ppc
+    *linux-ppc)                 # [myshkin] linux-ppc
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2316,7 +2469,7 @@ case "$1" in
         add_sources "netbsd" "ppc" "altivec" # with AltiVec
         ;;
 
-    *openbsd-ppc)                # [snake] for Macs and Freescale boards
+    *openbsd-ppc)               # [snake] for Macs and Freescale boards
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
@@ -2328,14 +2481,14 @@ case "$1" in
         add_sources "openbsd" "ppc" "altivec" # with AltiVec
         ;;
 
-    *macosx-ppc)                # [mfeiri] (MACH 3.x based: MacOS X, Darwin, requires XCode <= 3.1)
+    *macosx-ppc)                # [mfeiri] (MACH 3.x based: Mac OS X, Darwin, req Xcode <= 3.1)
         #TARGET_CC="/usr/bin/gcc-3.3"
-	#gcc-3.3 doesn't work with isysroot or macosx-version-min
+        #gcc-3.3 doesn't work with isysroot or macosx-version-min
         TARGET_CC="/usr/bin/gcc"
         generate_gcc_opts "ppc" "macosx"
         TARGET_plat="-mmacosx-version-min=10.0 -DMACOSX_DEPLOYMENT_TARGET=10.0 -isysroot /Developer/SDKs/MacOSX10.2.8.sdk"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -mdynamic-no-pic $TARGET_plat"
-	TARGET_LDFLAGS="$TARGET_plat"
+        TARGET_LDFLAGS="$TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
@@ -2380,7 +2533,7 @@ case "$1" in
         TARGET_AS="gas"
         TARGET_CC="g++"
         generate_gcc_opts "power" "aix"
- 
+
         # gcc's < 3.2 used -mthreads
         TARGET_CCFLAGS="$OPTS_GCC -pthread"
         #TARGET_CCFLAGS="$OPTS_GCC -mthreads"
@@ -2440,7 +2593,7 @@ case "$1" in
         add_sources "linux" "cellbe" "altivec"
         ;;
 
-    *linux-cellbe-uclibc*)         # using uClibc
+    *linux-cellbe-uclibc*)      # using uClibc
         # 1. Need uClibc toolchain in the path, see buildroot.uclibc.org
         # 2. Must build libspe2 (http://libspe.sourceforge.net) with uClibc first
         #    and install libs/includes to uClibc toolchain tree.
@@ -2612,6 +2765,7 @@ case "$1" in
         case internal-${inferred_arch} in
           internal-amd64)
             TARGET_NASM="yasm"
+            TARGET_NASM_FMT="elf64"
             add_sources "freebsd" "${inferred_arch}"
             ;;
           internal-x86)
@@ -2713,17 +2867,13 @@ case "$1" in
         add_sources "bsdos" "x86"
         ;;
 
-    *macosx-x86)                # [mfeiri] Mac OS X, Darwin (requires XCode >=2.1 && <=3.2)
-        TARGET_CC="/usr/bin/gcc-4.0"
-        generate_gcc_opts "x86" "macosx"
-        TARGET_plat="-mmacosx-version-min=10.4 -DMACOSX_DEPLOYMENT_TARGET=10.4 -isysroot /Developer/SDKs/MacOSX10.6.sdk -arch i386"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS $TARGET_plat"
+    *macosx-x86)                # [zebe] Mac OS X 10.6+ 32-bit, Darwin (Xcode >= 5 recommended)
+        TARGET_plat="-mmacosx-version-min=10.6 -DMACOSX_DEPLOYMENT_TARGET=10.6 -arch i386"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_32 -DHAVE_POSIX_THREADS $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_plat"
-
-        TARGET_NASM="/opt/local/bin/nasm" # use nasm 2.08 or newer
+        TARGET_NASM="/opt/local/bin/nasm"
         TARGET_NASM_FMT="macho"
-
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-x86"
         add_sources "macosx" "x86"
@@ -2765,7 +2915,7 @@ case "$1" in
         add_sources "nto2" "x86"
         ;;
 
-    *sco5-x86)			# SCO OpenServer 5.0.x pfeffi, ELF binaries
+    *sco5-x86)                  # SCO OpenServer 5.0.x pfeffi, ELF binaries
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "x86" "sco"
@@ -2818,6 +2968,7 @@ case "$1" in
         TARGET_CC="g++"
         generate_gcc_opts "amd64" "netbsd"
         TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -2831,6 +2982,7 @@ case "$1" in
         TARGET_CC="eg++"
         generate_gcc_opts "amd64" "openbsd"
         TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -2838,22 +2990,13 @@ case "$1" in
         add_sources "openbsd" "amd64"
         ;;
 
-    *macosx-amd64)              # [mfeiri] Mac OS X, Darwin (requires XCode >= 3.2)
-        generate_gcc_opts "amd64" "macosx"
-        TARGET_plat="-mmacosx-version-min=10.5 -DMACOSX_DEPLOYMENT_TARGET=10.5 -isysroot /Developer/SDKs/MacOSX10.6.sdk -arch x86_64"
-        #TARGET_CC="/Developer/usr/bin/llvm-g++"
-        TARGET_CC="/Developer/usr/bin/clang"
-        #TARGET_CC="/Developer/usr/bin/g++"
-        #TARGET_CC="/opt/local/bin/clang"
-        #TARGET_CC="/opt/local/bin/llvm-g++"
-        #TARGET_CC="/opt/local/bin/g++-mp-4.6" # requires >=4.6 to process CoreFoundation headers
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS $TARGET_plat"
-        TARGET_LIBS="-framework IOKit -framework CoreFoundation -weak_framework OpenCL"
+    *macosx-amd64)              # [zebe] Mac OS X 10.7+ 64-bit, Darwin (Xcode >= 5 recommended)
+        TARGET_plat="-mmacosx-version-min=10.7 -DMACOSX_DEPLOYMENT_TARGET=10.7 -arch x86_64"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DHAVE_POSIX_THREADS $TARGET_plat"
+        TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_plat"
-        
         TARGET_NASM="/opt/local/bin/yasm"
         TARGET_NASM_FMT="macho64"
-        
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-amd64"
         add_sources "macosx" "amd64"
@@ -2960,7 +3103,7 @@ case "$1" in
         add_sources "linux" "hppa"
         ;;
 
-    *linux-s390)	        # [pstadt] 31 Bit Linux on G5/G6 or older
+    *linux-s390)                # [pstadt] 31 Bit Linux on G5/G6 or older
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2971,7 +3114,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *linux-s390-static)	        # [pstadt] 31 Bit Linux on G5/G6 or older
+    *linux-s390-static)         # [pstadt] 31 Bit Linux on G5/G6 or older
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2983,7 +3126,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *linux-s390-z)		# [pstadt] 31 Bit Linux on z/Architecture
+    *linux-s390-z)              # [pstadt] 31 Bit Linux on z/Architecture
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -2994,7 +3137,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *linux-s390-z-static)	# [pstadt] 31 Bit Linux on z/Architecture
+    *linux-s390-z-static)       # [pstadt] 31 Bit Linux on z/Architecture
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390" "linux"
@@ -3006,7 +3149,7 @@ case "$1" in
         add_sources "linux" "s390"
         ;;
 
-    *linux-s390x)	        # [pstadt] 64 Bit Linux on z/Architecture
+    *linux-s390x)               # [pstadt] 64 Bit Linux on z/Architecture
         TARGET_AS="gcc -c"
         TARGET_CC="gcc"
         generate_gcc_opts "s390x" "linux"
@@ -3200,6 +3343,7 @@ case "$1" in
 ###### CUDA
 
     *linux-cuda*)               # use -cuda20 or -cuda21 to specify CUDA version
+	TARGET_CUDA_VERSION="6.0" # default
         infer_cuda_version "$1"
         infer_arch_and_version "Linux"
         TARGET_AS="gcc -c"         
@@ -3209,32 +3353,36 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DEXPECTED_CUDA_VERSION=${inferred_cuda_version_expected}"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_LIB_PATH}"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -Wl,-rpath=\\\$\$ORIGIN/lib,-rpath=${TARGET_CUDA_LIB_PATH}"
+        # Need the CUDA libs to be able to run the testplat program
+        export LD_LIBRARY_PATH="${TARGET_CUDA_LIB_PATH}"
         TARGET_LIBS="-lcudart -lrt"
         TARGET_TARBALL="linux-${inferred_arch}${inferred_cuda_tarball_suffix}"
         TARGET_DOCFILES="docs/readme.linux docs/readme.cuda"   #platform specific docfile
-        TARGET_LIBFILES="plat/cuda/cudatoolkit_eula.txt ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${TARGET_CUDA_VERSION%%.*} ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.so.${TARGET_CUDA_VERSION}*"
+        TARGET_LIBFILES="plat/cuda/cudatoolkit_eula.txt $TARGET_CUDA_LIB_PATH/libcudart.so.${TARGET_CUDA_VERSION%%.*} $TARGET_CUDA_LIB_PATH/libcudart.so.${TARGET_CUDA_VERSION}*"
         TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "cuda"
         ;;
 
-    *macosx-cuda*)              # Mac OS X, Darwin plus CUDA, use -cuda20 or -cuda21 to specify CUDA version
-        TARGET_CUDA_VERSION="3.0"  # default, can't autodetect by looking at file names
+    *macosx-cuda*)              # Mac OS X 10.7+, Darwin 64-bit + CUDA (specify vers w/ -cuda55)
+        TARGET_CUDA_VERSION="5.5" # default
         infer_cuda_version "$1"
-        generate_gcc_opts "x86" "macosx"
-        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_plat="-mmacosx-version-min=10.7 -DMACOSX_DEPLOYMENT_TARGET=10.7 -arch x86_64"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_64 $TARGET_plat"
         TARGET_CCFLAGS="$TARGET_CCFLAGS ${TARGET_CUDA_INSTALL_PATH:+-I$TARGET_CUDA_INSTALL_PATH/include} -DCUDA -DDYN_TIMESLICE"
         TARGET_CCFLAGS="$TARGET_CCFLAGS -DEXPECTED_CUDA_VERSION=${inferred_cuda_version_expected}"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -m32 ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_INSTALL_PATH/lib}"
-        # To use nasm's macho output, you will need a custom patch:
-        # http://sf.net/project/shownotes.php?release_id=337548
-        TARGET_NASM_FMT="macho"
-
+        TARGET_LDFLAGS="$TARGET_LDFLAGS $TARGET_plat ${TARGET_CUDA_INSTALL_PATH:+-L$TARGET_CUDA_LIB_PATH}"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -rpath @executable_path/lib -rpath ${TARGET_CUDA_LIB_PATH}"
+        TARGET_NASM="/opt/local/bin/nasm"
+        TARGET_NASM_FMT="macho64"
+        # you need the CUDA libs to be able to run the test program:
+        export DYLD_LIBRARY_PATH="${TARGET_CUDA_LIB_PATH}"
         TARGET_LIBS="$TARGET_LIBS -lcudart"
-        TARGET_TARBALL="macosx-x86${inferred_cuda_tarball_suffix}"
+        TARGET_TARBALL="macosx-amd64${inferred_cuda_tarball_suffix}"
         TARGET_DOCFILES="docs/readme.cuda"   #platform specific docfile
-        TARGET_LIBFILES="plat/cuda/cudatoolkit_eula.txt ${TARGET_CUDA_INSTALL_PATH:-/usr}/lib/libcudart.dylib"
+        TARGET_LIBFILES="plat/cuda/cudatoolkit_eula.txt ${TARGET_CUDA_LIB_PATH}/libcudart.dylib"
         add_sources "macosx" "cuda"
         ;;
 
@@ -3254,6 +3402,43 @@ case "$1" in
         TARGET_DOCFILES="docs/readme.linux docs/readme.stream"   #platform specific docfile
         TARGET_USES_GNUMAKE="yes"
         add_sources "linux" "stream"
+        ;;
+
+###### OpenCL
+
+    *linux-amd64-opencl)        # [khanna] 
+        infer_arch_and_version "Linux"
+        TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
+        TARGET_AS="gcc -c"  
+        TARGET_CC="gcc"
+        generate_gcc_opts "${inferred_arch}" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DOPENCL -DDYN_TIMESLICE"
+        TARGET_LIBS="-lrt -lOpenCL"
+        TARGET_USES_GNUMAKE="yes"        
+        TARGET_DOCFILES="docs/readme.linux"   #platform specific docfile
+        TARGET_TARBALL="linux-amd64-opencl"
+        add_sources "linux" "opencl"
+        ;;
+
+    *macosx-amd64-opencl)       # [zebe] Mac OS X 10.7+ 64-bit, Darwin (Xcode >= 5 recommended)
+        TARGET_plat="-mmacosx-version-min=10.7 -DMACOSX_DEPLOYMENT_TARGET=10.7 -arch x86_64"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"
+        TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
+        TARGET_LDFLAGS="$TARGET_plat"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="macosx-amd64-opencl"
+        add_sources "macosx" "opencl"
+        ;;
+
+    *macosx-x86-opencl)         # [zebe] Mac OS X 10.6+ 32-bit, Darwin (Xcode >= 5 recommended)
+        TARGET_plat="-mmacosx-version-min=10.6 -DMACOSX_DEPLOYMENT_TARGET=10.6 -arch i386"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_32 -DOPENCL -DHAVE_POSIX_THREADS -DDYN_TIMESLICE $TARGET_plat"
+        TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
+        TARGET_LDFLAGS="$TARGET_plat"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="macosx-x86-opencl"
+        add_sources "macosx" "opencl"
         ;;
 
 ###### Unknown
@@ -3303,10 +3488,10 @@ if [ -z "${TARGET_IS_CROSSCOMPILE}" ]; then
   fi
   ${TARGET_STRIP} testplat
 else
-  cc common/testplat.cpp -o testplat
+  g++ common/testplat.cpp -o testplat
 fi
 echo "Checking test program..."
-./testplat build_dependancies common/client.cpp > /dev/null
+./testplat build_dependencies common/client.cpp > /dev/null
 if [ $? -ne 0 ]; then
   echo "Execution failed.  Check your library search path."
   exit 1
@@ -3624,7 +3809,7 @@ if [ -n "$TARGET_GENMAN" ]; then
   echo "	test -s dnetc.1" >> Makefile
 fi
 if [ -n "$TARGET_TARBALL" ]; then
-  if [ -f ./upload.sh ]; then
+  if [ -f ../tools/upload.sh ]; then
     FULLTARNAME="${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}\${ARCHIVENAME_APPEND}"
     if [ "$TARGET_ARCTYPE" = "zip" ]; then
       echo "	zip -9 $FULLTARNAME.zip ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} \${DOCFILES}" >> Makefile
@@ -3681,11 +3866,11 @@ if [ -n "$TARGET_TARBALL" ]; then
   echo "ftp:" >> Makefile
   if [ "$BUILDNAME" = "x86-os2" -a -f upload.cmd ] ; then
     echo "	\$(SHELL) /C .\\upload.cmd ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
-  elif [ -f ./upload.sh ]; then
+  elif [ -f ../tools/upload.sh ]; then
     if [ -n "$TARGET_TARBALL_COMMENT" ]; then
       echo "	echo \"${TARGET_TARBALL_COMMENT}\">${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
     fi
-    echo "	\$(SHELL) ./upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
+    echo "	\$(SHELL) ../tools/upload.sh ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}" >>Makefile
     if [ -n "$TARGET_TARBALL_COMMENT" ]; then
       echo "	rm -f ${TARGET_BINNAME}\${BUILDNUM}-${TARGET_TARBALL}.comment" >>Makefile
     fi
@@ -3866,7 +4051,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
           CCFLAGS_SELECT="${CCFLAGS_SELECT} -maltivec"
         fi
       fi
-      deplist=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+      deplist=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
       echo "	\${CC} -c ${CCFLAGS_SELECT} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
@@ -3963,7 +4148,7 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
 	  CORE=TARGETSRC
 	fi
       done
-      TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+      TARGET_HDEPS=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       echo "$target:    $TARGETSRC $TARGET_HDEPS" >> Makefile
       echo "	\${SPUCC} -c -Dlinux -O3 -Wall -Wextra \${HPATHS} -DCORE_NAME=$CORE $TARGETSRC -o $target" >> Makefile
       echo "" >> Makefile
@@ -3988,11 +4173,17 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETSRC=""
     # ------------------------------------
       elif [ "${TARGETTYP}" = "cu" ]; then
-      deplist=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+      deplist=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
       echo "$target:    ${TARGETSRC} ${deplist}" >> Makefile
-      echo "	\${NVCC} --ptx --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target.ptx" >> Makefile 
-      echo "	\${NVCC} --cubin --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target.cubin" >> Makefile 
-      echo "	\${NVCC} -c --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target" >> Makefile
+      # CUDA Toolkit 6.5 no longer support targeting sm_10 arch and
+      # additionally 7.0 dropped support for sm_11, sm_12 and sm_13 archs
+      if [ $cudaver -lt 605 ]; then
+        CUDA_CODEGEN="--generate-code arch=compute_10,code=compute_10"
+      elif [ $cudaver -lt 700 ]; then
+        CUDA_CODEGEN="--generate-code arch=compute_11,code=compute_11"
+      fi
+      CUDA_CODEGEN="$CUDA_CODEGEN --generate-code arch=compute_20,code=compute_20 --generate-code arch=compute_30,code=compute_30 --generate-code arch=compute_35,code=compute_35 --generate-code arch=compute_50,code=compute_50"
+      echo "	\${NVCC} -c $CUDA_CODEGEN --compiler-options \"\${NVCCFLAGS}\" ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
@@ -4006,7 +4197,7 @@ fi
 if [ "$TARGET_OGRNG_MULTI" = "68k" ]; then
   echo "Generating Makefile 68k multi-core OGR-NG dependency targets..."
   TARGETSRC="$OGR/ansi/ogrng-32.cpp"
-  TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+  TARGET_HDEPS=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     deplist=""
@@ -4041,7 +4232,7 @@ fi
 if [ "$TARGET_OGR_MULTI" = "68k" ]; then
   echo "Generating Makefile 68k multi-core OGR dependency targets..."
   TARGETSRC="$OGR/68k/ogr-68k.cpp"
-  TARGET_HDEPS=`./testplat build_dependancies ${TARGETSRC} ${TARGET_INCSWITCHES}`
+  TARGET_HDEPS=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
   OGR68K="000 020 030 040 060"
   for targetext in ${OGR68K}; do
     deplist=""
@@ -4086,7 +4277,7 @@ fi
 #
 echo "Makefile auto-generation complete!"
 if [ -z "$TARGET_TARBALL" ]; then
-  if [ -f ./upload.sh ]; then
+  if [ -f ../tools/upload.sh ]; then
     echo "TARGET_TARBALL was not defined."
     echo "Upload-ready tarballs will not be auto-generated"
     echo "and Makefile does not have an 'ftp' target"

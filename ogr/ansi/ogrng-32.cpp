@@ -38,6 +38,11 @@
     #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM 0 /* 0-2 - 'no'  (default) */
   #endif
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
+#elif (CLIENT_CPU == CPU_ARM)
+  #define __CNTLZ(x) (1+__builtin_clzl(~(x)))
+  #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - '100% asm'      */
+  #define PRIVATE_ALT_COMP_LEFT_LIST_RIGHT      0 /* 0/1 - memory-based    */
+  #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */
 #else
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
   #define OGROPT_ALTERNATE_CYCLE                0 /* 0/1 - 'default'       */

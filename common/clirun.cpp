@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.162 2012/08/08 18:44:43 sla Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.163 2014/02/01 21:01:43 snikkel Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -92,10 +92,10 @@ struct thread_param_block
   #elif (defined(_POSIX_THREADS_SUPPORTED)) //cputypes.h
     pthread_t threadID;
   #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
-    unsigned long threadID;
+    UINT_PTR threadID;  /* 64 bits on win64 */
   #elif (CLIENT_OS == OS_NETWARE)
     long threadID;
-  #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS)
+  #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS)
     long threadID;
   #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
     thread_id threadID;
@@ -221,7 +221,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
       riscos_upcall_6();
       return (read_monotonic_time()-t)*10000;
     }
-  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
     #if defined(HAVE_KTHREADS) /* kernel threads */
     kthread_yield();
     #elif defined(__ELF__)
@@ -229,7 +229,7 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
     #else // a.out libc4
     NonPolledUSleep( 0 ); /* yield */
     #endif
-  #elif (CLIENT_OS == OS_MACOSX)
+  #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
     sched_yield();
   #elif (CLIENT_OS == OS_DRAGONFLY)
     sched_yield();
@@ -751,7 +751,8 @@ static int __StopThread( struct thread_param_block *thrparams )
       #elif (CLIENT_OS == OS_NETWARE)
       while (!thrparams->hasexited)
         delay(100);
-      #elif ((CLIENT_OS==OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS) /*kernel threads*/
+      #elif ((CLIENT_OS==OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) \
+         || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS) /*kernel threads*/
       kthread_join( thrparams->threadID );
       #elif defined(HAVE_MULTICRUNCH_VIA_FORK)
       int status = 0, elapsed = 0;
@@ -929,12 +930,15 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           ok2thread = -3;
         else if (sysctlbyname("kern.osrelease",buffer,&len2,NULL,0)!=0)
           ok2thread = -4;
-        else if (len<3 || !isdigit(buffer[0]) || buffer[1]!='.' || !isdigit(buffer[2]))
-          ok2thread = -5;
+        //else if (len<3 || !isdigit(buffer[0]) || buffer[1]!='.' || !isdigit(buffer[2]))
+          //ok2thread = -5;
         else
         {
-          buffer[sizeof(buffer)-1] = '\0';
-          ok2thread = ((buffer[0]-'0')*100)+((buffer[2]-'0')*10);
+          //buffer[sizeof(buffer)-1] = '\0';
+          //ok2thread = ((buffer[0]-'0')*100)+((buffer[2]-'0')*10);
+          
+          ok2thread = (int)(100*atof(buffer));
+	
           //fprintf(stderr, "found fbsd '%s' (interp ver %d)\n", buffer, ok2thread );
           if (ok2thread < 300) /* FreeBSD < 3.0 */
             ok2thread = -6;
@@ -1077,7 +1081,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
           } /* if parent or child */
         } /* thrparam inheritance ok */
       } /* FreeBSD >= 3.0 (+ SMP kernel optional) + global inheritance ok */
-      #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && defined(HAVE_KTHREADS)
+      #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)) && defined(HAVE_KTHREADS)
       {
         if (thrparams->threadnum == 0) /* first thread */
           use_poll_process = 1;
@@ -1096,7 +1100,9 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         else
         {
           thrparams->threadID = _beginthread( Go_mt, 8192, (void *)thrparams );
-          success = ( (thrparams->threadID) != 0);
+          /* MSVC _beginthread() returns -1 on error, _beginthreadex returns 0, other compilers - ? */
+          /* so check both cases */
+          success = ( thrparams->threadID != 0 && thrparams->threadID != -1 );
         }
       }
       #elif (CLIENT_OS == OS_OS2)

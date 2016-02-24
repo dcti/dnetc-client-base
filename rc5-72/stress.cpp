@@ -562,7 +562,7 @@ static long __test_4(Client *client)
       ProblemInfo info;
       u32 itersDonehi, itersDonelo, remoteconn=0;
 
-      do {
+      for (;;) {
         if (CheckExitRequestTrigger()) {
           success = 0L;
           break;
@@ -581,7 +581,7 @@ static long __test_4(Client *client)
           break;
         }
         remoteconn = 1;
-      } while(1);
+      }
 
       if (remoteconn) {
         Log("\rRC5-72: Restarting stress-test 4\n");

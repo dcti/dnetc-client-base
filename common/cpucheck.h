@@ -1,11 +1,11 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.23 2011/03/31 05:07:28 jlawson Exp $"
+#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.23 2014/06/08 16:08:28 stream1972 Exp $"
 
 // cpu feature flags (use by selcore.cpp)
 
@@ -31,6 +31,9 @@
   #define CPU_F_SSE4_2          (0x00100000L)
   #define CPU_F_SSSE3           (0x00200000L)
   #define CPU_F_LZCNT		(0x00400000L)
+  #define CPU_F_AVX_DISABLED    (0x00800000L)   /* supported but disabled (no OS support) */
+  #define CPU_F_AVX             (0x01000000L)   /* supported and enabled */
+  #define CPU_F_AVX2            (0x02000000L)   /* supported and enabled */
 
 // "core hint": ability to override core selection for some CPUs in the family
   #define CH_R72_X86_GO2B       (0x00000001L)

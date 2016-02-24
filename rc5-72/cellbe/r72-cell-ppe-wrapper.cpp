@@ -31,7 +31,7 @@ extern "C" s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) ( RC5_72UnitWork *, u32 *, 
 extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
 
 #ifndef HAVE_MULTICRUNCH_VIA_FORK
-  #error Code for fork'ed crunchers only - see static Args buffer below
+  #error Code for forked crunchers only - see static Args buffer below
 #endif
 
 /* Todo: move this function to platform-specific separate file */
@@ -135,7 +135,7 @@ s32 CDECL PPE_WRAPPER_FUNCTION(CORE_NAME) (RC5_72UnitWork *rc5_72unitwork, u32 *
 #include <unistd.h>  /* getpid() */
 
 #ifndef HAVE_MULTICRUNCH_VIA_FORK
-  #error Code for fork'ed crunchers only - see static Args buffer below
+  #error Code for forked crunchers only - see static Args buffer below
 #endif
 
 /*

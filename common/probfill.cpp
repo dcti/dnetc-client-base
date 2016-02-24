@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,7 +13,7 @@
  * -----------------------------------------------------------------
 */
 const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.101 2012/08/08 19:43:34 sla Exp $"; }
+return "@(#)$Id: probfill.cpp,v 1.102 2014/01/08 11:25:34 stream1972 Exp $"; }
 
 //#define TRACE
 
@@ -626,7 +626,7 @@ static long __loadapacket( Client *client,
       bufcount = GetBufferCount( client, selproject, 0, NULL );
     else         /* haven't got a packet yet */
     {
-      bufcount = GetBufferRecord( client, wrdata, selproject, 0 );
+      bufcount = GetBufferRecord( client, wrdata, selproject, prob_i, 0 );
       if (bufcount >= 0) /* no error */
         wrdata = 0;     /* don't load again */
     }
@@ -1113,9 +1113,9 @@ unsigned int LoadSaveProblems(Client *client,
       {
         WorkRecord data;
         while (GetBufferCount(client, cont_i, 0, 0)>0)
-          GetBufferRecord( client, &data, cont_i, 0 );
-        while (GetBufferCount(client, cont_i, 0, 0)>0)
-          GetBufferRecord( client, &data, cont_i, 1);
+          GetBufferRecord( client, &data, cont_i, -1, 0 );
+        while (GetBufferCount(client, cont_i, 1, 0)>0)
+          GetBufferRecord( client, &data, cont_i, -1, 1 );
       }
     }
     retval = total_problems_saved;

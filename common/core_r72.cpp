@@ -496,7 +496,7 @@ int selcoreGetPreselectedCoreForProject_rc572()
 //        case 0x0B: cindex = 6; break; // Most Pentium 4 == GO 2-pipe (#3960, #3265)
           case 0x0B: cindex =10; break; // Most Pentium 4 == GO 2-pipe-a (new)
           case 0x0C: cindex = 4; break; // Via C3         == DG 3-pipe alt (#3477)
-          case 0x0D: cindex = 6; break; // Pentium M      == GO 2-pipe (#3870)
+          case 0x0D: cindex =11; break; // Pentium M      == GO 2-pipe b (#4534)
           case 0x0E: cindex = 6; break; // Pentium III    == GO 2-pipe (#3602)
           case 0x0F: cindex = 7; break; // Via C3 Nehemiah == SGP 3-pipe (#3621)
           case 0x10: cindex = 5; break; // Cyrix Model 5  == SS 2-pipe (#3580)
@@ -509,8 +509,11 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x17: cindex = 7; break; // Variation of 0x13 with another OGR-NG core (#4186)
           case 0x18: cindex =11; break; // Via Nano       == GO 2-pipe-b (#4299)
           case 0x19: cindex = 6; break; // Sandy Bridge   == GO 2-pipe
-          case 0x20: cindex =11; break; // AMD APU        == GO 2-pipe-b (#4485)
-          case 0x21: cindex =11; break; // AMD FX         == GO 2-pipe-b (#4455)
+          case 0x1A: cindex =11; break; // Ivy Bridge     == GO 2-pipe-b (#4514)
+          case 0x1B: cindex = 6; break; // Haswell        == GO 2-pipe (#4533)
+          case 0x20: cindex =-1; break; // AMD Bobcat     == ?
+          case 0x21: cindex =11; break; // AMD Bulldozer  == GO 2-pipe-b (#4455)
+          case 0x22: cindex =11; break; // AMD Husky      == GO 2-pipe-b (#4485)
           default:   cindex =-1; break; // no default
         }
         #else
@@ -542,8 +545,11 @@ int selcoreGetPreselectedCoreForProject_rc572()
           case 0x17: cindex =-1; break; // Variation of 0x13 with another OGR-NG core (#4186)
           case 0x18: cindex =-1; break; // Via Nano       == ?
           case 0x19: cindex =-1; break; // Sandy Bridge   == ?
-          case 0x20: cindex =-1; break; // AMD APU        == ?
-          case 0x21: cindex =-1; break; // AMD FX         == ?
+          case 0x1A: cindex =-1; break; // Ivy Bridge     == ?
+          case 0x1B: cindex =-1; break; // Haswell        == ?
+          case 0x20: cindex =-1; break; // AMD Bobcat     == ?
+          case 0x21: cindex =-1; break; // AMD Bulldozer  == ?
+          case 0x22: cindex =-1; break; // AMD Husky      == ?
           default:   cindex =-1; break; // no default
         }
         #endif
@@ -564,8 +570,11 @@ int selcoreGetPreselectedCoreForProject_rc572()
         case 0x16: cindex = 3; break; // AMD Athlon (Model 16) == GO 2-pipe d
         case 0x18: cindex = 2; break; // Via Nano         == GO 2-pipe-c (#4437)
         case 0x19: cindex = 3; break; // Sandy Bridge     == GO 2-pipe d
-        case 0x20: cindex = 3; break; // AMD APU          == GO 2-pipe d
-        case 0x21: cindex = 2; break; // AMD FX           == GO 2-pipe c (#4455)
+        case 0x1A: cindex = 1; break; // Ivy Bridge       == KBE-64 3-pipe (#4514)
+        case 0x1B: cindex = 2; break; // Haswell          == GO 2-pipe c (#4533)
+        case 0x20: cindex = 3; break; // AMD Bobcat       == GO 2-pipe d (#4429)
+        case 0x21: cindex = 2; break; // AMD Bulldozer    == GO 2-pipe c (#4455)
+        case 0x22: cindex = 3; break; // AMD Husky        == GO 2-pipe d (#4485)
         default:   cindex =-1; break; // no default
       }
     }

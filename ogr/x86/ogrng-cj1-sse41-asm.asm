@@ -5,7 +5,11 @@
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
 
-cpu	p4
+%ifdef __NASM_VER__
+        cpu     p4
+%else
+        cpu     p4 sse4.1
+%endif
 
 %ifdef __OMF__ ; Watcom and Borland compilers/linkers
 	[SECTION _DATA USE32 ALIGN=16 CLASS=DATA]

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -22,7 +22,7 @@
  * ----------------------------------------------------------------------
 */
 const char *cliident_cpp(void) {
-return "@(#)$Id: cliident.cpp,v 1.38 2011/03/31 05:07:27 jlawson Exp $"; }
+return "@(#)$Id: cliident.cpp,v 1.39 2015/07/12 22:29:12 zebe Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"
@@ -228,7 +228,7 @@ extern const char *os2inst_cpp(void);
 #if (CLIENT_OS == OS_NEXTSTEP)
 extern const char *next_sup_cpp(void);
 #endif
-#if (CLIENT_OS == OS_LINUX)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)
 extern "C" const char *li_inst_c(void);
 extern "C" const char *resolv_c(void);
 #endif
@@ -307,7 +307,7 @@ static const char * (*ident_table[])(void) =
   #if (CLIENT_OS == OS_NEXTSTEP)
   next_sup_cpp,
   #endif
-#if (CLIENT_OS == OS_LINUX)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)
   li_inst_c,
 //resolv_c, // only used in some configrations
 #endif

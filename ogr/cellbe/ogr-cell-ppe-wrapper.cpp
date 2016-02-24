@@ -27,7 +27,7 @@ return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.9 2008/12/30 20:58:43 andreasb Exp
 extern spe_program_handle_t SPE_WRAPPER_FUNCTION(CORE_NAME);
 
 #ifndef HAVE_MULTICRUNCH_VIA_FORK
-  #error Code for fork'ed crunchers only - see static Args buffer below
+  #error Code for forked crunchers only - see static Args buffer below
 #endif
 
 spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program);

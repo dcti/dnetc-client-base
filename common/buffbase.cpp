@@ -6,7 +6,7 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *buffbase_cpp(void) {
-  return "@(#)$Id: buffbase.cpp,v 1.46 2012/08/08 18:33:28 sla Exp $";
+  return "@(#)$Id: buffbase.cpp,v 1.46 2014/01/09 18:33:28 stream Exp $";
 }
 
 //#define TRACE
@@ -314,8 +314,12 @@ long PutBufferRecord(Client *client,const WorkRecord *data)
 
 /* --------------------------------------------------------------------- */
 
+/* If prob_i >= 0, try to find partial packet with correct core for
+   given problem (thread) index.
+*/
+
 long GetBufferRecord( Client *client, WorkRecord* data,
-                      unsigned int contest, int use_out_file)
+                      unsigned int contest, int prob_i, int use_out_file)
 {
   int break_pending = CheckExitRequestTriggerNoIO();
   unsigned long workstate;
@@ -335,6 +339,8 @@ long GetBufferRecord( Client *client, WorkRecord* data,
   {
     if (client->nodiskbuffers == 0)
     {
+      int required_core;
+
       filename = client->in_buffer_basename;
       if (use_out_file)
         filename = client->out_buffer_basename;
@@ -343,8 +349,17 @@ long GetBufferRecord( Client *client, WorkRecord* data,
       #ifdef PROFILE_DISK_HITS
       LogScreen("Diskhit: BufferGetFileRecord() <- GetBufferRecord()\n");
       #endif
+      if (prob_i >= 0)
+      {
+        required_core = selcoreSelectCore( client, contest, prob_i, NULL, NULL );
+        /* No need for error check: if selection fails, core test will be skipped */
+      }
+      else
+      {
+        required_core = -1; /* do not check */
+      }
       retcode = BufferGetFileRecord( filename, data,
-                                     &count, BUFFER_FLAGS_NONE );
+                                     &count, BUFFER_FLAGS_NONE, required_core );
 //LogScreen("b:%d\n", retcode);
     }
     else
@@ -595,7 +610,7 @@ long BufferImportFileRecords( Client *client, const char *source_file, int inter
     LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferImportFileRecords()\n");
     #endif
     if (BufferGetFileRecord( source_file, &data,
-                             &remaining, BUFFER_FLAGS_REMOTEBUF ) != 0)
+                             &remaining, BUFFER_FLAGS_REMOTEBUF, -1 ) != 0)
     {
       break;  //returned <0 on ioerr/corruption, > 0 if norecs
     }
@@ -793,7 +808,7 @@ long BufferFetchFile( Client *client, int break_pending,
         LogScreen("Diskhit: BufferGetFileRecordNoOpt() <- BufferFetchFile()\n");
         #endif
         res = BufferGetFileRecord( remote_file, &wrdata,
-                                   &remaining, BUFFER_FLAGS_REMOTEBUF );
+                                   &remaining, BUFFER_FLAGS_REMOTEBUF, -1 );
         if ( res < 0 ) /* remote buffer i/o error */
         {
           ++errors;
@@ -961,7 +976,7 @@ long BufferFlushFile( Client *client, int break_pending,
       if (!break_pending && CheckExitRequestTriggerNoIO())
         break;
 
-      totrans_pkts = GetBufferRecord( client, &wrdata, contest, 1 );
+      totrans_pkts = GetBufferRecord( client, &wrdata, contest, -1, 1 );
       if (totrans_pkts < 0)
         break;
 

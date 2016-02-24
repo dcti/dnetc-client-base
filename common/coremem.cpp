@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -22,7 +22,7 @@ const char *coremem_cpp(void) {
 
 #if defined(HAVE_MULTICRUNCH_VIA_FORK)
 
-#if ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_HPUX))
+#if ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_HPUX) || (CLIENT_OS == OS_ANDROID))
 /* MAP_ANON|MAP_SHARED is completely unsupported in linux */
 /* <=2.2.2, and flakey in 2.2.3. MAP_SHARED is broken in 2.0 */
 /* MAP_SHARED is broken on HPUX <= 9.0 */

@@ -1,13 +1,13 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * This file contains functions used from ./configure
- * Specify 'build_dependancies' as argument
+ * Specify 'build_dependencies' as argument
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.16 2011/03/31 05:07:30 jlawson Exp $
+ * $Id: testplat.cpp,v 1.17 2015/06/27 21:52:52 zebe Exp $
 */
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */
@@ -110,7 +110,7 @@ static void delete_list(name_list **list)
 struct name_list *seen_files = NULL;
 struct name_list *seen_deps = NULL;
 
-static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
+static unsigned int build_dependencies( const char *cppname, /* ${TARGETSRC} */
                                         const char **include_dirs,
                                         unsigned int count )
 {
@@ -177,7 +177,7 @@ static unsigned int build_dependancies( const char *cppname, /* ${TARGETSRC} */
                   fprintf(stderr, "%d) '%s'%s\n", l, foundbuf, fileexists(foundbuf)?" *":"");
                 if (fileexists( foundbuf ))
                 {
-                  count = build_dependancies( origbuf, include_dirs, count );
+                  count = build_dependencies( origbuf, include_dirs, count );
                   break;
                 }
                 if (!include_dirs)
@@ -266,16 +266,16 @@ int main(int argc, char *argv[])
 {
   if (argc < 2)
   {
-    fprintf(stderr,"Specify 'build_dependancies' as argument.\n");
+    fprintf(stderr,"Specify 'build_dependencies' as argument.\n");
     return -1;
   }
-  if (strcmp(argv[1], "build_dependancies" )== 0)
+  if (strcmp(argv[1], "build_dependencies" )== 0)
   {
     const char **idirs;
     //fprintf(stderr,"%s 1\n", argv[2] );
     idirs = get_include_dirs(argc,argv);
     //fprintf(stderr,"%s 2\n", argv[2] );
-    build_dependancies( argv[2], idirs, 0 );
+    build_dependencies( argv[2], idirs, 0 );
     printf("\n");
     //fprintf(stderr,"%s 3\n", argv[2] );
     if (idirs)

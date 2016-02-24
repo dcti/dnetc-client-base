@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.209 2012/12/21 16:04:53 piru Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.209 2014/06/14 19:23:53 ertyu Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -29,6 +29,9 @@ return "@(#)$Id: cpucheck.cpp,v 1.209 2012/12/21 16:04:53 piru Exp $"; }
 #  include <mach/mach.h>
 #  include <mach/machine.h>
 #  include <IOKit/IOKitLib.h>
+#elif (CLIENT_OS == OS_IOS)
+#  include <mach/mach.h>
+#  include <mach/machine.h>
 #elif (CLIENT_OS == OS_DYNIX)
 #  include <sys/tmp_ctl.h>
 #elif (CLIENT_OS == OS_SOLARIS)
@@ -69,6 +72,10 @@ return "@(#)$Id: cpucheck.cpp,v 1.209 2012/12/21 16:04:53 piru Exp $"; }
 
 #if (CLIENT_CPU == CPU_OPENCL)
 #include "ocl_info.h"
+#endif
+
+#if (CLIENT_CPU == CPU_ARM64)
+#include <arm_neon.h>
 #endif
 
 
@@ -132,7 +139,7 @@ int GetNumberOfDetectedProcessors( void )
       //if (sysctlbyname("hw.ncpu", &ncpus, &len, NULL, 0 ) == 0)
         cpucount = ncpus;
     }
-    #elif (CLIENT_OS == OS_MACOSX)
+    #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
     {
       unsigned int    count;
       struct host_basic_info  info;
@@ -185,10 +192,10 @@ int GetNumberOfDetectedProcessors( void )
       if (rc != 0 || cpucount < 1)
         cpucount = -1;
     }
-    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)) && \
-           (CLIENT_CPU != CPU_CELLBE)
+    #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || \
+           (CLIENT_OS == OS_ANDROID)) && (CLIENT_CPU != CPU_CELLBE)
     {
-      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
+      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM64)
         cpucount = 1;
       #else
       FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
@@ -418,7 +425,7 @@ static long __GetRawProcessorID(const char **cpuname)
       detectedtype = -1;
     }
   }
-  #elif (CLIENT_OS == OS_LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)
   if (detectedtype == -2L)
   {
     FILE *cpuinfo;
@@ -628,7 +635,7 @@ static long __GetRawProcessorID(const char **cpuname)
       detectedname = "Power";
     }
   }
-  #elif (CLIENT_OS == OS_MACOSX)
+  #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
   if (detectedtype == -2L)
   {
     // We prefer raw PVR values over the IDs provided by host_info()
@@ -1241,6 +1248,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
     }
     else if ( vendorid == VENDOR_AMD )
     {
+      /* AMD CPUID Spec
+         http://developer.amd.com/wordpress/media/2012/10/254811.pdf
+         See the BIOS and Kernel Developer Guide (BKDG) for each family
+         http://developer.amd.com/resources/documentation-articles/developer-guides-manuals/
+       */
       /* see "AMD Processor Recognition Application Note" available at
          http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/20734.pdf 
          http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf 
@@ -1276,9 +1288,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00060A0, 0xFFFFFF0, CPU_F_I686,    9, "Athlon XP/MP/XP-M or Sempron (Barton)" },   // OGR-NG: OK (-k8)
         { 0x000F000, 0xFFFF000, CPU_F_I686,    9, "Athlon (Model 15)" },
         { 0x0010000, 0xFFFF000, CPU_F_I686, 0x16, "Opteron 6xxx" }, /* (#4438) */
-        { 0x0012000, 0xFFFF000, CPU_F_I686, 0x20, "A-Series APU" }, /* (#4485) */
-        { 0x0014000, 0xFFFF000, CPU_F_I686, 0x20, "E-Series APU" }, /* (#4429) */
-        { 0x0015010, 0xFFFF000, CPU_F_I686, 0x21, "FX" }, /* (#4455) */
+
         { 0x010F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64",              0 /* CH_R72_X86_GO2B */ }, /* (#4193) */
         { 0x020F000, 0xFFFF000, CPU_F_I686,    9, "Athlon 64 X2 Dual Core", CH_R72_X86_GO2B }, /* (#4193) */
         { 0x030F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Athlon 64" },
@@ -1297,13 +1307,17 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          * Current pseudo-groups for different combinations of RC5-72 and OGR-NG cores:
          *   0x13 - P4-based (RC5-72 core #7), OGR-NG core -k8
          *   0x14 - Atom
-         *   0x15 - Core i7/Xeon
+         *   0x15 - Core iX/Xeon
          *   0x16 - AMD-based (RC5-72 GO 2-pipe, #6) but similar to Intel Core CPUs, with fast SSE (OGR-NG SSE2 core) 
          *   0x17 - P4-based (RC5-72 core #7), OGR-NG core -p4
          *   0x18 - Via Nano
-         *   0x19 - Sandy Bridge Core i3/i5/i7
-         *   0x20 - AMD E-Series
-         *   0x21 - AMD FX
+         *   0x19 - Sandy Bridge Core iX-2xxx
+         *   0x1A - Ivy Bridge Core iX-3xxx
+         *   0x1B - Haswell Core iX-4xxx
+         *   0x1C-1F
+         *   0x20 - AMD Bobcat - Embedded APU
+         *   0x21 - AMD Bulldozer - FX
+         *   0x22 - AMD Husky - APU
          */
         { 0x080F000, 0xFFFF000, CPU_F_I686,    9, "Mobile Sempron" },
         { 0x090F000, 0xFFFF000, CPU_F_I686,    9, "Sempron",           CH_R72_X86_GO2B }, /* (#4193) */
@@ -1320,6 +1334,12 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x1411000, 0xFFFF000, CPU_F_I686,    9, "Turion X2 Ultra Mobile" },
         { 0x1511000, 0xFFFF000, CPU_F_I686,    9, "Turion X2 Mobile" },
         { 0x1611000, 0xFFFF000, CPU_F_I686,    9, "Athlon X2" },
+        { 0x1712000, 0xFFFF000, CPU_F_I686, 0x22, "A-Series APU (Model 18)" },
+        { 0x1812000, 0xFFFF000, CPU_F_I686, 0x22, "A-Series APU (Husky)" }, /* (#4485) */
+        { 0x1914000, 0xFFFF000, CPU_F_I686, 0x20, "E/C-Series APU (Model 20)" },
+        { 0x1A14000, 0xFFFF000, CPU_F_I686, 0x20, "E/C-Series APU (Bobcat)" }, /* (#4429,#4536) */
+        { 0x1B15000, 0xFFFF000, CPU_F_I686, 0x21, "FX (Model 21)" },
+        { 0x1C15000, 0xFFFF000, CPU_F_I686, 0x21, "FX (Bulldozer)" }, /* (#4497) */
         { 0x0000000,         0,          0,    0, NULL       }
       }; internalxref = &amdxref[0];
       if ((dettype & 0xFFFFFF0) == 0x0400)        /* no such AMD ident */
@@ -1428,9 +1448,14 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
         { 0x00061E0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i5/i7" },  /* (#4271) */
         { 0x0006250, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i3/i5/i7" },  /* (#4376,#4224) */
-        { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core i3/i5/i7-2xxx" },
+        { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core iX-2xxx (Sandy Bridge)" },
         { 0x00062C0, 0xFFFFFF0, CPU_F_I686, 0x15, "Xeon 56xx" },  /* (#4301) */
         { 0x00062D0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core i7-2xxx/3xxx EE" },  /* (#4456) */
+        { 0x00063A0, 0xFFFFFF0, CPU_F_I686, 0x1A, "Core iX-3xxx (Ivy Bridge)" },  /* (#4514) */
+        { 0x00063C0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },  /* (#4533) */
+        { 0x00063E0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon E7 v2 (Ivy Bridge EX)" },  /* (#4578) */
+        { 0x0006450, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },  /* (#4579) */
+        { 0x0006460, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
@@ -1498,7 +1523,9 @@ static long __GetRawProcessorID(const char **cpuname )
     signed int r72, ogr;
     const char *name;
   } ids[] = {
-    // ARM
+    // https://gist.github.com/dword1511/8262223
+    // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ihi0014q/Bcfihfdj.html
+    // 0x41(A) - ARM 
     { 0x41560200, 0xfffffff0, 1, 1, "ARM 2" },
     { 0x41560250, 0xfffffff0, 1, 1, "ARM 250" },
     { 0x41560300, 0xfffffff0, 1, 1, "ARM 3" },
@@ -1526,13 +1553,43 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x4104a200, 0xfffffff0, 2, 3, "ARM 1020T" },
     { 0x4115a200, 0xfffffff0, 2, 3, "ARM 1020E" },
     { 0x4106a260, 0xfffffff0, 2, 3, "ARM 1026EJ-S" },
-    // ?
-    { 0x54029150, 0xfffffff0, 0, 1, "ARM 915" },
-    { 0x54029250, 0xfffffff0, 0, 1, "ARM 925" },
-    // Digital
+    //{ 0x41009200, 0xff00fff0,-1,-1, "ARM 920" },
+    //{ 0x41009220, 0xff00fff0,-1,-1, "ARM 922" },
+    //{ 0x41009260, 0xff00fff0,-1,-1, "ARM 926" },
+    //{ 0x41009400, 0xff00fff0,-1,-1, "ARM 940" },
+    //{ 0x41009460, 0xff00fff0,-1,-1, "ARM 946" },
+    //{ 0x41009660, 0xff00fff0,-1,-1, "ARM 966" },
+    //{ 0x41009680, 0xff00fff0,-1,-1, "ARM 968" },
+    { 0x4100b020, 0xff00fff0,-1,-1, "ARM11 MPCore" },
+    { 0x4100b360, 0xff00fff0, 2, 3, "ARM 1136" },
+    { 0x4100b560, 0xff00fff0,-1,-1, "ARM 1156" },
+    { 0x4100b760, 0xff00fff0, 2, 3, "ARM 1176" },
+    { 0x4100c050, 0xff00fff0, 2, 3, "ARM Cortex-A5" },
+    { 0x4100c070, 0xff00fff0, 2, 3, "ARM Cortex-A7" },
+    { 0x4100c080, 0xff00fff0, 2, 3, "ARM Cortex-A8" },
+    { 0x4100c090, 0xff00fff0, 0, 3, "ARM Cortex-A9" },
+    { 0x4100c0c0, 0xff00fff0,-1,-1, "ARM Cortex-A12" },
+    { 0x4100c0f0, 0xff00fff0, 2, 3, "ARM Cortex-A15" },
+    { 0x4100d030, 0xff00fff0,-1,-1, "ARM Cortex-A53" },
+    { 0x4100d070, 0xff00fff0,-1,-1, "ARM Cortex-A57" },
+    // 0x44(D) - Digital
     { 0x4401a100, 0xfffffff0, 0, 1, "Digital StrongARM 110" },
     { 0x4401a110, 0xfffffff0, 0, 1, "Digital StrongARM 1100" },
-    // Intel
+    // 0x4D(M) - Motorola/Freescale
+    // 0x51(Q) - Qualcomm
+    { 0x510000f0, 0xff00fff0, 2, 3, "Qualcomm Scorpion (Snapdragon S1/S2)" },
+    { 0x510002d0, 0xff00fff0,-1,-1, "Qualcomm Dual Scorpion (Snapdragon S3)" },
+    { 0x510004d0, 0xff00fff0, 2, 3, "Qualcomm Dual Krait (Snapdragon S4)" },
+    { 0x510006f0, 0xff00fff0, 2, 3, "Qualcomm Quad Krait (Snapdragon 600/800)" },
+    // 0x54(T) - TI
+    { 0x54029150, 0xfffffff0, 0, 1, "TI ARM 915" },
+    { 0x54029250, 0xfffffff0, 0, 1, "TI ARM 925" },
+    // 0x56(V) - Marvell
+    { 0x56251310, 0xfffffff0, 2, 3, "Marvell Feroceon 88FR131" },
+    //{ 0x56001310, 0xff00fff0,-1,-1, "Marvell Feroceon" },
+    { 0x56005810, 0xff00fff0,-1,-1, "Marvell PJ4/PJ4b" },
+    { 0x56005840, 0xff00fff0,-1,-1, "Marvell Dual PJ4/PJ4b" },
+    // 0x69(i) - Intel 
     { 0x6901b110, 0xfffffff0, 0, 1, "Intel StrongARM 1110" },
     { 0x69052120, 0xfffff3f0, 2, 2, "Intel PXA210" },
     { 0x69052100, 0xfffff7f0, 2, 2, "Intel PXA250" },
@@ -1541,8 +1598,6 @@ static long __GetRawProcessorID(const char **cpuname )
     { 0x69052000, 0xfffffff0, 2, 2, "Intel 80200" },
     { 0x69052e20, 0xffffffe0, 2, 2, "Intel 80219" },
     { 0x69052c20, 0xffffffe0, 2, 2, "Intel IOP321" },
-    // Marvell
-    { 0x56251310, 0xfffffff0, 2, 3, "Marvell Feroceon 88FR131" },
     // End
     { 0x00000000, 0x00000000, -1, -1, "" }
   };
@@ -1553,7 +1608,7 @@ static long __GetRawProcessorID(const char **cpuname )
     detectedtype = ARMident();
     sprintf(namebuf, "%0lX", detectedtype);
   }
-  #elif (CLIENT_OS == OS_LINUX)
+  #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID)
   if (detectedtype == -2)
   {
     char buffer[256];
@@ -2751,6 +2806,15 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     }
     if (features & CPU_F_LZCNT) {
       strcat( namebuf, "LZCNT ");
+    }
+    if (features & CPU_F_AVX_DISABLED) {
+      strcat( namebuf, "AVX(disabled) ");
+    }
+    if (features & CPU_F_AVX) {
+      strcat( namebuf, "AVX ");
+    }
+    if (features & CPU_F_AVX2) {
+      strcat( namebuf, "AVX2 ");
     }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     sprintf(namebuf, "%08lX\n\tname: %s", rawid, cpuid_s );

@@ -1,6 +1,6 @@
 /* -*-C-*-
  *
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.121 2012/08/08 19:37:36 sla Exp $"
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.123 2015/06/27 21:52:52 zebe Exp $"
 
 /* ----------------------------------------------------------------- */
 
@@ -36,10 +36,11 @@
 #define CPU_DESCRACKER  16 /* eff descracker */
 #define CPU_AMD64       17 /* official name */
 #define CPU_X86_64      CPU_AMD64 /* old GNU name before AMD announced AMD64 */
-#define CPU_CELLBE	18
-#define CPU_CUDA	19
-#define CPU_ATI_STREAM	20
-#define CPU_OPENCL	21
+#define CPU_CELLBE      18
+#define CPU_CUDA        19
+#define CPU_ATI_STREAM  20
+#define CPU_OPENCL      21
+#define CPU_ARM64       22
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -94,7 +95,8 @@
 #define OS_NETWARE6     47
 #define OS_DRAGONFLY    48
 #define OS_HAIKU        49
-#define OS_ANDROID	50
+#define OS_ANDROID      50
+#define OS_IOS          51 /* Apple iOS (iPhone, iPad, etc.) */
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 
 /* ----------------------------------------------------------------- */
@@ -173,6 +175,8 @@
     #define CLIENT_CPU     CPU_CUDA
   #elif defined(ATI_STREAM) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
     #define CLIENT_CPU     CPU_ATI_STREAM
+  #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
+    #define CLIENT_CPU     CPU_OPENCL
   #elif defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(ASM_SH4) /* cross compile, ergo don't use __sh__ */
@@ -181,8 +185,8 @@
     #define CLIENT_CPU     CPU_ALPHA
   #elif defined(ASM_X86) || defined(__i386__)
     #define CLIENT_CPU     CPU_X86
-  #elif defined(__S390__) && defined(S390_Z_ARCH)	
-    #define CLIENT_CPU     CPU_S390	/* like S390 except rotate.h */
+  #elif defined(__S390__) && defined(S390_Z_ARCH)
+    #define CLIENT_CPU     CPU_S390   /* like S390 except rotate.h */
     #undef  CLIENT_OS_NAME
     #define CLIENT_OS_NAME "Linux (z/Architecture)"
   #elif defined(__S390__)
@@ -191,6 +195,8 @@
     #define CLIENT_CPU     CPU_S390X
   #elif defined(__IA64__)
     #define CLIENT_CPU     CPU_IA64
+  #elif defined(__arm64__)
+    #define CLIENT_CPU     CPU_ARM64
   #elif defined(ARM) || defined(__arm__)
     #define CLIENT_CPU     CPU_ARM
   #elif defined(ASM_SPARC) || defined(__sparc__)
@@ -231,6 +237,8 @@
   #define CLIENT_OS        OS_NETBSD
   #if defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
+  #elif defined(__arm64__)
+    #define CLIENT_CPU     CPU_ARM64
   #elif defined(__arm32__) || defined(ARM)
     #define CLIENT_CPU     CPU_ARM
   #elif defined(__alpha__) || defined(ASM_ALPHA)
@@ -425,20 +433,32 @@
     #define HAVE_POSIX_THREADS
   #endif
 #elif defined(__APPLE__)
-   #define CLIENT_OS_NAME  "Mac OS X"
-   #define CLIENT_OS       OS_MACOSX
-   #ifndef __unix__
-   #define __unix__
-   #endif
-   #if defined(CUDA) && (defined(__i386__) || defined(__x86_64__))
-     #define CLIENT_CPU    CPU_CUDA
-   #elif defined(__ppc__) || defined (__ppc64__)
-     #define CLIENT_CPU    CPU_POWERPC
-   #elif defined(__i386__) || defined(ASM_X86)
-     #define CLIENT_CPU    CPU_X86
-   #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
-     #define CLIENT_CPU    CPU_AMD64
-   #endif
+  #if defined(__arm64__)
+    #define CLIENT_OS_NAME  "iOS"
+    #define CLIENT_OS       OS_IOS
+    #define CLIENT_CPU      CPU_ARM64
+  #elif defined(__arm__) || defined(ARM)
+    #define CLIENT_OS_NAME  "iOS"
+    #define CLIENT_OS       OS_IOS
+    #define CLIENT_CPU      CPU_ARM
+  #else
+    #define CLIENT_OS_NAME  "Mac OS X"
+    #define CLIENT_OS       OS_MACOSX
+  #endif
+  #ifndef __unix__
+    #define __unix__
+  #endif
+  #if defined(CUDA) && (defined(__i386__) || defined(__x86_64__))
+    #define CLIENT_CPU    CPU_CUDA
+  #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__))
+    #define CLIENT_CPU    CPU_OPENCL
+  #elif defined(__ppc__) || defined(__ppc64__)
+    #define CLIENT_CPU    CPU_POWERPC
+  #elif defined(__i386__) || defined(ASM_X86)
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
+    #define CLIENT_CPU    CPU_AMD64
+  #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */
   #define __unix__ /* it ain't that special! */
@@ -506,10 +526,18 @@
   #if defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
   #endif
-#elif define(_ANDROID_)
+#elif defined(_ANDROID_)
   #define CLIENT_OS_NAME  "Android"
-  #define CLIENT_CPU      CPU_ARM
-  #define CLIENT_OS       OS_LINUX
+  #if defined(__arm64__)
+    #define CLIENT_CPU     CPU_ARM64
+  #elif defined(__i386__) || defined(ASM_X86)
+    #define CLIENT_CPU     CPU_X86
+  #elif defined(__arm32__) || defined(ARM)
+    #define CLIENT_CPU     CPU_ARM
+  #else
+    #define CLIENT_CPU     CPU_ARM
+  #endif
+  #define CLIENT_OS        OS_ANDROID
 #endif
 
 #if !defined(CLIENT_OS)
@@ -549,6 +577,8 @@
     #define CLIENT_OS_NAME_EXTENDED "CUDA 3.0 on " CLIENT_OS_NAME
   #elif (CUDA_VERSION == 3010)
     #define CLIENT_OS_NAME_EXTENDED "CUDA 3.1 on " CLIENT_OS_NAME
+  #elif (CUDA_VERSION == 5050)
+    #define CLIENT_OS_NAME_EXTENDED "CUDA 5.5 on " CLIENT_OS_NAME
   #else
     #define CLIENT_OS_NAME_EXTENDED "CUDA on " CLIENT_OS_NAME
   #endif
@@ -575,8 +605,8 @@
 /* ----------------------------------------------------------------- */
 
 #if ((CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || \
-	 (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_88K) || \
-     (CLIENT_CPU == CPU_SPARC) || \
+     (CLIENT_CPU == CPU_68K) || (CLIENT_CPU == CPU_88K) || \
+     (CLIENT_CPU == CPU_SPARC) || (CLIENT_CPU == CPU_ARM64) || \
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
@@ -628,7 +658,8 @@
   #include <sys/resource.h> /* WIF*() macros */
   #include <sys/sysctl.h>   /* sysctl()/sysctlbyname() */
   #include <sys/mman.h>     /* minherit() */
-#elif (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOSX)) && \
+#elif (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOSX) || \
+  (CLIENT_OS == OS_IOS) || (CLIENT_OS == OS_ANDROID)) && \
   ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)))
   /* Necessary for streams to work correctly */
   #define HAVE_POSIX_THREADS
@@ -769,7 +800,7 @@ extern "C" {
         #define SIZEOF_SHORT 8
       #else
         #error fixme: sizeof(unsigned short) !=1 and !=2 and !=4 and !=8?
-      #endif	
+      #endif
     #endif
     #if defined(SIZEOF_INT)
       #ifndef SIZEOF_SHORT

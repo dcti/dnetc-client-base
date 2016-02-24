@@ -34,7 +34,7 @@ spe_context_ptr_t ps3_assign_context_to_program(spe_program_handle_t *program);
 void              ps3_kernel_bug(void);
 
 #ifndef HAVE_MULTICRUNCH_VIA_FORK
-  #error Code for fork'ed crunchers only - see static Args buffer below
+  #error Code for forked crunchers only - see static Args buffer below
 #endif
 
 // #define INTERNAL_TEST

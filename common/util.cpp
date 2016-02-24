@@ -624,7 +624,8 @@ const char *utilGetAppName(void)
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
+      (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) || \
+      (CLIENT_OS == OS_ANDROID)
   #include <dirent.h>         // for direct read of /proc/
 #elif (CLIENT_OS == OS_BEOS) || (CLIENT_OS == OS_HAIKU)
   #include <kernel/OS.h>      // get_next_team_info()
@@ -1054,7 +1055,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
 
       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
           (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-          (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
+          (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) || \
+          (CLIENT_OS == OS_ANDROID)
       {
         DIR *dirp = opendir("/proc");
 
@@ -1116,7 +1118,8 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
       }
       #endif
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-      #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX) && (CLIENT_OS != OS_PS2LINUX)
+      #if (CLIENT_OS != OS_LINUX) && (CLIENT_OS != OS_HPUX) && \
+          (CLIENT_OS != OS_PS2LINUX) && (CLIENT_OS != OS_ANDROID)
       {
         /* this part is only needed for operating systems that do not read /proc
            OR do not have a reliable method to set the name as read from /proc
@@ -1127,18 +1130,18 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
         #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
             (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
             (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX) || \
-            (CLIENT_OS == OS_DRAGONFLY)
+            (CLIENT_OS == OS_DRAGONFLY) || (CLIENT_OS == OS_ANDROID)
         pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
         /* fbsd: "ps ax -o pid -o command 2>/dev/null"; */ /* bsd + -o ext */
         /* lnux: "ps ax --format pid,comm 2>/dev/null"; */ /* bsd + gnu -o */
-        #elif (CLIENT_OS == OS_MACOSX)
+        #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
         /* White spaces in directory/file names make parsing very error */
         /* prone. The workaround is to ask 'ps' to output the pid and   */
         /* executable name only, so that we can deal with white spaces  */
         /* in program names (quite frequent under Mac OS X)             */
         pscmd = "ps acxw -o pid,command 2>/dev/null";
         #elif (CLIENT_OS == OS_NEXTSTEP)
-        /* NeXTstep porduces spaces in process status columns like
+        /* NeXTstep produces spaces in process status columns like
          * 26513 p1 SW    0:01 -bash (bash)
          * 26542 p1 R N  32:52 ./dnetc */
         pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
@@ -1224,7 +1227,7 @@ int utilGetPIDList( const char *procname, long *pidlist, int maxnumpids )
                     while (*foundname && isspace(*foundname))
                       foundname++;
                     p = foundname;
-                    #if (CLIENT_OS == OS_MACOSX)
+                    #if (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
                     /* Skip to the end of line, and accept white spaces */
                     while (*p)
                       p++;

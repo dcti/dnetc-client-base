@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1998-2009 - All Rights Reserved
+ * Copyright distributed.net 1998-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.46 2012/04/29 14:30:34 snikkel Exp $"; }
+return "@(#)$Id: core_ogr_ng.cpp,v 1.47 2015/06/27 21:43:52 zebe Exp $"; }
 
 //#define TRACE
 
@@ -72,6 +72,8 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.46 2012/04/29 14:30:34 snikkel Exp $"; }
       CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse41(void);  //G (asm #6)
       CoreDispatchTable *ogrng_get_dispatch_table_cj1_sse2_lzcnt(void);  //H (asm #7)
     #endif
+#elif (CLIENT_CPU == CPU_ARM64) && (SIZEOF_LONG == 8)
+    CoreDispatchTable *ogrng64_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_ARM)
     CoreDispatchTable *ogrng_get_dispatch_table(void);
     CoreDispatchTable *ogrng_get_dispatch_table_arm1(void);
@@ -437,6 +439,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
           {
             switch (detected_type)
             {
+              case 0x1B: cindex = 6; break; /* Intel Haswell (#4533) */
               default:   cindex = 7;
             }
           }
@@ -446,6 +449,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
             switch (detected_type)
             {
               case 0x15: cindex = 3; break; /* Intel i3/i5/i7 */
+              case 0x1A: cindex = 3; break; /* Intel Ivy Bridge (#4514) */
               default:   cindex = 6; break;
             }
           }
@@ -494,7 +498,9 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
       switch (detected_type)
       {
         case 0x09: cindex = 1; break; /* AMD: generic (#4214) */
-        /*case 0x20: cindex = 1; break;*/ /* AMD APU (#4429/#4485) */
+        case 0x1A: cindex = 2; break; /* Intel Ivy Bridge (#4514) */
+        case 0x1B: cindex = 2; break; /* Intel Haswell (#4533) */
+        case 0x20: cindex = 1; break; /* AMD Bobcat (#4429) */
       }
       if (cindex == -1)
       {
@@ -637,6 +643,9 @@ int selcoreSelectCore_ogr_ng(Client *client, unsigned int threadindex,
     unit_func.ogr = ogrng64_get_dispatch_table();
     coresel = 0;
   }
+#elif (CLIENT_CPU == CPU_ARM64) && (SIZEOF_LONG == 8)
+  unit_func.ogr = ogrng64_get_dispatch_table();
+  coresel = 0;
 #elif (CLIENT_CPU == CPU_ARM)
   if (coresel == 1)
     unit_func.ogr = ogrng_get_dispatch_table_arm1();

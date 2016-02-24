@@ -1,5 +1,5 @@
 ;
-; Copyright distributed.net 1998-2009 - All Rights Reserved
+; Copyright distributed.net 1998-2014 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
@@ -7,7 +7,7 @@
 ; Written by Didier Levet <kakace@distributed.net>, mostly derived from
 ; x86ident.asm written by Cyrus Patel.
 ;
-; $Id: x86cpuid.asm,v 1.4 2009/12/27 13:52:40 andreasb Exp $
+; $Id: x86cpuid.asm,v 1.4 2014/03/23 12:40:40 stream1972 Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
@@ -82,6 +82,7 @@
 
 global          x86getid,_x86getid
 global          x86cpuid,_x86cpuid
+global          x86xgetbv,_x86xgetbv
 global          x86ident_haveioperm, _x86ident_haveioperm
 
 __DATASECT__
@@ -438,3 +439,12 @@ _cx4x86:        mov     ah, 40h        ; 486 class CPU
                 jmp     _end           ; model 0=Cx486SLC/DLC/SRx/DRx,
                                        ; model 1=Cx486S/DX/DX2/DX4, 4=MediaGX
 
+;----------------------------------------------------------------------
+
+_x86xgetbv:     ; x86xgetbv(u32 function, union PageInfos *infos)
+x86xgetbv:      mov     ecx, [esp+4]   ; Function number
+                db      0fh, 01h, 0d0h ; xgetbv
+                mov     ecx, [esp+8]   ; PageInfos *
+                mov     [ecx+4 ], edx
+                mov     [ecx+12], eax
+                ret                    ; return copy of eax

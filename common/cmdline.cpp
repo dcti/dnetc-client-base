@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -15,7 +15,7 @@
  * -------------------------------------------------------------------
 */
 const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.176 2012/08/08 18:57:54 sla Exp $"; }
+return "@(#)$Id: cmdline.cpp,v 1.176 2014/08/11 18:57:54 ertyu Exp $"; }
 
 //#define TRACE
 
@@ -39,10 +39,11 @@ return "@(#)$Id: cmdline.cpp,v 1.176 2012/08/08 18:57:54 sla Exp $"; }
 
 #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
     (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_OPENBSD) || \
-    (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
+    (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) || \
+    (CLIENT_OS == OS_ANDROID)
 #include <dirent.h> /* for direct read of /proc/ */
 #endif
-#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
   extern "C" int linux_uninstall(const char *basename, int quietly);
   extern "C" int linux_install(const char *basename, int argc,
     const char *argv[], int quietly); /* argv[1..(argc-1)] as start options */
@@ -214,7 +215,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           pid_t already_sigd[128]; unsigned int sigd_count = 0;
           #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
               (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
-              (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY)
+              (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DRAGONFLY) || \
+              (CLIENT_OS == OS_ANDROID)
           DIR *dirp = opendir("/proc");
           if (!dirp)
             kill_found = -1;
@@ -292,7 +294,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
                     if (file)
                     {
                       pid_t ppid = 0;
-                      #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+                      #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || \
+                          (CLIENT_OS == OS_ANDROID)
                       while (fgets(buffer, sizeof(buffer), file))
                       {
                         buffer[sizeof(buffer)-1] = '\0';
@@ -429,16 +432,16 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           #if (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_OPENBSD) || \
               (CLIENT_OS == OS_NETBSD) || (CLIENT_OS == OS_LINUX) || \
               (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_PS2LINUX) || \
-              (CLIENT_OS == OS_DRAGONFLY)
+              (CLIENT_OS == OS_DRAGONFLY) || (CLIENT_OS == OS_ANDROID)
           pscmd = "ps axw|awk '{print$1\" \"$5}' 2>/dev/null"; /* bsd, no -o */
           //fbsd: "ps ax -o pid -o command 2>/dev/null";  /* bsd + -o ext */
           //lnux: "ps ax --format pid,comm 2>/dev/null";  /* bsd + gnu -o */
-          #elif (CLIENT_OS == OS_MACOSX)
+          #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
           // Only grab the executable name to avoid troubles with white spaces
           // in file paths.
           pscmd = "ps acxw|awk '{print$1\" \"$5}' 2>/dev/null";
           #elif (CLIENT_OS == OS_NEXTSTEP)
-          /* NeXTstep porduces spaces in process status columns like
+          /* NeXTstep produces spaces in process status columns like
           * 26513 p1 SW    0:01 -bash (bash)
           * 26542 p1 R N  32:52 ./dnetc */
           pscmd = "ps axw|sed \"s/ [RUSITHPD][W >][N< ]//\"|awk '{print$1\" \"$4}' 2>/dev/null";
@@ -686,7 +689,8 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
       {
         if (misc_call)
           continue;
-        #if (CLIENT_OS==OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) /* argv[1..(argc-1)] as start options */
+        #if (CLIENT_OS==OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
+        /* argv[1..(argc-1)] as start options */
         retcode = 0;  
         if (0!=linux_install(utilGetAppName(), (argc-pos), &argv[pos], loop0_quiet))
           retcode = 3;           /* plat/linux/li_inst.c */
@@ -734,7 +738,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           continue;
         #if (CLIENT_OS == OS_OS2)
         retcode = os2CliUninstallClient(loop0_quiet) ? 3 : 0; /* os2inst.cpp */
-        #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+        #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
         retcode = 0;
         if (linux_uninstall(utilGetAppName(), loop0_quiet)!=0)
           retcode = 3;           /* plat/linux/li_inst.c */ 
@@ -1694,7 +1698,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           ( strcmp( thisarg, "-forceflush"  ) == 0 ) ||
           ( strcmp( thisarg, "-update"      ) == 0 ) ||
           ( strcmp( thisarg, "-ident"       ) == 0 ) ||
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
 #else
           ( strcmp( thisarg, "-gpuinfo"     ) == 0 ) ||
@@ -1842,7 +1846,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         ModeReqSet( MODEREQ_IDENT );
         break;
       }
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
       else if ( strcmp( thisarg, "-cpuinfo" ) == 0 )
       {
         client->quietmode = 0;

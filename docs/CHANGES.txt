@@ -23,7 +23,7 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
+Version change log: $Id: CHANGES.txt,v 1.132 2015/07/12 22:29:12 zebe Exp $
 ==========================================================================
 
 2.9100
@@ -44,6 +44,23 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             imp: morphos: Battery/AC power det & CPU temp query
             new: opencl: New rc5-72 cores
             imp: morphos: use standard MUI List instead of NList
+            imp: x86/amd64: AMD APU detection/selection (#4536)
+            imp: x86: Pentium M core selection (#4534)
+            imp: x86/amd64: Intel Ivy Bridge/Haswell
+                 detection/selection (#4514,#4533)
+            imp: x86/amd64: AMD FX detection/selection (#4497)
+            imp: macosx: better pause-on-battery detection on 10.7+
+            imp: cellbe: faster OGR-NG SPU ASM core
+            fix: linux: misc installation (dnetc -install) issues
+            imp: all: try to find partial packet started by matched core
+            fix: win64: screensaver broken (#4434)
+            imp: cuda: support CUDA 5.5, 6.0, 6.5, 7.0
+            imp: x86/amd64: Intel Haswell/Xeon detection (#4578,#4579)
+            imp: cuda: better codegen
+            imp: arm: CPU detection (#4498,#4505,#4540-4562)
+            new: arm64 support (ansi for now)
+            imp: android: reports as android, not linux
+            new: prototype iOS support
 
 2.9110.519  new: amd64: New GO-2c core
             new: amd64: New GO-2d core
@@ -52,7 +69,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             fix: x86: OGR core pre-selection for Intel Core iX (#4376)
             imp: x86/amd64: AMD APU detection/selection (#4429)
             imp: amd64: Via Nano core selection (#4437)
-            imp: x86/amd64: AMD Opeteron 6xxx detection/selection (#4438)
+            imp: x86/amd64: AMD Opteron 6xxx detection/selection (#4438)
             fix: cuda: processor counts for newer model fermi cards (#4441)
             imp: win: allow CUDA/Stream to coexist (#4274)
             imp: gpu: rename -cpuinfo to -gpuinfo
@@ -266,7 +283,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             fix: all: Made week number ISO 8601 compliant (#3336)
             imp: all: Display which cruncher load/save/complete work (#2954)
             imp: all: Log more error messages (#3611)
-            imp: macosx: Made the buffer threshold limits hw-dependant (#3626)
+            imp: macosx: Made the buffer threshold limits hw-dependent (#3626)
             fix: ppc: Select core #5 on PPC 601 (#3685)
             fix: macosx: Now recognize PPC 750FX (#3675)
             fix: macosx: No longer read the TAU on G4/G5.
@@ -335,7 +352,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
 2.9006-485  new: decunix: cpu temperature detection
             new: macosx: use AppleCPUthermo to read CPU temperature (#3315)
             imp: macosx: use latest gcc 3.3 to compile client and OGR cores
-            new: macosx: properly recongize the PowerPC 970 (G5) (#3310)
+            new: macosx: properly recognize the PowerPC 970 (G5) (#3310)
             new: ppc: new rc5-72 core for PowerPC 970 (G5) by Didier Levet
             new: nextstep: revived port with OGR and RC5-72 support
 
@@ -531,13 +548,13 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             imp: networking layer rewritten from scratch. It is also a lot
                  more chatty, and prints very specific messages on error.
             new: client can be configured with multiple keyserver names.
-            fix: all: no more uneccesary connects when using frequent-checks
+            fix: all: no more unnecessary connects when using frequent-checks
             fix: all: mail sent correctly on shutdown.
             fix: all: no longer discards work-to-do on fetch.
             fix: win9x: client no longer hangs on sys shutdown
             chg: all: smtp/firewall hostname settings have different semantics
                  (port # is appended to the name in the form hostname:port)
-            chg: all: the default keserver port (when port number is zero) 
+            chg: all: the default keyserver port (when port number is zero) 
                  for HTTP encoding is 80. The default HTTP proxy port is 8080.
             fix: all: for 'rotate' log file types: if the interval (limit)
                  is specified in days then the date in the filename reflects
@@ -545,7 +562,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             new: all: by default displays a different crunch-o-meter when an
                  OGR packet is being worked on. (any sug. for improvement?)
             chg: minor adjustments to Loaded/Saved/Completed/Summary messages
-                 for project independance (format doesn't have to be processed
+                 for project independence (format doesn't have to be processed
                  differently for different projects). Inexact percentages 
                  (ie, for OGR) are no longer displayed at load/save time.
             new: win16/32: crunch-o-scope, menus et al. (christmas present :)
@@ -593,7 +610,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
             new: macos: the macos client can now run "detached"
             fix: macos: a different networking library delivers many benefits
             chg: macos: priority adjustment works fine now
-            new: macos: the client is now controlable through AppleScript
+            new: macos: the client is now controllable through AppleScript
             new: macos: FBA/daemon version
             chg: macos: process detection for "pause-if-running" now works
             new: "pause-if-CPU-temperature-exceeds" (not on all platforms)
@@ -613,7 +630,7 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
 
 2.8008.459  new: x86: new rc5 K7 core thanks to
                  Sean Stanek <vulture@iastate.edu>
-            new: all: the "update frequently (-frequent)" has been superceded
+            new: all: the "update frequently (-frequent)" has been superseded
                  by "additional buffer-level checking". The new option
                  provides better control and supports one new mode
                  "update on per-project buffer exhaustion" which enables
@@ -936,12 +953,12 @@ Version change log: $Id: CHANGES.txt,v 1.130 2013/07/26 00:27:42 piru Exp $
 2.7024.409 98.06.14 Finalized lurk modes for OS/2
 2.7024.409 98.06.18 Users can now tell us exactly what we need to add to the
                      CPU identification code to stop their cpu from being
-                     mis-ident'd.
+                     misidentified.
 2.7024.409 98.06.17 Added a new PPro/PII/6x86/K6 *DES* core
 2.7024.409 98.06.15 New 64-bit UltraSparc DES core - super fast !
 2.7024.409 98.06.15 ARM version of Kwan's latest sboxes - 30% faster
 2.7024.409 98.06.14 Fixed the OS/2 lurk mode so that it updates less
-                     freqently.
+                     frequently.
 2.7024.409 98.05.13 Fixed CPU identification crash under *nix with
                      486 SX/DX/DX2.
 2.7024.409 98.06.08 More aesthetic fixes, SparcBSD fixes, fetch/flush
@@ -1040,7 +1057,7 @@ v2.7012.395 98.02.05 Yet another new bitslice driver.
 v2.7011.394b 98.02.01 "Connecting to..." message in network.cpp
 v2.7011.394 98.02.01 Watcom link order changed
 v2.7011.394 98.02.01 OS2 GUI changes for DES tests
-v2.7011.394 98.02.01 Macro collission problem fixed
+v2.7011.394 98.02.01 Macro collision problem fixed
 v2.7011.394 98.02.01 Netware changes
 v2.7010.393 98.01.30 New, much faster bitslice driver and s-boxes.
 v2.7010.393 98.01.30 Got RC5 assembly running on AIX/PowerPC client.
@@ -1100,7 +1117,7 @@ v2.7001.365 98.01.06 Initial Changes to incorporate DESII contest
                      3 seconds
 98.01.03 v2.6403.340 Checkpoint files re-written immediately after blocks
                      finished
-98.01.03 v2.6403.340 keyserver port can now be explictly specified when using
+98.01.03 v2.6403.340 keyserver port can now be explicitly specified when using
                      http
 98.01.03 v2.6403.340 PutBufferOutput() no longer returns error if Update()
                      fails. Only actual buffer updating problems result in a
@@ -1230,14 +1247,14 @@ preferred keyserver can now be specified when doing http
 network timeouts increased
 improved block buffering code
 maximum block count increased
-buffer files explictly placed in exe directory on win32
+buffer files explicitly placed in exe directory on win32
 
 
 
 v2 Build 2 (2.002)
 ------------------
 97.8.05 shadow count variable
-97.8.05 hour timout saves work
+97.8.05 hour timeout saves work
 97.8.05 timing output problem
 97.8.05 *break* text in win32
 97.8.05 help message fixed

@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.84 2012/01/13 01:05:22 snikkel Exp $"; }
+return "@(#)$Id: disphelp.cpp,v 1.84 2014/08/11 01:05:22 ertyu Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -41,7 +41,7 @@ static const char *helpbody[] =
   "-test [prj [cn]]   tests for core errors [optional: only project prj]",
   "                   [optional: only core cn, must be used with prj]",
   "-stress [prj [cn]] more thorough and longer running variant of -test",
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
   "-cpuinfo           print information about the detected cpu(s)",
 #else
   "-gpuinfo           print information about the detected gpu(s)",
@@ -58,7 +58,7 @@ static const char *helpbody[] =
 #elif (CLIENT_OS == OS_OS2)
   "-install           install the client in the startup folder",
   "-uninstall         remove the client from the startup folder",
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
   "-install [...]     install the client in /etc[/rc.d]/init.d/",
   "                   all [...options...] that follow '-install' serve",
   "                   as parameters for the installed client.",

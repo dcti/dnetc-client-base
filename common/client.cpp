@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.271 2012/05/13 10:22:13 stream Exp $"; }
+return "@(#)$Id: client.cpp,v 1.272 2015/07/12 22:29:12 zebe Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -230,7 +230,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME_EXTENDED " "
-                    "Copyright 1997-2012, distributed.net\n");
+                    "Copyright 1997-2014, distributed.net\n");
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
         LogScreenRaw( "ARM assembly by Peter Teichmann\n");
@@ -522,7 +522,7 @@ int main( int argc, char *argv[] )
     char *p = strrchr( argv[0], '/' );
     needchange = (strcmp( ((p)?(p+1):(argv[0])), defname )!=0);
 
-    #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX)
+    #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
     /* discard dir component from argv[0] when started from init.d */
     if (!needchange && *argv[0] == '/' && strlen(argv[0]) > (strlen(defname)+10))
     {
@@ -570,7 +570,7 @@ int main( int argc, char *argv[] )
       /* yes, it stays open */
     }
   }
-  #elif (CLIENT_OS == OS_MACOSX)                  /* SPT_TYPE==SPT_PSSTRINGS */
+  #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)     /* SPT_TYPE==SPT_PSSTRINGS */
   /* NOTHING - PS_STRINGS are no longer supported and there's no way to
   ** change the name of our process.
   if (needchange)

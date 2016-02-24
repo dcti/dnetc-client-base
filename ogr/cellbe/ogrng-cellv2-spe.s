@@ -48,6 +48,12 @@
 	;# 32 bits width of newbit to make big shifts work right.
 	;#    It was so many free clocks there that is was even possible to speculative
 	;# calculate whole next shift round, giving a nice boost (almost 10% total).
+	;#
+	;# 2013-10-20:
+	;#    Better alignment of jump targets gained one clock (~400K) without
+	;# changes in the code.
+	;#    Gained ~200K by removing one-clock dependency for first "or" in
+	;# "no_for_loop"->"no_for_loop" path.
 
 	;#
 	;# Known non-optimal things:
@@ -69,6 +75,10 @@
 	;# iteration, so losses are almost eliminated).
 	;#
 
+	;#
+	;# Current speed (PS3): 36,736,769 nodes/sec
+	;#
+
 	.data
 	.align	4
 
@@ -78,7 +88,15 @@ clz_addons_init:
 	.int		0, 32, 64, 96
 
 	.text
-	.align	3
+
+	;# Alignment could cause crazy and unpredictable effects when it comes
+	;# to instructions starvation (empty prefetch buffers) because datastore
+	;# has higher priority then IFETCH. Cell Handbook says that jumps aligned
+	;# to 64 bytes could improve performance in such cases. Let's start code
+	;# aligned to 128 bytes (full IFETCH line) to be able to align on any
+	;# value below.
+
+	.align	7
 	.global	ogr_cycle_256_test
 
 	# Parameters
@@ -172,6 +190,7 @@ clz_addons_init:
 	.set	addr_forloop,		70
 	.set	addr_no_forloop,	71
 	.set	addr_is_forloop,	72
+	.set	addr_no_forloop_no_or,	73
 
 ogr_cycle_256_test:
 
@@ -194,6 +213,7 @@ ogr_cycle_256_test:
 
 	ila		$addr_forloop,    for_loop
 	ila		$addr_no_forloop, no_for_loop
+	ila		$addr_no_forloop_no_or, no_for_loop_no_or
 
 	# cache data from oState
 
@@ -242,7 +262,26 @@ ogr_cycle_256_test:
 	lqd		$limit, 112($lev)	# int limit = lev->limit;
 	lqd		$mark,  96($lev)	# int mark  = lev->mark;
 
-;#	This label must be aligned - insert nops if necessary
+	;# Alignment craziness starts right here :)
+	;#
+	;# This label must be aligned to exactly 64 bytes. Align it to 128 bytes -
+	;# and you'll lose a clock (~440KNodes). Look like cause of the problem is
+	;# a code at "break_for". Jump to this code is executed once per node and
+	;# is always unpredicted (hard to predict, no room for hint). Current best
+	;# performace value (36,556 KNodes) happens when break_for is EXACTLY WHERE
+	;# IT IS - at address offset 0x0398. Move it by just a few instructions -
+	;# speed will change. There is a "stable" speed of 36,531K in most cases,
+	;# but at some offsets (e.g. if break_for aligned to 64, code offset 0x03C0)
+	;# you'll lose a full clock (speed will drop to 36,097K). Be aware! Move this
+	;# damn code to the stable point before you'll attempt to add or remove
+	;# intructions above it! (Align to 128 / offset 0x0400 looks safe).
+
+	;# So, as said above, "for_loop" must be aligned to 64 (file offset 0x00C0).
+	;# Be avare when changing number of instructions in initialization code above.
+	;# Moving this label could have side effects of speed penalties. Test it at
+	;# new offsets first.
+
+	.align	6
 
 for_loop:
 
@@ -256,9 +295,7 @@ for_loop:
 	# a version with return values 1..32 (32 for both -2 and -1)
 
 	nor		$s, $compV0, $compV0	# ~comp0
-	lnop					# with these 2 lnops a bit faster??? caching issues???
 	ceqi		$cond_comp0_minus1, $compV0, -1
-	lnop
 	rotmi		$s, $s, -1		# magic shift
 	selb		$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
 
@@ -331,6 +368,7 @@ no_for_loop:
 	# lev->mark = mark;
 	# if (depth == oState->maxdepthm1) {  goto exit; }
 	or		$new_distV0, $distV0, $listV0	# distV0 = vec_or(distV0, listV0); (precalc)
+no_for_loop_no_or:
 	brnz		$cond_depth_maxm1, save_mark_and_exit
 
 	#  PUSH_LEVEL_UPDATE_STATE(lev);
@@ -410,7 +448,8 @@ no_for_loop:
 
 		a	$s, $s, $clz_addons	# clz(word1) += 32
 
-		selb	$addr_is_forloop, $addr_no_forloop, $addr_forloop, $cond_comp0_minus1
+		# In this path we even have time to precalculate top "or" command
+		selb	$addr_is_forloop, $addr_no_forloop_no_or, $addr_forloop, $cond_comp0_minus1
 		lnop
 
 	clz		$element, $temp		# spu_cntlz(...)
@@ -492,10 +531,10 @@ fetch_pvalues:
 		lnop
 
 		ceq		$cond_depth_maxm1, $depth, $maxdepthm1	# if (depth == oState->maxdepthm1) ...
-		rotqbi		$listV1, $listV1, $inv_s
+		rotqbi		$listV0, $listV0, $inv_s
 
 	cgt		$cond_mark_limit, $mark, $limit
-		rotqbi		$listV0, $listV0, $inv_s
+		rotqbi		$listV1, $listV1, $inv_s
 
 		rotqbi		$compV0, $compV0, $s
 
@@ -503,6 +542,7 @@ fetch_pvalues:
 
 	# if (spu_extract(save_compV0, 0) == (SCALAR)~0) { continue; }
 
+	or		$new_distV0, $distV0, $listV0	# distV0 = vec_or(distV0, listV0); (precalc)
 .L_fl2:
 	bi		$addr_is_forloop
 
@@ -575,6 +615,8 @@ update_limit:
 	cgt		$cond_mark_limit, $mark, $limit
 	rotqbi		$compV0, $compV0, $s
 
+	# both delayed by 1 clock
+	or		$new_distV0, $distV0, $listV0	# distV0 = vec_or(distV0, listV0); (precalc)
 	brnz		$cond_mark_limit, break_for
 
 .L_fl3:
@@ -638,6 +680,18 @@ save_mark_and_exit:
 	bi		$lr
 
 	.align		3
+
+	;# Weird magic again. See comment before for_loop label.
+	;#
+	;# This code works a bit better only at given - unaligned - location!
+	;# (file offset must be 0x0398). Although other locations are acceptable,
+	;# (penalty is just about 24K) there exist really bad ones where speed
+	;# drops by 400+K (lose of full clock). E.g. align 64 / offset 0x03C0. Be aware!
+
+	;# Use nops to push the code to best known location
+
+#	nop
+#	lnop
 
 break_for:
 
