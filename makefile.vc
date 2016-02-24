@@ -8,6 +8,7 @@
 #PROCESSOR_ARCHITECTURE = cuda
 #PROCESSOR_ARCHITECTURE = ATI_STREAM
 #PROCESSOR_ARCHITECTURE = OPENCL
+#PROCESSOR_ARCHITECTURE = arm
 
 BASENAME = dnetc
 OUTPUTPATH = output
@@ -66,6 +67,12 @@ OPTS_CC_CPU =
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat
 ZIPSUFFIX = win32-x86-opencl
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "arm"
+HAVE_OGR_CORES = 0
+OPTS_CC_CPU = /D_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1
+OPTS_M_PLAT = ARM
+CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+ZIPSUFFIX = win32-arm
 !else
 !error unrecognized PROCESSOR_ARCHITECTURE found in the environment
 !endif
@@ -394,6 +401,13 @@ RC5_72_OBJS =                      \
         $(OUTPUTPATH)/ocl_4pipe.obj
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DOPENCL -DDYN_TIMESLICE
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "arm"
+RC5_72_OBJS =                        \
+        $(OUTPUTPATH)/r72arm1-winrt.obj \
+        $(OUTPUTPATH)/r72arm2-winrt.obj \
+        $(OUTPUTPATH)/r72arm3-winrt.obj
+
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !else
 !error No RC5-72 cores for this architecture.
 !endif
@@ -584,6 +598,11 @@ $(VC_CHECK):
 
 {$(RC572SRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "arm"
+
+{$(RC572SRCPATH)/arm}.asm{$(OUTPUTPATH)}.obj:
+        armasm -o $(@:/=\) -coff_thumb2_only $(**:/=\)
 
 !endif
 
