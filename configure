@@ -2514,7 +2514,7 @@ case "$1" in
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "openbsd"
         TARGET_CCFLAGS="$OPTS_GCC"
-        #TARGET_LDFLAGS="-static"
+        TARGET_LDFLAGS="-static"
         TARGET_LIBS="-ltermcap"
         TARGET_DOCFILES="docs/readme._ix"   
         TARGET_TARBALL="openbsd-ppc"

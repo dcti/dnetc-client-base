@@ -290,10 +290,9 @@ set_counter:
 		#lis		r10,(expanded_key)@ha
 		#la		r10,(expanded_key)@l(r10)
 		bl	bl_trick
-.long expanded_key
 bl_trick:
 		mflr	r10
-		lwz	r10,0(r10)
+		addi	r10,r10,expanded_key-bl_trick
 		
 
 	#---------------------------------------------------------------------
@@ -919,7 +918,8 @@ epilog:
 
 #============================================================================
 
-		.rodata
+		# keep expanded_key in .text section, so it is possible to
+		# addi	r10,r10,expanded_key-bl_trick
 		.align	4
 
 		
