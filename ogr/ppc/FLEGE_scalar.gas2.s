@@ -173,11 +173,10 @@ cycle_ppc_scalar_256:
     ;#addi     r2,r2,(L_SwitchCase-128)@l
     ;mflr     r0
     ;bl       lblAA
-    ;.long L_SwitchCase-128
     ;lblAA:
     ;mflr     r2
     ;mtlr     r0
-    ;lwz      r2,0(r2)
+    ;addi     r2,r2,L_SwitchCase-lblAA-128
     ;.if      0                         ;# Skip over AS code
     lis       r2,ha16(L_SwitchCase-128)
     addi      r2,r2,lo16(L_SwitchCase-128)
