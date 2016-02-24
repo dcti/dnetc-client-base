@@ -172,7 +172,7 @@ cycle_ppc_scalar_256:
     ;#lis      r2,(L_SwitchCase-128)@ha
     ;#addi     r2,r2,(L_SwitchCase-128)@l
     ;mflr     r0
-    ;bl       lblAA
+    ;bcl      20,31,lblAA	# see PowerPC PEM32b doc
     ;lblAA:
     ;mflr     r2
     ;mtlr     r0
