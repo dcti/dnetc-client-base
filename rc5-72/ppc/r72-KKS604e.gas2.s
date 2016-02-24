@@ -289,7 +289,7 @@ set_counter:
 		
 		#lis		r10,(expanded_key)@ha
 		#la		r10,(expanded_key)@l(r10)
-		bl	bl_trick
+		bcl	20,31,bl_trick	# see PowerPC PEM 32b doc
 bl_trick:
 		mflr	r10
 		addi	r10,r10,expanded_key-bl_trick
