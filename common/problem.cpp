@@ -81,6 +81,8 @@ static unsigned int __problem_counter = 0;
    and addressed/decremented in the destructor, both of which are
    'thread safe' in the sense that they are never called from the
    actual crunching threads themselves.
+   2015-10-24: threadindex will be set externally due to GPU issues
+   (microbench will call another ProblemAlloc() and get wrong GPU index)
 */
 
 /* ------------------------------------------------------------------- */
@@ -182,7 +184,7 @@ void ProblemFree(void *__thisprob)
   return;
 }
 
-Problem *ProblemAlloc(void)
+Problem *ProblemAlloc(unsigned thread_index)
 {
   char *p;
   SuperProblem *thisprob = (SuperProblem *)0;
@@ -265,8 +267,8 @@ Problem *ProblemAlloc(void)
     fastlock_init(&(thisprob->copy_lock));
     thisprob->iprobs[PICKPROB_CORE].priv_data.threadindex =
     thisprob->iprobs[PICKPROB_MAIN].priv_data.threadindex =
-    thisprob->iprobs[PICKPROB_TEMP].priv_data.threadindex =
-                                              __problem_counter++;
+    thisprob->iprobs[PICKPROB_TEMP].priv_data.threadindex = thread_index;
+    __problem_counter++;
 
     //align core_membuffer to 16byte boundary
     p = &(thisprob->iprobs[PICKPROB_CORE].priv_data.__core_membuffer_space[0]);
@@ -635,6 +637,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
   ContestWork for_magic;
   int genned_random = 0, genned_benchmark = 0;
   struct selcore selinfo; int coresel;
+  int device = hackGetUsedDeviceIndex(client, thisprob->priv_data.threadindex); // GPU device to use
 
   //has to be done before anything else
   if (work == CONTESTWORK_MAGIC_RANDOM) /* ((const ContestWork *)0) */
@@ -661,7 +664,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
     Log("BUG! LoadState() without previous RetrieveState(,,purge)!\n");
     return -1;
   }
-  if (!IsProblemLoadPermitted(thisprob->priv_data.threadindex, contestid))
+  if (!IsProblemLoadPermitted(device, contestid))
   {
     return -1;
   }
@@ -827,7 +830,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
       #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
-      thisprob->priv_data.rc5_72unitwork.devicenum = (client->devicenum >= 0 ? client->devicenum : thisprob->priv_data.threadindex);
+      thisprob->priv_data.rc5_72unitwork.devicenum = device;
       thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = 0;
       thisprob->priv_data.rc5_72unitwork.best_time = -1;
       #endif
@@ -1717,7 +1720,7 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
                              using_ptime, &s_using_ptime, last_resultcode );
         core_prob->pub_data.core_run_count++;
         core_prob->pub_data.tslice = iterations;
-#if (CLIENT_CPU == CPU_CUDA)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
         // FIXME there could be a better way to do this
         core_prob->pub_data.tslice_increment_hint = core_prob->priv_data.rc5_72unitwork.optimal_timeslice_increment;
 #endif
@@ -1745,13 +1748,15 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
 // specified problem slot, or 0 if it is not allowed.  Core
 // thread-safety and contest availability checks are used to determine
 // allowability, but not contest closure.
+//
+// If device < 0, it must be ignored (check if contest can be loaded to any device)
 
-int IsProblemLoadPermitted(long prob_index, unsigned int contest_i)
+int IsProblemLoadPermitted(int device, unsigned int contest_i)
 {
-  DNETC_UNUSED_PARAM(prob_index);
+  DNETC_UNUSED_PARAM(device);
 
   #if (CLIENT_OS == OS_RISCOS) && defined(HAVE_X86_CARD_SUPPORT)
-  if (prob_index == 1 && /* thread number reserved for x86 card */
+  if (device == 1 && /* thread number reserved for x86 card */
      contest_i != RC5 && /* RISC OS x86 thread only supports RC5 */
      GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     return 0;

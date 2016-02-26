@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -43,7 +43,7 @@ BOOL MemInit(VOID)
 {
    if (!MemPool) {
       #ifdef __amigaos4__
-      MemPool = CreatePool(MEMF_SHARED,8192,4096); /* OS4 */
+      MemPool = AllocSysObjectTags(ASOT_MEMPOOL,ASOPOOL_MFlags,MEMF_SHARED,ASOPOOL_Puddle,8192,ASOPOOL_Threshold,4096,ASOPOOL_Name,"dnetc",TAG_END); /* OS4 */
       #elif !defined(__PPC__)
       MemPool = LibCreatePool(MEMF_PUBLIC,8192,4096); /* 68K */
       InitSemaphore(&MemPoolLock);
@@ -138,7 +138,7 @@ VOID MemDeinit(VOID)
    if (MemPool) {
       #if defined(__amigaos4__)
       ObtainSemaphore(&MemPoolLock);
-      DeletePool(MemPool); /* OS4 */
+      FreeSysObject(ASOT_MEMPOOL,MemPool); /* OS4 */
       ReleaseSemaphore(&MemPoolLock);
       #elif !defined(__PPC__)
       ObtainSemaphore(&MemPoolLock);

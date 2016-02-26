@@ -1,9 +1,9 @@
 /*
-* Copyright distributed.net 2009-2014 - All Rights Reserved
+* Copyright distributed.net 2009-2016 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: ocl_info.cpp 2014/08/19 22:18:25 gkhanna Exp $
+* $Id: ocl_info.cpp 2016/02/04 19:08:25 zebe Exp $
 */
 
 #include "ocl_info.h"
@@ -19,271 +19,264 @@
 #include "deviceid.cpp"
 #include "../rc5-72/opencl/ocl_common.h"
 
-cl_uint numPlatforms = 0;
-cl_platform_id *platforms = NULL;
-cl_int numDevices = -2;
-cl_device_id *devices = NULL;
+/* For printing 64-bit values. Probably it should be in common client compiler-specific stuff. */
+#if defined(_MSC_VER) && _MSC_VER <= 1600  /* At least MSVC 2010 does not have nor this nor "inttypes.h" */
+#define PRIu64 "I64u"
+#else
+#include <inttypes.h>
+#endif
 
-int getOpenCLDeviceCount(void)
+u32 getOpenCLDeviceFreq(int device)
 {
-  if (numDevices == -2)
-    InitializeOpenCL();
-  return numDevices;
-}
+  ocl_context_t *cont = ocl_get_context(device);
 
-u32 getOpenCLDeviceFreq(unsigned device)
-{
-  if (getOpenCLDeviceCount() > (int)device)
+  if (cont)
   {
     cl_uint clockrate;
-    if(clGetDeviceInfo(devices[device], CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(clockrate), &clockrate, NULL)==CL_SUCCESS)
-		return clockrate;
+    if (clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(clockrate), &clockrate, NULL) == CL_SUCCESS)
+      return clockrate;
   }
+
   return 0;
 }
 
-static unsigned GetDeviceID(unsigned vendor_id, cl_char *device_name, cl_uint cunits, unsigned device)
+/*
+ * Run kernel with predefined constants to get device ID
+ */
+static unsigned GetDeviceID(/* unsigned vendor_id, cl_char *device_name, cl_uint cunits, */ ocl_context_t *cont)
 {
   size_t globalWorkSize[1];
+  cl_int status;
+  cl_uint id = 0;
   cl_uint *outPtr;
 
-	//Run kernel with predefined constants to get device ID
-//  cl_context context = NULL;
-  cl_command_queue cmdQueue = NULL;
-  cl_mem out_buffer = NULL;
-//  cl_program program = NULL;
-//  cl_kernel kernel = NULL;
-  cl_int status;
-  cl_uint id=0;
-
-  if(ocl_context[device].coreID != CORE_NONE)
-	  OCLReinitializeDevice(device);
+  // This code does not set coreID, so device must be implicitly reinited at start
+  // and cleaned up at end.
+  OCLReinitializeDevice(cont);
 
   // Create a context and associate it with the device
-  ocl_context[device].clcontext = clCreateContext(NULL, 1, &devices[device], NULL, NULL, &status);
-  if(status != CL_SUCCESS)
-	  return 0;
+  cont->clcontext = clCreateContext(NULL, 1, &cont->deviceID, NULL, NULL, &status);
+  if (status != CL_SUCCESS)
+    goto finished;
   
-  cmdQueue = clCreateCommandQueue(ocl_context[device].clcontext, devices[device], 0, &status);
-  if(status != CL_SUCCESS)
-	  goto finished;
+  cont->cmdQueue = clCreateCommandQueue(cont->clcontext, cont->deviceID, 0, &status);
+  if (status != CL_SUCCESS)
+    goto finished;
 
-  out_buffer = clCreateBuffer(ocl_context[device].clcontext, CL_MEM_ALLOC_HOST_PTR, 4, NULL, &status);
-  if(status != CL_SUCCESS)
-	  goto finished;
+  cont->out_buffer = clCreateBuffer(cont->clcontext, CL_MEM_ALLOC_HOST_PTR, 4, NULL, &status);
+  if (status != CL_SUCCESS)
+    goto finished;
 
-  if(!BuildCLProgram(device, deviceid_src, "deviceID"))
-	  goto finished;
+  if (!BuildCLProgram(cont, deviceid_src, "deviceID"))
+    goto finished;
 
-   status |= clSetKernelArg(ocl_context[device].kernel, 0, sizeof(cl_mem), &out_buffer);
-   if(status != CL_SUCCESS)
-     goto finished;
+  status = clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &cont->out_buffer);
+  if (status != CL_SUCCESS)
+    goto finished;
 	 
-   globalWorkSize[0] = 1;
-   status = clEnqueueNDRangeKernel(cmdQueue, ocl_context[device].kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
-   if(status != CL_SUCCESS)
+  globalWorkSize[0] = 1;
+  status = clEnqueueNDRangeKernel(cont->cmdQueue, cont->kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
+  if (status != CL_SUCCESS)
      goto finished;
 
-  outPtr = NULL;
-  outPtr = (cl_uint*) clEnqueueMapBuffer(cmdQueue, out_buffer, CL_TRUE, CL_MAP_READ, 0, 4, 0, NULL, NULL, &status);
-  if(status == CL_SUCCESS)
+  outPtr = (cl_uint*) clEnqueueMapBuffer(cont->cmdQueue, cont->out_buffer, CL_TRUE, CL_MAP_READ, 0, 4, 0, NULL, NULL, &status);
+  if (status == CL_SUCCESS)
   {
-	  id = outPtr[0];
-      clEnqueueUnmapMemObject(cmdQueue, out_buffer, outPtr, 0, NULL, NULL);
+    id = outPtr[0];
+    clEnqueueUnmapMemObject(cont->cmdQueue, cont->out_buffer, outPtr, 0, NULL, NULL);
   }
 
 finished:
-  if(cmdQueue)
-    clReleaseCommandQueue(cmdQueue);
-  if(out_buffer)
-    clReleaseMemObject(out_buffer);
-  OCLReinitializeDevice(device);
+  OCLReinitializeDevice(cont);
   return id;
 }
 
-long getOpenCLRawProcessorID(const char **cpuname, unsigned device)
+long getOpenCLRawProcessorID(int device, const char **cpuname)
 {
-  static cl_char device_name[256+130] = {0};
+  static cl_char device_name[256+130];
   strcpy((char*)device_name, "Unknown");
 
-  if(cpuname)
-	*cpuname = (const char*)device_name;
+  if (cpuname)
+    *cpuname = (const char*)device_name;
 
-  if (getOpenCLDeviceCount() > (int)device)
+  ocl_context_t *cont = ocl_get_context(device);
+  if (cont)
   {
-    clGetDeviceInfo(devices[device], CL_DEVICE_NAME, sizeof(device_name)-130, device_name, NULL);
+    clGetDeviceInfo(cont->deviceID, CL_DEVICE_NAME, sizeof(device_name)-130, device_name, NULL);
 
-	//retrieve card info, if available
-	u32 off = strlen((const char*)device_name);
-	device_name[off++]=' '; device_name[off++]='\0';
+    //retrieve card info, if available
+    u32 off = strlen((const char*)device_name);
+    device_name[off++]=' '; device_name[off++]='\0';
 #ifdef CL_DEVICE_BOARD_NAME_AMD
-	if(clGetDeviceInfo(devices[device], CL_DEVICE_BOARD_NAME_AMD, sizeof(device_name)-off, &device_name[off], NULL) == CL_SUCCESS)
-	{
-	  device_name[off-1]='(';
-	  u32 off2 = strlen((const char*)device_name);
-	  device_name[off2] = ')';
-	  device_name[off2+1] = '\0';
-	}
+    if (clGetDeviceInfo(cont->deviceID, CL_DEVICE_BOARD_NAME_AMD, sizeof(device_name)-off, &device_name[off], NULL) == CL_SUCCESS)
+    {
+      device_name[off-1]='(';
+      u32 off2 = strlen((const char*)device_name);
+      device_name[off2] = ')';
+      device_name[off2+1] = '\0';
+    }
 #endif
-	
-	cl_uint vendor_id=0;
-	clGetDeviceInfo(devices[device], CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL);
+// ??? Never used
+/*
+    cl_uint vendor_id=0;
+    clGetDeviceInfo(cont->deviceID, CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL);
 
-	cl_uint cunits=0;
-	clGetDeviceInfo(devices[device], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cunits), &cunits, NULL);
-	
-	return GetDeviceID(vendor_id, device_name, cunits, device);
+    cl_uint cunits=0;
+    clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cunits), &cunits, NULL);
+*/
+    return GetDeviceID(/* vendor_id, device_name, cunits, */ cont);
   }
 
   return -1;
-
 }
 
-void OpenCLPrintExtendedGpuInfo(void)
+void OpenCLPrintExtendedGpuInfo(int device)
 {
-  int i;
-
-  if (getOpenCLDeviceCount() <= 0)
-  {
-    LogRaw("No supported devices found\n");
-    return;
-  }
-
-  //Print platform info
-  LogRaw("\nPlatform info:\n");
-  LogRaw("--------------\n");
-  cl_char str[80];
+  const char *data;
   cl_int status;
-  status = clGetPlatformInfo(platforms[0], CL_PLATFORM_NAME, sizeof(str), (void *)str, NULL);
-  if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform Name", str);
 
-  status = clGetPlatformInfo(platforms[0], CL_PLATFORM_VENDOR, sizeof(str), (void *)str, NULL);
-  if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform Vendor", str);
+  ocl_context_t *cont = ocl_get_context(device);
+  if (cont == NULL)
+    return;
 
-  status = clGetPlatformInfo(platforms[0], CL_PLATFORM_VERSION, sizeof(str), (void *)str, NULL);
-  if(status == CL_SUCCESS)  LogRaw("%30s: %s\n", "Platform Version", str);
-
-  cl_char *str2;
-  size_t sz;
-
-  status = clGetPlatformInfo(platforms[0], CL_PLATFORM_EXTENSIONS, 0, NULL, &sz);
-  if(sz)
+  if (cont->firstOnPlatform)
   {
-    str2 = (cl_char*)malloc(sz+1);
-    status = clGetPlatformInfo(platforms[0], CL_PLATFORM_EXTENSIONS, sz+1, (void *)str2, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform extensions",str2);
-    free(str2);
-  }
+    //Print platform info once
+    LogRaw("\nPlatform info:\n");
+    LogRaw("--------------\n");
+    cl_char str[80];
+    status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_NAME, sizeof(str), (void *)str, NULL);
+    if (status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform Name", str);
 
-  for (i = 0; i < getOpenCLDeviceCount(); i++)
-  {
-    cl_char device_name[1024] = {0};
-    
-    LogRaw("\nDevice #%u:\n",i);
-    LogRaw("------------\n");
+    status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_VENDOR, sizeof(str), (void *)str, NULL);
+    if (status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform Vendor", str);
 
-    cl_device_type type;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_TYPE, sizeof(type), &type, NULL);
-    if(status == CL_SUCCESS)
+    status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_VERSION, sizeof(str), (void *)str, NULL);
+    if (status == CL_SUCCESS)  LogRaw("%30s: %s\n", "Platform Version", str);
+
+    cl_char *str2;
+    size_t sz;
+    status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_EXTENSIONS, 0, NULL, &sz);
+    if (sz)
     {
-      LogRaw("%30s: ", "Type");
-      if( type & CL_DEVICE_TYPE_CPU )
-        LogRaw("CPU\n");                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-      else
-        if( type & CL_DEVICE_TYPE_GPU )
-          LogRaw("GPU\n");
-        else
-          LogRaw("UNKNOWN\n");
-    }
-
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(device_name), device_name, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "Name",device_name);
-
-    cl_uint clockrate;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(clockrate), &clockrate, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "Max clockrate", clockrate);
-
-    cl_uint cunits;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cunits), &cunits, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "Max compute units", cunits);
-
-    cl_ulong gmemcache;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(gmemcache), &gmemcache, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "Global memory cache size", gmemcache);
-
-    cl_device_mem_cache_type ct;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof(ct), &ct, NULL);
-    if(status == CL_SUCCESS) 
-    {
-      LogRaw("%30s: ", "Global memory cache type");
-      switch(ct)
+      str2 = (cl_char*)malloc(sz+1);
+      if (str2)
       {
-        case CL_NONE:
-          LogRaw("NONE\n");
-          break;
-        case CL_READ_ONLY_CACHE:
-          LogRaw("Read Only\n");
-          break;
-        case CL_READ_WRITE_CACHE:
-          LogRaw("Read/Write\n");
-          break;
-        default:
-          LogRaw("Not sure\n");
+        status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_EXTENSIONS, sz+1, (void *)str2, NULL);
+        if (status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform extensions", str2);
+        free(str2);
       }
     }
-
-    cl_bool um;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_HOST_UNIFIED_MEMORY, sizeof(um), &um, NULL);
-    if(status == CL_SUCCESS) 
-    {
-      LogRaw("%30s: ", "Unified memory subsystem");
-      if(um)
-        LogRaw("Yes\n");
-      else
-        LogRaw("No\n");
-    }
-
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_IMAGE_SUPPORT, sizeof(um), &um, NULL);
-    if(status == CL_SUCCESS) 
-    {
-      LogRaw("%30s: ", "Image support");
-      if(um)
-        LogRaw("Yes\n");
-      else
-        LogRaw("No\n");
-    }
-
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_LOCAL_MEM_SIZE, sizeof(gmemcache), &gmemcache, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "Local memory size", gmemcache);
-
-    size_t mwgs;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(mwgs), &mwgs, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "Max workgroup size", mwgs);
-
-    cl_uint nvw;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_NATIVE_VECTOR_WIDTH_INT, sizeof(nvw), &nvw, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "native vector width (int)", nvw);
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT, sizeof(nvw), &nvw, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "native vector width (float)", nvw);
-
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_OPENCL_C_VERSION, sizeof(device_name), device_name, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "OpenCL C version",device_name);
-
-    size_t ptres;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_PROFILING_TIMER_RESOLUTION, sizeof(ptres), &ptres, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %u\n", "Device timer resolution (ns)",ptres);
-
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_VENDOR, sizeof(device_name), device_name, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "Device vendor",device_name);
-
-    cl_uint vendor_id;
-    status = clGetDeviceInfo(devices[i], CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: 0x%x\n", "Device vendor id",vendor_id);
-
-    status = clGetDeviceInfo(devices[i], CL_DRIVER_VERSION, sizeof(device_name), device_name, NULL);
-    if(status == CL_SUCCESS) LogRaw("%30s: %s\n", "Driver version",device_name);
-
-    //TODO: device extensions
+    /* Split platform and device info */
+    LogRaw("\nDevice info:\n");
+    LogRaw("--------------\n");
   }
 
+  cl_char device_name[1024] = {0};
+  cl_device_type type;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_TYPE, sizeof(type), &type, NULL);
+  if (status == CL_SUCCESS)
+  {
+    if ( type & CL_DEVICE_TYPE_CPU )
+      data = "CPU";
+    else
+    {
+      if ( type & CL_DEVICE_TYPE_GPU )
+        data = "GPU";
+      else
+        data = "UNKNOWN";
+    }
+    LogRaw("%30s: %s\n", "Type", data);
+  }
+
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_NAME, sizeof(device_name), device_name, NULL);
+  if (status == CL_SUCCESS) LogRaw("%30s: %s\n", "Name",device_name);
+
+  cl_uint clockrate;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(clockrate), &clockrate, NULL);
+  if (status == CL_SUCCESS) LogRaw("%30s: %u\n", "Max clockrate", clockrate);
+
+  cl_uint cunits;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cunits), &cunits, NULL);
+  if (status == CL_SUCCESS) LogRaw("%30s: %u\n", "Max compute units", cunits);
+
+  cl_ulong gmemcache;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, sizeof(gmemcache), &gmemcache, NULL);
+  if (status == CL_SUCCESS) LogRaw("%30s: %" PRIu64 "\n", "Global memory cache size", gmemcache);
+
+  cl_device_mem_cache_type ct;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof(ct), &ct, NULL);
+  if (status == CL_SUCCESS)
+  {
+    switch(ct)
+    {
+      case CL_NONE:
+        data = "NONE";
+        break;
+      case CL_READ_ONLY_CACHE:
+        data = "Read Only";
+        break;
+      case CL_READ_WRITE_CACHE:
+        data = "Read/Write";
+        break;
+      default:
+        data = "Not sure";
+    }
+    LogRaw("%30s: %s\n", "Global memory cache type", data);
+  }
+
+  cl_bool um;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_HOST_UNIFIED_MEMORY, sizeof(um), &um, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %s\n", "Unified memory subsystem", (um ? "Yes" : "No"));
+
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_IMAGE_SUPPORT, sizeof(um), &um, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %s\n", "Image support", (um ? "Yes" : "No"));
+
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_LOCAL_MEM_SIZE, sizeof(gmemcache), &gmemcache, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %" PRIu64 "\n", "Local memory size", gmemcache);
+
+  size_t mwgs;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(mwgs), &mwgs, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %lu\n", "Max workgroup size", (unsigned long)mwgs);
+
+  cl_uint nvw;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_NATIVE_VECTOR_WIDTH_INT, sizeof(nvw), &nvw, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %u\n", "native vector width (int)", nvw);
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT, sizeof(nvw), &nvw, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %u\n", "native vector width (float)", nvw);
+
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_OPENCL_C_VERSION, sizeof(device_name), device_name, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %s\n", "OpenCL C version",device_name);
+
+  size_t ptres;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_PROFILING_TIMER_RESOLUTION, sizeof(ptres), &ptres, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %lu\n", "Device timer resolution (ns)", (unsigned long)ptres);
+
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_VENDOR, sizeof(device_name), device_name, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %s\n", "Device vendor",device_name);
+
+  cl_uint vendor_id;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: 0x%x\n", "Device vendor id",vendor_id);
+
+  status = clGetDeviceInfo(cont->deviceID, CL_DRIVER_VERSION, sizeof(device_name), device_name, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %s\n", "Driver version",device_name);
+
+  cl_uint devbits;
+  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_ADDRESS_BITS, sizeof(devbits), &devbits, NULL);
+  if (status == CL_SUCCESS)
+    LogRaw("%30s: %u%s\n", "Device address bits", devbits, (devbits == sizeof(size_t) * 8 ? "" : " - NOT MATCHED -"));
+
+  //TODO: device extensions
 }

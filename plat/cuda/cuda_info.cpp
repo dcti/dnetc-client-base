@@ -21,13 +21,13 @@ int GetNumberOfDetectedCUDAGPUs()
 
   if (gpucount == -123) {
     gpucount = -1;
-    if (InitializeCUDA() == 0) {
+    if (cuda_init_state >= 0) {
       cudaDeviceProp deviceProp;
       cudaError_t rc = cudaGetDeviceCount(&gpucount);
       if (rc != cudaSuccess) {
         gpucount = -1;
       } else {
-        rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+        rc = cudaGetDeviceProperties(&deviceProp, 0); /* Query first device to be sure CUDA is working somehow */
         if (rc != cudaSuccess || (deviceProp.major == 9999 && deviceProp.minor == 9999))
           gpucount = 0;
       }
@@ -37,7 +37,7 @@ int GetNumberOfDetectedCUDAGPUs()
   return gpucount;
 }
 
-long GetRawCUDAGPUID(const char **cpuname)
+long GetRawCUDAGPUID(int device, const char **cpuname)
 {
   static char namebuf[40];
   int cores;
@@ -46,9 +46,9 @@ long GetRawCUDAGPUID(const char **cpuname)
   if (cpuname)
     *cpuname = &namebuf[0];
 
-  if (GetNumberOfDetectedCUDAGPUs() >= 0) {
+  if (device >= 0 && device < GetNumberOfDetectedCUDAGPUs()) {
     cudaDeviceProp deviceProp;
-    cudaError_t rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+    cudaError_t rc = cudaGetDeviceProperties(&deviceProp, device);
     if (rc == cudaSuccess) {
       if ((cores = getCUDACoresPerSM (deviceProp.major, deviceProp.minor)) != -1) {
         snprintf(namebuf, sizeof(namebuf), "%.29s (%d SPs)",
@@ -67,12 +67,12 @@ long GetRawCUDAGPUID(const char **cpuname)
 }
 
 // returns the frequency in MHz, or 0.
-unsigned int GetCUDAGPUFrequency()
+unsigned int GetCUDAGPUFrequency(int device)
 {
   unsigned int freq = 0;
-  if (GetNumberOfDetectedCUDAGPUs() >= 0) {
+  if (device >= 0 && device < GetNumberOfDetectedCUDAGPUs()) {
     cudaDeviceProp deviceProp;
-    cudaError_t rc = cudaGetDeviceProperties(&deviceProp, 0); /* Only supports the first device */
+    cudaError_t rc = cudaGetDeviceProperties(&deviceProp, device);
     if (rc == cudaSuccess)
       freq = deviceProp.clockRate / 1000;
   }

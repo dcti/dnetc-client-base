@@ -60,18 +60,20 @@ int GetNumberOfLogicalProcessors ( void );
 int GetNumberOfPhysicalProcessors ( void );
 
 //get (simplified) cpu ident by hardware detection
-long GetProcessorType(int quietly);
+long GetProcessorType(int quietly, int device = 0);
 
+#if 0
 //get cpu ident by hardware detection
 long GetProcessorID();
+#endif
 
 //get a set of supported processor features
 //cores may get disabled due to missing features
-unsigned long GetProcessorFeatureFlags();
+unsigned long GetProcessorFeatureFlags(int device = 0);
 
 //Return cpuid/cputag, maxcpus, foundcpus as descriptive strings.
 //Assists in debugging user complaints/bug reports.
-void GetProcessorInformationStrings( const char ** scpuid, 
+void GetProcessorInformationStrings( int device, const char ** scpuid,
                   const char ** smaxcpus, const char ** sfoundcpus );
 
 //Wrapper for GetProcessorInformationStrings()
@@ -79,6 +81,6 @@ void GetProcessorInformationStrings( const char ** scpuid,
 void DisplayProcessorInformation( void );
 
 //Return the CPU frequency (in MHz)
-unsigned int GetProcessorFrequency();
+unsigned int GetProcessorFrequency(int device = 0);
 
 #endif /* __CPUCHECK_H__ */

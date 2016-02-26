@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -21,7 +21,7 @@ LONG _start(VOID)
 }
 
 const char ExLibName[] = "dnetcgui.library";
-#define ExLibID (VSTRING "\0Copyright © 2001-2005 Oliver Roberts. All rights reserved.")
+#define ExLibID (VSTRING "\0Copyright © 2001-2016 Oliver Roberts. All rights reserved.")
 
 struct ExecBase *SysBase       = NULL;
 struct DosLibrary  *DOSBase       = NULL;

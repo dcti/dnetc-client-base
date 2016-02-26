@@ -23,11 +23,22 @@ Version bump guide:
 Note: #xxxx refers to bug numbers as viewable on http://bugs.distributed.net/
 
 ==========================================================================
-Version change log: $Id: CHANGES.txt,v 1.132 2015/07/12 22:29:12 zebe Exp $
+Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 ==========================================================================
 
 2.9100
 ------
+
+2.9112.521  new: x86/amd64: RC5-72 AVX2 core
+            imp: IPv6 support for Windows clients (#2982)
+            imp: x86/amd64: Intel Skylake (#4615)
+            imp: gpu/OpenCL: support any number of OCL platforms on PC
+            imp: gpu: make -gpuinfo be similar on all types of devices
+            imp: gpu: improved GPU initialization and error diagnostic
+            imp: gpu: better handling of small blocks on fast GPUs
+            imp: x86/amd64: Intel Xeon E5/E7 v3 (#4626,#4627)
+            fix: threading on FreeBSD >= 10
+            imp: ppc: recognize e5500 and e6500 processors
 
 2.9111.520  imp: all: support for benchmarks > 2Gkeys/sec
             chg: all: increase max threads to 512

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2014 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,13 +10,14 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.209 2014/06/14 19:23:53 ertyu Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.210 2016/02/13 17:09:10 ertyu Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
 #include "cpucheck.h"  //just to keep the prototypes in sync.
 #include "logstuff.h"  //LogScreen()/LogScreenRaw()
 #include "sleepdef.h"  //usleep
+#include "unused.h"    //DNETC_UNUSED_PARAM
 
 #if (CLIENT_OS == OS_DEC_UNIX)
 #  include <unistd.h>
@@ -108,26 +109,20 @@ int GetNumberOfDetectedProcessors( void )
     cpucount = -1;
     #if (CLIENT_CPU == CPU_CUDA)
     {
-      if ((cpucount = GetNumberOfDetectedCUDAGPUs()) <= 0) {
-        LogScreen("No CUDA-supported GPU found.\n");
-        cpucount = -99;
-      }
+      if ((cpucount = GetNumberOfDetectedCUDAGPUs()) <= 0)
+        cpucount = -99;  // special magic value for GPU
     }
     #elif (CLIENT_CPU == CPU_ATI_STREAM)
     {
-      cpucount=getAMDStreamDeviceCount();
-      if (cpucount<=0) {
-        LogScreen("No ATI Stream compatible device found.\n");
+      cpucount = getAMDStreamDeviceCount();
+      if (cpucount <= 0)
         cpucount = -99;
-      }
     }
     #elif (CLIENT_CPU == CPU_OPENCL)
     {
-      cpucount=getOpenCLDeviceCount();
-      if (cpucount<=0) {
-        LogScreen("No OpenCL compatible devices found.\n");
+      cpucount = getOpenCLDeviceCount();
+      if (cpucount <= 0)
         cpucount = -99;
-      }
     }
     #elif (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_BSDOS) || \
         (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
@@ -361,6 +356,35 @@ int GetNumberOfPhysicalProcessors ( void )
 }
 
 /* ---------------------------------------------------------------------- */
+/*
+ * Return number of physical DEVICES which shall require separate handling
+ * (e.g. GPUs which usually have different models and brands).
+ *
+ * Note: current implementation is incomplete and hackish. It assumes following:
+ *
+ * a) For CPU crunchers (classic client), this function must return 1 and
+ * GetNumberOfDetectedProcessors() return number of CPU cores (crunchers to run).
+ * I'm not sure is it possible to have different CPU brands on SMP system or not,
+ * but supporting this only increases complexity (e.g. affinity selection becomes)
+ * non-trivial) without any visible benefits. So always assume 1 CPU device
+ * with many threads, same RC5/OGR core is selected for all of them.
+ *
+ * b) For GPU crunchers, both GetNumberOfPhysicalDevices() and
+ * GetNumberOfDetectedProcessors() must return number of GPUs installed.
+ * This is a special case handled in main client code. One cruncher thread will
+ * be run for each device.
+ * FIXME: Must write code to support separate core selection for each device.
+ * For now, same core is used for all GPUs which may be inefficient or even
+ * unsupported.
+ */
+int GetNumberOfPhysicalDevices( void )
+{
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+  return GetNumberOfDetectedProcessors();
+#else
+  return 1;
+#endif
+}
 
 #if (CLIENT_CPU == CPU_68K)
 static long __GetRawProcessorID(const char **cpuname)
@@ -580,6 +604,8 @@ static long __GetRawProcessorID(const char **cpuname)
       {    0x8020, "e500"                },
       {    0x8021, "e500v2"              },
       {    0x8023, "e500mc"              },
+      {    0x8024, "e5500"               },
+      {    0x8040, "e6500"               },
       {    0x8081, "5200 (G2)"           },
       {    0x8082, "5200 (G2-LE)"        },
 //    {    0x810x, "e200z5"              }, // last digit of rid???
@@ -807,6 +833,8 @@ static long __GetRawProcessorID(const char **cpuname)
            { "e500",            0x8020  },
            { "e500v2",          0x8021  },
            { "e500mc",          0x8023  },
+           { "e5500",           0x8024  },
+           { "e6500",           0x8040  },
 //         { "e200z5",          0x810x  },
 //         { "e200z6",          0x811x  },
            // Must find true rid's for these 
@@ -876,7 +904,7 @@ static long __GetRawProcessorID(const char **cpuname)
     #if defined(__amigaos4__)
     /* AmigaOS 4.x */
     ULONG cpu;
-    IExec->GetCPUInfoTags(GCIT_Model, &cpu, TAG_DONE);
+    GetCPUInfoTags(GCIT_Model, &cpu, TAG_DONE);
     switch (cpu)
     {
        case CPUTYPE_PPC603E:        detectedtype = 0x0006; break;
@@ -897,6 +925,8 @@ static long __GetRawProcessorID(const char **cpuname)
        case CPUTYPE_PPC440SP:       detectedtype = 0x5322; break;
        case CPUTYPE_PA6T_1682M:     detectedtype = 0x0090; break;
        case CPUTYPE_PPC460EX:       detectedtype = 0x1302; break;
+       case CPUTYPE_PPC5121E:       detectedtype = 0x0086; break;
+       case CPUTYPE_P50XX:          detectedtype = 0x8024; break;
        default: // some PPC processor that we don't know about
                 // set the tag (so that the user can tell us), but return 0
        sprintf(namebuf, "OS4:%ld", cpu );
@@ -1454,8 +1484,10 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x00063A0, 0xFFFFFF0, CPU_F_I686, 0x1A, "Core iX-3xxx (Ivy Bridge)" },  /* (#4514) */
         { 0x00063C0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },  /* (#4533) */
         { 0x00063E0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon E7 v2 (Ivy Bridge EX)" },  /* (#4578) */
+        { 0x00063F0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon Ex v3 (Haswell EX)" },  /* (#4626,#4627) */
         { 0x0006450, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },  /* (#4579) */
         { 0x0006460, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },
+        { 0x00065E0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-6xxx (Skylake)" },  /* (#4615) */
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
@@ -2350,32 +2382,32 @@ static long __GetRawProcessorID(const char **cpuname)
 /* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_CUDA)
-static inline long __GetRawProcessorID(const char **cpuname)
+static inline long __GetRawProcessorID(int device, const char **cpuname)
 {
-  return GetRawCUDAGPUID(cpuname);
+  return GetRawCUDAGPUID(device, cpuname);
 }
 #endif
 
 /* ---------------------------------------------------------------------- */
 
 #if (CLIENT_CPU == CPU_ATI_STREAM)
-static inline long __GetRawProcessorID(const char **cpuname)
+static inline long __GetRawProcessorID(int device, const char **cpuname)
 {
-  return getAMDStreamRawProcessorID(cpuname);
+  return getAMDStreamRawProcessorID(device, cpuname);
 }
 #endif
 
 #if (CLIENT_CPU == CPU_OPENCL)
-static inline long __GetRawProcessorID(const char **cpuname)
+static inline long __GetRawProcessorID(int device, const char **cpuname)
 {
-  return getOpenCLRawProcessorID(cpuname);
+  return getOpenCLRawProcessorID(device, cpuname);
 }
 #endif
 
 /* ---------------------------------------------------------------------- */
 
 //get (simplified) cpu ident by hardware detection
-long GetProcessorType(int quietly)
+long GetProcessorType(int quietly, int device)
 {
   // only successful detection / detection of a new unknown cpu type gets logged to file
   long retval = -1L;
@@ -2389,12 +2421,17 @@ long GetProcessorType(int quietly)
       (CLIENT_CPU == CPU_OPENCL)
   {
     const char *cpuname = NULL;
+    #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+    long rawid = __GetRawProcessorID(device, &cpuname);
+    #else
+    DNETC_UNUSED_PARAM(device);
     long rawid = __GetRawProcessorID(&cpuname);
+    #endif
     if (rawid == -1L || rawid == -2L)
     {
       retval = -1L;  
       if (!quietly)
-        LogScreen("%s%s.\n", apd, ((rawid == -1L)?("failed"):("is not supported")));
+        Log("%s%s.\n", apd, ((rawid == -1L)?("failed"):("is not supported")));
     }
     else if (rawid == 0)
     {
@@ -2424,7 +2461,7 @@ long GetProcessorType(int quietly)
   #else
   {
     if (!quietly)
-      LogScreen("%sis not supported.\n", apd );
+      Log("%sis not supported.\n", apd );
   }
   #endif
   return retval;
@@ -2461,16 +2498,17 @@ long GetProcessorID()
 #endif
 
 //Return the frequency in MHz, or 0.
-unsigned int GetProcessorFrequency()
+unsigned int GetProcessorFrequency(int device)
 {
   unsigned int freq = 0;   /* Unknown */
 
+  DNETC_UNUSED_PARAM(device);  /* in most cases, except GPU */
   #if (CLIENT_CPU == CPU_CUDA)
-    freq = GetCUDAGPUFrequency();
+    freq = GetCUDAGPUFrequency(device);
   #elif (CLIENT_CPU == CPU_ATI_STREAM)
-    freq = getAMDStreamDeviceFreq();
+    freq = getAMDStreamDeviceFreq(device);
   #elif (CLIENT_CPU == CPU_OPENCL)
-    freq = getOpenCLDeviceFreq();
+    freq = getOpenCLDeviceFreq(device);
   #elif (CLIENT_OS == OS_MACOSX)
     int mib[2] = {CTL_HW, HW_CPU_FREQ};
     unsigned long frequency;
@@ -2494,7 +2532,7 @@ unsigned int GetProcessorFrequency()
   #elif (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_POWERPC)
     #if defined(__amigaos4__)
       uint64 freqhz;
-      IExec->GetCPUInfoTags(GCIT_ProcessorSpeed, &freqhz, TAG_DONE);
+      GetCPUInfoTags(GCIT_ProcessorSpeed, &freqhz, TAG_DONE);
       if (freqhz != 0)
         freq = (freqhz + 500000) / 1000000;
     #elif !defined(__POWERUP__)
@@ -2534,14 +2572,14 @@ unsigned int GetProcessorFrequency()
       if (freq < 250) {
         unsigned int nearest25, nearest30, nearest33;
         if ((freq - ((unsigned int)(freq / 25) * 25)) < 
-          (unsigned int)abs(freq - (((unsigned int)(freq / 25) + 1) * 25)))
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / 25) + 1) * 25))))
         {
           nearest25 = (unsigned int)(freq / 25) * 25;
         } else {
           nearest25 = ((unsigned int)(freq / 25) + 1) * 25;
         }
         if ((freq - ((unsigned int)(freq / 30) * 30)) < 
-          (unsigned int)abs(freq - (((unsigned int)(freq / 30) + 1) * 30)))
+          (unsigned int)abs((int)(freq - (((unsigned int)(freq / 30) + 1) * 30))))
         {
           nearest30 = (unsigned int)(freq / 30) * 30;
         } else {
@@ -2554,16 +2592,16 @@ unsigned int GetProcessorFrequency()
         } else {
           nearest33 = (unsigned int)(((unsigned int)(freq / (100.0/3.0)) + 1) * (100.0/3.0));
         }
-        if (abs(freq - nearest25) < abs(freq - nearest30))
+        if (abs((int)(freq - nearest25)) < abs((int)(freq - nearest30)))
         {
-          if (abs(freq - nearest25) < abs(freq - nearest33))
+          if (abs((int)(freq - nearest25)) < abs((int)(freq - nearest33)))
           {
             freq = nearest25;
           } else {
             freq = nearest33;
           }
         } 
-        else if (abs(freq - nearest30) < abs(freq - nearest33))
+        else if (abs((int)(freq - nearest30)) < abs((int)(freq - nearest33)))
         {
           freq = nearest30;
         } else {
@@ -2592,16 +2630,16 @@ unsigned int GetProcessorFrequency()
         } else {
           nearest166 = (unsigned int)(((unsigned int)(freq / (500.0/3.0)) + 1) * (500.0/3.0));
         }
-        if (abs(freq - nearest50) < abs(freq - nearest66))
+        if (abs((int)(freq - nearest50)) < abs((int)(freq - nearest66)))
         {
-          if (abs(freq - nearest50) < abs(freq - nearest166))
+          if (abs((int)(freq - nearest50)) < abs((int)(freq - nearest166)))
           {
             freq = nearest50;
           } else {
             freq = nearest166;
           }
         } 
-        else if (abs(freq - nearest66) < abs(freq - nearest166))
+        else if (abs((int)(freq - nearest66)) < abs((int)(freq - nearest166)))
         {
           freq = nearest66;
         } else {
@@ -2639,8 +2677,10 @@ unsigned int GetProcessorFrequency()
 
 //get a set of supported processor features
 //cores may get disabled due to missing features
-unsigned long GetProcessorFeatureFlags()
+unsigned long GetProcessorFeatureFlags(int device)
 {
+  DNETC_UNUSED_PARAM(device); /* Reserved for future use (GPU) */
+
   #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
     return (__GetRawProcessorID(NULL, 'f')) | (x86GetFeatures());
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
@@ -2679,7 +2719,7 @@ unsigned long GetProcessorFeatureFlags()
         /* AmigaOS 4.x */
         ULONG vec;
         char *extensions;
-        IExec->GetCPUInfoTags(GCIT_VectorUnit, &vec, GCIT_Extensions, &extensions, TAG_DONE);
+        GetCPUInfoTags(GCIT_VectorUnit, &vec, GCIT_Extensions, &extensions, TAG_DONE);
 
         if ((vec == VECTORTYPE_ALTIVEC) &&
             (extensions && strstr(extensions,"altivec")) &&
@@ -2729,7 +2769,7 @@ unsigned long GetProcessorFeatureFlags()
 // for x86, I now (after writing it) realize that it could also get users on
 // non-x86 platforms to send us *their* processor detection code. :) - Cyrus
 
-void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscpus, const char ** sfoundcpus )
+void GetProcessorInformationStrings( int device, const char ** scpuid, const char ** smaxscpus, const char ** sfoundcpus )
 {
   const char *maxcpu_s, *foundcpu_s, *cpuid_s;
 
@@ -2739,7 +2779,12 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
     (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
     (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
     (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+  #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+  long rawid = __GetRawProcessorID(device, &cpuid_s);
+  #else
+  DNETC_UNUSED_PARAM(device);
   long rawid = __GetRawProcessorID(&cpuid_s);
+  #endif
   if (rawid == -1L || rawid == -2L)
     cpuid_s = ((rawid==-1)?("?\n\t(identification failed)"):
               ("none\n\t(client does not support identification)"));
@@ -2867,25 +2912,47 @@ void GetProcessorInformationStrings( const char ** scpuid, const char ** smaxscp
 
 void DisplayProcessorInformation(void)
 {
-  const char *scpuid, *smaxscpus, *sfoundcpus;
-  GetProcessorInformationStrings( &scpuid, &smaxscpus, &sfoundcpus );
-  unsigned int clockmhz = GetProcessorFrequency();
+  int total_devices, device;
 
-  LogRaw("Automatic processor identification tag: %s\n"
-    "Estimated processor clock speed (0 if unknown): %u MHz\n"
-    "Number of processors detected by this client: %s\n"
-    "Number of processors supported by this client: %s\n",
-    scpuid, clockmhz, sfoundcpus, smaxscpus );
+  total_devices = GetNumberOfPhysicalDevices();
+  if (total_devices <= 0)
+    LogRaw("No compatible devices found\n");
+  else
+  {
+    for (device = 0; device < total_devices; device++)
+    {
+      const char *scpuid, *smaxscpus, *sfoundcpus;
+      GetProcessorInformationStrings( device, &scpuid, &smaxscpus, &sfoundcpus );
+      unsigned int clockmhz = GetProcessorFrequency( device );
 
-  #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
-    x86ShowInfos();
-  #endif
-  #if (CLIENT_CPU == CPU_ATI_STREAM)
-    AMDStreamPrintExtendedGpuInfo();
-  #endif
-  #if (CLIENT_CPU == CPU_OPENCL)
-    OpenCLPrintExtendedGpuInfo();
-  #endif
+      if (total_devices > 1)  /* output header only for multiple devices */
+      {
+        LogRaw("\nDevice #%d:\n------------\n", device);
+      }
+
+      LogRaw("Automatic processor identification tag: %s\n"
+        "Estimated processor clock speed (0 if unknown): %u MHz\n",
+        scpuid, clockmhz);
+      if (device == 0)  /* Print this only once */
+      {
+        LogRaw("Number of processors detected by this client: %s\n"
+          "Number of processors supported by this client: %s\n",
+          sfoundcpus, smaxscpus );
+      }
+#if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64)
+      x86ShowInfos();
+#endif
+#if (CLIENT_CPU == CPU_CUDA)
+      /* No extended information for CUDA yet */
+#endif
+#if (CLIENT_CPU == CPU_ATI_STREAM)
+      AMDStreamPrintExtendedGpuInfo( device );
+#endif
+#if (CLIENT_CPU == CPU_OPENCL)
+      OpenCLPrintExtendedGpuInfo( device );
+#endif
+    }
+  }
   return;
 }
 

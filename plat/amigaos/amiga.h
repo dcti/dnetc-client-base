@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -107,6 +107,25 @@ extern "C" {
          #define AllocVec(a,b) AllocVecPPC(a,b,0)
          #define FreeVec(a) FreeVecPPC(a)
       #endif
+   #endif
+
+   #ifdef __amigaos4__
+      #ifdef CreateMsgPort
+         #undef CreateMsgPort
+      #endif
+      #define CreateMsgPort() (struct MsgPort *)AllocSysObject(ASOT_PORT,NULL)
+      #ifdef DeleteMsgPort
+         #undef DeleteMsgPort
+      #endif
+      #define DeleteMsgPort(msgPort) FreeSysObject(ASOT_PORT,msgPort)
+      #ifdef CreateIORequest
+         #undef CreateIORequest
+      #endif
+      #define CreateIORequest(ioReplyPort,size) AllocSysObjectTags(ASOT_IOREQUEST,ASOIOR_ReplyPort,ioReplyPort,ASOIOR_Size,size,TAG_DONE)
+      #ifdef DeleteIORequest
+         #undef DeleteIORequest
+      #endif
+      #define DeleteIORequest(ioReq) FreeSysObject(ASOT_IOREQUEST,ioReq)
    #endif
 
    #define DNETC_MSG_RESTART	0x01

@@ -9,16 +9,17 @@
 #ifndef CUDA_SETUP_H
 #define CUDA_SETUP_H
 
-#define CUDA_SETUP_INVALID_DRIVER_REVISION 1
-#define CUDA_SETUP_MISSING_NVCUDA_DLL 2
-#define CUDA_SETUP_INVALID_NVCUDA_PATH 3
-#define CUDA_SETUP_NO_FILE_VERSION 4
+#define CUDA_SETUP_INVALID_DRIVER_REVISION -1
+#define CUDA_SETUP_MISSING_NVCUDA_DLL      -2
+#define CUDA_SETUP_INVALID_NVCUDA_PATH     -3
+#define CUDA_SETUP_NO_FILE_VERSION         -4
 
-#define CUDA_SETUP_STREAM_FAILURE 11
-#define CUDA_SETUP_EVENT_FAILURE 12
+#define CUDA_SETUP_STREAM_FAILURE         -11
+#define CUDA_SETUP_EVENT_FAILURE          -12
 
 // returns 0 on success
 // i.e. a supported GPU + driver version + CUDA version was found
-int InitializeCUDA();
+int InitializeCUDA(void);
+extern int cuda_init_state;
 
 #endif // CUDA_SETUP_H

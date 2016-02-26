@@ -16,15 +16,12 @@
 
 #include "logstuff.h"
 
-u32 getAMDStreamDeviceCount(void)
+unsigned getAMDStreamDeviceFreq(int device)
 {
-  return atistream_numDevices;
-}
+  stream_context_t *cont = stream_get_context(device);
 
-unsigned getAMDStreamDeviceFreq(void)
-{
-  if (getAMDStreamDeviceCount() > 0)
-    return CContext[0].attribs.engineClock;
+  if (cont)
+    return cont->attribs.engineClock;
 
   return 0;
 }
@@ -75,69 +72,36 @@ static const char* GetNameById(u32 id, u32 nSIMDs=0)
   }
 }
 
-long getAMDStreamRawProcessorID(const char **cpuname)
+long getAMDStreamRawProcessorID(int device, const char **cpuname)
 {
-  u32 nCPUs;
-  u32 i, amount;
-  static char *ATIstream_GPUname;
+  stream_context_t *dev = stream_get_context(device);
 
-  if (ATIstream_GPUname)
+  if (dev)
   {
-    *cpuname = ATIstream_GPUname;
-    return CContext[0].attribs.target;
+    *cpuname = GetNameById(dev->attribs.target, dev->attribs.numberOfSIMD);
+    return dev->attribs.target;
   }
-
-  nCPUs = getAMDStreamDeviceCount();
-  if (nCPUs == 0)
+  else
   {
-    *cpuname = GetNameById(0);
+    *cpuname = "???";
     return 0;
   }
-
-  // Calculate amount of required memory
-  for (i=amount=0; i < nCPUs; i++)
-    amount += strlen(GetNameById(CContext[i].attribs.target, CContext[i].attribs.numberOfSIMD)) + 3; /* include ", " */
-
-  ATIstream_GPUname = (char*)malloc(amount);
-  if (!ATIstream_GPUname)
-  {
-    *cpuname = GetNameById(0);
-    return 0;
-  }
-
-  ATIstream_GPUname[0]=0;
-  for (i = 0; i < nCPUs; i++)
-  {
-    if (i != 0)
-      strcat(ATIstream_GPUname, ", ");
-    strcat(ATIstream_GPUname, GetNameById(CContext[i].attribs.target, CContext[i].attribs.numberOfSIMD));
-  }
-
-  *cpuname = ATIstream_GPUname;
-  return CContext[0].attribs.target;
 }
 
-void AMDStreamPrintExtendedGpuInfo(void)
+void AMDStreamPrintExtendedGpuInfo(int device)
 {
-  int i;
-
-  if (atistream_numDevices <= 0)
-  {
-    LogRaw("No supported devices found\n");
+  stream_context_t *dev = stream_get_context(device);
+  if (dev == NULL)
     return;
-  }
-  for (i = 0; i < atistream_numDevices; i++)
+
+  LogRaw("\n");
+  if (!dev->active)
   {
-    stream_context_t *dev = &CContext[i];
-
-    LogRaw("\n");
-    if (!dev->active)
-    {
-      LogRaw("Warning: device %d not activated\n", i);
-      continue;
-    }
-
-    LogRaw("GPU %d attributes (EEEEEEEE == undefined):\n", i);
+    LogRaw("Warning: device %d not activated\n", device);
+  }
+  else
+  {
+    LogRaw("GPU %d attributes (EEEEEEEE == undefined):\n", device);
 #ifdef __GNUG__
 #define sh(name) LogRaw("%24s: %08X (%d)\n", #name, dev->attribs.name, dev->attribs.name)
 #else

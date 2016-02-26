@@ -353,28 +353,21 @@ ruler_found%1:
 %endmacro
 
 %macro header 0
-%ifdef _WINDOWS
-	push	rsi
-	push	rdi
+	; Although Linux requires less registers to save, common code
+	; is simpler to manage. So save maximum amount required to work with all OS'es.
+	push	rsi	; Windows
+	push	rdi	; Windows
 	push	rbx
 	push	rbp
 	push	r12
 	push	r13
 	push	r14
 	push	r15
-	sub	rsp, worksize
-
-	; Switch to linux calling convention
-	mov	rdi, rcx
-	mov	rsi, rdx
-	mov	rdx, r8
-
-	; Align stack to 32 bytes
-	mov	rcx, rsp
-	and	rsp, 0xFFFFFFE0
-	mov	[work_oldrsp], rcx
-
-	sub	rsp, 0xA0
+	; According to x64 ABI, stack must be aligned by 16 before call =>
+	; it'll be xxxxxxx8 after call. We've pushed EVEN number of registers above =>
+	; stack is still at xxxxxxx8. Subtracting ***8 will make it aligned to 16,
+	; so we can save XMM registers (required for Windows only, but see above).
+	sub	rsp, 0xA8
 	movdqa	[rsp+0x00], xmm6
 	movdqa	[rsp+0x10], xmm7
 	movdqa	[rsp+0x20], xmm8
@@ -385,20 +378,19 @@ ruler_found%1:
 	movdqa	[rsp+0x70], xmm13
 	movdqa	[rsp+0x80], xmm14
 	movdqa	[rsp+0x90], xmm15
-%else
-	push	rbx
-	push	rbp
-	push	r12
-	push	r13
-	push	r14
-	push	r15
-	sub	rsp, worksize
 
-	; Align stack to 32 bytes
-	mov	rcx, rsp
-	and	rsp, 0xFFFFFFE0
-	mov	[work_oldrsp], rcx
+%ifdef _WINDOWS
+	; Switch to linux calling convention
+	mov	rdi, rcx
+	mov	rsi, rdx
+	mov	rdx, r8
 %endif
+
+	; Create work area and align it to 32 bytes
+	mov	rcx, rsp
+	sub	rsp, worksize
+	and	rsp, -32
+	mov	[work_oldrsp], rcx
 
 start:
 	; write the paramters in the aligned work space
@@ -474,7 +466,7 @@ exit:
 
 	mov	eax, edx	; return depth;
 
-%ifdef _WINDOWS
+	mov	rsp, [work_oldrsp]
 	movdqa	xmm6, [rsp+0x00]
 	movdqa	xmm7, [rsp+0x10]
 	movdqa	xmm8, [rsp+0x20]
@@ -485,10 +477,7 @@ exit:
 	movdqa	xmm13, [rsp+0x70]
 	movdqa	xmm14, [rsp+0x80]
 	movdqa	xmm15, [rsp+0x90]
-	add	rsp, 0xA0
-
-	mov	rsp, [work_oldrsp]
-	add	rsp, worksize
+	add	rsp, 0xA8
 	pop	r15
 	pop	r14
 	pop	r13
@@ -497,16 +486,6 @@ exit:
 	pop	rbx
 	pop	rdi
 	pop	rsi
-%else
-	mov	rsp, [work_oldrsp]
-	add	rsp, worksize
-	pop	r15
-	pop	r14
-	pop	r13
-	pop	r12
-	pop	rbp
-	pop	rbx
-%endif
 	emms
 	ret
 %endmacro

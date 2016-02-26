@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -17,7 +17,7 @@
  *
 */
 const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.10 2012/06/05 22:12:55 snikkel Exp $"; }
+return "@(#)$Id: netconn.cpp,v 1.10 2016/02/03 13:09:14 stream Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET
@@ -1848,7 +1848,7 @@ int netconn_write( void *cookie, const char * data, int length )
     DUMP_PACKET("Put", data, towrite );
     rc = net_write(netstate->sock, data, &written, 
                    netstate->iotimeout);
-    if (rc == 0) /* success! sent all. */
+    if (rc == 0 && written == towrite) /* success AND sent all */
     {
       rc = length; /* we return the requested length */
       if ((netstate->mode & MODE_HTTP)!=0)
@@ -1857,7 +1857,7 @@ int netconn_write( void *cookie, const char * data, int length )
     else
     {
       if (netstate->verbose_level > 0 && !__break_check(netstate))
-        Log("Net::write: %s\n", net_strerror(rc,netstate->sock) );
+        Log("Net::write: %s\n", (rc ? net_strerror(rc,netstate->sock) : "timeout"));
       rc = -1;
     }
   }

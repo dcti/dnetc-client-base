@@ -123,5 +123,89 @@
   #define FAR far
 #endif
 
+
+#ifdef HAVE_IPV6
+/*
+ * IPv6 compatibility layer.
+ *
+ * Since we've included only minimal set of functions from "old" winsock.h,
+ * we should have no chance to see true IPv6 definitions, so declare everything
+ * right here.
+ *
+ * If HAVE_IPV6 is disabled, these definitions must be not available.
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Depending on DSK version, these could be already defined in WinError.h */
+
+#ifndef WSATYPE_NOT_FOUND
+  #define WSATYPE_NOT_FOUND       (WSABASEERR+109)
+#endif
+#ifndef WSA_NOT_ENOUGH_MEMORY
+  #define WSA_NOT_ENOUGH_MEMORY   (ERROR_NOT_ENOUGH_MEMORY)
+#endif
+
+/* IPv6 stuff - getaddrinfo() & friends */
+
+#define AI_PASSIVE                  0x00000001  // Socket address will be used in bind() call
+#define AI_CANONNAME                0x00000002  // Return canonical name in first ai_canonname
+#define AI_NUMERICHOST              0x00000004  // Nodename must be a numeric address string
+
+#define AI_ADDRCONFIG               0x00000400  // Resolution only if global address configured
+
+/* Error codes from getaddrinfo() */
+
+#define EAI_AGAIN           WSATRY_AGAIN
+#define EAI_BADFLAGS        WSAEINVAL
+#define EAI_FAIL            WSANO_RECOVERY
+#define EAI_FAMILY          WSAEAFNOSUPPORT
+#define EAI_MEMORY          WSA_NOT_ENOUGH_MEMORY
+#define EAI_NOSECURENAME    WSA_SECURE_HOST_NOT_FOUND
+//#define EAI_NODATA        WSANO_DATA
+#define EAI_NONAME          WSAHOST_NOT_FOUND
+#define EAI_SERVICE         WSATYPE_NOT_FOUND
+#define EAI_SOCKTYPE        WSAESOCKTNOSUPPORT
+#define EAI_IPSECPOLICY     WSA_IPSEC_NAME_POLICY_ERROR
+
+#define EAI_NODATA          EAI_NONAME
+
+#ifndef WSAAPI
+#define WSAAPI                  FAR PASCAL
+#endif
+
+typedef struct addrinfo {
+  int             ai_flags;
+  int             ai_family;
+  int             ai_socktype;
+  int             ai_protocol;
+  size_t          ai_addrlen;
+  char            *ai_canonname;
+  struct sockaddr  *ai_addr;
+  struct addrinfo  *ai_next;
+} ADDRINFOA, *PADDRINFOA;
+
+int  WSAAPI getaddrinfo(PCSTR pNodeName, PCSTR pServiceName, const ADDRINFOA *pHints, PADDRINFOA *ppResult);
+void WSAAPI freeaddrinfo(struct addrinfo *ai);
+
+// WARNING: The gai_strerror inline functions below use static buffers,
+// and hence are not thread-safe.
+
+#ifdef UNICODE
+#error - Todo.
+// #define gai_strerror   gai_strerrorW
+#else
+#define gai_strerror   gai_strerrorA
+char *gai_strerrorA(int ecode);
+#endif  /* UNICODE */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* HAVE_IPV6 */
+
 #endif /* _INCLUDE_BYTEORDER_ONLY */
 #endif /* __W32SOCK_H__ */

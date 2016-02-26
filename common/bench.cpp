@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.74 2012/05/13 09:32:54 stream Exp $";
+  return "@(#)$Id: bench.cpp,v 1.74 2015/12/30 12:49:32 stream Exp $";
 }
 
 //#define TRACE
@@ -188,7 +188,7 @@ long TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, i
 
   /* ++++++ run the benchmark +++++ */
 
-  thisprob = ProblemAlloc();
+  thisprob = ProblemAlloc(0);  // assume GPU0 if no -devicenum
   if (thisprob)
   {
     if ( ProblemLoadState( thisprob, CONTESTWORK_MAGIC_BENCHMARK,
@@ -278,14 +278,17 @@ long TBenchmark( Client *client, unsigned int contestid, unsigned int numsecs, i
 //printf("\noldtslice=%u, newtslice=%u %s\n", tslice, ratelo, "");
           }
           if (ratehi)
-            ratelo = 0x0fffffff;
+            ratelo = 0xFFFFFF00;
           if (ratelo > tslice || contestid == OGR_NG || contestid == OGR_P2)
             tslice = thisprob->pub_data.tslice = ratelo;
           if (thisprob->pub_data.tslice_increment_hint) {
             if (tslice < thisprob->pub_data.tslice_increment_hint)
               tslice = thisprob->pub_data.tslice_increment_hint;
             else {
+              u32 tmp = tslice;
               tslice += thisprob->pub_data.tslice_increment_hint / 2;
+              if (tslice < tmp)  /* overflow */
+                tslice = 0xFFFFFF00;
               tslice -= tslice % thisprob->pub_data.tslice_increment_hint;
             }
             thisprob->pub_data.tslice = tslice;

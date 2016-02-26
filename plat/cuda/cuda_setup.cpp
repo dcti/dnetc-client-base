@@ -14,14 +14,14 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+int cuda_init_state = -123;
+
 // returns 0 on success
 // i.e. a supported GPU + driver version + CUDA version was found
 int InitializeCUDA()
 {
-  static int retval = -123;
-
-  if (retval == -123) {
-    retval = -1;
+  if (cuda_init_state == -123) {
+    int retval = -1;
 
     #if ((CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64))
     const char nvcudaFileName[] = "nvcuda.dll";
@@ -49,7 +49,7 @@ int InitializeCUDA()
 
         if (dwLen > 0)
         {
-          LPBYTE pBuffer = new BYTE[dwLen];
+          LPBYTE pBuffer = (LPBYTE)malloc(dwLen);
           if (pBuffer)
           {
             if (GetFileVersionInfo(&pszFile[0], dwHandle, dwLen, pBuffer))
@@ -90,7 +90,7 @@ int InitializeCUDA()
               Log("Unable to read CUDA file version\n");
             }
 
-            delete [] pBuffer;
+            free(pBuffer);
           }
 
         }
@@ -135,7 +135,9 @@ int InitializeCUDA()
       if (retval)
         Log("Unable to create CUDA event\n");
     }
+
+    cuda_init_state = retval;
   }
 
-  return retval;
+  return cuda_init_state;
 }

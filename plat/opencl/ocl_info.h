@@ -21,15 +21,9 @@
 #include <OpenCL/opencl.h>
 #endif
 
-int     getOpenCLDeviceCount();
-u32     getOpenCLDeviceFreq(unsigned device=0);
-long    getOpenCLRawProcessorID(const char **cpuname, unsigned device=0);
-void    OpenCLPrintExtendedGpuInfo(void);
-
-extern cl_uint numPlatforms;
-extern cl_platform_id *platforms;
-extern cl_int numDevices;
-extern cl_device_id *devices;
-
+int     getOpenCLDeviceCount(void);
+u32     getOpenCLDeviceFreq(int device);
+long    getOpenCLRawProcessorID(int device, const char **cpuname);
+void    OpenCLPrintExtendedGpuInfo(int device);
 
 #endif // OCL_INFO_H

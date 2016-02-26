@@ -9,6 +9,7 @@ dnetc.1
 dnetc*.tar.gz
 dnetc*.zip
 dnetc*.lha
+dnetc*.library
 
 dnetc.ini
 buff-in.*

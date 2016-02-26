@@ -9,6 +9,6 @@
 #ifndef OCL_SETUP_H
 #define OCL_SETUP_H
 
-int InitializeOpenCL();
+int InitializeOpenCL(void);
 
 #endif // OCL_SETUP_H

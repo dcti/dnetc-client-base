@@ -1,65 +1,22 @@
 
- distributed.net client for ATI FireStream-compatible GPUs
- document revision $Id: readme.stream,v 1.4 2009/12/29 06:04:06 chandleg Exp $
+ distributed.net client for OpenCL-compatible GPUs
+ document revision $Id: readme.opencl,v 1.1 2015/11/28 22:56:01 stream Exp $
 
  Welcome to the distributed.net client.
 
- This document covers information specific to the client for the ATI
- FireStream-capable video card GPU. Refer to other enclosed documentation or
+ This document covers information specific to the client for the
+ OpenCL-capable video card GPU. Refer to other enclosed documentation or
  browse the online FAQ at <http://faq.distributed.net/> for
  non-platform-specific documentation.
 
-    1.0  ATI FireStream specific notes
-    2.0  Prerequisites
-    3.0  Getting started
-    4.0  Troubleshooting and Known issues
-         4.1 Multiple GPUs
-         4.2 GPU Client priority
-         4.3 RC5-72 block sizes
+    1.0  Getting started
+    2.0  OpenCL specific notes
+    3.0  Troubleshooting and known issues
+         3.1 Multiple GPUs
+         3.2 GPU Client priority
+         3.3 RC5-72 block sizes
 
- 1.0  ATI FireStream specific notes ------------------------------------
-
-    This client requires ATI FireStream-capable hardware and appropriate
-    drivers to be installed.  For a list of GPU hardware that supports
-    FireStream, see <http://en.wikipedia.org/wiki/FireStream#Hardware> 
-
-    With this version of the client you no longer need the FireStream drivers
-    or the SDK.  If you want them it is an option you can pursue.
-
-    You will need at least do download the ATI Catalyst Drivers for Linux,
-    which will install the shared libraries you need and your Kernel Driver.  {Linux}
-
-    Our FireStream clients also only execute crunchers on the GPU.  In order
-    to utilize the CPUs on your computer, you will need to download
-    and run another instance of the standard client from a separate
-    subdirectory.
-
-
- 2.0  Prerequisites -------------------------------------------------
-
-    On a Linux host there are several requirements that need to be met
-    to run the FireStream client.
-
-    1) The FireStream kernel module must be downloaded and built against
-       your running kernel's sources.  This driver will be called "fglrx".
-
-       This is contained in the Catalyst Drivers, NOTE: this will replace
-       your X/Xorg drivers.
-
-    2) The FireStream kernel module must be loaded.  Once the driver is
-       loaded, X/Xorg can be started.
-
-    4) X/Xorg must be running.  Due to some reason which is not obvious 
-       to me, the only way to connect to the resources of the card is 
-       through a combination of the X/Xorg drivers and the kernel module.
-
-       NOTE: The driver in use also MUST be fglrx from either the Catalyst
-             or FireStream Drivers.
-       NOTE: The primary interface for X/Xorg MUST be the card you want
-             to use as a stream device.  The client doesn't support 
-             Crossfire or multi-GPU yet.
-
- 3.0  Getting started ------------------------------------------------
+ 1.0  Getting started ------------------------------------------------
  
     Just unpack/unzip/untar the client in a directory of your choice and 
     fire it up.
@@ -78,53 +35,21 @@
     A complete step-by-step guide to running your first client is 
     available at <http://www.distributed.net/docs/tutor_clients.php>
 
- 4.0  Troubleshooting and Known issues ------------------------------
 
-    On Linux platforms, YOU WILL SEE errors when running the 
-    client on a text-mode system without X11 (init level 3 not 5).
-    As noted in the Prerequisites section X/Xorg MUST be running for
-    the client to work properly.  This can be a headless display, but
-    it MUST be running with the fglrx kernel and X/Xorg drivers loaded.
+ 2.0  OpenCL specific notes -----------------------------------------
 
-    If you are unable to execute the dnetc binary because of a missing
-    "libaticalrt.so" or "libaticalcl.so" library, you will need to visit
-    the ATI website and download and install a later driver.
-
-    If you have an onboard FireStream compatible card such as a Radeon 
-    HD 3200 or HD 3300, and an additional stream-capable card, and you
-    are seeing massively slow performance, your onboard video is likely
-    the main device in your X/Xorg config.  As stated in the Prerequisites 
-    section the primary device must be the card you want to use.  As far
-    as I can tell, having a CrossFire setup between those two will also 
-    break the functionality of the FireStream setup.  This is currently
-    a limitation of the libraries from ATI.
-    
-    The most simple way to fix this, is to enter the BIOS configuration
-    of your motherboard and select something other than "Onboard" or 
-    "OnChipVGA" or "OVGA", normally this would be "PCI-E".  
-
-    NOTE: This will effectively disable your onboard video!  This will
-          also change the PCI device lists in the X/Xorg detection.
-          Your x11.conf or xorg.conf will most likely have to be updated
-          to reflect the changes.  BE SURE TO MAKE SURE YOUR SYSTEM DOES
-          NOT BOOT DIRECTLY INTO X AFTER YOU MAKE THE BIOS CHANGES.  To 
-          find the new device use lspci or try to start X.  X will display
-          the device number it doesn't know how to use, and you will be
-          able to make your changes.  Once you have made those changes,
-          use "startx" to test them.  If that works, you may re-enable
-          X on start, and then you will need to reboot your system.  Due
-          to a bug in the drivers, if you leave X and try to restart it,
-          you will be left with a blank screen.  If you know X is running,
-          you can hit: ctrl-backspace then ctrl-alt-del right afterwards.
-          This will kill X and issue an init 6.
+    The client requires OpenCL version 1.1. It will not run on OpenCL 1.0
+    devices. An error will be reported during initialization of computing
+    core.
 
 
-    If you are having trouble with upgrading the drivers to a newer 
-    version , feel free to email: chandleg@distributed.net.   ATI's 
-    support is pretty lacking.  BEWARE, I don't check my mail as often
-    as I should ;)
+ 3.0  Troubleshooting and known issues ------------------------------
 
-  4.1   Multiple GPUs -----------------------------------------------
+    NVIDIA devices may use up to full CPU core when running OpenCL code.
+    This is a known "feature" of NVIDIA drivers. In some cases you may also
+    need to increase priority of the client (see section 3.2).
+
+  3.1   Multiple GPUs -----------------------------------------------
 
     The current client code can only select one core for crunching a project.
     In the modern world, this does not work well when multiple GPUs are
@@ -171,7 +96,7 @@
     checkpoint files, make sure that each copy of the client is using its own
     private file.
 
-  4.2   GPU Client priority -----------------------------------------
+  3.2   GPU Client priority -----------------------------------------
 
     Some fast GPUs may require a significant amount of CPU power to keep them
     busy. If you are running both GPU and CPU clients, and your real crunch
@@ -189,7 +114,7 @@
     too high, it may decrease responsiveness of other programs running on your
     computer, so take care when using this option.
 
-  4.3   RC5-72 block sizes ------------------------------------------
+  3.3   RC5-72 block sizes ------------------------------------------
 
     With the speed of modern GPUs, the overhead caused by accessing the buffer
     files and sending updates to the network may become noticeable and reduce

@@ -12,7 +12,6 @@
 #ifndef AMD_STREAM_CONTEXT_H
 #define AMD_STREAM_CONTEXT_H
 
-#include "amdstream_setup.h"
 #include "cputypes.h"
 
 #include <CAL/cal.h>
@@ -35,6 +34,8 @@ enum
 };
 
 typedef struct {
+  int clientDeviceNo;  // client GPU index (for logs)
+
   CALdevice device;
   CALdeviceattribs attribs;
   CALcontext ctx;
@@ -67,8 +68,9 @@ typedef struct {
   u32 USEcount;		//# of Unexpected Stop Errors
 } stream_context_t;
 
-extern stream_context_t CContext[AMD_STREAM_MAX_GPUS];
-extern int atistream_numDevices;
+stream_context_t *stream_get_context(int device);
+
+void AMDStreamReinitializeDevice(stream_context_t *cont);
 
 typedef CALresult (CALAPIENTRYP PFNCALCTXWAITFOREVENTS)(CALcontext ctx, CALevent *event, CALuint num, CALuint flags);
 extern PFNCALCTXWAITFOREVENTS calCtxWaitForEvents;

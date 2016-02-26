@@ -1,5 +1,5 @@
 /*
-* Copyright distributed.net 2009 - All Rights Reserved
+* Copyright distributed.net 2009-2016 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
@@ -12,130 +12,238 @@
 #include "ocl_info.h"
 #include "ocl_setup.h"
 #include "ocl_context.h"
+#include "../rc5-72/opencl/ocl_common.h"
 
-ocl_context_t *ocl_context;
+/*
+ * Initialize...() must return:
+ *
+ *  < 0 - on error (fatal error during initialization/detection, client will shutdown)
+ * >= 0 - on success, no matter how many devices were found (even 0).
+ *
+ * getNumDevices() must return:
+ *
+ * < 0 - on error (or if previous Initialize...() failed)
+ * = 0 - no errors but no devices were found
+ * > 0 - number of detected GPUs
+ *
+ * Although it's expected that Initialize...() will be always called before
+ * any getDeviceCount(),  getDeviceCount() must return error and do not touch
+ * GPU hardware if Initialize...() wasn't called or was called but failed.
+ */
 
-int getNumDevices()
+static cl_int numDevices = -12345;
+static ocl_context_t *ocl_context;
+
+int getOpenCLDeviceCount(void)
 {
-	return numDevices;
+  return numDevices;
 }
 
-int InitializeOpenCL()
+ocl_context_t *ocl_get_context(int device)
 {
+  if (device >= 0 && device < numDevices)
+    return &ocl_context[device];
 
-  numDevices = -1;
+  Log("INTERNAL ERROR: bad OpenCL device index %d (detected %d)!\n", device, numDevices);
+  return NULL;
+}
+
+// To debug on CPU...
+// #undef  CL_DEVICE_TYPE_GPU
+// #define CL_DEVICE_TYPE_GPU CL_DEVICE_TYPE_ALL
+
+int InitializeOpenCL(void)
+{
+  if (numDevices != -12345)
+    return numDevices;
+
+  numDevices = -1;  /* assume detection failure for now */
+
+  cl_uint devicesDetected = 0;
+  cl_uint numPlatforms;
   cl_int status = clGetPlatformIDs(0, NULL, &numPlatforms);
-	
-  if(!numPlatforms)
+  if (status != CL_SUCCESS)
   {
-    Log("No OpenCL platforms available!\n");
-    return -1;
+    Log("Error obtaining number of platforms (clGetPlatformIDs/1)\n");
+    ocl_diagnose(status, NULL, NULL);  // decode error code only
   }
-  // Allocate enough space for each platform
-  platforms = (cl_platform_id*)malloc(numPlatforms*sizeof(cl_platform_id));
-
-  // Fill in platforms with clGetPlatformIDs()
-  status = clGetPlatformIDs(numPlatforms, platforms, NULL);
-
-  // Use clGetDeviceIDs() to retrieve the number of 
-  // devices present
-  status = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, 0, NULL, (cl_uint*)&numDevices);
-  if(numDevices)
+  if (status == CL_SUCCESS)
   {
-    // Allocate enough space for each device
-    devices = (cl_device_id*)malloc(numDevices*sizeof(cl_device_id));
+    cl_platform_id *platforms = NULL;
+    cl_device_id *devices = NULL;
 
-    // Fill in devices with clGetDeviceIDs()
-    status = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_GPU, numDevices, devices, NULL);
+    if (numPlatforms != 0)
+    {
+      // Allocate enough space for each platform
+      platforms = (cl_platform_id *) malloc(numPlatforms * sizeof(cl_platform_id));
+
+      // Fill in platforms with clGetPlatformIDs()
+      status = clGetPlatformIDs(numPlatforms, platforms, NULL);
+      if (status != CL_SUCCESS)
+      {
+        Log("Error obtaining list of platforms (clGetPlatformIDs/2)\n");
+        ocl_diagnose(status, NULL, NULL);  // decode error code only
+      }
+      else
+      {
+        // Use clGetDeviceIDs() to retrieve the number of devices present
+        for (cl_uint plat = 0; plat < numPlatforms; plat++)
+        {
+          cl_uint devcnt;
+
+          status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, 0, NULL, &devcnt);
+          if (status == CL_DEVICE_NOT_FOUND)  // Special case. No GPU devices but other may exist
+          {
+            status = CL_SUCCESS;
+            devcnt = 0;
+          }
+          if (status != CL_SUCCESS)
+          {
+            Log("Error obtaining number of devices on platform %u (clGetDeviceIDs/1)\n", plat);
+            ocl_diagnose(status, NULL, NULL);  // decode error code only
+            break;
+          }
+          devicesDetected += devcnt;
+        }
+      }
+    }
+
+    if (status == CL_SUCCESS && devicesDetected != 0)
+    {
+      // Allocate enough space for each device
+      devices = (cl_device_id*) malloc(devicesDetected * sizeof(cl_device_id));
+
+      // Allocate and zero space for ocl_context
+      ocl_context = (ocl_context_t*) calloc(devicesDetected, sizeof(ocl_context_t));
+
+      // Fill in devices with clGetDeviceIDs()
+      cl_uint offset = 0;
+      for (cl_uint plat = 0; plat < numPlatforms; plat++)
+      {
+        cl_uint devcnt;
+
+        if (offset >= devicesDetected)   /* Avoid call with bufferSize=0 for last platform without GPU devices */
+          break;
+
+        status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, devicesDetected - offset, devices + offset, &devcnt);
+        if (status == CL_DEVICE_NOT_FOUND)  // Special case. No GPU devices but other may exist
+        {
+          status = CL_SUCCESS;
+          devcnt = 0;
+        }
+        if (status != CL_SUCCESS)
+        {
+          Log("Error obtaining list of devices on platform %u (clGetDeviceIDs/2)\n", plat);
+          ocl_diagnose(status, NULL, NULL);  // decode error code only
+          break;
+        }
+
+        // Fill non-zero context fields for each device
+        for (cl_uint u = 0; u < devcnt; u++, offset++)
+        {
+          ocl_context_t *cont = &ocl_context[offset];
+
+          /* Assume it working for now */
+          cont->active            = true;
+          cont->coreID            = CORE_NONE;
+          cont->platformID        = platforms[plat];
+          cont->deviceID          = devices[offset];
+          cont->firstOnPlatform   = (u == 0);
+          cont->clientDeviceNo    = offset;
+          cont->runSize           = 65536;
+          cont->runSizeMultiplier = 64;
+          cont->maxWorkSize       = 2048 * 2048;
+
+          /* Sanity check: size_t must be same width for both client and device */
+          /* Re-reading OpenCL specs, I found this check too paranoid. If implemented
+             correctly, difference in bitness must only limit maximum number of iterations
+             allowed to be requested from kernel (i.e. 64-bit host cannot request
+             more then 0xFFFFFFFF iterations from "32-bit" device. Client always requests
+             lesser value. So only log a message, just in case.
+          */
+          cl_uint devbits;
+          status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_ADDRESS_BITS, sizeof(devbits), &devbits, NULL);
+#if 0
+          /* Disabled, too paranoid */
+          if (ocl_diagnose(status, "clGetDeviceInfo(CL_DEVICE_ADDRESS_BITS)", cont) != CL_SUCCESS)
+            cont->active = false;
+          else if (devbits != sizeof(size_t) * 8)
+          {
+            Log("Error: Bitness of device %u (%u) does not match CPU (%u)!\n", offset, devbits, (unsigned)(sizeof(size_t) * 8));
+            cont->active = false;
+          }
+#else
+          if (ocl_diagnose(status, "clGetDeviceInfo(CL_DEVICE_ADDRESS_BITS)", cont) == CL_SUCCESS && devbits != sizeof(size_t) * 8)
+            Log("size_t on device %u: %u bits, host: %u\n", offset, devbits, (unsigned)(sizeof(size_t) * 8));
+#endif
+        }
+      }
+    }
+
+    if (status == CL_SUCCESS)
+    {
+      // Everything is done. Apply configuration.
+      numDevices = devicesDetected;
+    }
+
+    // Don't need them anymore
+    if (devices)
+      free(devices);
+    if (platforms)
+      free(platforms);
   }
 
-  //allocating space for ocl_context
-  ocl_context = (ocl_context_t*)malloc(numDevices*sizeof(ocl_context_t));
-  for(int i=0; i < numDevices; i++)
-  {
-    ocl_context[i].active = true;
-    ocl_context[i].coreID = CORE_NONE;
-    ocl_context[i].clcontext = NULL;
-    ocl_context[i].deviceID = devices[i];
-    ocl_context[i].cmdQueue = NULL;
-    ocl_context[i].const_buffer = NULL;
-    ocl_context[i].out_buffer = NULL;
-    ocl_context[i].const_ptr = NULL;
-    ocl_context[i].out_ptr = NULL;
-    ocl_context[i].kernel = NULL;
-    ocl_context[i].program = NULL;
-    ocl_context[i].runSize = 65536;	
-    ocl_context[i].runSizeMultiplier = 64;
-    ocl_context[i].maxWorkSize = 2048 * 2048;
-  }
-  
   return numDevices;
 } 
 
-void OCLReinitializeDevice(int device)
+void OCLReinitializeDevice(ocl_context_t *cont)
 {
-  if(ocl_context[device].coreID == CORE_NONE)
-	  return;
   //Log("Reinializing device %u\n", device);
-  ocl_context[device].coreID = CORE_NONE;
+  cont->coreID = CORE_NONE;
 
   //Log("Releasing kernel\n");
-  if(ocl_context[device].kernel)
+  if (cont->kernel)
   {
-	  clReleaseKernel(ocl_context[device].kernel);
-	  ocl_context[device].kernel = NULL;
+    ocl_diagnose( clReleaseKernel(cont->kernel), "clReleaseKernel", cont );
+    cont->kernel = NULL;
   }
   
   //Log("Releasing program\n");
-  if(ocl_context[device].program)
+  if (cont->program)
   {
-	clReleaseProgram(ocl_context[device].program);
-    ocl_context[device].program = NULL;
+    ocl_diagnose( clReleaseProgram(cont->program), "clReleaseProgram", cont );
+    cont->program = NULL;
   }
 
   //Log("Releasing CQ\n");
-  if(ocl_context[device].cmdQueue)
+  if (cont->cmdQueue)
   {
-	clReleaseCommandQueue(ocl_context[device].cmdQueue);
-	ocl_context[device].cmdQueue = NULL;
-  }
-
-  //Log("Releasing out ptr\n");
-  if(ocl_context[device].out_ptr)
-  {
-	  free(ocl_context[device].out_ptr);
-	  ocl_context[device].out_ptr = NULL;
-  }
-
-  //Log("Releasing const ptr\n");
-  if(ocl_context[device].const_ptr)
-  {
-	  free(ocl_context[device].const_ptr);
-	  ocl_context[device].const_ptr = NULL;
+    ocl_diagnose( clReleaseCommandQueue(cont->cmdQueue), "clReleaseCommandQueue", cont );
+    cont->cmdQueue = NULL;
   }
 
   //Log("Releasing const buffer\n");
-  if(ocl_context[device].const_buffer)
+  if (cont->const_buffer)
   {
-	  clReleaseMemObject(ocl_context[device].const_buffer);
-	  ocl_context[device].const_buffer = NULL;
+    ocl_diagnose( clReleaseMemObject(cont->const_buffer), "clReleaseMemObject(const_buffer)", cont );
+    cont->const_buffer = NULL;
   }
 
   //Log("Releasing out buffer buffer\n");
-  if(ocl_context[device].out_buffer)
+  if (cont->out_buffer)
   {
-	  clReleaseMemObject(ocl_context[device].out_buffer);
-	  ocl_context[device].out_buffer = NULL;
+    ocl_diagnose( clReleaseMemObject(cont->out_buffer),  "clReleaseMemObject(out_buffer)", cont );
+    cont->out_buffer = NULL;
   }
 
   //Log("Releasing context\n");
-  if(ocl_context[device].clcontext)
+  if (cont->clcontext)
   {
-	  clReleaseContext(ocl_context[device].clcontext);
-	  ocl_context[device].clcontext = NULL;
+    ocl_diagnose( clReleaseContext(cont->clcontext), "clReleaseContext", cont );
+    cont->clcontext = NULL;
   }
 
-  ocl_context[device].runSize = 65536;	
-  ocl_context[device].maxWorkSize = 2048 * 2048;
+  cont->runSize = 65536;
+  cont->maxWorkSize = 2048 * 2048;
   //Log("Reinit OK\n");
 }

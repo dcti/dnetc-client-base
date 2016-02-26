@@ -3,29 +3,49 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-#ifdef LINUX
 #include "baseincs.h"
-#endif
-
-#include "adl.h"
 #include "logstuff.h"
 
-ADL_MAIN_CONTROL_CREATE          ADL_Main_Control_Create;
-ADL_MAIN_CONTROL_DESTROY         ADL_Main_Control_Destroy;
-ADL_ADAPTER_NUMBEROFADAPTERS_GET ADL_Adapter_NumberOfAdapters_Get;
-ADL_ADAPTER_ADAPTERINFO_GET      ADL_Adapter_AdapterInfo_Get;
-ADL_OVERDRIVE5_THERMALDEVICES_ENUM ADL_Overdrive5_ThermalDevices_Enum;
-ADL_OVERDRIVE5_TEMPERATURE_GET ADL_Overdrive5_Temperature_Get;
+#include <adl_sdk.h>
+#include "amdstream_setup.h"
+#include "adl.h"
+
+typedef int ( *ADL_MAIN_CONTROL_CREATE )(ADL_MAIN_MALLOC_CALLBACK, int );
+typedef int ( *ADL_MAIN_CONTROL_DESTROY )();
+typedef int ( *ADL_ADAPTER_NUMBEROFADAPTERS_GET ) ( int* );
+typedef int ( *ADL_ADAPTER_ADAPTERINFO_GET ) ( LPAdapterInfo, int );
+typedef int ( *ADL_OVERDRIVE5_THERMALDEVICES_ENUM ) ( int, int, ADLThermalControllerInfo* );
+typedef int ( *ADL_OVERDRIVE5_TEMPERATURE_GET ) ( int, int, ADLTemperature* );
+
+typedef struct
+{
+  int bus;
+  int device;
+  int iAdapterIndex;
+  int active;
+} ThermalDevices_t;
+
+static ThermalDevices_t ThermalDevices[AMD_STREAM_MAX_GPUS];
+
+static ADL_MAIN_CONTROL_CREATE            ADL_Main_Control_Create;
+static ADL_MAIN_CONTROL_DESTROY           ADL_Main_Control_Destroy;
+static ADL_ADAPTER_NUMBEROFADAPTERS_GET   ADL_Adapter_NumberOfAdapters_Get;
+static ADL_ADAPTER_ADAPTERINFO_GET        ADL_Adapter_AdapterInfo_Get;
+static ADL_OVERDRIVE5_THERMALDEVICES_ENUM ADL_Overdrive5_ThermalDevices_Enum;
+static ADL_OVERDRIVE5_TEMPERATURE_GET     ADL_Overdrive5_Temperature_Get;
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
+static HINSTANCE hDLL;		// Handle to ADL DLL
+#endif
 
 // Memory allocation function
-void* __stdcall ADL_Main_Memory_Alloc ( int iSize )
+static void* __stdcall ADL_Main_Memory_Alloc ( int iSize )
 {
     void* lpBuffer = malloc ( iSize );
     return lpBuffer;
 }
 
 // Optional Memory de-allocation function
-void __stdcall ADL_Main_Memory_Free ( void** lpBuffer )
+static void __stdcall ADL_Main_Memory_Free ( void** lpBuffer )
 {
     if ( NULL != *lpBuffer )
     {
@@ -34,16 +54,11 @@ void __stdcall ADL_Main_Memory_Free ( void** lpBuffer )
     }
 }
 
-ThermalDevices_t ThermalDevices[AMD_STREAM_MAX_GPUS];
-#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
-HINSTANCE hDLL;		// Handle to ADL DLL
-#endif
-
 void ADLinit()
 {
   int i;
 
-  Log("Initializing ADL...\n");
+//Log("Initializing ADL...\n");
   for(i=0;i<AMD_STREAM_MAX_GPUS;i++)
     ThermalDevices[i].active=0;
 
@@ -56,7 +71,7 @@ void ADLinit()
   if (NULL == hDLL)
     return;
 
-  Log("Retrieving ADL handlers\n");
+//Log("Retrieving ADL handlers\n");
   ADL_Main_Control_Create = (ADL_MAIN_CONTROL_CREATE) GetProcAddress(hDLL,"ADL_Main_Control_Create");
   ADL_Main_Control_Destroy = (ADL_MAIN_CONTROL_DESTROY) GetProcAddress(hDLL,"ADL_Main_Control_Destroy");
   ADL_Adapter_NumberOfAdapters_Get = (ADL_ADAPTER_NUMBEROFADAPTERS_GET) GetProcAddress(hDLL,"ADL_Adapter_NumberOfAdapters_Get");
@@ -123,7 +138,8 @@ void ADLdeinit()
     ADL_Main_Control_Destroy ();
 
 #if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) 
-  FreeLibrary(hDLL);
+  if (hDLL)
+    FreeLibrary(hDLL);
 #endif
 }
 

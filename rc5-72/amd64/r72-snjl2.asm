@@ -10,6 +10,8 @@
 ; (r72-ss2 was based on r72-dg2 and r72ansi2 cores)
 ; $Id: r72-snjl2.asm,v 1.2 2007/10/22 16:48:35 jlawson Exp $
 
+%error This code lacks at least Windows prologue and must be not used without modifications and testing
+
 [SECTION .text]
 BITS 64
 

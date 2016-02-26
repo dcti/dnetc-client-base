@@ -171,10 +171,7 @@ int ModeReqRun(Client *client)
   */
   if ((modereq.reqbits & MODEREQ_NEEDS_CPU_MASK) != 0)
   {
-    static int cpucount = -99;
-    if (cpucount == -99)
-      cpucount = GetNumberOfDetectedProcessors();
-    if (cpucount == 0)  // -1 is OK when OS doesn't support detection
+    if (GetNumberOfDetectedProcessors() == 0)  // -1 is OK when OS doesn't support detection
       return 0;
   }
 

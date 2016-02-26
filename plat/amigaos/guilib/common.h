@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -124,6 +124,15 @@ struct Library *OpenLibraryIFace( STRPTR name, ULONG version, APTR *iface );
 VOID CloseLibraryIFace( struct Library *lib, APTR iface );
 #define DoMethod IDoMethod
 #define NewObject IIntuition->NewObject
+
+#ifdef CreateMsgPort
+#undef CreateMsgPort
+#endif
+#define CreateMsgPort() AllocSysObject(ASOT_PORT,NULL)
+#ifdef DeleteMsgPort
+#undef DeleteMsgPort
+#endif
+#define DeleteMsgPort(msgPort) FreeSysObject(ASOT_PORT,msgPort)
 
 LIBFUNC ULONG dnetcguiOpen(struct Interface *self, ULONG cpu, UBYTE *programname, struct WBArg *iconname, const char *vstring);
 LIBFUNC BOOL dnetcguiClose(struct Interface *self, struct ClientGUIParams *params);

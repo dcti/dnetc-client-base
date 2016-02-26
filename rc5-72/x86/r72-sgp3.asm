@@ -19,7 +19,7 @@
 
 %define P         0xB7E15163
 %define Q         0x9E3779B9
-%define S_not(N)  (P+Q*(N))
+%define S_not(N)  ((P+Q*(N)) & 0xFFFFFFFF)
 
 %define RESULT_NOTHING 1
 %define RESULT_FOUND   2
@@ -279,9 +279,9 @@ key_setup_1:
         mov     S2(0), dword 0xBF0A8B1D
         mov     S3(0), dword 0xBF0A8B1D
 
-        lea     A1, [B1 + S_not(1) + 0xBF0A8B1D]
-        lea     A2, [B2 + S_not(1) + 0xBF0A8B1D]
-        lea     A3, [B3 + S_not(1) + 0xBF0A8B1D]
+        lea     A1, [B1 + ((S_not(1) + 0xBF0A8B1D) & 0xFFFFFFFF)]
+        lea     A2, [B2 + ((S_not(1) + 0xBF0A8B1D) & 0xFFFFFFFF)]
+        lea     A3, [B3 + ((S_not(1) + 0xBF0A8B1D) & 0xFFFFFFFF)]
 
         KEYSETUP_BLOCK_PRE 0
         KEYSETUP_BLOCK S_not,1,1

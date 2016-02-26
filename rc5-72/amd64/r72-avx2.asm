@@ -1,6 +1,11 @@
+; RC5-72 AVX-2 core
+; Created by: Yasuhiro Katsui (bakabaka9xx@gmail.com, bakabaka9xx@github)
+;
 ; 16-pipe
 ; Need popcnt and AVX2 instruction
 ; Optimized for uOP cache
+;
+; Comments below are added by distributed.net members.
 
 [SECTION .data]
 [SECTION .text]
@@ -37,7 +42,7 @@ BITS 64
     %assign work32_size work32_size+32*(%2)
 %endmacro
 
-; local storage variables
+; local storage variables - referenced via [RSP+xxx]
 
 %ifdef _WINDOWS
 defwork save_xmm6,4
@@ -60,6 +65,8 @@ defwork save_r13,2
 defwork save_r14,2
 defwork save_r15,2
 
+; Following variables will be relocated BEFORE RBP (i.e. referenced as [RBP-xxx].
+; Declaring them here (in RSP+ pool) only to reserve work_size.
 defwork work_pre_A
 defwork work_pre_B_0
 defwork work_pre_B_1
@@ -67,14 +74,33 @@ defwork work_pre_B_2
 defwork work_pre_S1
 defwork work_pre_S2
 
+; Second pool of variables - aligned by 32, referenced via [RBP+xxx]
+; Add padding area for alignment
+%assign work_size work_size + 32
+; Start of secondary area (non-aligned yet)
 %assign work_offset work_size
 
+; WARNING: key_setup expects only this layout of frame, two fields before work_S,
+; i.e. work_S must be started at [ebp+64]
 defwork32 work_C_0
 defwork32 work_C_1
 defwork32 work_S, (26*2)
 
-%assign work_size work_offset + work32_size + 32
+; Concatenate two work areas together
+%assign work_size work_size + work32_size
+
+; "The stack must be aligned by 16 before any call instruction.
+; Consequently, the value of the stack pointer is always 8 modulo 16
+; at the entry of a procedure. A procedure must subtract an odd multiple
+; of 8 from the stack pointer before any call instruction." (Agner Fog)
+;
+; Step 1. Make sure that work_size is multiple of 8.
+%assign work_size (work_size + 7) & 0FFFFFFF8h
+; Step 2. If final work_size is divisible by 16, reserve 8 more bytes, as requested above.
 %assign work_size work_size + (8 - work_size % 16)
+; Note to other developers: a simpler method is to save registers in prologue
+; using odd number of push'es - this will make rsp aligned by 16, then align
+; work_size by 16 using only Step 1.
 
 ;; offsets within the parameter structure
 %define RC5_72UnitWork_plainhi  rdi+0
@@ -89,6 +115,7 @@ defwork32 work_S, (26*2)
 %define RC5_72UnitWork_CMCmid   rdi+36
 %define RC5_72UnitWork_CMClo    rdi+40
 
+; Manually move "RBP-minus" variables to their positions.
 %undef  work_pre_A
 %define work_pre_A              rbp-24
 %undef  work_pre_B_0
@@ -136,7 +163,13 @@ startseg:
 _rc5_72_unit_func_avx2:
 rc5_72_unit_func_avx2:
 
-    sub     rsp, work_size
+; Note to other core writers:
+; Alternative simpler method is to save registers here using ODD number of push'es.
+; This make stack aligned by 16 and work_size need to be only trivially aligned by 16.
+; It may be preferable to always save maximum required set of registers no matter
+; which OS is used (entry/exit sequence don't need to be optimized for speed)
+
+    sub     rsp, work_size     ; stack becomes aligned to 16 bytes, as required by calling convention
 
 %ifdef _WINDOWS
     vmovdqa [save_xmm6], xmm6
@@ -153,8 +186,6 @@ rc5_72_unit_func_avx2:
     mov     [save_rdi], rdi
     mov     rdi, rcx
     mov     rsi, rdx
-%else
-
 %endif
     mov     [save_rbx], rbx
     mov     [save_rbp], rbp
@@ -163,7 +194,9 @@ rc5_72_unit_func_avx2:
     mov     [save_r14], r14
     mov     [save_r15], r15
 
-    lea     rbp, [rsp+work_offset+32]
+; Move RBP to start of secondary area, after alignment space
+; Align secondary area by 32 bytes.
+    lea     rbp, [rsp+work_offset]
     and     bpl, 0xE0
 
     mov     r10d, [rsi]
@@ -195,7 +228,7 @@ rc5_72_unit_func_avx2:
     rol     eax, 3
     mov     [work_pre_S1], eax
     add     ecx, eax
-.key_setup_1_mid_loop
+.key_setup_1_mid_loop:
     lea     edx, [L0mid+ecx]
     rol     edx, cl
     mov     [work_pre_B_1], edx
@@ -503,9 +536,21 @@ rc5_72_unit_func_avx2:
     cmp     eax, 0
     je      .checkKey2
 
+.saveFoundKey:   ; edx = number of cmc's from low word
+; It seems that this code cancels cmc's found above, and adding only one
+; for found key. (at this point only one bit is usually set in eax,
+; "winning" key is only one, and false double matches, which decrypts
+; only two first words but not the whole message, are very, very rare).
+; This is questionable - it could be a partial match before full one in the
+; pipeline, but I think it's acceptable for now because exact cmc_count
+; does not really matter when RESULT_FOUND is reported; such results are
+; always handled manually - either we win, either it's false double match
+; (and block must be reprocessed completely manually), either core has
+; reported wrong result and block will be discarded and recycled.
     popcnt  ecx, eax
     sub     edx, ecx
     sub     dword [RC5_72UnitWork_CMCcount], edx
+; update number of iterations done and CMChi using exact key number
     bsr     eax, eax
     shl     r10d, 4
     sub     r10d, eax
@@ -513,6 +558,8 @@ rc5_72_unit_func_avx2:
     add     eax, L0hi
     mov     [RC5_72UnitWork_CMChi], eax
 
+; Save rest of current key before exit. L0hi was saved during key update.
+; Note that saved key point to start of pipeline-block where full match was found.
     mov     [RC5_72UnitWork_L0mid], L0mid
     mov     [RC5_72UnitWork_L0lo], L0lo
     mov     eax, RESULT_FOUND
@@ -545,22 +592,8 @@ rc5_72_unit_func_avx2:
     vmovmskps   eax, D2
     cmp     eax, 0
     je      .nextKey
-
-    popcnt  ecx, eax
-    sub     edx, ecx
-    sub     dword [RC5_72UnitWork_CMCcount], edx
-    bsr     eax, eax
-    add     eax, 8
-    shl     r10d, 4
-    sub     r10d, eax
-    sub     [rsi], r10d
-    add     eax, L0hi
-    mov     [RC5_72UnitWork_CMChi], eax
-
-    mov     [RC5_72UnitWork_L0mid], L0mid
-    mov     [RC5_72UnitWork_L0lo], L0lo
-    mov     eax, RESULT_FOUND
-    jmp     .finished
+    shl     eax, 8        ; it's pipe#2 - will add 8 to key index in following bsr
+    jmp     .saveFoundKey ; edx must be set to number of cmc's from low word
 
 .finished_Found_nothing:
     add     r13b, 16

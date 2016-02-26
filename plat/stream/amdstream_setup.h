@@ -14,7 +14,6 @@
 
 #define AMD_STREAM_MAX_GPUS 16
 
-int  AMDStreamInitialize();
-void AMDStreamReinitializeDevice(int Device);
+int  AMDStreamInitialize(void);
 
 #endif // AMD_STREAM_SETUP_H

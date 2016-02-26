@@ -10,7 +10,7 @@
 //#define DYN_TIMESLICE_SHOWME
 
 const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.163 2014/02/01 21:01:43 snikkel Exp $"; }
+return "@(#)$Id: clirun.cpp,v 1.163 2015/10/24 21:01:43 stream Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
@@ -35,14 +35,6 @@ return "@(#)$Id: clirun.cpp,v 1.163 2014/02/01 21:01:43 snikkel Exp $"; }
 #include "clievent.h"  // ClientEventSyncPost() and constants
 #include "coremem.h"   // cmem_alloc(), cmem_free()
 #include "bench.h"     // BenchResetStaticVars()
-
-#if (CLIENT_CPU == CPU_CUDA)
-#include "cuda_setup.h"         // InitializeCUDA();
-#endif
-
-#if (CLIENT_CPU == CPU_OPENCL)
-#include "ocl_setup.h"		// InitializeOpenCL()
-#endif
 
 // --------------------------------------------------------------------------
 
@@ -608,16 +600,36 @@ void Go_mt( void * parm )
               const u32 fixed_increment = thisprob->pub_data.tslice_increment_hint;
               const u32 usec = thrparams->dyn_timeslice_table[contest_i].usec;
               const u32 usec5perc = usec / 20;
-              if (runtime_usec < (thrparams->dyn_timeslice_table[contest_i].usec - usec5perc))
+              if (runtime_usec < (usec - usec5perc))
               {
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+                /*
+                 * Bump timeslice very fast for GPU clients. An 1GKey GPU have optimal
+                 * timeslice 15000 times higher then initial value. Original code
+                 * is reaching this point too slow, performance loss becomes noticeable
+                 * on small blocks.
+                 */
+                #define MAX_U32_TIMESLICE 0xFFFFFF00  /* I just don't like 0xFFFFFFFF. It'll be truncated to table.max anyway */
+                if (runtime_usec <= usec / 4)
+                {
+                  /* Be careful about 4GKey+ cards, lesser values also can overflow during bump */
+                  ui64 bumped_timeslice = (ui64)optimal_timeslice * usec / (runtime_usec ? runtime_usec : 1);
+                  if (bumped_timeslice > MAX_U32_TIMESLICE)
+                    bumped_timeslice = MAX_U32_TIMESLICE;
+                  optimal_timeslice = (u32)bumped_timeslice;
+                }
+                else
+#endif
+                {
                 if ((fixed_increment >= optimal_timeslice / 100) && (usec - 5 * usec5perc < runtime_usec))
                   optimal_timeslice += fixed_increment;
-                else
+                else if (optimal_timeslice < 0x80000000)  /* it's max for RC5, bad things will happens after shifting this! */
                   optimal_timeslice <<= 1;
+                }
                 if (optimal_timeslice > thrparams->dyn_timeslice_table[contest_i].max)
                   optimal_timeslice = thrparams->dyn_timeslice_table[contest_i].max;
               }
-              else if (runtime_usec > (thrparams->dyn_timeslice_table[contest_i].usec + usec5perc))
+              else if (runtime_usec > (usec + usec5perc))
               {
                 optimal_timeslice -= (optimal_timeslice>>2);
                 if (is_non_preemptive_cruncher)
@@ -1413,7 +1425,6 @@ int ClientRun( Client *client )
   //
   // Initialization: (order is important, 'F' denotes code that can fail)
   // 1.    UndoCheckpoint() (it is not affected by TimeToQuit)
-  // 1a.F  Initialize co-processors
   // 2.    Determine number of problems
   // 3. F  Create problem table (InitializeProblemManager())
   // 4. F  Load (or try to load) that many problems (needs number of problems)
@@ -1444,28 +1455,6 @@ int ClientRun( Client *client )
       checkpointsDisabled = 1;
     }
   }
-
-  // --------------------------------------
-  // Do co-processor specific initialization
-  // --------------------------------------
-
-  #if (CLIENT_CPU == CPU_CUDA)
-  if (InitializeCUDA() != 0)
-  {
-    Log("Unable to initialize CUDA.\n");
-    TimeToQuit = 1;
-    exitcode = -3;
-  }
-  #endif
-
-  #if (CLIENT_CPU == CPU_OPENCL)
-  if (InitializeOpenCL() <= 0)
-  {
-    Log("Unable to initialize OpenCL.\n");
-    TimeToQuit = 1;
-    exitcode = -3;
-  }
-  #endif
 
   // --------------------------------------
   // Determine the number of problems to work with. Number is used everywhere.
@@ -1519,7 +1508,32 @@ int ClientRun( Client *client )
     //  force_no_realthreads = 1; // if only one thread/processor is to used
     #endif
 
+    // On GPU, number of crunchers must NEVER exceed number of detected GPUs
+    #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+    int gpus = GetNumberOfDetectedProcessors();
+    if (gpus < 0)
+      gpus = 0; // just in case. It should not fail on GPU (return 0 on error)
+    if (numcrunchers > gpus)
+      numcrunchers = gpus;
+    #endif
+
     load_problem_count = numcrunchers;
+  }
+
+  // --------------------------------------
+  // Optional. Print nice error message if no GPUs were found. Even without this,
+  // client will stop later anyway, because no problem were loaded, with message
+  // "Unable to initialize problem manager", which may be too cryptic.
+  // --------------------------------------
+
+  if (!TimeToQuit)
+  {
+    if (load_problem_count == 0)
+    {
+      Log( "No crunchers to start. Quitting...\n" );
+      exitcode = -3;
+      TimeToQuit = 1;
+    }
   }
 
   // -------------------------------------

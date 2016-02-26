@@ -11,7 +11,7 @@
  * -------------------------------------------------------------------
 */
 const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.131 2012/08/08 19:45:54 sla Exp $"; }
+return "@(#)$Id: selcore.cpp,v 1.131 2015/10/22 19:45:54 stream Exp $"; }
 
 //#define TRACE
 
@@ -73,13 +73,13 @@ const char **corenames_for_contest( unsigned int cont_i )
 ** they have to live with the possibility that the choice will at some point
 ** no longer be optimal.
 */
-int apply_selcore_substitution_rules(unsigned int contestid, int cindex)
+static int apply_selcore_substitution_rules(unsigned int contestid, int cindex, int device)
 {
   switch (contestid)
     {
 #ifdef HAVE_RC5_72_CORES
     case RC5_72:
-      return apply_selcore_substitution_rules_rc572(cindex);
+      return apply_selcore_substitution_rules_rc572(cindex, device);
 #endif
 #ifdef HAVE_OGR_CORES
     case OGR_NG:
@@ -168,8 +168,8 @@ void selcoreEnumerateWide( int (*enumcoresproc)(
 /* ---------------------------------------------------------------------- */
 
 void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont, 
-                            const char *corename, int idx, void *udata ),
-                       void *userdata )
+                            const char *corename, int idx, void *udata, Client *client ),
+                       void *userdata, Client *client )
 {
   if (enumcoresproc)
   {
@@ -184,7 +184,7 @@ void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont,
         const char **corenames = corenames_for_contest(cont_i);
         for (coreindex = 0; !stoploop && coreindex < corecount; coreindex++)
           stoploop = (! ((*enumcoresproc)(cont_i, 
-                      corenames[coreindex], (int)coreindex, userdata )) );
+                      corenames[coreindex], (int)coreindex, userdata, client )) );
       }
     }
   }
@@ -193,11 +193,13 @@ void selcoreEnumerate( int (*enumcoresproc)(unsigned int cont,
 
 /* --------------------------------------------------------------------- */
 
-int selcoreValidateCoreIndex( unsigned int cont_i, int idx )
+int selcoreValidateCoreIndex( unsigned int cont_i, int idx, Client *client )
 {
   if (idx >= 0 && idx < ((int)corecount_for_contest( cont_i )))
   {
-    if (idx == apply_selcore_substitution_rules(cont_i, idx))
+    int device = hackGetUsedDeviceIndex(client, 0); // FIXME: without -devicenum, validates against GPU0
+
+    if (idx == apply_selcore_substitution_rules(cont_i, idx, device))
       return idx;
   }
   return -1;
@@ -335,6 +337,8 @@ static long __bench_or_test( Client *client, int which,
                             unsigned int cont_i, unsigned int benchsecs, int in_corenum )
 {
   long rc = -1;
+  /* FIXME: without -devicenum, test/bench will be run on GPU 0 only */
+  int device = hackGetUsedDeviceIndex(client, 0);
 
   if (selcore_initlev > 0                  /* core table is initialized? */
       && cont_i < CONTEST_COUNT)           /* valid contest id? */
@@ -344,14 +348,14 @@ static long __bench_or_test( Client *client, int which,
     int corenum = selcorestatics.corenum[cont_i];
     int coreidx, corecount = corecount_for_contest( cont_i );
     int fastest = -1;
-    int hardcoded = selcoreGetPreselectedCoreForProject(cont_i);
+    int hardcoded = selcoreGetPreselectedCoreForProject(cont_i, device);
     u32 bestrate_hi = 0, bestrate_lo = 0, refrate_hi = 0, refrate_lo = 0;
 
     rc = 0; /* assume nothing done */
     for (coreidx = 0; coreidx < corecount; coreidx++)
     {
       /* only bench/test cores that won't be automatically substituted */
-      if (apply_selcore_substitution_rules(cont_i, coreidx) == coreidx)
+      if (apply_selcore_substitution_rules(cont_i, coreidx, device) == coreidx)
       {
         if (in_corenum < 0)
             selcorestatics.user_cputype[cont_i] = coreidx; /* as if user set it */
@@ -455,7 +459,7 @@ static long __bench_or_test( Client *client, int which,
     if (rc > 0 && cont_i == RC5 && 
           GetNumberOfDetectedProcessors() > 1) /* have x86 card */
     {
-      Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */
+      Problem *prob = ProblemAlloc(); /* so bench/test gets threadnum+1 */ /* FIXME: not true anymore */
       rc = -1; /* assume alloc failed */
       if (prob)
       {
@@ -491,13 +495,13 @@ long selcoreStressTest( Client *client, unsigned int cont_i, int corenum)
 
 /* ---------------------------------------------------------------------- */
 
-int selcoreGetPreselectedCoreForProject(unsigned int projectid)
+int selcoreGetPreselectedCoreForProject(unsigned int projectid, int device)
 {
   switch (projectid)
     {
 #ifdef HAVE_RC5_72_CORES
     case RC5_72:
-      return selcoreGetPreselectedCoreForProject_rc572();
+      return selcoreGetPreselectedCoreForProject_rc572(device);
 #endif
 #ifdef HAVE_OGR_CORES
     case OGR_NG:
@@ -521,6 +525,8 @@ int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid )
   int corename_printed = 0;
   static long detected_type = -123;
   const char *contname = CliGetContestNameFromID(contestid);
+  /* FIXME: without -devicenum, core always selected for GPU 0 */
+  int device = hackGetUsedDeviceIndex(client, 0);
 
   if (!contname) /* no such contest */
     return -1;
@@ -546,14 +552,14 @@ int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid )
       else if (selcorestatics.user_cputype[cont_i] < 0)
         quietly = 0;
     }
-    detected_type = GetProcessorType(quietly);
+    detected_type = GetProcessorType(quietly, device);
     if (detected_type < 0)
       detected_type = -1;
   }
 
   selcorestatics.corenum[contestid] = selcorestatics.user_cputype[contestid];
   if (selcorestatics.corenum[contestid] < 0)
-    selcorestatics.corenum[contestid] = selcoreGetPreselectedCoreForProject(contestid);
+    selcorestatics.corenum[contestid] = selcoreGetPreselectedCoreForProject(contestid, device);
 
   TRACE_OUT((0, "cpu/arch preselection done: %d\n", selcorestatics.corenum[contestid]));
 
@@ -573,8 +579,7 @@ int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid )
       for (whichcrunch = 0; whichcrunch < corecount; whichcrunch++)
       {
         /* test only if not substituted */
-        if (whichcrunch == apply_selcore_substitution_rules(contestid, 
-                                                              whichcrunch))
+        if (whichcrunch == apply_selcore_substitution_rules(contestid, whichcrunch, device))
         {
           u32 rate_hi, rate_lo;
           selcorestatics.corenum[contestid] = whichcrunch;
@@ -613,8 +618,7 @@ int selcoreGetSelectedCoreForContest( Client *client, unsigned int contestid )
     ** substitution according to real selcoreSelectCore() rules
     ** Returns original if no substitution occurred.
     */
-    int override = apply_selcore_substitution_rules(contestid, 
-                                       selcorestatics.corenum[contestid]);
+    int override = apply_selcore_substitution_rules(contestid, selcorestatics.corenum[contestid], device);
     if (!corename_printed)
     {
       if (override != selcorestatics.corenum[contestid])
@@ -662,6 +666,24 @@ int selcoreSelectCore( Client *client, unsigned int contestid, unsigned int thre
     default:
       return -1; /* core selection failed */
     }
+}
+
+/* ------------------------------------------------------------- */
+
+// Get GPU device index from threadindex
+// (same as threadindex without -devicenum, otherwise forced by -devicenum)
+
+int hackGetUsedDeviceIndex( Client *client, unsigned threadindex )
+{
+  int device = threadindex;
+  /* TODO: really support separate cores for multiple types of devices */
+  #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+  if (client->devicenum >= 0)
+    device = client->devicenum;
+  #else
+  DNETC_UNUSED_PARAM(client);
+  #endif
+  return device;
 }
 
 /* ------------------------------------------------------------- */

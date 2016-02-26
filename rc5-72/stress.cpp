@@ -279,7 +279,7 @@ static long __test_1(Client *client)
     int resultcode;
 
     __init_contest(&contestwork, MINIMUM_ITERATIONS);
-    thisprob = ProblemAlloc();
+    thisprob = ProblemAlloc(0);
     if (thisprob) {
       __cypher_text(&contestwork, &matchkey, iters);
       if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, client) == 0) {
@@ -357,7 +357,7 @@ static long __test_2(Client *client)
     int resultcode;
 
     __init_contest(&contestwork, maxkeys);
-    thisprob = ProblemAlloc();
+    thisprob = ProblemAlloc(0);
     if (thisprob) {
       __cypher_text(&contestwork, &matchkey, iters);
       /* kludge : Convert a full match into a partial match */
@@ -468,7 +468,7 @@ static long __test_3(Client *client)
       contestwork.bigcrypto.key.mid = basekey.mid;
       contestwork.bigcrypto.key.lo  = basekey.lo;
 
-      thisprob = ProblemAlloc();
+      thisprob = ProblemAlloc(0);
       if (thisprob) {
         __cypher_text(&contestwork, &matchkey, iters);
         if (ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, client) == 0) {
@@ -546,7 +546,7 @@ static long __test_4(Client *client)
 
   __init_contest(&contestwork, maxkeys);
   cmc_key.hi = cmc_key.mid = cmc_key.lo = cmc_count = 0;
-  thisprob = ProblemAlloc();
+  thisprob = ProblemAlloc(0);
 
   /* Unlike the three other tests, we reuse the ContestWork datas to emulate
   ** the real behaviour of the client. Any core that fails to collect all
@@ -588,7 +588,7 @@ static long __test_4(Client *client)
         iters = 0;
         cmc_key.hi = cmc_key.mid = cmc_key.lo = cmc_count = 0;
         ProblemFree(thisprob);
-        thisprob = ProblemAlloc();
+        thisprob = ProblemAlloc(0);
         ProblemLoadState(thisprob, &contestwork, RC5_72, tslice, 0, 0, 0, 0, client);
         continue;
       }
