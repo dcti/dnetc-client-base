@@ -1644,6 +1644,16 @@ case "$1" in
         TARGET_IS_CROSSCOMPILE="1"
         add_sources "android" "x86"
         ;;
+        
+    *linux-arm64)               # [mikereed ertyu]
+        TARGET_CC="g++"
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_TARBALL="linux-arm64"
+        TARGET_DOCFILES="docs/readme._ix"
+        add_sources "linux" "arm64"
+        ;;
 
     *linux-arm-elf_single)      # [teichp]
         TARGET_CC="gcc"
