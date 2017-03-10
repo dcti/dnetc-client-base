@@ -41,6 +41,7 @@
 #define CPU_ATI_STREAM  20
 #define CPU_OPENCL      21
 #define CPU_ARM64       22
+#define CPU_PPC64       23
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -199,7 +200,9 @@
     #define CLIENT_CPU     CPU_IA64
   #elif defined(__arm64__) || defined(__aarch64__)
     #define CLIENT_CPU     CPU_ARM64
-  #elif defined(ARM) || defined(__arm__)
+ #elif defined(__ppc64__) || defined(__PPC64__)
+    #define CLIENT_CPU     CPU_PPC64   
+#elif defined(ARM) || defined(__arm__)
     #define CLIENT_CPU     CPU_ARM
   #elif defined(ASM_SPARC) || defined(__sparc__)
     #define CLIENT_CPU     CPU_SPARC
