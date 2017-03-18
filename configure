@@ -508,6 +508,17 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi
   #-----------------------------------------------------------------
+  elif [ "$2" = "ppc64" ]; then
+    if [ "$HAVE_RC5_72" = "1"]; then
+      DEFAULT_RC5_72="1"
+    fi # HAVE_RC5_72    
+
+    if [ "$HAVE_OGR" = "1" ]; then
+      DEFAULT_OGRNG="0"
+      #TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-32.cpp"
+    fi
+  #-----------------------------------------------------------------
   elif [ "$2" = "arm64" ]; then
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="1"
@@ -524,16 +535,6 @@ add_sources() # $1=os, $2=arch, $3=custom
       # add the 64-bit core
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS $OGR/ansi/ogrp2-64.cpp"
     fi
-    
-    elif [ "$2" = "ppc64" ]; then
-    if [ "$HAVE_RC5_72" = "1"]; then
-      DEFAULT_RC5_72="1"
-    fi # HAVE_RC5_72    
-
-    if [ "$HAVE_OGR" = "1" ]; then
-      DEFAULT_OGRNG="0"
-      #TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
-      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-32.cpp"
   #-----------------------------------------------------------------
   elif [ "$2" = "arm" ]; then
     if [ "$HAVE_RC5_72" = 1 ]; then
