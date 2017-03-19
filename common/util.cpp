@@ -73,7 +73,7 @@ void trace_setsrc( const char *filename )
 void trace_out( int indlevel, const char *format, ... )
 {
   static int indentlevel = -1; /* uninitialized */
-  const char *tracefile = "trace"EXTN_SEP"out";
+  const char *tracefile = "trace" EXTN_SEP "out";
   int old_errno = errno;
   FILE *file;
   va_list arglist;

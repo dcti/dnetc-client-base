@@ -92,9 +92,9 @@ return "@(#)$Id: w32svc.cpp,v 1.12 2012/08/21 18:55:55 sla Exp $"; }
   const char *W9xSERVICEKEY = "distributed.net client";
   #endif
 #endif /* PROXYTYPE or not */
-const char *APPDESCRIP = "distributed.net "SERVICEFOR;
+const char *APPDESCRIP = "distributed.net " SERVICEFOR;
 
-#define SERVICEMUTEX "distributed.net "SERVICEFOR" service mutex"
+#define SERVICEMUTEX "distributed.net " SERVICEFOR " service mutex"
 
 /* ---------------------------------------------------------- */
 
@@ -529,7 +529,7 @@ int win32CliDetectRunningService(void) /* <0=err, 0=no, >0=yes */
 int win32CliUninstallService(int quiet)
 {
   int retcode = -1;
-  const char *msg = "A distributed.net "SERVICEFOR" could not be uninstalled";
+  const char *msg = "A distributed.net " SERVICEFOR " could not be uninstalled";
 
   if (__winGetVersion() < 400) /* win16 */
   {

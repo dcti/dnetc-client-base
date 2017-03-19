@@ -564,8 +564,8 @@ static int smtp_send_message_header( void * net,
   if (errcode == 0) //send the date
   {
     sprintf( buffer, "\r\nDate: %s"
-        "\r\nX-Mailer: distributed.net v"CLIENT_VERSIONSTRING
-           " client for "CLIENT_OS_NAME_EXTENDED, rfc822Date( buffer + 256 ) );
+        "\r\nX-Mailer: distributed.net v" CLIENT_VERSIONSTRING
+           " client for " CLIENT_OS_NAME_EXTENDED, rfc822Date( buffer + 256 ) );
     if ( put_smtp_line( net, buffer, strlen( buffer ) ) )
       errcode = -1;
   }
