@@ -136,7 +136,7 @@ ZIPEXTRAS = \
 
 OPTS_MSVC = -nologo -D__WIN32__ \
             -W4 -GR- -GA -GF -Gy \
-            -Dsnprintf=_snprintf -DHAVE_SNPRINTF \
+            -DHAVE_SNPRINTF \
             -D_M_$(OPTS_M_PLAT) $(OPTS_CC_CPU) $(OPTS_CC_DEBUG)
             ## *** +++++++++++++++++++++++++++++++++++++++++
 OPTS_LIBS = advapi32.lib user32.lib kernel32.lib gdi32.lib
@@ -157,6 +157,12 @@ OPTS_RC   = -d_Windows -d_M_$(OPTS_M_PLAT)
 #   cl 16.00.xxxx = Visual Studio 2010 (VC10)
 #   cl 17.00.xxxx = Visual Studio 2012 (VC11)
 #   cl 18.00.xxxx = Visual Studio 2013 (VC12)
+#   cl 19.00.xxxx = Visual Studio 2015 (VC14)
+
+# snprintf needs to be defined for Visual Studio 2015 and earlier
+!if ( [plat\win\msvcver.cmd] < 19 )
+OPTS_MSVC = $(OPTS_MSVC) -Dsnprintf=_snprintf
+!endif
 
 !if ( [plat\win\msvcver.cmd] >= 15 )
 OPTS_MSVC = $(OPTS_MSVC) -EHs-c- -GS- -wd4996
