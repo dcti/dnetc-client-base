@@ -500,6 +500,7 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
         case 0x09: cindex = 1; break; /* AMD: generic (#4214) */
         case 0x1A: cindex = 2; break; /* Intel Ivy Bridge (#4514) */
         case 0x1B: cindex = 2; break; /* Intel Haswell (#4533) */
+        case 0x1C: cindex = 2; break; /* Intel Kaby Lake */
         case 0x20: cindex = 1; break; /* AMD Bobcat (#4429) */
       }
       if (cindex == -1)
