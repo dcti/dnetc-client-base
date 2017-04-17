@@ -47,10 +47,10 @@
        #define CORE_MEM_ALIGNMENT 4
      #endif
   #else
-     // For x86, alignment must be 8 for MMX core and 16 for SSE.
-     #if CORE_MEM_ALIGNMENT < 4
+     // For x86, alignment must be 8 for MMX core, 16 for SSE and 32 for AVX2.
+     #if CORE_MEM_ALIGNMENT < 5
        #undef CORE_MEM_ALIGNMENT
-       #define CORE_MEM_ALIGNMENT 4
+       #define CORE_MEM_ALIGNMENT 5
      #endif
   #endif
 #endif

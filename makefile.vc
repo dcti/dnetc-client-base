@@ -476,6 +476,8 @@ OGRNG_OBJS =                         \
         $(OUTPUTPATH)/ogrng64-cj1-sse2-asm.obj \
         $(OUTPUTPATH)/ogrng64-cj1-sse2-lzcnt.obj    \
         $(OUTPUTPATH)/ogrng64-cj1-sse2-lzcnt-asm.obj \
+        $(OUTPUTPATH)/ogrng64-cj1-avx2.obj    \
+        $(OUTPUTPATH)/ogrng64-cj1-avx2-asm.obj \
         $(OUTPUTPATH)/ogrng_init.obj \
         $(OUTPUTPATH)/ogrng_dat.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
