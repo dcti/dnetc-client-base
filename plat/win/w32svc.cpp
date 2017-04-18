@@ -863,7 +863,7 @@ int win32CliInstallService(int quiet)
         if (!IsShellRunning()) /* start will fail */
         {
            sprintf( buffer, "This machine is running a wierd shell.\n"
-           "The distributed.net "SERVICEFOR" would not have started correctly\n"
+           "The distributed.net " SERVICEFOR " would not have started correctly\n"
            "and has not been %sinstalled.", ((reinstalled)?("re-"):("")) );
            msg = &buffer[0];
         }
@@ -974,7 +974,7 @@ int win32CliInstallService(int quiet)
     {
       TRACE_OUT((+0,"huh? no shell?\n" ));
       msg = "This machine is running a wierd shell.\n"
-             "The distributed.net "SERVICEFOR" would not have started correctly\n"
+             "The distributed.net " SERVICEFOR " would not have started correctly\n"
              "and has not been installed.";
     }
     else
@@ -988,7 +988,7 @@ int win32CliInstallService(int quiet)
                 REG_OPTION_NON_VOLATILE,KEY_ALL_ACCESS,NULL,
                 &srvkey,&dwDisp) != ERROR_SUCCESS)
       {
-        msg = "Unable to open registry. The distributed.net "SERVICEFOR" could not be\n"
+        msg = "Unable to open registry. The distributed.net " SERVICEFOR " could not be\n"
               "installed as a service.";
         TRACE_LASTERROR((0,"RegCreateKey(HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\RunServices) failed!\n" ));
       }
@@ -1008,7 +1008,7 @@ int win32CliInstallService(int quiet)
         else
         {
           TRACE_OUT((-1,"RegSetValueEx() succeeded.\n" ));
-          msg = "The distributed.net "SERVICEFOR" has been successfully\n"
+          msg = "The distributed.net " SERVICEFOR " has been successfully\n"
                    "installed as a Windows 9x service.";
           retcode = 0;
         }
