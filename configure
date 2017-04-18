@@ -662,6 +662,7 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/amd64/ogrng64-cj1-generic-asm.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/amd64/ogrng64-cj1-sse2-asm.asm"
       TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/amd64/ogrng64-cj1-sse2-lzcnt-asm.asm"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS $OGR/amd64/ogrng64-cj1-avx2-asm.asm"
     fi
 
     if [ "$HAVE_OGR_P2" = "1" ]; then
