@@ -134,6 +134,16 @@ for_loop%1:
 	;        COMP_LEFT_LIST_RIGHT(lev, s);
 	; !!!
 
+	; Input
+	; comp [D C B A]
+	; list [D C B A]
+	; newb [0 0 0 N]
+	;
+	; Output
+	; comp >>[0 D C B] (temp_B) | <<[D C B A] (comp)
+	; list >>[D C B A] (list) | <<[C B A N] (temp_A)
+	; newb [X X X X]
+
 	vmovq	xmm_temp_ss, rax
 	vmovq	xmm_temp_s, rcx
 	vmovdqa	cur(dist, 0), ymm_dist
@@ -144,11 +154,9 @@ for_loop%1:
 	vpsrlq	ymm_temp_B, ymm_comp, xmm_temp_ss
 	vpsllq	xmm_newbit, xmm_newbit, xmm_temp_ss
 	vpsllq	ymm_comp, ymm_comp, xmm_temp_s
-	vpermpd	ymm_temp_A, ymm_temp_A, 90h	; Reorder temp to be [C B A N]
+	vpermpd	ymm_temp_A, ymm_temp_A, 90h	; Reorder temp to be [C B A D]
 	vpblendd	ymm_temp_B, ymm_temp_B, ymm_zero, 3	; overwrite lowest quadword with 0
-
 	vpsrlq	ymm_list, ymm_list, xmm_temp_s
-
 	vpermpd	ymm_temp_B, ymm_temp_B, 39h	; Reorder temp to be [0 D C B]
 
 	; ebx = mark
@@ -280,8 +288,18 @@ full_shift%1:
 	; COMP_LEFT_LIST_RIGHT_WORD(lev);
 	; !!!
 
+	; Input
+	; comp [D C B A]
+	; list [D C B A]
+	; newb [0 0 0 N]
+	;
+	; Output
+	; comp >>[0 D C B]
+	; list [C B A N]
+	; newb [0 0 0 0]
+
 	vpermpd	ymm_comp, ymm_comp, 39h	; Reorder to be [A D C B]
-	vpermpd ymm_list, ymm_list, 90h	; Reorder to be [C B A N]
+	vpermpd ymm_list, ymm_list, 90h	; Reorder to be [C B A D]
 
 	vpblendd	ymm_comp, ymm_comp, ymm_zero, 192	; overwrite highest quadword with 0
 	vpblendd	ymm_list, ymm_list, ymm_newbit, 3	; overwrite lowest quadword with N
