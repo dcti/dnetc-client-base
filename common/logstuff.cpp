@@ -50,7 +50,7 @@ return "@(#)$Id: logstuff.cpp,v 1.62 2011/12/31 20:32:22 snikkel Exp $"; }
 #define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 #endif
 
-#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
+#undef ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
 #define ASSUMED_SCREEN_WIDTH 80 //... until all platforms support ConGetSize()
 // ========================================================================
 
