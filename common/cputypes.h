@@ -197,7 +197,7 @@
     #define CLIENT_CPU     CPU_S390X
   #elif defined(__IA64__)
     #define CLIENT_CPU     CPU_IA64
-  #elif defined(__arm64__)
+  #elif (defined(__arm64__) || defined(__aarch64__))
     #define CLIENT_CPU     CPU_ARM64
   #elif defined(ARM) || defined(__arm__)
     #define CLIENT_CPU     CPU_ARM

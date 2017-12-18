@@ -1,3 +1,6 @@
+// RC5-72 scalar ARM64 core
+// Brought to you by Sunset Ash
+// Returns completed A and B, needs C++ support file for final checks
 .data
 
 .balign 8

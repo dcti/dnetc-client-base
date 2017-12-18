@@ -114,6 +114,8 @@ extern "C" s32 rc5_72_unit_func_ocl_ref (RC5_72UnitWork *rc5_72unitwork, u32 *it
 extern "C" s32 rc5_72_unit_func_ocl_1pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_ocl_2pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+#elif (CLIENT_CPU == CPU_ARM64)
+extern "C" s32 rc5_72_unit_func_scalarfusion(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
 
 
@@ -205,6 +207,11 @@ const char **corenames_for_contest_rc572()
       "KKS 2-pipe",
       "AnBe 1-pipe",
       "AnBe 2-pipe",
+  #elif (CLIENT_CPU == CPU_ARM64)
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
+      "KS-ScalarFusion",
   #elif (CLIENT_CPU == CPU_MIPS)
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -1076,6 +1083,13 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
          pipeline_count = 2;
          break;
      #endif
+
+    #if (CLIENT_CPU == CPU_ARM64)
+       case 3:
+	unit_func.gen_72 = rc5_72_unit_func_scalarfusion;
+	pipeline_count = 1;
+	break;
+    #endif
 
     }
   }

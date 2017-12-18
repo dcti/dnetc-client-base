@@ -24,7 +24,7 @@
 #define BUFFER_DEFAULT_OUT_BASENAME "buff-out"
 #define MINCLIENTOPTSTRLEN   64 /* no asciiz var is smaller than this */
 #define NO_OUTBUFFER_THRESHOLDS /* no longer have outthresholds */
-#define DEFAULT_EXITFLAGFILENAME "exitdnet"EXTN_SEP"now"
+#define DEFAULT_EXITFLAGFILENAME "exitdnet" EXTN_SEP "now"
 
 // ------------------
 
