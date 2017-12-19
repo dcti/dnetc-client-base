@@ -29,6 +29,8 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 2.9100
 ------
 
+2.9113.522  new: arm64: RC5-72 ScalarFusion core
+
 2.9112.521  new: x86/amd64: RC5-72 AVX2 core
             imp: IPv6 support for Windows clients (#2982)
             imp: x86/amd64: Intel Skylake (#4615)
