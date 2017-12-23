@@ -522,6 +522,8 @@ add_sources() # $1=os, $2=arch, $3=custom
   elif [ "$2" = "arm64" ]; then
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="1"
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm64/r72-ks-scalarfusion.S"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS rc5-72/arm64/r72-ks-scalarfusion.cpp"
     fi # HAVE_RC5_72
     
     if [ "$HAVE_OGR" = "1" ]; then
