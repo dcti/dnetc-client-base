@@ -1,86 +1,6 @@
 // RC5-72 scalar ARM64 core
 // Brought to you by Sunset Ash
 // Returns completed A and B, needs C++ support file for final checks
-.data
-
-.balign 8
-key_val_0: .word 0xb7e15163
-
-.balign 8
-key_val_1: .word 0x5618cb1c
-
-.balign 8
-key_val_2: .word 0xf45044d5
-
-.balign 8
-key_val_3: .word 0x9287be8e
-
-.balign 8
-key_val_4: .word 0x30bf3847
-
-.balign 8
-key_val_5: .word 0xcef6b200
-
-.balign 8
-key_val_6: .word 0x6d2e2bb9
-
-.balign 8
-key_val_7: .word 0x0b65a572
-
-.balign 8
-key_val_8: .word 0xa99d1f2b
-
-.balign 8
-key_val_9: .word 0x47d498e4
-
-.balign 8
-key_val_10: .word 0xe60c129d
-
-.balign 8
-key_val_11: .word 0x84438c56
-
-.balign 8
-key_val_12: .word 0x227b060f
-
-.balign 8
-key_val_13: .word 0xc0b27fc8
-
-.balign 8
-key_val_14: .word 0x5ee9f981
-
-.balign 8
-key_val_15: .word 0xfd21733a
-
-.balign 8
-key_val_16: .word 0x9b58ecf3
-
-.balign 8
-key_val_17: .word 0x399066ac
-
-.balign 8
-key_val_18: .word 0xd7c7e065
-
-.balign 8
-key_val_19: .word 0x75ff5a1e
-
-.balign 8
-key_val_20: .word 0x1436d3d7
-
-.balign 8
-key_val_21: .word 0xb26e4d90
-
-.balign 8
-key_val_22: .word 0x50a5c749
-
-.balign 8
-key_val_23: .word 0xeedd4102
-
-.balign 8
-key_val_24: .word 0x8d14babb
-
-.balign 8
-key_val_25: .word 0x2b4c3474
-
 
 .text
 .globl scalarFusionEntry
@@ -98,84 +18,83 @@ scalarFusionEntry:
   // we're going to want w0 and w1 later as A and B, so push them now
   stp x0, x1, [sp, #-16]!
 
-  // load pre-computed initial values
-  ldr x30, ptr_key_val_0
-  ldr w5, [x30]
+  // load initial values; we used to precompute these, but now we don't
+  ldr w0, constant_p
+  ldr w1, constant_q
+  mov w5, w0
+  add w6, w0, w1
 
-  ldr x30, ptr_key_val_1
-  ldr w6, [x30]
+  mov w30, #2
+  madd w7, w1, w30, w0
 
-  ldr x30, ptr_key_val_2
-  ldr w7, [x30]
+  mov w30, #3
+  madd w8, w1, w30, w0
 
-  ldr x30, ptr_key_val_3
-  ldr w8, [x30]
+  mov w30, #4
+  madd w9, w1, w30, w0
 
-  ldr x30, ptr_key_val_4
-  ldr w9, [x30]
+  mov w30, #5
+  madd w10, w1, w30, w0
 
-  ldr x30, ptr_key_val_5
-  ldr w10, [x30]
+  mov w30, #6
+  madd w11, w1, w30, w0
 
-  ldr x30, ptr_key_val_6
-  ldr w11, [x30]
+  mov w30, #7
+  madd w12, w1, w30, w0
 
-  ldr x30, ptr_key_val_7
-  ldr w12, [x30]
+  mov w30, #8
+  madd w13, w1, w30, w0
 
-  ldr x30, ptr_key_val_8
-  ldr w13, [x30]
+  mov w30, #9
+  madd w14, w1, w30, w0
 
-  ldr x30, ptr_key_val_9
-  ldr w14, [x30]
+  mov w30, #10
+  madd w15, w1, w30, w0
 
-  ldr x30, ptr_key_val_10
-  ldr w15, [x30]
+  mov w30, #11
+  madd w16, w1, w30, w0
 
-  ldr x30, ptr_key_val_11
-  ldr w16, [x30]
+  mov w30, #12
+  madd w17, w1, w30, w0
 
-  ldr x30, ptr_key_val_12
-  ldr w17, [x30]
+  mov w30, #13
+  madd w18, w1, w30, w0
 
-  ldr x30, ptr_key_val_13
-  ldr w18, [x30]
+  mov w30, #14
+  madd w19, w1, w30, w0
 
-  ldr x30, ptr_key_val_14
-  ldr w19, [x30]
+  mov w30, #15
+  madd w20, w1, w30, w0
 
-  ldr x30, ptr_key_val_15
-  ldr w20, [x30]
+  mov w30, #16
+  madd w21, w1, w30, w0
 
-  ldr x30, ptr_key_val_16
-  ldr w21, [x30]
+  mov w30, #17
+  madd w22, w1, w30, w0
 
-  ldr x30, ptr_key_val_17
-  ldr w22, [x30]
+  mov w30, #18
+  madd w23, w1, w30, w0
 
-  ldr x30, ptr_key_val_18
-  ldr w23, [x30]
+  mov w30, #19
+  madd w24, w1, w30, w0
 
-  ldr x30, ptr_key_val_19
-  ldr w24, [x30]
+  mov w30, #20
+  madd w25, w1, w30, w0
 
-  ldr x30, ptr_key_val_20
-  ldr w25, [x30]
+  mov w30, #21
+  madd w26, w1, w30, w0
 
-  ldr x30, ptr_key_val_21
-  ldr w26, [x30]
+  mov w30, #22
+  madd w27, w1, w30, w0
 
-  ldr x30, ptr_key_val_22
-  ldr w27, [x30]
+  mov w30, #23
+  madd w28, w1, w30, w0
 
-  ldr x30, ptr_key_val_23
-  ldr w28, [x30]
+  mov w30, #24
+  madd w29, w1, w30, w0
 
-  ldr x30, ptr_key_val_24
-  ldr w29, [x30]
-
-  ldr x30, ptr_key_val_25
-  ldr w30, [x30]
+  mov w30, #25
+  madd w30, w1, w30, w0
 
   ror w5, w5, #29 // s[0] = rotl3(S[0])
 
@@ -355,29 +274,9 @@ scalarFusionEntry:
 
   ret
 
-ptr_key_val_0: .dword key_val_0
-ptr_key_val_1: .dword key_val_1
-ptr_key_val_2: .dword key_val_2
-ptr_key_val_3: .dword key_val_3
-ptr_key_val_4: .dword key_val_4
-ptr_key_val_5: .dword key_val_5
-ptr_key_val_6: .dword key_val_6
-ptr_key_val_7: .dword key_val_7
-ptr_key_val_8: .dword key_val_8
-ptr_key_val_9: .dword key_val_9
-ptr_key_val_10: .dword key_val_10
-ptr_key_val_11: .dword key_val_11
-ptr_key_val_12: .dword key_val_12
-ptr_key_val_13: .dword key_val_13
-ptr_key_val_14: .dword key_val_14
-ptr_key_val_15: .dword key_val_15
-ptr_key_val_16: .dword key_val_16
-ptr_key_val_17: .dword key_val_17
-ptr_key_val_18: .dword key_val_18
-ptr_key_val_19: .dword key_val_19
-ptr_key_val_20: .dword key_val_20
-ptr_key_val_21: .dword key_val_21
-ptr_key_val_22: .dword key_val_22
-ptr_key_val_23: .dword key_val_23
-ptr_key_val_24: .dword key_val_24
-ptr_key_val_25: .dword key_val_25
+.balign 8
+constant_p: .word 0xb7e15163
+
+.balign 8
+constant_q: .word 0x9e3779b9
+
