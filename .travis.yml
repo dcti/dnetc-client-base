@@ -1,0 +1,21 @@
+language: c
+
+sudo: true
+
+os:
+  - linux
+
+compiler:
+  - gcc
+
+addons:
+  apt:
+    packages:
+    - yasm
+
+script:
+  - ./configure linux-amd64
+  - make
+  - ./dnetc -test
+  - ./dnetc -bench
+
