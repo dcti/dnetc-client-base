@@ -13,6 +13,7 @@ rem   15 = cl 15.00.xxxx = Visual Studio 2008 (VC9)
 rem   16 = cl 16.00.xxxx = Visual Studio 2010 (VC10)
 rem   17 = cl 17.00.xxxx = Visual Studio 2012 (VC11)
 rem   18 = cl 18.00.xxxx = Visual Studio 2013 (VC12)
+rem   19 = cl 18.00.xxxx = Visual Studio 2015 (VC14)
 
 for %%i in (cl.exe) do if "%%~$PATH:i"=="" goto notfound
 

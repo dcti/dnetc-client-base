@@ -7629,7 +7629,7 @@ static int __w32ConOutX(const char *text, int iserr)
   if (!handled)
   {
     /* note the spaces around the caption! Don't let this window be "findable" */
-    MessageBox(NULL,text, " "W32CLI_CONSOLE_NAME" ",MB_OK|MB_TASKMODAL
+    MessageBox(NULL,text, " " W32CLI_CONSOLE_NAME " ",MB_OK|MB_TASKMODAL
                             |(iserr?MB_ICONHAND:MB_ICONINFORMATION));
   }
   return 0;

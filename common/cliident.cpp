@@ -542,7 +542,7 @@ int CliIsDevelVersion(void)
 
 const char *CliGetFullVersionDescriptor(void)
 {
-  static char buffer[10+32+sizeof("v"CLIENT_VERSIONSTRING"-XXX-99071523-*dev* client for "CLIENT_OS_NAME_EXTENDED)];
+  static char buffer[10+32+sizeof("v" CLIENT_VERSIONSTRING "-XXX-99071523-*dev* client for " CLIENT_OS_NAME_EXTENDED)];
   struct timeval tv; tv.tv_usec = 0;
   tv.tv_sec = CliGetNewestModuleTime();
   sprintf( buffer, "%s v" CLIENT_VERSIONSTRING "-"
@@ -559,7 +559,7 @@ const char *CliGetFullVersionDescriptor(void)
          "%c"  /* limited release or dev branch or public release */
          "-%s" /* date is in bugzilla format yymmddhh */
          "%s"  /* "-*dev*" or "" */
-         " for "CLIENT_OS_NAME_EXTENDED,
+         " for " CLIENT_OS_NAME_EXTENDED,
          utilGetAppName(),
          ((ConIsGUI())?('G'):('C')),
          ((CliIsDevelVersion())?('L'):('R')),

@@ -405,7 +405,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "\n"
   "It is possible to have the client rotate through this list, updating its\n"
   "buffers only once for each pass. To do so, 'Dialup-link detection'\n"
-  "and '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"' must be disabled since a buffer\n"
+  "and '" ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "' must be disabled since a buffer\n"
   "update (new work being made available) would otherwise cause the client\n"
   "to go back to the beginning of the load order.\n"
   /*) */,CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
@@ -439,13 +439,13 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   CONF_FREQUENT_FREQUENCY      , /* CONF_MENU_BUFF */
   CFGTXT("Buffer-level check interval"), "0:00 (on buffer change)",
   /*CFGTXT(*/
-  "This option determines how often '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
+  "This option determines how often '" ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "'\n"
   "should be performed. (More precisely: how much time must elapse between\n"
   "buffer-level checks)\n" 
   "\n"
   "This setting is meaningful only if one of the extensions to normal threshold\n"
   "management is enabled: either implicitly when 'Dialup detection options' are\n"
-  "active or explicitly with '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'.\n"
+  "active or explicitly with '" ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "'.\n"
   "\n"
   "The interval specified here is in hours and minutes, and the default denotes\n"
   "that the client should check buffer-levels whenever it detects a change (by\n"
@@ -456,13 +456,13 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   CONF_FREQUENT_RETRY_FREQUENCY      , /* CONF_MENU_BUFF */
   CFGTXT("Buffer-level check retry interval"), "0:00 (no delay)",
   /*CFGTXT(*/
-  "This option determines how often '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
+  "This option determines how often '" ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "'\n"
   "should be retried after failure. (More precisely: how much time must elapse\n"
   "between buffer-level check retries)\n" 
   "\n"
   "This setting is meaningful only if one of the extensions to normal threshold\n"
   "management is enabled: either implicitly when 'Dialup detection options' are\n"
-  "active or explicitly with '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'.\n"
+  "active or explicitly with '" ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "'.\n"
   "\n"
   "The interval specified here is in hours and minutes, and the default denotes\n"
   "that the client should retry the buffer-level checks at most twice per minute\n"
@@ -503,7 +503,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "should be used instead. If that too is unspecified, then the client will\n"
   "use defaults.\n"
   "\n"
-  "* See also: '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
+  "* See also: '" ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,1,0xffff,NULL,NULL
 },
 { 
@@ -523,7 +523,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "unprocessed packet cannot be predicted.\n"
 #endif
   "\n"
-  "* See also: '"ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME"'\n"
+  "* See also: '" ADDITIONAL_BUFFLEVEL_CHECK_OPTION_NAME "'\n"
   ,CONF_MENU_BUFF,CONF_TYPE_IARRAY,NULL,NULL,0,(14*24),NULL,NULL
 },
 
