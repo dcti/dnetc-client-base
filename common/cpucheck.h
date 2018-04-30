@@ -24,13 +24,13 @@
   #define CPU_F_SSE             (0x00002000L)
   #define CPU_F_SSE2            (0x00004000L)
   #define CPU_F_SSE3            (0x00008000L)
-  #define CPU_F_HYPERTHREAD     (0x00010000L)	/* supported and enabled */
+  #define CPU_F_HYPERTHREAD     (0x00010000L)   /* supported and enabled */
   #define CPU_F_AMD64           (0x00020000L)
   #define CPU_F_EM64T           (0x00040000L)
   #define CPU_F_SSE4_1          (0x00080000L)
   #define CPU_F_SSE4_2          (0x00100000L)
   #define CPU_F_SSSE3           (0x00200000L)
-  #define CPU_F_LZCNT		(0x00400000L)
+  #define CPU_F_LZCNT           (0x00400000L)
   #define CPU_F_AVX_DISABLED    (0x00800000L)   /* supported but disabled (no OS support) */
   #define CPU_F_AVX             (0x01000000L)   /* supported and enabled */
   #define CPU_F_AVX2            (0x02000000L)   /* supported and enabled */

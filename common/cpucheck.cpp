@@ -1344,7 +1344,8 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          *   0x19 - Sandy Bridge Core iX-2xxx
          *   0x1A - Ivy Bridge Core iX-3xxx
          *   0x1B - Haswell Core iX-4xxx
-         *   0x1C-1F
+         *   0x1C - Kaby Lake Core iX-7xxx
+         *   0x1D-1F
          *   0x20 - AMD Bobcat - Embedded APU
          *   0x21 - AMD Bulldozer - FX
          *   0x22 - AMD Husky - APU
@@ -1489,6 +1490,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006460, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },
         { 0x00064F0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon Ex v4 (Broadwell EP)" },
         { 0x00065E0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-6xxx (Skylake)" },  /* (#4615) */
+        { 0x00069E0, 0xFFFFFF0, CPU_F_I686, 0x1C, "Core iX-7xxx (Kaby Lake)" },
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
     }
