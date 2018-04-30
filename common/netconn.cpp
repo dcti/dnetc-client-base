@@ -689,6 +689,9 @@ static int __open_connection(void *cookie)
   netstate->mode = netstate->startmode;
 
   TRACE_OUT((+1,"__open_connection()\n"));
+  
+  if (netstate->sock != INVALID_SOCKET)
+    net_close(netstate->sock);
 
   whichtry = 0, maxtries = 0; /* initially */
   /* The total possible number of attempts will be H * A, (max is 8 * 32),

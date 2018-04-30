@@ -516,9 +516,22 @@ add_sources() # $1=os, $2=arch, $3=custom
       fi
     fi
   #-----------------------------------------------------------------
+  elif [ "$2" = "ppc64" ]; then
+    if [ "$HAVE_RC5_72" = "1"]; then
+      DEFAULT_RC5_72="1"
+    fi # HAVE_RC5_72    
+
+    if [ "$HAVE_OGR" = "1" ]; then
+      DEFAULT_OGRNG="0"
+      #TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-32.cpp"
+    fi
+  #-----------------------------------------------------------------
   elif [ "$2" = "arm64" ]; then
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="1"
+      TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm64/r72-ks-scalarfusion.S"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGR_GENERAL_SRCS rc5-72/arm64/r72-ks-scalarfusion.cpp"
     fi # HAVE_RC5_72
     
     if [ "$HAVE_OGR" = "1" ]; then
@@ -1652,7 +1665,27 @@ case "$1" in
         TARGET_IS_CROSSCOMPILE="1"
         add_sources "android" "x86"
         ;;
+        
+    *linux-arm64)               # [mikereed ertyu]
+        TARGET_CC="g++"
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_TARBALL="linux-arm64"
+        TARGET_DOCFILES="docs/readme._ix"
+        add_sources "linux" "arm64"
+        ;;
 
+    *linux-ppc64)             # [sunset mikereed] 
+        TARGET_CC="g++"             
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_TARBALL="linux-ppc64"
+        TARGET_DOCFILES="docs/readme._ix"
+        add_sources "linux" "ppc64"
+        ;;
+	
     *linux-arm-elf_single)      # [teichp]
         TARGET_CC="gcc"
         TARGET_AS="gcc -c"
