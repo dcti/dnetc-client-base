@@ -223,7 +223,9 @@
   #endif
   #define CLIENT_OS_NAME   "FreeBSD"
   #define CLIENT_OS        OS_FREEBSD
-  #if defined(__i386__) || defined(ASM_X86)
+  #if defined(OPENCL)
+    #define CLIENT_CPU     CPU_OPENCL
+  #elif defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
   #elif defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_CPU     CPU_ALPHA

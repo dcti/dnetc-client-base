@@ -2782,57 +2782,6 @@ case "$1" in
         add_sources "netware6" "x86"
         ;;
 
-    *freebsd*)                  # FreeBSD (autoselect version and arch)
-                                # FreeBSD x86-elf, bovine, snake
-                                # FreeBSD x86-aout 2.x, snake (experimental)
-                                # FreeBSD sparc 6,7  snake
-                                # FreeBSD alpha-elf 4.x, snake
-                                # FreeBSD amd64 6,7,8 snake
-                                # FreeBSD ppc 8, snake
-        # note: do NOT include the major version number in the make target:
-        # use "configure freebsd-x86" , "configure freebsd-sparc" etc.
-        # major version number is automatically appended in TARBALL
-        infer_arch_and_version "FreeBSD"
-        inferred_bf=""
-        if [ $inferred_ver_major -lt 3 ]; then
-          inferred_bf="-aout"
-          TARGET_NASM_FMT="aoutb"
-        fi
-        TARGET_AS="gcc -c"
-        TARGET_CC="g++"
-        generate_gcc_opts "${inferred_arch}" "freebsd"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_LIBS="-lc" # NOT libc_r
-        # note: we NEED to link against libc, and NOT libc_r because the libc_r
-        # in 3.4 and above is incompatible with the pre-3.4 (specifically,
-        # the >=3.4 libc_r versions of select() and nanosleep() syscalls
-        # have their own new syscall numbers; they were emulated before).
-        # We don't really need the libc_r stuff anyway because the "threads"
-        # are really rfork()'d children.    -cyp Feb/13/2000
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="freebsd${inferred_ver_major}-${inferred_arch}${inferred_bf}"
-        case internal-${inferred_arch} in
-          internal-amd64)
-            TARGET_NASM="yasm"
-            TARGET_NASM_FMT="elf64"
-            add_sources "freebsd" "${inferred_arch}"
-            ;;
-          internal-x86)
-            TARGET_NASM="nasm"
-            add_sources "freebsd" "${inferred_arch}"
-            ;;
-          internal-powerpc)
-            TARGET_NASM=""
-            add_sources "freebsd" "ppc" "altivec"
-            ;;
-          internal-*)
-            TARGET_NASM=""
-            add_sources "freebsd" "${inferred_arch}"
-            ;;
-        esac
-        ;;
-
     *netbsd-x86-aout)           # NetBSD 1.4.x, aout [bernd]
         TARGET_AS="gcc -c"
         TARGET_CC="g++"
@@ -3490,6 +3439,70 @@ case "$1" in
         TARGET_TARBALL="macosx-x86-opencl"
         add_sources "macosx" "opencl"
         ;;
+
+    *freebsd-amd64-opencl)
+        TARGET_AS="cc -c"
+        TARGET_CC="cc"
+        TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DOPENCL -DDYN_TIMESLICE -I/usr/local/include"
+        TARGET_LIBS="-lOpenCL"
+        TARGET_LDFLAGS="-L/usr/local/lib"
+        TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
+        TARGET_TARBALL="freebsd-amd64-opencl"
+        add_sources "freebsd" "opencl"
+        ;;
+
+###### Wildcards
+    *freebsd*)                  # FreeBSD (autoselect version and arch)
+                                # FreeBSD x86-elf, bovine, snake
+                                # FreeBSD x86-aout 2.x, snake (experimental)
+                                # FreeBSD sparc 6,7  snake
+                                # FreeBSD alpha-elf 4.x, snake
+                                # FreeBSD amd64 6,7,8 snake
+                                # FreeBSD ppc 8, snake
+        # note: do NOT include the major version number in the make target:
+        # use "configure freebsd-x86" , "configure freebsd-sparc" etc.
+        # major version number is automatically appended in TARBALL
+        infer_arch_and_version "FreeBSD"
+        inferred_bf=""
+        if [ $inferred_ver_major -lt 3 ]; then
+          inferred_bf="-aout"
+          TARGET_NASM_FMT="aoutb"
+        fi
+        TARGET_AS="gcc -c"
+        TARGET_CC="g++"
+        generate_gcc_opts "${inferred_arch}" "freebsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_LIBS="-lc" # NOT libc_r
+        # note: we NEED to link against libc, and NOT libc_r because the libc_r
+        # in 3.4 and above is incompatible with the pre-3.4 (specifically,
+        # the >=3.4 libc_r versions of select() and nanosleep() syscalls
+        # have their own new syscall numbers; they were emulated before).
+        # We don't really need the libc_r stuff anyway because the "threads"
+        # are really rfork()'d children.    -cyp Feb/13/2000
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="freebsd${inferred_ver_major}-${inferred_arch}${inferred_bf}"
+        case internal-${inferred_arch} in
+          internal-amd64)
+            TARGET_NASM="yasm"
+            TARGET_NASM_FMT="elf64"
+            add_sources "freebsd" "${inferred_arch}"
+            ;;
+          internal-x86)
+            TARGET_NASM="nasm"
+            add_sources "freebsd" "${inferred_arch}"
+            ;;
+          internal-powerpc)
+            TARGET_NASM=""
+            add_sources "freebsd" "ppc" "altivec"
+            ;;
+          internal-*)
+            TARGET_NASM=""
+            add_sources "freebsd" "${inferred_arch}"
+            ;;
+        esac
+        ;;
+
 
 ###### Unknown
     *list)
