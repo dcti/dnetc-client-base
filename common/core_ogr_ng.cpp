@@ -84,6 +84,7 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.47 2015/06/27 21:43:52 zebe Exp $"; }
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_generic(void);
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_sse2(void);
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_sse2_lzcnt(void);
+    CoreDispatchTable *ogrng64_get_dispatch_table_cj1_avx2(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
     CoreDispatchTable *ogrng64_get_dispatch_table(void); 
 #elif (CLIENT_CPU == CPU_S390X) && (SIZEOF_LONG == 8)
@@ -166,6 +167,7 @@ int InitializeCoreTable_ogr_ng(int first_time)
         ogrng64_get_dispatch_table_cj1_generic();
         ogrng64_get_dispatch_table_cj1_sse2();
         ogrng64_get_dispatch_table_cj1_sse2_lzcnt();
+        ogrng64_get_dispatch_table_cj1_avx2();
       #elif (CLIENT_CPU == CPU_S390)
         ogrng_get_dispatch_table();
       #elif (CLIENT_CPU == CPU_S390X)
@@ -225,6 +227,7 @@ const char **corenames_for_contest_ogr_ng()
       "cj-asm-generic",
       "cj-asm-sse2",
       "cj-asm-sse2-lzcnt",
+      "cj-asm-avx2",
   #elif (CLIENT_CPU == CPU_ARM)
       "FLEGE 2.0",
       "FLEGE 2.0 ARMv3",
@@ -356,6 +359,8 @@ int apply_selcore_substitution_rules_ogr_ng(int cindex)
 #  endif
 # elif (CLIENT_CPU == CPU_AMD64)
   unsigned feature = GetProcessorFeatureFlags();
+  if (cindex == 4 && !(feature & CPU_F_AVX2)) /* Core 4 needs AVX2 */
+    cindex = 2; /* If no AVX2, try SSE2 */
   if (cindex == 3 && !(feature & CPU_F_LZCNT)) /* Core 3 needs LZCNT */
     cindex = 2; /* If no LZCNT, try SSE2 */
   if (cindex == 2 && !(feature & CPU_F_SSE2))  /* Core 2 needs SSE2 */
@@ -500,13 +505,15 @@ int selcoreGetPreselectedCoreForProject_ogr_ng()
         case 0x09: cindex = 1; break; /* AMD: generic (#4214) */
         case 0x1A: cindex = 2; break; /* Intel Ivy Bridge (#4514) */
         case 0x1B: cindex = 2; break; /* Intel Haswell (#4533) */
-        case 0x1C: cindex = 2; break; /* Intel Kaby Lake */
         case 0x20: cindex = 1; break; /* AMD Bobcat (#4429) */
       }
       if (cindex == -1)
       {
+        /* Assume that if AVX2 is availble it is the best choice */
+        if (detected_flags & CPU_F_AVX2)
+          cindex = 4;
         /* Assume that LZCNT+SSE2 is better then plain SSE2 everywhere */
-        if (detected_flags & CPU_F_LZCNT)
+        else if (detected_flags & CPU_F_LZCNT)
           cindex = 3;
         else if (detected_flags & CPU_F_SSE2)
           cindex = 2;  /* sse2 core */
@@ -639,6 +646,8 @@ int selcoreSelectCore_ogr_ng(Client *client, unsigned int threadindex,
     unit_func.ogr = ogrng64_get_dispatch_table_cj1_sse2();
   else if (coresel == 3)
     unit_func.ogr = ogrng64_get_dispatch_table_cj1_sse2_lzcnt();
+  else if (coresel == 4)
+    unit_func.ogr = ogrng64_get_dispatch_table_cj1_avx2();
   else
   {
     unit_func.ogr = ogrng64_get_dispatch_table();
