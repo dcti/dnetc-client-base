@@ -3276,7 +3276,7 @@ case "$1" in
         TARGET_LDFLAGS="-mcrt=clib2-ts"
         TARGET_TARBALL="amigaos-ppc"
         TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="ppc-amigaos-strip -R.comment"
+        TARGET_STRIP="ppc-amigaos-strip --strip-unneeded-rel-relocs -R.comment -R.eh_frame -R.gnu.attributes"
         TARGET_GENMAN=
         TARGET_ARCTYPE="amigaosgui"
         TARGET_MAKEARC="os4 ${TARGET_BINNAME}"
