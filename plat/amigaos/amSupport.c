@@ -55,6 +55,7 @@
 
 #if defined(__amigaos4__)
 const char *__stack_string = "$STACK:200000";
+int __minimum_os_lib_version = 51;
 #elif defined(__MORPHOS__)
 unsigned long __stack = 200000L;
 #else
