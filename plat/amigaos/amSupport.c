@@ -29,7 +29,7 @@
 #pragma pack(2)
 #endif
 
-#if __MORPHOS__
+#ifndef __OS3PPC__
 #define USE_RESETHANDLER 1
 #endif
 
@@ -119,7 +119,11 @@ const char *amigaGetOSVersion(void)
 
 struct rhdata
 {
+  #ifdef __amigaos4__
+  struct ExecIFace  *IExec;
+  #else
   struct ExecBase   *SysBase;
+  #endif
   struct Task       *Self;
   struct MsgPort    *msgport;
   struct IOStdReq   *ioreq;
@@ -133,9 +137,13 @@ struct rhdata
 static struct rhdata _rhdata, *rhdata = &_rhdata;
 
 
-static void native_resethandler(struct rhdata *rhdata)
+static __inline__ void native_resethandler(struct rhdata *rhdata)
 {
+  #ifdef __amigaos4__
+  struct ExecIFace *IExec = rhdata->IExec;
+  #else
   struct ExecBase *SysBase = rhdata->SysBase;
+  #endif
 
   /* Indicate we're rebooting... */
   rhdata->rebooting = TRUE;
@@ -144,7 +152,7 @@ static void native_resethandler(struct rhdata *rhdata)
   Signal(rhdata->Self, SIGBREAKF_CTRL_C);
 }
 
-#ifdef __MORPHOS__
+#if defined(__MORPHOS__)
 static void gate_resethandler(void)
 {
   struct rhdata *rhdata = (struct rhdata *) REG_A1;
@@ -152,6 +160,22 @@ static void gate_resethandler(void)
 }
 static struct EmulLibEntry rhgate  = {TRAP_LIBNR, 0, gate_resethandler};
 #define resethandler_code  &rhgate
+
+#elif defined(__amigaos4__)
+static ULONG resethandler_code(struct ExceptionContext *context __attribute__ ((unused)), struct ExecBase *SysBase __attribute__ ((unused)), struct rhdata *rhdata)
+{
+  native_resethandler(rhdata);
+  return 0;
+}
+
+#elif !defined(__OS3PPC__)
+static void resethandler_code(void)
+{
+  /* C++ can't handle __asm("a1") function parameters, so do it ourself */
+  struct rhdata *rhdata;
+  __asm__ __volatile__ ("movel a1,%0" : "=a" (rhdata) : );
+  native_resethandler(rhdata);
+}
 
 #else
 
@@ -166,7 +190,11 @@ static int add_resethandler(void)
   int ok = FALSE;
 
   bzero(rhdata, sizeof(*rhdata));
+  #ifdef __amigaos4__
+  rhdata->IExec = IExec;
+  #else
   rhdata->SysBase = SysBase;
+  #endif
   rhdata->Self    = FindTask(NULL);
   rhdata->msgport = CreateMsgPort();
   if (rhdata->msgport)
@@ -177,7 +205,11 @@ static int add_resethandler(void)
       if (OpenDevice("keyboard.device", 0, (struct IORequest *) rhdata->ioreq, 0) == 0)
       {
         rhdata->is.is_Node.ln_Type = NT_INTERRUPT;
+        #ifdef __MORPHOS__
         rhdata->is.is_Node.ln_Pri  = 64;
+        #else
+        rhdata->is.is_Node.ln_Pri  = 32;
+        #endif
         rhdata->is.is_Node.ln_Name = "distributed.net client";
         rhdata->is.is_Data         = (APTR) rhdata;
         rhdata->is.is_Code         = (void (*)(void)) resethandler_code;

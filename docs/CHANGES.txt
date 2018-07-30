@@ -30,9 +30,10 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 ------
 
 2.9114.523  imp: arm64: improved ScalarFusion performance
-            fix: amigaos: thread startup no longer relies on peeking
-                 inside non-user fields in internal DOS structures
+            fix: amigaos: thread startup no longer relies on peeking inside
+                 non-user fields in internal DOS structures
             imp: amigaos: replaced calls to deprecated OS4 routines
+            new: amigaos: added resethandler, client will quit before reset
 
 2.9113.522  new: arm64: RC5-72 ScalarFusion core
 
