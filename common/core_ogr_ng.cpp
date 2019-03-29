@@ -84,6 +84,8 @@ return "@(#)$Id: core_ogr_ng.cpp,v 1.47 2015/06/27 21:43:52 zebe Exp $"; }
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_generic(void);
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_sse2(void);
     CoreDispatchTable *ogrng64_get_dispatch_table_cj1_sse2_lzcnt(void);
+#elif (CLIENT_CPU == CPU_IA64)
+    CoreDispatchTable *ogrng64_get_dispatch_table(void);
 #elif (CLIENT_CPU == CPU_SPARC) && (SIZEOF_LONG == 8)
     CoreDispatchTable *ogrng64_get_dispatch_table(void); 
 #elif (CLIENT_CPU == CPU_S390X) && (SIZEOF_LONG == 8)
@@ -644,6 +646,9 @@ int selcoreSelectCore_ogr_ng(Client *client, unsigned int threadindex,
     unit_func.ogr = ogrng64_get_dispatch_table();
     coresel = 0;
   }
+#elif (CLIENT_CPU == CPU_IA64)
+  unit_func.ogr = ogrng64_get_dispatch_table();
+  coresel = 0;
 #elif (CLIENT_CPU == CPU_ARM64) && (SIZEOF_LONG == 8)
   unit_func.ogr = ogrng64_get_dispatch_table();
   coresel = 0;

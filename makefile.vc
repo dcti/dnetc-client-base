@@ -4,7 +4,9 @@
 # $Id: makefile.vc,v 1.141 2012/08/11 09:24:36 sla Exp $
 #
 
+#PROCESSOR_ARCHITECTURE = ALPHA
 #PROCESSOR_ARCHITECTURE = AMD64
+#PROCESSOR_ARCHITECTURE = IA64
 #PROCESSOR_ARCHITECTURE = cuda
 #PROCESSOR_ARCHITECTURE = ATI_STREAM
 #PROCESSOR_ARCHITECTURE = OPENCL
@@ -47,6 +49,11 @@ OPTS_CC_CPU = -D_AMD64_ -GS-
 OPTS_M_PLAT = AMD64
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 ZIPSUFFIX = win64-amd64
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "IA64"
+OPTS_CC_CPU = -D_IA64_ -GS-
+OPTS_M_PLAT = IA64
+CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
+ZIPSUFFIX = win64-ia64
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
 # This assumes 32-bit Windows since there's no advantage to using 64-bit
 HAVE_OGR_CORES = 0
@@ -372,6 +379,12 @@ RC5_72_OBJS = \
         $(OUTPUTPATH)/r72ansi2.obj \
         $(OUTPUTPATH)/r72ansi4.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "IA64"
+RC5_72_OBJS = \
+        $(OUTPUTPATH)/r72ansi1.obj \
+        $(OUTPUTPATH)/r72ansi2.obj \
+        $(OUTPUTPATH)/r72ansi4.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-ses1.obj   \
@@ -440,6 +453,11 @@ OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr.obj        \
         $(OUTPUTPATH)/ogr_dat.obj    \
         $(OUTPUTPATH)/ogr_sup.obj
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "IA64"
+OGR_OBJS =                           \
+        $(OUTPUTPATH)/ogr.obj        \
+        $(OUTPUTPATH)/ogr_dat.obj    \
+        $(OUTPUTPATH)/ogr_sup.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 OGR_OBJS =                           \
         $(OUTPUTPATH)/ogr-a.obj      \
@@ -476,6 +494,12 @@ OGRNG_OBJS =                         \
         $(OUTPUTPATH)/ogrng64-cj1-sse2-asm.obj \
         $(OUTPUTPATH)/ogrng64-cj1-sse2-lzcnt.obj    \
         $(OUTPUTPATH)/ogrng64-cj1-sse2-lzcnt-asm.obj \
+        $(OUTPUTPATH)/ogrng_init.obj \
+        $(OUTPUTPATH)/ogrng_dat.obj
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "IA64"
+OGRNG_OBJS =                         \
+        $(OUTPUTPATH)/ogr_sup.obj \
+        $(OUTPUTPATH)/ogrng-64.obj   \
         $(OUTPUTPATH)/ogrng_init.obj \
         $(OUTPUTPATH)/ogrng_dat.obj
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
