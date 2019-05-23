@@ -29,6 +29,8 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 2.9100
 ------
 
+2.9115.524  new: arm64: replaced ScalarFusion with MONIKA SIMD core
+
 2.9114.523  imp: arm64: improved ScalarFusion performance
             fix: amigaos: thread startup no longer relies on peeking inside
                  non-user fields in internal DOS structures
