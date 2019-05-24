@@ -134,3 +134,8 @@
     proxy software. ( http://www.distributed.net/Download_proxies ) Note that
     if you are using the personal proxy software, you may need to alter the
     proxy configuration to request larger packet sizes as well.
+
+  3.4   Multiple Concurrent Clients ---------------------------------
+
+   Some users have seen performance improvements from running multiple copies
+   of the OpenCL client on a single GPU.
