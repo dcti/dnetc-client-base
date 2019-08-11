@@ -56,6 +56,7 @@ extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2c( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2d( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_avx2( RC5_72UnitWork *, u32 *, void *);
+extern "C" s32 CDECL rc5_72_unit_func_ispc_16( RC5_72UnitWork *, u32 *, void *);
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -172,6 +173,7 @@ const char **corenames_for_contest_rc572()
       "GO 2-pipe c",
       "GO 2-pipe d",
       "YK AVX2",
+      "KS SPMD",
   #elif (CLIENT_CPU == CPU_ARM)
       "StrongARM 1-pipe",
       "ARM 2/3/6/7 1-pipe",
@@ -328,6 +330,9 @@ int apply_selcore_substitution_rules_rc572(int cindex, int device)
 #elif (CLIENT_CPU == CPU_AMD64)
   {
     unsigned long flags = GetProcessorFeatureFlags();
+
+    if (!(flags & CPU_F_AVX512) && cindex == 5) /* AVX512 ISPC core */
+      cindex = 4;
 
     if (!(flags & CPU_F_AVX2) && cindex == 4)   /* AVX2 core */
       cindex = 3;
@@ -585,7 +590,9 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
   // ===============================================================
   #elif (CLIENT_CPU == CPU_AMD64)
   {
-    if (detected_flags & CPU_F_AVX2)
+    if (detected_flags & CPU_F_AVX512)
+      cindex = 5;
+    else if (detected_flags & CPU_F_AVX2)
       cindex = 4;
     else if (detected_type >= 0)
     {
@@ -882,6 +889,10 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
         break;
       case 4:
         unit_func.gen_72 = rc5_72_unit_func_avx2;
+        pipeline_count = 16;
+        break;
+      case 5:
+        unit_func.gen_72 = rc5_72_unit_func_ispc_16;
         pipeline_count = 16;
         break;
     // -----------

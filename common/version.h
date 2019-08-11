@@ -34,9 +34,9 @@
 
 #define CLIENT_MAJOR_VER       2
 #define CLIENT_CONTEST         91
-#define CLIENT_BUILD           15
-#define CLIENT_BUILD_FRAC      524
-#define CLIENT_VERSIONSTRING   "2.9115-524"
+#define CLIENT_BUILD           16
+#define CLIENT_BUILD_FRAC      525
+#define CLIENT_VERSIONSTRING   "2.9116-525"
 
 /* combined version used in packets etc. ... */
 #define CLIENT_VERSION         ( (((u32)(CLIENT_CONTEST))    * 1000000UL) +  \

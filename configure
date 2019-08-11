@@ -656,6 +656,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     # -------------- rc5-72 --------------
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="0"     # don't add the ansi cores
+      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/amd64/r72-ks-spmd.cpp rc5-72/amd64/r72-ks-spmd-ispc.S rc5-72/amd64/r72-ks-spmd-ispc_avx512skx.S rc5-72/amd64/r72-ks-spmd-ispc_avx512knl.S"
       TARGET_ADDNASMS="$TARGET_ADDNASMS \
                        rc5-72/amd64/r72-snjl.asm \
                        rc5-72/amd64/r72-kbe.asm \
@@ -1090,7 +1091,6 @@ generate_gcc_opts() {
   gcc_get_ver
   if [ $gccver -lt 2000000 ]; then
     echo "gcc version less than 2, or something strange happened"
-    exit 1
   fi
 
   # ------
