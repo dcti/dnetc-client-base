@@ -53,6 +53,8 @@ union PageInfos {
 
 /* 0x00000007/ECX=0:EBX */
 #define X86_07_00_EBX_AVX2 (1 << 5)
+#define X86_HAS_AVX512F    (1 << 16)
+#define X86_HAS_AVX512CD   (1 << 28)
 
 /* 0x80000001:ECX */
 #define X86_HAS_LZCNT     (1 <<  5)
@@ -836,6 +838,13 @@ u32 x86GetFeatures(void)
             x86cpuid(0x00000007, &infos);
             if (infos.regs.ebx & X86_07_00_EBX_AVX2) {
               features |= CPU_F_AVX2;
+            }
+	    /* Check for AVX512 */
+	    /* we declare it supported if it has just F and CD sub features */
+            if (infos.regs.ebx & X86_HAS_AVX512F) {
+              if (infos.regs.ebx & X86_HAS_AVX512CD) {
+                features |= CPU_F_AVX512;
+              }
             }
           }
         }
