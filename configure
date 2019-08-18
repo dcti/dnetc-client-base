@@ -58,6 +58,8 @@ TARGET_HDIRS="./common" # the rest are added as needed
 TARGET_AS="as"
 TARGET_ASFLAGS=""
 TARGET_NASM="nasm"     #<- set this to "" if you have no nasm
+TARGET_ISPC="ispc"
+TARGET_ISPC_FLAGS="--pic --wno-perf"
 TARGET_NASM_FMT="elf"
 TARGET_STRIP="strip"
 TARGET_OGR_MULTI=""    #<-can be used to compile ogr.cpp with differing gcc opts
@@ -92,6 +94,7 @@ TARGET_ADDOBJS=""
 TARGET_INTOBJS=""
 TARGET_ADDCUDASRCS=""
 TARGET_ADDALTIVECSRCS=""
+TARGET_ADDISPCS=""
 
 # Certain source files need to be compiled without optimization
 # to get a working client. *sigh* This flag will get set in the
@@ -128,10 +131,21 @@ DEFAULT_RC5_72="1"
 DEFAULT_OGR="0"         # 1 = compile generic ANSI core(s)
 DEFAULT_OGRNG="1"       # 1 = compile generic ANSI core(s)
 
+HAVE_ISPC="0"
+
 add_sources() # $1=os, $2=arch, $3=custom
 {
   if [ "$1" != "amigaos" -a "$1" != "morphos" ]; then
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_IPV6"
+  fi
+
+  if [ "$2" = "amd64" ]; then
+    HAVE_ISPC="1"
+    TARGET_ISPC_FLAGS="$TARGET_ISPC_FLAGS --target=avx512skx-i32x16"
+  fi
+
+  if [ "$HAVE_ISPC" = "1" ]; then
+    TARGET_CCFLAGS="$TARGET_CCFLAGS -DUSE_ISPC_CORE"
   fi
 
   # additions to COMMON_SRCS need to be before ${COMMON_SRCS}
@@ -656,7 +670,10 @@ add_sources() # $1=os, $2=arch, $3=custom
     # -------------- rc5-72 --------------
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="0"     # don't add the ansi cores
-      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/amd64/r72-ks-spmd.cpp rc5-72/amd64/r72-ks-spmd-ispc.S rc5-72/amd64/r72-ks-spmd-ispc_avx512skx.S rc5-72/amd64/r72-ks-spmd-ispc_avx512knl.S"
+      if [ "$HAVE_ISPC" = "1" ]; then
+        TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/ispc/r72-ks-spmd.cpp"
+        TARGET_ADDISPCS="$TARGET_ADDISPCS rc5-72/ispc/r72-ks-spmd-ispc.ispc"
+      fi
       TARGET_ADDNASMS="$TARGET_ADDNASMS \
                        rc5-72/amd64/r72-snjl.asm \
                        rc5-72/amd64/r72-kbe.asm \
@@ -2939,7 +2956,7 @@ case "$1" in
         TARGET_NASM="yasm"
         TARGET_NASM_FMT="elf64"
         TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
-        TARGET_CC="gcc"
+        TARGET_CC="g++"
         generate_gcc_opts "amd64" "linux"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="$TARGET_LDFLAGS"
@@ -3634,6 +3651,17 @@ if [ -n "${TARGET_ADDNASMS}" ]; then
       TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
   done
 fi
+if [ -n "${TARGET_ADDISPCS}" ]; then
+  echo "Scanning output ISPC dependencies..."
+  TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} ispc"
+  for target in ${TARGET_ADDISPCS}; do
+      TARGETOBJECT=`basename $target .ispc`
+      TARGETOBJECT=output/`basename $target .ispc`.o
+      echo "  $target -> $TARGETOBJECT"
+      TARGET_ALLOBJS="${TARGET_ALLOBJS} ${TARGETOBJECT}"
+      TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} $target ${TARGETOBJECT}"
+  done
+fi
 if [ -n "${TARGET_ADDSRCS}" ]; then
   echo "Scanning additional C/C++ dependencies..."
   TARGET_SRCOBJLIST="${TARGET_SRCOBJLIST} cc"
@@ -3808,6 +3836,7 @@ echo "LIBS = ${TARGET_LIBS}" >> Makefile
 echo "AS = ${TARGET_AS}" >> Makefile
 echo "ASFLAGS = ${TARGET_ASFLAGS}" >> Makefile
 echo "NASM = ${TARGET_NASM}" >> Makefile
+echo "ISPC = ${TARGET_ISPC}" >> Makefile
 echo "NASMFLAGS = ${TARGET_NASMFLAGS}" >> Makefile
 if [ -n "${TARGET_SPUCC}" ]; then
   echo "SPUCC = ${TARGET_SPUCC}" >> Makefile
@@ -4001,6 +4030,8 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "nasm" ]; then
       TARGETTYP="$target"
+    elif [ "${target}" = "ispc" ]; then
+      TARGETTYP="$target"
     elif [ "${target}" = "spuasm" ]; then
       TARGETTYP="$target"
     elif [ "${target}" = "r72spuwrapper" ]; then
@@ -4128,6 +4159,12 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
       fi
       echo "$target:	${TARGETSRC}" >> Makefile
       echo "	\${NASM} \${NASMFLAGS} ${incswitch} ${TARGETSRC} -o $target" >> Makefile
+      echo "" >> Makefile
+      TARGETSRC=""
+    # ------------------------------------
+    elif [ "${TARGETTYP}" = "ispc" ]; then
+      echo "$target:    ${TARGETSRC}" >> Makefile
+      echo "	\${ISPC} ${TARGET_ISPC_FLAGS} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------
