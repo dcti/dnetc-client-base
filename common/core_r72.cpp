@@ -596,9 +596,12 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
   // ===============================================================
   #elif (CLIENT_CPU == CPU_AMD64)
   {
-    if ((detected_flags & CPU_F_AVX512) && USE_ISPC_CORE)
+    #if defined(USE_ISPC_CORE)
+    if (detected_flags & CPU_F_AVX512)
       cindex = 5;
-    else if (detected_flags & CPU_F_AVX2)
+    else
+    #endif
+    if (detected_flags & CPU_F_AVX2)
       cindex = 4;
     else if (detected_type >= 0)
     {
