@@ -610,7 +610,7 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
         case 0x09: cindex = 3; break; // K8               == GO 2-pipe d
         case 0x0B: cindex =-1; break; // Pentium 4        == KBE-64 3-pipe or GO 2???
         case 0x12: cindex = 3; break; // Core 2           == GO 2-pipe d
-        case 0x14: cindex = 1; break; // Atom             == KBE-64 3-pipe
+        case 0x14: cindex = 3; break; // Atom             == GO 2-pipe d
         case 0x15: cindex = 3; break; // Intel Core i7    == GO 2-pipe d
         case 0x16: cindex = 3; break; // AMD Athlon (Model 16) == GO 2-pipe d
         case 0x18: cindex = 2; break; // Via Nano         == GO 2-pipe-c (#4437)

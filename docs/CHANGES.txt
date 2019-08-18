@@ -30,7 +30,7 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 ------
 
 2.9116.525  new: amd64: added KS-SPMD AVX512 core
-	    imp: amd64: changed default compiler to g++ on linux
+            imp: x86/amd64: CPU detection/selection (#4637,#4653,#4668,#4684)
 
 2.9115.524  new: arm64: replaced ScalarFusion with MONIKA SIMD core
 

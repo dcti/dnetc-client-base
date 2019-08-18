@@ -574,10 +574,16 @@ static u32 x86GetAmdId(u32 maxfunc)
         brandid = AMDM18_APU;
       }
       else if (family == 20) {
-        brandid = AMDM20_APU;
+        brandid = AMDM20_BOBCAT;
       }
       else if (family == 21) {
         brandid = AMDM21_FX;
+      }
+      else if (family == 22) {
+        brandid = AMDM22_JAGUAR;
+      }
+      else if (family == 23) {
+        brandid = AMDM23_ZEN;
       }
       /* Otherwise we don't know much yet, so we'd better don't touch */
     }
