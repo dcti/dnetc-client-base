@@ -74,7 +74,7 @@ SSCONFIG_SSICON ICON LOADONCALL MOVEABLE DISCARDABLE DNETC_SCR_ICO
                        VALUE "FileDescription", SSVI_FILEDESCR "\0"
                        VALUE "FileVersion", SSVI_VERSTRING "\0"
                        VALUE "InternalName", "dnetc\0"
-                       VALUE "LegalCopyright", "Copyright \251 1997-2012. All Rights Reserved.\0"
+                       VALUE "LegalCopyright", "Copyright \251 1997-2019. All Rights Reserved.\0"
                        VALUE "OriginalFilename", "dnetc.exe\0"
                        VALUE "ProductName", SSVI_FILEDESCR "\0"
                        VALUE "ProductVersion", SSVI_VERSTRING "\0"
