@@ -682,10 +682,10 @@ rebuild: clean all
 makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
 	-del tmpzip.zip dnetcXXX-win32-x86.zip
 	zip -j tmpzip.zip $**
-	-rd /s tmpzipdir
+	-rd /s /q tmpzipdir
 	unzip -a tmpzip.zip -d tmpzipdir
 	-del tmpzip.zip
 	zip -jr dnetcXXX-win32-x86.zip tmpzipdir
-	-rd /s tmpzipdir
+	-rd /s /q tmpzipdir
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i$(BUILDNUM_APPEND)-$(ZIPSUFFIX).zip
 
