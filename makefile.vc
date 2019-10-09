@@ -22,6 +22,7 @@ HAVE_RC5_72_CORES=1
 HAVE_OGR_CORES=1
 HAVE_OGR_PASS2=0
 HAVE_IPV6=1
+HAVE_ISPC=1
 
 # --------------------------------------------
 
@@ -372,6 +373,15 @@ RC5_72_OBJS = \
         $(OUTPUTPATH)/r72ansi2.obj \
         $(OUTPUTPATH)/r72ansi4.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+
+!if $(HAVE_ISPC) != 0
+.SUFFIXES : .ispc
+OPTS_MSVC = $(OPTS_MSVC) -DUSE_ISPC_CORE
+RC5_72_OBJS = $(RC5_72_OBJS) \
+        $(OUTPUTPATH)/r72-ks-spmd.obj \
+        $(OUTPUTPATH)/r72-ks-spmd-ispc.obj
+!endif
+
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-ses1.obj   \
@@ -544,6 +554,14 @@ $(VC_CHECK):
 
 {$(RC572SRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(RC572SRCPATH:/=\)\amd64\ $(**:/=\)
+
+!if $(HAVE_ISPC) != 0
+{$(RC572SRCPATH)/ispc}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+{$(RC572SRCPATH)/ispc}.ispc{$(OUTPUTPATH)}.obj:
+        ispc --pic --wno-perf --target=avx512skx-i32x16 $(**:/=\) -o $(@:/=\)
+!endif
 
 {$(OGRSRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(OGRSRCPATH:/=\)\amd64\ $(**:/=\)
