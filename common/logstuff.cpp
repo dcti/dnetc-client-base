@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2019 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  *
  * ------------------------------------------------------
- * Pardon, oh, pardon, that my sould should make
+ * Pardon, oh, pardon, that my soul should make
  * Of all the strong divineness which I know
  * For thine and thee, an image only so
  * Formed of the sand, and fit to shift and break.
@@ -50,7 +50,7 @@ return "@(#)$Id: logstuff.cpp,v 1.62 2011/12/31 20:32:22 snikkel Exp $"; }
 #define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 #endif
 
-#undef ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
+#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
 #define ASSUMED_SCREEN_WIDTH 80 //... until all platforms support ConGetSize()
 // ========================================================================
 
