@@ -1,4 +1,6 @@
+#ifndef ISPC_UINT_IS_DEFINED 
 typedef unsigned int32 uint32;
+#endif
 
 #define P 0xB7E15163
 #define Q 0x9E3779B9
