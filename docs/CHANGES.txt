@@ -786,7 +786,7 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
             chg: all: auto keyserver name resolution now allows as many
                  retries as there are addresses for a name.
             rel: Mon, 15 Nov 1999 18:19:51 -0600
-                 http://lists.distributed.net/hypermail/announce/0075.html
+                 http://lists.distributed.net/pipermail/announce/1999/000073.html
 
 2.7100
 ------
@@ -968,7 +968,7 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 2.7100.412  chg: Buffer path problem and buffer truncation issue addressed
 2.7100.412  fix: win32GUI autolaunches in minimized state correctly now
 2.7100.412  rel: Sat, 27 Jun 1998 17:09:24 -0500 (CDT)
-                 http://lists.distributed.net/hypermail/announce/0049.html
+                 http://lists.distributed.net/pipermail/announce/1998/000047.html
 
 2.7000
 ------
