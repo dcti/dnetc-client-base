@@ -33,7 +33,7 @@
     with '-help' or '--help'.
 
     A complete step-by-step guide to running your first client is 
-    available at <http://www.distributed.net/docs/tutor_clients.php>
+    available at <https://www.distributed.net/Docs_tutor_client>
 
 
  2.0  OpenCL specific notes -----------------------------------------
@@ -131,7 +131,7 @@
     available. It is also recommended to minimize the network update frequency;
     the default configuration is usually sufficient. To decrease delays caused
     by network updates, we recommend that you use the distributed.net personal
-    proxy software. ( http://www.distributed.net/Download_proxies ) Note that
+    proxy software. <https://www.distributed.net/Download_proxies> Note that
     if you are using the personal proxy software, you may need to alter the
     proxy configuration to request larger packet sizes as well.
 
