@@ -1645,13 +1645,14 @@ case "$1" in
 
     *android-arm-eabi-r16)      # [yoyo mikereed]
         TARGET_CC="arm-linux-androideabi-gcc"
-        TARGET_AS="arm-linux-androideabi-gcc -c"
+        TARGET_AS="arm-linux-androideabi-gcc -c -fno-integrated-as"
         #generate_gcc_opts "arm" "eabi" #?
-        TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID  -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -I$TCINCLUDES/include -fPIE"
+        TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID  -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -fPIE"
         TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="android-arm-eabi-r16"
         TARGET_STRIP="arm-linux-androideabi-strip"
+        TARGET_IS_CROSSCOMPILE="1"
         add_sources "linux" "arm" "elf"
         ;;
 
