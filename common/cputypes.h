@@ -438,7 +438,7 @@
     #define HAVE_POSIX_THREADS
   #endif
 #elif defined(__APPLE__)
-  #if defined(__arm64__)
+  #if defined(__arm64__) && !defined(OPENCL)
     #define CLIENT_OS_NAME  "iOS"
     #define CLIENT_OS       OS_IOS
     #define CLIENT_CPU      CPU_ARM64
