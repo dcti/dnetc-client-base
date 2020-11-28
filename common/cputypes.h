@@ -438,14 +438,14 @@
     #define HAVE_POSIX_THREADS
   #endif
 #elif defined(__APPLE__)
-  #if defined(__arm64__) && !defined(OPENCL)
+  #if defined(__arm64__) && !defined(OPENCL) 
     #define CLIENT_OS_NAME  "iOS"
     #define CLIENT_OS       OS_IOS
-    #define CLIENT_CPU      CPU_ARM64
+    #define CLIENT_CPU    CPU_ARM64
   #elif defined(__arm__) || defined(ARM)
     #define CLIENT_OS_NAME  "iOS"
     #define CLIENT_OS       OS_IOS
-    #define CLIENT_CPU      CPU_ARM
+    #define CLIENT_CPU    CPU_ARM
   #else
     #define CLIENT_OS_NAME  "Mac OS X"
     #define CLIENT_OS       OS_MACOSX
@@ -463,6 +463,10 @@
     #define CLIENT_CPU    CPU_X86
   #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
     #define CLIENT_CPU    CPU_AMD64
+  #elif defined(__arm64__)
+    #define CLIENT_CPU    CPU_ARM64
+  #elif defined(__arm__)
+    #define CLIENT_CPU    CPU_ARM
   #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */
