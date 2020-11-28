@@ -246,7 +246,10 @@ static UInt32 _SMCread(UInt32 key, io_connect_t connection)
   smc_input.key = key;
   smc_input.cmd = SMC_READ_KEYINFO;
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) 
+  if (kIOReturnSuccess == IOConnectCallStructMethod(connection, 2, 
+    &smc_input, input_size, &smc_output, &output_size)) {
+#elif defined(__arm64__)
   if (kIOReturnSuccess == IOConnectCallStructMethod(connection, 2, 
     &smc_input, input_size, &smc_output, &output_size)) {
 #else
@@ -261,6 +264,9 @@ static UInt32 _SMCread(UInt32 key, io_connect_t connection)
       return 0;         // Unknown key.
 
 #if defined(__x86_64__)
+    if (kIOReturnSuccess == IOConnectCallStructMethod(connection, 2, 
+      &smc_input, input_size, &smc_output, &output_size)) {
+#elif defined(__arm64__)
     if (kIOReturnSuccess == IOConnectCallStructMethod(connection, 2, 
       &smc_input, input_size, &smc_output, &output_size)) {
 #else
