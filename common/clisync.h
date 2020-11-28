@@ -182,7 +182,7 @@
     return 1;
   }
 
-#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || ((CLIENT_CPU == CPU_ARM) && !defined(__GNUC__))
+#elif (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) && !defined(__arm64__)|| ((CLIENT_CPU == CPU_ARM) && !defined(__GNUC__))
 
   typedef volatile long fastlock_t;
 
