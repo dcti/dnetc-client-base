@@ -3498,7 +3498,7 @@ case "$1" in
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
         TARGET_TARBALL="macosx-arm64-opencl"
-        add_sources "macosx" "opencl" "arm64"
+        add_sources "macosx" "opencl"
         ;;
 
 ###### Unknown
