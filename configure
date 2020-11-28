@@ -120,7 +120,7 @@ OGR="ogr"
 
 # select the projects to include in the client
 HAVE_RC5_72="1"
-HAVE_OGR="0"
+HAVE_OGR="1"
 HAVE_OGR_P2="0"
 
 # define these to "0" in add_sources() if you add your own list of cores + options
