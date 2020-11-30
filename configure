@@ -1763,8 +1763,9 @@ case "$1" in
 
     *ios-arm64)              # [zebe] iOS 7+, 64-bit (Xcode >= 6 recommended)
         TARGET_plat="-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.1 -DIPHONEOS_DEPLOYMENT_TARGET=7.1 -DTARGETED_DEVICE_FAMILY=\"1,2\" -arch arm64"
-        TARGET_CCFLAGS="$OPTS_CLANGCC -Os -DHAVE_POSIX_THREADS $TARGET_plat"
+        TARGET_CCFLAGS="$OPTS_CLANGCC -Os -DIOS -DHAVE_POSIX_THREADS $TARGET_plat"
         TARGET_LIBS="-framework CoreFoundation"
+        TARGET_AS="gcc -c $TARGET_CCFLAGS"
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_IS_CROSSCOMPILE=1
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
@@ -1774,13 +1775,24 @@ case "$1" in
         
     *ios-arm)              # [zebe] iOS 5+, 32-bit (Xcode >= 5 recommended)
         TARGET_plat="-isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=5.1 -DIPHONEOS_DEPLOYMENT_TARGET=5.1 -DTARGETED_DEVICE_FAMILY=\"1,2\" -arch armv7"
-        TARGET_CCFLAGS="$OPTS_CLANGCC -Os -DHAVE_POSIX_THREADS $TARGET_plat"
+        TARGET_CCFLAGS="$OPTS_CLANGCC -Os -DIOS -DHAVE_POSIX_THREADS $TARGET_plat"
         TARGET_LIBS="-framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_IS_CROSSCOMPILE=1
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="ios-arm"
         add_sources "ios" "generic"
+        ;;
+
+    *macosx-arm64)
+        TARGET_plat="-mmacosx-version-min=11.0 -DMACOSX_DEPLOYMENT_TARGET=11.0 -arch arm64"
+        TARGET_CCFLAGS="$OPTS_CLANGCC -DHAVE_POSIX_THREADS $TARGET_plat"
+        TARGET_AS="gcc -c $TARGET_CCFLAGS"
+        TARGET_LIBS="-framework CoreFoundation -framework IOKit"
+        TARGET_LDFLAGS="$TARGET_plat"
+        TARGET_TARBALL="macosx-arm64"
+        TARGET_DOCFILES="docs/readme._ix"
+        add_sources "macosx" "arm64"
         ;;
 
 # IA64 *****************************************************************

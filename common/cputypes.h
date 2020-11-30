@@ -438,18 +438,17 @@
     #define HAVE_POSIX_THREADS
   #endif
 #elif defined(__APPLE__)
-  #if defined(__arm64__) && !defined(OPENCL) 
+  #if defined (IOS)
     #define CLIENT_OS_NAME  "iOS"
     #define CLIENT_OS       OS_IOS
-    #define CLIENT_CPU      CPU_ARM64
-  #elif defined(__arm__) || defined(ARM)
-    #define CLIENT_OS_NAME  "iOS"
-    #define CLIENT_OS       OS_IOS
-    #define CLIENT_CPU      CPU_ARM
+  #else
+  #define CLIENT_OS       OS_MACOSX
+  #if defined(__arm64__)
+    #define CLIENT_OS_NAME  "Mac OS X" // Added this incase we want to identify this as macOS 11 in the future.
   #else
     #define CLIENT_OS_NAME  "Mac OS X"
-    #define CLIENT_OS       OS_MACOSX
-  #endif
+#endif
+#endif
   #ifndef __unix__
     #define __unix__
   #endif
