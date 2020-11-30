@@ -19,3 +19,4 @@ logfile*.log
 trace.out
 
 output/
+.DS_Store
