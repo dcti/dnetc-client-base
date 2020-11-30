@@ -3,8 +3,13 @@
 // Returns completed A and B, needs C++ support file for final checks
 
 .text
+#if defined(__APPLE__)
+.globl _scalarFusionEntry
+_scalarFusionEntry:
+#else
 .globl scalarFusionEntry
 scalarFusionEntry:
+#endif
   // push fp and lr
   stp x29, x30, [sp, #-16]!
 
