@@ -207,11 +207,15 @@ const char **corenames_for_contest_rc572()
       "KKS 2-pipe",
       "AnBe 1-pipe",
       "AnBe 2-pipe",
-  #elif (CLIENT_CPU == CPU_ARM64)
+  #elif (CLIENT_CPU == CPU_ARM64 && (CLIENT_OS != OS_MACOSX))
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
       "KS-ScalarFusion",
+  #elif (CLIENT_CPU == CPU_ARM64 && (CLIENT_OS == OS_MACOSX))
+      "ANSI 4-pipe",
+      "ANSI 2-pipe",
+      "ANSI 1-pipe",
   #elif (CLIENT_CPU == CPU_MIPS)
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -1084,7 +1088,7 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
          break;
      #endif
 
-    #if (CLIENT_CPU == CPU_ARM64)
+    #if (CLIENT_CPU == CPU_ARM64 && (CLIENT_OS != OS_MACOSX))
        case 3:
 	unit_func.gen_72 = rc5_72_unit_func_scalarfusion;
 	pipeline_count = 1;
