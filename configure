@@ -984,7 +984,7 @@ gcc_get_ver() {
     #gcc_v="gcc version 4.0.1 (Apple Computer, Inc. build 5247)"
     #gcc_v="gcc-Version 4.3.2 (Ubuntu 4.3.2-1ubuntu11)"
 
-    gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
+    gccver_line=`echo "$gcc_v"|tail -1|tr '-' ' '`
     #echo "gccver_line=#$gccver_line#"
     lastwas=""
     ver_num=""
