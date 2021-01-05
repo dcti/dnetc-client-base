@@ -1108,6 +1108,7 @@ generate_gcc_opts() {
   gcc_get_ver
   if [ $gccver -lt 2000000 ]; then
     echo "gcc version less than 2, or something strange happened"
+    exit 1
   fi
 
   # ------
@@ -2968,6 +2969,32 @@ case "$1" in
         add_sources "linux" "amd64" ""
         ;;
 
+    *linux-amd64-uclibc*)       # using uClibc [ertyu]
+        ### From https://toolchains.bootlin.com
+        ### download x86_64 uclibc stable
+        ### and set the path/prefix accordingly below
+        # things that'll break cross-compile commented out
+        # put toolchain prefix here
+        cross_prefix="x86_64-linux-"
+        TARGET_IS_CROSSCOMPILE=1
+#       infer_arch_and_version "Linux"
+        TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
+        TARGET_AS="${cross_prefix}gcc -c"
+        TARGET_CC="${cross_prefix}gcc"
+        TARGET_STRIP="${cross_prefix}strip"
+#       generate_gcc_opts "${inferred_arch}" "linux"
+        generate_gcc_opts "amd64" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_LIBS="-lrt"
+#       TARGET_TARBALL="linux-${inferred_arch}-${TARGET_NASM_FMT}-uclibc"
+        TARGET_TARBALL="linux-amd64-uclibc"
+        TARGET_DOCFILES="docs/readme.linux docs/readme.uclib"   #platform specific docfile
+        TARGET_USES_GNUMAKE="yes"
+        add_sources "uclibc" "amd64"
+        ;;
+
     *netbsd-amd64)              # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "amd64" "netbsd"
@@ -2999,7 +3026,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DHAVE_POSIX_THREADS $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_plat"
-        TARGET_NASM="/opt/local/bin/yasm"
+        TARGET_NASM="yasm"
         TARGET_NASM_FMT="macho64"
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         TARGET_TARBALL="macosx-amd64"
