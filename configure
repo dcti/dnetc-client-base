@@ -1476,7 +1476,7 @@ fi # ogr-p2
 
 case "$1" in
 
-# Misc / Generic
+# Misc / Generic *******************************************************
 
     *ansi-generic)              # unoptimized vanilla ansi
         TARGET_AS="cc -c"
@@ -1496,6 +1496,74 @@ case "$1" in
         add_sources "ansi" "generic"
         ;;
 
+# 68k ******************************************************************
+
+    *hpux-m68k-gcc)
+        TARGET_CC="g++"
+        generate_gcc_opts "68k" "hpux"
+        TARGET_CCFLAGS="$OPTS_GCC -m68030 -D_HPUX_M68K -static"
+        TARGET_LDFLAGS="-static"
+        TARGET_ASFLAGS="$OPTS_GAS -v -V --register-prefix-optional -m68030"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "hpux" "68k"
+        ;;
+
+    *openbsd-m68k)              # [snake]
+        # this target does probably not work with a default system, you
+        # will need to update gas and ld to > 2.0
+        TARGET_CC="g++"
+        #TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
+        #                -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
+        generate_gcc_opts "68k" "openbsd"
+        TARGET_CCFLAGS="$OPTS_GCC -m68020-40"
+        TARGET_LDFLAGS="-static"
+        TARGET_ASFLAGS="$OPTS_GAS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="openbsd-m68k"
+        add_sources "openbsd" "68k"
+        ;;
+
+    *netbsd-m68k)               # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, [snake]
+        TARGET_CC="g++"
+        TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
+                        -m68020-40 -DASM_68K -DLURK"
+          if [ "$HAVE_OGR" = "1" ]; then
+            TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
+          fi
+        TARGET_LDFLAGS="-static"
+        TARGET_ASFLAGS="$OPTS_GAS"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-m68k-elf"
+        add_sources "netbsd" "68k"
+        ;;
+
+    *amigaos-m68k)              # [oliver] <oliver@futaura.co.uk>
+        TARGET_AS="plat/amigaos/tools/genam_wrapper"
+        TARGET_CC="g++"
+        generate_gcc_opts "68k" "amigaos"
+        TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -I./ -I./plat/amigaos/guilib \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -DDYN_TIMESLICE -Wno-unknown-pragmas"
+        TARGET_LDFLAGS="-noixemul"
+        TARGET_ASFLAGS="$OPTS_GAS"
+        TARGET_ADDOBJS="/gg/lib/libnix/swapstack.o"
+        TARGET_TARBALL="amigaos-68k"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_BINNAME_SUFFIX="_68k"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="68k ${TARGET_BINNAME}_68k"
+        add_sources "amigaos" "68k"
+        ;;
+
+    *next-m68k)
+        generate_gcc_opts "68k" "next"
+        TARGET_CCFLAGS="-static $OPTS_GCC -arch m68k -Iplat/next"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="next-m68k"
+        add_sources "next" "68k"
+        ;;
+
 # 88k ******************************************************************
 
     *dgux-88k)                  # data general unix
@@ -1506,7 +1574,6 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
         add_sources "hpux" "88k"
         ;;
-
 
     *mvme88k)                   # Motorola MVME 88k (Open BSD)
         TARGET_CCFLAGS="-DASM_NONE -DSINGLE_CRUNCHER_ONLY"
@@ -1523,7 +1590,7 @@ case "$1" in
         add_sources "ansi" "generic"
         ;;
 
-# Alpha ****************************************************************
+# ALPHA ****************************************************************
 
     *digital_unix*-alpha*)      # takes digital_unix-alpha[4|5|67|][-nonmt|]
         archname=`echo "$1" | sed 's/^.*digital_unix/digital_unix/'| cut -d- -f2`
@@ -1632,6 +1699,27 @@ case "$1" in
         add_sources "linux" "arm" "elf"
         ;;
 
+    *linux-arm64)               # [mikereed ertyu]
+        TARGET_CC="g++"
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_TARBALL="linux-arm64"
+        TARGET_DOCFILES="docs/readme._ix"
+        add_sources "linux" "arm64"
+        ;;
+
+    *linux-arm-elf_single)      # [teichp]
+        TARGET_CC="gcc"
+        TARGET_AS="gcc -c"
+        generate_gcc_opts "arm" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DSINGLE_CRUNCHER_ONLY"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-arm-elf_single"
+        add_sources "linux" "arm" "elf"
+        ;;
+
     *android-arm-eabi-r9)       # [yoyo mikereed]
         TARGET_CC="arm-linux-androideabi-gcc"
         TARGET_AS="arm-linux-androideabi-gcc -c"
@@ -1654,52 +1742,6 @@ case "$1" in
         TARGET_TARBALL="android-arm-eabi-r16"
         TARGET_STRIP="arm-linux-androideabi-strip"
         TARGET_IS_CROSSCOMPILE="1"
-        add_sources "linux" "arm" "elf"
-        ;;
-
-    *android-x86)               # [yoyo mikereed]
-        TARGET_CC="i686-linux-android-gcc"
-        TARGET_AS="i686-linux-android-gcc -c"
-        TARGET_NASM="yasm"
-        TARGET_NASM_FMT="elf"
-        TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -fPIE"
-        TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
-        TARGET_LDFLAGS="-fPIE -pie"
-        TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="android-x86"
-        TARGET_STRIP="i686-linux-android-strip"
-        TARGET_IS_CROSSCOMPILE="1"
-        add_sources "android" "x86"
-        ;;
-        
-    *linux-arm64)               # [mikereed ertyu]
-        TARGET_CC="g++"
-        TARGET_AS="gcc -c"
-        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
-        TARGET_LIBS="-lpthread -lrt"
-        TARGET_TARBALL="linux-arm64"
-        TARGET_DOCFILES="docs/readme._ix"
-        add_sources "linux" "arm64"
-        ;;
-
-    *linux-ppc64)             # [sunset mikereed] 
-        TARGET_CC="g++"             
-        TARGET_AS="gcc -c"
-        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
-        TARGET_LIBS="-lpthread -lrt"
-        TARGET_TARBALL="linux-ppc64"
-        TARGET_DOCFILES="docs/readme._ix"
-        add_sources "linux" "ppc64"
-        ;;
-	
-    *linux-arm-elf_single)      # [teichp]
-        TARGET_CC="gcc"
-        TARGET_AS="gcc -c"
-        generate_gcc_opts "arm" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -Dlinux -DSINGLE_CRUNCHER_ONLY"
-        TARGET_LIBS=""
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-arm-elf_single"
         add_sources "linux" "arm" "elf"
         ;;
 
@@ -1789,7 +1831,7 @@ case "$1" in
         add_sources "ios" "generic"
         ;;
 
-# IA64 *****************************************************************
+# IA64/ITANIUM *********************************************************
 
     *linux-ia64)
         TARGET_AS="gcc -c"
@@ -2016,7 +2058,7 @@ case "$1" in
        add_sources "irix" "mips"
        ;;
 
-# END of MIPSpro targets.
+  # END of MIPSpro targets.
 
     *linux-mips)
         TARGET_CC="gcc"
@@ -2171,18 +2213,7 @@ case "$1" in
         add_sources "nto2" "mips"
         ;;
 
-    *linux-sh4)                 # <Rule@freegates.be>
-        TARGET_CC="sh4-linux-g++"
-        TARGET_AS="sh4-linux-g++ -c"
-        TARGET_STRIP="sh4-linux-strip"
-        generate_gcc_opts "sh4" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
-        TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="linux-sh4"
-        add_sources "linux" "sh"
-        TARGET_IS_CROSSCOMPILE=1
-        ;;
+# HPPA/PA-RISC *********************************************************
 
     *linux-hppa-cross)          # <Rule@freegates.be>
         TARGET_CC="hppa-linux-g++"
@@ -2225,16 +2256,6 @@ case "$1" in
         add_sources "hpux" "hppa"
         ;;
 
-    *hpux-m68k-gcc)
-        TARGET_CC="g++"
-        generate_gcc_opts "68k" "hpux"
-        TARGET_CCFLAGS="$OPTS_GCC -m68030 -D_HPUX_M68K -static"
-        TARGET_LDFLAGS="-static"
-        TARGET_ASFLAGS="$OPTS_GAS -v -V --register-prefix-optional -m68030"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "hpux" "68k"
-        ;;
-
     *openbsd-hppa)              # [snake] OpenBSD on HP's PA RISC machines
         TARGET_CC="g++"
         generate_gcc_opts "hppa" "openbsd"
@@ -2245,7 +2266,38 @@ case "$1" in
         add_sources "openbsd" "hppa"
         ;;
 
-###### Sparc/UltraSparc
+    *linux-hppa32)              # [friedbait]  fb@baiti.net,patch+rc5@zabbadoz.net
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "hppa" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="linux-hppa32"
+        add_sources "linux" "hppa"
+        ;;
+
+    *linux-hppa32-static)       # [friedbait]  fb@baiti.net,patch+rc5@zabbadoz.net
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "hppa" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS=""
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="linux-hppa32-static"
+        add_sources "linux" "hppa"
+        ;;
+
+    *next-hppa)
+        TARGET_CC="cc++"
+        generate_gcc_opts "generic" "next"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -Iplat/next"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "next" "hppa"
+        ;;
+
+# SPARC/ULTRASPARC *****************************************************
 
     *openbsd-sparc)             # [snake] for 32bit sparcs (sun4[cdm])
         TARGET_CC="g++"
@@ -2441,43 +2493,15 @@ case "$1" in
         add_sources "solaris" "sparc64" "cc"
         ;;
 
-    #####
-
-    *solaris-x86)               # gcc, mt, dynamic
-        TARGET_CC="gcc"
-        generate_gcc_opts "x86" "solaris"
-        TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
-        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="solaris-x86"
-        add_sources "solaris" "x86"
+    *next-sparc)
+        TARGET_CC="cc++"
+        generate_gcc_opts "generic" "next"
+        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -Iplat/next"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        add_sources "next" "sparc"
         ;;
 
-    *solaris-amd64)             # gcc
-        TARGET_CC="gcc"
-        TARGET_NASM="yasm"
-        TARGET_NASM_FMT="elf64"
-        generate_gcc_opts "amd64" "solaris"
-        TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
-        TARGET_LDFLAGS="-m64"
-        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="solaris10-amd64"
-        add_sources "solaris" "amd64"
-        ;;
-
-    *solaris-amd64-suncc)       # sun cc
-        TARGET_CC="sunCC"
-        OPTS_CC_SOLARIS="-fast -m64 -DASM_AMD64"
-        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
-        TARGET_LDFLAGS="-m64"
-        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
-        TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="solaris10-amd64"
-        add_sources "solaris" "amd64"
-        ;;
-
-###### PowerPC/POWER
+# POWERPC/PPC/POWER ****************************************************
 
     *linux-ppc)                 # [myshkin] linux-ppc
         TARGET_CC="g++"
@@ -2504,6 +2528,16 @@ case "$1" in
         add_sources "uclibc" "ppc" "altivec"
         ;;
 
+    *linux-ppc64)             # [sunset mikereed] 
+        TARGET_CC="g++"             
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_TARBALL="linux-ppc64"
+        TARGET_DOCFILES="docs/readme._ix"
+        add_sources "linux" "ppc64"
+        ;;
+	
     *netbsd-ppc)                # [snake] for Macs, PPC-Amiga etc.
         TARGET_CC="g++"
         generate_gcc_opts "ppc" "netbsd"
@@ -2603,8 +2637,7 @@ case "$1" in
         add_sources "aix" "power"
         ;;
 
-  ### QNX PPC targets
-    *nto2-ppc)
+    *nto2-ppc)			# QNX PPC target
         TARGET_AS="qcc -Vgcc_ntoppcbe -c"
         TARGET_CC="qcc -Vgcc_ntoppcbe"
         TARGET_ASFLAGS="-DNO_BALIGN"
@@ -2618,7 +2651,91 @@ case "$1" in
         add_sources "nto2" "ppc"
         ;;
 
-    *linux-cellbe)              # [snikkel]
+    *beos-ppc)
+        TARGET_AS="mwcc -c"
+        TARGET_CC="mwcc"
+        TARGET_CCFLAGS="$OPTS_MWCC_PPC604"
+        TARGET_STRIP="touch"
+        TARGET_LIBS="-lnet"
+        TARGET_TARBALL="beos-ppc"
+        TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
+        add_sources "beos" "ppc"
+        ;;
+
+    *amigaos-ppc)               # [oliver] <oliver@futaura.co.uk>
+        TARGET_AS="ppc-amigaos-gas"
+        TARGET_CC="ppc-amigaos-g++"
+        generate_gcc_opts "ppc" "amigaos"
+        TARGET_CCFLAGS="$OPTS_GCC -I./ -I./plat/amigaos/guilib -mcrt=clib2-ts \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -DDYN_TIMESLICE -D__USE_INLINE__ -mvrsave"
+        TARGET_LDFLAGS="-mcrt=clib2-ts"
+        TARGET_TARBALL="amigaos-ppc"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_STRIP="ppc-amigaos-strip --strip-unneeded-rel-relocs -R.comment -R.eh_frame -R.gnu.attributes"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="os4 ${TARGET_BINNAME}"
+        add_sources "amigaos" "ppc" "altivec"
+        ;;
+
+    *amigaos-ppc-wos)           # [oliver] <oliver@futaura.co.uk>
+        TARGET_AS="ppc-amigaos-gas"
+        TARGET_CC="ppc-amigaos-g++"
+        TARGET_ASFLAGS="-m603"
+        generate_gcc_opts "ppc603e" "amigaos"
+        TARGET_CCFLAGS="$OPTS_GCC -mmultiple -mstring -I./ -I./plat/amigaos/guilib \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -DDYN_TIMESLICE"
+        TARGET_TARBALL="amigaos-ppc-wos"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_STRIP="touch"
+        TARGET_BINNAME_SUFFIX="_ppc"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_wos"
+        add_sources "amigaos" "ppc"
+        ;;
+
+    *amigaos-ppc-pup)           # [oliver] <oliver@futaura.co.uk>
+        TARGET_AS="ppc-amigaos-gas"
+        TARGET_CC="ppc-amigaos-g++"
+        TARGET_ASFLAGS="-m603"
+        generate_gcc_opts "ppc603e" "amigaos"
+        TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -mmultiple -mstring \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -I./ -I./plat/amigaos/guilib -DDYN_TIMESLICE"
+        TARGET_LDFLAGS="-pup"
+        TARGET_TARBALL="amigaos-ppc-pup"
+        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
+        TARGET_STRIP="plat/amigaos/tools/strip_pup"
+        TARGET_BINNAME_SUFFIX="_ppc"
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_pup"
+        add_sources "amigaos" "ppc"
+        ;;
+
+    *morphos-ppc)               # [piru] <sintonen@iki.fi>
+        TARGET_AS="ppc-rom-as -maltivec"
+        TARGET_CC="ppc-morphos-g++ -noixemul"
+        generate_gcc_opts "ppc" "morphos"
+        TARGET_CCFLAGS="-xc++ $OPTS_GCC -DNO_MIAMI -mmultiple -mstring \
+                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
+                        -I./ -I./plat/amigaos/guilib/morphos/ -DDYN_TIMESLICE"
+        TARGET_LDFLAGS=""
+        TARGET_TARBALL="morphos-ppc"
+        TARGET_DOCFILES="docs/readme.morphos"   #platform specific docfile
+        TARGET_STRIP="ppc-morphos-strip --remove-section .comment"
+        TARGET_BINNAME_SUFFIX=
+        TARGET_GENMAN=
+        TARGET_ARCTYPE="amigaosgui"
+        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_mos"
+        add_sources "morphos" "ppc" "altivec"
+        SHELL="/bin/sh" # workaround for pkdsh missing SHELL var
+        ;;
+
+    *linux-cellbe)
     # ubuntu has some broken ppu32-xxx, use generic form. (un)comment if necessary.
 #        TARGET_CC="ppu32-g++"
 #        TARGET_LD="ppu32-g++"
@@ -2661,7 +2778,103 @@ case "$1" in
         add_sources "uclibc" "cellbe" "altivec"
         ;;
 
-###### SH4 platforms
+# S390 *****************************************************************
+
+    *linux-s390)                # [pstadt] 31 Bit Linux on G5/G6 or older
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390"
+        add_sources "linux" "s390"
+        ;;
+
+    *linux-s390-static)         # [pstadt] 31 Bit Linux on G5/G6 or older
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390-static"
+        add_sources "linux" "s390"
+        ;;
+
+    *linux-s390-z)              # [pstadt] 31 Bit Linux on z/Architecture
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390-z"
+        add_sources "linux" "s390"
+        ;;
+
+    *linux-s390-z-static)       # [pstadt] 31 Bit Linux on z/Architecture
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390-z-static"
+        add_sources "linux" "s390"
+        ;;
+
+    *linux-s390x)               # [pstadt] 64 Bit Linux on z/Architecture
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390x" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390x"
+        add_sources "linux" "s390x"
+        ;;
+
+    *linux-s390x-static)        # [pstadt] 64 Bit Linux on z/Architecture
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "s390x" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="linux-s390x-static"
+        add_sources "linux" "s390x"
+        ;;
+
+    *os390-s390)                # [friedbait]  fb@baiti.net
+        TARGET_CC="gcc"
+        TARGET_AS=""
+        generate_gcc_opts "s390" "os390"
+        TARGET_CCFLAGS="$OPTS_GCC -D_ALL_SOURCE" #-D__STRING_CODE_SET__="ISO8859-1"
+        TARGET_ADDASMS=""
+        TARGET_LIBS="$SOCKS_LIBS"
+        TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
+        TARGET_TARBALL="os390-s390"
+        add_sources "os390" "s390"
+        ;;
+
+# SH4 ******************************************************************
+
+    *linux-sh4)                 # <Rule@freegates.be>
+        TARGET_CC="sh4-linux-g++"
+        TARGET_AS="sh4-linux-g++ -c"
+        TARGET_STRIP="sh4-linux-strip"
+        generate_gcc_opts "sh4" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="linux-sh4"
+        add_sources "linux" "sh"
+        TARGET_IS_CROSSCOMPILE=1
+        ;;
 
   ### SH4 QNX targets
 
@@ -2694,7 +2907,20 @@ case "$1" in
         add_sources "nto2" "sh4"
         ;;
 
-###### Intel X86
+# VAX ******************************************************************
+
+    *netbsd-vax)                # [snake]
+        TARGET_CC="g++"
+        generate_gcc_opts "vax" "netbsd"
+        TARGET_CCFLAGS="$OPTS_GCC"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-ltermcap"
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="netbsd-vax"
+        add_sources "netbsd" "vax"
+        ;;
+
+# X86 ******************************************************************
 
     *linux-x86-uclibc*)         # using uClibc [pfeffi]
         ### for testing the uClibc library www.uclibc.org
@@ -2768,6 +2994,21 @@ case "$1" in
           TARGET_LIBS="-L/usr/dnet/lib -Xlinker --whole-archive -lnss_files -lnss_dns -Xlinker --no-whole-archive -lresolv $TARGET_LIBS"
           ;;
         esac
+        ;;
+
+    *android-x86)               # [yoyo mikereed]
+        TARGET_CC="i686-linux-android-gcc"
+        TARGET_AS="i686-linux-android-gcc -c"
+        TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf"
+        TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -fPIE"
+        TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
+        TARGET_LDFLAGS="-fPIE -pie"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="android-x86"
+        TARGET_STRIP="i686-linux-android-strip"
+        TARGET_IS_CROSSCOMPILE="1"
+        add_sources "android" "x86"
         ;;
 
     *netware6-x86*)             # using LibC [jbgill]
@@ -2951,7 +3192,80 @@ case "$1" in
         add_sources "dynix" "x86"
         ;;
 
-###### AMD 64
+    *os2-x86)                   # [pfeffi] <pfeffi@distributed.net>
+        # don't need this, have GNU basename installed ;-)
+        # basename ()
+        # {
+        # export parm=$1
+        # ksh -c 'echo ${parm##*/}'
+        # }
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "x86" "os2"
+        TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -fexceptions -pedantic -Wno-long-long -I. -I${C_INCLUDE_PATH}"
+        TARGET_LDFLAGS="-Zmt"
+        TARGET_NASM_FMT="aout"
+        TARGET_STRIP="emxbind -s"
+        TARGET_ARCTYPE="zip"
+        TARGET_NASM="nasm.exe"
+        TARGET_LIBS="-lsocket -lvideo"
+        TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
+        TARGET_TARBALL="os2-x86-emx"
+        TARGET_BINNAME_SUFFIX=".exe"
+        TARGET_GENMAN=                               #no manpage
+        TARGET_USES_GNUMAKE="yes"
+        add_sources "os2" "x86"
+        ;;
+
+    *solaris-x86)               # gcc, mt, dynamic
+        TARGET_CC="gcc"
+        generate_gcc_opts "x86" "solaris"
+        TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
+        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
+        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_TARBALL="solaris-x86"
+        add_sources "solaris" "x86"
+        ;;
+
+    *beos-x86)
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "x86" "beos"
+        TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lnet"
+        TARGET_TARBALL="beos-x86"
+        TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
+        add_sources "beos" "x86"
+        ;;
+
+    *haiku-x86)
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        TARGET_NASM="nasm"
+        generate_gcc_opts "x86" "haiku"
+        TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar"
+        TARGET_LDFLAGS="-static"
+        TARGET_LIBS="-lnetwork"
+        TARGET_TARBALL="haiku-x86"
+        TARGET_DOCFILES="docs/readme.haiku"   #platform specific docfile
+        add_sources "haiku" "x86"
+        ;;
+
+    *next-x86)
+        generate_gcc_opts "x86" "next"
+        TARGET_CCFLAGS="-static $OPTS_GCC -arch i386 -Iplat/next"
+
+        # either nasm or NeXT as, latter needs forcecputype for x86ident.S
+        # TARGET_ASFLAGS="-force_cpusubtype_ALL"
+        TARGET_NASM_FMT="macho"
+
+        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_TARBALL="next-x86"
+        add_sources "next" "x86"
+        ;;
+
+# X86_64/AMD64 *********************************************************
 
     *linux-amd64)               # generic. works everywhere
         infer_arch_and_version "Linux"
@@ -3033,345 +3347,31 @@ case "$1" in
         add_sources "macosx" "amd64"
         ;;
 
-###### NeXT (x86, m68k, sparc, hppa)
-
-    *next-x86)
-        generate_gcc_opts "x86" "next"
-        TARGET_CCFLAGS="-static $OPTS_GCC -arch i386 -Iplat/next"
-
-        # either nasm or NeXT as, latter needs forcecputype for x86ident.S
-        # TARGET_ASFLAGS="-force_cpusubtype_ALL"
-        TARGET_NASM_FMT="macho"
-
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="next-x86"
-        add_sources "next" "x86"
-        ;;
-
-    *next-m68k)
-        generate_gcc_opts "68k" "next"
-        TARGET_CCFLAGS="-static $OPTS_GCC -arch m68k -Iplat/next"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="next-m68k"
-        add_sources "next" "68k"
-        ;;
-
-    *next-sparc)
-        TARGET_CC="cc++"
-        generate_gcc_opts "generic" "next"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_SPARC -arch sparc -Iplat/next"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "next" "sparc"
-        ;;
-
-    *next-hppa)
-        TARGET_CC="cc++"
-        generate_gcc_opts "generic" "next"
-        TARGET_CCFLAGS="$OPTS_GCC -O6 -DASM_HPPA -arch hppa -Iplat/next"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        add_sources "next" "hppa"
-        ;;
-
-    *openbsd-m68k)              # [snake]
-        # this target does probably not work with a default system, you
-        # will need to update gas and ld to > 2.0
-        TARGET_CC="g++"
-        #TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
-        #                -m68020-40 -DASM_68K -DLURK -DHAVE_OGR_CORES"
-        generate_gcc_opts "68k" "openbsd"
-        TARGET_CCFLAGS="$OPTS_GCC -m68020-40"
-        TARGET_LDFLAGS="-static"
-        TARGET_ASFLAGS="$OPTS_GAS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="openbsd-m68k"
-        add_sources "openbsd" "68k"
-        ;;
-
-    *netbsd-m68k)               # NetBSD on NeXT, 68k Macs, 68k Amiga, sun3 etc, [snake]
-        TARGET_CC="g++"
-        TARGET_CCFLAGS="-O6 -fno-exceptions -fomit-frame-pointer \
-                        -m68020-40 -DASM_68K -DLURK"
-          if [ "$HAVE_OGR" = "1" ]; then
-            TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_OGR_CORES"
-          fi
-        TARGET_LDFLAGS="-static"
-        TARGET_ASFLAGS="$OPTS_GAS"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-m68k-elf"
-        add_sources "netbsd" "68k"
-        ;;
-
-    *netbsd-vax)                # [snake]
-        TARGET_CC="g++"
-        generate_gcc_opts "vax" "netbsd"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-ltermcap"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="netbsd-vax"
-        add_sources "netbsd" "vax"
-        ;;
-
-    *linux-hppa32)              # [friedbait]  fb@baiti.net,patch+rc5@zabbadoz.net
-        TARGET_AS="gcc -c"
+    *solaris-amd64)             # gcc
         TARGET_CC="gcc"
-        generate_gcc_opts "hppa" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LIBS=""
+        TARGET_NASM="yasm"
+        TARGET_NASM_FMT="elf64"
+        generate_gcc_opts "amd64" "solaris"
+        TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
+        TARGET_LDFLAGS="-m64"
+        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
         TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="linux-hppa32"
-        add_sources "linux" "hppa"
+        TARGET_TARBALL="solaris10-amd64"
+        add_sources "solaris" "amd64"
         ;;
-    *linux-hppa32-static)       # [friedbait]  fb@baiti.net,patch+rc5@zabbadoz.net
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "hppa" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC"
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS=""
+
+    *solaris-amd64-suncc)       # sun cc
+        TARGET_CC="sunCC"
+        OPTS_CC_SOLARIS="-fast -m64 -DASM_AMD64"
+        TARGET_CCFLAGS="$OPTS_CC_SOLARIS -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
+        TARGET_LDFLAGS="-m64"
+        TARGET_LIBS="-ldl -lc -lmp -lnsl -lsocket -lpthread"
         TARGET_DOCFILES="docs/readme._ix"
-        TARGET_TARBALL="linux-hppa32-static"
-        add_sources "linux" "hppa"
+        TARGET_TARBALL="solaris10-amd64"
+        add_sources "solaris" "amd64"
         ;;
 
-    *linux-s390)                # [pstadt] 31 Bit Linux on G5/G6 or older
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
-        TARGET_LIBS="-lpthread -lrt"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390"
-        add_sources "linux" "s390"
-        ;;
-
-    *linux-s390-static)         # [pstadt] 31 Bit Linux on G5/G6 or older
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-lpthread -lrt"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390-static"
-        add_sources "linux" "s390"
-        ;;
-
-    *linux-s390-z)              # [pstadt] 31 Bit Linux on z/Architecture
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame -DHAVE_POSIX_THREADS"
-        TARGET_LIBS="-lpthread -lrt"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390-z"
-        add_sources "linux" "s390"
-        ;;
-
-    *linux-s390-z-static)       # [pstadt] 31 Bit Linux on z/Architecture
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "s390" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DS390_Z_ARCH -Wa,-Aesame -DHAVE_POSIX_THREADS"
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-lpthread -lrt"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390-z-static"
-        add_sources "linux" "s390"
-        ;;
-
-    *linux-s390x)               # [pstadt] 64 Bit Linux on z/Architecture
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "s390x" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
-        TARGET_LIBS="-lpthread -lrt"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390x"
-        add_sources "linux" "s390x"
-        ;;
-
-    *linux-s390x-static)        # [pstadt] 64 Bit Linux on z/Architecture
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "s390x" "linux"
-        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-lpthread -lrt"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
-        TARGET_TARBALL="linux-s390x-static"
-        add_sources "linux" "s390x"
-        ;;
-
-    *os390-s390)                # [friedbait]  fb@baiti.net
-        TARGET_CC="gcc"
-        TARGET_AS=""
-        generate_gcc_opts "s390" "os390"
-        TARGET_CCFLAGS="$OPTS_GCC -D_ALL_SOURCE" #-D__STRING_CODE_SET__="ISO8859-1"
-        TARGET_ADDASMS=""
-        TARGET_LIBS="$SOCKS_LIBS"
-        TARGET_DOCFILES="docs/readme.os390"   #platform specific docfile
-        TARGET_TARBALL="os390-s390"
-        add_sources "os390" "s390"
-        ;;
-
-    *beos-x86)
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "x86" "beos"
-        TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar"
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-lnet"
-        TARGET_TARBALL="beos-x86"
-        TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
-        add_sources "beos" "x86"
-        ;;
-
-    *beos-ppc)
-        TARGET_AS="mwcc -c"
-        TARGET_CC="mwcc"
-        TARGET_CCFLAGS="$OPTS_MWCC_PPC604"
-        TARGET_STRIP="touch"
-        TARGET_LIBS="-lnet"
-        TARGET_TARBALL="beos-ppc"
-        TARGET_DOCFILES="docs/readme.beos"   #platform specific docfile
-        add_sources "beos" "ppc"
-        ;;
-
-    *haiku-x86)
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        TARGET_NASM="nasm"
-        generate_gcc_opts "x86" "haiku"
-        TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar"
-        TARGET_LDFLAGS="-static"
-        TARGET_LIBS="-lnetwork"
-        TARGET_TARBALL="haiku-x86"
-        TARGET_DOCFILES="docs/readme.haiku"   #platform specific docfile
-        add_sources "haiku" "x86"
-        ;;
-
-####### OS/2 (x86, emx)
-
-    *os2-x86)                   # [pfeffi] <pfeffi@distributed.net>
-        # don't need this, have GNU basename installed ;-)
-        # basename ()
-        # {
-        # export parm=$1
-        # ksh -c 'echo ${parm##*/}'
-        # }
-        TARGET_AS="gcc -c"
-        TARGET_CC="gcc"
-        generate_gcc_opts "x86" "os2"
-        TARGET_CCFLAGS="-Zmt -pipe $OPTS_GCC -fexceptions -pedantic -Wno-long-long -I. -I${C_INCLUDE_PATH}"
-        TARGET_LDFLAGS="-Zmt"
-        TARGET_NASM_FMT="aout"
-        TARGET_STRIP="emxbind -s"
-        TARGET_ARCTYPE="zip"
-        TARGET_NASM="nasm.exe"
-        TARGET_LIBS="-lsocket -lvideo"
-        TARGET_DOCFILES="docs/readme.os2"   #platform specific docfile
-        TARGET_TARBALL="os2-x86-emx"
-        TARGET_BINNAME_SUFFIX=".exe"
-        TARGET_GENMAN=                               #no manpage
-        TARGET_USES_GNUMAKE="yes"
-        add_sources "os2" "x86"
-        ;;
-
-###### AmigaOS (m68k, PPC)
-    *amigaos-m68k)              # [oliver] <oliver@futaura.co.uk>
-        TARGET_AS="plat/amigaos/tools/genam_wrapper"
-        TARGET_CC="g++"
-        generate_gcc_opts "68k" "amigaos"
-        TARGET_CCFLAGS="$OPTS_GCC -m68000 -fpermissive -I./ -I./plat/amigaos/guilib \
-                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -DDYN_TIMESLICE -Wno-unknown-pragmas"
-        TARGET_LDFLAGS="-noixemul"
-        TARGET_ASFLAGS="$OPTS_GAS"
-        TARGET_ADDOBJS="/gg/lib/libnix/swapstack.o"
-        TARGET_TARBALL="amigaos-68k"
-        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_BINNAME_SUFFIX="_68k"
-        TARGET_GENMAN=
-        TARGET_ARCTYPE="amigaosgui"
-        TARGET_MAKEARC="68k ${TARGET_BINNAME}_68k"
-        add_sources "amigaos" "68k"
-        ;;
-
-    *amigaos-ppc)               # [oliver] <oliver@futaura.co.uk>
-        TARGET_AS="ppc-amigaos-gas"
-        TARGET_CC="ppc-amigaos-g++"
-        generate_gcc_opts "ppc" "amigaos"
-        TARGET_CCFLAGS="$OPTS_GCC -I./ -I./plat/amigaos/guilib -mcrt=clib2-ts \
-                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -DDYN_TIMESLICE -D__USE_INLINE__ -mvrsave"
-        TARGET_LDFLAGS="-mcrt=clib2-ts"
-        TARGET_TARBALL="amigaos-ppc"
-        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="ppc-amigaos-strip --strip-unneeded-rel-relocs -R.comment -R.eh_frame -R.gnu.attributes"
-        TARGET_GENMAN=
-        TARGET_ARCTYPE="amigaosgui"
-        TARGET_MAKEARC="os4 ${TARGET_BINNAME}"
-        add_sources "amigaos" "ppc" "altivec"
-        ;;
-
-    *amigaos-ppc-wos)           # [oliver] <oliver@futaura.co.uk>
-        TARGET_AS="ppc-amigaos-gas"
-        TARGET_CC="ppc-amigaos-g++"
-        TARGET_ASFLAGS="-m603"
-        generate_gcc_opts "ppc603e" "amigaos"
-        TARGET_CCFLAGS="$OPTS_GCC -mmultiple -mstring -I./ -I./plat/amigaos/guilib \
-                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -DDYN_TIMESLICE"
-        TARGET_TARBALL="amigaos-ppc-wos"
-        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="touch"
-        TARGET_BINNAME_SUFFIX="_ppc"
-        TARGET_GENMAN=
-        TARGET_ARCTYPE="amigaosgui"
-        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_wos"
-        add_sources "amigaos" "ppc"
-        ;;
-
-    *amigaos-ppc-pup)           # [oliver] <oliver@futaura.co.uk>
-        TARGET_AS="ppc-amigaos-gas"
-        TARGET_CC="ppc-amigaos-g++"
-        TARGET_ASFLAGS="-m603"
-        generate_gcc_opts "ppc603e" "amigaos"
-        TARGET_CCFLAGS="$OPTS_GCC -pup -D__POWERUP__ -mmultiple -mstring \
-                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -I./ -I./plat/amigaos/guilib -DDYN_TIMESLICE"
-        TARGET_LDFLAGS="-pup"
-        TARGET_TARBALL="amigaos-ppc-pup"
-        TARGET_DOCFILES="docs/readme.amiga"   #platform specific docfile
-        TARGET_STRIP="plat/amigaos/tools/strip_pup"
-        TARGET_BINNAME_SUFFIX="_ppc"
-        TARGET_GENMAN=
-        TARGET_ARCTYPE="amigaosgui"
-        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_pup"
-        add_sources "amigaos" "ppc"
-        ;;
-
-    *morphos-ppc)               # [piru] <sintonen@iki.fi>
-        TARGET_AS="ppc-rom-as -maltivec"
-        TARGET_CC="ppc-morphos-g++ -noixemul"
-        generate_gcc_opts "ppc" "morphos"
-        TARGET_CCFLAGS="-xc++ $OPTS_GCC -DNO_MIAMI -mmultiple -mstring \
-                        -D__AMIGADATE__=\`plat/amigaos/tools/amigadate\` \
-                        -I./ -I./plat/amigaos/guilib/morphos/ -DDYN_TIMESLICE"
-        TARGET_LDFLAGS=""
-        TARGET_TARBALL="morphos-ppc"
-        TARGET_DOCFILES="docs/readme.morphos"   #platform specific docfile
-        TARGET_STRIP="ppc-morphos-strip --remove-section .comment"
-        TARGET_BINNAME_SUFFIX=
-        TARGET_GENMAN=
-        TARGET_ARCTYPE="amigaosgui"
-        TARGET_MAKEARC="ppc ${TARGET_BINNAME}_mos"
-        add_sources "morphos" "ppc" "altivec"
-        SHELL="/bin/sh" # workaround for pkdsh missing SHELL var
-        ;;
-
-###### CUDA
+# CUDA *****************************************************************
 
     *linux-cuda*)               # use -cuda20 or -cuda21 to specify CUDA version
 	TARGET_CUDA_VERSION="6.0" # default
@@ -3417,7 +3417,7 @@ case "$1" in
         add_sources "macosx" "cuda"
         ;;
 
-###### ATI Stream
+# ATI Stream **************************************************************
 
     *linux-stream*)               
         infer_arch_and_version "Linux"
@@ -3435,7 +3435,7 @@ case "$1" in
         add_sources "linux" "stream"
         ;;
 
-###### OpenCL
+# OpenCL ***************************************************************
 
     *linux-amd64-opencl)        # [khanna] 
         infer_arch_and_version "Linux"
@@ -3483,7 +3483,8 @@ case "$1" in
         add_sources "freebsd" "opencl"
         ;;
 
-###### Wildcards
+# Wildcards ************************************************************
+
     *freebsd*)                  # FreeBSD (autoselect version and arch)
                                 # FreeBSD x86-elf, bovine, snake
                                 # FreeBSD x86-aout 2.x, snake (experimental)
@@ -3536,7 +3537,8 @@ case "$1" in
         ;;
 
 
-###### Unknown
+# Unknown **************************************************************
+
     *list)
         egrep "^[ ]*\*" $0 | grep -v internal | more
         echo ""
