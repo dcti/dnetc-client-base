@@ -114,6 +114,12 @@ extern "C" s32 rc5_72_unit_func_ocl_ref (RC5_72UnitWork *rc5_72unitwork, u32 *it
 extern "C" s32 rc5_72_unit_func_ocl_1pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_ocl_2pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_1pipe_large (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_2pipe_large (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_4pipe_large (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_1pipe_sleep (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_2pipe_sleep (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_4pipe_sleep (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #elif (CLIENT_CPU == CPU_ARM64)
 extern "C" s32 rc5_72_unit_func_scalarfusion(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
@@ -240,6 +246,12 @@ const char **corenames_for_contest_rc572()
       "CL 1-pipe",
       "CL 2-pipe",
       "CL 4-pipe",
+      "CL 1-pipe large",
+      "CL 2-pipe large",
+      "CL 4-pipe large",
+      "CL 1-pipe sleep",
+      "CL 2-pipe sleep",
+      "CL 4-pipe sleep",
   #else
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -1024,6 +1036,30 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
         break;
       case 3:
         unit_func.gen_72 = rc5_72_unit_func_ocl_4pipe;
+        pipeline_count = 4;
+        break;
+      case 4:
+        unit_func.gen_72 = rc5_72_unit_func_ocl_1pipe_large;
+        pipeline_count = 1;
+        break;
+      case 5:
+        unit_func.gen_72 = rc5_72_unit_func_ocl_2pipe_large;
+        pipeline_count = 2;
+        break;
+      case 6:
+        unit_func.gen_72 = rc5_72_unit_func_ocl_4pipe_large;
+        pipeline_count = 4;
+        break;
+      case 7:
+        unit_func.gen_72 = rc5_72_unit_func_ocl_1pipe_sleep;
+        pipeline_count = 1;
+        break;
+      case 8:
+        unit_func.gen_72 = rc5_72_unit_func_ocl_2pipe_sleep;
+        pipeline_count = 2;
+        break;
+      case 9:
+        unit_func.gen_72 = rc5_72_unit_func_ocl_4pipe_sleep;
         pipeline_count = 4;
         break;
 

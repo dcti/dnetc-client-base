@@ -6,10 +6,15 @@
 * $Id:
 */
 
+#ifndef ANOTHER_PASS
+
 #include "ocl_common.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define __SLEEP_FOR_POLLING__
+#include "sleepdef.h"
 
 #include "rc5-1pipe.cpp"
 #include "rc5-2pipe.cpp"
@@ -273,6 +278,12 @@ static bool selftest(ocl_context_t *cont)
 extern "C" s32 rc5_72_unit_func_ocl_1pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_ocl_2pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_1pipe_large (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_2pipe_large (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_4pipe_large (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_1pipe_sleep (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_2pipe_sleep (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_ocl_4pipe_sleep (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
 
 /* some static flags which are set on per-core basis */
@@ -282,7 +293,29 @@ struct core_static_flags
   bool profilingErr;
 };
 
-static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations,
+#define FLOAT_INTERNAL_HELPER(x) x##.
+#define FLOAT_HELPER(x) FLOAT_INTERNAL_HELPER(x)
+#define MIN_DESIRED_UNIT_MS 8.
+#define MAX_DESIRED_UNIT_MS_INT 12
+#define MAX_DESIRED_UNIT_MS FLOAT_HELPER(MAX_DESIRED_UNIT_MS_INT)
+#define MAX_SLEEP_MKS (2 * (1000 * MAX_DESIRED_UNIT_MS_INT * SCALING_RATIO))
+#define MIN_SLEEP_MKS 1000
+
+#endif /* ANOTHER_PASS */
+
+#ifndef SCALING_RATIO
+#define SCALING_RATIO 1
+#endif /* SCALING_RATIO */
+
+static s32
+#if defined(USE_SLEEP)
+rc5_72_unit_func_ocl_npipe_sleep
+#elif SCALING_RATIO > 1
+rc5_72_unit_func_ocl_npipe_large
+#else
+rc5_72_unit_func_ocl_npipe
+#endif
+(RC5_72UnitWork *rc5_72unitwork, u32 *iterations,
                                       unsigned core_ID, unsigned pipes_count,
                                       const char *core_program, const char *program_entry,
                                       struct core_static_flags *static_flags)
@@ -368,6 +401,28 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
       return -1;          //err
     }
 
+#ifdef USE_SLEEP
+    /* Sleep is useless w/o flush. */
+    status = clFlush(cont->cmdQueue);
+    if (ocl_diagnose(status, "flushing work", cont) != CL_SUCCESS)
+    {
+      RaiseExitRequestTrigger();
+      return -1;          //err
+    }
+
+    unsigned sleepTimeMks;
+    if (cont->estimatedPerf) {
+      sleepTimeMks = (unsigned)(1000000ULL * rest0 / cont->estimatedPerf);
+      if (sleepTimeMks > MAX_SLEEP_MKS)
+        sleepTimeMks = MAX_SLEEP_MKS;
+      else if (sleepTimeMks < MIN_SLEEP_MKS)
+        sleepTimeMks = MIN_SLEEP_MKS;
+    } else
+      sleepTimeMks = MIN_SLEEP_MKS;
+
+    usleep(sleepTimeMks);
+#endif /* USE_SLEEP */
+
     // wait for the kernel call to finish execution
     status = clWaitForEvents(1, &ndrEvt);
     if (ocl_diagnose(status, "waiting for event", cont) != CL_SUCCESS)
@@ -404,7 +459,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
       d = 10;
     }
 
-    if (d > 12.)
+    if (d > MAX_DESIRED_UNIT_MS * SCALING_RATIO)
     {
       //Decrease worksize by 5%
       u32 diffm = cont->runSize / 20 / cont->runSizeMultiplier;
@@ -414,7 +469,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
         cont->runSize -= diffm*cont->runSizeMultiplier;
       //Log("Down:Time: %f, runsize=%u\n", float(d), cont->runSize);
     } else
-    if ((d < 8.) && (rest0 == cont->runSize))
+    if ((d < MIN_DESIRED_UNIT_MS * SCALING_RATIO) && (rest0 == cont->runSize))
     {
       u32 diffm = cont->runSize / 20 / cont->runSizeMultiplier;
       if (diffm == 0)
@@ -423,6 +478,8 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
         cont->runSize += diffm*cont->runSizeMultiplier;
       //Log("Up:Time: %f, runsize=%u, diff=%u\n", float(d), cont->runSize, diffm*cont->runSizeMultiplier);
     }
+
+    cont->estimatedPerf = (unsigned long long)(rest0 / (d / 1000));
 
     key_incr(&tmp_unit.L0.hi, &tmp_unit.L0.mid, &tmp_unit.L0.lo, rest0 * pipes_count);
     iter_offset += rest0 * pipes_count;
@@ -488,6 +545,19 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
   return RESULT_NOTHING;
 }
 
+#ifndef ANOTHER_PASS
+
+#define ANOTHER_PASS
+
+#undef SCALING_RATIO
+#define SCALING_RATIO 100 /* Higher performance, especially with USE_SLEEP. */
+
+#include "ocl_1pipe.cpp"
+
+#define USE_SLEEP /* Required for low CPU usage on some hardware/drivers. */
+
+#include "ocl_1pipe.cpp"
+
 s32 rc5_72_unit_func_ocl_1pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
 {
   static struct core_static_flags flags;
@@ -508,3 +578,46 @@ s32 rc5_72_unit_func_ocl_4pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, 
 
   return rc5_72_unit_func_ocl_npipe(rc5_72unitwork, iterations, CORE_4PIPE, 4, ocl_rc572_4pipe_src, "ocl_rc572_4pipe", &flags);
 }
+
+s32 rc5_72_unit_func_ocl_1pipe_large(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe_large(rc5_72unitwork, iterations, CORE_1PIPE, 1, ocl_rc572_1pipe_src, "ocl_rc572_1pipe", &flags);
+}
+
+s32 rc5_72_unit_func_ocl_2pipe_large(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe_large(rc5_72unitwork, iterations, CORE_2PIPE, 2, ocl_rc572_2pipe_src, "ocl_rc572_2pipe", &flags);
+}
+
+s32 rc5_72_unit_func_ocl_4pipe_large(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe_large(rc5_72unitwork, iterations, CORE_4PIPE, 4, ocl_rc572_4pipe_src, "ocl_rc572_4pipe", &flags);
+}
+
+s32 rc5_72_unit_func_ocl_1pipe_sleep(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe_sleep(rc5_72unitwork, iterations, CORE_1PIPE, 1, ocl_rc572_1pipe_src, "ocl_rc572_1pipe", &flags);
+}
+
+s32 rc5_72_unit_func_ocl_2pipe_sleep(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe_sleep(rc5_72unitwork, iterations, CORE_2PIPE, 2, ocl_rc572_2pipe_src, "ocl_rc572_2pipe", &flags);
+}
+
+s32 rc5_72_unit_func_ocl_4pipe_sleep(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *)
+{
+  static struct core_static_flags flags;
+
+  return rc5_72_unit_func_ocl_npipe_sleep(rc5_72unitwork, iterations, CORE_4PIPE, 4, ocl_rc572_4pipe_src, "ocl_rc572_4pipe", &flags);
+}
+#endif /* ANOTHER_PASS */
