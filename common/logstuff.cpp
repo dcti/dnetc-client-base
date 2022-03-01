@@ -493,7 +493,7 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 // a (va_list *) instead to avoid this problem
 void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
 {
-  char msgbuffer[1024]; //min 1024!!, but also think of other OSs stack!!
+  char msgbuffer[32000]; //min 1024!!, but also think of other OSs stack!!
   unsigned int msglen = 0, sel;
   char *buffptr, *obuffptr;
   int old_loggingTo = loggingTo;
