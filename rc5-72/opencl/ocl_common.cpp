@@ -244,7 +244,6 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
   }
   if (ocl_diagnose(status, "building cl program", cont) != CL_SUCCESS)
   {
-    //static char buf[0x10001]={0};
     size_t log_size;
 
     clGetProgramBuildInfo( cont->program,
@@ -254,7 +253,12 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
                            NULL,
                            &log_size );
 
-    char *buf = (char *) malloc(log_size);
+    Log("Build log returned %ld bytes\n", (long)log_size);
+    char *buf = (char *) malloc(log_size + 1);
+    if (!buf) {
+      LogRaw("Unable to print build log (not enough memory)\n");
+      return false;
+    }
     clGetProgramBuildInfo( cont->program,
                            cont->deviceID,
                            CL_PROGRAM_BUILD_LOG,
@@ -262,10 +266,10 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
                            buf,
                            NULL );
     
-    buf[log_size - 1] = '\0';
-    Log("Build log returned %ld bytes\n", (long)log_size);
+    buf[log_size - 1] = '\n';
+    buf[log_size] = '\0';
     LogRaw("Build Log:\n");
-    LogRaw("%s\n", buf);
+    LogRawString(buf);
    
     free(buf);
 
