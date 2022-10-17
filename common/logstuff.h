@@ -50,6 +50,9 @@ extern void LogScreenRaw( const char *format, ... ) __CHKFMT_PRINTF;
 //Log to mail+file+screen. No adjustments.
 extern void LogRaw( const char *format, ... ) __CHKFMT_PRINTF;
 
+//Log to mail+file+screen. No adjustments. Supports very long strings but not formatting.
+extern void LogRawString( const char *str );
+
 //Log to LOGTO_* flags (RAW implies screen)
 extern void LogTo( int towhat, const char *format, ... ) __CHKFMT_LOGTO;
 
