@@ -239,8 +239,11 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
   free(decompressed_src);
   if (status == CL_SUCCESS)
   {
-    //status = clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL);
     status = clBuildProgram(cont->program, 1, &cont->deviceID, "-cl-std=CL1.1", NULL, NULL);
+    //"-cl-std=CL1.1" does not work for some devices (e. g. Intel Xe Graphics family)
+    if (CL_BUILD_PROGRAM_FAILURE == status) {
+      status = clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL);
+    }
   }
   if (ocl_diagnose(status, "building cl program", cont) != CL_SUCCESS)
   {
