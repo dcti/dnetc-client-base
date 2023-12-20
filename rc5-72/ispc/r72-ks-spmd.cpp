@@ -15,8 +15,8 @@ extern "C" s32 CDECL rc5_72_unit_func_ispc_16 ( RC5_72UnitWork *, u32 *, void * 
 s32 CDECL rc5_72_unit_func_ispc_16 (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void * /*memblk*/)
 {
   u32 kiter = *iterations/16;
-  uint32_t *bufferA = (uint32_t *)malloc(sizeof(uint32_t) * 16);
-  uint32_t *bufferB = (uint32_t *)malloc(sizeof(uint32_t) * 16);
+  uint32_t bufferA[16];
+  uint32_t bufferB[16];
   while (kiter--)
   {
     ispc::rc5_16pipe(rc5_72unitwork->L0.hi, rc5_72unitwork->L0.mid, rc5_72unitwork->L0.lo, rc5_72unitwork->plain.hi, rc5_72unitwork->plain.lo, 0, bufferA, bufferB);
