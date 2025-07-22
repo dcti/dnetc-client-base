@@ -527,6 +527,17 @@ add_sources() # $1=os, $2=arch, $3=custom
       TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-32.cpp"
     fi
   #-----------------------------------------------------------------
+  elif [ "$2" = "riscv" ]; then
+    if [ "$HAVE_RC5_72" = "1"]; then
+      DEFAULT_RC5_72="1"
+    fi # HAVE_RC5_72    
+
+    if [ "$HAVE_OGR" = "1" ]; then
+      DEFAULT_OGRNG="0"
+      #TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ppc/ogrng-ppc.cpp"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS $OGRNG_GENERAL_SRCS $OGR/ansi/ogrng-32.cpp"
+    fi
+  #-----------------------------------------------------------------
   elif [ "$2" = "arm64" ]; then
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="1"
@@ -966,7 +977,7 @@ gcc_get_ver() {
     #gcc_v="gcc version 3.3 20030304 (Apple Computer, Inc. build 1495)"
     #gcc_v="gcc version 4.0.1 (Apple Computer, Inc. build 5247)"
     #gcc_v="gcc-Version 4.3.2 (Ubuntu 4.3.2-1ubuntu11)"
-
+    
     gccver_line=`echo $gcc_v|tail -1|tr '-' ' '`
     #echo "gccver_line=#$gccver_line#"
     lastwas=""
@@ -1676,7 +1687,7 @@ case "$1" in
         add_sources "linux" "arm64"
         ;;
 
-    *linux-ppc64)             # [sunset mikereed] 
+    *linux-ppc64)               # [sunset mikereed] 
         TARGET_CC="g++"             
         TARGET_AS="gcc -c"
         TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
@@ -1684,6 +1695,16 @@ case "$1" in
         TARGET_TARBALL="linux-ppc64"
         TARGET_DOCFILES="docs/readme._ix"
         add_sources "linux" "ppc64"
+        ;;
+	
+    *linux-riscv)               # [jka] 
+        TARGET_CC="g++"             
+        TARGET_AS="gcc -c"
+        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
+        TARGET_LIBS="-lpthread -lrt"
+        TARGET_TARBALL="linux-riscv"
+        TARGET_DOCFILES="docs/readme._ix"
+        add_sources "linux" "riscv"
         ;;
 	
     *linux-arm-elf_single)      # [teichp]

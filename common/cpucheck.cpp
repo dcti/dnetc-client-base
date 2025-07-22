@@ -204,6 +204,7 @@ int GetNumberOfDetectedProcessors( void )
           #if (CLIENT_CPU == CPU_X86      || \
                CLIENT_CPU == CPU_AMD64    || \
                CLIENT_CPU == CPU_POWERPC  || \
+               CLIENT_CPU == CPU_RISCV    || \
                CLIENT_CPU == CPU_S390     || \
                CLIENT_CPU == CPU_S390X    || \
                CLIENT_CPU == CPU_PA_RISC)

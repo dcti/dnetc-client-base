@@ -42,6 +42,7 @@
 #define CPU_OPENCL      21
 #define CPU_ARM64       22
 #define CPU_PPC64       23
+#define CPU_RISCV       24
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -200,10 +201,12 @@
     #define CLIENT_CPU     CPU_IA64
   #elif defined(__arm64__) || defined(__aarch64__)
     #define CLIENT_CPU     CPU_ARM64
- #elif defined(__ppc64__) || defined(__PPC64__)
+  #elif defined(__ppc64__) || defined(__PPC64__)
     #define CLIENT_CPU     CPU_PPC64   
-#elif defined(ARM) || defined(__arm__)
+  #elif defined(ARM) || defined(__arm__)
     #define CLIENT_CPU     CPU_ARM
+  #elif defined(__riscv)
+    #define CLIENT_CPU     CPU_RISCV
   #elif defined(ASM_SPARC) || defined(__sparc__)
     #define CLIENT_CPU     CPU_SPARC
   #elif defined(__PPU__) || defined(__SPU__)
@@ -615,6 +618,7 @@
      (CLIENT_CPU == CPU_POWER) || (CLIENT_CPU == CPU_POWERPC) || \
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
+     (CLIENT_CPU == CPU_RISCV) ||				     \
      (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || \
      ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_WIN32) || \
      (CLIENT_OS == OS_DEC_UNIX))))
