@@ -86,8 +86,7 @@ static unsigned int __problem_counter = 0;
 */
 
 /* ------------------------------------------------------------------- */
-
-#if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
+#if (SIZEOF_LONG == 8 || (CLIENT_OS == OS_WIN64 && CLIENT_CPU == CPU_OPENCL))  /* SIZEOF_LONG is defined in cputypes.h */
 # include "pack8.h"
 #else
 # include "pack4.h"
