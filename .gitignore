@@ -10,6 +10,10 @@ dnetc*.tar.gz
 dnetc*.zip
 dnetc*.lha
 dnetc*.library
+dnetc.exe
+dnetc.com
+dnetc.map
+dnetc.scr
 
 dnetc.ini
 buff-in.*

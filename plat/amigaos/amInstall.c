@@ -38,6 +38,9 @@
   #else
     #define CLIENTSTACKSIZE 200000
   #endif
+  #if defined(__amigaos4__)
+    #define CurrentDir(dir) SetCurrentDir(dir)
+  #endif
 #endif
 
 int amigaInstall(int quiet, const char *progname)

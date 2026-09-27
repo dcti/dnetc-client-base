@@ -34,6 +34,7 @@
   #define CPU_F_AVX_DISABLED    (0x00800000L)   /* supported but disabled (no OS support) */
   #define CPU_F_AVX             (0x01000000L)   /* supported and enabled */
   #define CPU_F_AVX2            (0x02000000L)   /* supported and enabled */
+  #define CPU_F_AVX512          (0x04000000L)   /* F+CD supported and enabled */
 
 // "core hint": ability to override core selection for some CPUs in the family
   #define CH_R72_X86_GO2B       (0x00000001L)
