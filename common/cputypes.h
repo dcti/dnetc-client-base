@@ -106,7 +106,9 @@
 #if defined(_WIN64)
   #define CLIENT_OS        OS_WIN64
   #define CLIENT_OS_NAME   "Win64"
-  #if defined(_M_AMD64)
+  #if defined(OPENCL)
+    #define CLIENT_CPU     CPU_OPENCL
+  #elif defined(_M_AMD64)
     #define CLIENT_CPU     CPU_AMD64
   #elif defined(_M_IA64)
     #define CLIENT_CPU     CPU_IA64
@@ -223,7 +225,9 @@
   #endif
   #define CLIENT_OS_NAME   "FreeBSD"
   #define CLIENT_OS        OS_FREEBSD
-  #if defined(__i386__) || defined(ASM_X86)
+  #if defined(OPENCL)
+    #define CLIENT_CPU     CPU_OPENCL
+  #elif defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
   #elif defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_CPU     CPU_ALPHA

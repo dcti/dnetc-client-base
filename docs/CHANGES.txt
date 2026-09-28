@@ -29,7 +29,17 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 2.9100
 ------
 
+2.9116.525  new: amd64: added KS-SPMD AVX512 core
+            imp: x86/amd64: CPU detection/selection
+                 (#4637,#4653,#4656,#4668,#4684,#4699)
+
+2.9115.524  new: arm64: replaced ScalarFusion with MONIKA SIMD core
+
 2.9114.523  imp: arm64: improved ScalarFusion performance
+            fix: amigaos: thread startup no longer relies on peeking inside
+                 non-user fields in internal DOS structures
+            imp: amigaos: replaced calls to deprecated OS4 routines
+            new: amigaos: added resethandler, client will quit before reset
 
 2.9113.522  new: arm64: RC5-72 ScalarFusion core
 
@@ -777,7 +787,7 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
             chg: all: auto keyserver name resolution now allows as many
                  retries as there are addresses for a name.
             rel: Mon, 15 Nov 1999 18:19:51 -0600
-                 http://lists.distributed.net/hypermail/announce/0075.html
+                 http://lists.distributed.net/pipermail/announce/1999/000073.html
 
 2.7100
 ------
@@ -959,7 +969,7 @@ Version change log: $Id: CHANGES.txt,v 1.133 2016/02/01 16:09:10 ertyu Exp $
 2.7100.412  chg: Buffer path problem and buffer truncation issue addressed
 2.7100.412  fix: win32GUI autolaunches in minimized state correctly now
 2.7100.412  rel: Sat, 27 Jun 1998 17:09:24 -0500 (CDT)
-                 http://lists.distributed.net/hypermail/announce/0049.html
+                 http://lists.distributed.net/pipermail/announce/1998/000047.html
 
 2.7000
 ------

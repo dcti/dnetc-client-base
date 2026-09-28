@@ -2063,7 +2063,7 @@ LRESULT CALLBACK __w16AboutBox( HWND dialog, UINT msg, WPARAM wParam, LPARAM lPa
         {
           SelectObject( hDC, dd->hBGBrush );
 #ifdef DWLP_MSGRESULT
-          SetWindowLongPtr(dialog, DWLP_MSGRESULT, (LONG)dd->hBGBrush );
+          SetWindowLongPtr(dialog, DWLP_MSGRESULT, (LONG_PTR)dd->hBGBrush );
 #else
           SetWindowLong(dialog, DWL_MSGRESULT, (LONG)dd->hBGBrush );
 #endif
@@ -2465,7 +2465,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
       if (dd)
       {
 #ifdef DWLP_USER
-        SetWindowLongPtr(dialog, DWLP_USER, (LONG)dd);
+        SetWindowLongPtr(dialog, DWLP_USER, (LONG_PTR)dd);
         if (dd != ((struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER)))
 #else
         SetWindowLong(dialog, DWL_USER, (LONG)dd);

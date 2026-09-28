@@ -28,7 +28,7 @@
     with '-help' or '--help'.
 
     A complete step-by-step guide to running your first client is 
-    available at: http://www.distributed.net/docs/tutor_clients.php
+    available at: https://www.distributed.net/Docs_tutor_client
 
  2.0  Notes: ---------------------------------------------------------
 
@@ -69,7 +69,7 @@
     operation. 'host' is usually found in a package called 'bind-utils'.
     
     In case you get an error message similar to
-            Net::failed to resolve name "us.v27.distributed.net"
+            Net::failed to resolve name "us.v29.distributed.net"
             ENOENT: no entry for requested name
     please check, whether the 'host' command is installed and in your path.
     

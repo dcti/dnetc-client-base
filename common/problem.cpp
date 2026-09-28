@@ -86,8 +86,7 @@ static unsigned int __problem_counter = 0;
 */
 
 /* ------------------------------------------------------------------- */
-
-#if (SIZEOF_LONG == 8)  /* SIZEOF_LONG is defined in cputypes.h */
+#if (SIZEOF_LONG == 8 || (CLIENT_OS == OS_WIN64 && CLIENT_CPU == CPU_OPENCL))  /* SIZEOF_LONG is defined in cputypes.h */
 # include "pack8.h"
 #else
 # include "pack4.h"
@@ -494,7 +493,7 @@ static int __gen_benchmark_work(unsigned int contestid, ContestWork * work)
 /* ------------------------------------------------------------------- */
 
 #ifdef HAVE_RC5_72_CORES
-static unsigned rc5_72_random_subspace = 1340;
+static unsigned rc5_72_random_subspace = 1343;
 #endif
 
 /*

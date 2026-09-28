@@ -53,6 +53,8 @@ union PageInfos {
 
 /* 0x00000007/ECX=0:EBX */
 #define X86_07_00_EBX_AVX2 (1 << 5)
+#define X86_HAS_AVX512F    (1 << 16)
+#define X86_HAS_AVX512CD   (1 << 28)
 
 /* 0x80000001:ECX */
 #define X86_HAS_LZCNT     (1 <<  5)
@@ -572,10 +574,16 @@ static u32 x86GetAmdId(u32 maxfunc)
         brandid = AMDM18_APU;
       }
       else if (family == 20) {
-        brandid = AMDM20_APU;
+        brandid = AMDM20_BOBCAT;
       }
       else if (family == 21) {
         brandid = AMDM21_FX;
+      }
+      else if (family == 22) {
+        brandid = AMDM22_JAGUAR;
+      }
+      else if (family == 23) {
+        brandid = AMDM23_ZEN;
       }
       /* Otherwise we don't know much yet, so we'd better don't touch */
     }
@@ -836,6 +844,13 @@ u32 x86GetFeatures(void)
             x86cpuid(0x00000007, &infos);
             if (infos.regs.ebx & X86_07_00_EBX_AVX2) {
               features |= CPU_F_AVX2;
+            }
+	    /* Check for AVX512 */
+	    /* we declare it supported if it has just F and CD sub features */
+            if (infos.regs.ebx & X86_HAS_AVX512F) {
+              if (infos.regs.ebx & X86_HAS_AVX512CD) {
+                features |= CPU_F_AVX512;
+              }
             }
           }
         }

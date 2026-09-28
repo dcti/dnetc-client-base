@@ -1,12 +1,12 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2019 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  *
  * ------------------------------------------------------
- * Pardon, oh, pardon, that my sould should make
+ * Pardon, oh, pardon, that my soul should make
  * Of all the strong divineness which I know
  * For thine and thee, an image only so
  * Formed of the sand, and fit to shift and break.
@@ -50,7 +50,7 @@ return "@(#)$Id: logstuff.cpp,v 1.62 2011/12/31 20:32:22 snikkel Exp $"; }
 #define LOGFILETYPE_ROTATE  4 //then logLimit is in days
 #endif
 
-#undef ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
+#define ASSERT_WIDTH_80     //show where badly formatted lines are cropping up
 #define ASSUMED_SCREEN_WIDTH 80 //... until all platforms support ConGetSize()
 // ========================================================================
 
@@ -493,12 +493,19 @@ static void InternalLogMail( const char *msgbuffer, unsigned int msglen, int /*f
 // a (va_list *) instead to avoid this problem
 void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
 {
-  char msgbuffer[1024]; //min 1024!!, but also think of other OSs stack!!
+  int scrwidth = ASSUMED_SCREEN_WIDTH; /* assume this for consistency */
+  ConGetSize(&scrwidth,NULL); /* sets to 80 or does not touch if not supported */
+
+  char fixed_msgbuffer[1024]; //min 1024!!, but also think of other OSs stack!!
+  char *msgbuffer = &fixed_msgbuffer[0];
+
+  //the code below may insert some characters
+  unsigned extra_bytes = scrwidth > 4 ? scrwidth : 4;
+
   unsigned int msglen = 0, sel;
   char *buffptr, *obuffptr;
   int old_loggingTo = loggingTo;
 
-  msgbuffer[0]=0;
   loggingTo &= (logstatics.loggingTo|LOGTO_RAWMODE);
 
   if ( !format || !*format )
@@ -506,10 +513,21 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
 
   if ( loggingTo != LOGTO_NONE )
   {
-    if ( arglist == NULL )
-      strcat( msgbuffer, format );
-    else
-      vsprintf( msgbuffer, format, *arglist );
+    if ( arglist == NULL ) {
+      const size_t len = strlen(format);
+      if (len >= sizeof(fixed_msgbuffer) - extra_bytes) {
+        msgbuffer = (char *)malloc(len + 1 + extra_bytes);
+        if (msgbuffer) {
+          memcpy(msgbuffer, format, len + 1);
+        } else {
+          msgbuffer = &fixed_msgbuffer[0];
+          memcpy(msgbuffer, format, sizeof(fixed_msgbuffer) - 1 - extra_bytes);
+          msgbuffer[sizeof(fixed_msgbuffer) - 1 - extra_bytes] = 0;
+        }
+      } else
+        memcpy(msgbuffer, format, len + 1);
+    } else
+      vsnprintf(msgbuffer, sizeof(fixed_msgbuffer) - extra_bytes, format, *arglist);
     msglen = strlen( msgbuffer );
 
     if ( msglen == 0 )
@@ -571,9 +589,6 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
 
   if (( loggingTo & LOGTO_SCREEN ) != 0)
   {
-    int scrwidth = ASSUMED_SCREEN_WIDTH; /* assume this for consistancy */
-    ConGetSize(&scrwidth,NULL); /* gets set to 80 or untouched, if not supported */
-
     #ifdef ASSERT_WIDTH_80  //"show" where badly formatted lines are cropping up
     //if (logstatics.stdoutisatty)
     {
@@ -645,6 +660,10 @@ void LogWithPointer( int loggingTo, const char *format, va_list *arglist )
     }
   }
 
+  if (msgbuffer != &fixed_msgbuffer[0]) {
+    free(msgbuffer);
+  }
+
   return;
 }
 
@@ -714,6 +733,11 @@ void LogRaw( const char *format, ... )
   LogWithPointer( LOGTO_RAWMODE | LOGAS_LOG, format, MAKE_VA_LIST_PTR(argptr));
   va_end(argptr);
   return;
+}
+
+void LogRawString( const char *str )
+{
+  LogWithPointer( LOGTO_RAWMODE | LOGAS_LOG, str, NULL);
 }
 
 void LogTo( int towhat, const char *format, ... )
