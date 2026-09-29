@@ -1,5 +1,5 @@
 /*
-* Copyright distributed.net 2009-2014 - All Rights Reserved
+* Copyright distributed.net 2009-2026 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
@@ -10,6 +10,7 @@
 #include "base64.h"
 #include <stdlib.h>
 #include <string.h>
+#include "stdio.h"
 
 //rc5-72 test
 #define P 0xB7E15163
@@ -221,6 +222,184 @@ static unsigned char* Decompress(const unsigned char *inbuf, unsigned length)
   return outbuf;
 }
 
+bool GetNVComputeCapability(cl_device_id device, int &sm_version)
+{
+  cl_uint vendor;
+
+  sm_version = 0;
+  if (clGetDeviceInfo(device, CL_DEVICE_VENDOR_ID, sizeof(vendor), &vendor, NULL) != CL_SUCCESS)
+    return false;
+  if (vendor != 0x10DE)
+    return false; // Not NVIDIA
+
+  cl_uint sm_major = 0, sm_minor = 0;
+  cl_int maj_status = clGetDeviceInfo(device, 0x4000, sizeof(sm_major), &sm_major, NULL);
+  cl_int min_status = clGetDeviceInfo(device, 0x4001, sizeof(sm_minor), &sm_minor, NULL);
+  
+  if (maj_status == CL_SUCCESS && min_status == CL_SUCCESS)
+  {
+    sm_version = (int)sm_major * 10 + (int)sm_minor;
+
+    //LogTo(LOGTO_FILE, "Queried NVIDIA SM_%d from CL_DEVICE_COMPUTE_CAPABILITY\n", sm_version);
+
+    return true;
+  }
+ 
+  //LogTo(LOGTO_FILE, "Failed to query NVIDIA SM version\n");
+
+  return false;
+}
+
+bool GetNVRegisterHint(int sm_version, int &regs_2pipe, int &regs_4pipe)
+{
+  regs_2pipe = 0;
+  regs_4pipe = 0;
+
+  if (sm_version >= 50 && sm_version <= 72) // Maxwell, Pascal, Volta
+  {
+    regs_2pipe = 80;
+    regs_4pipe = 80;
+  }
+  else if (sm_version >= 75 && sm_version <= 89) // Turing, Ampere, Ada Lovelace
+  {
+    regs_2pipe = 64;
+    regs_4pipe = 128;
+  }
+  else if (sm_version >= 90 && sm_version <= 121) // Hopper, Blackwell
+  {
+    regs_2pipe = 80;
+    regs_4pipe = 80;
+  }
+
+  if (regs_2pipe > 0 && regs_4pipe > 0)
+    return true;   
+    
+  //LogTo(LOGTO_FILE, "Failed to find NVIDIA SM_%d in register hint lookup table\n", sm_version);
+
+  return false;
+}
+
+bool GetAMDComputeCapability(cl_device_id device, int &gfx_hex)
+{
+  gfx_hex = 0x0000;
+
+  cl_uint vendor;
+  if (clGetDeviceInfo(device, CL_DEVICE_VENDOR_ID, sizeof(vendor), &vendor, NULL) != CL_SUCCESS)
+    return false;
+    
+  if (vendor != 0x1002) // AMD PCI Vendor ID
+    return false;
+
+  bool found_gfx_ver = false;
+
+  // 1. Try to parse the official OpenCL Device Name String
+  char nameBuffer[256] = {0};
+  if (clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(nameBuffer), nameBuffer, NULL) == CL_SUCCESS)
+  {
+    char *gfx_ptr = strstr(nameBuffer, "gfx");
+    if (gfx_ptr == NULL)
+      gfx_ptr = strstr(nameBuffer, "GFX");
+
+    if (gfx_ptr != NULL)
+    {
+      char *end_ptr = NULL;
+      long parsed_val = strtol(gfx_ptr + 3, &end_ptr, 16);
+      
+      // Ensure strtol actually advanced (meaning it consumed valid hex digits)
+      if (parsed_val > 0 && end_ptr != (gfx_ptr + 3)) 
+      {
+        gfx_hex = (int)parsed_val;
+        found_gfx_ver = true;
+
+        //LogTo(LOGTO_FILE, "Parsed an AMD gfx%x from CL_DEVICE_NAME\n", gfx_hex);
+      }
+    }
+  }
+
+  // 2. Fallback: Query AMD's Proprietary Integer Extensions (CL_DEVICE_GFXIP_MAJOR/MINOR_AMD)
+  if (!found_gfx_ver)
+  {
+    cl_uint gfxip_major = 0;
+    cl_uint gfxip_minor = 0;
+        
+    cl_int maj_status = clGetDeviceInfo(device, 0x404A, sizeof(gfxip_major), &gfxip_major, NULL); // CL_DEVICE_GFXIP_MAJOR_AMD
+    cl_int min_status = clGetDeviceInfo(device, 0x404B, sizeof(gfxip_minor), &gfxip_minor, NULL); // CL_DEVICE_GFXIP_MINOR_AMD
+        
+    if (maj_status == CL_SUCCESS && min_status == CL_SUCCESS)
+    {
+      // Convert decimal Major/Minor pair to standard hex format
+      gfx_hex = (((gfxip_major / 10) << 12) | ((gfxip_major % 10) << 8) | (gfxip_minor << 4));
+      found_gfx_ver = true;
+
+      //LogTo(LOGTO_FILE, "Queried an AMD gfx%x from CL_DEVICE_GFXIP fallback\n", gfx_hex);
+    }
+  }
+
+  if (found_gfx_ver)
+    return true;
+  
+  //LogTo(LOGTO_FILE, "Failed to parse or query an AMD gfx compute id\n");
+  return false;
+}
+
+bool GetAMDRegisterHint(int gfx_hex, int &regs_2pipe, int &regs_4pipe) // VGPRs
+{
+  regs_2pipe = 0;
+  regs_4pipe = 0;
+
+  if (gfx_hex >= 0x600 && gfx_hex < 0x900)
+  {
+    // GCN 1.0 - 4.0 (gfx600 to gfx8xx)
+    // 256 VGPRs per SIMD - 4 VGPR Granularity - 10 waves max
+    regs_2pipe = 64;    // 4 waves - 40% occupancy
+    regs_4pipe = 128;   // 2 waves - 20% occupancy
+  }
+  else if (gfx_hex >= 0x900 && gfx_hex <= 0x90c && gfx_hex != 0x908 && gfx_hex != 0x90a)
+  {
+    // Vega / GCN 5.0 (gfx900 to gfx90c)
+    // 256 VGPRs per SIMD - 4 VGPR Granularity - 10 waves max
+    regs_2pipe = 64;    // 4 waves - 40% occupancy
+    regs_4pipe = 128;   // 2 waves - 20% occupancy
+  }
+  else if (gfx_hex >= 0x1000 && gfx_hex < 0x1030)
+  {
+    // RDNA 1 (gfx1010 to gfx1013)
+    // 1024 VGPRs per SIMD - 8 VGPR Granularity - 20 waves max
+    regs_2pipe = 64;    // 16 waves - 80% occupancy
+    regs_4pipe = 128;   //  8 waves - 40% occupancy
+  }
+  else if (gfx_hex >= 0x1030 && gfx_hex < 0x1100)
+  {
+    // RDNA 2 (gfx1030 to gfx1036)
+    // 1024 VGPRs per SIMD - 16 VGPR Granularity - 16 waves max
+    regs_2pipe = 64;    // 16 waves - 100% occupancy
+    regs_4pipe = 128;   //  8 waves - 50% occupancy
+  }
+  else if (gfx_hex >= 0x1100 && gfx_hex < 0x1200)
+  {
+    // RDNA 3 (gfx11xx)
+    // 1536 VGPRs per SIMD - 24 VGPR Granularity - 16 waves max
+    regs_2pipe = 96;    // 16 waves - 100% occupancy
+    regs_4pipe = 144;   // 10 waves - 63% occupancy
+  }
+  else if (gfx_hex >= 0x1200 && gfx_hex < 0x1300)
+  {
+    // RDNA 4 (gfx12xx)
+    // 1536 VGPRs per SIMD - 24 VGPR Granularity - 16 waves max
+    // (Dynamic VGPR mode is disabled)
+    regs_2pipe = 96;    // 16 waves - 100% occupancy
+    regs_4pipe = 144;   // 10 waves - 63% occupancy
+  }
+
+  if (regs_2pipe > 0 && regs_4pipe > 0)
+  {
+    return true;   
+  }
+
+  //LogTo(LOGTO_FILE, "Failed to find AMD gfx%x in VGPR register hint lookup table\n", gfx_hex);
+
+  return false;
+}
 
 bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *kernelName)
 {
@@ -239,14 +418,73 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
   free(decompressed_src);
   if (status == CL_SUCCESS)
   {
-    status = clBuildProgram(cont->program, 1, &cont->deviceID, "-cl-std=CL1.1", NULL, NULL);
-    //"-cl-std=CL1.1" does not work for some devices (e. g. Intel Xe Graphics family)
-    if (CL_BUILD_PROGRAM_FAILURE == status) {
-      status = clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL);
+    const char *clOption = "-cl-std=CL1.1";  // support older macOS
+    char buildOptions[80];
+    int nv_sm = 0;
+    int amd_gfx = 0;
+
+    if (GetNVComputeCapability(cont->deviceID, nv_sm))  // NVIDIA
+    {
+      char nvOption1[16] = "";
+
+      snprintf(nvOption1, sizeof(nvOption1), "-D NV_SM=%d", nv_sm); // SM version
+
+      char nvOption2[32] = "";
+      int nv_maxreg2, nv_maxreg4;
+
+      if (GetNVRegisterHint(nv_sm, nv_maxreg2, nv_maxreg4)) // maximize ILP and occupancy
+      {
+        if (strstr(kernelName, "2pipe"))
+          snprintf(nvOption2, sizeof(nvOption2), "-cl-nv-maxrregcount=%d", nv_maxreg2);
+        else if (strstr(kernelName, "4pipe"))
+          snprintf(nvOption2, sizeof(nvOption2), "-cl-nv-maxrregcount=%d", nv_maxreg4);
+      }
+   
+      snprintf(buildOptions, sizeof(buildOptions), "%s %s %s", clOption, nvOption1, nvOption2); // NVIDIA build options
+    }
+    else if (GetAMDComputeCapability(cont->deviceID, amd_gfx)) // AMD
+    {
+      char amdOption1[24] = "";
+
+      snprintf(amdOption1, sizeof(amdOption1), "-D AMD_GFX=0x%x", amd_gfx); // SM version
+
+      char amdOption2[16] = "";
+      int amd_maxreg2, amd_maxreg4;
+
+      if (GetAMDRegisterHint(amd_gfx, amd_maxreg2, amd_maxreg4)) // maximize ILP and occupancy
+      {
+        if (strstr(kernelName, "2pipe"))
+          snprintf(amdOption2, sizeof(amdOption2), "-D AMD_VGPR=%d", amd_maxreg2);
+        else if (strstr(kernelName, "4pipe"))
+          snprintf(amdOption2, sizeof(amdOption2), "-D AMD_VGPR=%d", amd_maxreg4);
+      }
+
+      snprintf(buildOptions, sizeof(buildOptions), "%s %s", clOption, amdOption1, amdOption2); // AMD build options
+    }
+    else // GENERIC
+      snprintf(buildOptions, sizeof(buildOptions), "%s", clOption);  // Generic manufacturer build options
+
+    status = clBuildProgram(cont->program, 1, &cont->deviceID, buildOptions, NULL, NULL);
+     
+    if (status == CL_SUCCESS)
+      LogTo(LOGTO_FILE, "clBuildProgram() successful for kernel: %s %s\n", kernelName, buildOptions);
+    else if (status != CL_SUCCESS)
+      LogTo(LOGTO_FILE, "clBuildProgram() failed for kernel: %s %s\n", kernelName, buildOptions);
+
+    if (status != CL_SUCCESS)  // fallback
+    {
+      status = clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL); // fallback build options
+      
+      if (status == CL_SUCCESS)
+        LogTo(LOGTO_FILE, "clBuildProgram() successful for kernel: %s with fallback build options\n", kernelName);
+      else if (status != CL_SUCCESS)
+        LogTo(LOGTO_FILE, "clBuildProgram() failed for kernel: %s with fallback build options\n", kernelName);
     }
   }
+
   if (ocl_diagnose(status, "building cl program", cont) != CL_SUCCESS)
   {
+    //static char buf[0x10001]={0};
     size_t log_size;
 
     clGetProgramBuildInfo( cont->program,
@@ -256,12 +494,7 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
                            NULL,
                            &log_size );
 
-    Log("Build log returned %ld bytes\n", (long)log_size);
-    char *buf = (char *) malloc(log_size + 1);
-    if (!buf) {
-      LogRaw("Unable to print build log (not enough memory)\n");
-      return false;
-    }
+    char *buf = (char *) malloc(log_size);
     clGetProgramBuildInfo( cont->program,
                            cont->deviceID,
                            CL_PROGRAM_BUILD_LOG,
@@ -269,10 +502,10 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
                            buf,
                            NULL );
     
-    buf[log_size - 1] = '\n';
-    buf[log_size] = '\0';
+    buf[log_size - 1] = '\0';
+    Log("Build log returned %ld bytes\n", (long)log_size);
     LogRaw("Build Log:\n");
-    LogRawString(buf);
+    LogRaw("%s\n", buf);
    
     free(buf);
 
