@@ -1835,7 +1835,7 @@ case "$1" in
     *macosx-arm64)
         TARGET_plat="-mmacosx-version-min=11.0 -DMACOSX_DEPLOYMENT_TARGET=11.0 -arch arm64"
         TARGET_CCFLAGS="$OPTS_CLANGCC -DHAVE_POSIX_THREADS $TARGET_plat"
-        TARGET_AS="gcc -c $TARGET_CCFLAGS"
+        TARGET_ASFLAGS="-x assembler-with-cpp $TARGET_plat"
         TARGET_LIBS="-framework CoreFoundation -framework IOKit"
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_TARBALL="macosx-arm64"
