@@ -3,9 +3,18 @@
 // Needs no C++ shim, unlike ScalarFusion, and should be considerably faster on most hardware
 // 4-pipe
 
+// WARNING: gcc treats ';' as end of line, apple clang treats it as comment
+
 .text
+#if defined(__APPLE__)
+.global _rc5_72_unit_func_monika_4pipe
+_rc5_72_unit_func_monika_4pipe:
+#define SEPARATOR %%
+#else
 .global rc5_72_unit_func_monika_4pipe
 rc5_72_unit_func_monika_4pipe:
+#define SEPARATOR ;
+#endif
         ldr w16, [x1]
         asr w16, w16, #2
         stp d8, d9, [sp, #-16]!
@@ -34,11 +43,11 @@ loopStart:
         // SF and it hurt perf by ~20%.
         dup v1.4s, wzr
         mov w11, #1
-        ins v1.4s[1], w11
+        ins v1.s[1], w11
         mov w12, #2
-        ins v1.4s[2], w12
+        ins v1.s[2], w12
         mov w13, #3
-        ins v1.4s[3], w13
+        ins v1.s[3], w13
         add v0.4s, v0.4s, v1.4s
         // good through here - KS
 
@@ -148,60 +157,61 @@ loopStart:
         madd w4, w3, w4, w2
         dup v28.4s, w4
 
+
 #define VROR(v, vb) \
-        dup v30.4s, w7; \
-        shl v31.4s, v, #3; \
-        ushl v29.4s, v, v30.4s; \
-        eor vb, v29.16b, v31.16b;
+        dup v30.4s, w7 SEPARATOR \
+        shl v31.4s, v, #3 SEPARATOR \
+        ushl v29.4s, v, v30.4s SEPARATOR \
+        eor vb, v29.16b, v31.16b SEPARATOR
 
 #define VROLV(firstV, secondV, firstVB, secondVB) \
-        dup v30.4s, w10; \
-        and v30.16b, v30.16b, secondVB; \
-        dup v31.4s, w5; \
-        add v31.4s, v31.4s, v30.4s; \
-        ushl v31.4s, firstV, v31.4s; \
-        ushl firstV, firstV, v30.4s; \
-        eor firstVB, firstVB, v31.16b;
+        dup v30.4s, w10 SEPARATOR \
+        and v30.16b, v30.16b, secondVB SEPARATOR \
+        dup v31.4s, w5 SEPARATOR \
+        add v31.4s, v31.4s, v30.4s SEPARATOR \
+        ushl v31.4s, firstV, v31.4s SEPARATOR \
+        ushl firstV, firstV, v30.4s SEPARATOR \
+        eor firstVB, firstVB, v31.16b SEPARATOR
 
 #define ROTL_BLOCK_i0_j1 \
-        add v29.4s, v2.4s, v28.4s; \
-        add v3.4s, v29.4s, v3.4s; \
-        VROR(v3.4s, v3.16b); \
-        add v29.4s, v3.4s, v2.4s; \
-        add v1.4s, v1.4s, v29.4s; \
-        VROLV(v1.4s, v29.4s, v1.16b, v29.16b);
+        add v29.4s, v2.4s, v28.4s SEPARATOR \
+        add v3.4s, v29.4s, v3.4s SEPARATOR \
+        VROR(v3.4s, v3.16b) SEPARATOR \
+        add v29.4s, v3.4s, v2.4s SEPARATOR \
+        add v1.4s, v1.4s, v29.4s SEPARATOR \
+        VROLV(v1.4s, v29.4s, v1.16b, v29.16b) SEPARATOR
 
 #define ROTL_BLOCK_i0_j2 \
-        add v29.4s, v1.4s, v28.4s; \
-        add v3.4s, v29.4s, v3.4s; \
-        VROR(v3.4s, v3.16b); \
-        add v29.4s, v1.4s, v3.4s; \
-        add v0.4s, v0.4s, v29.4s; \
-        VROLV(v0.4s, v29.4s, v0.16b, v29.16b);
+        add v29.4s, v1.4s, v28.4s SEPARATOR \
+        add v3.4s, v29.4s, v3.4s SEPARATOR \
+        VROR(v3.4s, v3.16b) SEPARATOR \
+        add v29.4s, v1.4s, v3.4s SEPARATOR \
+        add v0.4s, v0.4s, v29.4s SEPARATOR \
+        VROLV(v0.4s, v29.4s, v0.16b, v29.16b) SEPARATOR
 
 #define ROTL_BLOCK_j0(highReg, lowReg, highRegB) \
-        add highReg, highReg, lowReg; \
-        add highReg, highReg, v0.4s; \
-        VROR(highReg, highRegB); \
-        add v29.4s, highReg, v0.4s; \
-        add v2.4s, v2.4s, v29.4s; \
-        VROLV(v2.4s, v29.4s, v2.16b, v29.16b);
+        add highReg, highReg, lowReg SEPARATOR \
+        add highReg, highReg, v0.4s SEPARATOR \
+        VROR(highReg, highRegB) SEPARATOR \
+        add v29.4s, highReg, v0.4s SEPARATOR \
+        add v2.4s, v2.4s, v29.4s SEPARATOR \
+        VROLV(v2.4s, v29.4s, v2.16b, v29.16b) SEPARATOR
 
 #define ROTL_BLOCK_j1(highReg, lowReg, highRegB) \
-        add highReg, highReg, lowReg; \
-        add highReg, highReg, v2.4s; \
-        VROR(highReg, highRegB); \
-        add v29.4s, highReg, v2.4s; \
-        add v1.4s, v1.4s, v29.4s; \
-        VROLV(v1.4s, v29.4s, v1.16b, v29.16b);
+        add highReg, highReg, lowReg SEPARATOR \
+        add highReg, highReg, v2.4s SEPARATOR \
+        VROR(highReg, highRegB) SEPARATOR \
+        add v29.4s, highReg, v2.4s SEPARATOR \
+        add v1.4s, v1.4s, v29.4s SEPARATOR \
+        VROLV(v1.4s, v29.4s, v1.16b, v29.16b) SEPARATOR
 
 #define ROTL_BLOCK_j2(highReg, lowReg, highRegB) \
-        add highReg, highReg, lowReg; \
-        add highReg, highReg, v1.4s; \
-        VROR(highReg, highRegB); \
-        add v29.4s, highReg, v1.4s; \
-        add v0.4s, v0.4s, v29.4s; \
-        VROLV(v0.4s, v29.4s, v0.16b, v29.16b);
+        add highReg, highReg, lowReg SEPARATOR \
+        add highReg, highReg, v1.4s SEPARATOR \
+        VROR(highReg, highRegB) SEPARATOR \
+        add v29.4s, highReg, v1.4s SEPARATOR \
+        add v0.4s, v0.4s, v29.4s SEPARATOR \
+        VROLV(v0.4s, v29.4s, v0.16b, v29.16b) SEPARATOR
 
 VROR(v3.4s, v3.16b); // LOC 122 in r72ansi4.cpp - bookmark
 add v2.4s, v2.4s, v3.4s;
@@ -299,12 +309,12 @@ dup v1.4s, w11;
 add v1.4s, v1.4s, v4.4s; // B
 
 #define FINAL_BLOCK(lowerReg, upperReg) \
-        eor v0.16b, v0.16b, v1.16b; \
-        VROLV(v0.4s, v1.4s, v0.16b, v1.16b); \
-        add v0.4s, v0.4s, lowerReg; \
-        eor v1.16b, v1.16b, v0.16b; \
-        VROLV(v1.4s, v0.4s, v1.16b, v0.16b); \
-        add v1.4s, v1.4s, upperReg;
+        eor v0.16b, v0.16b, v1.16b SEPARATOR \
+        VROLV(v0.4s, v1.4s, v0.16b, v1.16b) SEPARATOR \
+        add v0.4s, v0.4s, lowerReg SEPARATOR \
+        eor v1.16b, v1.16b, v0.16b SEPARATOR \
+        VROLV(v1.4s, v0.4s, v1.16b, v0.16b) SEPARATOR \
+        add v1.4s, v1.4s, upperReg SEPARATOR
 
 FINAL_BLOCK(v5.4s, v6.4s);
 FINAL_BLOCK(v7.4s, v8.4s);
@@ -333,13 +343,13 @@ FINAL_BLOCK(v27.4s, v28.4s);
 // check.hi - #32
 // check.mid - #36
 // check.lo - #40
-umov w5, v0.2s[0];
+umov w5, v0.s[0];
 ldr q3, [x0, #8];
 // v3.4s[0] = cypher.hi
 // v3.4s[1] = cypher.lo
 // v3.4s[2] = L0.hi
 // v3.4s[3] = L0.mid
-umov w13, v3.4s[1];
+umov w13, v3.s[1];
 //ldr w13, [x0, #12];
 cmp w5, w13;
 b.ne A2Check;
@@ -348,7 +358,7 @@ ldr w6, [x0, #28];
 add w6, w6, #1;
 str w6, [x0, #28];
 
-umov x6, v3.2d[1];
+umov x6, v3.d[1];
 str x6, [x0, #32];
 
 //str w4, [x0, #32]; removed to use store pair
@@ -356,8 +366,8 @@ str x6, [x0, #32];
 ldr w4, [x0, #24];
 str w4, [x0, #40];
 
-umov w17, v3.2s[0];
-umov w6, v1.2s[0];
+umov w17, v3.s[0];
+umov w6, v1.s[0];
 cmp w6, w17;
 b.ne A2Check;
 
@@ -373,14 +383,14 @@ b programEnd;
 
 A2Check:
 
-umov w5, v0.4s[1];
+umov w5, v0.s[1];
 dup v6.4s, wzr;
 mov w17, #1;
-ins v6.4s[2], w17;
+ins v6.s[2], w17;
 
 add v3.4s, v3.4s, v6.4s;
 
-umov w13, v3.4s[1];
+umov w13, v3.s[1];
 //ldr w13, [x0, #12];
 cmp w5, w13;
 b.ne A3Check;
@@ -389,15 +399,15 @@ ldr w6, [x0, #28];
 add w6, w6, #1;
 str w6, [x0, #28];
 
-umov x6, v3.2d[1];
+umov x6, v3.d[1];
 str x6, [x0, #32];
 //str w4, [x0, #32]; removed to use store pair
 
 ldr w4, [x0, #24];
 str w4, [x0, #40];
 
-umov w17, v3.2s[0];
-umov w6, v1.2s[1];
+umov w17, v3.s[0];
+umov w6, v1.s[1];
 cmp w6, w17;
 b.ne A3Check;
 
@@ -414,10 +424,10 @@ b programEnd;
 
 A3Check:
 
-umov w5, v0.4s[2];
+umov w5, v0.s[2];
 add v3.4s, v3.4s, v6.4s;
 
-umov w13, v3.4s[1];
+umov w13, v3.s[1];
 //ldr w13, [x0, #12];
 cmp w5, w13;
 b.ne A4Check;
@@ -426,15 +436,15 @@ ldr w6, [x0, #28];
 add w6, w6, #1;
 str w6, [x0, #28];
 
-umov x6, v3.2d[1];
+umov x6, v3.d[1];
 str x6, [x0, #32];
 //str w4, [x0, #32]; removed to use store pair
 
 ldr w4, [x0, #24];
 str w4, [x0, #40];
 
-umov w17, v3.2s[0];
-umov w6, v1.4s[2];
+umov w17, v3.s[0];
+umov w6, v1.s[2];
 cmp w6, w17;
 b.ne A4Check;
 
@@ -449,10 +459,10 @@ b programEnd;
 
 A4Check:
 
-umov w5, v0.4s[3];
+umov w5, v0.s[3];
 add v3.4s, v3.4s, v6.4s;
 
-umov w13, v3.4s[1];
+umov w13, v3.s[1];
 //ldr w13, [x0, #12];
 cmp w5, w13;
 b.ne keyTransform;
@@ -461,15 +471,15 @@ ldr w6, [x0, #28];
 add w6, w6, #1;
 str w6, [x0, #28];
 
-umov x6, v3.2d[1];
+umov x6, v3.d[1];
 str x6, [x0, #32];
 //str w4, [x0, #32]; removed to use store pair
 
 ldr w4, [x0, #24];
 str w4, [x0, #40];
 
-umov w17, v3.2s[0];
-umov w6, v1.4s[3];
+umov w17, v3.s[0];
+umov w6, v1.s[3];
 cmp w6, w17;
 b.ne keyTransform;
 

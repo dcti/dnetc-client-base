@@ -1,0 +1,34 @@
+name: Linux amd64 CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: sudo apt-get install yasm wget
+    - name: Install ispc
+      working-directory: /tmp
+      run: |
+        wget https://github.com/ispc/ispc/releases/download/v1.13.0/ispc-v1.13.0-linux.tar.gz
+        tar xvzf ispc-v1.13.0-linux.tar.gz
+        sudo install ispc-v1.13.0-linux/bin/ispc /usr/bin/
+    - name: configure
+      env:
+        SHELL: /bin/sh
+      run: ./configure linux-amd64
+    - name: make
+      run: make
+    - name: test
+      run: ./dnetc -test
+    - name: cpuinfo
+      run: ./dnetc -cpuinfo
