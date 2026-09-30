@@ -17,6 +17,7 @@
 
 #include "logstuff.h"
 #include "deviceid.cpp"
+#include "compiler_info.cpp"
 #include "../rc5-72/opencl/ocl_common.h"
 
 /* For printing 64-bit values. Probably it should be in common client compiler-specific stuff. */
@@ -130,6 +131,164 @@ long getOpenCLRawProcessorID(int device, const char **cpuname)
   return -1;
 }
 
+
+static void OpenCLPrintPlatformStringProperty(cl_platform_id platform, cl_platform_info param_name, const char* label) 
+{
+  size_t sz = 0;
+  
+  // Pass 1: Query the exact required size for the payload (including the null terminator)
+  if (clGetPlatformInfo(platform, param_name, 0, NULL, &sz) == CL_SUCCESS && sz > 0) 
+  {
+    // Calculate the exact size of the formatted prefix (handles the %30s padding dynamically)
+    int prefix_len = snprintf(NULL, 0, "%30s: ", label);
+    if (prefix_len < 0) return; 
+
+    // Total size = Prefix + OpenCL Payload (sz) + Newline (1 byte)
+    // Note: sz already accounts for the null terminator from the OpenCL query
+    size_t total_size = (size_t)prefix_len + sz + 1; 
+    
+    cl_char *str = (cl_char*)malloc(total_size); 
+    if (str) 
+    {
+      // Write the formatted label prefix into the start of the buffer
+      snprintf((char*)str, total_size, "%30s: ", label);
+
+      // Fetch the actual OpenCL payload directly into the remainder of the buffer
+      if (clGetPlatformInfo(platform, param_name, sz, str + prefix_len, NULL) == CL_SUCCESS) 
+      {
+        // Force null-termination of the payload to find its exact end
+        str[prefix_len + sz - 1] = '\0'; 
+        
+        // Append the critical newline character so LogWithPointer routes it to files/email
+        strcat((char*)str, "\n");
+
+        // Pass the fully completed, single-line string to the logger
+        LogRawString((const char*)str);
+      }
+      free(str);
+    }
+  }
+}
+
+
+static void OpenCLPrintDeviceStringProperty(cl_device_id device, cl_device_info param_name, const char* label) 
+{
+  size_t sz = 0;
+  
+  // Pass 1: Query the exact required size for the payload
+  if (clGetDeviceInfo(device, param_name, 0, NULL, &sz) == CL_SUCCESS && sz > 0) 
+  {
+    // Calculate the exact size of the formatted prefix
+    int prefix_len = snprintf(NULL, 0, "%30s: ", label);
+    if (prefix_len < 0) return; 
+
+    // Total size = Prefix + OpenCL Payload (sz) + Newline (1 byte)
+    size_t total_size = (size_t)prefix_len + sz + 1; 
+    
+    cl_char *str = (cl_char*)malloc(total_size); 
+    if (str) 
+    {
+      // Write the formatted label prefix
+      snprintf((char*)str, total_size, "%30s: ", label);
+
+      // Fetch the actual OpenCL payload
+      if (clGetDeviceInfo(device, param_name, sz, str + prefix_len, NULL) == CL_SUCCESS) 
+      {
+        // Force null-termination of the payload
+        str[prefix_len + sz - 1] = '\0'; 
+        
+        // Append the critical newline character
+        strcat((char*)str, "\n");
+
+        // Pass to the logger
+        LogRawString((const char*)str);
+      }
+      free(str);
+    }
+  }
+}
+
+static void OpenCLPrintCompilationInfo(ocl_context_t *cont)
+{
+  size_t globalWorkSize[1];
+  cl_int status;
+  cl_uint nvptx, amd_media_ops, clang;
+  cl_uint *outPtr;
+  int nv, nv_sm, amd, amd_gfx, nv_reg, nv_maxreg2, nv_maxreg4, amd_reg, amd_maxreg2, amd_maxreg4;
+  
+  nvptx = 0;
+  amd_media_ops = 0;
+  clang = 0;
+  
+  OCLReinitializeDevice(cont);
+
+  cont->clcontext = clCreateContext(NULL, 1, &cont->deviceID, NULL, NULL, &status);
+  if (status != CL_SUCCESS)
+    goto finished;
+  
+  cont->cmdQueue = clCreateCommandQueue(cont->clcontext, cont->deviceID, 0, &status);
+  if (status != CL_SUCCESS)
+    goto finished;
+
+  cont->out_buffer = clCreateBuffer(cont->clcontext, CL_MEM_ALLOC_HOST_PTR, 4 * sizeof(cl_uint), NULL, &status);
+  if (status != CL_SUCCESS)
+    goto finished;
+
+  if (!BuildCLProgram(cont, compiler_info_src, "compiler_info"))
+    goto finished;
+
+  status = clSetKernelArg(cont->kernel, 0, sizeof(cl_mem), &cont->out_buffer);
+  if (status != CL_SUCCESS)
+    goto finished;
+	
+  globalWorkSize[0] = 1;
+  status = clEnqueueNDRangeKernel(cont->cmdQueue, cont->kernel, 1, NULL, globalWorkSize, NULL, 0, NULL, NULL);
+  if (status != CL_SUCCESS)
+     goto finished;
+
+  outPtr = (cl_uint*) clEnqueueMapBuffer(cont->cmdQueue, cont->out_buffer, CL_TRUE, CL_MAP_READ, 0, 4 * sizeof(cl_uint), 0, NULL, NULL, &status);
+  if (status == CL_SUCCESS)
+  {
+    nvptx = outPtr[0];
+    amd_media_ops = outPtr[1];
+    clang = outPtr[2];
+    clEnqueueUnmapMemObject(cont->cmdQueue, cont->out_buffer, outPtr, 0, NULL, NULL);
+  }
+  
+finished:
+  OCLReinitializeDevice(cont);
+
+  nv = GetNVComputeCapability(cont->deviceID, nv_sm);
+  if (nv)
+    nv_reg = GetNVRegisterHint(nv_sm, nv_maxreg2, nv_maxreg4);
+  
+  amd = GetAMDComputeCapability(cont->deviceID, amd_gfx);
+  if (amd)
+    amd_reg = GetAMDRegisterHint(amd_gfx, amd_maxreg2, amd_maxreg4);
+
+  LogRaw("%30s:", "Built-in defined");
+
+  if (nvptx) LogRaw(" __NVPTX__");
+  if (amd_media_ops) LogRaw(" cl_amd_media_ops");
+  if (clang) LogRaw(" __clang__");
+  
+  LogRaw("\n");
+
+  LogRaw("%30s:", "Parameter defined");
+
+  if (nv) LogRaw(" (1-pipe) -D NV_SM=%d\n", nv_sm);
+  if (nv && nv_reg) LogRaw("%31s (2-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d\n", "", nv_sm, nv_maxreg2);
+  if (nv && !nv_reg) LogRaw("%31s (2-pipe) -D NV_SM=%d\n", "", nv_sm);
+  if (nv && nv_reg) LogRaw("%31s (4-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d\n", "", nv_sm, nv_maxreg4);
+  if (nv && !nv_reg) LogRaw("%31s (4-pipe) -D NV_SM=%d\n", "", nv_sm);
+
+  if (amd) LogRaw(" (1-pipe) -D AMD_GFX=0x%x\n", amd_gfx);
+  if (amd && amd_reg) LogRaw("%31s (2-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg2);
+  if (amd && !amd_reg) LogRaw("%31s (2-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
+  if (amd && amd_reg) LogRaw("%31s (4-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg4);
+  if (amd && !amd_reg) LogRaw("%31s (4-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
+}
+
 void OpenCLPrintExtendedGpuInfo(int device)
 {
   const char *data;
@@ -144,35 +303,17 @@ void OpenCLPrintExtendedGpuInfo(int device)
     //Print platform info once
     LogRaw("\nPlatform info:\n");
     LogRaw("--------------\n");
-    cl_char str[80];
-    status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_NAME, sizeof(str), (void *)str, NULL);
-    if (status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform Name", str);
+    
+    OpenCLPrintPlatformStringProperty(cont->platformID, CL_PLATFORM_NAME, "Platform Name");
+    OpenCLPrintPlatformStringProperty(cont->platformID, CL_PLATFORM_VENDOR, "Platform Vendor");
+    OpenCLPrintPlatformStringProperty(cont->platformID, CL_PLATFORM_VERSION, "Platform Version");
+    OpenCLPrintPlatformStringProperty(cont->platformID, CL_PLATFORM_EXTENSIONS, "Platform Extensions");
 
-    status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_VENDOR, sizeof(str), (void *)str, NULL);
-    if (status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform Vendor", str);
-
-    status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_VERSION, sizeof(str), (void *)str, NULL);
-    if (status == CL_SUCCESS)  LogRaw("%30s: %s\n", "Platform Version", str);
-
-    cl_char *str2;
-    size_t sz;
-    status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_EXTENSIONS, 0, NULL, &sz);
-    if (sz)
-    {
-      str2 = (cl_char*)malloc(sz+1);
-      if (str2)
-      {
-        status = clGetPlatformInfo(cont->platformID, CL_PLATFORM_EXTENSIONS, sz+1, (void *)str2, NULL);
-        if (status == CL_SUCCESS) LogRaw("%30s: %s\n", "Platform extensions", str2);
-        free(str2);
-      }
-    }
     /* Split platform and device info */
-    LogRaw("\nDevice info:\n");
+    LogRaw("\nDevice Info:\n");
     LogRaw("--------------\n");
   }
 
-  cl_char device_name[1024] = {0};
   cl_device_type type;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_TYPE, sizeof(type), &type, NULL);
   if (status == CL_SUCCESS)
@@ -189,8 +330,7 @@ void OpenCLPrintExtendedGpuInfo(int device)
     LogRaw("%30s: %s\n", "Type", data);
   }
 
-  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_NAME, sizeof(device_name), device_name, NULL);
-  if (status == CL_SUCCESS) LogRaw("%30s: %s\n", "Name",device_name);
+  OpenCLPrintDeviceStringProperty(cont->deviceID, CL_DEVICE_NAME, "Name");
 
   cl_uint clockrate;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(clockrate), &clockrate, NULL);
@@ -251,32 +391,33 @@ void OpenCLPrintExtendedGpuInfo(int device)
   if (status == CL_SUCCESS)
     LogRaw("%30s: %u\n", "native vector width (float)", nvw);
 
-  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_OPENCL_C_VERSION, sizeof(device_name), device_name, NULL);
-  if (status == CL_SUCCESS)
-    LogRaw("%30s: %s\n", "OpenCL C version",device_name);
+  OpenCLPrintDeviceStringProperty(cont->deviceID, CL_DEVICE_OPENCL_C_VERSION, "OpenCL C version");
 
   size_t ptres;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_PROFILING_TIMER_RESOLUTION, sizeof(ptres), &ptres, NULL);
   if (status == CL_SUCCESS)
     LogRaw("%30s: %lu\n", "Device timer resolution (ns)", (unsigned long)ptres);
 
-  status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_VENDOR, sizeof(device_name), device_name, NULL);
-  if (status == CL_SUCCESS)
-    LogRaw("%30s: %s\n", "Device vendor",device_name);
+  OpenCLPrintDeviceStringProperty(cont->deviceID, CL_DEVICE_VENDOR, "Device vendor");
 
   cl_uint vendor_id;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL);
   if (status == CL_SUCCESS)
     LogRaw("%30s: 0x%x\n", "Device vendor id",vendor_id);
 
-  status = clGetDeviceInfo(cont->deviceID, CL_DRIVER_VERSION, sizeof(device_name), device_name, NULL);
-  if (status == CL_SUCCESS)
-    LogRaw("%30s: %s\n", "Driver version",device_name);
+  OpenCLPrintDeviceStringProperty(cont->deviceID, CL_DRIVER_VERSION, "Driver version");
 
   cl_uint devbits;
   status = clGetDeviceInfo(cont->deviceID, CL_DEVICE_ADDRESS_BITS, sizeof(devbits), &devbits, NULL);
   if (status == CL_SUCCESS)
     LogRaw("%30s: %u%s\n", "Device address bits", devbits, (devbits == sizeof(size_t) * 8 ? "" : " - NOT MATCHED -"));
 
-  //TODO: device extensions
+  OpenCLPrintDeviceStringProperty(cont->deviceID, CL_DEVICE_EXTENSIONS, "Device extensions");
+
+  /* Split platform and device info */
+  LogRaw("\nCompiler Info:\n");
+  LogRaw("--------------\n");
+
+  OpenCLPrintCompilationInfo(cont);
 }
+

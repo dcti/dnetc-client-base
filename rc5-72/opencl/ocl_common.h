@@ -41,4 +41,10 @@ cl_int ocl_diagnose(cl_int result, const char *where, ocl_context_t *cont);
 const char* clStrError(cl_int status);
 bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *kernelName);
 
+bool GetNVComputeCapability(cl_device_id device, int &sm_version);
+bool GetAMDComputeCapability(cl_device_id device, int &gfx_hex);
+bool GetAMDRegisterHint(int gfx_hex, int &regs_2pipe, int &regs_4pipe);
+bool GetNVRegisterHint(int sm_version, int &regs_2pipe, int &regs_4pipe);
+
+
 #endif //OCL_COMMON_H

@@ -465,20 +465,24 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
       snprintf(buildOptions, sizeof(buildOptions), "%s", clOption);  // Generic manufacturer build options
 
     status = clBuildProgram(cont->program, 1, &cont->deviceID, buildOptions, NULL, NULL);
-     
+    
+    /* 
     if (status == CL_SUCCESS)
       LogTo(LOGTO_FILE, "clBuildProgram() successful for kernel: %s %s\n", kernelName, buildOptions);
     else if (status != CL_SUCCESS)
       LogTo(LOGTO_FILE, "clBuildProgram() failed for kernel: %s %s\n", kernelName, buildOptions);
+    */
 
     if (status != CL_SUCCESS)  // fallback
     {
       status = clBuildProgram(cont->program, 1, &cont->deviceID, NULL, NULL, NULL); // fallback build options
       
+      /*
       if (status == CL_SUCCESS)
         LogTo(LOGTO_FILE, "clBuildProgram() successful for kernel: %s with fallback build options\n", kernelName);
       else if (status != CL_SUCCESS)
         LogTo(LOGTO_FILE, "clBuildProgram() failed for kernel: %s with fallback build options\n", kernelName);
+      */
     }
   }
 
