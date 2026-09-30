@@ -139,7 +139,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_IPV6"
   fi
 
-  if [ "$2" = "amd64" ]; then
+  if [ "$2" = "amd64" ] && [ "$1" != "haiku" ]; then
     HAVE_ISPC="1"
     TARGET_ISPC_FLAGS="$TARGET_ISPC_FLAGS --target=avx512skx-i32x16"
   fi
@@ -3257,7 +3257,6 @@ case "$1" in
         TARGET_NASM="nasm"
         generate_gcc_opts "x86" "haiku"
         TARGET_CCFLAGS="$OPTS_GCC -fno-pic -O3 -Wno-multichar"
-        TARGET_LDFLAGS="-static"
         TARGET_LIBS="-lnetwork"
         TARGET_TARBALL="haiku-x86"
         TARGET_DOCFILES="docs/readme.haiku"   #platform specific docfile
@@ -3381,6 +3380,20 @@ case "$1" in
         TARGET_DOCFILES="docs/readme._ix"
         TARGET_TARBALL="solaris10-amd64"
         add_sources "solaris" "amd64"
+        ;;
+
+    *haiku-amd64)
+        TARGET_AS="gcc -c"
+        TARGET_CC="gcc"
+        generate_gcc_opts "amd64" "haiku"
+        TARGET_NASM="nasm"
+        TARGET_NASM_FMT="elf64"
+        TARGET_CCFLAGS="$OPTS_GCC -O3 -Wno-multichar"
+        TARGET_LIBS="-lnetwork"
+        TARGET_TARBALL="haiku-amd64"
+        TARGET_DOCFILES="docs/readme.haiku"   #platform specific docfile
+        HAVE_OGR="0"                          # HAVE_OGR must be set to 0
+        add_sources "haiku" "amd64"
         ;;
 
 # CUDA *****************************************************************
