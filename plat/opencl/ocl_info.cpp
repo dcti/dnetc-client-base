@@ -296,12 +296,12 @@ finished:
     if (nv_reg)
     {
       snprintf(param_define2, sizeof(param_define2), "%32s(2-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d\n", "", nv_sm, nv_maxreg2);
-      snprintf(param_define3, sizeof(param_define3), "%32s(4-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d\n", "", nv_sm, nv_maxreg4);
+      snprintf(param_define3, sizeof(param_define3), "%32s(4-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d", "", nv_sm, nv_maxreg4);
     }
     else
     {
       snprintf(param_define2, sizeof(param_define2), "%32s(2-pipe) -D NV_SM=%d\n", "", nv_sm);
-      snprintf(param_define3, sizeof(param_define3), "%32s(4-pipe) -D NV_SM=%d\n", "", nv_sm);
+      snprintf(param_define3, sizeof(param_define3), "%32s(4-pipe) -D NV_SM=%d", "", nv_sm);
     }
   }
   else if (amd)
@@ -310,19 +310,19 @@ finished:
     if (amd_reg)
     {
       snprintf(param_define5, sizeof(param_define5), "%32s(2-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg2);
-      snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg4);
+      snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d", "", amd_gfx, amd_maxreg4);
     }
     else
     {
       snprintf(param_define5, sizeof(param_define5), "%32s(2-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
-      snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
+      snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x", "", amd_gfx);
     }
   }
 
   snprintf(param_defines, sizeof(param_defines), "%s%s%s%s%s%s", param_define1, param_define2, param_define3,
                                                                  param_define4, param_define5, param_define6);
 
-  LogRaw("%30s: %s", "Parameter defined", param_defines);
+  LogRaw("%30s: %s\n", "Parameter defined", param_defines);
 }
 
 void OpenCLPrintExtendedGpuInfo(int device)
