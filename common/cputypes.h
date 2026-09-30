@@ -106,7 +106,9 @@
 #if defined(_WIN64)
   #define CLIENT_OS        OS_WIN64
   #define CLIENT_OS_NAME   "Win64"
-  #if defined(_M_AMD64)
+  #if defined(OPENCL)
+    #define CLIENT_CPU     CPU_OPENCL
+  #elif defined(_M_AMD64)
     #define CLIENT_CPU     CPU_AMD64
   #elif defined(_M_IA64)
     #define CLIENT_CPU     CPU_IA64
@@ -223,7 +225,9 @@
   #endif
   #define CLIENT_OS_NAME   "FreeBSD"
   #define CLIENT_OS        OS_FREEBSD
-  #if defined(__i386__) || defined(ASM_X86)
+  #if defined(OPENCL)
+    #define CLIENT_CPU     CPU_OPENCL
+  #elif defined(__i386__) || defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
   #elif defined(__alpha__) || defined(ASM_ALPHA)
     #define CLIENT_CPU     CPU_ALPHA
@@ -438,24 +442,23 @@
     #define HAVE_POSIX_THREADS
   #endif
 #elif defined(__APPLE__)
+  #if defined (IOS)
+    #define CLIENT_OS_NAME  "iOS"
+    #define CLIENT_OS       OS_IOS
+  #else
+  #define CLIENT_OS       OS_MACOSX
   #if defined(__arm64__)
-    #define CLIENT_OS_NAME  "iOS"
-    #define CLIENT_OS       OS_IOS
-    #define CLIENT_CPU      CPU_ARM64
-  #elif defined(__arm__) || defined(ARM)
-    #define CLIENT_OS_NAME  "iOS"
-    #define CLIENT_OS       OS_IOS
-    #define CLIENT_CPU      CPU_ARM
+    #define CLIENT_OS_NAME  "Mac OS X" // Added this incase we want to identify this as macOS 11 in the future.
   #else
     #define CLIENT_OS_NAME  "Mac OS X"
-    #define CLIENT_OS       OS_MACOSX
-  #endif
+#endif
+#endif
   #ifndef __unix__
     #define __unix__
   #endif
   #if defined(CUDA) && (defined(__i386__) || defined(__x86_64__))
     #define CLIENT_CPU    CPU_CUDA
-  #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__))
+  #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__) || defined(__arm64__))
     #define CLIENT_CPU    CPU_OPENCL
   #elif defined(__ppc__) || defined(__ppc64__)
     #define CLIENT_CPU    CPU_POWERPC
@@ -463,6 +466,10 @@
     #define CLIENT_CPU    CPU_X86
   #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
     #define CLIENT_CPU    CPU_AMD64
+  #elif defined(__arm64__)
+    #define CLIENT_CPU    CPU_ARM64
+  #elif defined(__arm__)
+    #define CLIENT_CPU    CPU_ARM
   #endif
 #elif defined(__BEOS__) || defined(__be_os)
   #ifndef __unix__ /* 4.4bsd compatible or not? */

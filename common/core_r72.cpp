@@ -56,6 +56,9 @@ extern "C" s32 CDECL rc5_72_unit_func_kbe( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2c( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_go_2d( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 CDECL rc5_72_unit_func_avx2( RC5_72UnitWork *, u32 *, void *);
+# if defined(USE_ISPC_CORE)
+extern "C" s32 CDECL rc5_72_unit_func_ispc_16( RC5_72UnitWork *, u32 *, void *);
+# endif
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -115,7 +118,8 @@ extern "C" s32 rc5_72_unit_func_ocl_1pipe (RC5_72UnitWork *rc5_72unitwork, u32 *
 extern "C" s32 rc5_72_unit_func_ocl_2pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #elif (CLIENT_CPU == CPU_ARM64)
-extern "C" s32 rc5_72_unit_func_scalarfusion(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_monika_4pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_monika_2pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 #endif
 
 
@@ -171,6 +175,9 @@ const char **corenames_for_contest_rc572()
       "GO 2-pipe c",
       "GO 2-pipe d",
       "YK AVX2",
+  # if defined(USE_ISPC_CORE)
+      "KS SPMD",
+  # endif
   #elif (CLIENT_CPU == CPU_ARM)
       "StrongARM 1-pipe",
       "ARM 2/3/6/7 1-pipe",
@@ -211,7 +218,8 @@ const char **corenames_for_contest_rc572()
       "ANSI 4-pipe",
       "ANSI 2-pipe",
       "ANSI 1-pipe",
-      "KS-ScalarFusion",
+      "KS-MONIKA 4-pipe",
+      "KS-MONIKA 2-pipe",
   #elif (CLIENT_CPU == CPU_MIPS)
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -326,6 +334,11 @@ int apply_selcore_substitution_rules_rc572(int cindex, int device)
 #elif (CLIENT_CPU == CPU_AMD64)
   {
     unsigned long flags = GetProcessorFeatureFlags();
+
+    #if defined(USE_ISPC_CORE)
+    if (!(flags & CPU_F_AVX512) && cindex == 5) /* AVX512 ISPC core */
+      cindex = 4;
+    #endif
 
     if (!(flags & CPU_F_AVX2) && cindex == 4)   /* AVX2 core */
       cindex = 3;
@@ -583,6 +596,11 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
   // ===============================================================
   #elif (CLIENT_CPU == CPU_AMD64)
   {
+    #if defined(USE_ISPC_CORE)
+    if (detected_flags & CPU_F_AVX512)
+      cindex = 5;
+    else
+    #endif
     if (detected_flags & CPU_F_AVX2)
       cindex = 4;
     else if (detected_type >= 0)
@@ -592,7 +610,7 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
         case 0x09: cindex = 3; break; // K8               == GO 2-pipe d
         case 0x0B: cindex =-1; break; // Pentium 4        == KBE-64 3-pipe or GO 2???
         case 0x12: cindex = 3; break; // Core 2           == GO 2-pipe d
-        case 0x14: cindex = 1; break; // Atom             == KBE-64 3-pipe
+        case 0x14: cindex = 3; break; // Atom             == GO 2-pipe d
         case 0x15: cindex = 3; break; // Intel Core i7    == GO 2-pipe d
         case 0x16: cindex = 3; break; // AMD Athlon (Model 16) == GO 2-pipe d
         case 0x18: cindex = 2; break; // Via Nano         == GO 2-pipe-c (#4437)
@@ -882,6 +900,12 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
         unit_func.gen_72 = rc5_72_unit_func_avx2;
         pipeline_count = 16;
         break;
+      #if defined(USE_ISPC_CORE)
+      case 5:
+        unit_func.gen_72 = rc5_72_unit_func_ispc_16;
+        pipeline_count = 16;
+        break;
+      #endif
     // -----------
     #elif (CLIENT_CPU == CPU_POWERPC) && (CLIENT_OS != OS_WIN32)
       case 0:
@@ -1086,8 +1110,12 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
 
     #if (CLIENT_CPU == CPU_ARM64)
        case 3:
-	unit_func.gen_72 = rc5_72_unit_func_scalarfusion;
-	pipeline_count = 1;
+	unit_func.gen_72 = rc5_72_unit_func_monika_4pipe;
+	pipeline_count = 4;
+	break;
+       case 4:
+	unit_func.gen_72 = rc5_72_unit_func_monika_2pipe;
+	pipeline_count = 2;
 	break;
     #endif
 

@@ -1344,8 +1344,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          *   0x19 - Sandy Bridge Core iX-2xxx
          *   0x1A - Ivy Bridge Core iX-3xxx
          *   0x1B - Haswell Core iX-4xxx
-         *   0x1C - Kaby Lake Core iX-7xxx
-         *   0x1D-1F
+         *   0x1C - Xeon Phi
+         *   0x1D - Kaby Lake Core iX-7xxx
+         *   0x1E-1F
          *   0x20 - AMD Bobcat - Embedded APU
          *   0x21 - AMD Bulldozer - FX
          *   0x22 - AMD Husky - APU
@@ -1371,6 +1372,10 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x1A14000, 0xFFFF000, CPU_F_I686, 0x20, "E/C-Series APU (Bobcat)" }, /* (#4429,#4536) */
         { 0x1B15000, 0xFFFF000, CPU_F_I686, 0x21, "FX (Model 21)" },
         { 0x1C15000, 0xFFFF000, CPU_F_I686, 0x21, "FX (Bulldozer)" }, /* (#4497) */
+        { 0x1D16000, 0xFFFF000, CPU_F_I686,    0, "Jaguar" },
+        { 0x1E16000, 0xFFFF000, CPU_F_I686,    0, "Jaguar" },
+        { 0x1F17000, 0xFFFF000, CPU_F_I686,    0, "Zen" },
+        { 0x2017000, 0xFFFF000, CPU_F_I686,    0, "Zen" }, /* (#4653) */
         { 0x0000000,         0,          0,    0, NULL       }
       }; internalxref = &amdxref[0];
       if ((dettype & 0xFFFFFF0) == 0x0400)        /* no such AMD ident */
@@ -1476,7 +1481,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006160, 0x00FFFF0, CPU_F_I686, 0x12, "Celeron" }, /* 65 nm. Core2-based? (need same RC5-72 core) */
         { 0x0006170, 0xFFFFFF0, CPU_F_I686, 0x12, "Core 2/Extreme/Xeon" },  /* 45 nm */ /* (#4193) */
         { 0x00061A0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i7/Xeon" },  /* (#4118,#4198,#4193) */
-        { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
+        { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080,#4668) */
         { 0x00061E0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i5/i7" },  /* (#4271) */
         { 0x0006250, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i3/i5/i7" },  /* (#4376,#4224) */
         { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core iX-2xxx (Sandy Bridge)" },
@@ -1489,8 +1494,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006450, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },  /* (#4579) */
         { 0x0006460, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },
         { 0x00064F0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon Ex v4 (Broadwell EP)" },
+        { 0x0006570, 0xFFFFFF0, CPU_F_I686, 0x1C, "Xeon Phi (Knights Landing)" }, /* (#4656) */
+        { 0x00065C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom/Celeron (Apollo Lake)" }, /* (#4684) */
         { 0x00065E0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-6xxx (Skylake)" },  /* (#4615) */
-        { 0x00069E0, 0xFFFFFF0, CPU_F_I686, 0x1C, "Core iX-7xxx (Kaby Lake)" },
+        { 0x00068E0, 0xFFFFFF0, CPU_F_I686, 0x1D, "Core iX-7xxx (Kaby Lake)" }, /* (#4699) */
+        { 0x00069E0, 0xFFFFFF0, CPU_F_I686, 0x1D, "Core iX-7xxx (Kaby Lake)" },
         { 0x0006F10, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon E5 v4 (Broadwell EP)" },
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
@@ -2864,6 +2872,9 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
     }
     if (features & CPU_F_AVX2) {
       strcat( namebuf, "AVX2 ");
+    }
+    if (features & CPU_F_AVX512) {
+      strcat( namebuf, "AVX512 ");
     }
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     sprintf(namebuf, "%08lX\n\tname: %s", rawid, cpuid_s );

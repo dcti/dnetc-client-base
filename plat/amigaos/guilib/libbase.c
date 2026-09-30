@@ -21,7 +21,7 @@ LONG _start(VOID)
 }
 
 const char ExLibName[] = "dnetcgui.library";
-#define ExLibID (VSTRING "\0Copyright © 2001-2016 Oliver Roberts. All rights reserved.")
+#define ExLibID (VSTRING "\0Copyright © 2001-2018 Oliver Roberts. All rights reserved.")
 
 struct ExecBase *SysBase       = NULL;
 struct DosLibrary  *DOSBase       = NULL;

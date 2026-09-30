@@ -177,7 +177,7 @@ void *cmem_alloc(unsigned int sz)
 {
   void *mem = ((void *)0);
   #if defined(__amigaos4__)
-  mem = AllocVec(sz,MEMF_SHARED);
+  mem = AllocVecTags(sz,AVT_Type,MEMF_SHARED,TAG_END);
   #else
   mem = malloc(sz);
   #endif

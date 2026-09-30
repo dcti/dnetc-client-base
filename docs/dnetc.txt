@@ -93,7 +93,7 @@
     for sources of assistance.
 
     A complete step-by-step guide to running your first client is 
-    available at: http://www.distributed.net/docs/tutor_clients.php
+    available at: https://www.distributed.net/Docs_tutor_client
     There is also a great deal of useful information at the
     FAQ-O-Matic: http://faq.distributed.net/
 
@@ -291,13 +291,13 @@
        your IRC client at the server irc.distributed.net, port 6667.
        If your IRC client supports SSL, you may also use port 994.
        For more info on using IRC and distributed.net, see the IRC
-       Tutorial:  http://www.distributed.net/docs/tutor_irc.php
+       Tutorial:  http://www.distributed.net/Docs_tutor_irc
 
      - If you don't mind your mailbox receiving a few messages a day, 
        you may consider subscribing to the general client mailing list
        at <rc5@lists.distributed.net> (To subscribe to the mailing list, 
-       send a message to <majordomo@lists.distributed.net> with 
-       "subscribe rc5" as the message text).
+       send a message to <rc5-request@lists.distributed.net> with 
+       "subscribe" as the message text).
 
      - More user support is available from <help@distributed.net> 
        as well as from our regional support representatives listed at 

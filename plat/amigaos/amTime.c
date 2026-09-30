@@ -176,7 +176,12 @@ TIMERBASETYPE OpenTimer(BOOL isthread)
    TIMERBASETYPE timerbase = NULL;
    struct TimerResources *res;
 
-   if ((res = (struct TimerResources *)AllocVec(sizeof(struct TimerResources),MEMF_CLEAR|MEMF_PUBLIC))) {
+   #if defined(__amigaos4__)
+   if ((res = (struct TimerResources *)AllocVecTags(sizeof(struct TimerResources),AVT_Type,MEMF_SHARED,AVT_ClearWithValue,0,TAG_END)))
+   #else
+   if ((res = (struct TimerResources *)AllocVec(sizeof(struct TimerResources),MEMF_CLEAR|MEMF_PUBLIC)))
+   #endif
+   {
       #ifndef __OS3PPC__
       (FindTask(NULL))->tc_UserData = (APTR)res;
       #elif !defined(__POWERUP__)

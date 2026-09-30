@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2014 - All Rights Reserved
+ * Copyright distributed.net 1997-2018 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -275,20 +275,16 @@ static int __cruncher_yield__(struct thread_param_block *thrparams)
 
 void Go_mt( void * parm )
 {
-#if (CLIENT_OS == OS_AMIGAOS) && !defined(__OS3PPC__)
-  /* AmigaOS provides no direct way to pass parameters to sub-tasks! */
+#if (CLIENT_OS == OS_AMIGAOS) && (CLIENT_CPU == CPU_68K)
+  /* AmigaOS 3.x provides no direct way to pass parameters to sub-tasks! */
   struct Process *thisproc = (struct Process *)FindTask(NULL);
-  if (!thisproc->pr_Arguments)
+  if ((thisproc->pr_ExitData == 0x12348765) && (thisproc->pr_ExitCode == NULL))
   {
-     #if defined(__amigaos4__)
-     parm = thisproc->pr_Task.tc_UserData;
-     #elif (CLIENT_CPU == CPU_68K)
      struct ThreadArgsMsg *msg;
      WaitPort(&(thisproc->pr_MsgPort));
      msg = (struct ThreadArgsMsg *)GetMsg(&(thisproc->pr_MsgPort));
      parm = msg->tp_Params;
      ReplyMsg((struct Message *)msg);
-     #endif
   }
 #endif
 
@@ -812,6 +808,7 @@ static int __StopThread( struct thread_param_block *thrparams )
       #endif
       while (!thrparams->hasexited)
         NonPolledUSleep(300000);
+      cmem_free((void *)thrparams->thread_data1); /* threadname buffer */
       #elif (CLIENT_OS == OS_MORPHOS)
       /* Make the thread run at least the same priority as ourself */
       Forbid();
@@ -1158,35 +1155,35 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
             success = 1;
       }
       #elif (CLIENT_OS == OS_AMIGAOS)
+      if((thrparams->thread_data1 = (unsigned long)cmem_alloc(64)))
       {
-        char threadname[64];
-        sprintf(threadname, "%s crunch #%d", utilGetAppName(),
-                                             thrparams->threadnum + 1 );
+        char *threadname = (char *)thrparams->thread_data1;
+        snprintf(threadname, 64, "%s crunch #%d", utilGetAppName(),
+                                                  thrparams->threadnum + 1 );
         #if (CLIENT_CPU == CPU_68K)
-        struct Process *proc;
-        if ((proc = CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
-                                      NP_StackSize, 8192,
-                                      NP_Name, (ULONG)threadname,
-                                      TAG_END)))
+        if ((thrparams->threadID = (int)CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
+                                                          NP_StackSize, 8192,
+                                                          NP_Name, (ULONG)threadname,
+                                                          NP_ExitCode, NULL,
+                                                          NP_ExitData, 0x12348765,
+                                                          TAG_END)))
         {
-           struct Process *thisproc = (struct Process *)FindTask(NULL);
-           struct ThreadArgsMsg argsmsg;
-           argsmsg.tp_ExecMessage.mn_Node.ln_Type = NT_MESSAGE;
-           argsmsg.tp_ExecMessage.mn_ReplyPort = &(thisproc->pr_MsgPort);
-           argsmsg.tp_ExecMessage.mn_Length = sizeof(struct ThreadArgsMsg);
-           argsmsg.tp_Params = thrparams;
-           PutMsg(&(proc->pr_MsgPort),(struct Message *)&argsmsg);
-           WaitPort(&(thisproc->pr_MsgPort));
-           GetMsg(&(thisproc->pr_MsgPort));
+          struct Process *thread = (struct Process *)thrparams->threadID;;
+          struct Process *thisproc = (struct Process *)FindTask(NULL);
+          struct ThreadArgsMsg argsmsg;
+          argsmsg.tp_ExecMessage.mn_Node.ln_Type = NT_MESSAGE;
+          argsmsg.tp_ExecMessage.mn_ReplyPort = &(thisproc->pr_MsgPort);
+          argsmsg.tp_ExecMessage.mn_Length = sizeof(struct ThreadArgsMsg);
+          argsmsg.tp_Params = thrparams;
+          PutMsg(&(thread->pr_MsgPort),(struct Message *)&argsmsg);
+          WaitPort(&(thisproc->pr_MsgPort));
+          GetMsg(&(thisproc->pr_MsgPort));
         }
-        thrparams->threadID = (int)proc;
         #elif defined(__amigaos4__)
-        thrparams->threadID = (int)CreateNewProcTags(NP_Entry, (ULONG)Go_mt,
-                                                     NP_StackSize, 8192,
-                                                     NP_Name, (ULONG)threadname,
-                                                     NP_Child, TRUE,
-                                                     NP_UserData, (ULONG)thrparams,
-                                                     TAG_END);
+        thrparams->threadID = (int)CreateTaskTags(threadname,0,(CONST_APTR)Go_mt,8192,
+                                                  AT_Param1, (ULONG)thrparams,
+                                                  AT_Child, TRUE,
+                                                  TAG_END);
         #elif !defined(__POWERUP__)
         struct TagItem tags[5];
         tags[0].ti_Tag = TASKATTR_CODE; tags[0].ti_Data = (ULONG)Go_mt;
@@ -1206,6 +1203,10 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         if (thrparams->threadID)
         {
           success = 1;
+        }
+	else
+	{
+          cmem_free(threadname);
         }
       }
       #elif (CLIENT_OS == OS_MORPHOS)
