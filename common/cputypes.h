@@ -491,8 +491,10 @@
   #define CLIENT_OS        OS_HAIKU
   #if defined(__POWERPC__) || defined(__PPC__)
     #define CLIENT_CPU     CPU_POWERPC
-  #elif defined(__INTEL__)
-    #define CLIENT_CPU     CPU_X86
+  #elif defined(__i386__) || defined(ASM_X86)
+    #define CLIENT_CPU    CPU_X86
+  #elif defined(ASM_AMD64) || defined(__x86_64__) || defined(__amd64__)
+    #define CLIENT_CPU    CPU_AMD64
   #endif
 #elif defined(__MORPHOS__)
   #define CLIENT_OS_NAME   "MorphOS"
