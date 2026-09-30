@@ -1148,7 +1148,7 @@ static struct thread_param_block *__StartThread( unsigned int thread_i,
         // Be OS priority should be adjustable from 1 to 10
         // 1 is lowest, 10 is higest for non-realtime and non-system tasks
         sprintf(thread_name, "%s crunch#%d", utilGetAppName(), thread_i + 1);
-        thrparams->threadID = spawn_thread((long (*)(void *)) Go_mt,
+        thrparams->threadID = spawn_thread((thread_func)Go_mt,
                thread_name, be_priority, (void *)thrparams );
         if ( ((thrparams->threadID) >= B_NO_ERROR) &&
              (resume_thread(thrparams->threadID) == B_NO_ERROR) )
