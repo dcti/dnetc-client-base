@@ -212,13 +212,26 @@ static void OpenCLPrintCompilationInfo(ocl_context_t *cont)
 {
   size_t globalWorkSize[1];
   cl_int status;
-  cl_uint nvptx, amd_media_ops, clang;
   cl_uint *outPtr;
-  int nv, nv_sm, amd, amd_gfx, nv_reg, nv_maxreg2, nv_maxreg4, amd_reg, amd_maxreg2, amd_maxreg4;
-  
-  nvptx = 0;
-  amd_media_ops = 0;
-  clang = 0;
+
+  cl_uint nvptx = 0, amd_media_ops = 0, clang = 0;
+
+  int nv = 0, nv_sm = 0, amd = 0, amd_gfx = 0;
+  int nv_reg = 0, nv_maxreg2 = 0, nv_maxreg4 = 0;
+  int amd_reg = 0, amd_maxreg2 = 0, amd_maxreg4 = 0;
+
+  char compiler_defines[64] = "";
+  char compiler_define1[16] = "";
+  char compiler_define2[24] = "";
+  char compiler_define3[16] = "";
+
+  char param_defines[768] = "";
+  char param_define1[32] = "";
+  char param_define2[96] = "";
+  char param_define3[96] = "";
+  char param_define4[96] = "";
+  char param_define5[96] = "";
+  char param_define6[96] = "";
   
   OCLReinitializeDevice(cont);
 
@@ -266,27 +279,50 @@ finished:
   if (amd)
     amd_reg = GetAMDRegisterHint(amd_gfx, amd_maxreg2, amd_maxreg4);
 
-  LogRaw("%30s:", "Built-in defined");
+  if (nvptx)
+    snprintf(compiler_define1, sizeof(compiler_define1), "%s", "__NVPTX__ ");
+  if (amd_media_ops)
+    snprintf(compiler_define2, sizeof(compiler_define2), "%s", "cl_amd_media_ops ");
+  if (clang)
+    snprintf(compiler_define3, sizeof(compiler_define3), "%s", "__clang__");
+ 
+  snprintf(compiler_defines, sizeof(compiler_defines), "%s%s%s", compiler_define1, compiler_define2, compiler_define3);
 
-  if (nvptx) LogRaw(" __NVPTX__");
-  if (amd_media_ops) LogRaw(" cl_amd_media_ops");
-  if (clang) LogRaw(" __clang__");
-  
-  LogRaw("\n");
+  LogRaw("%30s: %s\n", "Built-in defined", compiler_defines);
 
-  LogRaw("%30s:", "Parameter defined");
+  if (nv)
+  {
+    snprintf(param_define1, sizeof(param_define1), "(1-pipe) -D NV_SM=%d\n", nv_sm);
+    if (nv_reg)
+    {
+      snprintf(param_define2, sizeof(param_define2), "%32s(2-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d\n", "", nv_sm, nv_maxreg2);
+      snprintf(param_define3, sizeof(param_define3), "%32s(4-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d\n", "", nv_sm, nv_maxreg4);
+    }
+    else
+    {
+      snprintf(param_define2, sizeof(param_define2), "%32s(2-pipe) -D NV_SM=%d\n", "", nv_sm);
+      snprintf(param_define3, sizeof(param_define3), "%32s(4-pipe) -D NV_SM=%d\n", "", nv_sm);
+    }
+  }
+  else if (amd)
+  {
+    snprintf(param_define4, sizeof(param_define4), "(1-pipe) -D AMD_GFX=0x%x\n", amd_gfx);
+    if (amd_reg)
+    {
+      snprintf(param_define5, sizeof(param_define5), "%32s(2-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg2);
+      snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg4);
+    }
+    else
+    {
+      snprintf(param_define5, sizeof(param_define5), "%32s(2-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
+      snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
+    }
+  }
 
-  if (nv) LogRaw(" (1-pipe) -D NV_SM=%d\n", nv_sm);
-  if (nv && nv_reg) LogRaw("%31s (2-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d\n", "", nv_sm, nv_maxreg2);
-  if (nv && !nv_reg) LogRaw("%31s (2-pipe) -D NV_SM=%d\n", "", nv_sm);
-  if (nv && nv_reg) LogRaw("%31s (4-pipe) -D NV_SM=%d -cl-nv-maxrregcount=%d\n", "", nv_sm, nv_maxreg4);
-  if (nv && !nv_reg) LogRaw("%31s (4-pipe) -D NV_SM=%d\n", "", nv_sm);
+  snprintf(param_defines, sizeof(param_defines), "%s%s%s%s%s%s", param_define1, param_define2, param_define3,
+                                                                 param_define4, param_define5, param_define6);
 
-  if (amd) LogRaw(" (1-pipe) -D AMD_GFX=0x%x\n", amd_gfx);
-  if (amd && amd_reg) LogRaw("%31s (2-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg2);
-  if (amd && !amd_reg) LogRaw("%31s (2-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
-  if (amd && amd_reg) LogRaw("%31s (4-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg4);
-  if (amd && !amd_reg) LogRaw("%31s (4-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
+  LogRaw("%30s: %s", "Parameter defined", param_defines);
 }
 
 void OpenCLPrintExtendedGpuInfo(int device)

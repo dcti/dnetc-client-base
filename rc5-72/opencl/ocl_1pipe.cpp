@@ -65,7 +65,7 @@ static bool init_rc5_72_ocl_npipe(ocl_context_t *cont, unsigned core_ID, const c
   }
 
   // align to 256
-  cont->runSizeMultiplier = (cont->runSizeMultiplier + 255) & ~255;
+  cont->runSizeMultiplier = ((cont->runSizeMultiplier + 256 - 1) / 256) * 256;
   if (cont->runSizeMultiplier < 256)
     cont->runSizeMultiplier = 256;
 

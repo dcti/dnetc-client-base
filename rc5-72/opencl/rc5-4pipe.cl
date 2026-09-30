@@ -58,7 +58,7 @@
   #define SWAP(x) (((uint)(x) << 24) | (((uint)(x) & 0x0000FF00u) << 8) | (((uint)(x) >> 8) & 0x0000FF00u) | ((uint)(x) >> 24))
 #endif
 
-#if (defined(NV_SM) && NV_SM >= 75 && NV_SM <= 89) || (defined(AMD_VGPR) && AMD_VGPR >= 128) // ENABLE ROUND1 OPTIMIZATION
+#if (defined(NV_SM) && (NV_SM >= 75) && (NV_SM <= 89)) || (defined(AMD_VGPR) && (AMD_VGPR >= 128)) // ENABLE ROUND1 OPTIMIZATION
   #define ROUND1_OPT 1
 #endif
 

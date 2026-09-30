@@ -459,7 +459,7 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
           snprintf(amdOption2, sizeof(amdOption2), "-D AMD_VGPR=%d", amd_maxreg4);
       }
 
-      snprintf(buildOptions, sizeof(buildOptions), "%s %s", clOption, amdOption1, amdOption2); // AMD build options
+      snprintf(buildOptions, sizeof(buildOptions), "%s %s %s", clOption, amdOption1, amdOption2); // AMD build options
     }
     else // GENERIC
       snprintf(buildOptions, sizeof(buildOptions), "%s", clOption);  // Generic manufacturer build options
