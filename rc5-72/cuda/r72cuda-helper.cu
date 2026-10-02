@@ -23,12 +23,17 @@
 /* u32 byte swap */
 static __host__ __device__ u32 swap_u32(u32 num)
 {
+#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 200)
+  u32 retval;
+  asm("prmt.b32 %0, %1, 0, 0x0123;" : "=r"(retval) : "r"(num));
+  return retval;
+#else
   u32 retval = (num & 0xFF000000) >> 24;
   retval |= (num & 0x00FF0000) >> 8;
   retval |= (num & 0x0000FF00) << 8;
   retval |= (num & 0x000000FF) << 24;
-
   return retval;
+#endif
 }
 
 /* Adds two u32s, returning the carry out bit.  */
