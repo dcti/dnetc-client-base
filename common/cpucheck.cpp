@@ -1552,7 +1552,7 @@ static void ARMident_catcher(int)
 }
 #endif
 
-#if (CLIENT_CPU == CPU_ARM)
+#if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_ARM64)
 signed int default_rc5_core = -1;
 signed int default_r72_core = -1;
 signed int default_ogr_core = -1;
@@ -1845,8 +1845,26 @@ static long __GetRawProcessorID(const char **cpuname )
       }
     } /* if (len > 0) */
   } /* if (detectedtype == -2) */
+  #elif (CLIENT_OS == OS_MACOSX)
+  if ( detectedtype == -2L )
+  {
+      /* some details in mach/machine.h */
+      int cpufamily;
+      size_t len;
+
+      detectedtype = 0;
+      len = sizeof(cpufamily);
+      if (sysctlbyname( "hw.cpufamily", &cpufamily, &len, NULL, 0 ) == 0) {
+        detectedtype = cpufamily;
+      }
+      len = sizeof(namebuf);
+      if (sysctlbyname( "machdep.cpu.brand_string", &namebuf, &len, NULL, 0) == 0) {
+        detectedname = ((const char *)&(namebuf[0]));
+      }
+  }
   #endif
 
+  #if (CLIENT_OS != OS_MACOSX)
   if (detectedtype != -2)
   {
     for (int n=0; detectedname==NULL; n++)
@@ -1871,6 +1889,7 @@ static long __GetRawProcessorID(const char **cpuname )
       }
     }
   }
+  #endif
 
   if ( cpuname )
     *cpuname = detectedname;
@@ -2429,6 +2448,7 @@ long GetProcessorType(int quietly, int device)
       (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
       (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
       (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
+      (CLIENT_CPU == CPU_ARM64)   || \
       (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM) || \
       (CLIENT_CPU == CPU_OPENCL)
   {
@@ -2790,6 +2810,7 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
     (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
     (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
     (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
+    (CLIENT_CPU == CPU_ARM64)   || \
     (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
   #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
   long rawid = __GetRawProcessorID(device, &cpuid_s);
@@ -2805,10 +2826,10 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
     static char namebuf[200];
     if (cpuid_s == NULL) cpuid_s = "*unknown*";
     if (*cpuid_s =='\0') cpuid_s = "???";
-  #if (CLIENT_CPU == CPU_ARM)
+  #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_ARM64)
     namebuf[0] = '\0';
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%lX" */
-      sprintf( namebuf, "%lX\n\tname: ", rawid );
+      snprintf( namebuf, sizeof(namebuf), "%lX\n\tname: ", rawid );
     strcat( namebuf, cpuid_s ); /* always valid */
     #if (CLIENT_OS == OS_RISCOS && defined(HAVE_X86_CARD_SUPPORT))
     if (riscos_count_cpus() == 2)
@@ -2913,7 +2934,7 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
   else
   {
     static char foundcpu_b[6];
-    sprintf( foundcpu_b, "%d", cpucount );
+    snprintf( foundcpu_b, sizeof(foundcpu_b), "%d", cpucount );
     foundcpu_s = ((const char *)(&foundcpu_b[0]));
   }
 
