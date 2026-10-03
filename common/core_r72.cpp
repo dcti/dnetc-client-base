@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1998-2016 - All Rights Reserved
+ * Copyright distributed.net 1998-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
@@ -120,6 +120,7 @@ extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *
 #elif (CLIENT_CPU == CPU_ARM64)
 extern "C" s32 rc5_72_unit_func_monika_4pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_monika_2pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_neon_8x4(RC5_72UnitWork *w, u32 *iterations, void *);
 #endif
 
 
@@ -220,6 +221,7 @@ const char **corenames_for_contest_rc572()
       "ANSI 1-pipe",
       "KS-MONIKA 4-pipe",
       "KS-MONIKA 2-pipe",
+      "NEON 8x4",
   #elif (CLIENT_CPU == CPU_MIPS)
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -1108,15 +1110,19 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
          break;
      #endif
 
-    #if (CLIENT_CPU == CPU_ARM64)
+     #if (CLIENT_CPU == CPU_ARM64)
        case 3:
-	unit_func.gen_72 = rc5_72_unit_func_monika_4pipe;
-	pipeline_count = 4;
-	break;
+         unit_func.gen_72 = rc5_72_unit_func_monika_4pipe;
+         pipeline_count = 4;
+         break;
        case 4:
-	unit_func.gen_72 = rc5_72_unit_func_monika_2pipe;
-	pipeline_count = 2;
-	break;
+         unit_func.gen_72 = rc5_72_unit_func_monika_2pipe;
+         pipeline_count = 2;
+         break;
+       case 5:
+         unit_func.gen_72 = rc5_72_unit_func_neon_8x4;
+         pipeline_count = 16;
+         break;
     #endif
 
     }
