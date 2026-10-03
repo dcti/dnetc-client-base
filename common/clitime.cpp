@@ -21,6 +21,9 @@ return "@(#)$Id: clitime.cpp,v 1.77 2013/05/08 20:34:37 bovine Exp $"; }
 #include "clitime.h"    /* keep the prototypes in sync */
 #include "unused.h"     /* DNETC_UNUSED_* */
 #include "clisync.h"
+#ifdef CLIENT_OS == OS_ANDROID
+ #include <sys/utsname.h>
+#endif
 
 #if (CLIENT_OS == OS_NETWARE6)
 #include <nks/time.h>
@@ -603,23 +606,14 @@ int CliGetMonotonicClock( struct timeval *tv )
       static int supports_clock_gettime = -1;
       if (supports_clock_gettime == -1)
       {
+        int major, minor, version = -1;
+
+        #if CLIENT_OS != OS_ANDROID
         FILE* fp = fopen("/proc/sys/kernel/osrelease","r");
 
         if (fp)
         {
-          int major, minor, version = -1;
-
-          if (fscanf(fp, "%d.%d.%d", &major, &minor, &version) >= 2)
-          {
-            /* clock_gettime is supported in Linux 2.6 and beyond 
-             * useful in 2.6.18 and greater */
-            if (major > 2 || (major == 2 && minor > 6) ||
-              (major == 2 && minor == 6 && version >= 18))
-              supports_clock_gettime = 1;
-            else
-              supports_clock_gettime = 0;
-          }
-          else
+          if (fscanf(fp, "%d.%d.%d", &major, &minor, &version) < 2)
           {
             fclose(fp);
             return -1; /* failed reading file */
@@ -631,6 +625,20 @@ int CliGetMonotonicClock( struct timeval *tv )
         {
           return -1; /* failed opening file */
         }
+        #else
+        struct utsname name;
+        if (uname (&name) == -1 ||
+          sscanf(name.release, "%d.%d.%d", &major, &minor, &version) < 2)
+          return -1;
+        #endif
+
+        /* clock_gettime is supported in Linux 2.6 and beyond
+          * useful in 2.6.18 and greater */
+        if (major > 2 || (major == 2 && minor > 6) ||
+          (major == 2 && minor == 6 && version >= 18))
+          supports_clock_gettime = 1;
+        else
+          supports_clock_gettime = 0;
       }
 
       #if defined(CLOCK_MONOTONIC)
