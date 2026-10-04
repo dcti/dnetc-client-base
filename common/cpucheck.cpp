@@ -190,7 +190,7 @@ int GetNumberOfDetectedProcessors( void )
     #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || \
            (CLIENT_OS == OS_ANDROID)) && (CLIENT_CPU != CPU_CELLBE)
     {
-      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM64)
+      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
         cpucount = 1;
       #else
       FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
@@ -206,7 +206,8 @@ int GetNumberOfDetectedProcessors( void )
                CLIENT_CPU == CPU_POWERPC  || \
                CLIENT_CPU == CPU_S390     || \
                CLIENT_CPU == CPU_S390X    || \
-               CLIENT_CPU == CPU_PA_RISC)
+               CLIENT_CPU == CPU_PA_RISC  || \
+               CLIENT_CPU == CPU_ARM64)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
           #elif (CLIENT_CPU == CPU_SPARC)
