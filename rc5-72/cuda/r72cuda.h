@@ -71,6 +71,19 @@ typedef struct {
 #define SHL(x, s) ((u32) ((x) << ((s) & 31)))
 #define SHR(x, s) ((u32) ((x) >> (32 - ((s) & 31))))
 
-#define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
-#define ROTL3(x) ROTL(x, 3)
+#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 320)
+  __device__ __forceinline__ u32 ROTL(u32 x, u32 s) {
+    u32 res;
+    asm("shf.l.wrap.b32 %0, %1, %1, %2;" : "=r"(res) : "r"(x), "r"(s));
+    return res;
+  }
+  __device__ __forceinline__ u32 ROTL3(u32 x) {
+    u32 res;
+    asm("shf.l.wrap.b32 %0, %1, %1, 3;" : "=r"(res) : "r"(x));
+    return res;
+  }
+#else
+  #define ROTL(x, s) ((u32) (SHL((x), (s)) | SHR((x), (s))))
+  #define ROTL3(x)   ROTL(x, 3)
+#endif
 

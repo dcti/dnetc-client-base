@@ -148,7 +148,8 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
   prev_ts = read_counter();
 #endif
 
-  for (i = 0; i < *iterations; i += optimal_process_amount) {
+  //for (i = 0; i < *iterations; i += optimal_process_amount) {
+  for (i = 0; i < *iterations; ) {
     dim3 block_dimension(num_threads);
     dim3 grid_dimension(grid_dim);
     u32 process_amount = min_u32(*iterations - i, optimal_process_amount);
@@ -356,6 +357,8 @@ static s32 CDECL rc5_72_run_cuda_2(RC5_72UnitWork *rc5_72unitwork, u32 *iteratio
     /* Advance L0 by the amount that we processed */
     /* this pass through the for() loop.          */
     increment_L0(&rc5_72unitwork->L0.hi, &rc5_72unitwork->L0.mid, &rc5_72unitwork->L0.lo, process_amount);
+
+    i += process_amount;
 
 #ifdef DISPLAY_TIMESTAMPS
     current_ts = read_counter();
