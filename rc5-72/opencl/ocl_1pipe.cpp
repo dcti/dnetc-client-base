@@ -63,6 +63,12 @@ static bool init_rc5_72_ocl_npipe(ocl_context_t *cont, unsigned core_ID, const c
     if (status == CL_SUCCESS)
       cont->runSizeMultiplier = prefm * cus * 4; //Hack for now. We need 4 wavefronts per CU to hide latency
   }
+
+  // align to 256
+  cont->runSizeMultiplier = ((cont->runSizeMultiplier + 256 - 1) / 256) * 256;
+  if (cont->runSizeMultiplier < 256)
+    cont->runSizeMultiplier = 256;
+
   //Log("Multiplier = %u\n", cont->runSizeMultiplier);
   unsigned t = cont->runSize/cont->runSizeMultiplier;
   if (t == 0) t = 1;
