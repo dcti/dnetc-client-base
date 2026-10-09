@@ -26,6 +26,18 @@ return "@(#)$Id: clitime.cpp,v 1.77 2013/05/08 20:34:37 bovine Exp $"; }
 #include <nks/time.h>
 #endif
 
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
+#define WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
+#if (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
+#include <mach/mach_time.h>
+#endif
+
 #if defined(__unix__)
  #if !((CLIENT_OS == OS_QNX ) && !(defined(__QNXNTO__)))
   #define HAVE_GETRUSAGE
@@ -440,68 +452,36 @@ int CliGetMonotonicClock( struct timeval *tv )
     }
     #elif (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
     {
-      #if 0 /* too many failures to be useful */
-      static int using_qff = -1;
-      if (using_qff != 0)
+      static ui64 qfreq = 0;
+      static int qpc_supported = -1;
+      LARGE_INTEGER qcount;
+
+      /* Check if high-resolution hardware timers are supported */
+      if (qpc_supported == -1)
       {
-        static unsigned __int64 freq = 0;
-        unsigned __int64 now; int gotit = 0;
-        LARGE_INTEGER qperf;
-        if (winGetVersion() >= 400 && /* not efficient on win32s */
-           QueryPerformanceCounter(&qperf))
+        LARGE_INTEGER f;
+        if (QueryPerformanceFrequency(&f) && (f.LowPart != 0 || f.HighPart != 0))
         {
-          if (qperf.LowPart || qperf.HighPart)
-          {
-            gotit = +1;
-            if (using_qff < 0)
-            {
-              /* guard against Japanese Win95 (PC9800 version) which always
-              ** returns 1193180 (.eq. QueryPerfFrequency()) as counter.
-              ** See KB article Q152145
-              */
-              LARGE_INTEGER qcheck;
-              Sleep(5); /* not really necessary, but doesn't hurt */
-              gotit = 0;
-              if (QueryPerformanceCounter(&qcheck))
-              {
-                if ((qcheck.LowPart || qcheck.HighPart) &&
-                    ((qcheck.LowPart != qperf.LowPart) ||
-                     (qcheck.HighPart != qperf.HighPart)))
-                {
-                  qperf.LowPart = qcheck.LowPart;
-                  qperf.HighPart = qcheck.HighPart;
-                  if (QueryPerformanceFrequency(&qcheck))
-                  {
-                    now = qcheck.HighPart;
-                    now <<= 32;
-                    now += qcheck.LowPart;
-                    freq = now;
-                    gotit = +1;
-                  }
-                }
-              }
-            }
-          }
+          /* Combine 32-bit parts into a 64-bit unsigned int */
+          qfreq = ((ui64)f.HighPart << 32) | f.LowPart;
+          qpc_supported = 1;
         }
-        if (using_qff < 0)
-          using_qff = gotit;
-        else if (!gotit)
-          return -1;
-        if (gotit)
+        else
         {
-          now = qperf.HighPart;
-          now <<= 32;
-          now += qperf.LowPart;
-          tv->tv_sec = (time_t)(now / freq);
-          now = now % freq;
-          now = now * 1000000ui64;
-          tv->tv_usec = (time_t)(now / freq);
-          return 0;
+          qpc_supported = 0;
         }
-        /* fallthrough: using_qff == 0 */
       }
-      #endif
-      /* if (using_qff == 0) */
+
+      /* If supported, use sub-microsecond precision */
+      if (qpc_supported == 1 && QueryPerformanceCounter(&qcount))
+      {
+        ui64 now = ((ui64)qcount.HighPart << 32) | qcount.LowPart;
+        
+        tv->tv_sec  = (time_t)(now / qfreq);
+        tv->tv_usec = (long)(((now % qfreq) * 1000000ULL) / qfreq);
+      }
+      /* Fallback to the legacy 15.625ms timer if QPC fails */
+      else
       {
         static DWORD lastticks = 0, wrap_count = (DWORD)-1L;
         static fastlock_t mutex;
@@ -547,24 +527,30 @@ int CliGetMonotonicClock( struct timeval *tv )
       __clks2tv( 1000, ticks, l_wrap_count, tv );
     }
     #elif (CLIENT_OS == OS_MACOSX) || (CLIENT_OS == OS_IOS)
-      // OS 10.5.2 : the sysctl() call causes a huge slow down on 64-bit arch.
-      static struct timeval boot = {0, 0};
-      struct timeval now;
-      int mib[2]; size_t argsize = sizeof(boot);
-      mib[0] = CTL_KERN; mib[1] = KERN_BOOTTIME;
-      if (gettimeofday(&now, 0))
-        return -1;
-      if (boot.tv_sec == 0 && sysctl(&mib[0], 2, &boot, &argsize, NULL, 0) == -1)
-        return -1;
-      if (now.tv_sec < boot.tv_sec || /* should never happen */
-          (now.tv_sec == boot.tv_sec && now.tv_usec < boot.tv_sec))
-        return -1;
-      if (now.tv_usec < boot.tv_usec) {
-        now.tv_usec += 1000000;
-        now.tv_sec--;
+    {
+      static mach_timebase_info_data_t timebase = {0, 0};
+      
+      /* Initialize hardware ratio once */
+      if (timebase.denom == 0)
+      {
+        if (mach_timebase_info(&timebase) != KERN_SUCCESS || timebase.denom == 0)
+        {
+          /* default to 1:1 if the kernel call ever fails */
+          timebase.numer = 1;
+          timebase.denom = 1;
+        }
       }
-      tv->tv_sec = now.tv_sec - boot.tv_sec;
-      tv->tv_usec = now.tv_usec - boot.tv_usec;
+
+      /* Read the raw CPU hardware counter */
+      ui64 ticks = (ui64)mach_absolute_time();
+
+      /* Convert ticks to nanoseconds (split math avoids 64-bit overflow) */
+      ui64 nanos = (ticks / timebase.denom) * timebase.numer +
+                  ((ticks % timebase.denom) * timebase.numer) / timebase.denom;
+
+      tv->tv_sec  = (time_t)(nanos / 1000000000ULL);
+      tv->tv_usec = (long)((nanos % 1000000000ULL) / 1000ULL);
+    }
     #elif defined(CTL_KERN) && defined(KERN_BOOTTIME) /* *BSD */
     {
       struct timeval boot, now;
