@@ -530,16 +530,21 @@ int CliGetMonotonicClock( struct timeval *tv )
     {
       static mach_timebase_info_data_t timebase = {0, 0};
       
-      /* Get the hardware tick-to-nanosecond ratio */
+      /* Initialize hardware ratio once */
       if (timebase.denom == 0)
       {
-        mach_timebase_info(&timebase);
+        if (mach_timebase_info(&timebase) != KERN_SUCCESS || timebase.denom == 0)
+        {
+          /* default to 1:1 if the kernel call ever fails */
+          timebase.numer = 1;
+          timebase.denom = 1;
+        }
       }
 
       /* Read the raw CPU hardware counter */
       ui64 ticks = (ui64)mach_absolute_time();
 
-      /* Convert ticks to nanoseconds */
+      /* Convert ticks to nanoseconds (split math avoids 64-bit overflow) */
       ui64 nanos = (ticks / timebase.denom) * timebase.numer +
                   ((ticks % timebase.denom) * timebase.numer) / timebase.denom;
 
