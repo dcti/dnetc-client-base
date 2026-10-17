@@ -1121,7 +1121,7 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
          break;
        case 5:
          unit_func.gen_72 = rc5_72_unit_func_neon_8x4;
-         pipeline_count = 16;
+         pipeline_count = 32;
          break;
     #endif
 
