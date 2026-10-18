@@ -24,7 +24,7 @@ PLATSRCPATH = plat\win
 #DEBUG=1
 
 HAVE_RC5_72_CORES=1
-HAVE_OGR_CORES=1
+HAVE_OGR_CORES=0
 
 # -------------------------------------------------------------------
 
