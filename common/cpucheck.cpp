@@ -2824,7 +2824,7 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
               ("none\n\t(client does not support identification)"));
   else
   {
-    static char namebuf[200];
+    static char namebuf[512];
     if (cpuid_s == NULL) cpuid_s = "*unknown*";
     if (*cpuid_s =='\0') cpuid_s = "???";
   #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_ARM64)
@@ -2842,62 +2842,75 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%08x" */
       sprintf( namebuf, "%08X\n\tname: ",(int)rawid);
     strcat( namebuf, cpuid_s ); /* always valid */
+
+    #define ADD_FEATURE_STRING(namebuf, char_count, featurebuf) \
+      if ( (char_count + strlen(featurebuf)) >= 80 ) { \
+        strcat( namebuf, "\n\t          " ); \
+        char_count = 10 + 10; \
+      } \
+      strcat( namebuf, featurebuf ); \
+      char_count += strlen(featurebuf);
+
+    int char_count = 0;
     strcat( namebuf, "\n\tfeatures: " );
+    char_count += 10 + 10;
+
     features = GetProcessorFeatureFlags();
     if (features & CPU_F_MMX) {
-      strcat( namebuf, "MMX " );
+      ADD_FEATURE_STRING(namebuf, char_count, "MMX ");
     }
     if (features & CPU_F_CYRIX_MMX_PLUS) {
-      strcat( namebuf, "Cyrix_MMX+ " );
+      ADD_FEATURE_STRING(namebuf, char_count, "Cyrix_MMX+ ");
     }
-    if (features & CPU_F_AMD_MMX_PLUS) {   
-      strcat( namebuf, "AMD_MMX+ " );   
+    if (features & CPU_F_AMD_MMX_PLUS) {
+      ADD_FEATURE_STRING(namebuf, char_count, "AMD_MMX+ ");
     }
-    if (features & CPU_F_3DNOW) {   
-      strcat( namebuf, "3DNOW " );   
+    if (features & CPU_F_3DNOW) {
+      ADD_FEATURE_STRING(namebuf, char_count, "3DNOW ");
     }
-    if (features & CPU_F_3DNOW_PLUS) {   
-      strcat( namebuf, "3DNOW+ " );   
+    if (features & CPU_F_3DNOW_PLUS) {
+      ADD_FEATURE_STRING(namebuf, char_count, "3DNOW+ ");
     }
-    if (features & CPU_F_SSE) {   
-      strcat( namebuf, "SSE " );   
+    if (features & CPU_F_SSE) {
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE ");
     }
-    if (features & CPU_F_SSE2) {   
-      strcat( namebuf, "SSE2 " );   
+    if (features & CPU_F_SSE2) {
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE2 ");
     }
-    if (features & CPU_F_SSE3) {   
-      strcat( namebuf, "SSE3 " );   
+    if (features & CPU_F_SSE3) {
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE3 ");
     }
     if (features & CPU_F_AMD64) {
-      strcat( namebuf, "AMD64 " );
+      ADD_FEATURE_STRING(namebuf, char_count, "AMD64 ");
     }
     if (features & CPU_F_EM64T) {
-      strcat( namebuf, "EM64T " );
+      ADD_FEATURE_STRING(namebuf, char_count, "EM64T ");
     }
     if (features & CPU_F_SSSE3) {
-      strcat( namebuf, "SSSE3 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "SSSE3 ");
     }
     if (features & CPU_F_SSE4_1) {
-      strcat( namebuf, "SSE4.1 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE4.1 ");
     }
     if (features & CPU_F_SSE4_2) {
-      strcat( namebuf, "SSE4.2 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE4.2 ");
     }
     if (features & CPU_F_LZCNT) {
-      strcat( namebuf, "LZCNT ");
+      ADD_FEATURE_STRING(namebuf, char_count, "LZCNT ");
     }
     if (features & CPU_F_AVX_DISABLED) {
-      strcat( namebuf, "AVX(disabled) ");
+      ADD_FEATURE_STRING(namebuf, char_count, "AVX(disabled) ");
     }
     if (features & CPU_F_AVX) {
-      strcat( namebuf, "AVX ");
+      ADD_FEATURE_STRING(namebuf, char_count, "AVX ");
     }
     if (features & CPU_F_AVX2) {
-      strcat( namebuf, "AVX2 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "AVX2 ");
     }
     if (features & CPU_F_AVX512) {
-      strcat( namebuf, "AVX512 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "AVX512 ");
     }
+
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     sprintf(namebuf, "%08lX\n\tname: %s", rawid, cpuid_s );
   #else
