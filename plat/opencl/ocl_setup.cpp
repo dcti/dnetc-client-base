@@ -245,5 +245,6 @@ void OCLReinitializeDevice(ocl_context_t *cont)
 
   cont->runSize = 65536;
   cont->maxWorkSize = 2048 * 2048;
+  cont->fullKernelTime = 0;
   //Log("Reinit OK\n");
 }

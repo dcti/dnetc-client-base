@@ -377,7 +377,7 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
     }
 
     // wait for the kernel call to finish execution
-    status = clWaitForEvents(1, &ndrEvt);
+    status = OCLWaitForKernel(cont, ndrEvt, rest0);
 
     cl_ulong startTime;
     cl_ulong endTime;
@@ -387,7 +387,11 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
 
     double d;
     if (status == CL_SUCCESS)
+    {
       d = 1e-6 * (endTime - startTime);
+      if (rest0 == cont->runSize)
+        cont->fullKernelTime = d;
+    }
     else
     {
       static bool profilingErr = false;
