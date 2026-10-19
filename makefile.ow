@@ -7,7 +7,7 @@ base     = ..\client_head
 # enable/disable projects
 RC5_72   = 1
 OGR_P2   = 0
-OGR_NG   = 1
+OGR_NG   = 0
 
 !ifdef dos
 os_cpp     = $(base)\plat\dos
