@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright distributed.net 1998-2016 - All Rights Reserved
+# Copyright distributed.net 1998-2026 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
@@ -123,7 +123,7 @@ OGR="ogr"
 
 # select the projects to include in the client
 HAVE_RC5_72="1"
-HAVE_OGR="1"
+HAVE_OGR="0"
 HAVE_OGR_P2="0"
 
 # define these to "0" in add_sources() if you add your own list of cores + options
@@ -545,6 +545,7 @@ add_sources() # $1=os, $2=arch, $3=custom
     if [ "$HAVE_RC5_72" = "1" ]; then
       DEFAULT_RC5_72="1"
       TARGET_ADDASMS="$TARGET_ADDASMS rc5-72/arm64/r72-ks-monika.S rc5-72/arm64/r72-ks-monika-2pipe.S"
+      TARGET_ADDSRCS="$TARGET_ADDSRCS rc5-72/arm64/r72-neon-8x4.cpp"
     fi # HAVE_RC5_72
     
     if [ "$HAVE_OGR" = "1" ]; then
