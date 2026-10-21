@@ -268,9 +268,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/coremem.obj    \
-        $(OUTPUTPATH)/core_r72.obj   \
-        $(OUTPUTPATH)/core_ogr.obj   \
-        $(OUTPUTPATH)/core_ogr_ng.obj \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
         $(OUTPUTPATH)/iniread.obj    \
@@ -293,6 +290,19 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/stress.obj     \
         $(OUTPUTPATH)/triggers.obj   \
         $(OUTPUTPATH)/util.obj
+
+!if $(HAVE_RC5_72_CORES) == 1
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/core_r72.obj
+!endif
+!if $(HAVE_OGR_CORES) == 1
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/core_ogr_ng.obj
+!endif
+!if $(HAVE_OGR_PASS2) == 1
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/core_ogr.obj
+!endif
 OPTS_MSVC = $(OPTS_MSVC) -I$(COMMONPATH) -DLURK
 !if exist( "$(PRIVATEPATH:/=\)\buffpriv.cpp" )
 COMMON_OBJS = $(COMMON_OBJS)         \
