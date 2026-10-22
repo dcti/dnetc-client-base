@@ -1,13 +1,13 @@
 /*
- * RC5-72 NEON core for arm64 - 2026
+ * RC5-72 NEON core for arm64 - Oct 2026
  *
  * This core runs 32 keys at once as 8 groups of uint32x4_t (4 keys/lane).
  * Variable left-rotate uses USHL with a per-lane signed shift:
  * ROTL(x,s) = ushl(x, s&31) | ushl(x, (s&31)-32). The schedule/encryption are
- * bit-identical to the ANSI core (validated by `dnetc -test rc5-72`). Each
- * lane's key is built with the full ANSI carry, so blocks need no alignment;
- * the core reports pipeline_count 16 and masks the lanes of a short final
- * block.
+ * bit-identical to the ANSI core (validated by `dnetc -test rc5-72`).
+ * 32 keys/block and 32 divides 256, so the hi byte never crosses a block
+ * boundary within a group assuming the start is aligned -- the ANSI key
+ * counter applies as-is.
  */
 #include "ccoreio.h"
 #include <arm_neon.h>
@@ -25,51 +25,17 @@ static inline uint32x4_t VROTL(uint32x4_t x, uint32x4_t s)
 static inline uint32x4_t VROTL3(uint32x4_t x)
 { return vorrq_u32(vshlq_n_u32(x, 3), vshrq_n_u32(x, 29)); }
 
-static inline void key_inc(u32 &hi, u32 &mid, u32 &lo)
-{
-  hi = (hi + 1) & 0xFF;
-  if (!hi) {
-    mid = mid + 0x01000000;
-    if (!(mid & 0xFF000000u)) { mid = (mid + 0x00010000) & 0x00FFFFFF;
-      if (!(mid & 0x00FF0000)) { mid = (mid + 0x00000100) & 0x0000FFFF;
-        if (!(mid & 0x0000FF00)) { mid = (mid + 1) & 0xFF;
-          if (!mid) { lo = lo + 0x01000000;
-            if (!(lo & 0xFF000000u)) { lo = (lo + 0x00010000) & 0x00FFFFFF;
-              if (!(lo & 0x00FF0000)) { lo = (lo + 0x00000100) & 0x0000FFFF;
-                if (!(lo & 0x0000FF00)) { lo = (lo + 0x00000001) & 0x000000FF; } } } } } } }
-  }
-}
-
 extern "C" s32 rc5_72_unit_func_neon_8x4(RC5_72UnitWork *w, u32 *iterations, void *)
 {
   uint32x4_t S[NG][26], L[NG][3], A[NG], B[NG];
-  u32 khi[NP + 1], kmid[NP + 1], klo[NP + 1];
-  u32 todo = *iterations, done = 0;
-  khi[0] = w->L0.hi; kmid[0] = w->L0.mid; klo[0] = w->L0.lo;
-  while (done < todo) {
-    u32 valid = (todo - done < NP) ? (todo - done) : NP;
-    bool wrap = khi[0] + NP > 0x100;
-    if (!wrap) {
-      for (int n = 1; n <= NP; n++) { khi[n] = khi[0] + n; kmid[n] = kmid[0]; klo[n] = klo[0]; }
-      if (khi[NP] == 0x100) { khi[NP] = khi[NP - 1]; key_inc(khi[NP], kmid[NP], klo[NP]); }
-    } else {
-      for (int n = 0; n < NP; n++) {
-        khi[n + 1] = khi[n]; kmid[n + 1] = kmid[n]; klo[n + 1] = klo[n];
-        key_inc(khi[n + 1], kmid[n + 1], klo[n + 1]);
-      }
-    }
-    const uint32x4_t lane = {0, 1, 2, 3};
+  const uint32x4_t lane = {0, 1, 2, 3};
+  u32 kiter = *iterations / NP;
+  while (kiter--) {
     _Pragma("clang loop unroll(full)")
     for (int g = 0; g < NG; g++) {
-      if (!wrap) {
-        L[g][2] = vaddq_u32(vdupq_n_u32(khi[0] + 4 * g), lane);
-        L[g][1] = vdupq_n_u32(kmid[0]);
-        L[g][0] = vdupq_n_u32(klo[0]);
-      } else {
-        L[g][2] = vld1q_u32(&khi[4 * g]);
-        L[g][1] = vld1q_u32(&kmid[4 * g]);
-        L[g][0] = vld1q_u32(&klo[4 * g]);
-      }
+      L[g][2] = vaddq_u32(vdupq_n_u32(w->L0.hi), vaddq_u32(lane, vdupq_n_u32(4 * g)));
+      L[g][1] = vdupq_n_u32(w->L0.mid);
+      L[g][0] = vdupq_n_u32(w->L0.lo);
       for (int i = 0; i < 26; i++) S[g][i] = vdupq_n_u32(P + (u32)i * Q);
       A[g] = vdupq_n_u32(0); B[g] = vdupq_n_u32(0);
     }
@@ -98,23 +64,27 @@ extern "C" s32 rc5_72_unit_func_neon_8x4(RC5_72UnitWork *w, u32 *iterations, voi
       u32 al[4], bl[4];
       vst1q_u32(al, a); vst1q_u32(bl, b);
       for (int p = 0; p < 4; p++) {
-        u32 n = 4 * g + p;
-        if (al[p] == w->cypher.lo && n < valid) {
+        if (al[p] == w->cypher.lo) {
           ++w->check.count;
-          w->check.hi = khi[n];
-          w->check.mid = kmid[n];
-          w->check.lo = klo[n];
-          if (bl[p] == w->cypher.hi) {
-            w->L0.hi = khi[n]; w->L0.mid = kmid[n]; w->L0.lo = klo[n];
-            *iterations = done + n;
-            return RESULT_FOUND;
-          }
+          w->check.hi = w->L0.hi + (u32)(4 * g + p);
+          w->check.mid = w->L0.mid;
+          w->check.lo = w->L0.lo;
+          if (bl[p] == w->cypher.hi) { *iterations -= (kiter + 1) * NP - (4 * g + p); return RESULT_FOUND; }
         }
       }
     }
-    done += valid;
-    khi[0] = khi[valid]; kmid[0] = kmid[valid]; klo[0] = klo[valid];
+    /* key += NP (byte hi, full ANSI carry into mid/lo) */
+    w->L0.hi = (w->L0.hi + NP) & 0xFF;
+    if (!w->L0.hi) {
+      w->L0.mid = w->L0.mid + 0x01000000;
+      if (!(w->L0.mid & 0xFF000000u)) { w->L0.mid = (w->L0.mid + 0x00010000) & 0x00FFFFFF;
+        if (!(w->L0.mid & 0x00FF0000)) { w->L0.mid = (w->L0.mid + 0x00000100) & 0x0000FFFF;
+          if (!(w->L0.mid & 0x0000FF00)) { w->L0.mid = (w->L0.mid + 1) & 0xFF;
+            if (!w->L0.mid) { w->L0.lo = w->L0.lo + 0x01000000;
+              if (!(w->L0.lo & 0xFF000000u)) { w->L0.lo = (w->L0.lo + 0x00010000) & 0x00FFFFFF;
+                if (!(w->L0.lo & 0x00FF0000)) { w->L0.lo = (w->L0.lo + 0x00000100) & 0x0000FFFF;
+                  if (!(w->L0.lo & 0x0000FF00)) { w->L0.lo = (w->L0.lo + 0x00000001) & 0x000000FF; } } } } } } }
+    }
   }
-  w->L0.hi = khi[0]; w->L0.mid = kmid[0]; w->L0.lo = klo[0];
   return RESULT_NOTHING;
 }
