@@ -34,6 +34,7 @@ typedef struct {
   u32               runSize;
   u32               runSizeMultiplier;
   u32               maxWorkSize;
+  unsigned long long estimatedPerf; //keys per second per pipe
 } ocl_context_t;
 
 ocl_context_t *ocl_get_context(int device);
