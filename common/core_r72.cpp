@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.66 2026/10/11 17:16:00 Mix Exp $"; }
+return "@(#)$Id: core_r72.cpp,v 1.67 2026/10/22 12:27:00 zebe Exp $"; }
 
 //#define TRACE
 
@@ -653,6 +653,54 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
         cindex = 0;
     }
 #endif
+  // ===============================================================
+  #elif (CLIENT_CPU == CPU_ARM64)
+    /* The raw id is OS-specific. */
+    #if (CLIENT_OS == OS_MACOSX)
+    /* macOS reports hw.cpufamily (see <mach/machine.h>) */
+    if (detected_type > 0)
+    {
+      switch (detected_type)
+      {
+        case 0x1b588bb3: cindex = 5; break; // Firestorm/Icestorm (M1 family)
+        case 0xda33d83d: cindex = 5; break; // Blizzard/Avalanche (M2 family)
+        case 0xfa33415e: cindex = 5; break; // Ibiza (M3)
+        case 0x5f4dea93: cindex = 5; break; // Lobos (M3 Pro)
+        case 0x72015832: cindex = 5; break; // Palma (M3 Max/Ultra)
+        case 0x6f5129ac: cindex = 5; break; // Donan (M4)
+        case 0x17d5b93a: cindex = 5; break; // Brava (M4 Pro/Max)
+        case 0x1d5a87e8: cindex = 5; break; // Hidra (M5)
+        case 0xf76c5b1a: cindex = 5; break; // Sotra (M5 Pro/Max/Ultra)
+        case 0x75d4acb9: cindex = 5; break; // Tahiti (A18 Pro/MacBook Neo)
+        /* to do: M6 and up for macOS */
+        default:         cindex =-1; break; // no default
+      }
+    }
+    #else
+	/* non-macOS OSes use MIDR from /proc/cpuinfo. */
+    if (detected_type > 0)
+    {
+      /* implementer + part; /proc/cpuinfo parsing ORs the E-core and
+       * P-core part numbers, which differ only in bit 0 */
+      switch (detected_type & 0xff00ffe0)
+      {
+        case 0x61000220: cindex = 5; break; // Apple M1
+        case 0x61000240: cindex = 5; break; // Apple M1 Pro
+        case 0x61000280: cindex = 5; break; // Apple M1 Max
+        case 0x61000320: cindex = 5; break; // Apple M2
+        case 0x61000340: cindex = 5; break; // Apple M2 Pro 
+        case 0x61000380: cindex = 5; break; // Apple M2 Max
+        case 0x61000420: cindex = 5; break; // Apple M3
+        case 0x61000440: cindex = 5; break; // Apple M3 Pro
+        case 0x61000480: cindex = 5; break; // Apple M3 Max
+        case 0x61000520: cindex = 5; break; // Apple M4
+        case 0x61000540: cindex = 5; break; // Apple M4 Pro
+        case 0x61000580: cindex = 5; break; // Apple M4 Max
+        /* to do: M5 and up on non-macOS */
+        default:         cindex =-1; break; // no default
+      }
+    }
+    #endif
   // ===============================================================
   #elif (CLIENT_CPU == CPU_SPARC)
     #if (CLIENT_OS == OS_SOLARIS)
