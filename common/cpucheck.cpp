@@ -1847,14 +1847,15 @@ static long __GetRawProcessorID(const char **cpuname )
   #elif (CLIENT_OS == OS_MACOSX)
   if ( detectedtype == -2L )
   {
-      /* some details in mach/machine.h */
-      int cpufamily;
+      /* unsigned: several CPUFAMILY_ARM_* values have bit 31 set, and a
+       * sign-extended (negative) id is treated as "not detected" */
+      u32 cpufamily;
       size_t len;
 
       detectedtype = 0;
       len = sizeof(cpufamily);
       if (sysctlbyname( "hw.cpufamily", &cpufamily, &len, NULL, 0 ) == 0) {
-        detectedtype = cpufamily;
+        detectedtype = (long)cpufamily;
       }
       len = sizeof(namebuf);
       if (sysctlbyname( "machdep.cpu.brand_string", &namebuf, &len, NULL, 0) == 0) {
