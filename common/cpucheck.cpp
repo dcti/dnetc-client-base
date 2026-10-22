@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2016 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,7 +10,7 @@
  *
 */
 const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.210 2016/02/13 17:09:10 ertyu Exp $"; }
+return "@(#)$Id: cpucheck.cpp,v 1.211 2026/10/22 11:29:10 zebe Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -1849,14 +1849,15 @@ static long __GetRawProcessorID(const char **cpuname )
   #elif (CLIENT_OS == OS_MACOSX)
   if ( detectedtype == -2L )
   {
-      /* some details in mach/machine.h */
-      int cpufamily;
+      /* unsigned: several CPUFAMILY_ARM_* values have bit 31 set, and a
+       * sign-extended (negative) id is treated as "not detected" */
+      u32 cpufamily;
       size_t len;
 
       detectedtype = 0;
       len = sizeof(cpufamily);
       if (sysctlbyname( "hw.cpufamily", &cpufamily, &len, NULL, 0 ) == 0) {
-        detectedtype = cpufamily;
+        detectedtype = (long)cpufamily;
       }
       len = sizeof(namebuf);
       if (sysctlbyname( "machdep.cpu.brand_string", &namebuf, &len, NULL, 0) == 0) {
