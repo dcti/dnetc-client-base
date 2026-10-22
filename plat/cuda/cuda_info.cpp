@@ -71,10 +71,16 @@ unsigned int GetCUDAGPUFrequency(int device)
 {
   unsigned int freq = 0;
   if (device >= 0 && device < GetNumberOfDetectedCUDAGPUs()) {
+    int clockRate = 0;
+#if CUDART_VERSION >= 5000
+    if (cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, device) == cudaSuccess)
+      freq = (unsigned int)(clockRate / 1000);
+#else
     cudaDeviceProp deviceProp;
     cudaError_t rc = cudaGetDeviceProperties(&deviceProp, device);
     if (rc == cudaSuccess)
-      freq = deviceProp.clockRate / 1000;
+      freq = (unsigned int)(deviceProp.clockRate / 1000);
+#endif
   }
   return freq;
 }
