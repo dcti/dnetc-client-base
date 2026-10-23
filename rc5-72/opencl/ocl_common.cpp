@@ -158,6 +158,9 @@ static void OCLPreciseSleep(unsigned int usecs)
    Smaller kernels sleep proportionally less. */
 cl_int OCLWaitForKernel(ocl_context_t *cont, cl_event evt, u32 workItems)
 {
+  if (!OCLGetSleepWhileWaiting()) // disabled: wait exactly as before
+    return clWaitForEvents(1, &evt);
+
   cl_int status = clFlush(cont->cmdQueue); // GPU must start before we sleep
   if (status != CL_SUCCESS)
     return status;

@@ -48,6 +48,7 @@ enum /* anonymous */
   CONF_NUMCPU                  , /* CONF_MENU_PERF 0 ... */
   CONF_DEVICENUM               , /* CONF_MENU_PERF */
   CONF_NICENESS                , /* CONF_MENU_PERF priority */
+  CONF_GPUSLEEP                , /* CONF_MENU_PERF */
 
   CONF_MENU_LOG_PLACEHOLDER    , /* 33 */
   CONF_LOGTYPE                 , /* CONF_MENU_LOG */
