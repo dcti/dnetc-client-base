@@ -10,5 +10,6 @@
 #define OCL_SETUP_H
 
 int InitializeOpenCL(void);
+void OCLSetSleepWhileWaiting(int enabled);
 
 #endif // OCL_SETUP_H

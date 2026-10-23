@@ -33,10 +33,21 @@
 
 static cl_int numDevices = -12345;
 static ocl_context_t *ocl_context;
+static int sleepWhileWaiting = 0; // set before the crunchers start, only read after
 
 int getOpenCLDeviceCount(void)
 {
   return numDevices;
+}
+
+void OCLSetSleepWhileWaiting(int enabled)
+{
+  sleepWhileWaiting = enabled;
+}
+
+int OCLGetSleepWhileWaiting(void)
+{
+  return sleepWhileWaiting;
 }
 
 ocl_context_t *ocl_get_context(int device)
@@ -245,5 +256,6 @@ void OCLReinitializeDevice(ocl_context_t *cont)
 
   cont->runSize = 65536;
   cont->maxWorkSize = 2048 * 2048;
+  cont->fullKernelTime = 0;
   //Log("Reinit OK\n");
 }

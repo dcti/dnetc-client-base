@@ -375,7 +375,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
     }
 
     // wait for the kernel call to finish execution
-    status = clWaitForEvents(1, &ndrEvt);
+    status = OCLWaitForKernel(cont, ndrEvt, rest0);
     if (ocl_diagnose(status, "waiting for event", cont) != CL_SUCCESS)
     {
       clReleaseEvent(ndrEvt);  // allocated locally, must (try to) free before return
@@ -399,7 +399,11 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
 
     double d;
     if (status_p1 == CL_SUCCESS && status_p2 == CL_SUCCESS) // this is status of clGetEventProfilingInfo
+    {
       d = 1e-6 * (endTime - startTime);
+      if (rest0 == cont->runSize)
+        cont->fullKernelTime = d;
+    }
     else
     {
       if (!static_flags->profilingErr)

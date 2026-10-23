@@ -35,6 +35,7 @@ void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
 u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2);
 //inline u32 swap32(u32 a);
 void OCLReinitializeDevice(ocl_context_t *cont);
+int OCLGetSleepWhileWaiting(void);
 
 s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork);
 cl_int ocl_diagnose(cl_int result, const char *where, ocl_context_t *cont);
@@ -45,6 +46,7 @@ bool GetNVComputeCapability(cl_device_id device, int &sm_version);
 bool GetAMDComputeCapability(cl_device_id device, int &gfx_hex);
 bool GetAMDRegisterHint(int gfx_hex, int &regs_2pipe, int &regs_4pipe);
 bool GetNVRegisterHint(int sm_version, int &regs_2pipe, int &regs_4pipe);
+cl_int OCLWaitForKernel(ocl_context_t *cont, cl_event evt, u32 workItems);
 
 
 #endif //OCL_COMMON_H
