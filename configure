@@ -681,6 +681,9 @@ add_sources() # $1=os, $2=arch, $3=custom
                        rc5-72/amd64/r72-avx2.asm \
                        rc5-72/amd64/r72-go2c.asm \
                        rc5-72/amd64/r72-go2d.asm"
+      # AVX-512 asm core needs NASM (YASM has no EVEX)
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_72_AVX512_ASM"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS rc5-72/amd64/r72-avx512z.asm"
     fi # HAVE_RC5_72
 
     if [ "$HAVE_OGR" = "1" ]; then

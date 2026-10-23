@@ -392,10 +392,12 @@ RC5_72_OBJS = \
         $(OUTPUTPATH)/r72-go2c.obj \
         $(OUTPUTPATH)/r72-go2d.obj \
         $(OUTPUTPATH)/r72-avx2.obj \
+        $(OUTPUTPATH)/r72-avx512z.obj \
         $(OUTPUTPATH)/r72ansi1.obj \
         $(OUTPUTPATH)/r72ansi2.obj \
         $(OUTPUTPATH)/r72ansi4.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_AVX512_ASM
 
 !if $(HAVE_ISPC) != 0
 .SUFFIXES : .ispc

@@ -59,6 +59,21 @@ extern "C" s32 CDECL rc5_72_unit_func_avx2( RC5_72UnitWork *, u32 *, void *);
 # if defined(USE_ISPC_CORE)
 extern "C" s32 CDECL rc5_72_unit_func_ispc_16( RC5_72UnitWork *, u32 *, void *);
 # endif
+# if defined(HAVE_RC5_72_AVX512_ASM)
+extern "C" s32 CDECL rc5_72_unit_func_avx512z( RC5_72UnitWork *, u32 *, void *);
+// MIX ZMM follows KS SPMD: #6, or #5 when the ISPC core is not built
+#  if defined(USE_ISPC_CORE)
+#   define R72_CORE_MIX_ZMM 6
+#  else
+#   define R72_CORE_MIX_ZMM 5
+#  endif
+# endif
+// Preselected core on AVX-512F: MIX ZMM if built, else KS SPMD
+# if defined(HAVE_RC5_72_AVX512_ASM)
+#  define R72_CORE_AVX512 R72_CORE_MIX_ZMM
+# elif defined(USE_ISPC_CORE)
+#  define R72_CORE_AVX512 5
+# endif
 #elif (CLIENT_CPU == CPU_ARM)
 extern "C" s32 rc5_72_unit_func_arm1( RC5_72UnitWork *, u32 *, void *);
 extern "C" s32 rc5_72_unit_func_arm2( RC5_72UnitWork *, u32 *, void *);
@@ -178,6 +193,9 @@ const char **corenames_for_contest_rc572()
       "YK AVX2",
   # if defined(USE_ISPC_CORE)
       "KS SPMD",
+  # endif
+  # if defined(HAVE_RC5_72_AVX512_ASM)
+      "MIX ZMM",
   # endif
   #elif (CLIENT_CPU == CPU_ARM)
       "StrongARM 1-pipe",
@@ -339,6 +357,10 @@ int apply_selcore_substitution_rules_rc572(int cindex, int device)
 
     #if defined(USE_ISPC_CORE)
     if (!(flags & CPU_F_AVX512) && cindex == 5) /* AVX512 ISPC core */
+      cindex = 4;
+    #endif
+    #if defined(HAVE_RC5_72_AVX512_ASM)
+    if (!(flags & CPU_F_AVX512) && cindex == R72_CORE_MIX_ZMM) /* MIX ZMM */
       cindex = 4;
     #endif
 
@@ -598,9 +620,9 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
   // ===============================================================
   #elif (CLIENT_CPU == CPU_AMD64)
   {
-    #if defined(USE_ISPC_CORE)
+    #if defined(R72_CORE_AVX512)
     if (detected_flags & CPU_F_AVX512)
-      cindex = 5;
+      cindex = R72_CORE_AVX512;
     else
     #endif
     if (detected_flags & CPU_F_AVX2)
@@ -906,6 +928,12 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
       case 5:
         unit_func.gen_72 = rc5_72_unit_func_ispc_16;
         pipeline_count = 16;
+        break;
+      #endif
+      #if defined(HAVE_RC5_72_AVX512_ASM)
+      case R72_CORE_MIX_ZMM:
+        unit_func.gen_72 = rc5_72_unit_func_avx512z;
+        pipeline_count = 64;                            /* 4 pipes x 16 lanes */
         break;
       #endif
     // -----------
