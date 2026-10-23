@@ -104,7 +104,7 @@ return "@(#)$Id: stress.cpp,v 1.10 2012/01/13 01:05:29 snikkel Exp $"; }
 #define KEYBASE_MID 0xDB0EF306
 #define KEYBASE_LO  0x30000000
 
-#define MINIMUM_ITERATIONS 96     /* Borrowed from problem.cpp */
+#define MINIMUM_ITERATIONS 192    /* Borrowed from problem.cpp */
 
 
 struct RC5_Key {
@@ -342,7 +342,7 @@ static long __test_2(Client *client)
 {
   ContestWork contestwork;
   Problem *thisprob;
-  u32 maxkeys = 0x420;      /* Must be an even multiple of MINIMUM_ITERATIONS */
+  u32 maxkeys = 0x480;      /* Must be an even multiple of MINIMUM_ITERATIONS */
                             /* and must be > 768 to test 3-pipe cores.        */
   u32 pipes = 1;
   u32 tslice = maxkeys;
@@ -532,7 +532,7 @@ static long __test_4(Client *client)
   ContestWork contestwork;
   Problem *thisprob;
   u32 maxkeys = 0x33006600;   /* must be > 0x309CDAE6 */
-  u32 tslice = 0x0007FFE0;    /* large enough to find partial matches #3 and
+  u32 tslice = 0x0007FF80;    /* large enough to find partial matches #3 and
                                  #4 in the same run */
   u32 pipes = 1;
   u32 iters = 0;
