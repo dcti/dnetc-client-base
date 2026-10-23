@@ -16,6 +16,11 @@
 #include "logstuff.h"
 #include "x86id.h"
 
+#if (CLIENT_OS == OS_MACOSX)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
+
 
 /*----------------------------------------------------------------------------*/
 
@@ -785,6 +790,21 @@ u32 x86GetDetectedType(void)
 }
 
 
+static int x86OSHasAVX512State(u32 xcr0)
+{
+#if (CLIENT_OS == OS_MACOSX)
+  /* macOS sets the AVX-512 bits in XCR0 only after first use */
+  int enabled = 0;
+  size_t len = sizeof(enabled);
+  (void)xcr0;
+  if (sysctlbyname("hw.optional.avx512f", &enabled, &len, NULL, 0) != 0)
+    return 0;
+  return (enabled != 0);
+#else
+  return ((xcr0 & 0xE6) == 0xE6);
+#endif
+}
+
 u32 x86GetFeatures(void)
 {
   u32 features = 0;
@@ -841,12 +861,12 @@ u32 x86GetFeatures(void)
             if (infos.regs.ebx & X86_07_00_EBX_AVX2) {
               features |= CPU_F_AVX2;
             }
-	    /* Check for AVX512 */
-	    /* we declare it supported if it has just F and CD sub features */
-            if (infos.regs.ebx & X86_HAS_AVX512F) {
-              if (infos.regs.ebx & X86_HAS_AVX512CD) {
-                features |= CPU_F_AVX512;
-              }
+            /* Check for AVX-512. The OS must also save/restore the opmask
+               registers and the full ZMM state: XCR0 bits 5, 6 and 7
+               (plus bits 1 and 2 checked above), i.e. (XCR0 & 0xE6) == 0xE6. */
+            if ((infos.regs.ebx & X86_HAS_AVX512F) &&
+                x86OSHasAVX512State(bvinfo.regs.eax)) {
+              features |= CPU_F_AVX512;
             }
           }
         }
