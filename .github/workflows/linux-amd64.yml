@@ -19,9 +19,9 @@ jobs:
     - name: Install ispc
       working-directory: /tmp
       run: |
-        wget https://github.com/ispc/ispc/releases/download/v1.13.0/ispc-v1.13.0-linux.tar.gz
-        tar xvzf ispc-v1.13.0-linux.tar.gz
-        sudo install ispc-v1.13.0-linux/bin/ispc /usr/bin/
+        wget https://github.com/ispc/ispc/releases/download/v1.32.0/ispc-v1.32.0-linux.tar.gz
+        tar xvzf ispc-v1.32.0-linux.tar.gz
+        sudo install ispc-v1.32.0-linux/bin/ispc /usr/bin/
     - name: configure
       env:
         SHELL: /bin/sh

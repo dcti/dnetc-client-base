@@ -583,7 +583,7 @@ $(VC_CHECK):
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/ispc}.ispc{$(OUTPUTPATH)}.obj:
-        ispc --pic --wno-perf --target=avx512skx-i32x16 $(**:/=\) -o $(@:/=\)
+        ispc --pic --wno-perf --target=avx512skx-x16 $(**:/=\) -o $(@:/=\)
 !endif
 
 {$(OGRSRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
