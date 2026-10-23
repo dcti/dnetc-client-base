@@ -55,7 +55,7 @@
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
 #ifndef MINIMUM_ITERATIONS
-#define MINIMUM_ITERATIONS 96
+#define MINIMUM_ITERATIONS 192
 /*
    MINIMUM_ITERATIONS determines minimum number of iterations that will
    be requested, as well as the boundary on which number of iterations will
