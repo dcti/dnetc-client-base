@@ -845,12 +845,12 @@ u32 x86GetFeatures(void)
             if (infos.regs.ebx & X86_07_00_EBX_AVX2) {
               features |= CPU_F_AVX2;
             }
-	    /* Check for AVX512 */
-	    /* we declare it supported if it has just F and CD sub features */
-            if (infos.regs.ebx & X86_HAS_AVX512F) {
-              if (infos.regs.ebx & X86_HAS_AVX512CD) {
-                features |= CPU_F_AVX512;
-              }
+            /* Check for AVX-512. The OS must also save/restore the opmask
+               registers and the full ZMM state: XCR0 bits 5, 6 and 7
+               (plus bits 1 and 2 checked above), i.e. (XCR0 & 0xE6) == 0xE6. */
+            if ((infos.regs.ebx & X86_HAS_AVX512F) &&
+                (bvinfo.regs.eax & 0xE6) == 0xE6) {
+              features |= CPU_F_AVX512;
             }
           }
         }

@@ -392,10 +392,12 @@ RC5_72_OBJS = \
         $(OUTPUTPATH)/r72-go2c.obj \
         $(OUTPUTPATH)/r72-go2d.obj \
         $(OUTPUTPATH)/r72-avx2.obj \
+        $(OUTPUTPATH)/r72-avx512z.obj \
         $(OUTPUTPATH)/r72ansi1.obj \
         $(OUTPUTPATH)/r72ansi2.obj \
         $(OUTPUTPATH)/r72ansi4.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_AVX512_ASM
 
 !if $(HAVE_ISPC) != 0
 .SUFFIXES : .ispc
@@ -575,8 +577,9 @@ $(VC_CHECK):
 {$(RC572SRCPATH)/ansi}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
+# NASM (2.14+) is required: YASM cannot assemble the AVX-512 cores.
 {$(RC572SRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
-        yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(RC572SRCPATH:/=\)\amd64\ $(**:/=\)
+        nasm -O5 -f win64 -D_WINDOWS -I $(RC572SRCPATH:/=\)\amd64\ -o $(@:/=\) $(**:/=\)
 
 !if $(HAVE_ISPC) != 0
 {$(RC572SRCPATH)/ispc}.cpp{$(OUTPUTPATH)}.obj:
@@ -587,13 +590,13 @@ $(VC_CHECK):
 !endif
 
 {$(OGRSRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
-        yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(OGRSRCPATH:/=\)\amd64\ $(**:/=\)
+        nasm -O5 -f win64 -D_WINDOWS -I $(OGRSRCPATH:/=\)\amd64\ -o $(@:/=\) $(**:/=\)
 
 {$(OGRSRCPATH)/amd64}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
-        yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS $(**:/=\)
+        nasm -O5 -f win64 -D_WINDOWS -o $(@:/=\) $(**:/=\)
 
 {plat/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
