@@ -141,7 +141,7 @@ add_sources() # $1=os, $2=arch, $3=custom
 
   if [ "$2" = "amd64" ] && [ "$1" != "haiku" ]; then
     HAVE_ISPC="1"
-    TARGET_ISPC_FLAGS="$TARGET_ISPC_FLAGS --target=avx512skx-i32x16"
+    TARGET_ISPC_FLAGS="$TARGET_ISPC_FLAGS --target=avx512skx-x16"
   fi
 
   if [ "$HAVE_ISPC" = "1" ]; then
