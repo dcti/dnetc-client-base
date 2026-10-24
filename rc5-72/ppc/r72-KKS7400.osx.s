@@ -4,7 +4,7 @@
 ;# Target : MPC7400/MPC7410 (G4)
 ;#
 ;# Written by Didier Levet (kakace@wanadoo.fr)
-;# Copyright distributed.net 1997-2003 - All Rights Reserved.
+;# Copyright distributed.net 1997-2026 - All Rights Reserved.
 ;# For use in distributed.net projects only. Any other distribution
 ;# or use of this source violates copyright.
 ;#

@@ -1,7 +1,7 @@
 
   distributed.net client documentation
 
-  Copyright distributed.net 1997-2005 - All Rights Reserved
+  Copyright distributed.net 1997-2026 - All Rights Reserved
   For use in distributed.net projects only.
   Any other distribution violates copyright.
 

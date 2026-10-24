@@ -2,7 +2,7 @@
         SECTION rc5core_040,CODE
 	OPT	O+,W-
 
-; Copyright distributed.net 1997-2003 - All Rights Reserved
+; Copyright distributed.net 1997-2026 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;

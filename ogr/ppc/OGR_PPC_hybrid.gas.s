@@ -3,7 +3,7 @@
 ;# Code scheduled for MPC744x/745x (G4+)
 ;# Written by Didier Levet (kakace@distributed.net)
 ;#
-;# Copyright 2004 distributed.net, All Rights Reserved
+;# Copyright 2004-2026 distributed.net, All Rights Reserved
 ;# For use in distributed.net projects only.
 ;# Any other distribution or use of this source violates copyright.
 ;#

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2014 - All rights reserved.
+ * Copyright distributed.net 2014-2026 - All rights reserved.
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *

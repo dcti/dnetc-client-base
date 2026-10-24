@@ -1,6 +1,6 @@
 /*
  * SMC Code inspired by Naoki Hiroshima (http://n.h7a.org/hacks/rubycocoa/smc.rb)
- * Copyright distributed.net 2003-2009 - All Rights Reserved
+ * Copyright distributed.net 2003-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
