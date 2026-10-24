@@ -138,8 +138,8 @@ int utilCheckIfBetaExpired(int print_msg)
 
     #ifndef BETA_PERIOD
     #define BETA_PERIOD (7L*24L*60L*60L) /* one week from build date */
-    #endif    /* where "build date" is time of newest module in ./common/ */
-    expirationtime.tv_sec = CliGetNewestModuleTime() + (time_t)BETA_PERIOD;
+    #endif
+    expirationtime.tv_sec = CliGetBuildTime() + (time_t)BETA_PERIOD;
     expirationtime.tv_usec= 0;
 
     if (now >= expirationtime.tv_sec)

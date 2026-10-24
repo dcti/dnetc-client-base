@@ -4025,6 +4025,8 @@ echo "" >> Makefile
 #
 #  Clean, Superclean, Distclean, and Ident targets.
 #
+echo "FORCE:" >> Makefile
+echo "" >> Makefile
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} \${ADDOBJS} \${INTOBJS}" >> Makefile
 if [ "$BUILDNAME" = "os2-x86" ]; then
@@ -4186,8 +4188,15 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
         fi
       fi
       deplist=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
-      echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
-      echo "	\${CC} -c ${CCFLAGS_SELECT} ${TARGETSRC} -o $target" >> Makefile
+      if [ "$target" = "output/cliident.o" ]; then
+        # cliident.o carries the git revisions and build time
+        # (common/buildinfo.sh), so it is rebuilt on every make.
+        echo "$target:	${TARGETSRC} ${deplist} FORCE" >> Makefile
+        echo "	\${CC} -c ${CCFLAGS_SELECT} \`sh common/buildinfo.sh\` ${TARGETSRC} -o $target" >> Makefile
+      else
+        echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
+        echo "	\${CC} -c ${CCFLAGS_SELECT} ${TARGETSRC} -o $target" >> Makefile
+      fi
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------

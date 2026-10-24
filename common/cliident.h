@@ -8,7 +8,8 @@
 #define __CLIIDENT_H__ "@(#)$Id: cliident.h,v 1.15 2008/12/30 20:58:41 andreasb Exp $"
 
 extern void CliIdentifyModules(void);
-extern time_t CliGetNewestModuleTime(void);
+extern time_t CliGetBuildTime(void);
+extern time_t CliGetSourceTime(void);
 extern int CliIsDevelVersion(void);
 extern const char *CliGetFullVersionDescriptor(void);
 
