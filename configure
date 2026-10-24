@@ -1689,6 +1689,9 @@ case "$1" in
         ;;
 
     *linux-arm64)               # [mikereed ertyu]
+	echo "Warning: gcc-arm64 optimizations need to be determined and set"
+	exit
+
         TARGET_CC="g++"
         TARGET_AS="gcc -c"
         TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
@@ -1828,7 +1831,7 @@ case "$1" in
         TARGET_LIBS="-framework CoreFoundation -framework IOKit"
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_TARBALL="macosx-arm64"
-        TARGET_DOCFILES="docs/readme._ix"
+        TARGET_DOCFILES="docs/readme.osx.html"
         add_sources "macosx" "arm64"
         ;;
         
@@ -2572,7 +2575,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS -mdynamic-no-pic $TARGET_plat"
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
         TARGET_TARBALL="macosx-ppc"
         TARGET_ASFLAGS="-force_cpusubtype_ALL -arch ppc"
         add_sources "macosx" "ppc" "altivec"
@@ -3121,7 +3124,7 @@ case "$1" in
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_NASM="/opt/local/bin/nasm"
         TARGET_NASM_FMT="macho"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
         TARGET_TARBALL="macosx-x86"
         add_sources "macosx" "x86"
         ;;
@@ -3342,7 +3345,7 @@ case "$1" in
         TARGET_LDFLAGS="$TARGET_plat"
         TARGET_NASM="yasm"
         TARGET_NASM_FMT="macho64"
-        TARGET_DOCFILES="docs/readme._ix"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
         TARGET_TARBALL="macosx-amd64"
         add_sources "macosx" "amd64"
         ;;
@@ -3471,7 +3474,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DOPENCL -DDYN_TIMESLICE $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
         TARGET_LDFLAGS="$TARGET_plat"
-        TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.osx.html docs/readme.opencl"   #platform specific docfile
         TARGET_TARBALL="macosx-amd64-opencl"
         add_sources "macosx" "opencl"
         ;;
@@ -3481,7 +3484,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CLANGCC_32 -DOPENCL -DDYN_TIMESLICE $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
         TARGET_LDFLAGS="$TARGET_plat"
-        TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.osx.html docs/readme.opencl"   #platform specific docfile
         TARGET_TARBALL="macosx-x86-opencl"
         add_sources "macosx" "opencl"
         ;;
@@ -3491,7 +3494,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CLANGCC -DOPENCL -DDYN_TIMESLICE $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation -framework OpenCL"
         TARGET_LDFLAGS="$TARGET_plat"
-        TARGET_DOCFILES="docs/readme._ix docs/readme.opencl"   #platform specific docfile
+        TARGET_DOCFILES="docs/readme.osx.html docs/readme.opencl"   #platform specific docfile
         TARGET_TARBALL="macosx-arm64-opencl"
         add_sources "macosx" "opencl"
         ;;
