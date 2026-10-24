@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2009 - All Rights Reserved
+ * Copyright distributed.net 1999-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
 */
 #ifndef __OGR_NG_H__
-#define __OGR_NG_H__ "@(#)$Id: ogrng.h,v 1.3 2009/09/17 20:16:00 andreasb Exp $"
+#define __OGR_NG_H__
 
 #include "ansi/ogr-interface.h"
 

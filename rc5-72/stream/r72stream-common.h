@@ -6,7 +6,6 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-common.h,v 1.21 2012/01/14 13:48:32 sla Exp $
 */
 
 #ifndef IL_COMMON_H

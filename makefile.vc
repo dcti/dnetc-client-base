@@ -1,8 +1,6 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.141 2012/08/11 09:24:36 sla Exp $
-#
 
 #PROCESSOR_ARCHITECTURE = AMD64
 #PROCESSOR_ARCHITECTURE = cuda
@@ -693,6 +691,14 @@ $(VC_CHECK):
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
+# cliident.obj carries the git revisions and build time
+# (plat\win\buildinfo.cmd), so it is rebuilt on every build.
+$(OUTPUTPATH)/cliident.obj: $(COMMONPATH)/cliident.cpp FORCE
+        @cmd /c plat\win\buildinfo.cmd $(OUTPUTPATH:/=\)\buildinfo.rsp
+        cl -c -O2 $(OPTS_MSVC) @$(OUTPUTPATH:/=\)\buildinfo.rsp -Fo$(OUTPUTPATH)\ $(COMMONPATH)\cliident.cpp
+
+FORCE:
+
 {$(PRIVATEPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
@@ -725,7 +731,7 @@ $(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_72_O
 # --------------------------------------------
 
 clean:
-        -del $(OUTPUTPATH:/=\)\*.o?? $(RES_FILE:/=\)
+        -del $(OUTPUTPATH:/=\)\*.o?? $(OUTPUTPATH:/=\)\buildinfo.rsp $(RES_FILE:/=\)
 
 superclean: clean
         -del $(BASENAME).map $(BASENAME).exe $(BASENAME).scr $(BASENAME).com $(BASENAME).ini buff-in.* buff-out.*

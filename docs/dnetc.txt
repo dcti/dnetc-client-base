@@ -1,8 +1,7 @@
 
   distributed.net client documentation
-  document revision $Id: dnetc.txt,v 1.5 2007/10/22 16:48:28 jlawson Exp $
 
-  Copyright distributed.net 1997-2005 - All Rights Reserved
+  Copyright distributed.net 1997-2026 - All Rights Reserved
   For use in distributed.net projects only.
   Any other distribution violates copyright.
 

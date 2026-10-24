@@ -3,7 +3,7 @@
 ;# Code scheduled for G2/G3
 ;# Written by Didier Levet (kakace@distributed.net)
 ;#
-;# Copyright 2004 distributed.net, All Rights Reserved
+;# Copyright 2004-2026 distributed.net, All Rights Reserved
 ;# For use in distributed.net projects only.
 ;# Any other distribution or use of this source violates copyright.
 ;#
@@ -15,8 +15,6 @@
 ;# - Use a custom stack frame (leaf procedure).
 ;# - LR register not used nor saved in caller's stack.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
-;#
-;# $Id: OGR_PPC_scalar.gas.s,v 1.2 2007/10/22 16:48:29 jlawson Exp $
 ;#
 ;#============================================================================
 

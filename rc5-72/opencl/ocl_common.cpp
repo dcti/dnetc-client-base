@@ -3,7 +3,6 @@
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: ocl_common.cpp 2014/08/11 22:18:25 ertyu Exp $
 */
 #include "cputypes.h"
 #include "ocl_common.h"

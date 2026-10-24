@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2018 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,9 +8,6 @@
 
 //#define TRACE
 //#define DYN_TIMESLICE_SHOWME
-
-const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.163 2015/10/24 21:01:43 stream Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes

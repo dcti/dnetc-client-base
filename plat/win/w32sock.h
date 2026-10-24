@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -41,7 +41,7 @@
  *   #endif
 */
 #ifndef __W32SOCK_H__
-#define __W32SOCK_H__ "@(#)$Id: w32sock.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $"
+#define __W32SOCK_H__
 
 #if !defined(_INC_WINDOWS)
   /* windows.h must be included first! (don't default LEAN_AND_MEAN, 

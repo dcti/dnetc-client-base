@@ -1,9 +1,7 @@
 /*
- * Copyright distributed.net 1997-2016 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * $Id: amiga.h,v 1.4 2008/10/27 09:49:33 oliver Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *

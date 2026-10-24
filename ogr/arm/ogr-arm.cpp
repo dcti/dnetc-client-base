@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2002-2008 - All Rights Reserved
+ * Copyright distributed.net 2002-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,9 +7,6 @@
 
 #include "ansi/ogrp2-32.h"
 
-
-const char *ogr_arm_cpp(void) {
-return "@(#)$Id: ogr-arm.cpp,v 1.4 2008/12/30 20:58:43 andreasb Exp $"; }
 
 #if defined(ASM_ARM)
 

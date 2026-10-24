@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,9 +9,6 @@
  *  "prelude" serves as a shim between WinMain() [in client.cpp] and
  *  realmain() [also in client.cpp]
 */
-
-const char *w32pre_cpp(void) {
-return "@(#)$Id: w32pre.cpp,v 1.5 2011/03/31 05:07:31 jlawson Exp $"; }
 
 #include "cputypes.h"  //CLIENT_OS
 #define WIN32_LEAN_AND_MEAN

@@ -1,6 +1,4 @@
 
-$Id: what-is-what.txt,v 1.2 2002/09/02 00:35:51 andreasb Exp $
-
 The platforms/NetWare directory consists of...
 
  client.xdc The 'bagfile'. Created with mpkxdc -n

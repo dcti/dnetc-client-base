@@ -6,7 +6,6 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: ocl_info.h 2014/08/19 22:18:25 gkhanna Exp $
 */
 
 #ifndef OCL_INFO_H

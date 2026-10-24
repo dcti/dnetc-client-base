@@ -1,6 +1,5 @@
 ;
 ; Base assembly core for OGR-NG, 64bit. Based on generic 64 bit assembly core (ogrng64-cj1-generic-asm.asm) and SSE2 core (ogrng-cj1-sse2-asm.asm).
-; $Id: ogrng64-cj1-base.asm,v 1.1 2010/02/02 05:35:17 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;

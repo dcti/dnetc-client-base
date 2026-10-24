@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2016 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -16,8 +16,6 @@
  * based on lessons learned from the old Network class methods
  *
 */
-const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.10 2016/02/03 13:09:14 stream Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET

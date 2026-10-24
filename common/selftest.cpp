@@ -1,10 +1,8 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *selftest_cpp(void) {
-return "@(#)$Id: selftest.cpp,v 1.106 2012/01/13 01:05:22 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"    // CONTEST_COUNT

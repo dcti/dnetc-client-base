@@ -1,10 +1,8 @@
-! Copyright distributed.net 2003 - All Rights Reserved
+! Copyright distributed.net 2003-2026 - All Rights Reserved
 ! For use in distributed.net projects only.
 ! Any other distribution or use of this source violates copyright.
 !
 ! Author: Andreas Beckmann <andreasb@distributed.net>
-!
-! $Id: r72-anbe2.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 !
 ! This 2 pipeline core is optimized for a 1 processor that is able to
 ! dispatch two integer instructions (but only one shift, which must be the

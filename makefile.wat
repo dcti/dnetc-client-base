@@ -6,8 +6,6 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.47 2011/03/31 05:07:26 jlawson Exp $
-##
 ## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
 ## - if building a DES-capable client, then it also requires either
 ##   a) the Microsoft Assembler (masm) OR b) Borland Turbo Assembler (tasm32)

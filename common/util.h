@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,7 +12,7 @@
  * ----------------------------------------------------------------
 */
 #ifndef __UTIL_H__
-#define __UTIL_H__ "@(#)$Id: util.h,v 1.20 2007/10/22 16:48:28 jlawson Exp $"
+#define __UTIL_H__
 
 /* drag in DNETC_UNUSED_* defines so we don't have to do so in all the
 ** source files explicitly */

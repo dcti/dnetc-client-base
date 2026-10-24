@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -25,8 +25,6 @@
  * platform has its own code sections to avoid cross-platform assumptions
  * altogether.
 */
-const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.26 2008/04/11 06:29:29 jlawson Exp $"; }
 
 // #define TRACE
 

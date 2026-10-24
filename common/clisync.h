@@ -1,6 +1,6 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 2001-2009 - All Rights Reserved
+ * Copyright distributed.net 2001-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -62,7 +62,7 @@
  */
 
 #ifndef __CLISYNC_H__
-#define __CLISYNC_H__ "@(#)$Id: clisync.h,v 1.18 2012/08/08 18:54:43 sla Exp $"
+#define __CLISYNC_H__
 
 #include "cputypes.h"           /* thread defines */
 #include "sleepdef.h"           /* NonPolledUSleep() */
