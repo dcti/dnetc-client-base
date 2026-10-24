@@ -5,9 +5,6 @@
  * Any other distribution or use of this source violates copyright.
 */
 
-const char *next_sup_cpp(void) {
-return "@(#)$Id: next_sup.cpp,v 1.3 2007/10/22 16:48:31 jlawson Exp $"; }
-
 #include "next_sup.h"
 #include <stdlib.h>   /* malloc */
 #include <string.h>   /* strcpy */

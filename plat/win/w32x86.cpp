@@ -13,8 +13,6 @@
  *  Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *  ----------------------------------------------------------------
 */
-const char *w32x86_cpp(void) {
-return "@(#)$Id: w32x86.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */
 #define INCLUDE_TOOLHELP_H /* win16 and __WINDOWS386__ */

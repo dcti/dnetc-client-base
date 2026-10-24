@@ -9,8 +9,6 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  * 
 */
-const char *w32util_cpp(void) {
-return "@(#)$Id: w32util.cpp,v 1.4 2008/12/30 20:58:45 andreasb Exp $"; }
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */
 #define INCLUDE_SHELLAPI_H /* __WINDOWS386__ */

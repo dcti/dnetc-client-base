@@ -12,7 +12,6 @@
 # (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
 # A list of all mirrors is at http://www.kernel.org/mirrors/
 #
-# $Id: makefile.bcc,v 1.39 2008/02/10 00:25:29 kakace Exp $
 
 BASENAME = dnetc
 OUTPUTPATH = output

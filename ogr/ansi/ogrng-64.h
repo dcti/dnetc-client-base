@@ -7,7 +7,6 @@
  * made of four 64-bit scalars, so that the bitmaps precision strictly matches
  * the regular 32-bit core.
  *
- * $Id: ogrng-64.h,v 1.1 2008/03/08 20:07:14 kakace Exp $
 */
 
 #include "ansi/ogrng.h"

@@ -2,8 +2,6 @@
 // For use in distributed.net projects only.
 // Any other distribution or use of this source violates copyright.
 // 
-// $Id: rotate.h,v 1.7 2007/10/22 16:48:35 jlawson Exp $
-//
 
 #ifndef __ROTATE_H__
 #define __ROTATE_H__

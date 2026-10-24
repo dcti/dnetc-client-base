@@ -12,8 +12,6 @@
  * ----------------------------------------------------------------
  *
 */
-const char *os2inst_cpp(void) {
-return "@(#)$Id: os2inst.cpp,v 1.7 2008/12/30 20:58:44 andreasb Exp $"; }
 
 // #define TRACE
 

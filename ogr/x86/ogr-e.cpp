@@ -5,7 +5,6 @@
  *
  * Wrapper around ogr64.cpp for assembly x86 64-bit cores.
  *
- * $Id: ogr-e.cpp,v 1.5 2008/12/30 20:58:44 andreasb Exp $
 */
 
 #include <stddef.h>

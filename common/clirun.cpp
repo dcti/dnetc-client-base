@@ -9,9 +9,6 @@
 //#define TRACE
 //#define DYN_TIMESLICE_SHOWME
 
-const char *clirun_cpp(void) {
-return "@(#)$Id: clirun.cpp,v 1.163 2015/10/24 21:01:43 stream Exp $"; }
-
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // Client structure

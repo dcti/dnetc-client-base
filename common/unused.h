@@ -5,7 +5,7 @@
 */
 
 #ifndef __UNUSED_H__
-#define __UNUSED_H__  "@(#)$Id: unused.h,v 1.3 2007/10/22 16:48:28 jlawson Exp $"
+#define __UNUSED_H__
 
 /* This file is a bit empty at the moment because it's meant to be
 ** extended for all the compilers encountered by this code. If it

@@ -10,8 +10,6 @@
 #
 # Based in part on "Lintilla" core for RC5-64 by Dan Oetting
 #
-# $Id: r72-604e-mh-1-addi.gas.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
-#
 # $Log: r72-604e-mh-1-addi.gas.s,v $
 # Revision 1.3  2007/10/22 16:48:35  jlawson
 # overwrite head with contents of release-2-90xx

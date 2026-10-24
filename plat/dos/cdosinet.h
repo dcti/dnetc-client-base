@@ -10,7 +10,7 @@
  *
 */
 #ifndef __CLIDOS_INET_H__
-#define __CLIDOS_INET_H__ "@(#)$Id: cdosinet.h,v 1.2 2002/09/02 00:35:50 andreasb Exp $"
+#define __CLIDOS_INET_H__
 
   typedef int SOCKET;
 

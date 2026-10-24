@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *core_ogr_ng_cpp(void) {
-return "@(#)$Id: core_ogr_ng.cpp,v 1.47 2015/06/27 21:43:52 zebe Exp $"; }
 
 //#define TRACE
 

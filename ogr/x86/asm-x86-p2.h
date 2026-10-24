@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86-p2.h,v 1.2 2008/12/30 20:58:44 andreasb Exp $"
+#define __ASM_X86_H__
 
 /*
  * Assembly routines for OGR-P2 only. They're not compatible with OGR-NG

@@ -7,11 +7,6 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 
-#if (!defined(lint) && defined(__showids__))
-const char *w32ssb_cpp(void) {
-return "@(#)$Id: w32ssb.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
-#endif
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 

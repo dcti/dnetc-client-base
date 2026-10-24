@@ -7,8 +7,6 @@
 ;# Code designed for G3 (MPC750)
 ;# Written by Didier Levet <kakace@distributed.net>
 ;#
-;# $Id: FLEGE_scalar.gas.s,v 1.3 2009/05/08 16:32:52 kakace Exp $
-;#
 ;#============================================================================
 ;# Special notes :
 ;# - The code extensively use simplified mnemonics.

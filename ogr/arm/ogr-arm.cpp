@@ -8,9 +8,6 @@
 #include "ansi/ogrp2-32.h"
 
 
-const char *ogr_arm_cpp(void) {
-return "@(#)$Id: ogr-arm.cpp,v 1.4 2008/12/30 20:58:43 andreasb Exp $"; }
-
 #if defined(ASM_ARM)
 
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   1 /* 0-2 - partial support */

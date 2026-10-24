@@ -7,7 +7,6 @@
  * Assumes cwd is already set up. Uses my readini stuff in common.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
- * $Id: nwcconf.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
  *
 */
 

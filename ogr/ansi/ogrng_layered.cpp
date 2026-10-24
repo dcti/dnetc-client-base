@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_layered.cpp,v 1.2 2008/12/30 23:05:52 kakace Exp $
- *
  * This file demonstrates the implementation of a layered, two stages, OGR-NG
  * core. If you wish to test it, proceed as follows :
  * - Create a core by the usual method (see ogr_readme.txt for details)

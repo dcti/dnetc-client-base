@@ -30,7 +30,7 @@
  * ------------------------------------------------------------------
 */ 
 #ifndef __SLEEPDEF_H__
-#define __SLEEPDEF_H__ "@(#)$Id: sleepdef.h,v 1.46 2008/12/30 20:58:42 andreasb Exp $"
+#define __SLEEPDEF_H__
 
 #include "cputypes.h"
 

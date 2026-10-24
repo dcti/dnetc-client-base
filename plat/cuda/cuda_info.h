@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: cuda_info.h,v 1.5 2014/02/23 21:09:09 zebe Exp $
 */
 
 #ifndef CUDA_INFO_H

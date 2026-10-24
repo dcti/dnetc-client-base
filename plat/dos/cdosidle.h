@@ -8,7 +8,7 @@
  *
 */
 #ifndef __CLIDOS_IDLE_H__
-#define __CLIDOS_IDLE_H__ "@(#)$Id: cdosidle.h,v 1.2 2002/09/02 00:35:50 andreasb Exp $"
+#define __CLIDOS_IDLE_H__
 
 #ifdef __cplusplus
 extern "C" {

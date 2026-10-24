@@ -6,7 +6,7 @@
 */
 
 #ifndef DOSQSS_H
-#define DOSQSS_H "@(#)$Id: dosqss.h,v 1.3 2007/10/22 16:48:31 jlawson Exp $"
+#define DOSQSS_H
 
 
 #ifdef __cplusplus

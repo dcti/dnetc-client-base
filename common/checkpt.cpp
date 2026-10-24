@@ -13,9 +13,6 @@
  * interval is controlled from Run()
  * -----------------------------------------------------------------
 */
-const char *checkpt_cpp(void) {
-  return "@(#)$Id: checkpt.cpp,v 1.26 2008/12/30 20:58:41 andreasb Exp $";
-}
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()

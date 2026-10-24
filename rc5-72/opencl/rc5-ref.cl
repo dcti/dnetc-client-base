@@ -3,7 +3,6 @@
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: 
 */
 #define SHL(x, s) ((uint) ((x) << ((s) & 31)))
 #define SHR(x, s) ((uint) ((x) >> (32 - ((s) & 31))))

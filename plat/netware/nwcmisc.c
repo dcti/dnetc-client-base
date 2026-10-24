@@ -12,8 +12,6 @@
  *   int nwCliExitClient( void );
  *   void nwCliMillisecSleep(unsigned long millisecs);
  *
- * $Id: nwcmisc.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
- *
 */
 
 #ifdef __cplusplus

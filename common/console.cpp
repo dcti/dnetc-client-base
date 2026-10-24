@@ -13,8 +13,6 @@
  * to functions in modules in your own platform area.   - cyp
  * ----------------------------------------------------------------------
 */
-const char *console_cpp(void) {
-return "@(#)$Id: console.cpp,v 1.85 2011/03/31 05:07:28 jlawson Exp $"; }
 
 /* -------------------------------------------------------------------- */
 

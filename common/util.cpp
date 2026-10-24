@@ -5,8 +5,6 @@
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *util_cpp(void) {
-return "@(#)$Id: util.cpp,v 1.41 2008/12/30 20:58:42 andreasb Exp $"; }
 
 //#define TRACE
 

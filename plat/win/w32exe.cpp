@@ -8,7 +8,6 @@
  * 
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: w32exe.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $
 */
 #include <stdio.h>
 #include <stddef.h>

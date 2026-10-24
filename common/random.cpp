@@ -13,10 +13,6 @@
 //                                - Added by Tim Charron 12.15.1997
 // -----------------------------------------------------------------
 
-const char *random_cpp(void) {
-  return "@(#)$Id: random.cpp,v 1.10 2008/12/19 11:10:59 andreasb Exp $";
-}
-
 #include "cputypes.h" /* u32 */
 #include <time.h>     /* time() */
 

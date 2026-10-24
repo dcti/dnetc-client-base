@@ -13,8 +13,6 @@
  * dsttime DST_* code.
  * ------------------------------------------------------------------
 */
-const char *cdostime_cpp(void) {
-return "@(#)$Id: cdostime.cpp,v 1.2 2002/09/02 00:35:50 andreasb Exp $"; }
 
 //#define DEBUG_MONOTONIC
 //#define DEBUG_TIMEOFDAY

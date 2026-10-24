@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_AMD64_H__
-#define __ASM_AMD64_H__ "@(#)$Id: asm-amd64.h,v 1.12 2009/09/17 20:15:59 andreasb Exp $"
+#define __ASM_AMD64_H__
 
 
 #if defined(__ICC)

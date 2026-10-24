@@ -4,8 +4,6 @@
 !
 ! Author: Andreas Beckmann <andreasb@distributed.net>
 !
-! $Id: r72-anbe1-64.gcc.S,v 1.2 2007/10/22 16:48:36 jlawson Exp $
-!
 ! This 1 pipeline core is optimized for a low instruction count by storing
 ! parts of S[] in registers to avoid ld/st S[i] pairs.
 ! This works best for not superscalar cpus and/or cpus with a small instruction 

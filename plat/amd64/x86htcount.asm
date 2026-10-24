@@ -7,8 +7,6 @@
 ; 
 ; Written for distributed.net by Steven Nikkel, Nov 2003
 ; 
-; $Id: x86htcount.asm,v 1.3 2009/12/27 13:52:32 andreasb Exp $
-;
 ; return u32
 
 

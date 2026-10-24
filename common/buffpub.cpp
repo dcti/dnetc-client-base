@@ -8,9 +8,6 @@
  * Public source buffer handling stuff
 */
 
-const char *buffpub_cpp(void) {
-return "@(#)$Id: buffpub.cpp,v 1.14 2008/12/30 20:58:40 andreasb Exp $"; }
-
 #include "cputypes.h"
 #include "client.h"   //client class
 #include "baseincs.h" //basic #includes

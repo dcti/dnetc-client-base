@@ -6,9 +6,6 @@
 
 #include "ansi/ogrp2-32.h"
 
-const char *ogr_ppc_cpp(void) {
-return "@(#)$Id: ogr-ppc.cpp,v 1.12 2009/12/27 13:52:26 andreasb Exp $"; }
-
 #if defined(ASM_PPC) || defined(__PPC__) || defined(__POWERPC__)
 
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM     2 /* 0-2 - '100% asm'      */

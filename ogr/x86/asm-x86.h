@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_X86_H__
-#define __ASM_X86_H__ "@(#)$Id: asm-x86.h,v 1.14 2009/09/17 20:16:01 andreasb Exp $"
+#define __ASM_X86_H__
 
 #if (SCALAR_BITS == 32)
   #if defined(__ICC)

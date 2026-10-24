@@ -19,9 +19,6 @@
  * ----------------------------------------------------------------------
 */
 
-const char *w32ras_cpp(void) {
-return "@(#)$Id: w32ras.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
-
 #include <windows.h>
 #include <ras.h>
 #include <raserror.h>

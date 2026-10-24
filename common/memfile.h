@@ -17,7 +17,7 @@
 **
 */
 #ifndef __MEMFILE_H__
-#define __MEMFILE_H__ "@(#)$Id: memfile.h,v 1.8 2008/12/30 20:58:41 andreasb Exp $"
+#define __MEMFILE_H__
 
 #include <stdio.h>   /* required for the size_t typedef */
 

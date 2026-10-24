@@ -3,7 +3,6 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <dnet@peter-teichmann.de>
-; $Id: ogr_arm3-gccsdk.s,v 1.2 2007/10/22 16:48:29 jlawson Exp $
 ;
 ; XScale optimized core:
 ; * Intel really did a extremly bad job. They had better just taken the

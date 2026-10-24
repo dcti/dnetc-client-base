@@ -3,7 +3,6 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-dg3.asm,v 1.7 2009/01/05 22:45:21 mfeiri Exp $
 
 ; Modified by Alexey <alexey.kovalev@intel.com>
 ; Performance impromevements for P4 2.667Ghz:

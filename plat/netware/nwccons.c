@@ -13,7 +13,6 @@
  *   int nwCliKbHit(void);
  *   int nwCliGetCh(void);
  *
- * $Id: nwccons.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
 */
 
 #include <stdio.h>    /* printf(), EOF */

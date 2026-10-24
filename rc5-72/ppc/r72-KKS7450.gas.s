@@ -37,8 +37,6 @@
 #	Estimated keyrate : 10695.2 keys/s/MHz
 #	Benchmark : 10687.8 keys/s/MHz (374 clock cycles)
 #
-# $Id: r72-KKS7450.gas.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
-#
 # $Log: r72-KKS7450.gas.s,v $
 # Revision 1.3  2007/10/22 16:48:36  jlawson
 # overwrite head with contents of release-2-90xx

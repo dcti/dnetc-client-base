@@ -3,10 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-/*
-const char *ogrng_cell_spe_wrapper_cpp(void) {
-return "@(#)$Id: ogrng-cellv2-spe-wrapper.c,v 1.5 2011/03/31 05:07:30 jlawson Exp $"; }
-*/
 
 #include <spu_intrinsics.h>
 #include "ccoreio.h"

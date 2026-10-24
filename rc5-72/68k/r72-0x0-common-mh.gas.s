@@ -14,8 +14,6 @@
 	| Converted from Amiga Devpac assembler notation to GAS
 	| notation by Oliver Roberts <oliver@futuara.co.uk>
 	|
-	| $Id: r72-0x0-common-mh.gas.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
-	|
 	| $Log: r72-0x0-common-mh.gas.s,v $
 	| Revision 1.3  2007/10/22 16:48:35  jlawson
 	| overwrite head with contents of release-2-90xx

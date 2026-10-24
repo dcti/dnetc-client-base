@@ -9,9 +9,6 @@
  * remaining after conversion.
  *
 */
-const char *base64_cpp(void) {
-  return "@(#)$Id: base64.cpp,v 1.14 2008/12/30 20:58:40 andreasb Exp $";
-}
 
 static const unsigned char base64table[64] =
 {

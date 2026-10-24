@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: cuda_info.cpp,v 1.6 2014/02/23 21:07:07 zebe Exp $
 */
 
 #include "cuda_info.h"

@@ -11,8 +11,6 @@
  * ------------------------------------------------------------------
  *
 */
-const char *cdosidle_cpp(void) {
-return "@(#)$Id: cdosidle.cpp,v 1.2 2002/09/02 00:35:50 andreasb Exp $"; }
 
 #include <stdlib.h>   /* getenv() */
 #include <string.h>   /* strcmp() */

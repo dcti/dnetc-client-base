@@ -7,7 +7,6 @@
 ;     Jeff Lawson <bovine@distributed.net>
 ;     Steven Nikkel <snikkel@distributed.net>
 ;
-; $Id: r72-kbe.asm,v 1.2 2007/10/22 16:48:35 jlawson Exp $
 
 [SECTION .text]
 BITS 64

@@ -9,7 +9,7 @@
 */
 
 #ifndef __CLIEVENT_H__
-#define __CLIEVENT_H__ "@(#)$Id: clievent.h,v 1.16 2007/10/22 16:48:24 jlawson Exp $"
+#define __CLIEVENT_H__
 
                                               /* parm is ptr to... */
 #define CLIEVENT_CLIENT_STARTED        0x0001 /* ...client */

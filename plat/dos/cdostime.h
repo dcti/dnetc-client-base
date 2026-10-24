@@ -15,7 +15,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __CLIDOS_TIME_H__
-#define __CLIDOS_TIME_H__ "@(#)$Id: cdostime.h,v 1.2 2002/09/02 00:35:50 andreasb Exp $"
+#define __CLIDOS_TIME_H__
 
 #pragma pack(1)
 struct timeval  { long tv_sec; long tv_usec; }; /* seconds and microsecs */

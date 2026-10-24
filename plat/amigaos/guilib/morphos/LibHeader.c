@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: LibHeader.c,v 1.3 2008/10/27 16:13:07 piru Exp $
- *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
  * ----------------------------------------------------------------------

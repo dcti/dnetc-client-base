@@ -14,9 +14,6 @@
 ** mflush[all](), mfclose[all](), mfileno(), mfilelength(), mftruncate(),
 ** mdup(). The stream object used/created by these functions is a MEMFILE *.
 */
-const char *memfile_cpp(void) {
-  return "@(#)$Id: memfile.cpp,v 1.11 2008/12/30 20:58:41 andreasb Exp $";
-}
 
 #include <stdio.h>
 #include <string.h>

@@ -10,7 +10,7 @@
 */
 
 #ifndef __CLIDOS_H__
-#define __CLIDOS_H__ "@(#)$Id: clidos.h,v 1.2 2002/09/02 00:35:50 andreasb Exp $"
+#define __CLIDOS_H__
 
 //#include <sys/timeb.h>
 #include <io.h>

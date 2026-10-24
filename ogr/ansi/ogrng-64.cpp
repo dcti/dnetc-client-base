@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng-64.cpp,v 1.9 2015/06/27 21:52:52 zebe Exp $
 */
 
 #include "ansi/ogrng-64.h"

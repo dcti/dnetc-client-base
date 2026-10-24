@@ -30,9 +30,6 @@
  * struct struct_EVENT_ll { long l1, l2; };
  * ----------------------------------------------------------------------
 */
-const char *clievent_cpp(void) {
-  return "@(#)$Id: clievent.cpp,v 1.16 2008/12/30 20:58:41 andreasb Exp $";
-}
 
 #include "baseincs.h"   /* NULL, memset */
 #include "clievent.h"   /* keep prototypes in sync */

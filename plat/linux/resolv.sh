@@ -6,7 +6,6 @@
 # shell script versions of gethostbyname() and gethostbyaddr()
 #
 # Created July 27 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
-# $Id: resolv.sh,v 1.2 2002/09/02 00:35:50 andreasb Exp $
 #
 # this script does these things: 
 #   - determine if called to process a hostname or hostaddress

@@ -39,9 +39,6 @@
  * Created by Cyrus Patel (cyp@fb14.uni-mainz.de)
  * --------------------------------------------------------------------
 */
-const char *pollsys_cpp(void) {
-  return "@(#)$Id: pollsys.cpp,v 1.24 2011/03/31 05:07:29 jlawson Exp $";
-}
 
 #include "baseincs.h"  /* NULL, malloc */
 #include "clitime.h"   /* CliTimer() */

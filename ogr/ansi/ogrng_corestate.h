@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_corestate.h,v 1.1 2008/03/09 13:22:34 kakace Exp $
  */
 
 #ifndef ogrng_corestate_H

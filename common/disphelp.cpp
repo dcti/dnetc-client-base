@@ -5,8 +5,6 @@
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.84 2014/08/11 01:05:22 ertyu Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 

@@ -12,8 +12,6 @@
 | Converted from Amiga Devpac assembler notation to GAS notation
 | by Oliver Roberts <oliver@futaura.co.uk>
 |
-| $Id: r72-030-mh.gas.s,v 1.3 2007/10/22 16:48:33 jlawson Exp $
-|
 | $Log: r72-030-mh.gas.s,v $
 | Revision 1.3  2007/10/22 16:48:33  jlawson
 | overwrite head with contents of release-2-90xx

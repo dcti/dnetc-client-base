@@ -10,9 +10,6 @@
 #error Fixme: Obsolete file. Merged into ogrp2-32.cpp
 
 
-const char *ogr_ev4_cpp(void) {
-return "@(#)$Id: ev4.cpp,v 1.5 2008/12/30 20:58:43 andreasb Exp $"; }
-
 #if defined(__GNUC__)
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   0 /* 0-2 - 'no'  (default) */
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - 'no'            */

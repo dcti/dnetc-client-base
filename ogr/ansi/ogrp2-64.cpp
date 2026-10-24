@@ -14,7 +14,6 @@
  * Beside, the PRIVATE_ALT_COMP_LEFT_LIST_RIGHT setting selects a
  * memory based implementation (0), or a register based implementation (1).
  *
- * $Id: ogrp2-64.cpp,v 1.1 2008/03/08 20:07:14 kakace Exp $
 */
 
 

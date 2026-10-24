@@ -5,8 +5,6 @@
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.102 2012/06/05 22:12:54 snikkel Exp $"; }
 
 //#define TRACE
 

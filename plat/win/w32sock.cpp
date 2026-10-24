@@ -42,8 +42,6 @@
  *     #define FD_ISSET(fd, set) __WSAFDIsSet(fd, set) //...so discard the cast
  *   #endif
 */
-const char *w32sock_cpp(void) {
-return "@(#)$Id: w32sock.cpp,v 1.3 2002/10/09 22:22:15 andreasb Exp $"; }
 
 #include <windows.h>
 #include "w32sock.h" // <windows.h> and <winsock.h> as documented above.

@@ -4,7 +4,7 @@
  * Any other distribution or use of this source violates copyright.
  */
 #ifndef __X86ID_H__
-#define __X86ID_H__ "@(#)$Id: x86id.h,v 1.7 2011/03/31 05:07:32 jlawson Exp $"
+#define __X86ID_H__
 
 
 /* Extended CPU ID format :

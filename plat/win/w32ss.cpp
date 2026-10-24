@@ -7,9 +7,6 @@
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 
-const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.9 2010/02/01 20:06:43 stream Exp $"; }
-
 #include "cputypes.h"
 #include "unused.h"     /* DNETC_UNUSED_* */
 #define INCLUDE_COMMDLG_H

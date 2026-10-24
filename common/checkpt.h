@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CHECKPT_H__
-#define __CHECKPT_H__ "@(#)$Id: checkpt.h,v 1.13 2008/12/30 20:58:41 andreasb Exp $"
+#define __CHECKPT_H__
 
 /* action flags */
 #define CHECKPOINT_REFRESH 0x00       /* save current to checkpoint */

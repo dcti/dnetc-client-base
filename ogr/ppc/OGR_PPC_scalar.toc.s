@@ -16,8 +16,6 @@
 ;# - LR register not used nor saved in caller's stack.
 ;# - CTR, CR0, CR1, GPR0 and GPR3-GPR12 are volatile (not preserved).
 ;#
-;# $Id: OGR_PPC_scalar.toc.s,v 1.2 2007/10/22 16:48:29 jlawson Exp $
-;#
 ;#============================================================================
 
 

@@ -6,7 +6,6 @@
  * ANSI/POSIX functions not available for NetWare
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: nwlcomp.h,v 1.2 2002/09/02 00:35:51 andreasb Exp $
 */
 
 #ifndef __CNW_LCOMPAT_H_

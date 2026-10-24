@@ -16,7 +16,6 @@
  * The pipe shim itself is generic and will work without changes with any
  * backend that SetStdHandle()s the 'advertised' pipe ends.
  *
- * $Id: w32cuis.c,v 1.4 2010/02/01 20:06:43 stream Exp $
 */
 
 /* #define HAVE_EXEC_AS_TEMPFILE */  /* davehart's solution */

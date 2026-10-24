@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng-ppc.cpp,v 1.4 2008/03/29 21:54:12 kakace Exp $
 */
 
 #include "ansi/ogrng-32.h"

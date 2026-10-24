@@ -11,8 +11,6 @@
  * ease maintenance.
  * ----------------------------------------------------------------------
 */ 
-const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.45 2012/05/13 09:32:54 stream Exp $"; }
 
 //#define TRACE
 

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __CMDLINE_H__
-#define __CMDLINE_H__ "@(#)$Id: cmdline.h,v 1.12 2008/12/30 20:58:41 andreasb Exp $"
+#define __CMDLINE_H__
 
 // runlevel=0 = parse cmdline, >0==exec modes && print messages
 // returns !0 if app should be terminated; (retcodeP then has exit code)

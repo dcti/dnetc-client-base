@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef _RISCOS_X86_H_
-#define _RISCOS_X86_H_ "@(#)$Id: riscos_x86.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $";
+#define _RISCOS_X86_H_
 
 #ifdef __cplusplus
 extern "C" {

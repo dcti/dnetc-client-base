@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_PPC_H__
-#define __ASM_PPC_H__ "@(#)$Id: asm-ppc.h,v 1.5 2008/12/30 20:58:43 andreasb Exp $"
+#define __ASM_PPC_H__
 
 #if defined(__GNUC__)     /*================================================*/
 

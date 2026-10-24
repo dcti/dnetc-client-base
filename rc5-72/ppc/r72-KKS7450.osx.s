@@ -37,8 +37,6 @@
 ;#	Estimated keyrate : 10695.2 keys/s/MHz
 ;#	Benchmark : 10687.8 keys/s/MHz (374 clock cycles)
 ;#
-;# $Id: r72-KKS7450.osx.s,v 1.4 2009/01/31 20:18:21 kakace Exp $
-;#
 ;# $Log: r72-KKS7450.osx.s,v $
 ;# Revision 1.4  2009/01/31 20:18:21  kakace
 ;# Work around a spurious bug in XCode 3+

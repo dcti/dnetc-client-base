@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGR_INTERFACE_H__
-#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.6 2008/12/31 00:26:17 kakace Exp $"
+#define __OGR_INTERFACE_H__
 
 #include <limits.h>
 

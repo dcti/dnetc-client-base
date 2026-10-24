@@ -8,8 +8,6 @@
  * doesn't sell it, they don't eat it.  Vending machines don't sell quiche.
  * ---------------------------------------------------------------------
 */
-const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.71 2012/06/24 18:26:56 piru Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 

@@ -35,8 +35,6 @@
 ;		8 keys at once, all keys (within such "block") having the same mid
 ;		and lo values).
 ;
-; $Id: r72-KKS604e.osx.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
-;
 ; $Log: r72-KKS604e.osx.s,v $
 ; Revision 1.3  2007/10/22 16:48:35  jlawson
 ; overwrite head with contents of release-2-90xx

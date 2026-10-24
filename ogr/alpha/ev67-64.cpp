@@ -8,9 +8,6 @@
 #include "ansi/ogrp2-64.h"
 
 
-const char *ogr_ev67_64_cpp(void) {
-return "@(#)$Id: ev67-64.cpp,v 1.4 2008/12/30 20:58:43 andreasb Exp $"; }
-
 #if defined(__GNUC__)
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - "100% asm"      */
   #define OGROPT_STRENGTH_REDUCE_CHOOSE         0 /* 0/1 - 'yes' (default) */

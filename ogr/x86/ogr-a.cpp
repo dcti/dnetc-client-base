@@ -6,7 +6,6 @@
  * Wrapper around ogr.cpp for all processor WITH a fast bsr instruction.
  * (ie, PPro, PII, PIII)
  *
- * $Id: ogr-a.cpp,v 1.8 2008/12/30 20:58:44 andreasb Exp $
 */
 
 #define OGR_GET_DISPATCH_TABLE_FXN    ogr_get_dispatch_table

@@ -8,9 +8,6 @@
  *
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *coremem_cpp(void) {
-  return "@(#)$Id: coremem.cpp,v 1.11 2013/10/14 01:43:12 snikkel Exp $";
-}
 
 //#define TRACE
 

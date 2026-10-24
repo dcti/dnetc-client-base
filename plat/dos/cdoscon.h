@@ -13,7 +13,7 @@
  *
 */
 #ifndef __CLIDOSCON_H__
-#define __CLIDOSCON_H__ "@(#)$Id: cdoscon.h,v 1.2 2002/09/02 00:35:50 andreasb Exp $"
+#define __CLIDOSCON_H__
 
 extern int dosCliConIsScreen(void);
 extern int dosCliConGetPos( int *colP, int *rowP );

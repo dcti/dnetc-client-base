@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *ogrng_dat_cpp(void) {
-return "@(#)$Id: ogrng_dat.cpp,v 1.4 2009/02/01 11:36:09 andreasb Exp $"; }
 
 #if defined(_MSC_VER)
 #pragma warning(disable:4049) // source file is too long

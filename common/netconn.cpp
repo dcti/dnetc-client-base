@@ -16,8 +16,6 @@
  * based on lessons learned from the old Network class methods
  *
 */
-const char *netconn_cpp(void) {
-return "@(#)$Id: netconn.cpp,v 1.10 2016/02/03 13:09:14 stream Exp $"; }
 
 //#define TRACE
 //#define DUMP_PACKET

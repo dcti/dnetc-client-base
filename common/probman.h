@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __PROBMAN_H__
-#define __PROBMAN_H__ "@(#)$Id: probman.h,v 1.11 2008/12/30 20:58:42 andreasb Exp $"
+#define __PROBMAN_H__
 
 //Return a specific Problem object or NULL if that problem doesn't exist
 Problem *GetProblemPointerFromIndex(unsigned int probindex);

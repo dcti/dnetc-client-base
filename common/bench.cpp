@@ -3,9 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *bench_cpp(void) {
-  return "@(#)$Id: bench.cpp,v 1.74 2015/12/30 12:49:32 stream Exp $";
-}
 
 //#define TRACE
 

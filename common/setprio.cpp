@@ -10,8 +10,6 @@
  *  re-nice() if the prio is 9 (assume external control)] 
  * ------------------------------------------------------------------
 */
-const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.66 2008/12/30 20:58:42 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

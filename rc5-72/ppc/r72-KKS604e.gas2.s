@@ -38,8 +38,6 @@
 #		8 keys at once, all keys (within such "block") having the same mid
 #		and lo values).
 #
-# $Id: r72-KKS604e.gas.s,v 1.5 2008/12/30 20:58:45 andreasb Exp $
-#
 # $Log: r72-KKS604e.gas.s,v $
 # Revision 1.5  2008/12/30 20:58:45  andreasb
 # 2008 copyright bump (all files touched this year)

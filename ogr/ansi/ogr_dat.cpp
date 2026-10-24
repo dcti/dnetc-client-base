@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogr_dat.cpp,v 1.5 2007/10/22 16:48:29 jlawson Exp $
 */
 
 #ifdef __cplusplus

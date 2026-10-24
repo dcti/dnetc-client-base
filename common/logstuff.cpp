@@ -14,9 +14,6 @@
 */
 //#define TRACE
 
-const char *logstuff_cpp(void) {
-return "@(#)$Id: logstuff.cpp,v 1.62 2011/12/31 20:32:22 snikkel Exp $"; }
-
 #include "cputypes.h"
 #include "baseincs.h"  // basic (even if port-specific) #includes
 #include "client.h"    // CONTEST_COUNT

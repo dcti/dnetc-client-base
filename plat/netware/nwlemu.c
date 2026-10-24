@@ -14,7 +14,6 @@
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: nwlemu.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
 */
 
 //#define DEMO_TIMEFUNC

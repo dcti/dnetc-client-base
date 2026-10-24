@@ -6,7 +6,6 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: amdstream_info.cpp,v 1.14 2012/02/02 18:58:58 sla Exp $
 */
 
 #include "amdstream_info.h"

@@ -6,7 +6,6 @@
  * client console management functions.
  * written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: nwccons.h,v 1.2 2002/09/02 00:35:51 andreasb Exp $
 */
 #ifndef __CNW_CLIENT_CONSOLE_H__
 #define __CNW_CLIENT_CONSOLE_H__ 

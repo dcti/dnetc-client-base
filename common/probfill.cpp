@@ -12,8 +12,6 @@
  *       KEEP IT THAT WAY!
  * -----------------------------------------------------------------
 */
-const char *probfill_cpp(void) {
-return "@(#)$Id: probfill.cpp,v 1.102 2014/01/08 11:25:34 stream1972 Exp $"; }
 
 //#define TRACE
 

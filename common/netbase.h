@@ -13,7 +13,7 @@
  * module.
 */
 #ifndef __NETBASE_H__
-#define __NETBASE_H__ "@(#)$Id: netbase.h,v 1.8 2012/06/05 22:12:55 snikkel Exp $"
+#define __NETBASE_H__
 
 #include "cputypes.h" /* u32 */
 

@@ -9,7 +9,6 @@
  * (no, its not nice to do things this way, but its the only way
  * when one doesn't want to repeatedly muck with a shared makefile)
  *
- * $Id: netware.cpp,v 1.2 2002/09/02 00:35:51 andreasb Exp $
 */
 
 #include "nwlemu.c"     /* kernel/clib portability stubs */

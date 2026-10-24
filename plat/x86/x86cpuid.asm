@@ -7,8 +7,6 @@
 ; Written by Didier Levet <kakace@distributed.net>, mostly derived from
 ; x86ident.asm written by Cyrus Patel.
 ;
-; $Id: x86cpuid.asm,v 1.4 2014/03/23 12:40:40 stream1972 Exp $
-;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:
 ; a) The code to use Cyrix Device ID registers for differentiate between a 

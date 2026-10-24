@@ -7,7 +7,6 @@
  *  one 32-bit scalar part (left side), and two 128-bit vector parts, thus the
  *  "hybrid" name.
  *
- * $Id: ogrng-vec.cpp,v 1.7 2009/12/27 13:52:28 andreasb Exp $
 */
 
 #include "ansi/ogrng.h"

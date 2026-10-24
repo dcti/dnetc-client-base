@@ -15,8 +15,6 @@
  * -----------------------------------------------------------------
  *
 */
-const char *cdoscon_cpp(void) {
-return "@(#)$Id: cdoscon.cpp,v 1.2 2002/09/02 00:35:50 andreasb Exp $"; }
 
 #include "cdoscon.h" /* keep prototypes in sync */
 

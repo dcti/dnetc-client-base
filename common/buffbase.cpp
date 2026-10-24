@@ -5,9 +5,6 @@
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *buffbase_cpp(void) {
-  return "@(#)$Id: buffbase.cpp,v 1.46 2014/01/09 18:33:28 stream Exp $";
-}
 
 //#define TRACE
 //#define PROFILE_DISK_HITS

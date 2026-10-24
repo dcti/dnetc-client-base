@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: pclbench.cpp,v 1.3 2007/10/22 16:48:35 jlawson Exp $
  */
 
 #include "baseincs.h"

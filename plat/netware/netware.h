@@ -6,7 +6,6 @@
  * Catch-all header file for the distributed.net client for NetWare 
  * written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
- * $Id: netware.h,v 1.2 2002/09/02 00:35:51 andreasb Exp $
 */
 
 #ifndef __NETWARE_CLIENT_H__

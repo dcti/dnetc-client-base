@@ -10,8 +10,6 @@
  *    is an optimist, the real number is more like three weeks.)
  * -------------------------------------------------------------------
 */
-const char *problem_cpp(void) {
-return "@(#)$Id: problem.cpp,v 1.209 2012/08/08 19:44:42 sla Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)

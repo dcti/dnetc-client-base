@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------
 */
 #ifndef __CLIDOS_EMU_H__ 
-#define __CLIDOS_EMU_H__ "@(#)$Id: cdosemu.h,v 1.2 2002/09/02 00:35:50 andreasb Exp $"
+#define __CLIDOS_EMU_H__
 
   const char *dosCliGetEmulationDescription(void);
 

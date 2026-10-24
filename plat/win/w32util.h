@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32UTIL_H__
-#define __W32UTIL_H__ "@(#)$Id: w32util.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $"
+#define __W32UTIL_H__
 
 #ifdef _INC_WINDOWS
 /* ScreenSaver boot vector (initialized from w32ss.cpp if linked) */

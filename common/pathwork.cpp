@@ -25,8 +25,6 @@
  * platform has its own code sections to avoid cross-platform assumptions
  * altogether.
 */
-const char *pathwork_cpp(void) {
-return "@(#)$Id: pathwork.cpp,v 1.26 2008/04/11 06:29:29 jlawson Exp $"; }
 
 // #define TRACE
 

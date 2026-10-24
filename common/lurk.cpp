@@ -48,8 +48,6 @@
  *        initiated with DialIfNeeded() (returns -1 if IsConnected(), else 0)
  *   otherwise it hangs up and returns zero. (no longer connected)
 */ 
-const char *lurk_cpp(void) {
-return "@(#)$Id: lurk.cpp,v 1.68 2008/12/30 20:58:41 andreasb Exp $"; }
 
 //#define TRACE
 

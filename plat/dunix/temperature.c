@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *temperature_c(void) {
-return "@(#)$Id: temperature.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

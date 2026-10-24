@@ -17,7 +17,6 @@
  * See also
  * http://developer.apple.com/documentation/MacOSX/Conceptual/BPSystemStartup/Concepts/BootProcess.html
  *
- * $Id: c_install.cpp,v 1.2 2007/10/22 16:48:31 jlawson Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>

@@ -4,9 +4,6 @@
  * Any other distribution or use of this source violates copyright.
 */
 
-const char *stress_r72_cpp(void) {
-return "@(#)$Id: stress.cpp,v 1.10 2012/01/13 01:05:29 snikkel Exp $"; }
-
 #include "cputypes.h"
 #include "client.h"
 #include "baseincs.h"  // standard #includes

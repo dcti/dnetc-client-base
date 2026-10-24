@@ -15,8 +15,6 @@
 # explanation why we need the TOC entries for AIX and maybe other
 # architectures
 #
-# $Id: r72-ppc-mh-2.toc.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
-#
 # $Log: r72-ppc-mh-2.toc.s,v $
 # Revision 1.3  2007/10/22 16:48:36  jlawson
 # overwrite head with contents of release-2-90xx

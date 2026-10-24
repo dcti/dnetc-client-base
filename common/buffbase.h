@@ -10,7 +10,7 @@
  * ------------------------------------------------------------------
 */
 #ifndef __BUFFBASE_H__
-#define __BUFFBASE_H__ "@(#)$Id: buffbase.h,v 1.10 2008/12/30 20:58:40 andreasb Exp $"
+#define __BUFFBASE_H__
 
 //efficiency hints/open mode modifiers
 #define BUFFER_FLAGS_NONE           (0x00) //regular local buffer

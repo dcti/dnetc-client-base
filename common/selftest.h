@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __SELFTEST_H__
-#define __SELFTEST_H__ "@(#)$Id: selftest.h,v 1.15 2012/01/13 01:05:22 snikkel Exp $"
+#define __SELFTEST_H__
 
 #include "client.h"
 

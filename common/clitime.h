@@ -10,7 +10,7 @@
  * ----------------------------------------------------------------------
 */
 #ifndef __CLITIME_H__
-#define __CLITIME_H__ "@(#)$Id: clitime.h,v 1.35 2011/03/31 05:07:28 jlawson Exp $"
+#define __CLITIME_H__
 
 #include "baseincs.h" /* struct timeval */
 

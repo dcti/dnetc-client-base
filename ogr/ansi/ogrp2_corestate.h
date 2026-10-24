@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrp2_corestate.h,v 1.1 2008/03/08 20:07:14 kakace Exp $
  */
 
 #ifndef ogrp2_corestate_H

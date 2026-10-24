@@ -10,9 +10,6 @@
  *  realmain() [also in client.cpp]
 */
 
-const char *w32pre_cpp(void) {
-return "@(#)$Id: w32pre.cpp,v 1.5 2011/03/31 05:07:31 jlawson Exp $"; }
-
 #include "cputypes.h"  //CLIENT_OS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

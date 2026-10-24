@@ -8,7 +8,6 @@
 ; Version 1.0    2003/09/08  23:53
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-ma4.asm,v 1.4 2009/01/05 22:45:21 mfeiri Exp $
 
 ; SIMD Core Idea
 ; The only areas of the CPU that former cores have not utilized are the

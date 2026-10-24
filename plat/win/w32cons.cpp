@@ -10,8 +10,6 @@
  *
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.17 2012/05/01 13:15:08 stream Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE

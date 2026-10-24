@@ -12,8 +12,6 @@
 ;
 ; Malcolm Howell <coreblimey@rottingscorpion.com>, 27th Jan 2003
 ;
-; $Id: r72-030-mh.s,v 1.3 2007/10/22 16:48:33 jlawson Exp $
-;
 ; $Log: r72-030-mh.s,v $
 ; Revision 1.3  2007/10/22 16:48:33  jlawson
 ; overwrite head with contents of release-2-90xx

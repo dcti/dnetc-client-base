@@ -3,7 +3,6 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <teichp@distributed.net>
-; $Id: ogrng-arm2-gccsdk.s,v 1.2 2009/01/04 22:00:30 teichp Exp $
 ;
 ; ARMv5 variant, optimized for XScale:
 ; * Intel really did a extremly bad job. They had better just taken the

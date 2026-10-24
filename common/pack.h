@@ -6,7 +6,7 @@
 */
 
 #ifndef __PACK_H__
-#define __PACK_H__  "@(#)$Id: pack.h,v 1.3 2007/10/22 16:48:26 jlawson Exp $"
+#define __PACK_H__
 
 /* DNETC_USE_PACK will make pack[0-8].h use #pragma pack
 **

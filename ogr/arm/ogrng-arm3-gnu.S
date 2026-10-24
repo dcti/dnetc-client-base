@@ -3,7 +3,6 @@
 @ Any other distribution or use of this source violates copyright.
 @
 @ Author: Peter Teichmann <teichp@distributed.net>
-@ $Id: ogrng-arm3-gnu.S,v 1.1 2011/11/11 18:49:25 teichp Exp $
 @
 @ ARMv5 variant
 @

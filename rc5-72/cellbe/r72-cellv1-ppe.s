@@ -29,8 +29,6 @@
 ;#		and lo values.
 ;#
 ;#
-;# $Id: r72-cellv1-ppe.s,v 1.2 2007/10/22 16:48:35 jlawson Exp $
-;#
 ;# $Log: r72-cellv1-ppe.s,v $
 ;# Revision 1.2  2007/10/22 16:48:35  jlawson
 ;# overwrite head with contents of release-2-90xx

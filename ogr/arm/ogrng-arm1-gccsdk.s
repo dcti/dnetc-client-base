@@ -3,7 +3,6 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <teichp@distributed.net>
-; $Id: ogrng-arm1-gccsdk.s,v 1.3 2009/01/04 22:00:30 teichp Exp $
 ;
 ; ARMv3 variant, optimized for StrongARM
 ;

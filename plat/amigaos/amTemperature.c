@@ -11,7 +11,6 @@
  * after the decimal point), else -1.
  * For multiple cpus, gets one with highest temperature.
  *
- *  $Id: amTemperature.c,v 1.2 2012/06/25 00:30:00 piru Exp $
  */
 
 #include <stdlib.h>

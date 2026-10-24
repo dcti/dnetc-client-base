@@ -7,8 +7,6 @@
 ; 
 ; Written for distributed.net by Steven Nikkel, Nov 2003
 ; 
-; $Id: x86htcount.asm,v 1.2 2007/10/22 16:48:32 jlawson Exp $
-;
 ; return u32
 
 %ifndef __OMF__

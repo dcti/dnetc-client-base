@@ -6,7 +6,7 @@
 */
 
 #ifndef __PACK8_H__
-# define __PACK8_H__ "@(#)$Id: pack8.h,v 1.3 2007/10/22 16:48:26 jlawson Exp $"
+# define __PACK8_H__
 
 # include "pack.h"
 #endif

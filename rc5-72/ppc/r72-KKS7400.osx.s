@@ -36,8 +36,6 @@
 ;#	Clock cycles (inner loop) : 436
 ;#	Estimated keyrate : 9174.30 keys/s/MHz
 ;#
-;# $Id: r72-KKS7400.osx.s,v 1.4 2009/01/31 20:18:21 kakace Exp $
-;#
 ;# $Log: r72-KKS7400.osx.s,v $
 ;# Revision 1.4  2009/01/31 20:18:21  kakace
 ;# Work around a spurious bug in XCode 3+

@@ -3,7 +3,6 @@
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: ocl_info.cpp 2016/02/04 19:08:25 zebe Exp $
 */
 
 #include "ocl_info.h"

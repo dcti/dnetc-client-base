@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32CONS_H__
-#define __W32CONS_H__ "@(#)$Id: w32cons.h,v 1.8 2012/08/21 18:55:55 sla Exp $"
+#define __W32CONS_H__
 
 #include "cputypes.h"
 

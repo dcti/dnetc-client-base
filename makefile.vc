@@ -1,8 +1,6 @@
 # distributed.net client makefile for Microsoft Visual C++
 # see http://www.distributed.net/
 #
-# $Id: makefile.vc,v 1.141 2012/08/11 09:24:36 sla Exp $
-#
 
 #PROCESSOR_ARCHITECTURE = AMD64
 #PROCESSOR_ARCHITECTURE = cuda

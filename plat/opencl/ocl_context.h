@@ -3,7 +3,6 @@
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: 
 */
 
 #ifndef OCL_CONTEXT_INCLUDED

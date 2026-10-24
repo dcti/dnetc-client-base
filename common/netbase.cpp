@@ -64,8 +64,6 @@
  *   but can easily be changed if warranted.
  *
 */
-const char *netbase_cpp(void) {
-return "@(#)$Id: netbase.cpp,v 1.23 2016/02/03 13:09:14 stream Exp $"; }
 
 //#define TRACE             /* expect trace to _really_ slow I/O down */
 #define TRACE_STACKIDC(x) //TRACE_OUT(x) /* stack init/shutdown/check calls */

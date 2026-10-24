@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *ogr_cell_ppe_wrapper_cpp(void) {
-return "@(#)$Id: ogr-cell-ppe-wrapper.cpp,v 1.9 2008/12/30 20:58:43 andreasb Exp $"; }
 
 #ifndef CORE_NAME
 #define CORE_NAME cellv1

@@ -6,9 +6,6 @@
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
 
-const char *w32svc_cpp(void) {
-return "@(#)$Id: w32svc.cpp,v 1.12 2012/08/21 18:55:55 sla Exp $"; }
-
 //#define TRACE
 
 #include "cputypes.h"

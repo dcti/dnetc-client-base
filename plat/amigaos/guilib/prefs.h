@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: prefs.h,v 1.3 2007/10/22 16:48:30 jlawson Exp $
- *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
  * ----------------------------------------------------------------------

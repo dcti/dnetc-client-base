@@ -14,8 +14,6 @@
  * Client::Main() in client.cpp
  * -------------------------------------------------------------------
 */
-const char *cmdline_cpp(void) {
-return "@(#)$Id: cmdline.cpp,v 1.176 2015/10/24 18:57:54 stream Exp $"; }
 
 //#define TRACE
 

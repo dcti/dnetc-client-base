@@ -17,9 +17,6 @@
  * some of this. (4) Extensibility: hup, two, three, four...  - cyp
 */
 
-const char *triggers_cpp(void) {
-return "@(#)$Id: triggers.cpp,v 1.46 2013/12/15 17:11:00 zebe Exp $"; }
-
 /* ------------------------------------------------------------------------ */
 
 //#define TRACE

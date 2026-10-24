@@ -3,7 +3,6 @@
 # Any other distribution or use of this source violates copyright.
 #
 # Author: Decio Luiz Gazzoni Filho <decio@distributed.net>
-# $Id: ogr-cellv1-spe.s,v 1.5 2008/12/30 20:58:43 andreasb Exp $
 
 	#################################################################
 	# Hackers: see the comments right above the .text section for a #

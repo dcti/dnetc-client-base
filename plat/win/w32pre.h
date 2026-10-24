@@ -7,7 +7,7 @@
 */ 
 
 #ifndef __W32PRE_H__
-#define __W32PRE_H__ "@(#)$Id: w32pre.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $"
+#define __W32PRE_H__
 
 int winGetMyModuleFilename(char *buffer,unsigned int len);
 

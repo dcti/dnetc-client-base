@@ -7,7 +7,6 @@
 
         AREA    RISCOSAsmArea, CODE, READONLY
 
-        DCB     "@(#)$Id: riscos_asm.s,v 1.2 2002/09/02 00:35:53 andreasb Exp $", 0
         ALIGN
 
 OS_EnterOS              *       &16

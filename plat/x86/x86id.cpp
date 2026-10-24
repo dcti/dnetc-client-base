@@ -3,14 +3,10 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: x86id.cpp,v 1.20 2011/03/31 05:07:32 jlawson Exp $
- *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
  *    http://sandpile.org/   
  */
-const char *x86id_cpp(void) {
-return "@(#)$Id: x86id.cpp,v 1.20 2011/03/31 05:07:32 jlawson Exp $"; }
 
 #include <string.h>
 #include <stdio.h>

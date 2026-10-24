@@ -1,6 +1,5 @@
 
  distributed.net client for NetWare 5.1 and above
- Document revision $Id: readme.nw6,v 1.3 2008/12/30 12:42:51 andreasb Exp $
                                                          
 This is a port of the dnetc client to the Netware LibC platform.
 

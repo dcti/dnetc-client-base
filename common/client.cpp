@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.272 2016/02/01 16:08:35 stream Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

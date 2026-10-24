@@ -6,7 +6,6 @@
  * Implementation : Each of the three bitmaps "list", "dist" and "comp" is
  * made of eight 32-bit scalars.
  *
- * $Id: ogrng-32.h,v 1.1 2008/03/08 20:07:14 kakace Exp $
 */
 
 #include "ansi/ogrng.h"

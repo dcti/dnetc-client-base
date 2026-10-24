@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32SVC_H__
-#define __W32SVC_H__ "@(#)$Id: w32svc.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $"
+#define __W32SVC_H__
 
 int win32CliUninstallService(int quiet); 
 /*returns 0 on success. quiet is used internally by the service itself */

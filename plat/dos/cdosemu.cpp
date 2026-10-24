@@ -14,8 +14,6 @@
  * ----------------------------------------------------------------
  *
 */
-const char *cdosemu_cpp(void) {
-return "@(#)$Id: cdosemu.cpp,v 1.2 2002/09/02 00:35:50 andreasb Exp $"; }
 
 #include <stdlib.h>   /* getenv() */
 #include <stdio.h>    /* sprintf() */

@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: MUIGUI.c,v 1.2 2007/10/22 16:48:30 jlawson Exp $
- *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *
  * ----------------------------------------------------------------------

@@ -3,7 +3,6 @@
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Peter Teichmann <dnet@peter-teichmann.de>
-; $Id: r72arm1-gccsdk.S,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 
 r0	RN	0
 r1	RN	1

@@ -3,8 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *core_r72_cpp(void) {
-return "@(#)$Id: core_r72.cpp,v 1.66 2026/10/11 17:16:00 Mix Exp $"; }
 
 //#define TRACE
 

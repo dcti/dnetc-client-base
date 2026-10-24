@@ -8,7 +8,7 @@
 */ 
 
 #ifndef __W32EXE_H__
-#define __W32EXE_H__ "@(#)$Id: w32exe.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $"
+#define __W32EXE_H__
 
 /* is executable gui subsys? <0=err, 0=no, >0=yes */
 extern int winIsGUIExecutable( const char *filename );

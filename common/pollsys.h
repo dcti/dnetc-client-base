@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __POLLSYS_H__
-#define __POLLSYS_H__ "@(#)$Id: pollsys.h,v 1.12 2011/03/31 05:07:29 jlawson Exp $"
+#define __POLLSYS_H__
 
 #include "clitime.h"  /* needed for timeval struct */
 

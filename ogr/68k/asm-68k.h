@@ -5,7 +5,7 @@
 */
 
 #ifndef __ASM_68K_H__
-#define __ASM_68K_H__ "@(#)$Id: asm-68k.h,v 1.4 2008/12/30 20:58:43 andreasb Exp $"
+#define __ASM_68K_H__
 
 #if defined(ASM_68K) && defined(__GNUC__)
 

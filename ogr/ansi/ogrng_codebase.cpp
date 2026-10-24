@@ -3,7 +3,6 @@
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng_codebase.cpp,v 1.13 2012/05/17 17:57:25 stream Exp $
  */
 
 #include <string.h>   /* memset */

@@ -5,7 +5,7 @@
  *
 */
 #ifndef __OGRP2_H__
-#define __OGRP2_H__ "@(#)$Id: ogrp2.h,v 1.4 2008/03/08 20:18:31 kakace Exp $"
+#define __OGRP2_H__
 
 #include "ansi/ogr-interface.h"
 

@@ -5,7 +5,7 @@
  * Any other distribution or use of this source violates copyright.
 */ 
 #ifndef __CPUCHECK_H__
-#define __CPUCHECK_H__ "@(#)$Id: cpucheck.h,v 1.23 2014/06/08 16:08:28 stream1972 Exp $"
+#define __CPUCHECK_H__
 
 // cpu feature flags (use by selcore.cpp)
 

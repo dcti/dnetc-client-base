@@ -13,10 +13,6 @@
  *
  * Written December 1997 Cyrus Patel <cyp@fb14.uni-mainz.de>
 */   
-#if defined(__showids__)
-const char *nwwatemu_c(void) {
-return "@(#)$Id: nwwatemu.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $"; }
-#endif
 
 #ifdef __cplusplus
   #error Error: This needs to be a 'C' not 'CPP' file.
