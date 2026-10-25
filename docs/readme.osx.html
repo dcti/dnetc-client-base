@@ -66,14 +66,14 @@ h2 {
 <h2>Welcome to the distributed.net client for Mac OS X</h2>
 <p>This document covers information specific to the client for Mac OS X. For 
   non-platform specific information, refer to other enclosed documentation 
-  or browse the online FAQ at <a href="http://faq.distributed.net/">http://faq.distributed.net/</a> 
-  or <a href="http://www.distributed.net/Docs">http://www.distributed.net/Docs</a>.</p>
+  or browse the online FAQ at <a href="https://faq.distributed.net/">https://faq.distributed.net/</a> 
+  or <a href="https://www.distributed.net/Docs">https://www.distributed.net/Docs</a>.</p>
 <ul>
-  <li><a href"#started">Getting started</a></li>
+  <li><a href="#started">Getting started</a></li>
   <li><a href="#quiet">Running the client in quiet mode</a></li>
-  <li><a href="faq">Frequently Asked Questions on OS X</a></li>
-  <li><a href="bugs">Problems and bugs</a></li>
-  <li><a href="credits">Credits and thanks</a></li>
+  <li><a href="#faq">Frequently Asked Questions on OS X</a></li>
+  <li><a href="#bugs">Problems and bugs</a></li>
+  <li><a href="#credits">Credits and thanks</a></li>
 </ul>
 <a name="started"></a>       
 <h2>Getting Started</h2>
@@ -89,6 +89,20 @@ h2 {
   The "<code>-config</code>" is a switch which tells dnetc to start configuration 
   mode. It will do this automatically if you have never configured it before, 
   but using the switch will always start config mode.</p>
+
+<p>If you just downloaded the client, you may get an error message
+from MacOS and it stops you from running the client. This is to be expected
+as MacOS Gatekeeper now blocks applications from running that don't
+have an official Apple authorized developer signature. In order to
+proceed, open <b>System Settings</b> and navigate to <b>Privacy &amp; Security</b>.
+Scroll down to the section called <b>Security</b>, where you should see:
+<b><i>"dnetc" was blocked</i></b>. Click on <b>Allow Anyway</b> next to the message. Then try to run the client
+again, MacOS will give you some more information, then click <b>Open
+Anyway</b>. The client should now run and you shouldn't need to authorize
+it again unless you download a new version. Remember only to download
+and use official clients from <a
+href="https://www.distributed.net/Download">https://www.distributed.net/Download</a>.
+
 <p>You will be introduced to a text-driven menu with fairly self-explanatory options. 
   Primarily, you will need to enter your email address as your distributed.net ID.
   Other options can usually remain unchanged, and can be modified later by starting
@@ -100,7 +114,7 @@ h2 {
   it there. You can see other command line options for the client by starting 
   it with the <code>-help</code> switch.</p>  
 <p>Additional guides to the various configuration options are available online. 
-  <a href="http://www.distributed.net/Docs">http://www.distributed.net/Docs</a></p>  
+  <a href="https://www.distributed.net/Docs">https://www.distributed.net/Docs</a></p>  
 <a name="quiet"></a>
 <h2>Running the client in quiet mode</h2>
 <p>It may be desirable to run the client in the background; that is, to close the
@@ -132,10 +146,10 @@ h2 {
 <p><strong>Q:</strong> What are the changes in this version of the client ?<br>
   <strong>A:</strong> Check the CHANGES.txt document included in this distribution.</p>
   <p><strong>Q:</strong> Is there a GUI version of the client ?<br>
-  <strong>A:</strong> Any GUI features not included in this client will be 
-  released as portable, open source add-on utilities. However, since distributed.net 
+  <strong>A:</strong> There is not currently a GUI version. Since distributed.net 
   is a volunteer organization, we rely on users to contribute code. Please 
-  contact us if you're interested. See also
+  contact us if you're interested. There might also be some add-on
+visulization tools, see
   <a href="https://www.distributed.net/Download_addons">https://www.distributed.net/Download_addons</a></p>
   <p><strong>Q:</strong> How do I check if a silent (quiet mode) client is running ?<br>
   <strong>A:</strong> Open a Terminal window and type: <code>ps -acwx | grep 
@@ -199,7 +213,7 @@ this. It is available on the <a href="https://www.distributed.net/Download_addon
   for more info.<br>
   If you need to share buffers between many clients, you may wish to consider 
   setting up a personal proxy. For more info on perproxies, visit
-  <a href="http://www.distributed.net/download/proxies.php">http://www.distributed.net/download/proxies.php</a></p>
+  <a href="https://www.distributed.net/download/proxies.php">https://www.distributed.net/download/proxies.php</a></p>
 <p><strong>Q:</strong> How do I completely remove the client from my system ?<br>
   <strong>A:</strong> If you used the <code>-install</code> switch to run the
   client each time you boot up your machine, use the <code>-uninstall</code>
@@ -207,7 +221,7 @@ this. It is available on the <a href="https://www.distributed.net/Download_addon
   client (<code>./dnetc -shutdown</code>), and then simply delete the folder
   containing the client.</p>
   <p><strong>Q:</strong> My computer runs too hot. What can I do ?<br>
-  <strong>A:</strong> Recent Macs contain hardware temperature sensors, which dnetc can
+  <strong>A:</strong> Recent Macs contain hardware temperature sensors, which dnetc may be able to 
   use for temperature monitoring. To activate it, open the configuration menu
   (<code>./dnetc -config</code>) and go to General Client Options. Select the option
   labeled: <code>Pause if processor temperature thresholds are exceeded</code>. Say yes to
@@ -225,13 +239,13 @@ this. It is available on the <a href="https://www.distributed.net/Download_addon
 take to help us diagnose and fix the problem.</p>
 <ol>
   <li> Visit the client download page and verify that you have the latest release 
-  of the client for Mac OS X. <a href="http://www.distributed.net/download/clients.php">http://www.distributed.net/download/clients.php</a></li>
+  of the client for Mac OS X. <a href="https://www.distributed.net/download/clients.php">https://www.distributed.net/download/clients.php</a></li>
   <li> Run Software Update to ensure you have the latest updates for Mac OS X.</li>
   <li>See if you can find steps to reproduce the problem. How does the bug occur? What
   happens when it does? If you receive a crash log, save it, as this may be useful info.</li>
   <li>Visit distributed.net's Bugzilla system, our bug reporting and tracking 
   site. Here, you can report your bug and stay in contact with distributed.net 
-  QA and developers as we try to fix your bug. <a href="http://bugs.distributed.net/">http://bugs.distributed.net/</a></li>
+  QA and developers as we try to fix your bug. <a href="https://bugs.distributed.net/">https://bugs.distributed.net/</a></li>
   <li>When reporting a bug, please give us as many details as possible.</li>
     <ul>
       <li>What version of Mac OS X are you running?<br>
@@ -244,24 +258,10 @@ take to help us diagnose and fix the problem.</p>
 </ol>
 <p>The more details you can give us, the easier it will be for us to fix your 
   bug. Thank you for helping us improve the client!</p>
+<a name="credits"></a>
 <h2>Credits and Thanks</h2>
 <p>Thanks to everybody involved in the development of the client for Mac OS X and the beta
-  testing process, who have helped make it what it is, including (in no particular order):
-<ul>
-<li>Michael Feiri (OS X port, years of excellent development and fixes)</li>
-<li>Dan Oetting (Fantastic optimizations and other valuable input)</li>
-<li>Chris Cox (OGR optimizations and great help during WWDC 2K)</li>
-<li>Nate "sampo" Begeman (OGR optimizations, XML drafts, bug fixes)</li>
-<li>Cyrus Patel (Lead developer at dnet and an awesome helper)</li>
-<li>Don Bruder (Contributor of code snippets and a logfile grapher)</li>
-<li>Michael Nahrath (Maintainer of JavaVis and ever-encouraging)</li>
-<li>Evan Vetere (dearly missed "end-user relations" guy)</li>
-<li>Matt "Zebe" Lee (bug fixes, docs, and Bugzilla management)</li>
-<li>Andrew Meggs and Peter DiCamillo (ported previous clients)</li>
-<li>Benjamin "thumper^" Kaufman For work on this document.</li>
-<li>Joseph McLean and all members of the dmac-beta list</li>
-<li>Everybody who provides feedback through Bugzilla</li>
-</ul>
+  testing process, who have helped make it what it is.
 </p> 
 <p>And finally, thanks to everyone who runs dnetc on their computers. Without you there
 wouldn't be much of a point in doing the client, so keep on cracking! Maybe YOU can find
