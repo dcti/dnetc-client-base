@@ -140,6 +140,25 @@ static void __cruncher_sleep__(struct thread_param_block * /*thrparams*/)
   #endif
 }
 
+#if (CLIENT_CPU == CPU_TENSTORRENT)
+/* Like __cruncher_sleep__(), but returns as soon as new work is loaded.
+** The main thread reloads a problem within milliseconds, and the device
+** can finish a packet in about a second.
+*/
+static void __cruncher_wait_for_work__(struct thread_param_block *thrparams,
+                                       void *thisprob)
+{
+  int i;
+  for (i = 0; i < 100; i++)
+  {
+    if (ProblemIsInitialized(thisprob) ||
+        thrparams->do_suspend || thrparams->do_exit)
+      break;
+    NonPolledUSleep(10000); /* 10 ms, 1 s at most */
+  }
+}
+#endif
+
 static int __cruncher_yield__(struct thread_param_block *thrparams)
 {
   DNETC_UNUSED_PARAM(thrparams);
@@ -420,7 +439,11 @@ void Go_mt( void * parm )
       // especially since the client does not exit if it has run out of work
       // __cruncher_yield__(thrparams) is not enough and also this needs to
       // be done independently of the thrparams->realthread setting
+      #if (CLIENT_CPU == CPU_TENSTORRENT)
+      __cruncher_wait_for_work__(thrparams, thisprob);
+      #else
       __cruncher_sleep__(thrparams);
+      #endif
     }
     else
     {
@@ -1778,6 +1801,28 @@ int ClientRun( Client *client )
       if (isPaused)
         NonPolledSleep(1);
 
+      #if (CLIENT_CPU == CPU_TENSTORRENT)
+      /* check for refills every 10 ms: the device can finish a packet
+         in about a second and idles until it is refilled */
+      int tick = 0;
+      while (tick < 5*100
+            && !__CheckClearIfRefillNeeded(thread_data_table,0)
+            && !CheckExitRequestTriggerNoIO()
+            && ModeReqIsSet(-1)==0)
+      {
+        if ((tick % 100) == 0)
+        {
+          i = (tick / 100) + 1;
+          ClientEventSyncPost(CLIEVENT_CLIENT_RUNIDLE, &i, sizeof(i));
+        }
+        usleep(10000);
+        tick++;
+        #if defined(DYN_TIMESLICE_SHOWME)
+        if ((tick % 100) == 0)
+          __dyn_timeslice_showme(thread_data_table);
+        #endif
+      }
+      #else
       while ((i++)<5
             && !__CheckClearIfRefillNeeded(thread_data_table,0)
             && !CheckExitRequestTriggerNoIO()
@@ -1789,6 +1834,7 @@ int ClientRun( Client *client )
         __dyn_timeslice_showme(thread_data_table);
         #endif
       }
+      #endif
       SetGlobalPriority( 9 );
     }
     dontSleep = 0; //for the next round
