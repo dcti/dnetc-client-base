@@ -1,0 +1,139 @@
+
+ distributed.net client for Tenstorrent Blackhole devices
+ document revision $Id: readme.tenstorrent $
+
+ Welcome to the distributed.net client.
+
+ This document covers information specific to the client for Tenstorrent
+ Blackhole accelerators, and for running it on the ttsim simulator when
+ no such device is available. Refer to other enclosed documentation or
+ browse the online FAQ at <http://faq.distributed.net/> for
+ non-platform-specific documentation.
+
+    1.0  Getting started
+    2.0  Tenstorrent specific notes
+         2.1 Cores
+         2.2 Running on the ttsim simulator
+         2.3 Self-checks
+         2.4 Environment variables
+    3.0  Building
+         3.1 Device firmware
+    4.0  Troubleshooting and known issues
+
+ 1.0  Getting started ------------------------------------------------
+
+    Just unpack/unzip/untar the client in a directory of your choice and
+    fire it up.
+
+    If you have never run the client before, it will initiate the
+    menu-driven configuration. Save and quit when done.
+
+    Then, simply restart the client. From that point on it will use the
+    saved configuration.
+
+    The configuration options are fairly self-explanatory and can be run
+    at any time by starting the client with the '-config' option.
+    A list of command line options is available by starting the client
+    with '-help' or '--help'.
+
+    A complete step-by-step guide to running your first client is
+    available at <https://www.distributed.net/Docs_tutor_client>
+
+
+ 2.0  Tenstorrent specific notes -------------------------------------
+
+    The client supports RC5-72 on Tenstorrent Blackhole devices (p100,
+    p150 and similar cards) on Linux. It needs the Tenstorrent kernel
+    driver (tt-kmd) with exclusive device ownership support, and read/write
+    access to the device nodes in /dev/tenstorrent.
+
+    The client takes exclusive ownership of each device it uses. Do not
+    run it at the same time as other programs using the device (such as
+    TT-Metalium); the client reports devices in use and skips them. When it
+    exits, the client stops its firmware on the device.
+
+    To list the devices detected by the client, run "dnetc -gpuinfo".
+    Every Blackhole device found is used, one cruncher per device; see
+    "Multiple GPUs" in readme.opencl about the "-devicenum" option, which
+    works the same way here.
+
+  2.1   Cores ------------------------------------------------------
+
+    Every Tensix tile of the device has five small RISC-V cores and a
+    32-lane vector unit (SFPU). The client loads its own firmware onto all
+    of the tiles. There are two RC5-72 cores:
+
+    #0 "RISC-V x5": all five RISC-V cores of every tile check keys.
+    #1 "SFPU + RISC-V x4": one RISC-V core of every tile drives its vector
+       unit, checking 32 keys at a time; the other four check keys
+       themselves. This is the default and is much faster.
+
+  2.2   Running on the ttsim simulator ----------------------------------
+
+    ttsim is Tenstorrent's simulator, which presents a virtual Blackhole
+    device. It is much slower than a real device, but bit-exact, so the
+    client's tests can be run without Tenstorrent hardware. Download the
+    Blackhole simulator library, libttsim_bh.so, from
+    <https://github.com/tenstorrent/ttsim/releases> and point the client
+    at it:
+
+        DNETC_TTSIM=/path/to/libttsim_bh.so ./dnetc -test rc5-72
+
+    With DNETC_TTSIM set, the client uses the simulator instead of any
+    devices in /dev/tenstorrent. "-test" takes about 30 seconds per core
+    on the simulator; "-stress" takes hours.
+
+  2.3   Self-checks --------------------------------------------------
+
+    Before a core is first used, the client checks it on every tile of the
+    device: each tile must find a key planted in a range of keys that
+    crosses a carry in the key, and the vector unit's result for every key
+    is compared with the RISC-V cores' result. A failure is reported and
+    stops the client. Any key found by the device is also re-checked on the
+    host before it is reported.
+
+  2.4   Environment variables --------------------------------------------
+
+    DNETC_TTSIM=path      use the ttsim simulator library at 'path' instead
+                          of the devices in /dev/tenstorrent
+    DNETC_TT_MAX_TILES=n  use at most n Tensix tiles per device, for
+                          bring-up and debugging
+    DNETC_TT_STATS=1      log device clock statistics for every core call
+
+
+ 3.0  Building -------------------------------------------------------
+
+    On Linux x86_64:
+
+        ./configure linux-amd64-tenstorrent
+        make
+
+    No Tenstorrent software is needed to build the client.
+
+  3.1   Device firmware ----------------------------------------------
+
+    The firmware the client loads onto the device is built from
+    rc5-72/tenstorrent/r72tt_tile.c. Its image is included in the source as
+    rc5-72/tenstorrent/r72tt_tile_fw.cpp, so that building the client
+    does not need a RISC-V compiler. After changing the firmware sources,
+    regenerate the image with the SFPI toolchain
+    <https://github.com/tenstorrent/sfpi/releases> (version 7.90.0 was used
+    for the included image):
+
+        SFPI_PATH=/path/to/sfpi ./configure linux-amd64-tenstorrent
+        make tt-firmware
+
+    Rebuilding the image from unchanged sources with the same SFPI version
+    reproduces r72tt_tile_fw.cpp exactly.
+
+
+ 4.0  Troubleshooting and known issues ------------------------------
+
+    "is in use by another program": another program has the device open.
+    Stop it and retry.
+
+    "does not support exclusive device ownership": the kernel driver is too
+    old; update tt-kmd.
+
+    If a device stops responding, it can be reset with "tt-smi -r"
+    <https://github.com/tenstorrent/tt-smi>.
