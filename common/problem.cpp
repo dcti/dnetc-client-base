@@ -826,7 +826,7 @@ static int __InternalLoadState( InternalProblem *thisprob,
       thisprob->pub_data.startkeys.lo = thisprob->priv_data.contestwork.bigcrypto.keysdone.lo;
       thisprob->pub_data.startpermille = __compute_permille( thisprob->pub_data.contest, &thisprob->priv_data.contestwork );
 
-      #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+      #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
       thisprob->priv_data.rc5_72unitwork.devicenum = device;
       thisprob->priv_data.rc5_72unitwork.optimal_timeslice_increment = 0;
       thisprob->priv_data.rc5_72unitwork.best_time = -1;
@@ -1717,7 +1717,7 @@ int ProblemRun(void *__thisprob) /* returns RESULT_*  or -1 */
                              using_ptime, &s_using_ptime, last_resultcode );
         core_prob->pub_data.core_run_count++;
         core_prob->pub_data.tslice = iterations;
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
         // FIXME there could be a better way to do this
         core_prob->pub_data.tslice_increment_hint = core_prob->priv_data.rc5_72unitwork.optimal_timeslice_increment;
 #endif

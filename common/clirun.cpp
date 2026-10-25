@@ -595,7 +595,7 @@ void Go_mt( void * parm )
               const u32 usec5perc = usec / 20;
               if (runtime_usec < (usec - usec5perc))
               {
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
                 /*
                  * Bump timeslice very fast for GPU clients. An 1GKey GPU have optimal
                  * timeslice 15000 times higher then initial value. Original code
@@ -1507,7 +1507,7 @@ int ClientRun( Client *client )
     #endif
 
     // On GPU, number of crunchers must NEVER exceed number of detected GPUs
-    #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+    #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
     int gpus = GetNumberOfDetectedProcessors();
     if (gpus < 0)
       gpus = 0; // just in case. It should not fail on GPU (return 0 on error)

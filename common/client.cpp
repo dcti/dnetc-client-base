@@ -42,6 +42,10 @@
 #include "ocl_setup.h"		// InitializeOpenCL()
 #endif
 
+#if (CLIENT_CPU == CPU_TENSTORRENT)
+#include "tt_setup.h"           // InitializeTenstorrent()
+#endif
+
 /* ------------------------------------------------------------------------ */
 
 void ResetClientData(Client *client)
@@ -351,6 +355,11 @@ static void InitializeCoProcessorsOnce(Client *client)
     #if (CLIENT_CPU == CPU_OPENCL)
       #define GPU_NAME "OpenCL"
       #define GPU_INIT InitializeOpenCL()
+    #endif
+
+    #if (CLIENT_CPU == CPU_TENSTORRENT)
+      #define GPU_NAME "Tenstorrent"
+      #define GPU_INIT InitializeTenstorrent()
     #endif
 
     #ifdef GPU_NAME

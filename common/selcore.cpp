@@ -436,7 +436,7 @@ static long __bench_or_test( Client *client, int which,
         }
         else {
           Log("Core #%d is significantly faster than the default core.\n"
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL && CLIENT_CPU != CPU_TENSTORRENT)
               "Please file a bug report along with the output of\n-cpuinfo.\n"
 #else
               "The GPU core selection has been made as a tradeoff between core speed\n"
@@ -675,7 +675,7 @@ int hackGetUsedDeviceIndex( Client *client, unsigned threadindex )
 {
   int device = threadindex;
   /* TODO: really support separate cores for multiple types of devices */
-  #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+  #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
   if (client->devicenum >= 0)
     device = client->devicenum;
   #else

@@ -250,7 +250,7 @@ unsigned int ClientGetInThreshold(Client *client,
       /* it's a bad idea to use PREFERREDBLOCKSIZE_DEFAULT here - too rough and unrelated */
       /* the number could be arbitrary but must be reasonable. So we've choosed 24 units
          for average PC (4 Mkeys/sec), but GPU settings could be tweaked accordingly. */
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
       bufthresh = 6 * 200 * 100;  /* average GPU: 200 Mkeys/sec. */
 #elif (CLIENT_CPU == CPU_CELLBE)
       bufthresh = 6 * 24 * 100;   /* PS3 each core: 24 Mkeys/sec. */
