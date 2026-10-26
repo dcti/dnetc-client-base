@@ -3,6 +3,7 @@
  *
  * Created Nov 2000, by Cyrus Patel <cyp@fb14.uni-mainz.de>
  * clone() cloned from wine source (wine/misc/port.c)
+ * $Id: li_kthread.c,v 1.2 2002/09/02 00:35:50 andreasb Exp $
 */
 #define __NO_STRING_INLINES /* work around bugs in glibc bits/strings2.h */
 

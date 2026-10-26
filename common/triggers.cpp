@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2013 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -16,6 +16,9 @@
  * is affected by every itty-bitty change. (3) Modularity: gawd knows we need
  * some of this. (4) Extensibility: hup, two, three, four...  - cyp
 */
+
+const char *triggers_cpp(void) {
+return "@(#)$Id: triggers.cpp,v 1.46 2013/12/15 17:11:00 zebe Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 

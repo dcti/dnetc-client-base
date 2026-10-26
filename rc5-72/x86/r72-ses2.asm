@@ -4,6 +4,8 @@
 ; For use by distributed.net. I do request that any
 ; changes to this core are also emailed to Samuel@Lightspeed.cx
 
+; $Id: r72-ses2.asm,v 1.6 2007/10/22 16:48:36 jlawson Exp $
+
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]
 %else

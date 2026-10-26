@@ -1,10 +1,12 @@
 /*
- * Copyright distributed.net 1999-2026 - All Rights Reserved
+ * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * OGR support routines and data.
 */
+const char *ogr_sup_cpp(void) {
+return "@(#)$Id: ogr_sup.cpp,v 1.10 2009/02/01 11:36:09 andreasb Exp $"; }
 
 #include <stdio.h>
 #include <string.h>

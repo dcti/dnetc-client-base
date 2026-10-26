@@ -6,6 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
+ * $Id: r72cuda-2pipe.cu,v 1.32 2012/01/13 01:05:36 snikkel Exp $
 */
 
 #include <stdio.h>

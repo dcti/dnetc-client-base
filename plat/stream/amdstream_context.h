@@ -6,6 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
+ * $Id: amdstream_context.h,v 1.12 2012/01/14 13:45:09 sla Exp $
 */
 
 #ifndef AMD_STREAM_CONTEXT_H

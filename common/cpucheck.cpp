@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2016 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,6 +9,8 @@
  * See notes on implementing __GetRawProcessorID() below.
  *
 */
+const char *cpucheck_cpp(void) {
+return "@(#)$Id: cpucheck.cpp,v 1.210 2016/02/13 17:09:10 ertyu Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files

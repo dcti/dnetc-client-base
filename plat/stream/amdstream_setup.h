@@ -6,6 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
+ * $Id: amdstream_setup.h,v 1.9 2010/05/09 10:47:37 stream Exp $
 */
 
 #ifndef AMD_STREAM_SETUP_H

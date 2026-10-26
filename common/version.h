@@ -1,6 +1,6 @@
 /* -*-C-*-
  *
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -25,7 +25,7 @@
  * ---------------------------------------------------------------------
 */
 #ifndef __VERSION_H__
-#define __VERSION_H__
+#define __VERSION_H__ "@(#)$Id: version.h,v 1.103 2012/05/17 17:58:24 stream Exp $"
 
 /* BETA etc is handled internally/at-runtime by cliident.cpp. */
 /* Do not adjust for BETA here, particularly CLIENT_VERSIONSTRING. */

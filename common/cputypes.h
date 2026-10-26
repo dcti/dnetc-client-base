@@ -1,6 +1,6 @@
 /* -*-C-*-
  *
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,7 +8,7 @@
 */
 
 #ifndef __CPUTYPES_H__
-#define __CPUTYPES_H__
+#define __CPUTYPES_H__ "@(#)$Id: cputypes.h,v 1.123 2015/06/27 21:52:52 zebe Exp $"
 
 /* ----------------------------------------------------------------- */
 

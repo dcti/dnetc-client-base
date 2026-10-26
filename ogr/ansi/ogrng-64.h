@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2002-2026 - All Rights Reserved
+ * Copyright distributed.net 2002-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,6 +7,7 @@
  * made of four 64-bit scalars, so that the bitmaps precision strictly matches
  * the regular 32-bit core.
  *
+ * $Id: ogrng-64.h,v 1.1 2008/03/08 20:07:14 kakace Exp $
 */
 
 #include "ansi/ogrng.h"

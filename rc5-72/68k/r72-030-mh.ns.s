@@ -1,4 +1,4 @@
-| Copyright distributed.net 1997-2026 - All Rights Reserved
+| Copyright distributed.net 1997-2003 - All Rights Reserved
 | For use in distributed.net projects only.
 | Any other distribution or use of this source violates copyright.
 |
@@ -9,6 +9,8 @@
 | Malcolm Howell <coreblimey@rottingscorpion.com>, 27th Jan 2003
 | Adapted to funny NeXTstep assembler syntax by
 |  Michael Weiser <michael@weiser.dinsnail.net>
+|
+| $Id: r72-030-mh.ns.s,v 1.3 2007/10/22 16:48:33 jlawson Exp $
 |
 | $Log: r72-030-mh.ns.s,v $
 | Revision 1.3  2007/10/22 16:48:33  jlawson

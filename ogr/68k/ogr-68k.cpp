@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2001-2026 - All Rights Reserved
+ * Copyright distributed.net 2001-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,6 +8,19 @@
 
 #include "ansi/ogrp2-32.h"
 
+
+#if defined(mc68060)
+const char *ogr_68060_cpp(void)
+#elif defined(mc68040)
+const char *ogr_68040_cpp(void)
+#elif defined(mc68030)
+const char *ogr_68030_cpp(void)
+#elif defined(mc68020)
+const char *ogr_68020_cpp(void)
+#else
+const char *ogr_68000_cpp(void)
+#endif
+{ return "@(#)$Id: ogr-68k.cpp,v 1.4 2008/12/30 20:58:43 andreasb Exp $"; }
 
 /*
 ** The following macro is defined on the command line for each target CPU

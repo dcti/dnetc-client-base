@@ -1,8 +1,9 @@
 /*
-* Copyright distributed.net 2009-2026 - All Rights Reserved
+* Copyright distributed.net 2009 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
+* $Id: cuda_setup.cpp,v 1.8 2010/07/01 12:55:37 stream Exp $
 */
 
 #include "cuda_setup.h"

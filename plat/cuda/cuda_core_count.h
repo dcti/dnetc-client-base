@@ -1,8 +1,9 @@
 /*
- * Copyright distributed.net 2014-2026 - All rights reserved.
+ * Copyright distributed.net 2014 - All rights reserved.
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
+ * $Id: cuda_core_count.h,v 1.0 2014/02/25 22:19:04 ertyu Exp $
  */
  
 #ifndef CUDA_CORE_COUNT_H

@@ -4,6 +4,7 @@
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
+# @(#)$Id: configure,v 1.435 2016/02/04 19:12:52 zebe Exp $
 
 # - If you wish to have the build automatically generate a .tar.gz ready
 #   for upload, then add  TARGET_TARBALL="<os>-<cpu>-<limitations>"
@@ -680,6 +681,9 @@ add_sources() # $1=os, $2=arch, $3=custom
                        rc5-72/amd64/r72-avx2.asm \
                        rc5-72/amd64/r72-go2c.asm \
                        rc5-72/amd64/r72-go2d.asm"
+      # AVX-512 asm core needs NASM (YASM has no EVEX)
+      TARGET_CCFLAGS="$TARGET_CCFLAGS -DHAVE_RC5_72_AVX512_ASM"
+      TARGET_ADDNASMS="$TARGET_ADDNASMS rc5-72/amd64/r72-avx512z.asm"
     fi # HAVE_RC5_72
 
     if [ "$HAVE_OGR" = "1" ]; then
@@ -3002,7 +3006,7 @@ case "$1" in
     *android-x86)               # [yoyo mikereed]
         TARGET_CC="i686-linux-android-gcc"
         TARGET_AS="i686-linux-android-gcc -c"
-        TARGET_NASM="yasm"
+        TARGET_NASM="nasm"
         TARGET_NASM_FMT="elf"
         TARGET_CCFLAGS="--sysroot=$TCSYSROOT -DANDROID -DDECLARE_TIMEZONE -Wall -I$TCINCLUDES/include -O3 -fomit-frame-pointer -fPIE"
         TARGET_LIBS="-L$TCSYSROOT/usr/lib -L$TCINCLUDES/lib -llog"
@@ -3271,7 +3275,7 @@ case "$1" in
 
     *linux-amd64)               # generic. works everywhere
         infer_arch_and_version "Linux"
-        TARGET_NASM="yasm"
+        TARGET_NASM="nasm"
         TARGET_NASM_FMT="elf64"
         TARGET_AS="gcc -c"          # can make aout if TARGET_CCFLAGS+=-aout
         TARGET_CC="g++"
@@ -3294,7 +3298,7 @@ case "$1" in
         cross_prefix="x86_64-linux-"
         TARGET_IS_CROSSCOMPILE=1
 #       infer_arch_and_version "Linux"
-        TARGET_NASM="yasm"
+        TARGET_NASM="nasm"
         TARGET_NASM_FMT="elf64"
         TARGET_AS="${cross_prefix}gcc -c"
         TARGET_CC="${cross_prefix}gcc"
@@ -3314,7 +3318,7 @@ case "$1" in
     *netbsd-amd64)              # [snake]
         TARGET_CC="g++"
         generate_gcc_opts "amd64" "netbsd"
-        TARGET_NASM="yasm"
+        TARGET_NASM="nasm"
         TARGET_NASM_FMT="elf64"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
@@ -3328,7 +3332,7 @@ case "$1" in
         # we need egcc/eg++ (which is gcc 4.2)
         TARGET_CC="eg++"
         generate_gcc_opts "amd64" "openbsd"
-        TARGET_NASM="yasm"
+        TARGET_NASM="nasm"
         TARGET_NASM_FMT="elf64"
         TARGET_CCFLAGS="$OPTS_GCC"
         TARGET_LDFLAGS="-static"
@@ -3342,7 +3346,7 @@ case "$1" in
         TARGET_CCFLAGS="$OPTS_CLANGCC_64 -DHAVE_POSIX_THREADS $TARGET_plat"
         TARGET_LIBS="-framework IOKit -framework CoreFoundation"
         TARGET_LDFLAGS="$TARGET_plat"
-        TARGET_NASM="yasm"
+        TARGET_NASM="nasm"
         TARGET_NASM_FMT="macho64"
         TARGET_DOCFILES="docs/readme.osx.html"   #platform specific docfile
         TARGET_TARBALL="macosx-amd64"
@@ -3351,7 +3355,7 @@ case "$1" in
 
     *solaris-amd64)             # gcc
         TARGET_CC="gcc"
-        TARGET_NASM="yasm"
+        TARGET_NASM="nasm"
         TARGET_NASM_FMT="elf64"
         generate_gcc_opts "amd64" "solaris"
         TARGET_CCFLAGS="$OPTS_GCC -Dsolaris -DHAVE_POSIX_THREADS -D_REENTRANT"
@@ -3455,7 +3459,7 @@ case "$1" in
 
     *linux-amd64-opencl)        # [khanna] 
         infer_arch_and_version "Linux"
-        TARGET_NASM="yasm"
+        TARGET_NASM="nasm"
         TARGET_NASM_FMT="elf64"
         TARGET_AS="gcc -c"  
         TARGET_CC="gcc"
@@ -3543,7 +3547,7 @@ case "$1" in
         TARGET_TARBALL="freebsd${inferred_ver_major}-${inferred_arch}${inferred_bf}"
         case internal-${inferred_arch} in
           internal-amd64)
-            TARGET_NASM="yasm"
+            TARGET_NASM="nasm"
             TARGET_NASM_FMT="elf64"
             add_sources "freebsd" "${inferred_arch}"
             ;;
@@ -4027,8 +4031,6 @@ echo "" >> Makefile
 #
 #  Clean, Superclean, Distclean, and Ident targets.
 #
-echo "FORCE:" >> Makefile
-echo "" >> Makefile
 echo "clean:" >> Makefile
 echo "	rm -f \${ALLOBJS} \${ADDOBJS} \${INTOBJS}" >> Makefile
 if [ "$BUILDNAME" = "os2-x86" ]; then
@@ -4190,15 +4192,8 @@ if [ -n "${TARGET_SRCOBJLIST}" ]; then
         fi
       fi
       deplist=`./testplat build_dependencies ${TARGETSRC} ${TARGET_INCSWITCHES}`
-      if [ "$target" = "output/cliident.o" ]; then
-        # cliident.o carries the git revisions and build time
-        # (common/buildinfo.sh), so it is rebuilt on every make.
-        echo "$target:	${TARGETSRC} ${deplist} FORCE" >> Makefile
-        echo "	\${CC} -c ${CCFLAGS_SELECT} \`sh common/buildinfo.sh\` ${TARGETSRC} -o $target" >> Makefile
-      else
-        echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
-        echo "	\${CC} -c ${CCFLAGS_SELECT} ${TARGETSRC} -o $target" >> Makefile
-      fi
+      echo "$target:	${TARGETSRC} ${deplist}" >> Makefile
+      echo "	\${CC} -c ${CCFLAGS_SELECT} ${TARGETSRC} -o $target" >> Makefile
       echo "" >> Makefile
       TARGETSRC=""
     # ------------------------------------

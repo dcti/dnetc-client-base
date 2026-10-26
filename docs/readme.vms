@@ -1,6 +1,7 @@
 
  distributed.net client for OpenVMS.
  Released by Jason Brady <jr_brady@comcast.net>
+ Document revision $Id: readme.vms,v 1.7 2008/12/30 13:24:41 andreasb Exp $
                   
  Welcome to the distributed.net client!
 

@@ -1,8 +1,9 @@
-| Copyright distributed.net 1997-2026 - All Rights Reserved
+| Copyright distributed.net 1997-2003 - All Rights Reserved
 | For use in distributed.net projects only.
 | Any other distribution or use of this source violates copyright.
 
 | $VER: MC680x0 RC5 core common functions 04-Feb-2001
+| $Id: r72-0x0-common-mh.ns.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 
 |
 | MC680x0 RC5 core common functions

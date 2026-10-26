@@ -1,7 +1,9 @@
 /*
- * Copyright distributed.net 2004-2026 - All Rights Reserved
+ * Copyright distributed.net 2004-2005 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: AppClass.h,v 1.3 2012/06/24 12:36:38 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *

@@ -1,8 +1,10 @@
 /*
- * Copyright distributed.net 1999-2026 - All Rights Reserved
+ * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  */
+const char *ogrng_init_cpp(void) {
+return "@(#)$Id: ogrng_init.cpp,v 1.11 2010/05/09 10:58:19 stream Exp $"; }
 
 #include <stdlib.h>     /* calloc */
 #include "clisync.h"    /* fastlock_* */

@@ -1,8 +1,9 @@
 /*
- * Copyright distributed.net 2009-2026 - All Rights Reserved
+ * Copyright distributed.net 2009-2011, 2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
+ * $Id: cuda_info.cpp,v 1.6 2014/02/23 21:07:07 zebe Exp $
 */
 
 #include "cuda_info.h"

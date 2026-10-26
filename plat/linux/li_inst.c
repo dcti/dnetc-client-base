@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2000-2026 - All Rights Reserved
+ * Copyright distributed.net 2000-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -21,6 +21,8 @@
 #ifdef __cplusplus /* to ensure gcc -lang switches don't mess this up */
 extern "C" {
 #endif
+const char *li_inst_c(void) {
+return "@(#)$Id: li_inst.c,v 1.7 2010/02/02 05:32:02 stream Exp $"; }
 
 int linux_uninstall(const char *basename, int quietly);
 int linux_install(const char *basename, int argc, const char *argv[], 

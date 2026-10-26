@@ -6,6 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
+ * $Id: amdstream_setup.cpp,v 1.19 2012/01/14 13:45:09 sla Exp $
 */
 
 #include "amdstream_setup.h"

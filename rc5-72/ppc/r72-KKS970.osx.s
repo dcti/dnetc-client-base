@@ -8,7 +8,7 @@
 ;#                      ==========================
 ;#
 ;# Written by Didier Levet (kakace@wanadoo.fr)
-;# Copyright distributed.net 1997-2026 - All Rights Reserved.
+;# Copyright distributed.net 1997-2003 - All Rights Reserved.
 ;# For use in distributed.net projects only. Any other distribution
 ;# or use of this source violates copyright.
 ;#
@@ -46,6 +46,8 @@
 ;# extract all instruction parallelism from the integer issue queues, without
 ;# adding extra latencies (stalls) to the VSIU instruction pattern, the keyrate
 ;# would be near 16 MKeys/s when running at 2 GHz.
+;#
+;# $Id: r72-KKS970.osx.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 ;#
 ;# $Log: r72-KKS970.osx.s,v $
 ;# Revision 1.3  2007/10/22 16:48:36  jlawson

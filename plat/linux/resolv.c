@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2000-2026 - All Rights Reserved
+ * Copyright distributed.net 2000-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -87,6 +87,8 @@
  *     be thread-safe (ie, to use thread-local-storage) and you don't want
  *     to adjust __get_local_hostent_data() below.
 */
+const char *resolv_c(void) {
+return "@(#)$Id: resolv.c,v 1.6 2009/02/01 11:36:12 andreasb Exp $"; }
 
 #if defined(__linux__) && defined(__STRICT_ANSI__)
 #undef __STRICT_ANSI__ /* headers won't prototype popen()/usleep() otherwise */

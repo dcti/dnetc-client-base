@@ -1,11 +1,12 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Stubs/Emulation for the MPK* API as first released with NetWare 5.0
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *
+ * $Id: nwmpk.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
 */
 
 //#define DEBUG_TABLELOAD

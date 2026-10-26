@@ -1,10 +1,12 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
+const char *util_cpp(void) {
+return "@(#)$Id: util.cpp,v 1.41 2008/12/30 20:58:42 andreasb Exp $"; }
 
 //#define TRACE
 
@@ -136,8 +138,8 @@ int utilCheckIfBetaExpired(int print_msg)
 
     #ifndef BETA_PERIOD
     #define BETA_PERIOD (7L*24L*60L*60L) /* one week from build date */
-    #endif
-    expirationtime.tv_sec = CliGetBuildTime() + (time_t)BETA_PERIOD;
+    #endif    /* where "build date" is time of newest module in ./common/ */
+    expirationtime.tv_sec = CliGetNewestModuleTime() + (time_t)BETA_PERIOD;
     expirationtime.tv_usec= 0;
 
     if (now >= expirationtime.tv_sec)

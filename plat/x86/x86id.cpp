@@ -1,12 +1,16 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: x86id.cpp,v 1.20 2011/03/31 05:07:32 jlawson Exp $
  *
  * Gold mine of technical details:
  *    http://datasheets.chipdb.org/
  *    http://sandpile.org/   
  */
+const char *x86id_cpp(void) {
+return "@(#)$Id: x86id.cpp,v 1.20 2011/03/31 05:07:32 jlawson Exp $"; }
 
 #include <string.h>
 #include <stdio.h>
@@ -841,12 +845,12 @@ u32 x86GetFeatures(void)
             if (infos.regs.ebx & X86_07_00_EBX_AVX2) {
               features |= CPU_F_AVX2;
             }
-	    /* Check for AVX512 */
-	    /* we declare it supported if it has just F and CD sub features */
-            if (infos.regs.ebx & X86_HAS_AVX512F) {
-              if (infos.regs.ebx & X86_HAS_AVX512CD) {
-                features |= CPU_F_AVX512;
-              }
+            /* Check for AVX-512. The OS must also save/restore the opmask
+               registers and the full ZMM state: XCR0 bits 5, 6 and 7
+               (plus bits 1 and 2 checked above), i.e. (XCR0 & 0xE6) == 0xE6. */
+            if ((infos.regs.ebx & X86_HAS_AVX512F) &&
+                (bvinfo.regs.eax & 0xE6) == 0xE6) {
+              features |= CPU_F_AVX512;
             }
           }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -12,6 +12,8 @@
  *       KEEP IT THAT WAY!
  * -----------------------------------------------------------------
 */
+const char *probfill_cpp(void) {
+return "@(#)$Id: probfill.cpp,v 1.102 2014/01/08 11:25:34 stream1972 Exp $"; }
 
 //#define TRACE
 

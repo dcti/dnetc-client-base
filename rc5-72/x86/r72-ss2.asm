@@ -1,9 +1,10 @@
-; Copyright distributed.net 1997-2026 - All Rights Reserved
+; Copyright distributed.net 1997-2003 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
 ; Author: Ianos Gnatiuc <ssianky@hotmail.com>
 ; based on r72-dg2 and r72ansi2 cores
+; $Id: r72-ss2.asm,v 1.4 2009/01/05 22:45:21 mfeiri Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]

@@ -1,11 +1,13 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Tim Charron (tcharron@interlog.com) 1997/09/17
  * Complete rewrite by Cyrus Patel (cyp@fb14.uni-mainz.de) 1998/08/15
 */
+const char *mail_cpp(void) {
+return "@(#)$Id: mail.cpp,v 1.50 2012/06/05 22:12:55 snikkel Exp $"; }
 
 //#define SHOWMAIL    // define showmail to see mail transcript on stdout
 

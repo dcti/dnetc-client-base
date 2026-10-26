@@ -1,5 +1,6 @@
 
  distributed.net client for nVidia CUDA-compatible GPUs
+ document revision $Id: readme.cuda,v 1.15 2014/02/23 22:56:01 zebe Exp $
 
  Welcome to the distributed.net client.
 

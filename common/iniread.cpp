@@ -17,6 +17,10 @@
  *
 */
 
+const char *iniread_cpp(void) {
+  return "@(#)$Id: iniread.cpp,v 1.42 2008/12/19 11:10:58 andreasb Exp $";
+}
+
 #include "baseincs.h"
 #include "iniread.h"
 

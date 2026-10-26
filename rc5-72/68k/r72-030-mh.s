@@ -2,7 +2,7 @@
         SECTION rc5core_030,CODE
 	OPT	O+,W-
 
-; Copyright distributed.net 1997-2026 - All Rights Reserved
+; Copyright distributed.net 1997-2003 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
@@ -11,6 +11,8 @@
 ; Both critical loop code and data are < 256 bytes
 ;
 ; Malcolm Howell <coreblimey@rottingscorpion.com>, 27th Jan 2003
+;
+; $Id: r72-030-mh.s,v 1.3 2007/10/22 16:48:33 jlawson Exp $
 ;
 ; $Log: r72-030-mh.s,v $
 ; Revision 1.3  2007/10/22 16:48:33  jlawson

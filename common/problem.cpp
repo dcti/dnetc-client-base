@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,6 +10,8 @@
  *    is an optimist, the real number is more like three weeks.)
  * -------------------------------------------------------------------
 */
+const char *problem_cpp(void) {
+return "@(#)$Id: problem.cpp,v 1.209 2012/08/08 19:44:42 sla Exp $"; }
 
 //#define TRACE
 #define TRACE_U64OPS(x) TRACE_OUT(x)
@@ -55,7 +57,7 @@
 //#define STRESS_THREADS_AND_BUFFERS /* !be careful with this! */
 
 #ifndef MINIMUM_ITERATIONS
-#define MINIMUM_ITERATIONS 96
+#define MINIMUM_ITERATIONS 192
 /*
    MINIMUM_ITERATIONS determines minimum number of iterations that will
    be requested, as well as the boundary on which number of iterations will

@@ -6,6 +6,7 @@
  *
  * With modifications by Greg Childers, Robin Harmsen and Andreas Beckmann
  *
+ * $Id: r72cuda-helper.cu,v 1.5 2008/12/22 00:53:41 andreasb Exp $
 */
 
 /* nvcc requires all __device__ functions to be in the same source file as

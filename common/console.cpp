@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,6 +13,8 @@
  * to functions in modules in your own platform area.   - cyp
  * ----------------------------------------------------------------------
 */
+const char *console_cpp(void) {
+return "@(#)$Id: console.cpp,v 1.85 2011/03/31 05:07:28 jlawson Exp $"; }
 
 /* -------------------------------------------------------------------- */
 

@@ -1,8 +1,9 @@
 /*
- * Copyright distributed.net 1999-2026 - All Rights Reserved
+ * Copyright distributed.net 1999-2008 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
+ * $Id: ogrp2_codebase.cpp,v 1.2 2008/03/31 08:33:07 stream Exp $
  */
 #include <string.h>   /* memset */
 

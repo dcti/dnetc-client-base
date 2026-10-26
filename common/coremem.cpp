@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2015 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,6 +8,9 @@
  *
  * Created March 2001 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
+const char *coremem_cpp(void) {
+  return "@(#)$Id: coremem.cpp,v 1.11 2013/10/14 01:43:12 snikkel Exp $";
+}
 
 //#define TRACE
 

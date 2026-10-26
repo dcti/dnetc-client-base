@@ -1,10 +1,12 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2014 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
+const char *disphelp_cpp(void) {
+return "@(#)$Id: disphelp.cpp,v 1.84 2014/08/11 01:05:22 ertyu Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -15,7 +17,7 @@
 #include "logstuff.h" //LogScreenRaw()
 #include "util.h"     //UtilGetAppName()
 #include "console.h"  //ConClear(), ConInkey()
-#include "cliident.h" //CliGetSourceTime(),CliGetFullVersionDescriptor()
+#include "cliident.h" //CliGetNewestModuleTime(),CliGetFullVersionDescriptor()
 #include "client.h"   //various #defines
 
 #if defined(__unix__)
@@ -169,7 +171,7 @@ void GenerateManPage( void )
   {
     unsigned int linelen, pos;
     char *p; const char *cp;
-    time_t t = CliGetSourceTime();
+    time_t t = CliGetNewestModuleTime();
     struct tm *gmt = gmtime(&t);
 
     fprintf(manp, ".\\\"\n");
@@ -177,6 +179,7 @@ void GenerateManPage( void )
     fprintf(manp, ".\\\" Copyright (c) 1996-%d\n", gmt->tm_year+1900 );
     fprintf(manp, ".\\\"         distributed.net. All rights reserved.\n" );
     fprintf(manp, ".\\\"\n");
+    fprintf(manp, ".Id %cId: %s.1%s\n", '$', appname, strchr(disphelp_cpp(),','));
     fprintf(manp, ".Dd %s", ctime(&t));
     strncpy(buffer, appname,sizeof(buffer));
     buffer[sizeof(buffer)-1] = '\0';

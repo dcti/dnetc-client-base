@@ -1,5 +1,6 @@
 ;
 ; Assembly core for OGR-NG, SSE2 version. Using PEXTRD.
+; $Id: ogrng-cj1-sse41-asm.asm,v 1.1 2010/02/02 05:35:41 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;

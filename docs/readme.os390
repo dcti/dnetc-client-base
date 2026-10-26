@@ -1,6 +1,7 @@
 
  distributed.net client for IBM S/390 servers running OS/390.
  Released by Friedemann Baitinger <fb@baiti.net>
+ Document revision $Id: readme.os390,v 1.9 2008/12/30 13:24:41 andreasb Exp $
 
  Welcome to the distributed.net client.
 

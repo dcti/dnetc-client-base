@@ -1,11 +1,13 @@
 ;
-; Copyright distributed.net 1998-2026 - All Rights Reserved
+; Copyright distributed.net 1998-2014 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
 ; x86 Processor identification for rc5 distributed.net effort
 ; Written by Didier Levet <kakace@distributed.net>, mostly derived from
 ; x86ident.asm written by Cyrus Patel.
+;
+; $Id: x86cpuid.asm,v 1.4 2014/03/23 12:40:40 stream1972 Exp $
 ;
 ; correctly identifies almost every 386+ processor with the
 ; following exceptions:

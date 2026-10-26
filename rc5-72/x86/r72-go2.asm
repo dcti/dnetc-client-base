@@ -2,6 +2,7 @@
 ; integer/mmx mixed version - 2 pipe
 ; Vyacheslav Chupyatov - goteam@mail.ru - 26/04/2003,07/03/2007
 ; For use by distributed.net. 
+; $Id: r72-go2.asm,v 1.4 2009/01/05 22:45:21 mfeiri Exp $
 
 %define P	  0xB7E15163
 %define Q	  0x9E3779B9

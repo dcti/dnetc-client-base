@@ -4,7 +4,7 @@
  *
 */
 #ifndef __INIREAD_H__
-#define __INIREAD_H__
+#define __INIREAD_H__ "@(#)$Id: iniread.h,v 1.37 2008/12/19 11:10:58 andreasb Exp $"
 
 unsigned long GetPrivateProfileStringB( const char *sect, const char *key,
                                         const char *defval, char *buffer,

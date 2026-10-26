@@ -1,6 +1,6 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * 
@@ -10,7 +10,7 @@
  *
 */
 #ifndef __CLIDOS_INET_H__
-#define __CLIDOS_INET_H__
+#define __CLIDOS_INET_H__ "@(#)$Id: cdosinet.h,v 1.2 2002/09/02 00:35:50 andreasb Exp $"
 
   typedef int SOCKET;
 

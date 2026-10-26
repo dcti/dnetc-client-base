@@ -4,7 +4,7 @@
 # Targets : MPC603e/MPC740/MPC750
 #
 # Written by Didier Levet (kakace@wanadoo.fr)
-# Copyright distributed.net 1997-2026 - All Rights Reserved.
+# Copyright distributed.net 1997-2003 - All Rights Reserved.
 # For use in distributed.net projects only. Any other distribution
 # or use of this source violates copyright.
 #
@@ -38,6 +38,8 @@
 # see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=12069 for an
 # explanation why we need the TOC entries for AIX and maybe other
 # architectures
+#
+# $Id: r72-KKS2pipes.toc.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 #
 # $Log: r72-KKS2pipes.toc.s,v $
 # Revision 1.3  2007/10/22 16:48:35  jlawson

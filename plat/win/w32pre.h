@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,7 +7,7 @@
 */ 
 
 #ifndef __W32PRE_H__
-#define __W32PRE_H__
+#define __W32PRE_H__ "@(#)$Id: w32pre.h,v 1.2 2002/09/02 00:35:53 andreasb Exp $"
 
 int winGetMyModuleFilename(char *buffer,unsigned int len);
 

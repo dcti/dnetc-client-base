@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1999-2026 - All Rights Reserved
+ * Copyright distributed.net 1999-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,6 +7,11 @@
  *  one 32-bit scalar part (left side), and one 128-bit vector part, thus the
  *  "hybrid" name.
 */
+
+#ifndef IMPLEMENT_CELL_CORES /* Included twice for PPU and SPU */
+const char *ogr_vec_cpp(void) {
+return "@(#)$Id: ogr-vec.cpp,v 1.13 2009/12/27 13:52:27 andreasb Exp $"; }
+#endif
 
 #include "ansi/ogrp2.h"
 

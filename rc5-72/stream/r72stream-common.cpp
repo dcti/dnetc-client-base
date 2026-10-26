@@ -6,6 +6,7 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
+ * $Id: r72stream-common.cpp,v 1.16 2010/09/13 16:23:07 sla Exp $
 */
 
 #include "r72stream-common.h"

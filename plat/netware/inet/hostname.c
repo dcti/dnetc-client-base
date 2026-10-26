@@ -4,6 +4,8 @@
  * Author: Cyrus Patel <cyp@fb14.uni-mainz.de>
  * Copyright: none
  *
+ * $Id: hostname.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
+ *
 */
 
 #ifdef __cplusplus

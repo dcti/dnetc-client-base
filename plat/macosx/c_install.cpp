@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2002-2026 - All Rights Reserved
+ * Copyright distributed.net 2002-2004 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -17,6 +17,7 @@
  * See also
  * http://developer.apple.com/documentation/MacOSX/Conceptual/BPSystemStartup/Concepts/BootProcess.html
  *
+ * $Id: c_install.cpp,v 1.2 2007/10/22 16:48:31 jlawson Exp $
 */
 #include <stdio.h>
 #include <stdlib.h>

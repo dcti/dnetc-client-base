@@ -1,8 +1,10 @@
 /*
- * Copyright distributed.net 1998-2026 - All Rights Reserved
+ * Copyright distributed.net 1998-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
+const char *core_ogr_cpp(void) {
+return "@(#)$Id: core_ogr.cpp,v 1.15 2012/01/13 01:05:22 snikkel Exp $"; }
 
 //#define TRACE
 

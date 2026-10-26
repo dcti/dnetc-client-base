@@ -1,8 +1,11 @@
 /*
- * Copyright distributed.net 1998-2026 - All Rights Reserved
+ * Copyright distributed.net 1998-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
+
+const char *stress_r72_cpp(void) {
+return "@(#)$Id: stress.cpp,v 1.10 2012/01/13 01:05:29 snikkel Exp $"; }
 
 #include "cputypes.h"
 #include "client.h"
@@ -101,7 +104,7 @@
 #define KEYBASE_MID 0xDB0EF306
 #define KEYBASE_LO  0x30000000
 
-#define MINIMUM_ITERATIONS 96     /* Borrowed from problem.cpp */
+#define MINIMUM_ITERATIONS 192    /* Borrowed from problem.cpp */
 
 
 struct RC5_Key {
@@ -289,8 +292,9 @@ static long __test_1(Client *client)
         resultcode = ProblemRetrieveState(thisprob, &contestwork, NULL, 1, 0);
 
         /* Check the number of pipelines here, once and for all. */
-        if (pipes != 1 && pipes != 2 && pipes != 3 && pipes != 4 &&
-            pipes != 8 && pipes != 12 && pipes != 16 && pipes != 24 && pipes != 32) {
+        /* Allowed pipe counts: 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64
+           (1-64 and dividing MINIMUM_ITERATIONS, 192) */
+        if (pipes < 1 || pipes > 64 || (MINIMUM_ITERATIONS % pipes) != 0) {
           Log("\rRC5-72 : INTERNAL ERROR - Number of pipes = %d\n", pipes);
           success = -1L;
         }
@@ -339,7 +343,7 @@ static long __test_2(Client *client)
 {
   ContestWork contestwork;
   Problem *thisprob;
-  u32 maxkeys = 0x420;      /* Must be an even multiple of MINIMUM_ITERATIONS */
+  u32 maxkeys = 0x480;      /* Must be an even multiple of MINIMUM_ITERATIONS */
                             /* and must be > 768 to test 3-pipe cores.        */
   u32 pipes = 1;
   u32 tslice = maxkeys;
@@ -529,7 +533,7 @@ static long __test_4(Client *client)
   ContestWork contestwork;
   Problem *thisprob;
   u32 maxkeys = 0x33006600;   /* must be > 0x309CDAE6 */
-  u32 tslice = 0x0007FFE0;    /* large enough to find partial matches #3 and
+  u32 tslice = 0x0007FF80;    /* large enough to find partial matches #3 and
                                  #4 in the same run */
   u32 pipes = 1;
   u32 iters = 0;

@@ -4,7 +4,7 @@
 ;# Target : MPC7400/MPC7410 (G4)
 ;#
 ;# Written by Didier Levet (kakace@wanadoo.fr)
-;# Copyright distributed.net 1997-2026 - All Rights Reserved.
+;# Copyright distributed.net 1997-2003 - All Rights Reserved.
 ;# For use in distributed.net projects only. Any other distribution
 ;# or use of this source violates copyright.
 ;#
@@ -35,6 +35,8 @@
 ;# Stats :
 ;#	Clock cycles (inner loop) : 436
 ;#	Estimated keyrate : 9174.30 keys/s/MHz
+;#
+;# $Id: r72-KKS7400.osx.s,v 1.4 2009/01/31 20:18:21 kakace Exp $
 ;#
 ;# $Log: r72-KKS7400.osx.s,v $
 ;# Revision 1.4  2009/01/31 20:18:21  kakace

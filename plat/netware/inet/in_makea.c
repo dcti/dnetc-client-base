@@ -18,6 +18,11 @@
  *
 */
 
+#if defined(__showids__)
+const char *in_makea(void) { 
+return "$Id: in_makea.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $"; }
+#endif
+
 
 #include <netinet/in.h> /* struct in_addr */
 #include <arpa/inet.h>  /* inet_makeaddr() */

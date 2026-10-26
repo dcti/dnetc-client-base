@@ -1,8 +1,9 @@
 /*
- * Copyright distributed.net 2009-2026 - All Rights Reserved
+ * Copyright distributed.net 2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
+ * $Id: cuda_setup.h,v 1.3 2009/04/29 08:52:35 andreasb Exp $
 */
 
 #ifndef CUDA_SETUP_H

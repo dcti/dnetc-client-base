@@ -1,3 +1,4 @@
+// $Id: alpha-asm.h,v 1.3 2008/03/08 20:18:28 kakace Exp $
 
 #if (OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM == 2)
   #if (SCALAR_BITS == 32)

@@ -1,11 +1,13 @@
 ;#
-;# Copyright distributed.net 1999-2026 - All Rights Reserved
+;# Copyright distributed.net 1999-2008 - All Rights Reserved
 ;# For use in distributed.net projects only.
 ;# Any other distribution or use of this source violates copyright.
 ;#
 ;# PPC Scalar core - 256 bits OGR core for PowerPC processors.
 ;# Code designed for G3 (MPC750)
 ;# Written by Didier Levet <kakace@distributed.net>
+;#
+;# $Id: FLEGE_scalar.gas.s,v 1.3 2009/05/08 16:32:52 kakace Exp $
 ;#
 ;#============================================================================
 ;# Special notes :

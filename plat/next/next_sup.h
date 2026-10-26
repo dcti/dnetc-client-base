@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2003 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __NEXT_SUP_H__
-#define __NEXT_SUP_H__
+#define __NEXT_SUP_H__  "@(#)$Id: next_sup.h,v 1.3 2007/10/22 16:48:31 jlawson Exp $"
 
 #include <sys/types.h> /* size_t, off_t */
 #include <sys/wait.h>  /* union wait, WIFEXITED */

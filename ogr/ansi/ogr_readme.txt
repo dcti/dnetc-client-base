@@ -1,3 +1,4 @@
+$Id: ogr_readme.txt,v 1.2 2009/01/02 16:59:42 kakace Exp $
 
 
                         OGR - Optimum Golomb Rulers

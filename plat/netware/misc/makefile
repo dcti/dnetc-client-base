@@ -1,6 +1,8 @@
 #
 # Watcom makefile for watcom clib stub-out
 #
+# $Id: makefile,v 1.2 2002/09/02 00:35:51 andreasb Exp $
+#
 
 objlst = nwwatemu.obj nwpre3x.obj
 target = nwwatemu.lib #clib3s.lib

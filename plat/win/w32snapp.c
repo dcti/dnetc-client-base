@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2002 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -31,6 +31,7 @@
  * and pe.szExeFile usually (I've seen a few ".com"s, but not all .com's
  * appear with ".com") does not have an extension.
  *
+ * $Id: w32snapp.c,v 1.5 2007/10/22 16:48:32 jlawson Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN

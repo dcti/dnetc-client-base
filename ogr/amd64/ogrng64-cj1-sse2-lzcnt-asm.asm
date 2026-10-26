@@ -1,5 +1,6 @@
 ;
 ; Assembly core for OGR-NG, 64bit SSE2 with LZCNT asm version.
+; $Id: ogrng64-cj1-sse2-lzcnt-asm.asm,v 1.2 2013/04/11 19:39:30 umccullough Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;

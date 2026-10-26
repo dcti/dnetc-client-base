@@ -1,7 +1,9 @@
 /*
- * Copyright distributed.net 2004-2026 - All Rights Reserved
+ * Copyright distributed.net 2004-2009 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
+ *
+ * $Id: CreateGUI.c,v 1.7 2013/07/26 00:27:42 piru Exp $
  *
  * Created by Ilkka Lehtoranta <ilkleht@isoveli.org>
  *

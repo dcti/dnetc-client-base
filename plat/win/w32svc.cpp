@@ -1,10 +1,13 @@
 /*
- * Copyright distributed.net 1997-2026 - All Rights Reserved
+ * Copyright distributed.net 1997-2011 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
+
+const char *w32svc_cpp(void) {
+return "@(#)$Id: w32svc.cpp,v 1.12 2012/08/21 18:55:55 sla Exp $"; }
 
 //#define TRACE
 

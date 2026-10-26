@@ -1,5 +1,6 @@
 ;
 ; Assembly core for OGR-NG, 64bit SSE2 asm version.
+; $Id: ogrng64-cj1-sse2-asm.asm,v 1.2 2010/02/02 05:35:20 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;
