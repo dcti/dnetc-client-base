@@ -121,6 +121,10 @@ static const char *helpbody[] =
   "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
 #endif
   "-devicenum <n>     run on device <n> only.",
+#if (CLIENT_CPU == CPU_OPENCL)
+  "-gpusleep          sleep while waiting for the GPU (less CPU usage)",
+  "-nogpusleep        wait for the GPU in the driver's default way (default)",
+#endif
   "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
   "",
   "Logging options:",

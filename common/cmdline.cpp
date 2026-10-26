@@ -1641,6 +1641,18 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
             LogScreenRaw("Setting device number to %d\n", client->devicenum);
         }
       }
+      #if (CLIENT_CPU == CPU_OPENCL)
+      else if ( strcmp( thisarg, "-gpusleep" ) == 0 ) // sleep while waiting for the GPU
+      {
+        if (run_level == 0)
+          client->gpusleep = 1;
+      }
+      else if ( strcmp( thisarg, "-nogpusleep" ) == 0 ) // wait for the GPU in the driver's default way
+      {
+        if (run_level == 0)
+          client->gpusleep = 0;
+      }
+      #endif
       else if ( strcmp( thisarg, "-cktime" ) == 0 || /* obsolete */
                 strcmp( thisarg, "-ckpoint2" ) == 0 || /* obsolete */
                 strcmp( thisarg, "-exitfilechecktime" ) == 0 ) /* obsolete */

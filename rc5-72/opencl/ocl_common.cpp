@@ -5,6 +5,11 @@
 *
 */
 #include "cputypes.h"
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64)
+#include <windows.h> // before ocl_common.h
+#else
+#include <time.h>
+#endif
 #include "ocl_common.h"
 #include "base64.h"
 #include <stdlib.h>
@@ -116,6 +121,54 @@ cl_int ocl_diagnose(cl_int result, const char *where, ocl_context_t *cont)
   }
 
   return result;
+}
+
+static void OCLPreciseSleep(unsigned int usecs)
+{
+#if (CLIENT_OS == OS_WIN32) || (CLIENT_OS == OS_WIN64) // high-resolution timer (Windows 10 1803+), else no sleep
+  typedef HANDLE (WINAPI *CreateWaitableTimerExW_t)(LPSECURITY_ATTRIBUTES, LPCWSTR, DWORD, DWORD);
+  CreateWaitableTimerExW_t create = NULL;
+  HANDLE timer = NULL;
+
+  HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
+  if (kernel32)
+    create = (CreateWaitableTimerExW_t)GetProcAddress(kernel32, "CreateWaitableTimerExW");
+  if (create)
+    timer = create(NULL, NULL, 0x00000002, TIMER_ALL_ACCESS); // CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
+  if (timer == NULL)
+    return;
+
+  LARGE_INTEGER due;
+  due.QuadPart = -(LONGLONG)usecs * 10; // relative, in 100 ns units
+  if (SetWaitableTimer(timer, &due, 0, NULL, NULL, FALSE))
+    WaitForSingleObject(timer, INFINITE);
+  CloseHandle(timer);
+#else // Linux, macOS, FreeBSD, Android: nanosleep() is precise enough
+  struct timespec ts;
+  ts.tv_sec  = usecs / 1000000;
+  ts.tv_nsec = (long)(usecs % 1000000) * 1000;
+  nanosleep(&ts, NULL);
+#endif
+}
+
+/* Some OpenCL drivers busy-wait in clWaitForEvents(), using a whole CPU core.
+   The run size controller keeps full-size kernels between 8 and 12 ms, so once
+   the last one took at least 8 ms, sleep 7 ms and wait for the remainder.
+   Smaller kernels sleep proportionally less. */
+cl_int OCLWaitForKernel(ocl_context_t *cont, cl_event evt, u32 workItems)
+{
+  if (!OCLGetSleepWhileWaiting()) // disabled: wait exactly as before
+    return clWaitForEvents(1, &evt);
+
+  cl_int status = clFlush(cont->cmdQueue); // GPU must start before we sleep
+  if (status != CL_SUCCESS)
+    return status;
+
+  double sleep_us = 7000.0 * workItems / cont->runSize;
+  if (cont->fullKernelTime >= 8.0 && sleep_us >= 1000.0) // timers can't do very short sleeps
+    OCLPreciseSleep((unsigned int)sleep_us);
+
+  return clWaitForEvents(1, &evt);
 }
 
 const char* clStrError(cl_int status)

@@ -1252,6 +1252,9 @@ int ConfigRead(Client *client)
   client->numcpu = GetPrivateProfileIntB( OPTSECT_CPU, "max-threads", client->numcpu, fn );
   #endif /* SINGLE_CRUNCHER_ONLY */
   client->devicenum = GetPrivateProfileIntB( OPTSECT_CPU, "devicenum", client->devicenum, fn );
+  #if (CLIENT_CPU == CPU_OPENCL)
+  client->gpusleep = GetPrivateProfileIntB( OPTSECT_CPU, "gpu-sleep", client->gpusleep, fn );
+  #endif
 
   /* --------------------- */
 
@@ -1469,6 +1472,9 @@ int ConfigWrite(Client *client)
     #endif /* SINGLE_CRUNCHER_ONLY */
     __XSetProfileInt( OPTSECT_CPU, "devicenum", client->devicenum, fn, -1, 0 );
     __XSetProfileInt( OPTSECT_CPU, "priority", client->priority, fn, 0, 0);
+    #if (CLIENT_CPU == CPU_OPENCL)
+    __XSetProfileInt( OPTSECT_CPU, "gpu-sleep", client->gpusleep, fn, 0, 'y' );
+    #endif
 
     /* more buffer stuff */
 

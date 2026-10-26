@@ -627,6 +627,15 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 #endif
   /*)*/,CONF_MENU_PERF, CONF_TYPE_INT, NULL, NULL, 0, 9, NULL,NULL 
 },
+{
+  CONF_GPUSLEEP                , /* CONF_MENU_PERF */
+  CFGTXT("Sleep while waiting for the GPU"), "no",
+  CFGTXT(
+  "Some GPU drivers keep a CPU core busy for each GPU while it works. If the\n"
+  "client uses a full CPU core per GPU, enable this option to sleep instead.\n"
+  "Disable it if the crunch rate drops.\n"
+  ),CONF_MENU_PERF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
+},
 
 /* ------------------------------------------------------------ */
 

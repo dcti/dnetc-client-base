@@ -138,3 +138,21 @@
 
    Some users have seen performance improvements from running multiple copies
    of the OpenCL client on a single GPU.
+
+  3.5   GPU Client CPU usage ----------------------------------------
+
+    Some GPU drivers keep a CPU core busy for each GPU while it works. If
+    the client uses a full CPU core per GPU, enable the sleep option
+    ("-gpusleep" on the command line, or in the configuration: "Performance
+    related options" -> "Sleep while waiting for the GPU"). It is disabled
+    by default. To compare, run "dnetc -bench -gpusleep" and
+    "dnetc -bench -nogpusleep". Disable it if the crunch rate drops.
+
+    Why this happens: the client gives the GPU its work in short pieces
+    (kernels) of about 8 to 12 ms each and waits for each one to finish.
+    Some drivers block during this wait, so the client sleeps until the GPU
+    is done and uses almost no CPU. Other drivers busy-wait, checking over
+    and over for the whole kernel, which keeps a CPU core fully busy. With
+    the sleep option enabled, the client sleeps for most of each kernel and
+    lets the driver wait only for the last part. On drivers that block, the
+    option makes no difference.

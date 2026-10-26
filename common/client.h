@@ -85,6 +85,7 @@ typedef struct Client_struct
   int  numcpu;
   int  devicenum;
   int  priority;
+  int  gpusleep;  // sleep while waiting for the GPU, 0 = the driver's default waiting
   int  coretypes[CONTEST_COUNT];
 
   /* -- triggers -- */

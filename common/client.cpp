@@ -375,6 +375,10 @@ static void InitializeCoProcessorsOnce(Client *client)
     Log("Device ID %d exceed number of detected devices (%d), ignored\n", client->devicenum, nDev);
     client->devicenum = -1;
   }
+
+  #if (CLIENT_CPU == CPU_OPENCL)
+  OCLSetSleepWhileWaiting(client->gpusleep); // every time, so a restart picks up an .ini change
+  #endif
 }
 
 static int ClientMain( int argc, char *argv[] )
