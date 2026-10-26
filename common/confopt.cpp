@@ -1,10 +1,8 @@
 /* 
- * Copyright distributed.net 1997-2015 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.64 2012/08/08 19:00:49 sla Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 

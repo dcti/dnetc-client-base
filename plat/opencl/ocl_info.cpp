@@ -1,9 +1,8 @@
 /*
-* Copyright distributed.net 2009-2016 - All Rights Reserved
+* Copyright distributed.net 2009-2026 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: ocl_info.cpp 2016/02/04 19:08:25 zebe Exp $
 */
 
 #include "ocl_info.h"

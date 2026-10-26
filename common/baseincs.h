@@ -1,11 +1,11 @@
 /* -*-C++-*-
  *
- * Copyright distributed.net 1997-2015 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 #ifndef __BASEINCS_H__
-#define __BASEINCS_H__ "@(#)$Id: baseincs.h,v 1.97 2015/07/12 22:29:12 zebe Exp $"
+#define __BASEINCS_H__
 
 #include "cputypes.h"
 

@@ -1,6 +1,5 @@
 
  distributed.net client for OpenCL-compatible GPUs
- document revision $Id: readme.opencl,v 1.1 2015/11/28 22:56:01 stream Exp $
 
  Welcome to the distributed.net client.
 

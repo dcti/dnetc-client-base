@@ -6,7 +6,6 @@
  *
  * With modifications by Greg Childers
  *
- * $Id: r72cuda.h,v 1.15 2009/04/15 19:00:25 thejet Exp $
 */
 
 #include "ccoreio.h"

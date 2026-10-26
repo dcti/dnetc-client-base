@@ -1,12 +1,10 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.102 2012/06/05 22:12:54 snikkel Exp $"; }
 
 //#define TRACE
 

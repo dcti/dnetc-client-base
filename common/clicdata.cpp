@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,8 +11,6 @@
  * ease maintenance.
  * ----------------------------------------------------------------------
 */ 
-const char *clicdata_cpp(void) {
-return "@(#)$Id: clicdata.cpp,v 1.45 2012/05/13 09:32:54 stream Exp $"; }
 
 //#define TRACE
 

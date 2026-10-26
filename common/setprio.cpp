@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,8 +10,6 @@
  *  re-nice() if the prio is 9 (assume external control)] 
  * ------------------------------------------------------------------
 */
-const char *setprio_cpp(void) {
-return "@(#)$Id: setprio.cpp,v 1.66 2008/12/30 20:58:42 andreasb Exp $"; }
 
 #include "cputypes.h"  // CLIENT_OS, CLIENT_CPU
 #include "client.h"    // MAXCPUS, Packet, FileHeader, Client class, etc

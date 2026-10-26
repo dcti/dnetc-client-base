@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,8 +11,6 @@
  *   int nwCliInitClient( int argc, char **argv);
  *   int nwCliExitClient( void );
  *   void nwCliMillisecSleep(unsigned long millisecs);
- *
- * $Id: nwcmisc.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $
  *
 */
 

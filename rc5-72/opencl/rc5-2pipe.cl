@@ -3,7 +3,6 @@
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: 
 */
 //CORENAME=ocl_rc572_2pipe_src
 #if defined(__NVPTX__) && defined(NV_SM) // NVIDIA OPTIMIZED

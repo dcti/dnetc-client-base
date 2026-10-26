@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  */
@@ -17,7 +17,6 @@
  * ('D C T I' expands to "Distributed Computing Technologies, Inc.")
  * 'sect' is optional. If NULL or "", the format becomes key=value.
  *
- * $Id: w32ini.cpp,v 1.6 2012/05/01 16:21:16 stream Exp $
 */
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */

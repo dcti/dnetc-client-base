@@ -1,12 +1,11 @@
 /*
- * Copyright distributed.net 2002-2008 - All Rights Reserved
+ * Copyright distributed.net 2002-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Implementation : Each of the three bitmaps "list", "dist" and "comp" is
  * made of eight 32-bit scalars.
  *
- * $Id: ogrng-32.h,v 1.1 2008/03/08 20:07:14 kakace Exp $
 */
 
 #include "ansi/ogrng.h"

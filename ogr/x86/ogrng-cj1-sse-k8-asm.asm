@@ -1,6 +1,5 @@
 ;
 ; Assembly core for OGR-NG, SSE version tuned for K8. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse-k8-asm.asm,v 1.4 2009/05/31 23:33:19 mfeiri Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;

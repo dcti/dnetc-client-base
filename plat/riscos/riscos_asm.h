@@ -1,13 +1,13 @@
 /* Hey, Emacs, this a -*-C-*- file !
  *
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * RISC OS assembler support functions
 */
 #ifndef __RISCOS_ASM_H__
-#define __RISCOS_ASM_H__ "@(#)$Id: riscos_asm.h,v 1.5 2007/10/22 16:48:31 jlawson Exp $"
+#define __RISCOS_ASM_H__
 
 #ifdef __cplusplus
 extern "C" {

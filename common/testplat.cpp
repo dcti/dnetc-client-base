@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2015 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,7 +7,6 @@
  * Specify 'build_dependencies' as argument
  * (which is all this needs to do anymore)
  *
- * $Id: testplat.cpp,v 1.17 2015/06/27 21:52:52 zebe Exp $
 */
 #include <stdio.h>   /* fopen()/fclose()/fread()/fwrite()/NULL */
 #include <string.h>  /* strlen()/memmove() */

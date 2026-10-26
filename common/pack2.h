@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C-*- file !
  *
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __PACK2_H__
-# define __PACK2_H__ "@(#)$Id: pack2.h,v 1.5 2011/03/31 05:07:29 jlawson Exp $"
+# define __PACK2_H__
 
 # include "pack.h"
 #endif

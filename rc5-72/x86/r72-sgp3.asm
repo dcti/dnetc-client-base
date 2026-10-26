@@ -1,4 +1,4 @@
-; Copyright distributed.net 1997-2003 - All Rights Reserved
+; Copyright distributed.net 1997-2026 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
@@ -6,7 +6,6 @@
 ; Version 1.2    2003/09/24  11:08
 ;
 ; Based on dg-3 by Décio Luiz Gazzoni Filho <acidblood@distributed.net>
-; $Id: r72-sgp3.asm,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 
 %ifdef __OMF__ ; Borland and Watcom compilers/linkers
 [SECTION _TEXT FLAT USE32 align=16 CLASS=CODE]

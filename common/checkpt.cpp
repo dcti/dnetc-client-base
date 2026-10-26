@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,9 +13,6 @@
  * interval is controlled from Run()
  * -----------------------------------------------------------------
 */
-const char *checkpt_cpp(void) {
-  return "@(#)$Id: checkpt.cpp,v 1.26 2008/12/30 20:58:41 andreasb Exp $";
-}
 
 #include "client.h"   // FileHeader, Client class
 #include "baseincs.h" // memset(), strlen()

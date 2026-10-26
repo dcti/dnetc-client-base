@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  * 
@@ -16,8 +16,6 @@
  * int 21h with the equivalent of a kbhit() check)
  * -----------------------------------------------------------------
 */
-const char *cdoskeyb_cpp(void) {
-return "@(#)$Id: cdoskeyb.cpp,v 1.2 2002/09/02 00:35:50 andreasb Exp $"; }
 
 #if !defined(__WATCOMC__)
 #error This is watcom C specific
