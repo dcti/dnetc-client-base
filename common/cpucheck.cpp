@@ -73,6 +73,10 @@
 #include "ocl_info.h"
 #endif
 
+#if (CLIENT_CPU == CPU_TENSTORRENT)
+#include "tt_setup.h"
+#endif
+
 #if (CLIENT_CPU == CPU_ARM64)
 #include <arm_neon.h>
 #endif
@@ -119,6 +123,12 @@ int GetNumberOfDetectedProcessors( void )
     #elif (CLIENT_CPU == CPU_OPENCL)
     {
       cpucount = getOpenCLDeviceCount();
+      if (cpucount <= 0)
+        cpucount = -99;
+    }
+    #elif (CLIENT_CPU == CPU_TENSTORRENT)
+    {
+      cpucount = getTenstorrentDeviceCount();
       if (cpucount <= 0)
         cpucount = -99;
     }
@@ -378,7 +388,7 @@ int GetNumberOfPhysicalProcessors ( void )
  */
 int GetNumberOfPhysicalDevices( void )
 {
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
   return GetNumberOfDetectedProcessors();
 #else
   return 1;
@@ -2434,6 +2444,13 @@ static inline long __GetRawProcessorID(int device, const char **cpuname)
 }
 #endif
 
+#if (CLIENT_CPU == CPU_TENSTORRENT)
+static inline long __GetRawProcessorID(int device, const char **cpuname)
+{
+  return getTenstorrentRawProcessorID(device, cpuname);
+}
+#endif
+
 /* ---------------------------------------------------------------------- */
 
 //get (simplified) cpu ident by hardware detection
@@ -2449,10 +2466,10 @@ long GetProcessorType(int quietly, int device)
       (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
       (CLIENT_CPU == CPU_ARM64)   || \
       (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM) || \
-      (CLIENT_CPU == CPU_OPENCL)
+      (CLIENT_CPU == CPU_OPENCL)  || (CLIENT_CPU == CPU_TENSTORRENT)
   {
     const char *cpuname = NULL;
-    #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+    #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
     long rawid = __GetRawProcessorID(device, &cpuname);
     #else
     DNETC_UNUSED_PARAM(device);
@@ -2540,6 +2557,8 @@ unsigned int GetProcessorFrequency(int device)
     freq = getAMDStreamDeviceFreq(device);
   #elif (CLIENT_CPU == CPU_OPENCL)
     freq = getOpenCLDeviceFreq(device);
+  #elif (CLIENT_CPU == CPU_TENSTORRENT)
+    freq = getTenstorrentDeviceFreq(device);
   #elif (CLIENT_OS == OS_MACOSX)
     int mib[2] = {CTL_HW, HW_CPU_FREQ};
     unsigned long frequency;
@@ -2810,8 +2829,9 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
     (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
     (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
     (CLIENT_CPU == CPU_ARM64)   || \
-    (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
-  #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+    (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || \
+    (CLIENT_CPU == CPU_TENSTORRENT)
+  #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
   long rawid = __GetRawProcessorID(device, &cpuid_s);
   #else
   DNETC_UNUSED_PARAM(device);
@@ -2998,6 +3018,9 @@ void DisplayProcessorInformation(void)
 #endif
 #if (CLIENT_CPU == CPU_OPENCL)
       OpenCLPrintExtendedGpuInfo( device );
+#endif
+#if (CLIENT_CPU == CPU_TENSTORRENT)
+      TenstorrentPrintExtendedInfo( device );
 #endif
     }
   }

@@ -1,0 +1,62 @@
+name: Linux amd64 Tenstorrent CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  TTSIM_URL: https://github.com/tenstorrent/ttsim/releases/download/v1.15.0/libttsim_bh.so
+  TTSIM_SHA256: be13b7ce79631ea5f7a44ded5fbbdb3b65019c2b3c03be519750243e821a8e3b
+  SFPI_URL: https://github.com/tenstorrent/sfpi/releases/download/7.90.0/sfpi_7.90.0_x86_64_debian.txz
+  SFPI_SHA256: 87cf261ae9dc75d10942730216a3e474c3dd5bb38341ea0dfffabf9aa0e5844e
+
+jobs:
+  # Build the client and run its RC5-72 tests on the ttsim Blackhole simulator
+  build:
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install ttsim
+      working-directory: /tmp
+      run: |
+        wget -q -O libttsim_bh.so "$TTSIM_URL"
+        echo "$TTSIM_SHA256  libttsim_bh.so" | sha256sum -c
+    - name: configure
+      env:
+        SHELL: /bin/sh
+      run: ./configure linux-amd64-tenstorrent
+    - name: make
+      run: make
+    - name: test
+      run: DNETC_TTSIM=/tmp/libttsim_bh.so ./dnetc -test rc5-72
+    - name: gpuinfo
+      run: DNETC_TTSIM=/tmp/libttsim_bh.so ./dnetc -gpuinfo
+
+  # Check that the included device firmware image matches its sources
+  firmware:
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install SFPI
+      working-directory: /tmp
+      run: |
+        wget -q -O sfpi.txz "$SFPI_URL"
+        echo "$SFPI_SHA256  sfpi.txz" | sha256sum -c
+        tar xJf sfpi.txz
+    - name: configure
+      env:
+        SHELL: /bin/sh
+        SFPI_PATH: /tmp/sfpi
+      run: ./configure linux-amd64-tenstorrent
+    - name: rebuild firmware
+      run: make tt-firmware
+    - name: compare
+      run: git diff --exit-code rc5-72/tenstorrent/r72tt_tile_fw.cpp

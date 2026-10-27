@@ -1688,7 +1688,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
           ( strcmp( thisarg, "-forceflush"  ) == 0 ) ||
           ( strcmp( thisarg, "-update"      ) == 0 ) ||
           ( strcmp( thisarg, "-ident"       ) == 0 ) ||
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL && CLIENT_CPU != CPU_TENSTORRENT)
           ( strcmp( thisarg, "-cpuinfo"     ) == 0 ) ||
 #else
           ( strcmp( thisarg, "-gpuinfo"     ) == 0 ) ||
@@ -1816,7 +1816,7 @@ static int __parse_argc_argv( int misc_call, int argc, const char *argv[],
         ModeReqSet( MODEREQ_IDENT );
         break;
       }
-#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL)
+#if (CLIENT_CPU != CPU_CUDA && CLIENT_CPU != CPU_ATI_STREAM && CLIENT_CPU != CPU_OPENCL && CLIENT_CPU != CPU_TENSTORRENT)
       else if ( strcmp( thisarg, "-cpuinfo" ) == 0 )
       {
         client->quietmode = 0;
@@ -2230,7 +2230,7 @@ int ParseCommandline( Client *client,
     rc = __finalize_level(argv[0],
              client, run_level, retcodeP, restarted, &inimissing, &multiok );
 
-  #if (CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM || CLIENT_CPU == CPU_OPENCL)
+  #if (CLIENT_CPU == CPU_CUDA || CLIENT_CPU == CPU_ATI_STREAM || CLIENT_CPU == CPU_OPENCL || CLIENT_CPU == CPU_TENSTORRENT)
   /* if a device is specified run only a single thread */
   /* for numcpu, 0 is same as "1 without shared memory", -1 is "auto" */
   if (client->devicenum >= 0 && client->numcpu != 0)

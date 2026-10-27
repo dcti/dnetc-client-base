@@ -94,6 +94,11 @@ TARGET_INTOBJS=""
 TARGET_ADDCUDASRCS=""
 TARGET_ADDALTIVECSRCS=""
 TARGET_ADDISPCS=""
+TARGET_TTFW=""         # Tenstorrent device firmware source, see 'make tt-firmware'
+TARGET_SFPI_PATH="${SFPI_PATH:-/opt/tenstorrent/sfpi}"
+TARGET_TTCC="${TARGET_SFPI_PATH}/compiler/bin/riscv-tt-elf-gcc"
+TARGET_TTOBJCOPY="${TARGET_SFPI_PATH}/compiler/bin/riscv-tt-elf-objcopy"
+TARGET_TTCCFLAGS="-mcpu=tt-bh -march=rv32im_zba_zbb_zicsr_zifencei -mabi=ilp32 -O2 -Wall -Wextra -ffreestanding -fno-builtin -nostdlib -Wl,--no-warn-rwx-segments"
 
 # Certain source files need to be compiled without optimization
 # to get a working client. *sigh* This flag will get set in the
@@ -821,6 +826,28 @@ add_sources() # $1=os, $2=arch, $3=custom
                           rc5-72/opencl/ocl_common.cpp \
                           rc5-72/opencl/ocl_ref.cpp \
                           rc5-72/opencl/ocl_1pipe.cpp"
+    fi # HAVE_RC5_72
+
+  #-----------------------------------------------------------------
+  elif [ "$2" = "tenstorrent" ]; then
+
+    HAVE_OGR="0"
+    HAVE_OGR_P2="0"
+    TARGET_HDIRS="$TARGET_HDIRS ./plat/tenstorrent ./rc5-72/tenstorrent"
+
+    TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                          plat/tenstorrent/tt_device.cpp \
+                          plat/tenstorrent/tt_setup.cpp"
+
+    # -------------- rc5-72 --------------
+    if [ "$HAVE_RC5_72" = "1" ]; then
+      DEFAULT_RC5_72="0"     # don't add the ansi cores
+      TARGET_ADDSRCS="$TARGET_ADDSRCS \
+                          rc5-72/ansi/r72ansi1.cpp \
+                          rc5-72/tenstorrent/r72tt.cpp \
+                          rc5-72/tenstorrent/r72tt_tile_fw.cpp"
+      # r72tt_tile_fw.cpp is generated from this by 'make tt-firmware'
+      TARGET_TTFW="rc5-72/tenstorrent/r72tt_tile.c"
     fi # HAVE_RC5_72
 
   #-----------------------------------------------------------------
@@ -3451,6 +3478,20 @@ case "$1" in
         add_sources "linux" "stream"
         ;;
 
+# Tenstorrent **********************************************************
+
+    *linux-amd64-tenstorrent)   # Blackhole devices, or the ttsim simulator
+        infer_arch_and_version "Linux"
+        TARGET_CC="g++"
+        generate_gcc_opts "amd64" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DTENSTORRENT -DDYN_TIMESLICE"
+        TARGET_LIBS="-lrt -ldl -lpthread"
+        TARGET_USES_GNUMAKE="yes"
+        TARGET_DOCFILES="docs/readme.linux docs/readme.tenstorrent"   #platform specific docfile
+        TARGET_TARBALL="linux-amd64-tenstorrent"
+        add_sources "linux" "tenstorrent"
+        ;;
+
 # OpenCL ***************************************************************
 
     *linux-amd64-opencl)        # [khanna] 
@@ -3907,6 +3948,11 @@ echo "BUILDNAME = $1" >> Makefile
 echo "DOCFILES = ${TARGET_DOCFILES}" >>Makefile
 echo "LIBFILES = ${TARGET_LIBFILES}" >> Makefile
 echo "NVCC = ${TARGET_NVCC}" >>Makefile   
+if [ -n "${TARGET_TTFW}" ]; then
+  echo "TTCC = ${TARGET_TTCC}" >> Makefile
+  echo "TTOBJCOPY = ${TARGET_TTOBJCOPY}" >> Makefile
+  echo "TTCCFLAGS = ${TARGET_TTCCFLAGS}" >> Makefile
+fi
 echo "NVCCFLAGS = \${CFLAGS}" >> Makefile   
 if [ "$TARGET_USES_GNUMAKE" = "yes" ]; then
   # GNUMake $(shell ) evaluates only once - but this isn't supported by BSD make etc ...
@@ -4059,6 +4105,17 @@ echo "" >> Makefile
 echo "ident:	${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX}" >> Makefile
 echo "	ident ${TARGET_BINNAME}${TARGET_BINNAME_SUFFIX} | awk '{ printf(\"%-30s %12s %s %s %s %s%c\", \$\$2,\$\$3,\$\$4,\$\$5,\$\$6,\$\$7,10)}'" >> Makefile
 echo "" >> Makefile
+
+if [ -n "${TARGET_TTFW}" ]; then
+  # Regenerates the committed firmware image source; needs SFPI (SFPI_PATH)
+  FWDIR=`dirname ${TARGET_TTFW}`
+  FWNAME=`basename ${TARGET_TTFW} .c`
+  echo "tt-firmware:" >> Makefile
+  echo "	\${TTCC} \${TTCCFLAGS} -I$FWDIR -T $FWDIR/r72tt.ld $FWDIR/r72tt_crt0.S ${TARGET_TTFW} -o output/$FWNAME.elf" >> Makefile
+  echo "	\${TTOBJCOPY} -O binary output/$FWNAME.elf output/$FWNAME.bin" >> Makefile
+  echo "	sh $FWDIR/bin2c.sh output/$FWNAME.bin ${FWNAME}_fw \"\`\${TTCC} --version | head -1\`\" > $FWDIR/${FWNAME}_fw.cpp" >> Makefile
+  echo "" >> Makefile
+fi
 
 #
 # Generate the dependency targets in the makefile

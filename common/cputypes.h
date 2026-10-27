@@ -42,6 +42,7 @@
 #define CPU_OPENCL      21
 #define CPU_ARM64       22
 #define CPU_PPC64       23
+#define CPU_TENSTORRENT 24
 
 /* DO NOT RECYCLE OLD OS SLOTS !!! (including OS_UNUSED_*) */
 /* Old OSes will stay in stats forever! */
@@ -182,6 +183,8 @@
     #define CLIENT_CPU     CPU_ATI_STREAM
   #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
     #define CLIENT_CPU     CPU_OPENCL
+  #elif defined(TENSTORRENT) && (defined(__x86_64__) || defined(__aarch64__))
+    #define CLIENT_CPU     CPU_TENSTORRENT
   #elif defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU     CPU_PA_RISC
   #elif defined(ASM_SH4) /* cross compile, ergo don't use __sh__ */
@@ -612,6 +615,10 @@
   #endif
 #endif
 
+#if (CLIENT_CPU == CPU_TENSTORRENT)
+  #define CLIENT_OS_NAME_EXTENDED "Tenstorrent on " CLIENT_OS_NAME
+#endif
+
 #if !defined(CLIENT_OS_NAME_EXTENDED)
   #define CLIENT_OS_NAME_EXTENDED   CLIENT_OS_NAME
 #endif
@@ -625,6 +632,7 @@
      (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM) || \
      (CLIENT_CPU == CPU_AMD64) || (CLIENT_CPU == CPU_CUDA) || \
      (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || \
+     (CLIENT_CPU == CPU_TENSTORRENT) || \
      ((CLIENT_CPU == CPU_ALPHA) && ((CLIENT_OS == OS_WIN32) || \
      (CLIENT_OS == OS_DEC_UNIX))))
    #define CORES_SUPPORT_SMP
@@ -674,7 +682,7 @@
   #include <sys/mman.h>     /* minherit() */
 #elif (((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_MACOSX) || \
   (CLIENT_OS == OS_IOS) || (CLIENT_OS == OS_ANDROID)) && \
-  ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)))
+  ((CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)))
   /* Necessary for streams to work correctly */
   #define HAVE_POSIX_THREADS
   #define _POSIX_THREADS_SUPPORTED

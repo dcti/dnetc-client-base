@@ -806,7 +806,7 @@ int CliGetThreadUserTime( struct timeval *tv )
 #elif (CLIENT_CPU == CPU_CELLBE)
   DNETC_UNUSED_PARAM(tv);
   return -1;
-#elif (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+#elif (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
   DNETC_UNUSED_PARAM(tv);
   return -1;
 #elif defined(HAVE_GETRUSAGE) && defined(THREADS_HAVE_OWN_ACCOUNTING)
