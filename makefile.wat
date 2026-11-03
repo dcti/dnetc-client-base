@@ -6,7 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
+## - This makefile *requires* nasm (https://www.nasm.us/)
 ## - if building a DES-capable client, then it also requires either
 ##   a) the Microsoft Assembler (masm) OR b) Borland Turbo Assembler (tasm32)
 ##   OR c) pre-assembled object files to be located in the same directory
@@ -1017,7 +1017,7 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
                       $(%watcom)\lib386 #$(%watcom)\lib386\netware
      @set READMETXT = docs\readme.nw
      @set BINNAME   = $(BASENAME).nlm
-     @set COPYRIGHT = 'Copyright 1997-2011 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
+     @set COPYRIGHT = 'Copyright 1997-2026 Distributed Computing Technologies, Inc.\r\n  Visit https://www.distibuted.net/ for more information'
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
      @%make declare_for_rc5_72

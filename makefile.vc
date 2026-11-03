@@ -1,5 +1,5 @@
 # distributed.net client makefile for Microsoft Visual C++
-# see http://www.distributed.net/
+# see https://www.distributed.net/
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64

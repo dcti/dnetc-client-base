@@ -1,16 +1,11 @@
 # distributed.net client makefile for Borland C++ for Win32.
-# see http://www.distributed.net/
+# see https://www.distributed.net/
 #
-# As of Jul 2000, Borland C++ 5.5.1 compiler is free for download.
-# http://www.borland.com/bcppbuilder/freecompiler/
-# ftp://ftpd.inprise.com/download/bcppbuilder/freecommandLinetools.exe
-# ftp://ftpd.inprise.com/download/bcppbuilder/TurboDebugger.exe
+# Embarcadero has a free version of BCC32 available (untested):
+# https://www.embarcadero.com/free-tools/ccompiler
 #
 # This makefile expects NASM (Netwide Assembler) to be in the search path.
-# NASM is available at all kernel.org mirror sites under 
-# ftp://ftp.??.kernel.org/pub/software/devel/nasm/ 
-# (replace ?? with a two letter country code, eg 'de', 'us', 'uk' etc)
-# A list of all mirrors is at http://www.kernel.org/mirrors/
+# NASM is available at https://www.nasm.us/
 #
 
 BASENAME = dnetc

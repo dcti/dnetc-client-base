@@ -393,7 +393,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
     && ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16))
   "Note : OGR is automatically disabled for non-preemptive operating\n"
   "environments running on low(er)-end hardware. For details, see\n"
-  "http://www.distributed.net/faq/cache/188.html\n"
+  "https://faq.distributed.net/cache/188.html\n"
   #endif
   #if 0
   "\n"
