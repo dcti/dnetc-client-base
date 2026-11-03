@@ -572,6 +572,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
   conf_options[CONF_DEVICENUM].thevariable = &(client->devicenum);
+  #if (CLIENT_CPU == CPU_OPENCL)
+  conf_options[CONF_GPUSLEEP].thevariable = &(client->gpusleep); // hidden elsewhere
+  #endif
 
   /* --------------------------------------------------------- */
 
