@@ -215,7 +215,7 @@ static void OpenCLPrintCompilationInfo(ocl_context_t *cont)
 
   cl_uint nvptx = 0, amd_media_ops = 0, clang = 0;
 
-  int nv = 0, nv_sm = 0, amd = 0, amd_gfx = 0;
+  int nv = 0, nv_sm = 0, amd = 0, amd_gfx = 0, apple = 0, apple_m = 0;
   int nv_reg = 0, nv_maxreg2 = 0, nv_maxreg4 = 0;
   int amd_reg = 0, amd_maxreg2 = 0, amd_maxreg4 = 0;
 
@@ -278,6 +278,8 @@ finished:
   if (amd)
     amd_reg = GetAMDRegisterHint(amd_gfx, amd_maxreg2, amd_maxreg4);
 
+  apple = GetAppleComputeCapability(cont->deviceID, apple_m);
+
   if (nvptx)
     snprintf(compiler_define1, sizeof(compiler_define1), "%s", "__NVPTX__ ");
   if (amd_media_ops)
@@ -317,6 +319,8 @@ finished:
       snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x", "", amd_gfx);
     }
   }
+  else if (apple)
+    snprintf(param_define1, sizeof(param_define1), "-D APPLE_M=%d", apple_m);
 
   snprintf(param_defines, sizeof(param_defines), "%s%s%s%s%s%s", param_define1, param_define2, param_define3,
                                                                  param_define4, param_define5, param_define6);
