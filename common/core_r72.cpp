@@ -119,6 +119,7 @@ extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *
 extern "C" s32 rc5_72_unit_func_monika_4pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_monika_2pipe(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, void *);
 extern "C" s32 rc5_72_unit_func_neon_8x4(RC5_72UnitWork *w, u32 *iterations, void *);
+extern "C" s32 rc5_72_unit_func_neon_mix(RC5_72UnitWork *w, u32 *iterations, void *);
 #endif
 
 
@@ -220,6 +221,7 @@ const char **corenames_for_contest_rc572()
       "KS-MONIKA 4-pipe",
       "KS-MONIKA 2-pipe",
       "NEON 8x4",
+      "MIX NEON",
   #elif (CLIENT_CPU == CPU_MIPS)
       "ANSI 4-pipe",
       "ANSI 2-pipe",
@@ -1119,6 +1121,10 @@ int selcoreSelectCore_rc572(Client *client, unsigned int threadindex,
          break;
        case 5:
          unit_func.gen_72 = rc5_72_unit_func_neon_8x4;
+         pipeline_count = 32;
+         break;
+       case 6:
+         unit_func.gen_72 = rc5_72_unit_func_neon_mix;
          pipeline_count = 32;
          break;
     #endif
