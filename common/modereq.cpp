@@ -209,7 +209,7 @@ int ModeReqRun(Client *client)
             }
           }
           Log("Compare and share your rates in the speeds database at\n"
-              "http://www.distributed.net/speed/\n"
+              "https://cgi.distributed.net/speed/\n"
               "(benchmark rates are for a single processor core)\n");
         } while (!CheckExitRequestTriggerNoIO() && modereq.bench_projbits);
         retval |= (bits & (MODEREQ_BENCHMARK_QUICK | MODEREQ_BENCHMARK |
