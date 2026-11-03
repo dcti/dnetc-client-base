@@ -21,7 +21,7 @@ return "@(#)$Id: clitime.cpp,v 1.77 2013/05/08 20:34:37 bovine Exp $"; }
 #include "clitime.h"    /* keep the prototypes in sync */
 #include "unused.h"     /* DNETC_UNUSED_* */
 #include "clisync.h"
-#ifdef CLIENT_OS == OS_ANDROID
+#if (CLIENT_OS == OS_ANDROID)
  #include <sys/utsname.h>
 #endif
 
