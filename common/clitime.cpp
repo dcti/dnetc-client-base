@@ -599,18 +599,13 @@ int CliGetMonotonicClock( struct timeval *tv )
       hirestime /= 1000; /* nanosecs to microsecs */
       tv->tv_sec = (time_t)(hirestime / 1000000);
       tv->tv_usec = (unsigned long)(hirestime % 1000000);
-    }
-    #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
-    /*only RTlinux has clock_gettime/gethrtime*/
-    {
-      static int supports_clock_gettime = -1;
-      if (supports_clock_gettime == -1)
-      {
-        int major, minor, version = -1;
-
-        #if CLIENT_OS != OS_ANDROID
+        #if (CLIENT_OS == OS_ANDROID)
+        struct utsname name;
+        if (uname (&name) == -1 ||
+          sscanf(name.release, "%d.%d.%d", &major, &minor, &version) < 2)
+          return -1;
+        #else
         FILE* fp = fopen("/proc/sys/kernel/osrelease","r");
-
         if (fp)
         {
           if (fscanf(fp, "%d.%d.%d", &major, &minor, &version) < 2)
@@ -618,18 +613,12 @@ int CliGetMonotonicClock( struct timeval *tv )
             fclose(fp);
             return -1; /* failed reading file */
           }
-
           fclose(fp);
         }
         else
         {
           return -1; /* failed opening file */
         }
-        #else
-        struct utsname name;
-        if (uname (&name) == -1 ||
-          sscanf(name.release, "%d.%d.%d", &major, &minor, &version) < 2)
-          return -1;
         #endif
 
         /* clock_gettime is supported in Linux 2.6 and beyond
