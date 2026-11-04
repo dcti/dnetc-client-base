@@ -60,7 +60,7 @@ typedef struct
   struct {u32 hi,lo;} cypher; /* cyphertext */
   struct {u32 hi,mid,lo;} L0; /* key, changes with every unit * PIPELINE_COUNT. */
   struct {u32 count; u32 hi,mid,lo;} check; /* counter-measure check */
-#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
+#if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL) || (CLIENT_CPU == CPU_TENSTORRENT)
   // HACK! better move these members to someplace else
   int devicenum; /* To track which GPU to use */
   int optimal_timeslice_increment; /* Best timeslice increment for the core */
