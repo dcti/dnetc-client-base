@@ -605,6 +605,7 @@ int CliGetMonotonicClock( struct timeval *tv )
             fclose(fp);
             return -1; /* failed reading file */
           }
+
           fclose(fp);
         }
         else
