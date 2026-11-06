@@ -1,6 +1,5 @@
 ;
 ; Base assembly core for OGR-NG, SSE2 version. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse2-base.asm,v 1.1 2010/02/02 05:35:33 stream Exp $
 ;
 ; NOTE: Requires *ALL* DIST, LIST and COMP bitmaps to start on 16 byte boundaries.
 ; Designed for Pentium M and later 

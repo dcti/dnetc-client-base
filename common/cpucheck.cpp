@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2016 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -9,8 +9,6 @@
  * See notes on implementing __GetRawProcessorID() below.
  *
 */
-const char *cpucheck_cpp(void) {
-return "@(#)$Id: cpucheck.cpp,v 1.210 2016/02/13 17:09:10 ertyu Exp $"; }
 
 #include "cputypes.h"
 #include "baseincs.h"  // for platform specific header files
@@ -190,7 +188,7 @@ int GetNumberOfDetectedProcessors( void )
     #elif ((CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || \
            (CLIENT_OS == OS_ANDROID)) && (CLIENT_CPU != CPU_CELLBE)
     {
-      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS) || (CLIENT_CPU == CPU_ARM64)
+      #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_MIPS)
         cpucount = 1;
       #else
       FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
@@ -206,7 +204,8 @@ int GetNumberOfDetectedProcessors( void )
                CLIENT_CPU == CPU_POWERPC  || \
                CLIENT_CPU == CPU_S390     || \
                CLIENT_CPU == CPU_S390X    || \
-               CLIENT_CPU == CPU_PA_RISC)
+               CLIENT_CPU == CPU_PA_RISC  || \
+               CLIENT_CPU == CPU_ARM64)
           if (strstr(buffer, "processor") == buffer)
             cpucount++;
           #elif (CLIENT_CPU == CPU_SPARC)
@@ -1344,8 +1343,9 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
          *   0x19 - Sandy Bridge Core iX-2xxx
          *   0x1A - Ivy Bridge Core iX-3xxx
          *   0x1B - Haswell Core iX-4xxx
-         *   0x1C - Kaby Lake Core iX-7xxx
-         *   0x1D-1F
+         *   0x1C - Xeon Phi
+         *   0x1D - Kaby Lake Core iX-7xxx
+         *   0x1E-1F
          *   0x20 - AMD Bobcat - Embedded APU
          *   0x21 - AMD Bulldozer - FX
          *   0x22 - AMD Husky - APU
@@ -1371,6 +1371,10 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x1A14000, 0xFFFF000, CPU_F_I686, 0x20, "E/C-Series APU (Bobcat)" }, /* (#4429,#4536) */
         { 0x1B15000, 0xFFFF000, CPU_F_I686, 0x21, "FX (Model 21)" },
         { 0x1C15000, 0xFFFF000, CPU_F_I686, 0x21, "FX (Bulldozer)" }, /* (#4497) */
+        { 0x1D16000, 0xFFFF000, CPU_F_I686,    0, "Jaguar" },
+        { 0x1E16000, 0xFFFF000, CPU_F_I686,    0, "Jaguar" },
+        { 0x1F17000, 0xFFFF000, CPU_F_I686,    0, "Zen" },
+        { 0x2017000, 0xFFFF000, CPU_F_I686,    0, "Zen" }, /* (#4653) */
         { 0x0000000,         0,          0,    0, NULL       }
       }; internalxref = &amdxref[0];
       if ((dettype & 0xFFFFFF0) == 0x0400)        /* no such AMD ident */
@@ -1476,7 +1480,7 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006160, 0x00FFFF0, CPU_F_I686, 0x12, "Celeron" }, /* 65 nm. Core2-based? (need same RC5-72 core) */
         { 0x0006170, 0xFFFFFF0, CPU_F_I686, 0x12, "Core 2/Extreme/Xeon" },  /* 45 nm */ /* (#4193) */
         { 0x00061A0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i7/Xeon" },  /* (#4118,#4198,#4193) */
-        { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080) */
+        { 0x00061C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom" },  /* (#4080,#4668) */
         { 0x00061E0, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i5/i7" },  /* (#4271) */
         { 0x0006250, 0xFFFFFF0, CPU_F_I686, 0x15, "Core i3/i5/i7" },  /* (#4376,#4224) */
         { 0x00062A0, 0xFFFFFF0, CPU_F_I686, 0x19, "Core iX-2xxx (Sandy Bridge)" },
@@ -1489,8 +1493,11 @@ long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
         { 0x0006450, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },  /* (#4579) */
         { 0x0006460, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-4xxx (Haswell)" },
         { 0x00064F0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon Ex v4 (Broadwell EP)" },
+        { 0x0006570, 0xFFFFFF0, CPU_F_I686, 0x1C, "Xeon Phi (Knights Landing)" }, /* (#4656) */
+        { 0x00065C0, 0xFFFFFF0, CPU_F_I686, 0x14, "Atom/Celeron (Apollo Lake)" }, /* (#4684) */
         { 0x00065E0, 0xFFFFFF0, CPU_F_I686, 0x1B, "Core iX-6xxx (Skylake)" },  /* (#4615) */
-        { 0x00069E0, 0xFFFFFF0, CPU_F_I686, 0x1C, "Core iX-7xxx (Kaby Lake)" },
+        { 0x00068E0, 0xFFFFFF0, CPU_F_I686, 0x1D, "Core iX-7xxx (Kaby Lake)" }, /* (#4699) */
+        { 0x00069E0, 0xFFFFFF0, CPU_F_I686, 0x1D, "Core iX-7xxx (Kaby Lake)" },
         { 0x0006F10, 0xFFFFFF0, CPU_F_I686, 0x1B, "Xeon E5 v4 (Broadwell EP)" },
         { 0x0000000,         0,          0,    0, NULL }
       }; internalxref = &intelxref[0];
@@ -1544,7 +1551,7 @@ static void ARMident_catcher(int)
 }
 #endif
 
-#if (CLIENT_CPU == CPU_ARM)
+#if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_ARM64)
 signed int default_rc5_core = -1;
 signed int default_r72_core = -1;
 signed int default_ogr_core = -1;
@@ -1837,8 +1844,26 @@ static long __GetRawProcessorID(const char **cpuname )
       }
     } /* if (len > 0) */
   } /* if (detectedtype == -2) */
+  #elif (CLIENT_OS == OS_MACOSX)
+  if ( detectedtype == -2L )
+  {
+      /* some details in mach/machine.h */
+      int cpufamily;
+      size_t len;
+
+      detectedtype = 0;
+      len = sizeof(cpufamily);
+      if (sysctlbyname( "hw.cpufamily", &cpufamily, &len, NULL, 0 ) == 0) {
+        detectedtype = cpufamily;
+      }
+      len = sizeof(namebuf);
+      if (sysctlbyname( "machdep.cpu.brand_string", &namebuf, &len, NULL, 0) == 0) {
+        detectedname = ((const char *)&(namebuf[0]));
+      }
+  }
   #endif
 
+  #if (CLIENT_OS != OS_MACOSX)
   if (detectedtype != -2)
   {
     for (int n=0; detectedname==NULL; n++)
@@ -1863,6 +1888,7 @@ static long __GetRawProcessorID(const char **cpuname )
       }
     }
   }
+  #endif
 
   if ( cpuname )
     *cpuname = detectedname;
@@ -2421,6 +2447,7 @@ long GetProcessorType(int quietly, int device)
       (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
       (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
       (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
+      (CLIENT_CPU == CPU_ARM64)   || \
       (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM) || \
       (CLIENT_CPU == CPU_OPENCL)
   {
@@ -2782,6 +2809,7 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
     (CLIENT_CPU == CPU_CELLBE)  || (CLIENT_CPU == CPU_X86)   || \
     (CLIENT_CPU == CPU_AMD64)   || (CLIENT_CPU == CPU_MIPS)  || \
     (CLIENT_CPU == CPU_SPARC)   || (CLIENT_CPU == CPU_ARM)   || \
+    (CLIENT_CPU == CPU_ARM64)   || \
     (CLIENT_CPU == CPU_CUDA)    || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
   #if (CLIENT_CPU == CPU_CUDA) || (CLIENT_CPU == CPU_ATI_STREAM) || (CLIENT_CPU == CPU_OPENCL)
   long rawid = __GetRawProcessorID(device, &cpuid_s);
@@ -2794,13 +2822,13 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
               ("none\n\t(client does not support identification)"));
   else
   {
-    static char namebuf[200];
+    static char namebuf[512];
     if (cpuid_s == NULL) cpuid_s = "*unknown*";
     if (*cpuid_s =='\0') cpuid_s = "???";
-  #if (CLIENT_CPU == CPU_ARM)
+  #if (CLIENT_CPU == CPU_ARM) || (CLIENT_CPU == CPU_ARM64)
     namebuf[0] = '\0';
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%lX" */
-      sprintf( namebuf, "%lX\n\tname: ", rawid );
+      snprintf( namebuf, sizeof(namebuf), "%lX\n\tname: ", rawid );
     strcat( namebuf, cpuid_s ); /* always valid */
     #if (CLIENT_OS == OS_RISCOS && defined(HAVE_X86_CARD_SUPPORT))
     if (riscos_count_cpus() == 2)
@@ -2812,59 +2840,75 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
     if (rawid != 0) /* if rawid == 0, then cpuid_s == "%08x" */
       sprintf( namebuf, "%08X\n\tname: ",(int)rawid);
     strcat( namebuf, cpuid_s ); /* always valid */
+
+    #define ADD_FEATURE_STRING(namebuf, char_count, featurebuf) \
+      if ( (char_count + strlen(featurebuf)) >= 80 ) { \
+        strcat( namebuf, "\n\t          " ); \
+        char_count = 10 + 10; \
+      } \
+      strcat( namebuf, featurebuf ); \
+      char_count += strlen(featurebuf);
+
+    int char_count = 0;
     strcat( namebuf, "\n\tfeatures: " );
+    char_count += 10 + 10;
+
     features = GetProcessorFeatureFlags();
     if (features & CPU_F_MMX) {
-      strcat( namebuf, "MMX " );
+      ADD_FEATURE_STRING(namebuf, char_count, "MMX ");
     }
     if (features & CPU_F_CYRIX_MMX_PLUS) {
-      strcat( namebuf, "Cyrix_MMX+ " );
+      ADD_FEATURE_STRING(namebuf, char_count, "Cyrix_MMX+ ");
     }
-    if (features & CPU_F_AMD_MMX_PLUS) {   
-      strcat( namebuf, "AMD_MMX+ " );   
+    if (features & CPU_F_AMD_MMX_PLUS) {
+      ADD_FEATURE_STRING(namebuf, char_count, "AMD_MMX+ ");
     }
-    if (features & CPU_F_3DNOW) {   
-      strcat( namebuf, "3DNOW " );   
+    if (features & CPU_F_3DNOW) {
+      ADD_FEATURE_STRING(namebuf, char_count, "3DNOW ");
     }
-    if (features & CPU_F_3DNOW_PLUS) {   
-      strcat( namebuf, "3DNOW+ " );   
+    if (features & CPU_F_3DNOW_PLUS) {
+      ADD_FEATURE_STRING(namebuf, char_count, "3DNOW+ ");
     }
-    if (features & CPU_F_SSE) {   
-      strcat( namebuf, "SSE " );   
+    if (features & CPU_F_SSE) {
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE ");
     }
-    if (features & CPU_F_SSE2) {   
-      strcat( namebuf, "SSE2 " );   
+    if (features & CPU_F_SSE2) {
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE2 ");
     }
-    if (features & CPU_F_SSE3) {   
-      strcat( namebuf, "SSE3 " );   
+    if (features & CPU_F_SSE3) {
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE3 ");
     }
     if (features & CPU_F_AMD64) {
-      strcat( namebuf, "AMD64 " );
+      ADD_FEATURE_STRING(namebuf, char_count, "AMD64 ");
     }
     if (features & CPU_F_EM64T) {
-      strcat( namebuf, "EM64T " );
+      ADD_FEATURE_STRING(namebuf, char_count, "EM64T ");
     }
     if (features & CPU_F_SSSE3) {
-      strcat( namebuf, "SSSE3 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "SSSE3 ");
     }
     if (features & CPU_F_SSE4_1) {
-      strcat( namebuf, "SSE4.1 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE4.1 ");
     }
     if (features & CPU_F_SSE4_2) {
-      strcat( namebuf, "SSE4.2 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "SSE4.2 ");
     }
     if (features & CPU_F_LZCNT) {
-      strcat( namebuf, "LZCNT ");
+      ADD_FEATURE_STRING(namebuf, char_count, "LZCNT ");
     }
     if (features & CPU_F_AVX_DISABLED) {
-      strcat( namebuf, "AVX(disabled) ");
+      ADD_FEATURE_STRING(namebuf, char_count, "AVX(disabled) ");
     }
     if (features & CPU_F_AVX) {
-      strcat( namebuf, "AVX ");
+      ADD_FEATURE_STRING(namebuf, char_count, "AVX ");
     }
     if (features & CPU_F_AVX2) {
-      strcat( namebuf, "AVX2 ");
+      ADD_FEATURE_STRING(namebuf, char_count, "AVX2 ");
     }
+    if (features & CPU_F_AVX512) {
+      ADD_FEATURE_STRING(namebuf, char_count, "AVX512 ");
+    }
+
   #elif (CLIENT_CPU == CPU_POWERPC) || (CLIENT_CPU == CPU_CELLBE)
     sprintf(namebuf, "%08lX\n\tname: %s", rawid, cpuid_s );
   #else
@@ -2902,7 +2946,7 @@ void GetProcessorInformationStrings( int device, const char ** scpuid, const cha
   else
   {
     static char foundcpu_b[6];
-    sprintf( foundcpu_b, "%d", cpucount );
+    snprintf( foundcpu_b, sizeof(foundcpu_b), "%d", cpucount );
     foundcpu_s = ((const char *)(&foundcpu_b[0]));
   }
 

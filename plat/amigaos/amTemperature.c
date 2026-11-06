@@ -1,6 +1,6 @@
 /*
  * Sensor polling for MorphOS by Harry Sintonen <sintonen@iki.fi>
- * Copyright distributed.net 2012 - All Rights Reserved
+ * Copyright distributed.net 2012-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,7 +11,6 @@
  * after the decimal point), else -1.
  * For multiple cpus, gets one with highest temperature.
  *
- *  $Id: amTemperature.c,v 1.2 2012/06/25 00:30:00 piru Exp $
  */
 
 #include <stdlib.h>

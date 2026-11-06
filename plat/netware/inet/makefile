@@ -2,8 +2,6 @@
 # Watcom makefile for tcpip.nlm and netdb.nlm replacements
 # (ie, things that should have been in clib/resolv, but aren't)
 #
-# $Id: makefile,v 1.2 2002/09/02 00:35:51 andreasb Exp $
-#
 
 objlst = nhtohnls.obj in_aton.obj in_ntoa.obj in_makea.obj &
          in_netof.obj in_lnaof.obj hostname.obj hbyname.obj

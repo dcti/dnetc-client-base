@@ -1,4 +1,4 @@
-# Copyright distributed.net 1997-2003 - All Rights Reserved
+# Copyright distributed.net 1997-2026 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
@@ -8,7 +8,6 @@
 # Written by Malcolm Howell <coreblimey@rottingscorpion.com>
 # 4th Jan 2003
 #
-# $Id: r72-ppc-mh-2.gas.s,v 1.3 2007/10/22 16:48:36 jlawson Exp $
 
 gcc2_compiled.:
 

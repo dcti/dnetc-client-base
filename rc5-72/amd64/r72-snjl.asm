@@ -1,4 +1,4 @@
-; Copyright distributed.net 1997-2004 - All Rights Reserved
+; Copyright distributed.net 1997-2026 - All Rights Reserved
 ; For use in distributed.net projects only.
 ; Any other distribution or use of this source violates copyright.
 ;
@@ -7,7 +7,6 @@
 ;     Jeff Lawson <bovine@distributed.net>
 ;
 ; Based off of the r72-dg3.asm core by Décio Luiz Gazzoni Filho.
-; $Id: r72-snjl.asm,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 
 [SECTION .text]
 BITS 64

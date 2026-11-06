@@ -1,12 +1,10 @@
 /*
- * Copyright distributed.net 1997-2014 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *disphelp_cpp(void) {
-return "@(#)$Id: disphelp.cpp,v 1.84 2014/08/11 01:05:22 ertyu Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -17,7 +15,7 @@ return "@(#)$Id: disphelp.cpp,v 1.84 2014/08/11 01:05:22 ertyu Exp $"; }
 #include "logstuff.h" //LogScreenRaw()
 #include "util.h"     //UtilGetAppName()
 #include "console.h"  //ConClear(), ConInkey()
-#include "cliident.h" //CliGetNewestModuleTime(),CliGetFullVersionDescriptor()
+#include "cliident.h" //CliGetSourceTime(),CliGetFullVersionDescriptor()
 #include "client.h"   //various #defines
 
 #if defined(__unix__)
@@ -123,6 +121,10 @@ static const char *helpbody[] =
   "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
 #endif
   "-devicenum <n>     run on device <n> only.",
+#if (CLIENT_CPU == CPU_OPENCL)
+  "-gpusleep          sleep while waiting for the GPU (default, less CPU usage)",
+  "-nogpusleep        wait for the GPU in the driver's default way",
+#endif
   "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
   "",
   "Logging options:",
@@ -171,7 +173,7 @@ void GenerateManPage( void )
   {
     unsigned int linelen, pos;
     char *p; const char *cp;
-    time_t t = CliGetNewestModuleTime();
+    time_t t = CliGetSourceTime();
     struct tm *gmt = gmtime(&t);
 
     fprintf(manp, ".\\\"\n");
@@ -179,7 +181,6 @@ void GenerateManPage( void )
     fprintf(manp, ".\\\" Copyright (c) 1996-%d\n", gmt->tm_year+1900 );
     fprintf(manp, ".\\\"         distributed.net. All rights reserved.\n" );
     fprintf(manp, ".\\\"\n");
-    fprintf(manp, ".Id %cId: %s.1%s\n", '$', appname, strchr(disphelp_cpp(),','));
     fprintf(manp, ".Dd %s", ctime(&t));
     strncpy(buffer, appname,sizeof(buffer));
     buffer[sizeof(buffer)-1] = '\0';
@@ -366,7 +367,7 @@ void GenerateManPage( void )
 		 ".Sp\n"
                  "If you believe you have found a bug, please submit it to the "
                  "distributed.net bug tracking database at "
-                 "http://bugs.distributed.net/\n"
+                 "https://bugs.distributed.net/\n"
                  ".sp 1\n" 
 		 "Please provide the entire version descriptor as displayed on client start "
                  "when doing so. For example, the client version this manpage was "
@@ -389,11 +390,11 @@ void GenerateManPage( void )
 
     fprintf(manp,".Sh \"SEE ALSO\"\n"
                  ".Pp\n"
-                 "Client documentation: %s.txt and http://faq.distributed.net/\n",
+                 "Client documentation: %s.txt and https://faq.distributed.net/\n",
                  appname);
     fprintf(manp,".Sh AUTHOR\n"
                  "distributed.net\n"
-                 "http://www.distributed.net/\n");
+                 "https://www.distributed.net/\n");
 
     fclose(manp);
   }
@@ -414,7 +415,7 @@ void DisplayHelp( const char * unrecognized_option )
   static const char *helpheader[] =
   {
     "distributed.net v" CLIENT_VERSIONSTRING " client for " CLIENT_OS_NAME_EXTENDED,
-    "Visit http://faq.distributed.net/ for in-depth command line help",
+    "Visit https://faq.distributed.net/ for in-depth command line help",
     "-------------------------------------------------------------------------"
   };
 

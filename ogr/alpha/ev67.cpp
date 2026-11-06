@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 2002-2008 - All Rights Reserved
+ * Copyright distributed.net 2002-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -7,9 +7,6 @@
 
 #include "ansi/ogrp2-32.h"
 
-
-const char *ogr_ev67_cpp(void) {
-return "@(#)$Id: ev67.cpp,v 1.7 2008/12/30 20:58:43 andreasb Exp $"; }
 
 #if defined(__GNUC__)
   #define OGROPT_HAVE_FIND_FIRST_ZERO_BIT_ASM   2 /* 0-2 - "100% asm"      */

@@ -1,5 +1,5 @@
 /*  
- * Copyright distributed.net 1997-2002 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -13,8 +13,6 @@
  *  Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
  *  ----------------------------------------------------------------
 */
-const char *w32x86_cpp(void) {
-return "@(#)$Id: w32x86.cpp,v 1.2 2002/09/02 00:35:53 andreasb Exp $"; }
 
 #define WIN32_LEAN_AND_MEAN /* for win32 */
 #define INCLUDE_TOOLHELP_H /* win16 and __WINDOWS386__ */

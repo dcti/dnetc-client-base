@@ -1,9 +1,7 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * $Id: amTime.c,v 1.5 2008/12/30 20:58:44 andreasb Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -176,7 +174,12 @@ TIMERBASETYPE OpenTimer(BOOL isthread)
    TIMERBASETYPE timerbase = NULL;
    struct TimerResources *res;
 
-   if ((res = (struct TimerResources *)AllocVec(sizeof(struct TimerResources),MEMF_CLEAR|MEMF_PUBLIC))) {
+   #if defined(__amigaos4__)
+   if ((res = (struct TimerResources *)AllocVecTags(sizeof(struct TimerResources),AVT_Type,MEMF_SHARED,AVT_ClearWithValue,0,TAG_END)))
+   #else
+   if ((res = (struct TimerResources *)AllocVec(sizeof(struct TimerResources),MEMF_CLEAR|MEMF_PUBLIC)))
+   #endif
+   {
       #ifndef __OS3PPC__
       (FindTask(NULL))->tc_UserData = (APTR)res;
       #elif !defined(__POWERUP__)

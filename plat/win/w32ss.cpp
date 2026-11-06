@@ -1,14 +1,11 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Win32/Win16 Screen Saver stuff.
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-
-const char *w32ss_cpp(void) {
-return "@(#)$Id: w32ss.cpp,v 1.9 2010/02/01 20:06:43 stream Exp $"; }
 
 #include "cputypes.h"
 #include "unused.h"     /* DNETC_UNUSED_* */

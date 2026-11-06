@@ -1,6 +1,5 @@
 ;
 ; Assembly core for OGR-NG, 64bit generic asm version. Based on SSE-K8 assembly core (ogrng-cj1-sse-k8-asm.asm).
-; $Id: ogrng64-cj1-generic-asm.asm,v 1.1 2009/08/08 18:26:19 snikkel Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;

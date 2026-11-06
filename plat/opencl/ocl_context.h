@@ -1,9 +1,8 @@
 /*
-* Copyright distributed.net 2012-2016 - All Rights Reserved
+* Copyright distributed.net 2012-2026 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: 
 */
 
 #ifndef OCL_CONTEXT_INCLUDED
@@ -34,6 +33,7 @@ typedef struct {
   u32               runSize;
   u32               runSizeMultiplier;
   u32               maxWorkSize;
+  double            fullKernelTime;  // GPU time (ms) of the most recent full-size kernel, 0 = unknown
 } ocl_context_t;
 
 ocl_context_t *ocl_get_context(int device);

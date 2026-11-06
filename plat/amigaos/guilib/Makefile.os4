@@ -10,7 +10,7 @@ TARGET	= ../../../dnetcgui.library
 
 CC	= ppc-amigaos-gcc
 RM	= delete
-STRIP   = ppc-amigaos-strip -R.comment
+STRIP   = ppc-amigaos-strip --strip-unneeded-rel-relocs -R.comment -R.eh_frame -R.gnu.attributes
 
 CFLAGS	= -O2 -fomit-frame-pointer -fno-exceptions -fstrict-aliasing -I. -I../../../plat/amigaos -D__USE_INLINE__ -D__USE_BASETYPE__ -mcrt=clib2-ts
 LDFLAGS	= -nostartfiles -mcrt=clib2-ts

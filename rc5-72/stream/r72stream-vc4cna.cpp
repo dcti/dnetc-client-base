@@ -6,7 +6,6 @@
  * Special thanks for help in testing this core to:
  * Alexander Kamashev, PanAm, Alexei Chupyatov
  *
- * $Id: r72stream-vc4cna.cpp,v 1.14 2012/08/12 17:19:19 sla Exp $
 */
 
 #include "r72stream-common.h"

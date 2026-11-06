@@ -1,4 +1,3 @@
-# $Id: Makefile,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 
 all: pclbench
 

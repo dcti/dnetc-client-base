@@ -28,10 +28,6 @@
  *
  *
 */
-#if defined(__showids__)
-const char *hbyname_c(void) {
-return "@(#)$Id: hbyname.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $"; }
-#endif
 
 //#define DEBUG   /* print raw dns I/O */
 //#define STANDALONE /* include main() */

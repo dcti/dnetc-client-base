@@ -18,11 +18,6 @@
  *
 */
 
-#if defined(__showids__)
-const char *in_ntoa_c(void) { 
-return "$Id: in_ntoa.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $"; } 
-#endif
-
 #define NOT_NETWARE_386 /* suppress symbol redefinition macros */
 #include <netinet/in.h> /* struct in_addr */
 #include <arpa/inet.h>  /* inet_ntoa() */

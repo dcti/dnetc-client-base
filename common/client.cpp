@@ -1,10 +1,8 @@
 /*
- * Copyright distributed.net 1997-2016 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *client_cpp(void) {
-return "@(#)$Id: client.cpp,v 1.272 2016/02/01 16:08:35 stream Exp $"; }
 
 /* ------------------------------------------------------------------------ */
 
@@ -65,6 +63,7 @@ void ResetClientData(Client *client)
   projectmap_build(client->project_order_map, client->project_state, "");
   client->numcpu = -1;
   client->devicenum = -1;
+  client->gpusleep = 1;
   client->corenumtotestbench = -1;
   for (contest=0; contest<CONTEST_COUNT; contest++)
     client->coretypes[contest] = -1;
@@ -239,7 +238,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
     if (level == 0)
     {
       LogScreenRaw( "\ndistributed.net client for " CLIENT_OS_NAME_EXTENDED " "
-                    "Copyright 1997-2016, distributed.net\n");
+                    "Copyright 1997-2026, distributed.net\n");
 #if defined HAVE_RC5_72_CORES
       #if (CLIENT_CPU == CPU_ARM)
         LogScreenRaw( "ARM assembly by Peter Teichmann\n");
@@ -274,7 +273,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "PMODE DOS extender Copyright 1994-1998, Charles Scheffold and Thomas Pytel\n");
       #endif
 
-      LogScreenRaw( "Please visit http://www.distributed.net/ for up-to-date contest information.\n");
+      LogScreenRaw( "Please visit https://www.distributed.net/ for up-to-date contest information.\n");
       LogScreenRaw( "Start the client with '-help' for a list of valid command line options.\n" );
       LogScreenRaw( "\n" );
     }
@@ -289,7 +288,7 @@ static void PrintBanner(const char *dnet_id,int level,int restarted,int logscree
       LogScreenRaw( "Please provide the *entire* version descriptor "
                     "when submitting bug reports.\n");
       LogScreenRaw( "The distributed.net bug report pages are at "
-                    "http://bugs.distributed.net/\n");
+                    "https://bugs.distributed.net/\n");
       if (dnet_id[0] != '\0' && strcmp(dnet_id,"rc5@distributed.net") !=0 &&
           utilIsUserIDValid(dnet_id) )
         LogTo( logto, "Using email address (distributed.net ID) \'%s\'\n",dnet_id);
@@ -377,6 +376,10 @@ static void InitializeCoProcessorsOnce(Client *client)
     Log("Device ID %d exceed number of detected devices (%d), ignored\n", client->devicenum, nDev);
     client->devicenum = -1;
   }
+
+  #if (CLIENT_CPU == CPU_OPENCL)
+  OCLSetSleepWhileWaiting(client->gpusleep); // every time, so a restart picks up an .ini change
+  #endif
 }
 
 static int ClientMain( int argc, char *argv[] )

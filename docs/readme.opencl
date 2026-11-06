@@ -1,6 +1,5 @@
 
  distributed.net client for OpenCL-compatible GPUs
- document revision $Id: readme.opencl,v 1.1 2015/11/28 22:56:01 stream Exp $
 
  Welcome to the distributed.net client.
 
@@ -33,7 +32,7 @@
     with '-help' or '--help'.
 
     A complete step-by-step guide to running your first client is 
-    available at <http://www.distributed.net/docs/tutor_clients.php>
+    available at <https://www.distributed.net/Docs_tutor_client>
 
 
  2.0  OpenCL specific notes -----------------------------------------
@@ -131,6 +130,29 @@
     available. It is also recommended to minimize the network update frequency;
     the default configuration is usually sufficient. To decrease delays caused
     by network updates, we recommend that you use the distributed.net personal
-    proxy software. ( http://www.distributed.net/Download_proxies ) Note that
+    proxy software. <https://www.distributed.net/Download_proxies> Note that
     if you are using the personal proxy software, you may need to alter the
     proxy configuration to request larger packet sizes as well.
+
+  3.4   Multiple Concurrent Clients ---------------------------------
+
+   Some users have seen performance improvements from running multiple copies
+   of the OpenCL client on a single GPU.
+
+  3.5   GPU Client CPU usage ----------------------------------------
+
+    Some GPU drivers keep a CPU core busy for each GPU while it works. To
+    avoid this, the client sleeps while waiting for the GPU by default. To
+    turn this off, use "-nogpusleep" on the command line, or in the
+    configuration: "Performance related options" -> "Sleep while waiting
+    for the GPU". To compare, run "dnetc -bench -gpusleep" and
+    "dnetc -bench -nogpusleep". Disable it if the crunch rate drops.
+
+    Why this happens: the client gives the GPU its work in short pieces
+    (kernels) of about 8 to 12 ms each and waits for each one to finish.
+    Some drivers block during this wait, so the client sleeps until the GPU
+    is done and uses almost no CPU. Other drivers busy-wait, checking over
+    and over for the whole kernel, which keeps a CPU core fully busy. With
+    the sleep option enabled, the client sleeps for most of each kernel and
+    lets the driver wait only for the last part. On drivers that block, the
+    option makes no difference.

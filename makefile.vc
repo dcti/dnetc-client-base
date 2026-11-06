@@ -1,13 +1,12 @@
 # distributed.net client makefile for Microsoft Visual C++
-# see http://www.distributed.net/
-#
-# $Id: makefile.vc,v 1.141 2012/08/11 09:24:36 sla Exp $
+# see https://www.distributed.net/
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
 #PROCESSOR_ARCHITECTURE = cuda
 #PROCESSOR_ARCHITECTURE = ATI_STREAM
-#PROCESSOR_ARCHITECTURE = OPENCL
+#PROCESSOR_ARCHITECTURE = OPENCL32
+#PROCESSOR_ARCHITECTURE = OPENCL64
 #PROCESSOR_ARCHITECTURE = arm
 
 BASENAME = dnetc
@@ -19,9 +18,10 @@ OGRSRCPATH = ogr
 PLATSRCPATH = plat/win
 
 HAVE_RC5_72_CORES=1
-HAVE_OGR_CORES=1
+HAVE_OGR_CORES=0
 HAVE_OGR_PASS2=0
 HAVE_IPV6=1
+HAVE_ISPC=1
 
 # --------------------------------------------
 
@@ -62,12 +62,18 @@ OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat
 #CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 ZIPSUFFIX = win32-x86-stream
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL"
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL32"
 HAVE_OGR_CORES = 0
 OPTS_CC_CPU =
 OPTS_M_PLAT = IX86
 CHIPSRCPATH = plat
 ZIPSUFFIX = win32-x86-opencl
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL64"
+HAVE_OGR_CORES = 0
+OPTS_CC_CPU =
+OPTS_M_PLAT = AMD64
+CHIPSRCPATH = plat
+ZIPSUFFIX = win64-amd64-opencl
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "arm"
 HAVE_OGR_CORES = 0
 OPTS_CC_CPU = /D_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1
@@ -220,9 +226,15 @@ ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.stream
 
 # OpenCL support
 
-!if "$(PROCESSOR_ARCHITECTURE)" == "OPENCL"
+!if "$(PROCESSOR_ARCHITECTURE)" == "OPENCL32"
 OPTS_MSVC = $(OPTS_MSVC) -I"$(OPENCLDIR)include" -Iplat\opencl -Iplat\x86
 OPTS_LIBS = $(OPTS_LIBS) "$(OPENCLDIR)lib\x86\OpenCL.lib"
+ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.opencl
+!endif
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "OPENCL64"
+OPTS_MSVC = $(OPTS_MSVC) -I"$(OPENCLDIR)include" -Iplat\opencl -Iplat\amd64
+OPTS_LIBS = $(OPTS_LIBS) "$(OPENCLDIR)lib\x86_64\opencl.lib"
 ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.opencl
 !endif
 
@@ -254,9 +266,6 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/confrwv.obj    \
         $(OUTPUTPATH)/console.obj    \
         $(OUTPUTPATH)/coremem.obj    \
-        $(OUTPUTPATH)/core_r72.obj   \
-        $(OUTPUTPATH)/core_ogr.obj   \
-        $(OUTPUTPATH)/core_ogr_ng.obj \
         $(OUTPUTPATH)/cpucheck.obj   \
         $(OUTPUTPATH)/disphelp.obj   \
         $(OUTPUTPATH)/iniread.obj    \
@@ -279,6 +288,19 @@ COMMON_OBJS =                        \
         $(OUTPUTPATH)/stress.obj     \
         $(OUTPUTPATH)/triggers.obj   \
         $(OUTPUTPATH)/util.obj
+
+!if $(HAVE_RC5_72_CORES) == 1
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/core_r72.obj
+!endif
+!if $(HAVE_OGR_CORES) == 1
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/core_ogr_ng.obj
+!endif
+!if $(HAVE_OGR_PASS2) == 1
+COMMON_OBJS = $(COMMON_OBJS)         \
+        $(OUTPUTPATH)/core_ogr.obj
+!endif
 OPTS_MSVC = $(OPTS_MSVC) -I$(COMMONPATH) -DLURK
 !if exist( "$(PRIVATEPATH:/=\)\buffpriv.cpp" )
 COMMON_OBJS = $(COMMON_OBJS)         \
@@ -372,6 +394,15 @@ RC5_72_OBJS = \
         $(OUTPUTPATH)/r72ansi2.obj \
         $(OUTPUTPATH)/r72ansi4.obj
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
+
+!if $(HAVE_ISPC) != 0
+.SUFFIXES : .ispc
+OPTS_MSVC = $(OPTS_MSVC) -DUSE_ISPC_CORE
+RC5_72_OBJS = $(RC5_72_OBJS) \
+        $(OUTPUTPATH)/r72-ks-spmd.obj \
+        $(OUTPUTPATH)/r72-ks-spmd-ispc.obj
+!endif
+
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_72_OBJS =                        \
         $(OUTPUTPATH)/r72-ses1.obj   \
@@ -406,7 +437,7 @@ RC5_72_OBJS =                             \
         $(OUTPUTPATH)/adl.obj        
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL"
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL32" || "$(PROCESSOR_ARCHITECTURE)" == "OPENCL64"
 RC5_72_OBJS =                      \
         $(OUTPUTPATH)/ocl_info.obj \
         $(OUTPUTPATH)/ocl_setup.obj \
@@ -545,6 +576,14 @@ $(VC_CHECK):
 {$(RC572SRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(RC572SRCPATH:/=\)\amd64\ $(**:/=\)
 
+!if $(HAVE_ISPC) != 0
+{$(RC572SRCPATH)/ispc}.cpp{$(OUTPUTPATH)}.obj:
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+{$(RC572SRCPATH)/ispc}.ispc{$(OUTPUTPATH)}.obj:
+        ispc --pic --wno-perf --target=avx512skx-x16 $(**:/=\) -o $(@:/=\)
+!endif
+
 {$(OGRSRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
         yasm -a x86 -m amd64 -o $(@:/=\) -f win32 -D _WINDOWS -I $(OGRSRCPATH:/=\)\amd64\ $(**:/=\)
 
@@ -560,16 +599,16 @@ $(VC_CHECK):
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+        nasm -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
 {$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(RC572SRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(RC572SRCPATH:/=\)\x86\ $(**:/=\)
+        nasm -o $(@:/=\) -f win32 -i $(RC572SRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(OGRSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -O5 -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
+        nasm -O5 -o $(@:/=\) -f win32 -i $(OGRSRCPATH:/=\)\x86\ $(**:/=\)
 
 {$(OGRSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
@@ -577,7 +616,7 @@ $(VC_CHECK):
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
 
 {$(CHIPSRCPATH)}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+        nasm -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
 {$(CHIPSRCPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
@@ -588,7 +627,7 @@ $(VC_CHECK):
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "ATI_STREAM"
 
 {$(CHIPSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+        nasm -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
 {$(CHIPSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
@@ -599,12 +638,26 @@ $(VC_CHECK):
 {$(RC572SRCPATH)/stream}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL"
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL32"
 
 {$(CHIPSRCPATH)/x86}.asm{$(OUTPUTPATH)}.obj:
-        nasmw -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+        nasm -o $(@:/=\) -f win32 -i $(CHIPSRCPATH:/=\) $(**:/=\)
 
 {$(CHIPSRCPATH)/x86}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(CHIPSRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(RC572SRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL64"
+
+{$(CHIPSRCPATH)/amd64}.asm{$(OUTPUTPATH)}.obj:
+        nasmw -o $(@:/=\) -f win64 -i $(CHIPSRCPATH:/=\) $(**:/=\)
+
+{$(CHIPSRCPATH)/amd64}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
 
 {$(CHIPSRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
@@ -638,6 +691,14 @@ $(VC_CHECK):
 {$(COMMONPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
+# cliident.obj carries the git revisions and build time
+# (plat\win\buildinfo.cmd), so it is rebuilt on every build.
+$(OUTPUTPATH)/cliident.obj: $(COMMONPATH)/cliident.cpp FORCE
+        @cmd /c plat\win\buildinfo.cmd $(OUTPUTPATH:/=\)\buildinfo.rsp
+        cl -c -O2 $(OPTS_MSVC) @$(OUTPUTPATH:/=\)\buildinfo.rsp -Fo$(OUTPUTPATH)\ $(COMMONPATH)\cliident.cpp
+
+FORCE:
+
 {$(PRIVATEPATH)}.cpp{$(OUTPUTPATH)}.obj::
         cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
 
@@ -670,7 +731,7 @@ $(BASENAME).exe: $(VC_CHECK) $(PLAT_OBJS) $(COMMON_OBJS) $(CHIP_OBJS) $(RC5_72_O
 # --------------------------------------------
 
 clean:
-        -del $(OUTPUTPATH:/=\)\*.o?? $(RES_FILE:/=\)
+        -del $(OUTPUTPATH:/=\)\*.o?? $(OUTPUTPATH:/=\)\buildinfo.rsp $(RES_FILE:/=\)
 
 superclean: clean
         -del $(BASENAME).map $(BASENAME).exe $(BASENAME).scr $(BASENAME).com $(BASENAME).ini buff-in.* buff-out.*
@@ -682,10 +743,10 @@ rebuild: clean all
 makezip: $(BASENAME).exe $(BASENAME).com $(BASENAME).scr $(ZIPEXTRAS)
 	-del tmpzip.zip dnetcXXX-win32-x86.zip
 	zip -j tmpzip.zip $**
-	-rd /s tmpzipdir
+	-rd /s /q tmpzipdir
 	unzip -a tmpzip.zip -d tmpzipdir
 	-del tmpzip.zip
 	zip -jr dnetcXXX-win32-x86.zip tmpzipdir
-	-rd /s tmpzipdir
+	-rd /s /q tmpzipdir
 	FOR /F "usebackq tokens=3" %i IN (`findstr /r /c:"#define CLIENT_BUILD_FRAC[^_]" common\version.h`) DO move /y dnetcXXX-win32-x86.zip dnetc%i$(BUILDNUM_APPEND)-$(ZIPSUFFIX).zip
 

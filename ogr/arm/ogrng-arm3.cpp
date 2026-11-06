@@ -1,9 +1,8 @@
 /*
- * Copyright distributed.net 2002-2008 - All Rights Reserved
+ * Copyright distributed.net 2002-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: ogrng-arm3.cpp,v 1.1 2011/11/11 18:49:25 teichp Exp $
 */
 
 #include "ansi/ogrng-32.h"

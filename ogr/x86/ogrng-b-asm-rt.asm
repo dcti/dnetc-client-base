@@ -12,8 +12,6 @@
 ;	- aligned stack
 ;	- improved calculation of 'dist0' during update of 'limit'
 ;
-; $Id: ogrng-b-asm-rt.asm,v 1.5 2009/04/26 08:57:50 stream Exp $
-;
 
 %ifdef __NASM_VER__
 	cpu	586	; NASM doesnt know feature flags but accepts mmx in 586 mode

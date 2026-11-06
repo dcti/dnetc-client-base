@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1998-2009 - All Rights Reserved
+ * Copyright distributed.net 1998-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,8 +10,6 @@
  *
  * Created 03.Oct.98 by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *w32cons_cpp(void) {
-return "@(#)$Id: w32cons.cpp,v 1.17 2012/05/01 13:15:08 stream Exp $"; }
 
 //define TRACE only if you want to use any TRACE_OUT below
 //#define TRACE
@@ -2063,7 +2061,7 @@ LRESULT CALLBACK __w16AboutBox( HWND dialog, UINT msg, WPARAM wParam, LPARAM lPa
         {
           SelectObject( hDC, dd->hBGBrush );
 #ifdef DWLP_MSGRESULT
-          SetWindowLongPtr(dialog, DWLP_MSGRESULT, (LONG)dd->hBGBrush );
+          SetWindowLongPtr(dialog, DWLP_MSGRESULT, (LONG_PTR)dd->hBGBrush );
 #else
           SetWindowLong(dialog, DWL_MSGRESULT, (LONG)dd->hBGBrush );
 #endif
@@ -2465,7 +2463,7 @@ LRESULT CALLBACK __w16GraphView( HWND dialog, UINT msg, WPARAM wParam, LPARAM lP
       if (dd)
       {
 #ifdef DWLP_USER
-        SetWindowLongPtr(dialog, DWLP_USER, (LONG)dd);
+        SetWindowLongPtr(dialog, DWLP_USER, (LONG_PTR)dd);
         if (dd != ((struct dlgdata *)GetWindowLongPtr(dialog, DWLP_USER)))
 #else
         SetWindowLong(dialog, DWL_USER, (LONG)dd);

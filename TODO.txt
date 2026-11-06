@@ -1,6 +1,4 @@
 
-$Id: TODO.txt,v 1.12 2002/09/02 03:10:31 andreasb Exp $
-
 This file contains a list of mini-projects. Submissions as well as
 volunteers :) are welcome.
 

@@ -4,7 +4,7 @@
 ;# Target : PPC_cell
 ;#
 ;# Written by Didier Levet (kakace@distributed.net)
-;# Copyright distributed.net 1997-2007 - All Rights Reserved.
+;# Copyright distributed.net 1997-2026 - All Rights Reserved.
 ;# For use in distributed.net projects only. Any other distribution
 ;# or use of this source violates copyright.
 ;#
@@ -28,8 +28,6 @@
 ;#		16 keys at once, all keys (within each group) having the same mid
 ;#		and lo values.
 ;#
-;#
-;# $Id: r72-cellv1-ppe.s,v 1.2 2007/10/22 16:48:35 jlawson Exp $
 ;#
 ;# $Log: r72-cellv1-ppe.s,v $
 ;# Revision 1.2  2007/10/22 16:48:35  jlawson

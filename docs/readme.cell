@@ -1,6 +1,5 @@
 
  distributed.net client for the PlayStation 3/Cell Broadband Engine
- document revision $Id: readme.cell,v 1.7 2009/05/20 18:17:02 stream Exp $
 
  Welcome to the distributed.net client.
 
@@ -38,7 +37,7 @@
     with '-help' or '--help'.
 
     A complete step-by-step guide to running your first client is 
-    available at <http://www.distributed.net/docs/tutor_clients.php>
+    available at http://www.distributed.net/Docs_tutor_client
 
  2.0  PS3/Cell BE specific notes ------------------------------------
 

@@ -1,6 +1,5 @@
 ;
 ; Assembly core for OGR-NG, SSE version tuned for P4. Based on MMX assembly core (ogrng-b-asm-rt.asm).
-; $Id: ogrng-cj1-sse-p4-asm.asm,v 1.4 2009/05/31 23:33:20 mfeiri Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;

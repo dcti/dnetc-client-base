@@ -1,10 +1,10 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  */
 #ifndef __X86ID_H__
-#define __X86ID_H__ "@(#)$Id: x86id.h,v 1.7 2011/03/31 05:07:32 jlawson Exp $"
+#define __X86ID_H__
 
 
 /* Extended CPU ID format :
@@ -97,14 +97,26 @@ enum AmdModel18 {
 
 enum AmdModel20 {
    AMDM20_UNKNOWN = AMDM18_LAST_MODEL + 1,
-   AMDM20_APU,
-   AMDM20_LAST_MODEL = AMDM20_APU
+   AMDM20_BOBCAT,
+   AMDM20_LAST_MODEL = AMDM20_BOBCAT
 };
 
 enum AmdModel21 {
    AMDM21_UNKNOWN = AMDM20_LAST_MODEL + 1,
    AMDM21_FX,
    AMDM21_LAST_MODEL = AMDM21_FX
+};
+
+enum AmdModel22 {
+   AMDM22_UNKNOWN = AMDM21_LAST_MODEL + 1,
+   AMDM22_JAGUAR,
+   AMDM22_LAST_MODEL = AMDM22_JAGUAR
+};
+
+enum AmdModel23 {
+   AMDM23_UNKNOWN = AMDM22_LAST_MODEL + 1,
+   AMDM23_ZEN,
+   AMDM23_LAST_MODEL = AMDM23_ZEN
 };
 
 const char* x86GetVendorName(u32);

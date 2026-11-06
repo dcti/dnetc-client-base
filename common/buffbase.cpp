@@ -1,13 +1,10 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Created by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *buffbase_cpp(void) {
-  return "@(#)$Id: buffbase.cpp,v 1.46 2014/01/09 18:33:28 stream Exp $";
-}
 
 //#define TRACE
 //#define PROFILE_DISK_HITS

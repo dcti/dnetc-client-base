@@ -6,9 +6,7 @@
 ##               or anything else with a section at the end of this file
 ##               (adjust $(known_tgts) if you add a new section)
 ##
-## $Id: makefile.wat,v 1.47 2011/03/31 05:07:26 jlawson Exp $
-##
-## - This makefile *requires* nasm (http://www.web-sites.co.uk/nasm/)
+## - This makefile *requires* nasm (https://www.nasm.us/)
 ## - if building a DES-capable client, then it also requires either
 ##   a) the Microsoft Assembler (masm) OR b) Borland Turbo Assembler (tasm32)
 ##   OR c) pre-assembled object files to be located in the same directory
@@ -46,7 +44,6 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\checkpt.obj     &
             output\coremem.obj     &
             output\core_r72.obj    &
-            output\core_ogr.obj    &
             output\random.obj      &
             output\clicdata.obj    &
             output\base64.obj      &
@@ -76,6 +73,7 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
             output\setprio.obj     &
             output\pathwork.obj    &
             output\buffbase.obj
+#            output\core_ogr.obj    &
 %PRIVMODS = common\buffpriv.cpp  common\buffupd.cpp   common\scram.cpp
 %PRIVOBJS = output\buffpriv.obj  output\buffupd.obj   output\scram.obj
 %PUBOBJS =  output\buffpub.obj
@@ -86,9 +84,9 @@ known_tgts=netware dos win16 win32 os2# list of known (possible) builds
 %POSTLINKTGTS= # targets to make after linking (bind etc)
 
 #---
-%ogrstd_LINKOBJS = output\ogr-a.obj output\ogr-b.obj output\ogr_dat.obj output\ogr_sup.obj
-%ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr
-%ogrstd_SYMALIAS = #
+#%ogrstd_LINKOBJS = output\ogr-a.obj output\ogr-b.obj output\ogr_dat.obj output\ogr_sup.obj
+#%ogrstd_DEFALL   = -DHAVE_OGR_CORES -Iogr
+#%ogrstd_SYMALIAS = #
 #---
 %rc572std_LINKOBJS = output\r72-ses1.obj output\r72-ses2.obj output\r72-dg2.obj &
                    output\r72-dg3.obj output\r72-dg3a.obj output\r72-ss2.obj &
@@ -273,10 +271,10 @@ debug : .symbolic
 
 #-----------------------------------------------------------------------
 
-declare_for_ogr : .symbolic
-  @set COREOBJS = $(%ogrstd_LINKOBJS) $(%COREOBJS)
-  @set DEFALL   = $(%ogrstd_DEFALL) $(%DEFALL) 
-  @set SYMALIAS = $(%ogrstd_SYMALIAS) $(%SYMALIAS) 
+#declare_for_ogr : .symbolic
+#  @set COREOBJS = $(%ogrstd_LINKOBJS) $(%COREOBJS)
+#  @set DEFALL   = $(%ogrstd_DEFALL) $(%DEFALL) 
+#  @set SYMALIAS = $(%ogrstd_SYMALIAS) $(%SYMALIAS) 
 
 declare_for_rc5_72 : .symbolic
   @set COREOBJS = $(%rc572std_LINKOBJS) $(%COREOBJS)
@@ -382,9 +380,9 @@ output\core_r72.obj : common\core_r72.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
   @set isused=1
 
-output\core_ogr.obj : common\core_ogr.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
-  @set isused=1
+#output\core_ogr.obj : common\core_ogr.cpp $(%dependall) .AUTODEPEND
+#  *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
+#  @set isused=1
 
 output\selftest.obj : common\selftest.cpp $(%dependall) .AUTODEPEND
   *$(%CCPP) $(%CFLAGS) $(%OPT_SIZE) $[@ $(%ERRDIROP) /fo=$^@ /i$[:
@@ -478,30 +476,30 @@ output\logstuff.obj : common\logstuff.cpp $(%dependall) .AUTODEPEND
 
 # ----------------------------------------------------------------
 
-FASTEST_OGR_A=/6s /s /os /oa /oe=4096 /oi+ /ol+ #for PPro+ (/6s or /3s)
-FASTEST_OGR_B=/5s /oneatx /oh /oi+ /ol+         #for the rest
+#FASTEST_OGR_A=/6s /s /os /oa /oe=4096 /oi+ /ol+ #for PPro+ (/6s or /3s)
+#FASTEST_OGR_B=/5s /oneatx /oh /oi+ /ol+         #for the rest
 #it took me 5 hours to determine these.
 # #/ox /oa /oe=512 /oh /oi+ /ol+
 
-output\ogr-a.obj : ogr\x86\ogr-a.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR_A) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
+#output\ogr-a.obj : ogr\x86\ogr-a.cpp $(%dependall) .AUTODEPEND
+#  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR_A) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+#  @set isused=1
 
-output\ogr-b.obj : ogr\x86\ogr-b.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR_B) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
+#output\ogr-b.obj : ogr\x86\ogr-b.cpp $(%dependall) .AUTODEPEND
+#  *$(%CCPP) $(%CFLAGS) $(FASTEST_OGR_B) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+#  @set isused=1
 
 #output\ogr.obj : ogr\x86\ogr.asm $(%dependall) 
 #  $(%NASMEXE) $(%NASMFLAGS) -o $^@ -i $[: $[@ 
 #  @set isused=1
 
-output\ogr_dat.obj : ogr\ansi\ogr_dat.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
+#output\ogr_dat.obj : ogr\ansi\ogr_dat.cpp $(%dependall) .AUTODEPEND
+#  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+#  @set isused=1
 
-output\ogr_sup.obj : ogr\ansi\ogr_sup.cpp $(%dependall) .AUTODEPEND
-  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
-  @set isused=1
+#output\ogr_sup.obj : ogr\ansi\ogr_sup.cpp $(%dependall) .AUTODEPEND
+#  *$(%CCPP) $(%CFLAGS) $(%OPT_SPEED) $[@ $(%ERRDIROP) /fo=$^@ /i$[: /icommon
+#  @set isused=1
 
 # ----------------------------------------------------------------
 
@@ -874,7 +872,7 @@ dos: .symbolic                                    # DOS-PMODE/W or DOS/4GW
      @if $(%got_tcpnet).==1. @set STACKSIZE=210K
      
      @%make declare_for_rc5_72
-     @%make declare_for_ogr
+     #@%make declare_for_ogr
      @%make platform
      #-------------------------
      @if not $(%PMODEW_PATH).==. @-$(%PMODEW_PATH)\pmwlite.exe /C4 /S$(%PMODEW_PATH)\pmodew.exe $(%BINNAME)
@@ -901,7 +899,7 @@ os2: .symbolic                                       # OS/2
      @if not $(%watcom).==. @set include=$(%include);$(%WATCOM)\h;$(%WATCOM)\os2
      #@if not $(%watcom).==. @set LIBPATH=$(%watcom)\lib386 $(%watcom)\lib386\os2
      @%make declare_for_rc5_72
-     @%make declare_for_ogr
+     #@%make declare_for_ogr
      @%make platform
 
 w16: .symbolic
@@ -935,7 +933,7 @@ win16: .symbolic                                       # Windows/16
      @set BINNAME   = $(BASENAME).exe
      @set EXTRABIN  = $(BASENAME).scr
      @%make declare_for_rc5_72
-     @%make declare_for_ogr
+     #@%make declare_for_ogr
      @%make platform
      #---------------------------
      @if exist $(BASENAME).rex @del $(BASENAME).rex
@@ -978,7 +976,7 @@ win32: .symbolic                               # win32
      @set BINNAME   = $(BASENAME).exe
      @set EXTRABIN  = $(BASENAME).com $(BASENAME).scr
      @%make declare_for_rc5_72
-     @%make declare_for_ogr
+     #@%make declare_for_ogr
      @%make platform
      #---------------------------------
      @wrc -31 -bt=nt -q &
@@ -1019,11 +1017,11 @@ netware : .symbolic   # NetWare NLM unified SMP/non-SMP, !NOWATCOM-gunk! (May 24
                       $(%watcom)\lib386 #$(%watcom)\lib386\netware
      @set READMETXT = docs\readme.nw
      @set BINNAME   = $(BASENAME).nlm
-     @set COPYRIGHT = 'Copyright 1997-2011 Distributed Computing Technologies, Inc.\r\n  Visit http://www.distibuted.net/ for more information'
+     @set COPYRIGHT = 'Copyright 1997-2026 Distributed Computing Technologies, Inc.\r\n  Visit https://www.distibuted.net/ for more information'
      @set FORMAT    = Novell NLM 'distributed.net client for NetWare'
      @set %dependall=
      @%make declare_for_rc5_72
-     @%make declare_for_ogr
+     #@%make declare_for_ogr
      @%make platform
      #
      @if exist $(NLMDUMPEXE) @$(NLMDUMPEXE) *$(BASENAME).nlm /b:$(BASENAME).map 

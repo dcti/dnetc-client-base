@@ -1,6 +1,6 @@
 /*
  * SMC Code inspired by Naoki Hiroshima (http://n.h7a.org/hacks/rubycocoa/smc.rb)
- * Copyright distributed.net 2003-2009 - All Rights Reserved
+ * Copyright distributed.net 2003-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -34,7 +34,6 @@
  *   - #3338 : kIOMasterPortDefault doesn't exist prior Mac OS 10.2 (2.9006.485)
  *   - #3343 : The object filled by CFNumberGetValue shall not be released (2.9006.485)
  *
- *  $Id: temperature.cpp,v 1.8 2010/05/07 05:13:25 snikkel Exp $
  */
 
 #include <string.h>
@@ -246,7 +245,7 @@ static UInt32 _SMCread(UInt32 key, io_connect_t connection)
   smc_input.key = key;
   smc_input.cmd = SMC_READ_KEYINFO;
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__arm64__)
   if (kIOReturnSuccess == IOConnectCallStructMethod(connection, 2, 
     &smc_input, input_size, &smc_output, &output_size)) {
 #else
@@ -260,7 +259,7 @@ static UInt32 _SMCread(UInt32 key, io_connect_t connection)
     if (smc_input.size == 0)
       return 0;         // Unknown key.
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__arm64__)
     if (kIOReturnSuccess == IOConnectCallStructMethod(connection, 2, 
       &smc_input, input_size, &smc_output, &output_size)) {
 #else

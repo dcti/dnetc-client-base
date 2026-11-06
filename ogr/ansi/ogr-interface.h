@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2008 - All Rights Reserved
+ * Copyright distributed.net 1999-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
 */
 #ifndef __OGR_INTERFACE_H__
-#define __OGR_INTERFACE_H__ "@(#)$Id: ogr-interface.h,v 1.6 2008/12/31 00:26:17 kakace Exp $"
+#define __OGR_INTERFACE_H__
 
 #include <limits.h>
 

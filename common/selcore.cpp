@@ -1,5 +1,5 @@
 /* 
- * Copyright distributed.net 1998-2009 - All Rights Reserved
+ * Copyright distributed.net 1998-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -10,8 +10,6 @@
  * one's head against a wall but with fewer opportunities for reward.
  * -------------------------------------------------------------------
 */
-const char *selcore_cpp(void) {
-return "@(#)$Id: selcore.cpp,v 1.131 2015/10/22 19:45:54 stream Exp $"; }
 
 //#define TRACE
 

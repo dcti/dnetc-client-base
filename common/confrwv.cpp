@@ -1,12 +1,10 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
  * Written by Cyrus Patel <cyp@fb14.uni-mainz.de>
 */
-const char *confrwv_cpp(void) {
-return "@(#)$Id: confrwv.cpp,v 1.102 2012/06/05 22:12:54 snikkel Exp $"; }
 
 //#define TRACE
 
@@ -1254,6 +1252,9 @@ int ConfigRead(Client *client)
   client->numcpu = GetPrivateProfileIntB( OPTSECT_CPU, "max-threads", client->numcpu, fn );
   #endif /* SINGLE_CRUNCHER_ONLY */
   client->devicenum = GetPrivateProfileIntB( OPTSECT_CPU, "devicenum", client->devicenum, fn );
+  #if (CLIENT_CPU == CPU_OPENCL)
+  client->gpusleep = GetPrivateProfileIntB( OPTSECT_CPU, "gpu-sleep", client->gpusleep, fn );
+  #endif
 
   /* --------------------- */
 
@@ -1471,6 +1472,9 @@ int ConfigWrite(Client *client)
     #endif /* SINGLE_CRUNCHER_ONLY */
     __XSetProfileInt( OPTSECT_CPU, "devicenum", client->devicenum, fn, -1, 0 );
     __XSetProfileInt( OPTSECT_CPU, "priority", client->priority, fn, 0, 0);
+    #if (CLIENT_CPU == CPU_OPENCL)
+    __XSetProfileInt( OPTSECT_CPU, "gpu-sleep", client->gpusleep, fn, 1, 'y' );
+    #endif
 
     /* more buffer stuff */
 

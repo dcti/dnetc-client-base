@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2011 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -11,9 +11,6 @@
  * clear/run the modes when appropriate.
  * ---------------------------------------------------------------
 */
-const char *modereq_cpp(void) {
-  return "@(#)$Id: modereq.cpp,v 1.50 2012/05/13 09:32:55 stream Exp $";
-}
 
 //#define TRACE
 
@@ -212,7 +209,7 @@ int ModeReqRun(Client *client)
             }
           }
           Log("Compare and share your rates in the speeds database at\n"
-              "http://www.distributed.net/speed/\n"
+              "https://cgi.distributed.net/speed/\n"
               "(benchmark rates are for a single processor core)\n");
         } while (!CheckExitRequestTriggerNoIO() && modereq.bench_projbits);
         retval |= (bits & (MODEREQ_BENCHMARK_QUICK | MODEREQ_BENCHMARK |

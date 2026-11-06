@@ -1,9 +1,8 @@
 /*
- * Copyright distributed.net 2009-2011, 2014 - All Rights Reserved
+ * Copyright distributed.net 2009-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
- * $Id: cuda_info.cpp,v 1.6 2014/02/23 21:07:07 zebe Exp $
 */
 
 #include "cuda_info.h"
@@ -71,10 +70,16 @@ unsigned int GetCUDAGPUFrequency(int device)
 {
   unsigned int freq = 0;
   if (device >= 0 && device < GetNumberOfDetectedCUDAGPUs()) {
+    int clockRate = 0;
+#if CUDART_VERSION >= 5000
+    if (cudaDeviceGetAttribute(&clockRate, cudaDevAttrClockRate, device) == cudaSuccess)
+      freq = (unsigned int)(clockRate / 1000);
+#else
     cudaDeviceProp deviceProp;
     cudaError_t rc = cudaGetDeviceProperties(&deviceProp, device);
     if (rc == cudaSuccess)
-      freq = deviceProp.clockRate / 1000;
+      freq = (unsigned int)(deviceProp.clockRate / 1000);
+#endif
   }
   return freq;
 }

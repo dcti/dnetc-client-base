@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C++-*- file !
  *
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */ 
 
 #ifndef __CONFOPT_H__
-#define __CONFOPT_H__ "@(#)$Id: confopt.h,v 1.31 2012/01/13 01:05:21 snikkel Exp $"
+#define __CONFOPT_H__
 
 enum /* anonymous */
 {
@@ -48,6 +48,7 @@ enum /* anonymous */
   CONF_NUMCPU                  , /* CONF_MENU_PERF 0 ... */
   CONF_DEVICENUM               , /* CONF_MENU_PERF */
   CONF_NICENESS                , /* CONF_MENU_PERF priority */
+  CONF_GPUSLEEP                , /* CONF_MENU_PERF */
 
   CONF_MENU_LOG_PLACEHOLDER    , /* 33 */
   CONF_LOGTYPE                 , /* CONF_MENU_LOG */

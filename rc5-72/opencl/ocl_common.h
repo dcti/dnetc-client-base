@@ -1,9 +1,8 @@
 /*
-* Copyright distributed.net 2009-2014 - All Rights Reserved
+* Copyright distributed.net 2009-2026 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id: ocl_info.h 2014/08/19 22:18:25 gkhanna Exp $
 */
 
 #ifndef OCL_COMMON_H
@@ -12,7 +11,7 @@
 #include "cputypes.h"
 #if (CLIENT_OS == OS_WIN64) || (CLIENT_OS == OS_WIN32) || \
     (CLIENT_OS == OS_WIN16) || (CLIENT_OS == OS_LINUX) || \
-    (CLIENT_OS == OS_ANDROID)
+    (CLIENT_OS == OS_FREEBSD) || (CLIENT_OS == OS_ANDROID)
 #include <CL/cl.h>
 #elif (CLIENT_OS == OS_MACOSX)
 #include <OpenCL/opencl.h>
@@ -35,10 +34,18 @@ void key_incr(u32 *hi, u32 *mid, u32 *lo, u32 incr);
 u32 sub72(u32 m1, u32 h1, u32 m2, u32 h2);
 //inline u32 swap32(u32 a);
 void OCLReinitializeDevice(ocl_context_t *cont);
+int OCLGetSleepWhileWaiting(void);
 
 s32 rc5_72_unit_func_ansi_ref (RC5_72UnitWork *rc5_72unitwork);
 cl_int ocl_diagnose(cl_int result, const char *where, ocl_context_t *cont);
 const char* clStrError(cl_int status);
 bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *kernelName);
+
+bool GetNVComputeCapability(cl_device_id device, int &sm_version);
+bool GetAMDComputeCapability(cl_device_id device, int &gfx_hex);
+bool GetAMDRegisterHint(int gfx_hex, int &regs_2pipe, int &regs_4pipe);
+bool GetNVRegisterHint(int sm_version, int &regs_2pipe, int &regs_4pipe);
+cl_int OCLWaitForKernel(ocl_context_t *cont, cl_event evt, u32 workItems);
+
 
 #endif //OCL_COMMON_H

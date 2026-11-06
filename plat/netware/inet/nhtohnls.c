@@ -18,11 +18,6 @@
  *
 */
 
-#if defined(__showids__)
-const char *nhtohnls_c(void) { 
-return "$Id: nhtohnls.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $"; } 
-#endif
-
 /* #include <netinet/in.h> */
 #include <limits.h>
 

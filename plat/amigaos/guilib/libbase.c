@@ -1,9 +1,7 @@
 /*
- * Copyright distributed.net 1997-2016 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * $Id: libbase.c,v 1.3 2007/10/22 16:48:30 jlawson Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -21,7 +19,7 @@ LONG _start(VOID)
 }
 
 const char ExLibName[] = "dnetcgui.library";
-#define ExLibID (VSTRING "\0Copyright © 2001-2016 Oliver Roberts. All rights reserved.")
+#define ExLibID (VSTRING "\0Copyright © 2001-2018 Oliver Roberts. All rights reserved.")
 
 struct ExecBase *SysBase       = NULL;
 struct DosLibrary  *DOSBase       = NULL;

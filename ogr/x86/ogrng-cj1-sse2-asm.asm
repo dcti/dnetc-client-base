@@ -1,6 +1,5 @@
 ;
 ; Assembly core for OGR-NG, SSE2 version.
-; $Id: ogrng-cj1-sse2-asm.asm,v 1.8 2010/02/02 05:35:29 stream Exp $
 ;
 ; Created by Craig Johnston (craig.johnston@dolby.com)
 ;

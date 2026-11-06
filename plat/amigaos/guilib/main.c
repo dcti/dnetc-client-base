@@ -1,9 +1,7 @@
 /*
- * Copyright distributed.net 1997-2016 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * $Id: main.c,v 1.9 2011/03/31 05:07:31 jlawson Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -92,6 +90,7 @@ struct ChooserIFace *IChooser;
 struct WorkbenchIFace *IWorkbench;
 struct ARexxIFace *IARexx;
 struct WindowIFace *IWindow;
+#define CurrentDir(dir) SetCurrentDir(dir)
 #endif
 
 struct MsgPort *IDCMPPort, *AppPort, *ArexxPort;
@@ -159,7 +158,7 @@ struct NewMenu ClientMenus[] = {
 
 const char AboutText[] =
    "distributed.net client - a product of distributed.net\n"
-   "%s\nCopyright (C) 1997-2016 distributed.net\n\n"
+   "%s\nCopyright (C) 1997-2018 distributed.net\n\n"
 #ifndef __amigaos4__
    "\33cAmigaOS clients maintained by\n"
 #else

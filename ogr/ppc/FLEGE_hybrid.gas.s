@@ -1,13 +1,11 @@
 ;#
-;# Copyright distributed.net 1999-2008 - All Rights Reserved
+;# Copyright distributed.net 1999-2026 - All Rights Reserved
 ;# For use in distributed.net projects only.
 ;# Any other distribution or use of this source violates copyright.
 ;#
 ;# 2 stages hybrid Scalar/Vector - 256 bits OGR core for PowerPC processors.
 ;# Code designed for MPC744x/745x (G4+)
 ;# Written by Didier Levet <kakace@distributed.net>
-;#
-;# $Id: FLEGE_hybrid.gas.s,v 1.6 2009/05/08 16:32:52 kakace Exp $
 ;#
 ;#============================================================================
 ;# Special notes :

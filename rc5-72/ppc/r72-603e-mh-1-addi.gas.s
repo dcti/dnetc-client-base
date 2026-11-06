@@ -1,4 +1,4 @@
-# Copyright distributed.net 1997-2003 - All Rights Reserved
+# Copyright distributed.net 1997-2026 - All Rights Reserved
 # For use in distributed.net projects only.
 # Any other distribution or use of this source violates copyright.
 #
@@ -7,8 +7,6 @@
 # 24th January 2003
 #
 # Based in part on "Lintilla" core for RC5-64 by Dan Oetting
-#
-# $Id: r72-603e-mh-1-addi.gas.s,v 1.3 2007/10/22 16:48:35 jlawson Exp $
 #
 # $Log: r72-603e-mh-1-addi.gas.s,v $
 # Revision 1.3  2007/10/22 16:48:35  jlawson

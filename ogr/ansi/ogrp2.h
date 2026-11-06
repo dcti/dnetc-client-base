@@ -1,11 +1,11 @@
 /*
- * Copyright distributed.net 1999-2008 - All Rights Reserved
+ * Copyright distributed.net 1999-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
 */
 #ifndef __OGRP2_H__
-#define __OGRP2_H__ "@(#)$Id: ogrp2.h,v 1.4 2008/03/08 20:18:31 kakace Exp $"
+#define __OGRP2_H__
 
 #include "ansi/ogr-interface.h"
 

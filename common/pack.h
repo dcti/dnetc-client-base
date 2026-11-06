@@ -1,12 +1,12 @@
 /* Hey, Emacs, this a -*-C-*- file !
  *
- * Copyright distributed.net 1997-2003 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
 
 #ifndef __PACK_H__
-#define __PACK_H__  "@(#)$Id: pack.h,v 1.3 2007/10/22 16:48:26 jlawson Exp $"
+#define __PACK_H__
 
 /* DNETC_USE_PACK will make pack[0-8].h use #pragma pack
 **

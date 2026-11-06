@@ -1,6 +1,5 @@
 ;
 ; Assembly core for OGR, MMX version. Based on generic assembly core.
-; $Id: ogr-asm2-rt-mmx.asm,v 1.2 2007/10/22 16:48:30 jlawson Exp $
 ;
 ; Created by Roman Trunov (proxyma@tula.net)
 ;

@@ -1,9 +1,7 @@
 /*
- * Copyright distributed.net 1997-2008 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
- *
- * $Id: amConsole.c,v 1.6 2008/12/30 20:58:44 andreasb Exp $
  *
  * Created by Oliver Roberts <oliver@futaura.co.uk>
  *
@@ -246,6 +244,13 @@ int amigaConIsScreen(void)
          char buffer[256];
          if (NameFromFH(output,buffer,256)) {
             if (IsFileSystem(buffer) == DOSTRUE) {
+               #ifdef __amigaos4__
+               struct ExamineData *ed;
+               if ((ed = ExamineObjectTags(EX_FileHandleInput,output,TAG_END))) {
+                  if (!EXD_IS_PIPE(ed)) outputisfile = TRUE;
+                  FreeDosObject(DOS_EXAMINEDATA,ed);
+	       }
+               #else
                struct FileInfoBlock *fib;
                if ((fib = (struct FileInfoBlock *)AllocDosObject(DOS_FIB,NULL))) {
                   if (ExamineFH(output,fib) == DOSTRUE) {
@@ -253,6 +258,7 @@ int amigaConIsScreen(void)
 		  }
                   FreeDosObject(DOS_FIB,fib);
 	       }
+               #endif
 	    }
             else {
                if (strncmp(buffer,"NIL:",4) == 0) outputisfile = TRUE;

@@ -1,9 +1,8 @@
 /*
-* Copyright distributed.net 2012 - All Rights Reserved
+* Copyright distributed.net 2012-2026 - All Rights Reserved
 * For use in distributed.net projects only.
 * Any other distribution or use of this source violates copyright.
 *
-* $Id:
 */
 
 #include "ocl_common.h"
@@ -63,6 +62,12 @@ static bool init_rc5_72_ocl_npipe(ocl_context_t *cont, unsigned core_ID, const c
     if (status == CL_SUCCESS)
       cont->runSizeMultiplier = prefm * cus * 4; //Hack for now. We need 4 wavefronts per CU to hide latency
   }
+
+  // align to 256
+  cont->runSizeMultiplier = ((cont->runSizeMultiplier + 256 - 1) / 256) * 256;
+  if (cont->runSizeMultiplier < 256)
+    cont->runSizeMultiplier = 256;
+
   //Log("Multiplier = %u\n", cont->runSizeMultiplier);
   unsigned t = cont->runSize/cont->runSizeMultiplier;
   if (t == 0) t = 1;
@@ -369,7 +374,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
     }
 
     // wait for the kernel call to finish execution
-    status = clWaitForEvents(1, &ndrEvt);
+    status = OCLWaitForKernel(cont, ndrEvt, rest0);
     if (ocl_diagnose(status, "waiting for event", cont) != CL_SUCCESS)
     {
       clReleaseEvent(ndrEvt);  // allocated locally, must (try to) free before return
@@ -393,7 +398,11 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
 
     double d;
     if (status_p1 == CL_SUCCESS && status_p2 == CL_SUCCESS) // this is status of clGetEventProfilingInfo
+    {
       d = 1e-6 * (endTime - startTime);
+      if (rest0 == cont->runSize)
+        cont->fullKernelTime = d;
+    }
     else
     {
       if (!static_flags->profilingErr)

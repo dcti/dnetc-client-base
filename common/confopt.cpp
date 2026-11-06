@@ -1,10 +1,8 @@
 /* 
- * Copyright distributed.net 1997-2015 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
 */
-const char *confopt_cpp(void) {
-return "@(#)$Id: confopt.cpp,v 1.64 2012/08/08 19:00:49 sla Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -300,9 +298,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   CFGTXT(
   "Enter the prefix (the base name, ie a filename without an 'extension')\n"
   "of the buffer files where unfinished work will be stored. The default\n"
-  "is \""BUFFER_DEFAULT_IN_BASENAME"\". The name of the project will be concatenated internally\n"
+  "is \"" BUFFER_DEFAULT_IN_BASENAME "\". The name of the project will be concatenated internally\n"
   "to this base name to construct the full name of the buffer file. For\n"
-  "example, \""BUFFER_DEFAULT_IN_BASENAME"\" becomes \""BUFFER_DEFAULT_IN_BASENAME""EXTN_SEP"r72\" for the RC5-72 input buffer.\n"
+  "example, \"" BUFFER_DEFAULT_IN_BASENAME "\" becomes \"" BUFFER_DEFAULT_IN_BASENAME "" EXTN_SEP "r72\" for the RC5-72 input buffer.\n"
   "Note : if a path is not specified, the files will be created in the same\n"
   "directory as the .ini file, which, by default, is created in the same\n"
   "directory as the client itself.\n"
@@ -319,9 +317,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   CFGTXT(
   "Enter the prefix (the base name, ie a filename without an 'extension')\n"
   "of the buffer files where finished work will be stored. The default\n"
-  "is \""BUFFER_DEFAULT_OUT_BASENAME"\". The name of the project will be concatenated internally\n"
+  "is \"" BUFFER_DEFAULT_OUT_BASENAME "\". The name of the project will be concatenated internally\n"
   "to this base name to construct the full name of the buffer file. For\n"
-  "example, \""BUFFER_DEFAULT_OUT_BASENAME"\" becomes \""BUFFER_DEFAULT_OUT_BASENAME""EXTN_SEP"r72\" for the RC5-72 output buffer\n"
+  "example, \"" BUFFER_DEFAULT_OUT_BASENAME "\" becomes \"" BUFFER_DEFAULT_OUT_BASENAME "" EXTN_SEP "r72\" for the RC5-72 output buffer\n"
   "Note : if a path is not specified, the files will be created in the same\n"
   "directory as the .ini file, which, by default, is created in the same\n"
   "directory as the client itself.\n"
@@ -374,9 +372,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "This option specifies a *directory*, and not a filename. The full paths\n"
   "effectively used are constructed from the name of the project and the\n"
   "filename component in the \"[Out|In]-Buffer Filename Prefix\" options.\n"
-  "For example, if the \"In-Buffer Filename Prefix\" is \"~/"BUFFER_DEFAULT_IN_BASENAME"\", and\n"
+  "For example, if the \"In-Buffer Filename Prefix\" is \"~/" BUFFER_DEFAULT_IN_BASENAME "\", and\n"
   "the alternate buffer directory is \"/there/\" then the alternate in-buffer\n"
-  "file for RC5-72 becomes \"/there/"BUFFER_DEFAULT_IN_BASENAME".r72\"\n"
+  "file for RC5-72 becomes \"/there/" BUFFER_DEFAULT_IN_BASENAME ".r72\"\n"
   ),CONF_MENU_BUFF,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 
@@ -395,7 +393,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
     && ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16))
   "Note : OGR is automatically disabled for non-preemptive operating\n"
   "environments running on low(er)-end hardware. For details, see\n"
-  "http://www.distributed.net/faq/cache/188.html\n"
+  "https://faq.distributed.net/cache/188.html\n"
   #endif
   #if 0
   "\n"
@@ -629,6 +627,15 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
 #endif
   /*)*/,CONF_MENU_PERF, CONF_TYPE_INT, NULL, NULL, 0, 9, NULL,NULL 
 },
+{
+  CONF_GPUSLEEP                , /* CONF_MENU_PERF */
+  CFGTXT("Sleep while waiting for the GPU"), "yes",
+  CFGTXT(
+  "Some GPU drivers keep a CPU core busy for each GPU while it works. This\n"
+  "option makes the client sleep instead.\n"
+  "Disable it if the crunch rate drops.\n"
+  ),CONF_MENU_PERF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
+},
 
 /* ------------------------------------------------------------ */
 
@@ -667,9 +674,9 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   "whatever you specify here.\n"
   "\n"
   "If the rotate interval was specified as a number of days, then the name of\n"
-  "the log file used will be [file_or_dir_to_log_to]YYMMDD"EXTN_SEP"log, where YYMMDD\n"
+  "the log file used will be [file_or_dir_to_log_to]YYMMDD" EXTN_SEP "log, where YYMMDD\n"
   "is the date of the first day of that 'interval'. If the interval were weekly,\n"
-  "the name of the log file used will be [file_or_dir_to_log_to]yearweek"EXTN_SEP"log\n"
+  "the name of the log file used will be [file_or_dir_to_log_to]yearweek" EXTN_SEP "log\n"
   ),CONF_MENU_LOG,CONF_TYPE_ASCIIZ,NULL,NULL,0,0,NULL,NULL
 },
 { 

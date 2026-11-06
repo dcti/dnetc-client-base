@@ -18,11 +18,6 @@
  *
 */
 
-#if defined(__showids__)
-const char *in_aton_c(void) { 
-return "$Id: in_aton.c,v 1.2 2002/09/02 00:35:51 andreasb Exp $"; } 
-#endif
-
 
 #include <netinet/in.h> /* struct in_addr */
 #include <arpa/inet.h>  /* inet_aton, inet_addr, inet_network, inet_netof */

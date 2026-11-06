@@ -1,7 +1,6 @@
 
  distributed.net client for Haiku (x86)
  Released by Urias McCullough <umccullough@teamhaiku.com>
- document revision $Id: readme.haiku,v 1.4 2008/12/30 13:24:41 andreasb Exp $
 
  Welcome to the distributed.net client.
 
@@ -34,7 +33,7 @@
     with '-help' or '--help'.
 
     A complete step-by-step guide to running your first client is 
-    available at: http://www.distributed.net/docs/tutor_clients.php
+    available at: http://www.distributed.net/Docs_tutor_client
 
 
  2.0  Haiku specific Notes: ------------------------------------------

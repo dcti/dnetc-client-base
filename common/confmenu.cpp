@@ -1,5 +1,5 @@
 /*
- * Copyright distributed.net 1997-2012 - All Rights Reserved
+ * Copyright distributed.net 1997-2026 - All Rights Reserved
  * For use in distributed.net projects only.
  * Any other distribution or use of this source violates copyright.
  *
@@ -8,8 +8,6 @@
  * doesn't sell it, they don't eat it.  Vending machines don't sell quiche.
  * ---------------------------------------------------------------------
 */
-const char *confmenu_cpp(void) {
-return "@(#)$Id: confmenu.cpp,v 1.71 2012/06/24 18:26:56 piru Exp $"; }
 
 /* ----------------------------------------------------------------------- */
 
@@ -574,6 +572,9 @@ static int __configure( Client *client ) /* returns >0==success, <0==cancelled *
   conf_options[CONF_NICENESS].thevariable = &(client->priority);
   conf_options[CONF_NUMCPU].thevariable = &(client->numcpu);
   conf_options[CONF_DEVICENUM].thevariable = &(client->devicenum);
+  #if (CLIENT_CPU == CPU_OPENCL)
+  conf_options[CONF_GPUSLEEP].thevariable = &(client->gpusleep); // hidden elsewhere
+  #endif
 
   /* --------------------------------------------------------- */
 
