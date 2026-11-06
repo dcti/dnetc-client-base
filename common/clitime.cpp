@@ -583,6 +583,14 @@ int CliGetMonotonicClock( struct timeval *tv )
       hirestime /= 1000; /* nanosecs to microsecs */
       tv->tv_sec = (time_t)(hirestime / 1000000);
       tv->tv_usec = (unsigned long)(hirestime % 1000000);
+    }
+    #elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_ANDROID)
+    /*only RTlinux has clock_gettime/gethrtime*/
+    {
+      static int supports_clock_gettime = -1;
+      if (supports_clock_gettime == -1)
+      {
+        int major, minor, version = -1;
         #if (CLIENT_OS == OS_ANDROID)
         struct utsname name;
         if (uname (&name) == -1 ||
