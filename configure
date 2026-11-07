@@ -1167,6 +1167,11 @@ generate_gcc_opts() {
         opts310="$OPTS_GCC310 -O2 -DASM_VAX -funroll-loops"
         ;;
 
+    *internal-arm64)
+        opts310="$OPTS_GCC310 -O2 -funroll-loops"
+        opts400="$OPTS_GCC400 -O2 -funroll-loops"
+        ;;
+
     *internal-arm)
         opts272="$OPTS_GCC272 -DARM -DASM_ARM -funroll-loops"
         opts295="$OPTS_GCC295 -O2 -march=armv3 -mtune=strongarm -DARM -DASM_ARM \
@@ -1688,12 +1693,10 @@ case "$1" in
         ;;
 
     *linux-arm64)               # [mikereed ertyu]
-	echo "Warning: gcc-arm64 optimizations need to be determined and set"
-	exit
-
         TARGET_CC="g++"
         TARGET_AS="gcc -c"
-        TARGET_CCFLAGS="$OPTS_GCC -Wall -DHAVE_POSIX_THREADS"
+        generate_gcc_opts "arm64" "linux"
+        TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
         TARGET_LIBS="-lpthread -lrt"
         TARGET_TARBALL="linux-arm64"
         TARGET_DOCFILES="docs/readme._ix"
