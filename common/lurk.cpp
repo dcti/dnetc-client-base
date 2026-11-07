@@ -242,7 +242,7 @@ int LurkCheckIfConnectRequested(void) //yes/no
 /* ================================================================== */
 
 
-#if (CLIENT_OS == OS_LINUX)    || (CLIENT_OS == OS_FREEBSD)  || \
+#if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID) || (CLIENT_OS == OS_FREEBSD)  || \
     (CLIENT_OS == OS_OPENBSD)  || (CLIENT_OS == OS_NETBSD)   || \
     (CLIENT_OS == OS_BSDOS)    || (CLIENT_OS == OS_MACOSX)   || \
     (CLIENT_OS == OS_PS2LINUX) || (CLIENT_OS == OS_DEC_UNIX) || \
@@ -425,7 +425,7 @@ int LurkGetCapabilityFlags(void)
         what |= CONNECT_DODBYPROFILE;
     }
   }
-#elif (CLIENT_OS == OS_LINUX)    || (CLIENT_OS == OS_FREEBSD)  || \
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID) || (CLIENT_OS == OS_FREEBSD)  || \
       (CLIENT_OS == OS_OPENBSD)  || (CLIENT_OS == OS_NETBSD)   || \
       (CLIENT_OS == OS_BSDOS)    || (CLIENT_OS == OS_OS2)      || \
       (CLIENT_OS == OS_MACOSX)   || (CLIENT_OS == OS_PS2LINUX) || \
@@ -1336,7 +1336,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
      return 1;
    }
 
-#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_FREEBSD) || \
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID) || (CLIENT_OS == OS_FREEBSD) || \
       (CLIENT_OS == OS_OPENBSD) || (CLIENT_OS == OS_NETBSD) || \
       (CLIENT_OS == OS_BSDOS) || (CLIENT_OS == OS_AMIGAOS) || \
       (CLIENT_OS == OS_MORPHOS)|| (CLIENT_OS == OS_DRAGONFLY) || \
@@ -1397,7 +1397,7 @@ static int __LurkIsConnected(void) //must always returns a valid yes/no
        #ifdef LURK_MULTIDEV_TRACK
        __insdel_devname(NULL,1,lurker.conndevices,sizeof(lurker.conndevices)); /* begin tracking */
        #endif
-       #if (CLIENT_OS == OS_LINUX) || ((CLIENT_OS == OS_OS2) && defined(__EMX__)) || \
+       #if (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID) || ((CLIENT_OS == OS_OS2) && defined(__EMX__)) || \
        	   (CLIENT_OS == OS_PS2LINUX)
        for (n = 0, ifr = ifc.ifc_req; n < ifc.ifc_len; n += sizeof(struct ifreq), ifr++)
        {
@@ -1739,7 +1739,7 @@ int LurkDialIfNeeded(int force /* !0== override lurk-only */ )
   TRACE_OUT((-1,"DialIfNeeded() => 0\n"));
   return 0;
 
-#elif (CLIENT_OS == OS_LINUX)   || (CLIENT_OS == OS_OS2)      || \
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID) || (CLIENT_OS == OS_OS2)      || \
      (CLIENT_OS == OS_FREEBSD)  || (CLIENT_OS == OS_OPENBSD)  || \
      (CLIENT_OS == OS_NETBSD)   || (CLIENT_OS == OS_BSDOS)    || \
      (CLIENT_OS == OS_MACOSX)   || (CLIENT_OS == OS_VMS)      || \
@@ -1918,7 +1918,7 @@ int LurkHangupIfNeeded(void) //returns 0 on success, -1 on fail
   lurker.dohangupcontrol = 0;
   return 0;
 
-#elif (CLIENT_OS == OS_LINUX)    || (CLIENT_OS == OS_OS2)      || \
+#elif (CLIENT_OS == OS_LINUX) || (CLIENT_OS == OS_ANDROID) || (CLIENT_OS == OS_OS2)      || \
       (CLIENT_OS == OS_FREEBSD)  || (CLIENT_OS == OS_OPENBSD)  || \
       (CLIENT_OS == OS_NETBSD)   || (CLIENT_OS == OS_BSDOS)    || \
       (CLIENT_OS == OS_MACOSX)   || (CLIENT_OS == OS_VMS)      || \
