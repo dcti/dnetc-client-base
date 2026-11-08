@@ -43,6 +43,7 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
 
 bool GetNVComputeCapability(cl_device_id device, int &sm_version);
 bool GetAMDComputeCapability(cl_device_id device, int &gfx_hex);
+bool GetAppleComputeCapability(cl_device_id device, int &m_version);
 bool GetAMDRegisterHint(int gfx_hex, int &regs_2pipe, int &regs_4pipe);
 bool GetNVRegisterHint(int sm_version, int &regs_2pipe, int &regs_4pipe);
 cl_int OCLWaitForKernel(ocl_context_t *cont, cl_event evt, u32 workItems);

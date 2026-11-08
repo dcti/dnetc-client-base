@@ -453,6 +453,41 @@ bool GetAMDRegisterHint(int gfx_hex, int &regs_2pipe, int &regs_4pipe) // VGPRs
   return false;
 }
 
+bool GetAppleComputeCapability(cl_device_id device, int &m_version)
+{
+  m_version = 0;
+  // Apple's own OpenCL framework only; other drivers (Mesa) lower the rotate differently
+  cl_platform_id platform;
+  if (clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, NULL) != CL_SUCCESS)
+    return false;
+  char platformBuffer[256] = {0};
+  if (clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(platformBuffer), platformBuffer, NULL) != CL_SUCCESS)
+    return false;
+  if (strcmp(platformBuffer, "Apple") != 0)
+    return false;
+  // Apple GPUs have no PCI vendor id, so the vendor string decides
+  char vendorBuffer[256] = {0};
+  if (clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(vendorBuffer), vendorBuffer, NULL) != CL_SUCCESS)
+    return false;
+  if (strncmp(vendorBuffer, "Apple", 5) != 0)
+    return false;
+  // Chip generation from the device name: "Apple M1", "Apple M3 Pro", ...
+  char nameBuffer[256] = {0};
+  if (clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(nameBuffer), nameBuffer, NULL) == CL_SUCCESS)
+  {
+    char *m_ptr = strstr(nameBuffer, "Apple M");
+    if (m_ptr != NULL)
+    {
+      char *end_ptr = NULL;
+      long parsed_val = strtol(m_ptr + 7, &end_ptr, 10);
+      if (parsed_val > 0 && end_ptr != (m_ptr + 7))
+        m_version = (int)parsed_val;
+      //LogTo(LOGTO_FILE, "Parsed an Apple M%d from CL_DEVICE_NAME\n", m_version);
+    }
+  }
+  return true; // Apple GPU; 0 = generation unknown
+}
+
 bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *kernelName)
 {
   char *decoded_src = (char*)malloc(strlen(programText)+1);
@@ -474,6 +509,7 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
     char buildOptions[80];
     int nv_sm = 0;
     int amd_gfx = 0;
+    int apple_m = 0;
 
     if (GetNVComputeCapability(cont->deviceID, nv_sm))  // NVIDIA
     {
@@ -512,6 +548,14 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
       }
 
       snprintf(buildOptions, sizeof(buildOptions), "%s %s %s", clOption, amdOption1, amdOption2); // AMD build options
+    }
+    else if (GetAppleComputeCapability(cont->deviceID, apple_m)) // Apple
+    {
+      char appleOption1[16] = "";
+
+      snprintf(appleOption1, sizeof(appleOption1), "-D APPLE_M=%d", apple_m); // chip generation
+
+      snprintf(buildOptions, sizeof(buildOptions), "%s %s", clOption, appleOption1); // Apple build options
     }
     else // GENERIC
       snprintf(buildOptions, sizeof(buildOptions), "%s", clOption);  // Generic manufacturer build options
