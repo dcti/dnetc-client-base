@@ -121,6 +121,10 @@ static const char *helpbody[] =
   "-numcpu <n>        run <n> threads/run on <n> cpus. 0 forces single-threading.",
 #endif
   "-devicenum <n>     run on device <n> only.",
+#if (CLIENT_CPU == CPU_OPENCL)
+  "-gpusleep          sleep while waiting for the GPU (default, less CPU usage)",
+  "-nogpusleep        wait for the GPU in the driver's default way",
+#endif
   "-priority <0-9>    scheduling priority from 0 (lowest/idle) to 9 (normal/user)",
   "",
   "Logging options:",
@@ -363,7 +367,7 @@ void GenerateManPage( void )
 		 ".Sp\n"
                  "If you believe you have found a bug, please submit it to the "
                  "distributed.net bug tracking database at "
-                 "http://bugs.distributed.net/\n"
+                 "https://bugs.distributed.net/\n"
                  ".sp 1\n" 
 		 "Please provide the entire version descriptor as displayed on client start "
                  "when doing so. For example, the client version this manpage was "
@@ -386,11 +390,11 @@ void GenerateManPage( void )
 
     fprintf(manp,".Sh \"SEE ALSO\"\n"
                  ".Pp\n"
-                 "Client documentation: %s.txt and http://faq.distributed.net/\n",
+                 "Client documentation: %s.txt and https://faq.distributed.net/\n",
                  appname);
     fprintf(manp,".Sh AUTHOR\n"
                  "distributed.net\n"
-                 "http://www.distributed.net/\n");
+                 "https://www.distributed.net/\n");
 
     fclose(manp);
   }
@@ -411,7 +415,7 @@ void DisplayHelp( const char * unrecognized_option )
   static const char *helpheader[] =
   {
     "distributed.net v" CLIENT_VERSIONSTRING " client for " CLIENT_OS_NAME_EXTENDED,
-    "Visit http://faq.distributed.net/ for in-depth command line help",
+    "Visit https://faq.distributed.net/ for in-depth command line help",
     "-------------------------------------------------------------------------"
   };
 

@@ -393,7 +393,7 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
     && ((CLIENT_OS == OS_NETWARE) || (CLIENT_OS == OS_WIN16))
   "Note : OGR is automatically disabled for non-preemptive operating\n"
   "environments running on low(er)-end hardware. For details, see\n"
-  "http://www.distributed.net/faq/cache/188.html\n"
+  "https://faq.distributed.net/cache/188.html\n"
   #endif
   #if 0
   "\n"
@@ -626,6 +626,15 @@ struct optionstruct conf_options[CONF_OPTION_COUNT] = {
   #endif
 #endif
   /*)*/,CONF_MENU_PERF, CONF_TYPE_INT, NULL, NULL, 0, 9, NULL,NULL 
+},
+{
+  CONF_GPUSLEEP                , /* CONF_MENU_PERF */
+  CFGTXT("Sleep while waiting for the GPU"), "yes",
+  CFGTXT(
+  "Some GPU drivers keep a CPU core busy for each GPU while it works. This\n"
+  "option makes the client sleep instead.\n"
+  "Disable it if the crunch rate drops.\n"
+  ),CONF_MENU_PERF,CONF_TYPE_BOOL,NULL,NULL,0,1,NULL,NULL
 },
 
 /* ------------------------------------------------------------ */

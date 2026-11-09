@@ -30,6 +30,11 @@
   #define ROTL(x, s)  amd_bitalign((uint)(x), (uint)(x), 32u - (uint)(s))
   #define ROTL3(x)    amd_bitalign((uint)(x), (uint)(x), 29u)
   #define SWAP(x)     bitselect(amd_bytealign((uint)(x), (uint)(x), 3u), amd_bytealign((uint)(x), (uint)(x), 1u), 0xFF00FF00u)
+#elif defined(APPLE_M) // APPLE OPTIMIZED
+  #if (APPLE_M >= 1) // rotate as a funnel shift of the value paired with itself
+    #define ROTL(x, s)  ((uint)(as_ulong((uint2)((uint)(x), (uint)(x))) >> ((0u - (uint)(s)) & 31u)))
+    #define ROTL3(x)    ((uint)(as_ulong((uint2)((uint)(x), (uint)(x))) >> 29u))
+  #endif
 #endif
 
 #ifndef ROTL // STANDARD OPENCL

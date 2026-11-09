@@ -38,6 +38,12 @@
   #define ROTL3(x)    amd_bitalign((uint2)(x), (uint2)(x), (uint2)(29u))
   #define ROTL1(x, s) amd_bitalign((uint)(x), (uint)(x), 32u - (uint)(s))
   #define SWAP(x)     bitselect(amd_bytealign((uint)(x), (uint)(x), 3u), amd_bytealign((uint)(x), (uint)(x), 1u), 0xFF00FF00u)
+#elif defined(APPLE_M) // APPLE OPTIMIZED
+  #if (APPLE_M >= 1) // rotate as a funnel shift of the value paired with itself
+    #define ROTL(x, s)  convert_uint2(as_ulong2(((uint2)(x)).xxyy) >> convert_ulong2(((uint2)(0u) - (uint2)(s)) & (uint2)(31u)))
+    #define ROTL3(x)    convert_uint2(as_ulong2(((uint2)(x)).xxyy) >> (ulong2)(29u))
+    #define ROTL1(x, s) ((uint)(as_ulong((uint2)((uint)(x), (uint)(x))) >> ((0u - (uint)(s)) & 31u)))
+  #endif
 #endif
 
 #ifndef ROTL // STANDARD OPENCL
@@ -53,7 +59,7 @@
   #define SWAP(x) (((uint)(x) << 24) | (((uint)(x) & 0x0000FF00u) << 8) | (((uint)(x) >> 8) & 0x0000FF00u) | ((uint)(x) >> 24))
 #endif
 
-#if (defined(NV_SM) && (NV_SM >= 50)) || (defined(AMD_VGPR) && (AMD_VGPR >= 64)) // ENABLE ROUND1 OPTIMIZATION
+#if (defined(NV_SM) && (NV_SM >= 50)) || (defined(AMD_VGPR) && (AMD_VGPR >= 64)) || (defined(APPLE_M) && (APPLE_M >= 1)) // ENABLE ROUND1 OPTIMIZATION
   #define ROUND1_OPT 1
 #endif
 
