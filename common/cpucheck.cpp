@@ -1556,11 +1556,59 @@ signed int default_rc5_core = -1;
 signed int default_r72_core = -1;
 signed int default_ogr_core = -1;
 
-static long __GetRawProcessorID(const char **cpuname )
+// whattoret 0:detectedtype, 'c':simpleid (ARM64 only)
+static long __GetRawProcessorID(const char **cpuname, int whattoret = 0 )
 {
   static long detectedtype = -2L; /* -1 == failed, -2 == not supported */
   static const char *detectedname = NULL;
   static char namebuf[65];
+  #if (CLIENT_CPU == CPU_ARM64)
+  static int simpleid = -1;        /* -1 == not looked up yet */
+
+  /* The raw id is OS-specific, so, as on x86, it is mapped to a synthetic
+   * "simpleid", which is what GetProcessorType() returns and selcore uses.
+   *   0xFF - unknown (CPU_ARM64_UNKNOWN)
+   * The name is only used if the OS does not supply one.
+   */
+  static struct {
+    unsigned int id, mask;
+    signed int simpleid;
+    const char *name;
+  } arm64xref[] = {
+    #if (CLIENT_OS == OS_MACOSX)
+    // hw.cpufamily, see CPUFAMILY_ARM_* in <mach/machine.h>
+    { 0x1b588bb3, 0xffffffff, CPU_APPLE_M1, CPU_APPLE_M1_NAME },
+    { 0xda33d83d, 0xffffffff, CPU_APPLE_M2, CPU_APPLE_M2_NAME },
+    { 0xfa33415e, 0xffffffff, CPU_APPLE_M3, CPU_APPLE_M3_NAME },
+    { 0x5f4dea93, 0xffffffff, CPU_APPLE_M3_PRO, CPU_APPLE_M3_PRO_NAME },
+    { 0x72015832, 0xffffffff, CPU_APPLE_M3_MAX_ULTRA, CPU_APPLE_M3_MAX_ULTRA_NAME },
+    { 0x6f5129ac, 0xffffffff, CPU_APPLE_M4, CPU_APPLE_M4_NAME },
+    { 0x17d5b93a, 0xffffffff, CPU_APPLE_M4_PRO_MAX, CPU_APPLE_M4_PRO_MAX_NAME },
+    { 0x1d5a87e8, 0xffffffff, CPU_APPLE_M5, CPU_APPLE_M5_NAME },
+    { 0xf76c5b1a, 0xffffffff, CPU_APPLE_M5_PRO_MAX_ULTRA, CPU_APPLE_M5_PRO_MAX_ULTRA_NAME },
+    { 0x6d0ccb0c, 0xffffffff, CPU_APPLE_M6, CPU_APPLE_M6_NAME },
+    { 0x75d4acb9, 0xffffffff, CPU_APPLE_A18_PRO, CPU_APPLE_A18_PRO_NAME },
+    #else
+    // MIDR: implementer + part number. /proc/cpuinfo parsing ORs the
+    // fields of all cores, so mask out the bit 0 in which the part
+    // numbers of the E-cores and P-cores differ.
+    // 0x61(a) - Apple
+    { 0x61000220, 0xff00ffe0, CPU_APPLE_M1, CPU_APPLE_M1_NAME },
+    { 0x61000240, 0xff00ffe0, CPU_APPLE_M1, CPU_APPLE_M1_PRO_NAME },
+    { 0x61000280, 0xff00ffe0, CPU_APPLE_M1, CPU_APPLE_M1_MAX_NAME },
+    { 0x61000320, 0xff00ffe0, CPU_APPLE_M2, CPU_APPLE_M2_NAME },
+    { 0x61000340, 0xff00ffe0, CPU_APPLE_M2, CPU_APPLE_M2_PRO_NAME },
+    { 0x61000380, 0xff00ffe0, CPU_APPLE_M2, CPU_APPLE_M2_MAX_NAME },
+    { 0x61000420, 0xff00ffe0, CPU_APPLE_M3, CPU_APPLE_M3_NAME },
+    { 0x61000440, 0xff00ffe0, CPU_APPLE_M3_PRO, CPU_APPLE_M3_PRO_NAME },
+    { 0x61000480, 0xff00ffe0, CPU_APPLE_M3_MAX, CPU_APPLE_M3_MAX_NAME },
+    { 0x61000520, 0xff00ffe0, CPU_APPLE_M4, CPU_APPLE_M4_NAME },
+    { 0x61000540, 0xff00ffe0, CPU_APPLE_M4_PRO_MAX, CPU_APPLE_M4_PRO_NAME },
+    { 0x61000580, 0xff00ffe0, CPU_APPLE_M4_PRO_MAX, CPU_APPLE_M4_MAX_NAME },
+    #endif
+    { 0x00000000, 0x00000000, CPU_ARM64_UNKNOWN, NULL }
+  };
+  #endif
   static struct {
     unsigned int id, mask;
     signed int r72, ogr;
@@ -1847,19 +1895,39 @@ static long __GetRawProcessorID(const char **cpuname )
   #elif (CLIENT_OS == OS_MACOSX)
   if ( detectedtype == -2L )
   {
-      /* some details in mach/machine.h */
-      int cpufamily;
+      /* unsigned: several CPUFAMILY_ARM_* values have bit 31 set, and a
+       * sign-extended (negative) id is treated as "not detected" */
+      u32 cpufamily;
       size_t len;
 
       detectedtype = 0;
       len = sizeof(cpufamily);
       if (sysctlbyname( "hw.cpufamily", &cpufamily, &len, NULL, 0 ) == 0) {
-        detectedtype = cpufamily;
+        detectedtype = (long)cpufamily;
       }
       len = sizeof(namebuf);
       if (sysctlbyname( "machdep.cpu.brand_string", &namebuf, &len, NULL, 0) == 0) {
         detectedname = ((const char *)&(namebuf[0]));
       }
+  }
+  #endif
+
+  #if (CLIENT_CPU == CPU_ARM64)
+  /* must come first: the generic table below resets the id of any
+     cpu it does not know about (such as Apple's) to 0 */
+  if (detectedtype > 0 && simpleid == -1)
+  {
+    simpleid = CPU_ARM64_UNKNOWN; /* default id = unknown */
+    for (int n=0; arm64xref[n].name; n++)
+    {
+      if ((detectedtype & arm64xref[n].mask) == arm64xref[n].id)
+      {
+        simpleid = arm64xref[n].simpleid;
+        if (detectedname == NULL)
+          detectedname = arm64xref[n].name;
+        break;
+      }
+    }
   }
   #endif
 
@@ -1892,6 +1960,12 @@ static long __GetRawProcessorID(const char **cpuname )
 
   if ( cpuname )
     *cpuname = detectedname;
+  #if (CLIENT_CPU == CPU_ARM64)
+  if (whattoret == 'c')
+    return ((long)simpleid);
+  #else
+  DNETC_UNUSED_PARAM(whattoret);
+  #endif
   return detectedtype;
 }
 #endif
@@ -2482,8 +2556,10 @@ long GetProcessorType(int quietly, int device)
       }
       retval = rawid; /* let selcore figure things out */
 
-      /* simply too many core<->cpu combinations */
-      #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) 
+      /* simply too many core<->cpu combinations (x86), or raw ids
+         that differ between OSes (ARM64) */
+      #if (CLIENT_CPU == CPU_X86) || (CLIENT_CPU == CPU_AMD64) || \
+          (CLIENT_CPU == CPU_ARM64)
       if ((retval = __GetRawProcessorID(NULL,'c')) < 0)
         retval = -1;
       #endif
