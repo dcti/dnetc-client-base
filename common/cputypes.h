@@ -162,6 +162,21 @@
   #define CLIENT_OS_NAME   "OS/2"
   #define CLIENT_OS        OS_OS2
   #define CLIENT_CPU       CPU_X86
+#elif defined(__ANDROID__) || defined(_ANDROID_)
+  /* must precede the linux test: Android compilers also define linux */
+  #define CLIENT_OS_NAME  "Android"
+  #if defined(__arm64__) || defined(__aarch64__)
+    #define CLIENT_CPU     CPU_ARM64
+  #elif defined(__x86_64__) || defined(__amd64__)
+    #define CLIENT_CPU     CPU_AMD64
+  #elif defined(__i386__) || defined(ASM_X86)
+    #define CLIENT_CPU     CPU_X86
+  #elif defined(__arm32__) || defined(ARM)
+    #define CLIENT_CPU     CPU_ARM
+  #else
+    #define CLIENT_CPU     CPU_ARM
+  #endif
+  #define CLIENT_OS        OS_ANDROID
 #elif defined(linux)
   #ifndef __unix__ /* should already be defined */
   #define __unix__
@@ -540,18 +555,6 @@
   #if defined(ASM_X86)
     #define CLIENT_CPU     CPU_X86
   #endif
-#elif defined(_ANDROID_)
-  #define CLIENT_OS_NAME  "Android"
-  #if defined(__arm64__)
-    #define CLIENT_CPU     CPU_ARM64
-  #elif defined(__i386__) || defined(ASM_X86)
-    #define CLIENT_CPU     CPU_X86
-  #elif defined(__arm32__) || defined(ARM)
-    #define CLIENT_CPU     CPU_ARM
-  #else
-    #define CLIENT_CPU     CPU_ARM
-  #endif
-  #define CLIENT_OS        OS_ANDROID
 #endif
 
 #if !defined(CLIENT_OS)
