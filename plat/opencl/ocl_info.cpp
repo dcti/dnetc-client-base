@@ -215,9 +215,8 @@ static void OpenCLPrintCompilationInfo(ocl_context_t *cont)
 
   cl_uint nvptx = 0, amd_media_ops = 0, clang = 0;
 
-  int nv = 0, nv_sm = 0, amd = 0, amd_gfx = 0, apple = 0, apple_m = 0;
+  int nv = 0, nv_sm = 0, amd = 0, amd_gfx = 0, mesa_radeonsi = 0, apple = 0, apple_m = 0;
   int nv_reg = 0, nv_maxreg2 = 0, nv_maxreg4 = 0;
-  int amd_reg = 0, amd_maxreg2 = 0, amd_maxreg4 = 0;
 
   char compiler_defines[64] = "";
   char compiler_define1[16] = "";
@@ -228,9 +227,6 @@ static void OpenCLPrintCompilationInfo(ocl_context_t *cont)
   char param_define1[32] = "";
   char param_define2[96] = "";
   char param_define3[96] = "";
-  char param_define4[96] = "";
-  char param_define5[96] = "";
-  char param_define6[96] = "";
   
   OCLReinitializeDevice(cont);
 
@@ -275,8 +271,8 @@ finished:
     nv_reg = GetNVRegisterHint(nv_sm, nv_maxreg2, nv_maxreg4);
   
   amd = GetAMDComputeCapability(cont->deviceID, amd_gfx);
-  if (amd)
-    amd_reg = GetAMDRegisterHint(amd_gfx, amd_maxreg2, amd_maxreg4);
+
+  mesa_radeonsi = IsMesaRadeonSI(cont->deviceID);
 
   apple = GetAppleComputeCapability(cont->deviceID, apple_m);
 
@@ -306,24 +302,13 @@ finished:
     }
   }
   else if (amd)
-  {
-    snprintf(param_define4, sizeof(param_define4), "(1-pipe) -D AMD_GFX=0x%x\n", amd_gfx);
-    if (amd_reg)
-    {
-      snprintf(param_define5, sizeof(param_define5), "%32s(2-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d\n", "", amd_gfx, amd_maxreg2);
-      snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x -D AMD_VGPR=%d", "", amd_gfx, amd_maxreg4);
-    }
-    else
-    {
-      snprintf(param_define5, sizeof(param_define5), "%32s(2-pipe) -D AMD_GFX=0x%x\n", "", amd_gfx);
-      snprintf(param_define6, sizeof(param_define6), "%32s(4-pipe) -D AMD_GFX=0x%x", "", amd_gfx);
-    }
-  }
+    snprintf(param_define1, sizeof(param_define1), "-D AMD_GFX=0x%x", amd_gfx);
+  else if (mesa_radeonsi)
+    snprintf(param_define1, sizeof(param_define1), "-D MESA_AMD=1");
   else if (apple)
     snprintf(param_define1, sizeof(param_define1), "-D APPLE_M=%d", apple_m);
 
-  snprintf(param_defines, sizeof(param_defines), "%s%s%s%s%s%s", param_define1, param_define2, param_define3,
-                                                                 param_define4, param_define5, param_define6);
+  snprintf(param_defines, sizeof(param_defines), "%s%s%s", param_define1, param_define2, param_define3);
 
   LogRaw("%30s: %s\n", "Parameter defined", param_defines);
 }

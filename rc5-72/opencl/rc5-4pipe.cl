@@ -48,6 +48,11 @@
     #define ROTL3(x)    convert_uint4(as_ulong4(((uint4)(x)).xxyyzzww) >> (ulong4)(29u))
     #define ROTL1(x, s) ((uint)(as_ulong((uint2)((uint)(x), (uint)(x))) >> ((0u - (uint)(s)) & 31u)))
   #endif
+#elif defined(MESA_AMD) // MESA ON AMD: right-rotate spelling becomes a funnel shift (v_alignbit_b32)
+  #define ROTL(x, s)  (((uint4)(x) >> ((uint4)(32u) - (uint4)(s))) | ((uint4)(x) << ((uint4)(32u) - ((uint4)(32u) - (uint4)(s)))))
+  #define ROTL1(x, s) (((uint)(x) >> (32u - (uint)(s))) | ((uint)(x) << (32u - (32u - (uint)(s)))))
+  #define ROTL3(x)    ({ volatile uint _r3v = 29u; volatile uint *_r3p = &_r3v; const uint _r3n = *_r3p; ((uint4)(x) >> _r3n) | ((uint4)(x) << (32u - _r3n)); })
+  #define SWAP(x)     bitselect(rotate((uint)(x), 8u), rotate((uint)(x), 24u), 0xFF00FF00u)
 #endif
 
 #ifndef ROTL // STANDARD OPENCL
@@ -63,7 +68,7 @@
   #define SWAP(x) (((uint)(x) << 24) | (((uint)(x) & 0x0000FF00u) << 8) | (((uint)(x) >> 8) & 0x0000FF00u) | ((uint)(x) >> 24))
 #endif
 
-#if (defined(NV_SM) && (NV_SM >= 75) && (NV_SM <= 89)) || (defined(AMD_VGPR) && (AMD_VGPR >= 128)) || (defined(APPLE_M) && (APPLE_M >= 1)) // ENABLE ROUND1 OPTIMIZATION
+#if (defined(NV_SM) && (NV_SM >= 75) && (NV_SM <= 89)) || defined(AMD_GFX) || (defined(APPLE_M) && (APPLE_M >= 1)) // ENABLE ROUND1 OPTIMIZATION
   #define ROUND1_OPT 1
 #endif
 
