@@ -426,7 +426,7 @@ bool IsMesaRadeonSI(cl_device_id device)
   char nameBuffer[256] = {0};
   if (clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(nameBuffer), nameBuffer, NULL) != CL_SUCCESS)
     return false;
-  return strstr(nameBuffer, "(radeonsi,") != NULL;
+  return strstr(nameBuffer, "radeonsi") != NULL;
 }
 
 bool GetAppleComputeCapability(cl_device_id device, int &m_version)
