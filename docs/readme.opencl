@@ -10,6 +10,7 @@
 
     1.0  Getting started
     2.0  OpenCL specific notes
+         2.1 AMD GPUs with Mesa (Linux)
     3.0  Troubleshooting and known issues
          3.1 Multiple GPUs
          3.2 GPU Client priority
@@ -40,6 +41,36 @@
     The client requires OpenCL version 1.1. It will not run on OpenCL 1.0
     devices. An error will be reported during initialization of computing
     core.
+
+  2.1   AMD GPUs with Mesa (Linux) ----------------------------------
+
+    On Linux, AMD GPUs from the Radeon HD 7000 series onward can run the
+    client with Mesa's OpenCL driver (Rusticl). Install your
+    distribution's Mesa OpenCL package, for example:
+
+        Debian, Ubuntu, Linux Mint:      mesa-opencl-icd
+        Fedora:                          mesa-libOpenCL
+        openSUSE:                        Mesa-libRusticlOpenCL
+        Arch Linux, CachyOS, Manjaro:    opencl-mesa
+        Gentoo:                          media-libs/mesa with USE=opencl
+
+    Unless your distribution enables it, Rusticl does not offer AMD GPUs
+    by default and the client reports "No OpenCL compatible devices
+    found". Set the RUSTICL_ENABLE environment variable when starting
+    the client:
+
+        RUSTICL_ENABLE=radeonsi ./dnetc
+
+    To make this permanent, add "export RUSTICL_ENABLE=radeonsi" to your
+    shell profile or to the script that starts the client.
+
+    "dnetc -gpuinfo" should then show "Platform Name: rusticl" and
+    "Parameter defined: -D MESA_AMD=1".
+
+    AMD's own OpenCL driver (ROCm) also works with the client. It
+    officially supports the Radeon RX 7000 and 9000 series; AMD's
+    community TheRock builds add the RX 5000 and 6000 series and Vega.
+    See AMD's ROCm documentation for installation.
 
 
  3.0  Troubleshooting and known issues ------------------------------

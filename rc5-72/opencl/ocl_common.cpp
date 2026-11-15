@@ -342,6 +342,17 @@ bool GetAMDComputeCapability(cl_device_id device, int &gfx_hex)
   if (vendor != 0x1002) // AMD PCI Vendor ID
     return false;
 
+  // AMD's own OpenCL runtime only (ROCm, TheRock, Windows driver); Mesa's Rusticl
+  // also reports vendor id 0x1002 but compiles with a different backend (see IsMesaRadeonSI)
+  cl_platform_id platform;
+  if (clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, NULL) != CL_SUCCESS)
+    return false;
+  char platformVendor[256] = {0};
+  if (clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, sizeof(platformVendor), platformVendor, NULL) != CL_SUCCESS)
+    return false;
+  if (strncmp(platformVendor, "Advanced Micro Devices", 22) != 0)
+    return false;
+
   bool found_gfx_ver = false;
 
   // 1. Try to parse the official OpenCL Device Name String
@@ -394,63 +405,28 @@ bool GetAMDComputeCapability(cl_device_id device, int &gfx_hex)
   return false;
 }
 
-bool GetAMDRegisterHint(int gfx_hex, int &regs_2pipe, int &regs_4pipe) // VGPRs
+bool IsMesaRadeonSI(cl_device_id device)
 {
-  regs_2pipe = 0;
-  regs_4pipe = 0;
-
-  if (gfx_hex >= 0x600 && gfx_hex < 0x900)
-  {
-    // GCN 1.0 - 4.0 (gfx600 to gfx8xx)
-    // 256 VGPRs per SIMD - 4 VGPR Granularity - 10 waves max
-    regs_2pipe = 64;    // 4 waves - 40% occupancy
-    regs_4pipe = 128;   // 2 waves - 20% occupancy
-  }
-  else if (gfx_hex >= 0x900 && gfx_hex <= 0x90c && gfx_hex != 0x908 && gfx_hex != 0x90a)
-  {
-    // Vega / GCN 5.0 (gfx900 to gfx90c)
-    // 256 VGPRs per SIMD - 4 VGPR Granularity - 10 waves max
-    regs_2pipe = 64;    // 4 waves - 40% occupancy
-    regs_4pipe = 128;   // 2 waves - 20% occupancy
-  }
-  else if (gfx_hex >= 0x1000 && gfx_hex < 0x1030)
-  {
-    // RDNA 1 (gfx1010 to gfx1013)
-    // 1024 VGPRs per SIMD - 8 VGPR Granularity - 20 waves max
-    regs_2pipe = 64;    // 16 waves - 80% occupancy
-    regs_4pipe = 128;   //  8 waves - 40% occupancy
-  }
-  else if (gfx_hex >= 0x1030 && gfx_hex < 0x1100)
-  {
-    // RDNA 2 (gfx1030 to gfx1036)
-    // 1024 VGPRs per SIMD - 16 VGPR Granularity - 16 waves max
-    regs_2pipe = 64;    // 16 waves - 100% occupancy
-    regs_4pipe = 128;   //  8 waves - 50% occupancy
-  }
-  else if (gfx_hex >= 0x1100 && gfx_hex < 0x1200)
-  {
-    // RDNA 3 (gfx11xx)
-    // 1536 VGPRs per SIMD - 24 VGPR Granularity - 16 waves max
-    regs_2pipe = 96;    // 16 waves - 100% occupancy
-    regs_4pipe = 144;   // 10 waves - 63% occupancy
-  }
-  else if (gfx_hex >= 0x1200 && gfx_hex < 0x1300)
-  {
-    // RDNA 4 (gfx12xx)
-    // 1536 VGPRs per SIMD - 24 VGPR Granularity - 16 waves max
-    // (Dynamic VGPR mode is disabled)
-    regs_2pipe = 96;    // 16 waves - 100% occupancy
-    regs_4pipe = 144;   // 10 waves - 63% occupancy
-  }
-
-  if (regs_2pipe > 0 && regs_4pipe > 0)
-  {
-    return true;   
-  }
-
-  //LogTo(LOGTO_FILE, "Failed to find AMD gfx%x in VGPR register hint lookup table\n", gfx_hex);
-
-  return false;
+  // Mesa's Rusticl OpenCL on the radeonsi driver (ACO compiler). Its rotate lowering differs
+  // from AMD's own compiler, so the kernels get a Mesa-specific path (MESA_AMD).
+  cl_uint vendor;
+  if (clGetDeviceInfo(device, CL_DEVICE_VENDOR_ID, sizeof(vendor), &vendor, NULL) != CL_SUCCESS)
+    return false;
+  if (vendor != 0x1002) // AMD PCI Vendor ID
+    return false;
+  cl_platform_id platform;
+  if (clGetDeviceInfo(device, CL_DEVICE_PLATFORM, sizeof(platform), &platform, NULL) != CL_SUCCESS)
+    return false;
+  char platformBuffer[256] = {0};
+  if (clGetPlatformInfo(platform, CL_PLATFORM_NAME, sizeof(platformBuffer), platformBuffer, NULL) != CL_SUCCESS)
+    return false;
+  if (strcmp(platformBuffer, "rusticl") != 0)
+    return false;
+  // Device name: "AMD Radeon RX 6800 (radeonsi, navi21, ACO, DRM 3.x, ...)"
+  char nameBuffer[256] = {0};
+  if (clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(nameBuffer), nameBuffer, NULL) != CL_SUCCESS)
+    return false;
+  return strstr(nameBuffer, "radeonsi") != NULL;
 }
 
 bool GetAppleComputeCapability(cl_device_id device, int &m_version)
@@ -534,20 +510,13 @@ bool BuildCLProgram(ocl_context_t *cont, const char* programText, const char *ke
     {
       char amdOption1[24] = "";
 
-      snprintf(amdOption1, sizeof(amdOption1), "-D AMD_GFX=0x%x", amd_gfx); // SM version
+      snprintf(amdOption1, sizeof(amdOption1), "-D AMD_GFX=0x%x", amd_gfx); // gfx version
 
-      char amdOption2[16] = "";
-      int amd_maxreg2, amd_maxreg4;
-
-      if (GetAMDRegisterHint(amd_gfx, amd_maxreg2, amd_maxreg4)) // maximize ILP and occupancy
-      {
-        if (strstr(kernelName, "2pipe"))
-          snprintf(amdOption2, sizeof(amdOption2), "-D AMD_VGPR=%d", amd_maxreg2);
-        else if (strstr(kernelName, "4pipe"))
-          snprintf(amdOption2, sizeof(amdOption2), "-D AMD_VGPR=%d", amd_maxreg4);
-      }
-
-      snprintf(buildOptions, sizeof(buildOptions), "%s %s %s", clOption, amdOption1, amdOption2); // AMD build options
+      snprintf(buildOptions, sizeof(buildOptions), "%s %s", clOption, amdOption1); // AMD build options
+    }
+    else if (IsMesaRadeonSI(cont->deviceID)) // Mesa radeonsi
+    {
+      snprintf(buildOptions, sizeof(buildOptions), "%s %s", clOption, "-D MESA_AMD=1"); // Mesa radeonsi build options
     }
     else if (GetAppleComputeCapability(cont->deviceID, apple_m)) // Apple
     {
