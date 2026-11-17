@@ -180,7 +180,7 @@
     #define CLIENT_CPU     CPU_CUDA
   #elif defined(ATI_STREAM) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
     #define CLIENT_CPU     CPU_ATI_STREAM
-  #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
+  #elif defined(OPENCL) && (defined(__i386__) || defined(__x86_64__) || defined(__amd64__) || defined(__aarch64__))
     #define CLIENT_CPU     CPU_OPENCL
   #elif defined(ASM_HPPA) /* cross compile, ergo don't use __hppa/__hppa__ */
     #define CLIENT_CPU     CPU_PA_RISC
