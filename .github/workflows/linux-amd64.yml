@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install dependencies
-      run: sudo apt-get install yasm wget
+      run: sudo apt-get install nasm wget
     - name: Install ispc
       working-directory: /tmp
       run: |
