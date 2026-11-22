@@ -110,6 +110,8 @@
     #define CLIENT_CPU     CPU_OPENCL
   #elif defined(_M_AMD64)
     #define CLIENT_CPU     CPU_AMD64
+  #elif defined(_M_ARM64)
+    #define CLIENT_CPU     CPU_ARM64
   #elif defined(_M_IA64)
     #define CLIENT_CPU     CPU_IA64
   #endif

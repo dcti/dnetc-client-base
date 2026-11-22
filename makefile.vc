@@ -3,6 +3,7 @@
 #
 
 #PROCESSOR_ARCHITECTURE = AMD64
+#PROCESSOR_ARCHITECTURE = ARM64
 #PROCESSOR_ARCHITECTURE = cuda
 #PROCESSOR_ARCHITECTURE = ATI_STREAM
 #PROCESSOR_ARCHITECTURE = OPENCL32
@@ -47,6 +48,23 @@ OPTS_CC_CPU = -D_AMD64_ -GS-
 OPTS_M_PLAT = AMD64
 CHIPSRCPATH = plat/$(PROCESSOR_ARCHITECTURE)
 ZIPSUFFIX = win64-amd64
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ARM64"
+# The RC5-72 cores are built with LLVM clang (.S) and clang-cl (.cpp), the
+# rest with MSVC. Set CLANG and CLANG_CL if they are not on the PATH.
+HAVE_OGR_CORES = 0
+OPTS_CC_CPU =
+OPTS_M_PLAT = ARM64
+CHIPSRCPATH = plat
+ZIPSUFFIX = win64-arm64
+!ifndef CLANG
+CLANG = clang
+!endif
+!ifndef CLANG_CL
+CLANG_CL = clang-cl
+!endif
+# clang-cl options for the compiled cores (ANSI, NEON 8x4)
+OPTS_CLANG_CORES = --target=aarch64-pc-windows-msvc -c /clang:-Os
+.SUFFIXES : .S
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
 # This assumes 32-bit Windows since there's no advantage to using 64-bit
 HAVE_OGR_CORES = 0
@@ -328,7 +346,7 @@ PLAT_OBJS =                          \
 !if "$(PROCESSOR_ARCHITECTURE)" == "x86"
 # PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/w32x86.obj
 !endif
-!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64" || "$(PROCESSOR_ARCHITECTURE)" == "ARM64"
 PLAT_OBJS = $(PLAT_OBJS) $(OUTPUTPATH)/strcmpi.obj
 !endif
 
@@ -352,7 +370,7 @@ SCR_OBJS =                           \
         $(OUTPUTPATH)/w32ini.obj     \
         $(OUTPUTPATH)/w32util.obj
 
-!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64"
+!if "$(PROCESSOR_ARCHITECTURE)" == "AMD64" || "$(PROCESSOR_ARCHITECTURE)" == "ARM64"
 SCR_OBJS = $(SCR_OBJS) $(OUTPUTPATH)/strcmpi.obj
 !endif
 
@@ -374,6 +392,8 @@ CHIP_OBJS = $(OUTPUTPATH)/x86cpuid.obj       \
             $(OUTPUTPATH)/x86id.obj          \
             $(OUTPUTPATH)/x86rdtsc.obj       \
             $(OUTPUTPATH)/x86htcount.obj
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ARM64"
+CHIP_OBJS =
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "cuda"
 CHIP_OBJS = $(OUTPUTPATH)/cuda_setup.obj     \
             $(OUTPUTPATH)/cuda_info.obj
@@ -402,6 +422,18 @@ RC5_72_OBJS = $(RC5_72_OBJS) \
         $(OUTPUTPATH)/r72-ks-spmd.obj \
         $(OUTPUTPATH)/r72-ks-spmd-ispc.obj
 !endif
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ARM64"
+RC5_72_OBJS = \
+        $(OUTPUTPATH)/r72ansi1.obj \
+        $(OUTPUTPATH)/r72ansi2.obj \
+        $(OUTPUTPATH)/r72ansi4.obj \
+        $(OUTPUTPATH)/r72-ks-monika.obj \
+        $(OUTPUTPATH)/r72-ks-monika-2pipe.obj \
+        $(OUTPUTPATH)/r72-neon-8x4.obj \
+        $(OUTPUTPATH)/r72-neon-mix.obj \
+        $(OUTPUTPATH)/r72-neon-hyb.obj
+OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 RC5_72_OBJS =                        \
@@ -595,6 +627,23 @@ $(VC_CHECK):
 
 {plat/x86}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "ARM64"
+
+{$(RC572SRCPATH)/arm64}.S{$(OUTPUTPATH)}.obj:
+        $(CLANG) --target=aarch64-pc-windows-msvc -c -o $(@:/=\) $(**:/=\)
+
+{$(RC572SRCPATH)/arm64}.cpp{$(OUTPUTPATH)}.obj:
+        $(CLANG_CL) $(OPTS_CLANG_CORES) $(OPTS_MSVC) -Fo$(@:/=\) $(**:/=\)
+
+$(OUTPUTPATH)/r72ansi1.obj: $(RC572SRCPATH)/ansi/r72ansi1.cpp
+        $(CLANG_CL) $(OPTS_CLANG_CORES) $(OPTS_MSVC) -Fo$(@:/=\) $(**:/=\)
+
+$(OUTPUTPATH)/r72ansi2.obj: $(RC572SRCPATH)/ansi/r72ansi2.cpp
+        $(CLANG_CL) $(OPTS_CLANG_CORES) $(OPTS_MSVC) -Fo$(@:/=\) $(**:/=\)
+
+$(OUTPUTPATH)/r72ansi4.obj: $(RC572SRCPATH)/ansi/r72ansi4.cpp
+        $(CLANG_CL) $(OPTS_CLANG_CORES) $(OPTS_MSVC) -Fo$(@:/=\) $(**:/=\)
 
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "x86"
 
