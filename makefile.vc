@@ -7,6 +7,7 @@
 #PROCESSOR_ARCHITECTURE = ATI_STREAM
 #PROCESSOR_ARCHITECTURE = OPENCL32
 #PROCESSOR_ARCHITECTURE = OPENCL64
+#PROCESSOR_ARCHITECTURE = OPENCL_ARM64
 #PROCESSOR_ARCHITECTURE = arm
 
 BASENAME = dnetc
@@ -74,6 +75,12 @@ OPTS_CC_CPU =
 OPTS_M_PLAT = AMD64
 CHIPSRCPATH = plat
 ZIPSUFFIX = win64-amd64-opencl
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL_ARM64"
+HAVE_OGR_CORES = 0
+OPTS_CC_CPU =
+OPTS_M_PLAT = ARM64
+CHIPSRCPATH = plat
+ZIPSUFFIX = win64-arm64-opencl
 !elseif "$(PROCESSOR_ARCHITECTURE)" == "arm"
 HAVE_OGR_CORES = 0
 OPTS_CC_CPU = /D_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE=1
@@ -235,6 +242,12 @@ ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.opencl
 !if "$(PROCESSOR_ARCHITECTURE)" == "OPENCL64"
 OPTS_MSVC = $(OPTS_MSVC) -I"$(OPENCLDIR)include" -Iplat\opencl -Iplat\amd64
 OPTS_LIBS = $(OPTS_LIBS) "$(OPENCLDIR)lib\x86_64\opencl.lib"
+ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.opencl
+!endif
+
+!if "$(PROCESSOR_ARCHITECTURE)" == "OPENCL_ARM64"
+OPTS_MSVC = $(OPTS_MSVC) -I"$(OPENCLDIR)include" -Iplat\opencl
+OPTS_LIBS = $(OPTS_LIBS) "$(OPENCLDIR)lib\arm64\OpenCL.lib"
 ZIPEXTRAS = $(ZIPEXTRAS) docs\readme.opencl
 !endif
 
@@ -437,7 +450,7 @@ RC5_72_OBJS =                             \
         $(OUTPUTPATH)/adl.obj        
 
 OPTS_MSVC = $(OPTS_MSVC) -DHAVE_RC5_72_CORES -DATI_STREAM -DDYN_TIMESLICE
-!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL32" || "$(PROCESSOR_ARCHITECTURE)" == "OPENCL64"
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL32" || "$(PROCESSOR_ARCHITECTURE)" == "OPENCL64" || "$(PROCESSOR_ARCHITECTURE)" == "OPENCL_ARM64"
 RC5_72_OBJS =                      \
         $(OUTPUTPATH)/ocl_info.obj \
         $(OUTPUTPATH)/ocl_setup.obj \
@@ -659,6 +672,14 @@ $(VC_CHECK):
 
 {$(CHIPSRCPATH)/amd64}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(CHIPSRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
+
+{$(RC572SRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
+        cl -c -O2 $(OPTS_MSVC) -Fo$(OUTPUTPATH)\ $<
+
+!elseif "$(PROCESSOR_ARCHITECTURE)" == "OPENCL_ARM64"
 
 {$(CHIPSRCPATH)/opencl}.cpp{$(OUTPUTPATH)}.obj::
         cl -c $(OPTS_MSVC) -Ox -Fo$(OUTPUTPATH)\ $<
