@@ -1697,6 +1697,7 @@ case "$1" in
         TARGET_AS="gcc -c"
         generate_gcc_opts "arm64" "linux"
         TARGET_CCFLAGS="$OPTS_GCC -DHAVE_POSIX_THREADS"
+        TARGET_LDFLAGS="$TARGET_LDFLAGS -static"
         TARGET_LIBS="-lpthread -lrt"
         TARGET_TARBALL="linux-arm64"
         TARGET_DOCFILES="docs/readme._ix"
