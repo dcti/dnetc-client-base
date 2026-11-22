@@ -58,9 +58,12 @@ ocl_context_t *ocl_get_context(int device)
   return NULL;
 }
 
-// To debug on CPU...
-// #undef  CL_DEVICE_TYPE_GPU
-// #define CL_DEVICE_TYPE_GPU CL_DEVICE_TYPE_ALL
+// Allow CPU devices such as PoCL for testing and debug
+#ifdef OCL_ALLOW_CPU_DEVICES
+#define OCL_DEVICE_TYPE_WANTED CL_DEVICE_TYPE_ALL
+#else
+#define OCL_DEVICE_TYPE_WANTED CL_DEVICE_TYPE_GPU
+#endif
 
 int InitializeOpenCL(void)
 {
@@ -101,7 +104,7 @@ int InitializeOpenCL(void)
         {
           cl_uint devcnt;
 
-          status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, 0, NULL, &devcnt);
+          status = clGetDeviceIDs(platforms[plat], OCL_DEVICE_TYPE_WANTED, 0, NULL, &devcnt);
           if (status == CL_DEVICE_NOT_FOUND)  // Special case. No GPU devices but other may exist
           {
             status = CL_SUCCESS;
@@ -135,7 +138,7 @@ int InitializeOpenCL(void)
         if (offset >= devicesDetected)   /* Avoid call with bufferSize=0 for last platform without GPU devices */
           break;
 
-        status = clGetDeviceIDs(platforms[plat], CL_DEVICE_TYPE_GPU, devicesDetected - offset, devices + offset, &devcnt);
+        status = clGetDeviceIDs(platforms[plat], OCL_DEVICE_TYPE_WANTED, devicesDetected - offset, devices + offset, &devcnt);
         if (status == CL_DEVICE_NOT_FOUND)  // Special case. No GPU devices but other may exist
         {
           status = CL_SUCCESS;
