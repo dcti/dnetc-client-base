@@ -35,6 +35,10 @@
     #define ROTL(x, s)  ((uint)(as_ulong((uint2)((uint)(x), (uint)(x))) >> ((0u - (uint)(s)) & 31u)))
     #define ROTL3(x)    ((uint)(as_ulong((uint2)((uint)(x), (uint)(x))) >> 29u))
   #endif
+#elif defined(MESA_AMD) // MESA ON AMD: right-rotate spelling becomes a funnel shift (v_alignbit_b32)
+  #define ROTL(x, s)  (((uint)(x) >> (32u - (uint)(s))) | ((uint)(x) << (32u - (32u - (uint)(s)))))
+  #define ROTL3(x)    ({ volatile uint _r3v = 29u; volatile uint *_r3p = &_r3v; const uint _r3n = *_r3p; ((uint)(x) >> _r3n) | ((uint)(x) << (32u - _r3n)); })
+  #define SWAP(x)     bitselect(rotate((uint)(x), 8u), rotate((uint)(x), 24u), 0xFF00FF00u)
 #endif
 
 #ifndef ROTL // STANDARD OPENCL
