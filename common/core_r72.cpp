@@ -656,6 +656,27 @@ int selcoreGetPreselectedCoreForProject_rc572(int device)
     }
 #endif
   // ===============================================================
+  #elif (CLIENT_CPU == CPU_ARM64)
+    if (detected_type > 0)
+    {
+      switch (detected_type)
+      {
+        case CPU_APPLE_M1:
+        case CPU_APPLE_M2:
+        case CPU_APPLE_M3:
+        case CPU_APPLE_M3_PRO:
+        case CPU_APPLE_M3_MAX_ULTRA:
+        case CPU_APPLE_M4:
+        case CPU_APPLE_M4_PRO_MAX:
+        case CPU_APPLE_M5:
+        case CPU_APPLE_M5_PRO_MAX_ULTRA:
+        case CPU_APPLE_M6:
+        case CPU_APPLE_A18_PRO:
+                   cindex =  5; break; // NEON 8x4 (all of the above)
+        default:   cindex = -1; break; // no default
+      }
+    }
+  // ===============================================================
   #elif (CLIENT_CPU == CPU_SPARC)
     #if (CLIENT_OS == OS_SOLARIS)
     if (detected_type > 0)

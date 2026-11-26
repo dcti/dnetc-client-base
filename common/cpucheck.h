@@ -49,6 +49,43 @@ unsigned long GetProcessorCoreHints(void);
   #define CPU_F_SYNERGISTIC     (0x00000004L)
 #endif
 
+// constants for Apple Silicon CPU families
+#if (CLIENT_CPU == CPU_ARM64)
+  #define CPU_ARM64_UNKNOWN             (0xFF)
+  #define CPU_APPLE_M1                  (0x10)      // Firestorm/Icestorm
+  #define CPU_APPLE_M2                  (0x20)      // Blizzard/Avalanche
+  #define CPU_APPLE_M3                  (0x30)      // Ibiza
+  #define CPU_APPLE_M3_PRO              (0x31)      // Lobos
+  #define CPU_APPLE_M3_MAX_ULTRA        (0x32)      // Palma
+  #define CPU_APPLE_M4                  (0x40)      // Donan
+  #define CPU_APPLE_M4_PRO_MAX          (0x41)      // Brava
+  #define CPU_APPLE_M5                  (0x50)      // Hidra
+  #define CPU_APPLE_M5_PRO_MAX_ULTRA    (0x51)      // Sotra
+  #define CPU_APPLE_M6                  (0x60)
+  
+  #define CPU_APPLE_A18_PRO             (0xA18)     // Tahiti
+
+  #define CPU_APPLE_M1_NAME                 "Apple M1"
+  #define CPU_APPLE_M1_PRO_NAME             "Apple M1 Pro"
+  #define CPU_APPLE_M1_MAX_NAME             "Apple M1 Max"
+  #define CPU_APPLE_M2_NAME                 "Apple M2"
+  #define CPU_APPLE_M2_PRO_NAME             "Apple M2 Pro"
+  #define CPU_APPLE_M2_MAX_NAME             "Apple M2 Max"
+  #define CPU_APPLE_M3_NAME                 "Apple M3"
+  #define CPU_APPLE_M3_PRO_NAME             "Apple M3 Pro"
+  #define CPU_APPLE_M3_MAX_NAME             "Apple M3 Max"
+  #define CPU_APPLE_M3_MAX_ULTRA_NAME       "Apple M3 Max/Ultra"
+  #define CPU_APPLE_M4_NAME                 "Apple M4"
+  #define CPU_APPLE_M4_PRO_NAME             "Apple M4 Pro"
+  #define CPU_APPLE_M4_MAX_NAME             "Apple M4 Max"
+  #define CPU_APPLE_M4_PRO_MAX_NAME         "Apple M4 Pro/Max"
+  #define CPU_APPLE_M5_NAME                 "Apple M5"
+  #define CPU_APPLE_M5_PRO_MAX_ULTRA_NAME   "Apple M5 Pro/Max/Ultra"
+  #define CPU_APPLE_M6_NAME                 "Apple M6"
+
+  #define CPU_APPLE_A18_PRO_NAME            "Apple A18 Pro"
+#endif
+
 //return number of processors detected (by the hardware/from the OS)
 //returns -1 if detection is not supported.
 //returns 0 if a required co-processor (e.g. GPU) was not found
