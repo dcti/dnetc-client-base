@@ -297,7 +297,6 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
 {
   ocl_context_t *cont = ocl_get_context(rc5_72unitwork->devicenum);
   RC5_72UnitWork tmp_unit;
-  static bool selftestpassed = false;
 
   if (cont == NULL)
   {
@@ -314,7 +313,7 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
     }
   }
 
-  if (!selftestpassed)
+  if (!cont->selftestPassed)
   {
     if (!selftest(cont))
     {
@@ -322,7 +321,7 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
       RaiseExitRequestTrigger();
       return -1;
     } else
-      selftestpassed = true;
+      cont->selftestPassed = true;
   }
 
   //Log("Got %u iters to do\n", *iterations);

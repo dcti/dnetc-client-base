@@ -283,7 +283,6 @@ extern "C" s32 rc5_72_unit_func_ocl_4pipe (RC5_72UnitWork *rc5_72unitwork, u32 *
 /* some static flags which are set on per-core basis */
 struct core_static_flags
 {
-  bool selftestpassed;
   bool profilingErr;
 };
 
@@ -310,7 +309,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
       return -1;
     }
   }
-  if (!static_flags->selftestpassed)
+  if (!cont->selftestPassed)
   {
     if (!selftest(cont))
     {
@@ -318,7 +317,7 @@ static s32 rc5_72_unit_func_ocl_npipe(RC5_72UnitWork *rc5_72unitwork, u32 *itera
       RaiseExitRequestTrigger();
       return -1;
     } else
-      static_flags->selftestpassed = true;
+      cont->selftestPassed = true;
   }
 
   memmove(&tmp_unit, rc5_72unitwork, sizeof(RC5_72UnitWork));
