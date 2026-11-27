@@ -377,6 +377,12 @@ s32 rc5_72_unit_func_ocl_ref(RC5_72UnitWork *rc5_72unitwork, u32 *iterations, vo
 
     // wait for the kernel call to finish execution
     status = OCLWaitForKernel(cont, ndrEvt, rest0);
+    if (ocl_diagnose(status, "waiting for event", cont) != CL_SUCCESS)
+    {
+      clReleaseEvent(ndrEvt);  // allocated locally, must (try to) free before return
+      RaiseExitRequestTrigger();
+      return -1;          //err
+    }
 
     cl_ulong startTime;
     cl_ulong endTime;
