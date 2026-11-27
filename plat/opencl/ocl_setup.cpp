@@ -210,6 +210,7 @@ void OCLReinitializeDevice(ocl_context_t *cont)
 {
   //Log("Reinializing device %u\n", device);
   cont->coreID = CORE_NONE;
+  cont->selftestPassed = false;
 
   //Log("Releasing kernel\n");
   if (cont->kernel)
